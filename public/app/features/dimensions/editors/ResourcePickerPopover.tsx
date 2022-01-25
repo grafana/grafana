@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { createRef, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import SVG from 'react-inlinesvg';
-import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Label, Input } from '@grafana/ui';
+import { Button, Select, FilterInput, useTheme2, stylesFactory, Field, Label, Input, ButtonGroup } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 
 import { ResourceCards } from './ResourceCards';
 import { getPublicOrAbsoluteUrl } from '../resource';
@@ -164,28 +165,42 @@ export const ResourcePickerPopover = (props: Props) => {
     }
   };
 
+  const onClose = () => {
+    onChange(value);
+  };
+
+  const ref = createRef<HTMLElement>();
+  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
+
   return (
-    <FocusScope>
-      <div className={styles.resourcePickerPopover}>
-        <div className={styles.resourcePickerPopoverTabs}>
-          <button className={getTabClassName('folder')} onClick={() => setActivePicker('folder')}>
-            Folder
-          </button>
-          <button className={getTabClassName('url')} onClick={() => setActivePicker('url')}>
-            URL
-          </button>
+    <FocusScope contain autoFocus restoreFocus>
+      <section ref={ref} {...overlayProps}>
+        <div className={styles.resourcePickerPopover}>
+          <div className={styles.resourcePickerPopoverTabs}>
+            <button className={getTabClassName('folder')} onClick={() => setActivePicker('folder')}>
+              Folder
+            </button>
+            <button className={getTabClassName('url')} onClick={() => setActivePicker('url')}>
+              URL
+            </button>
+          </div>
+          <div className={styles.resourcePickerPopoverContent}>
+            {renderPicker()}
+            <ButtonGroup className={styles.buttonGroup}>
+              <Button className={styles.button} variant={'secondary'} onClick={() => onClose()}>
+                Cancel
+              </Button>
+              <Button
+                className={styles.button}
+                variant={newValue && newValue !== value ? 'primary' : 'secondary'}
+                onClick={() => onChange(newValue)}
+              >
+                Select
+              </Button>
+            </ButtonGroup>
+          </div>
         </div>
-        <div className={styles.resourcePickerPopoverContent}>
-          {renderPicker()}
-          <Button
-            className={styles.selectButton}
-            variant={newValue && newValue !== value ? 'primary' : 'secondary'}
-            onClick={() => onChange(newValue)}
-          >
-            Select
-          </Button>
-        </div>
-      </div>
+      </section>
     </FocusScope>
   );
 };
@@ -251,7 +266,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     resourcePickerPopoverContent: css`
-      width: 300px;
+      width: 315px;
       font-size: ${theme.typography.bodySmall.fontSize};
       min-height: 184px;
       padding: ${theme.spacing(1)};
@@ -263,11 +278,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       width: 100%;
       border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
     `,
-    selectButton: css`
+    buttonGroup: css`
       align-self: center;
-      align-text: center;
-      margin-top: 20px;
-      margin-bottom: 10px;
+      flex-direction: row;
+    `,
+    button: css`
+      margin: 12px 20px 5px;
     `,
   };
 });

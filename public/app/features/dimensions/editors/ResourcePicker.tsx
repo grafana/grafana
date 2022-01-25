@@ -41,7 +41,7 @@ export const ResourcePicker = (props: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <PopoverController content={popoverElement} hideAfter={300}>
+    <PopoverController content={popoverElement}>
       {(showPopper, hidePopper, popperProps) => {
         return (
           <>
@@ -49,13 +49,14 @@ export const ResourcePicker = (props: Props) => {
               <Popover
                 {...popperProps}
                 referenceElement={pickerTriggerRef.current}
-                onMouseLeave={hidePopper}
                 onMouseEnter={showPopper}
-                onKeyDown={(event: any) => closePopover(event, hidePopper)}
+                onKeyDown={(event: any) => {
+                  closePopover(event, hidePopper);
+                }}
               />
             )}
 
-            <div ref={pickerTriggerRef} onClick={showPopper} onMouseLeave={hidePopper}>
+            <div ref={pickerTriggerRef} onClick={showPopper}>
               <InlineFieldRow className={styles.pointer}>
                 <InlineField label={null} grow>
                   <Input
