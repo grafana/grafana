@@ -748,7 +748,9 @@ func TestNotificationChannels(t *testing.T) {
 	// As we are using a NotificationService mock here, but he test expects real NotificationService -
 	// we try to issue a real POST request here
 	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
-		_, _ = http.Post(cmd.Url, "", strings.NewReader(cmd.Body))
+		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
+			res.Body.Close()
+		}
 		return nil
 	}
 
