@@ -5,12 +5,12 @@ import React, { PureComponent } from 'react';
 
 import { QUERY_TYPES, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery } from '../types';
+import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
 import { MetricQueryEditor, QueryEditorRow, SLOQueryEditor } from './';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 
-export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
+export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
 export class QueryEditor extends PureComponent<Props> {
   async UNSAFE_componentWillMount() {
