@@ -55,27 +55,9 @@ func (p *Provider) GetClient(headers map[string]string) (apiv1.API, error) {
 	}
 
 	// Azure authentication
-	if _, ok := opts.CustomOptions["_azureCredentials"]; !ok {
-		credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
-		if err != nil {
-			err = fmt.Errorf("invalid Azure credentials: %s", err)
-			return nil, err
-		}
-
-		if credentials != nil {
-			opts.CustomOptions["_azureCredentials"] = credentials
-		}
-	}
-
-	if _, ok := opts.CustomOptions["azureEndpointResourceId"]; !ok {
-		azureEndpointResourceId, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
-		if err != nil {
-			return nil, err
-		}
-
-		if azureEndpointResourceId != "" {
-			opts.CustomOptions["azureEndpointResourceId"] = azureEndpointResourceId
-		}
+	err = p.configureAzureAuthentication(opts)
+	if err != nil {
+		return nil, err
 	}
 
 	roundTripper, err := p.clientProvider.GetTransport(opts)
@@ -106,6 +88,24 @@ func (p *Provider) middlewares() []sdkhttpclient.Middleware {
 	}
 
 	return middlewares
+}
+
+func (p *Provider) configureAzureAuthentication(opts sdkhttpclient.Options) error {
+	credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
+	if err != nil {
+		err = fmt.Errorf("invalid Azure credentials: %s", err)
+		return err
+	} else if credentials != nil {
+		opts.CustomOptions["_azureCredentials"] = credentials
+
+		resourceId, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
+		if err != nil {
+			return err
+		} else if resourceId != "" {
+			opts.CustomOptions["azureEndpointResourceId"] = resourceId
+		}
+	}
+	return nil
 }
 
 func reqHeaders(headers map[string]string) map[string]string {
