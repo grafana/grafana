@@ -14,9 +14,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	opentracing "github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -43,7 +44,8 @@ func (e *AzureMonitorDatasource) resourceRequest(rw http.ResponseWriter, req *ht
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -52,7 +54,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
@@ -147,7 +149,8 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 	return azureMonitorQueries, nil
 }
 
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, dsInfo datasourceInfo, cli *http.Client, url string) backend.DataResponse {
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, dsInfo datasourceInfo, cli *http.Client,
+	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, dsInfo, url)
@@ -159,22 +162,15 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
-	span.SetTag("target", query.Target)
-	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
-	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
-	span.SetTag("datasource_id", dsInfo.DatasourceID)
-	span.SetTag("org_id", dsInfo.OrgID)
+	ctx, span := tracer.Start(ctx, "azuremonitor query")
+	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
+	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
 
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		dataResponse.Error = err
-		return dataResponse
-	}
+	defer span.End()
+	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
 	azlog.Debug("AzureMonitor", "Target", query.Target)

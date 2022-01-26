@@ -3,7 +3,11 @@ on:
   pull_request_target:
     types:
       - opened
+      - reopened
       - synchronize
+      - ready_for_review      
+      - labeled
+      - unlabeled
   issues:
     types:
       - milestoned
@@ -12,6 +16,7 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout Actions
         uses: actions/checkout@v2

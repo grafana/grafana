@@ -144,6 +144,17 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 }
 
+func (d JSONData) DashboardIncludes() []*Includes {
+	result := []*Includes{}
+	for _, include := range d.Includes {
+		if include.Type == TypeDashboard {
+			result = append(result, include)
+		}
+	}
+
+	return result
+}
+
 // Route describes a plugin route that is defined in
 // the plugin.json file for a plugin.
 type Route struct {

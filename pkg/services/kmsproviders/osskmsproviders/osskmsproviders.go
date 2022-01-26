@@ -2,6 +2,7 @@ package osskmsproviders
 
 import (
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	grafana "github.com/grafana/grafana/pkg/services/kmsproviders/defaultprovider"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -20,12 +21,12 @@ func ProvideService(enc encryption.Internal, settings setting.Provider) Service 
 	}
 }
 
-func (s Service) Provide() (map[string]secrets.Provider, error) {
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
+	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return nil, nil
 	}
 
-	return map[string]secrets.Provider{
+	return map[secrets.ProviderID]secrets.Provider{
 		kmsproviders.Default: grafana.New(s.settings, s.enc),
 	}, nil
 }

@@ -36,7 +36,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		TotalCount: 2,
 	}
 
-	loggedInUserScenario(t, "When calling GET on", "api/users/:id", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		bus.AddHandler("test", func(ctx context.Context, query *models.GetUserProfileQuery) error {
 			query.Result = models.UserProfileDTO{
@@ -63,7 +63,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		sc.handlerFunc = hs.GetUserByID
 		avatarUrl := dtos.GetGravatarUrl("daniel@grafana.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": "1"}).exec()
 
 		expected := fmt.Sprintf(`
 			{
@@ -89,7 +89,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.JSONEq(t, expected, sc.resp.Body.String())
 	})
 
-	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		bus.AddHandler("test", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 			require.Equal(t, "danlee", query.LoginOrEmail)
@@ -135,7 +135,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.JSONEq(t, expected, sc.resp.Body.String())
 	})
 
-	loggedInUserScenario(t, "When calling GET on", "/api/users", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
 		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
@@ -159,7 +159,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, len(respJSON.MustArray()))
 	})
 
-	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
 		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
@@ -179,7 +179,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, sendPage)
 	})
 
-	loggedInUserScenario(t, "When calling GET on", "/api/users/search", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
 		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
@@ -205,7 +205,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, len(respJSON.Get("users").MustArray()))
 	})
 
-	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
 		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
