@@ -134,7 +134,7 @@ export class TeamPages extends PureComponent<Props, State> {
           return (
             <UpgradeBox
               text={
-                'Team Sync immediately updates each user’s Grafana teams and permissions based on their LDAP or Oauth group membership, instead of updating when users sign in.'
+                "Team Sync immediately updates each user's Grafana teams and permissions based on their LDAP or Oauth group membership, instead of updating when users sign in."
               }
             />
           );
