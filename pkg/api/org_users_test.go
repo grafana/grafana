@@ -690,7 +690,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					UserId: tc.targetUserId,
 					OrgId:  tc.targetOrg,
 				}
-				err = sqlstore.GetSignedInUser(context.Background(), &getUserQuery)
+				err = sc.db.GetSignedInUser(context.Background(), &getUserQuery)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedUserRole, getUserQuery.Result.OrgRole)
 			}

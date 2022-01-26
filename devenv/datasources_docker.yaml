@@ -42,7 +42,7 @@ datasources:
       version: Flux
       organization: myorg
       defaultBucket: mybucket
-      
+
   - name: gdev-influxdb-influxql
     type: influxdb
     access: proxy
@@ -217,6 +217,17 @@ datasources:
     url: mssql:1433
     database: grafana
     user: grafana
+    secureJsonData:
+      password: Password!
+
+  - name: gdev-mssql-tls
+    type: mssql
+    url: localhost:1434
+    database: grafana
+    user: grafana
+    jsonData:
+      encrypt: "true"
+      tlsSkipVerify: true
     secureJsonData:
       password: Password!
 

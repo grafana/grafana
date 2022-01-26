@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -79,11 +81,11 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		// TODO: Use a fake SQLStore when it's represented by an interface
-		origCreateTeam := createTeam
-		origAddTeamMember := addTeamMember
+		orgCreateTeam := createTeam
+		orgAddTeamMember := addOrUpdateTeamMember
 		t.Cleanup(func() {
-			createTeam = origCreateTeam
-			addTeamMember = origAddTeamMember
+			createTeam = orgCreateTeam
+			addOrUpdateTeamMember = orgAddTeamMember
 		})
 
 		createTeamCalled := 0
@@ -93,8 +95,8 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		}
 
 		addTeamMemberCalled := 0
-		addTeamMember = func(sqlStore *sqlstore.SQLStore, userID, orgID, teamID int64, isExternal bool,
-			permission models.PermissionType) error {
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
+			permission string) error {
 			addTeamMemberCalled++
 			return nil
 		}
@@ -179,7 +181,7 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsCreate}}, 1)
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}, 1)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})

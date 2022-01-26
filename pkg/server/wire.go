@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -188,6 +189,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,
+	resourceservices.ProvideResourceServices,
 	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.FolderService), new(*dashboardservice.FolderServiceImpl)),
@@ -198,6 +200,9 @@ var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -205,6 +210,11 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
+
+	notifications.MockNotificationService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
