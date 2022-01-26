@@ -15,7 +15,9 @@ const getOperator = (config: DataTransformerConfig): MonoTypeOperatorFunction<Da
   const options = { ...defaultOptions, ...config.options };
 
   return source.pipe(
-    mergeMap((before) => of(before).pipe(info.transformation.operator(options), postProcessTransform(before, info)))
+    mergeMap((before) =>
+      of(before).pipe(info.transformation.operator(options, config.replace), postProcessTransform(before, info))
+    )
   );
 };
 

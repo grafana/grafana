@@ -2,6 +2,7 @@ import { MonoTypeOperatorFunction } from 'rxjs';
 
 import { DataFrame, Field } from './dataFrame';
 import { RegistryItemWithOptions } from '../utils/Registry';
+import { ScopedVars } from './ScopedVars';
 
 /**
  * Function that transform data frames (AKA transformer)
@@ -13,7 +14,10 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  operator: (options: TOptions) => MonoTypeOperatorFunction<DataFrame[]>;
+  operator: (
+    options: TOptions,
+    replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string
+  ) => MonoTypeOperatorFunction<DataFrame[]>;
 }
 
 /**
@@ -42,6 +46,10 @@ export interface DataTransformerConfig<TOptions = any> {
    * Options to be passed to the transformer
    */
   options: TOptions;
+  /**
+   * Function to apply template variable substitution to the DataTransformerConfig
+   */
+  replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 }
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
