@@ -546,7 +546,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return nil
 	}
 
-	err := GetSignedInUser(ctx, query)
+	err := ss.GetSignedInUser(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -556,7 +556,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 	return nil
 }
 
-func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	orgId := "u.org_id"
 	if query.OrgId > 0 {
 		orgId = strconv.FormatInt(query.OrgId, 10)
@@ -603,7 +603,7 @@ func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) er
 	}
 
 	getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-	err = GetTeamsByUser(ctx, getTeamsByUserQuery)
+	err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return err
 	}
