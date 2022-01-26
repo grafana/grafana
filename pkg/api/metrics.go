@@ -40,6 +40,30 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
+// QueryMetricsV2 returns query metrics.
+// POST /api/ds/query   DataSource query w/ expressions
+func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
+	reqDTO := dtos.MetricRequest{}
+	if err := web.Bind(c.Req, &reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	params := web.Params(c.Req)
+	dashboardId := params[":dashboardId"]
+	panelId := params[":panelId"]
+
+	if dashboardId == "" || panelId == "" {
+		// TODO: Is this an appropriate status code?
+		return response.Error(http.StatusForbidden, "missing dashboard or panel ID", nil)
+	}
+
+	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
+	if err != nil {
+		return hs.handleQueryMetricsError(err)
+	}
+	return toJsonStreamingResponse(resp)
+}
+
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
 //nolint: staticcheck // legacydata.DataResponse deprecated
