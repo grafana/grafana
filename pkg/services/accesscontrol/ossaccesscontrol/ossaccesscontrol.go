@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessControlService {
+func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		Cfg:           cfg,
+		features:      features,
 		UsageStats:    usageStats,
 		Log:           log.New("accesscontrol"),
 		ScopeResolver: accesscontrol.NewScopeResolver(),
@@ -26,7 +26,7 @@ func ProvideService(cfg *setting.Cfg, usageStats usagestats.Service) *OSSAccessC
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	Cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
 	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
@@ -34,10 +34,10 @@ type OSSAccessControlService struct {
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
-	if ac.Cfg == nil {
+	if ac.features == nil {
 		return true
 	}
-	return !ac.Cfg.FeatureToggles["accesscontrol"]
+	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
