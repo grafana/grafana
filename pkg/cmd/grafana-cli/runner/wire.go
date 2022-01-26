@@ -73,6 +73,6 @@ func (noOpRouteRegister) Group(string, func(routing.RouteRegister), ...web.Handl
 
 func (noOpRouteRegister) Insert(string, func(routing.RouteRegister), ...web.Handler) {}
 
-func (noOpRouteRegister) Register(routing.Router) {}
+func (noOpRouteRegister) Register(routing.Router, ...routing.RegisterNamedMiddleware) {}
 
 func (noOpRouteRegister) Reset() {}

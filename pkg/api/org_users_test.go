@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -35,8 +34,8 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 }
 
 func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
-	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
-	settings := hs.Cfg
+	settings := setting.NewCfg()
+	hs := &HTTPServer{Cfg: settings}
 
 	sqlStore := sqlstore.InitTestDB(t)
 	sqlStore.Cfg = settings
@@ -691,7 +690,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					UserId: tc.targetUserId,
 					OrgId:  tc.targetOrg,
 				}
-				err = sqlstore.GetSignedInUser(context.Background(), &getUserQuery)
+				err = sc.db.GetSignedInUser(context.Background(), &getUserQuery)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedUserRole, getUserQuery.Result.OrgRole)
 			}

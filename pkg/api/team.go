@@ -19,7 +19,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	accessControlEnabled := hs.Features.Toggles().IsAccesscontrolEnabled()
+	accessControlEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
 	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
@@ -37,8 +37,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addTeamMember(hs.SQLStore, c.SignedInUser.UserId, c.OrgId, team.Id, false,
-				models.PERMISSION_ADMIN); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, c.SignedInUser.UserId, c.OrgId, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {

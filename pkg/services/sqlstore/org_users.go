@@ -117,7 +117,7 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	// service accounts table in the modelling
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
-	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+	if ss.Cfg.FeatureToggles["accesscontrol"] {
 		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err
@@ -180,7 +180,7 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	// service accounts table in the modelling
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
-	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+	if ss.Cfg.FeatureToggles["accesscontrol"] {
 		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err

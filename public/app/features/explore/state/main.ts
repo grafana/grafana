@@ -1,6 +1,6 @@
 import { AnyAction } from 'redux';
 import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery, ExploreUrlState, serializeStateToUrlParam, TimeRange, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { paneReducer } from './explorePane';
@@ -87,12 +87,7 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export function splitOpen<T extends DataQuery = any>(options?: {
-  datasourceUid: string;
-  query: T;
-  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
-  range?: TimeRange;
-}): ThunkResult<void> {
+export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
     const leftUrlState = getUrlStateFromPaneState(leftState);
@@ -104,13 +99,14 @@ export function splitOpen<T extends DataQuery = any>(options?: {
         datasource: datasourceName,
         queries: [options.query],
         range: options.range || leftState.range,
+        panelsState: options.panelsState,
       };
     }
 
     const urlState = serializeStateToUrlParam(rightUrlState, true);
     locationService.partial({ right: urlState }, true);
   };
-}
+};
 
 /**
  * Close the split view and save URL state. We need to update the state here because when closing we cannot just
