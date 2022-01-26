@@ -37,7 +37,7 @@ type AuthOpts struct {
 	OrgRole models.RoleType
 }
 
-func GetRequestTimeout(opt TimeoutOpts) time.Duration {
+func getRequestTimeout(opt TimeoutOpts) time.Duration {
 	if opt.RequestTimeoutMultiplier == 0 {
 		return opt.Timeout * 2 // default
 	}
