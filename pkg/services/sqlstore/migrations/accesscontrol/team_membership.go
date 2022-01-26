@@ -31,7 +31,6 @@ func (p *teamPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Mig
 	return p.migrateMemberships(sess)
 }
 
-// generateNewRoleUID tries to generate a unique Short UID three times, in case of three conflicts returns an error.
 func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
@@ -46,23 +45,24 @@ func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("could not generate random uid")
+	return "", fmt.Errorf("failed to generate uid")
 }
 
-// saveRole either creates a role or updates it with additional permissions
-func (p *teamPermissionMigrator) saveRole(sess *xorm.Session, orgID int64, name string, permissions []accesscontrol.Permission) (int64, bool, error) {
+// addPermissionsToRole either finds the role or creates a new role
+func (p *teamPermissionMigrator) getOrCreateManagedRole(sess *xorm.Session, orgID, userID int64, name string) (int64, error) {
 	role := &accesscontrol.Role{OrgID: orgID, Name: name}
 	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(role)
 	if err != nil {
-		return 0, false, err
+		return 0, err
 	}
 
-	now := time.Now()
 	if !has {
 		uid, err := generateNewRoleUID(sess, orgID)
 		if err != nil {
-			return 0, false, err
+			return 0, err
 		}
+
+		now := time.Now()
 		role = &accesscontrol.Role{
 			UID:     uid,
 			Name:    name,
@@ -71,30 +71,46 @@ func (p *teamPermissionMigrator) saveRole(sess *xorm.Session, orgID int64, name 
 			Created: now,
 		}
 		if _, err := sess.Insert(role); err != nil {
-			return 0, false, err
+			return 0, err
+		}
+
+		_, err = sess.Table("user_role").Insert(accesscontrol.UserRole{
+			OrgID:   orgID,
+			RoleID:  role.ID,
+			UserID:  userID,
+			Created: time.Now(),
+		})
+		if err != nil {
+			return 0, err
 		}
 	}
 
+	return role.ID, nil
+}
+
+// addPermissionsToRole updates role with any newly added permissions
+func (p *teamPermissionMigrator) addPermissionsToRole(sess *xorm.Session, roleID int64, permissions []accesscontrol.Permission) error {
 	var newPermissions []accesscontrol.Permission
 	for _, permission := range permissions {
-		has, err := sess.Where("role_id = ? AND action = ? AND scope = ?", role.ID, permission.Action, permission.Scope).Get(&accesscontrol.Permission{})
+		has, err := sess.Where("role_id = ? AND action = ? AND scope = ?", roleID, permission.Action, permission.Scope).Get(&accesscontrol.Permission{})
 		if err != nil {
-			return 0, false, err
+			return err
 		}
 		if !has {
-			permission.RoleID = role.ID
+			now := time.Now()
+			permission.RoleID = roleID
 			permission.Created = now
 			permission.Updated = now
 			newPermissions = append(newPermissions, permission)
 		}
 	}
 
-	_, err = sess.InsertMulti(&newPermissions)
+	_, err := sess.InsertMulti(&newPermissions)
 	if err != nil {
-		return 0, false, err
+		return err
 	}
 
-	return role.ID, has, nil
+	return nil
 }
 
 // mapPermissionToFGAC translates the legacy membership (Member or Admin) into FGAC permissions
@@ -105,7 +121,6 @@ func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.Permissio
 		return []accesscontrol.Permission{{Action: "teams:read", Scope: teamIDScope}}
 	case models.PERMISSION_ADMIN:
 		return []accesscontrol.Permission{
-			{Action: "teams:create", Scope: teamIDScope},
 			{Action: "teams:delete", Scope: teamIDScope},
 			{Action: "teams:read", Scope: teamIDScope},
 			{Action: "teams:write", Scope: teamIDScope},
@@ -119,15 +134,15 @@ func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.Permissio
 
 // migrateMemberships generate managed permissions for users based on their memberships to teams
 func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
-	var members []models.TeamMember
-	if err := sess.SQL(`SELECT * FROM team_member`).Find(&members); err != nil {
+	var teamMemberships []models.TeamMember
+	if err := sess.SQL(`SELECT * FROM team_member`).Find(&teamMemberships); err != nil {
 		return err
 	}
 
 	userPermissionsByOrg := map[int64]map[int64][]accesscontrol.Permission{}
 
 	// Loop through memberships and generate associated permissions
-	for _, m := range members {
+	for _, m := range teamMemberships {
 		userPermissions, initialized := userPermissionsByOrg[m.OrgId]
 		if !initialized {
 			userPermissions = map[int64][]accesscontrol.Permission{}
@@ -139,20 +154,13 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 	// Loop through generated permissions and store them
 	for orgID, userPermissions := range userPermissionsByOrg {
 		for userID, permissions := range userPermissions {
-			roleID, existed, err := p.saveRole(sess, orgID, fmt.Sprintf("managed:users:%d:permissions", userID), permissions)
+			roleID, err := p.getOrCreateManagedRole(sess, orgID, userID, fmt.Sprintf("managed:users:%d:permissions", userID))
 			if err != nil {
 				return err
 			}
-			if !existed {
-				_, err = sess.Table("user_role").Insert(accesscontrol.UserRole{
-					OrgID:   orgID,
-					RoleID:  roleID,
-					UserID:  userID,
-					Created: time.Now(),
-				})
-				if err != nil {
-					return err
-				}
+			err = p.addPermissionsToRole(sess, roleID, permissions)
+			if err != nil {
+				return err
 			}
 		}
 	}
