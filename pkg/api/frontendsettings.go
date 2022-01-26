@@ -249,7 +249,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"edition":         hs.License.Edition(),
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
