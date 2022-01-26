@@ -3,12 +3,12 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,14 +24,13 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
 	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
 	for _, member := range query.Result {
-		// TODO: when FGAC is enabled, use SQL filtering to filter out for users that the caller has permissions to see
-		if !hs.Cfg.FeatureToggles["accesscontrol"] && dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
@@ -70,13 +69,13 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 
 	isTeamMember, err := hs.SQLStore.IsTeamMember(c.OrgId, cmd.TeamId, cmd.UserId)
 	if err != nil {
-		return response.Error(500, "Failed to update team member.", err)
+		return response.Error(500, "Failed to add team member.", err)
 	}
 	if isTeamMember {
 		return response.Error(400, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
 	if err != nil {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
@@ -116,7 +115,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(404, "Team member not found.", nil)
 	}
 
-	err = addOrUpdateTeamMember(hs.TeamPermissionsService, userId, orgId, teamId, false, cmd.Permission)
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, userId, orgId, teamId, false, cmd.Permission)
 	if err != nil {
 		return response.Error(500, "Failed to update team member.", err)
 	}
@@ -142,7 +141,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.TeamPermissionsService.SetUserPermission(context.TODO(), orgId, userId, teamIDString, []string{}); err != nil {
+	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, userId, teamIDString, []string{}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
@@ -159,7 +158,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // addOrUpdateTeamMember adds or updates a team member.
 //
 // Stubbable by tests.
-var addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
+var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
 	permission models.PermissionType) error {
 	permissionString := permission.String()
 	// Team member permission is 0, which maps to an empty string.
@@ -171,5 +170,5 @@ var addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.
 	teamIDString := strconv.FormatInt(teamID, 10)
 	_, err := resourcePermissionService.SetUserPermission(context.TODO(), orgID, userID, teamIDString, actions)
 
-	return err
+	return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 }

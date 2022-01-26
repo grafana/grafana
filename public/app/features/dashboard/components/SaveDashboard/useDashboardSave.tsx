@@ -5,7 +5,7 @@ import { SaveDashboardOptions } from './types';
 import appEvents from 'app/core/app_events';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { DashboardSavedEvent } from 'app/types/events';
 
 const saveDashboard = (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
@@ -32,6 +32,10 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard saved']);
+      reportInteraction(`Dashboard ${dashboard.id ? 'saved' : 'created'}`, {
+        name: dashboard.title,
+        url: state.value.url,
+      });
 
       const currentPath = locationService.getLocation().pathname;
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);

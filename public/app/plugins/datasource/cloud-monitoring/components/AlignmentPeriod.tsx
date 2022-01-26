@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
+import React, { useMemo } from 'react';
+
 import { ALIGNMENT_PERIODS } from '../constants';
 import { MetricQuery, SLOQuery } from '../types';
 
 export interface Props<TQuery> {
+  inputId: string;
   onChange(query: TQuery): void;
   query: TQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
@@ -12,6 +14,7 @@ export interface Props<TQuery> {
 }
 
 export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
+  inputId,
   templateVariableOptions,
   onChange,
   query,
@@ -45,6 +48,7 @@ export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
         },
       ]}
       placeholder="Select Alignment"
+      inputId={inputId}
     ></Select>
   );
 }

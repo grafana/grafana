@@ -24,13 +24,6 @@ const (
 	ActionOrgsQuotasWrite      = "orgs.quotas:write"
 	ActionOrgsDelete           = "orgs:delete"
 	ActionOrgsCreate           = "orgs:create"
-
-	ActionTeamsCreate           = "teams:create"
-	ActionTeamsDelete           = "teams:delete"
-	ActionTeamsRead             = "teams:read"
-	ActionTeamsWrite            = "teams:write"
-	ActionTeamsPermissionsRead  = "teams.permissions:read"
-	ActionTeamsPermissionsWrite = "teams.permissions:write"
 )
 
 // API related scopes
@@ -45,8 +38,6 @@ var (
 	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
 	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
 	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
-
-	ScopeTeamsID = accesscontrol.Scope("teams", "id", accesscontrol.Parameter(":teamId"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
@@ -141,6 +132,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionDatasourcesQuery},
+				{Action: ActionDatasourcesRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -194,25 +186,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
-	teamsWriterRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:teams:writer",
-			DisplayName: "Team writer",
-			Description: "Read and manage team memberships.",
-			Group:       "Teams",
-			Version:     2,
-			Permissions: []accesscontrol.Permission{
-				{
-					Action: ActionTeamsPermissionsRead,
-				},
-				{
-					Action: ActionTeamsPermissionsWrite,
-				},
-			},
-		},
-		Grants: []string{string(models.ROLE_ADMIN)},
-	}
-
 	teamCreatorGrants := []string{string(models.ROLE_ADMIN)}
 	if hs.Cfg.EditorsCanAdmin {
 		teamCreatorGrants = append(teamCreatorGrants, string(models.ROLE_EDITOR))
@@ -223,10 +196,10 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Team creator",
 			Description: "Create teams.",
 			Group:       "Teams",
-			Version:     2,
+			Version:     1,
 			Permissions: []accesscontrol.Permission{
 				{
-					Action: ActionTeamsCreate,
+					Action: accesscontrol.ActionTeamsCreate,
 				},
 			},
 		},
@@ -235,7 +208,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsWriterRole, teamsCreatorRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
 	)
 }
 

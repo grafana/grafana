@@ -126,7 +126,7 @@ export class TablePanel extends Component<Props> {
 
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
+          {this.renderTable(data.series[currentIndex], width, height - inputHeight + padding)}
           <div className={tableStyles.selectWrapper}>
             <Select
               menuShouldPortal
@@ -139,7 +139,7 @@ export class TablePanel extends Component<Props> {
       );
     }
 
-    return this.renderTable(data.series[0], width, height - 12);
+    return this.renderTable(data.series[0], width, height);
   }
 }
 

@@ -20,6 +20,7 @@ import {
   MetricDescriptor,
   QueryType,
   PostResponse,
+  Aggregation,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
@@ -136,7 +137,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     };
   }
 
-  async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
+  async getLabels(metricType: string, refId: string, projectName: string, aggregation?: Aggregation) {
     const options = {
       targets: [
         {
@@ -146,8 +147,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           metricQuery: {
             projectName: this.templateSrv.replace(projectName),
             metricType: this.templateSrv.replace(metricType),
-            groupBys: this.interpolateGroupBys(groupBys || [], {}),
-            crossSeriesReducer: 'REDUCE_NONE',
+            groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
+            crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
             view: 'HEADERS',
           },
         },

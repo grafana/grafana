@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*ResourceServices, error) {
+func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*ResourceServices, error) {
 	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
@@ -33,19 +33,19 @@ func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
 
 var (
 	TeamMemberActions = []string{
-		"teams:read",
+		accesscontrol.ActionTeamsRead,
 	}
 
 	TeamAdminActions = []string{
-		"teams:read",
-		"teams:delete",
-		"teams:write",
-		"teams.permissions:read",
-		"teams.permissions:write",
+		accesscontrol.ActionTeamsRead,
+		accesscontrol.ActionTeamsDelete,
+		accesscontrol.ActionTeamsWrite,
+		accesscontrol.ActionTeamsPermissionsRead,
+		accesscontrol.ActionTeamsPermissionsWrite,
 	}
 )
 
-func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
+func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
@@ -55,7 +55,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 				return err
 			}
 
-			err = sqlstore.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
+			err = sql.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
 				OrgId: orgID,
 				Id:    id,
 			})
@@ -84,17 +84,20 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 			}
 			switch permission {
 			case "Member":
-				return sql.SaveTeamMember(userID, orgID, teamId, false, 0)
+				return sql.AddOrUpdateTeamMember(userID, orgID, teamId, false, 0)
 			case "Admin":
-				return sql.SaveTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+				return sql.AddOrUpdateTeamMember(userID, orgID, teamId, false, models.PERMISSION_ADMIN)
 			case "":
-				return sql.RemoveTeamMember(orgID, teamId, userID)
+				return sql.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{
+					OrgId:  orgID,
+					UserId: userID,
+					TeamId: teamId,
+				})
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
-			return nil
 		},
 	}
 
-	return resourcepermissions.New(options, router, ac, store)
+	return resourcepermissions.New(options, router, ac, store, sql)
 }
