@@ -117,7 +117,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "delete me", 1, 0, false, "delete this")
 
-		err := DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
+		err := sqlStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 			Id:    dash.Id,
 			OrgId: 1,
 		})
@@ -214,21 +214,21 @@ func TestDashboardDataAccess(t *testing.T) {
 		emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
-		err := DeleteDashboard(context.Background(), deleteCmd)
+		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 	})
 
 	t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
-		err := DeleteDashboard(context.Background(), deleteCmd)
+		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
-		err := DeleteDashboard(context.Background(), deleteCmd)
+		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
 		query := search.FindPersistedDashboardsQuery{
@@ -382,24 +382,6 @@ func TestDashboardDataAccess(t *testing.T) {
 		require.Equal(t, hit.FolderUID, savedFolder.Uid)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
 		require.Equal(t, hit.FolderURL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
-	})
-
-	t.Run("Should be able to search for general folder's children", func(t *testing.T) {
-		setup()
-		query := search.FindPersistedDashboardsQuery{
-			OrgId:        1,
-			FolderIds:    []int64{0},
-			SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
-		}
-
-		err := sqlStore.SearchDashboards(context.Background(), &query)
-		require.NoError(t, err)
-
-		require.Equal(t, len(query.Result), 1)
-		hit := query.Result[0]
-		require.Equal(t, savedDash2.Id, hit.ID)
-		require.Equal(t, fmt.Sprintf("/d/%s/%s", savedDash2.Uid, savedDash2.Slug), hit.URL)
-		require.Equal(t, int64(0), hit.FolderID)
 	})
 
 	t.Run("Should be able to search for dashboard by dashboard ids", func(t *testing.T) {
