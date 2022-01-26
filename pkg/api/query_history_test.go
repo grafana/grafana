@@ -45,7 +45,6 @@ func TestQueryHistoryEndpoint(t *testing.T) {
 			func(sc *scenarioContext) {
 				callAddToQueryHistory(sc)
 				require.Equal(t, 200, sc.resp.Code)
-
 			})
 	})
 }
