@@ -60,6 +60,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
     height: 1px;
     margin: ${theme.spacing(1)} 0;
     overflow: hidden;
+    flex: 1;
   `,
   element: css`
     align-items: center;
@@ -74,12 +75,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
     text-align: left;
     white-space: nowrap;
     width: 100%;
-
-    &:hover,
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-    }
 
     &:focus-visible {
       box-shadow: none;

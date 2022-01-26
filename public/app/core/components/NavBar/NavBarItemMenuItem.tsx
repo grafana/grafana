@@ -1,7 +1,7 @@
 import React, { ReactElement, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Icon, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { useMenuItem } from '@react-aria/menu';
 import { useFocus, useKeyboard } from '@react-aria/interactions';
 import { TreeState } from '@react-stately/tree';
@@ -9,6 +9,7 @@ import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
 
 import { useNavBarItemMenuContext } from './context';
+import { NestedSubMenu } from './NestedSubMenu';
 
 export interface NavBarItemMenuItemProps {
   item: Node<NavModelItem>;
@@ -58,6 +59,12 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   return (
     <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
       {rendered}
+      {!!item.value.children?.length && item.value.menuItemType === NavMenuItemType.Item && (
+        <>
+          <span style={{ marginLeft: 'auto' }}>{<Icon name={'angle-right'} />}</span>
+          <NestedSubMenu items={item.value.children} />
+        </>
+      )}
     </li>
   );
 }
@@ -71,8 +78,11 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
   }
   return {
     menuItem: css`
+      position: relative;
       background-color: ${backgroundColor};
       color: ${theme.colors.text.primary};
+      display: flex;
+      align-items: center;
 
       &:focus-visible {
         background-color: ${theme.colors.action.hover};
@@ -81,6 +91,13 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         outline: 2px solid ${theme.colors.primary.main};
         outline-offset: -2px;
         transition: none;
+      }
+
+      &:hover {
+        & > ul {
+          opacity: 1;
+          visibility: visible;
+        }
       }
     `,
   };
