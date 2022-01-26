@@ -12,14 +12,14 @@ func TestDashTemplateEvaluator(t *testing.T) {
 	template, err := simplejson.NewJson([]byte(`{
 		"__inputs": [
 			{
-						"name": "DS_NAME",
-			"type": "datasource"
+				"name": "DS_NAME",
+				"type": "datasource"
 			}
 		],
 		"test": {
 			"prop": "${DS_NAME}_${DS_NAME}"
 		}
-		}`))
+	}`))
 	require.NoError(t, err)
 
 	evaluator := &DashTemplateEvaluator{
