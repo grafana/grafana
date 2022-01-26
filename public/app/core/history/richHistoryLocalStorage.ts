@@ -87,7 +87,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 
-  async updateComment(id: number, comment: string): Promise<void> {
+  async updateComment(id: number, comment: string | undefined): Promise<void> {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const updatedHistory = richHistory.map((query) => {
       if (query.ts === id) {

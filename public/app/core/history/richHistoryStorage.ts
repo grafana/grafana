@@ -36,5 +36,5 @@ export default interface RichHistoryStorage {
   deleteAll(): Promise<void>;
   deleteRichHistory(id: number): Promise<void>;
   updateStarred(id: number, starred: boolean): Promise<void>;
-  updateComment(id: number, comment: string): Promise<void>;
+  updateComment(id: number, comment: string | undefined): Promise<void>;
 }

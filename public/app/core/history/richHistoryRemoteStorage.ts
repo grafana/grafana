@@ -8,16 +8,11 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async getRichHistory(): Promise<RichHistoryQuery[]> {
     return [];
   }
-
   async addToRichHistory(updatedHistory: RichHistoryQuery): Promise<RichHistoryStorageWarningDetails | undefined> {
     return;
   }
-
   async deleteAll(): Promise<void> {}
-
   async deleteRichHistory(id: number): Promise<void> {}
-
-  async updateComment(id: number, comment: string): Promise<void> {}
-
+  async updateComment(id: number, comment: string | undefined): Promise<void> {}
   async updateStarred(id: number, starred: boolean): Promise<void> {}
 }

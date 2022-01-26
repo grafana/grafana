@@ -49,7 +49,7 @@ export async function addToRichHistory(
   sessionName: string,
   showQuotaExceededError: boolean,
   showLimitExceededWarning: boolean
-): Promise<{ richHistory: RichHistoryQuery[]; localStorageFull?: boolean; limitExceeded?: boolean }> {
+): Promise<{ richHistory: RichHistoryQuery[]; richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
   const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
@@ -65,21 +65,21 @@ export async function addToRichHistory(
       sessionName,
     };
 
-    let localStorageFull = false;
+    let richHistoryStorageFull = false;
     let limitExceeded = false;
-    let warning: RichHistoryStorageWarningDetails;
+    let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
       warning = await getRichHistoryService().addToRichHistory(newRichHistory);
     } catch (error) {
       if (error.name === RichHistoryServiceError.StorageFull) {
-        localStorageFull = true;
+        richHistoryStorageFull = true;
         showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
       } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
         dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
       }
       // Saving failed. Do not add new entry.
-      return { richHistory, localStorageFull, limitExceeded };
+      return { richHistory, richHistoryStorageFull, limitExceeded };
     }
 
     // Limit exceeded but new entry was added. Notify that old entries have been removed.
@@ -88,7 +88,7 @@ export async function addToRichHistory(
     }
 
     // Saving successful - add new entry.
-    return { richHistory: [newRichHistory, ...richHistory], localStorageFull, limitExceeded };
+    return { richHistory: [newRichHistory, ...richHistory], richHistoryStorageFull, limitExceeded };
   }
 
   // Nothing to save
@@ -337,7 +337,7 @@ export function notEmptyQuery(query: DataQuery) {
 
 export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
   return queries.filter((query) => {
-    if (query.comment.includes(searchFilter)) {
+    if (query.comment?.includes(searchFilter)) {
       return true;
     }
 
