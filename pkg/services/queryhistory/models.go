@@ -1,4 +1,4 @@
-package models
+package queryhistory
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -12,5 +12,10 @@ type QueryHistory struct {
 	CreatedBy     int64            `json:"createdBy"`
 	CreatedAt     int64            `json:"createdAt"`
 	Comment       string           `json:"comment"`
+	Queries       *simplejson.Json `json:"queries"`
+}
+
+type CreateQueryInQueryHistoryCommand struct {
+	DatasourceUid string           `json:"datasourceUid"`
 	Queries       *simplejson.Json `json:"queries"`
 }

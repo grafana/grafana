@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/http_api/query_history/"]
 
 # Query history API
 
-This API can be used to create/update/delete Query history, to add comments and to star/unstar queries in Query history. All actions require that the user is logged in and that Query history feature is enabled in config file.
+This API can be used to add queries to Query history. It requires that the user is logged in and that Query history feature is enabled in config file.
 
 ## Add query to Query history
 
