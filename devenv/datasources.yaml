@@ -255,6 +255,17 @@ datasources:
     secureJsonData:
       password: Password!
 
+  - name: gdev-mssql-tls
+    type: mssql
+    url: localhost:1434
+    database: grafana
+    user: grafana
+    jsonData:
+      encrypt: "true"
+      tlsSkipVerify: true
+    secureJsonData:
+      password: Password!
+
   - name: gdev-mssql-ds-tests
     type: mssql
     url: localhost:1433
