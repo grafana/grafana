@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -363,7 +362,7 @@ func (s *SecretsService) Run(ctx context.Context) error {
 	grp, gCtx := errgroup.WithContext(ctx)
 
 	for _, p := range s.providers {
-		if svc, ok := p.(registry.BackgroundService); ok {
+		if svc, ok := p.(secrets.BackgroundProvider); ok {
 			grp.Go(func() error {
 				return svc.Run(gCtx)
 			})
