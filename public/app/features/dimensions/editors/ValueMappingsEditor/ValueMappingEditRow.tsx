@@ -3,6 +3,8 @@ import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMa
 import { Draggable } from 'react-beautiful-dnd';
 import { css } from '@emotion/css';
 import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, Input, Button } from '@grafana/ui';
+import { ResourcePicker } from '../ResourcePicker';
+import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
@@ -60,6 +62,18 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   const onClearColor = () => {
     update((mapping) => {
       mapping.result.color = undefined;
+    });
+  };
+
+  const onChangeIcon = (icon?: string) => {
+    update((mapping) => {
+      mapping.result.icon = icon;
+    });
+  };
+
+  const onClearIcon = () => {
+    update((mapping) => {
+      mapping.result.icon = undefined;
     });
   };
 
@@ -182,6 +196,22 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 )}
               </ColorPicker>
             )}
+          </td>
+          <td className={styles.textAlignCenter}>
+            <HorizontalGroup spacing="sm" justify="center">
+              <ResourcePicker
+                onChange={onChangeIcon}
+                onClear={onClearIcon}
+                value={result.icon}
+                size={ResourcePickerSize.SMALL}
+                folderName={ResourceFolderName.Icon}
+                mediaType={MediaType.Icon}
+                color={result.color}
+              />
+              {result.icon && (
+                <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
+              )}
+            </HorizontalGroup>
           </td>
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">

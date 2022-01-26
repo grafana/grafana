@@ -98,6 +98,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
               </th>
               <th style={{ textAlign: 'left' }}>Display text</th>
               <th style={{ width: '10%' }}>Color</th>
+              <th style={{ width: '10%' }}>Icon</th>
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
