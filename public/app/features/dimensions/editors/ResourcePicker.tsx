@@ -33,7 +33,7 @@ const sourceOptions = [
 
 const getFolders = (mediaType: 'icon' | 'image') => {
   if (mediaType === 'icon') {
-    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Marker];
+    return [ResourceFolderName.Icon, ResourceFolderName.IOT, ResourceFolderName.Simple, ResourceFolderName.Maki];
   } else {
     return [ResourceFolderName.BG];
   }

@@ -114,6 +114,7 @@ export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
 export enum ResourceFolderName {
   Icon = 'img/icons/unicons',
   IOT = 'img/icons/iot',
-  Marker = 'img/icons/marker',
+  Simple = 'img/icons/simple',
+  Maki = 'img/icons/maki',
   BG = 'img/bg',
 }

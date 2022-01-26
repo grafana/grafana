@@ -115,7 +115,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                     {
                       settings: {
                         resourceType: 'icon',
-                        folderName: ResourceFolderName.Marker,
+                        folderName: ResourceFolderName.Simple,
                         placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
@@ -202,7 +202,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
             {
               settings: {
                 resourceType: 'icon',
-                folderName: ResourceFolderName.Marker,
+                folderName: ResourceFolderName.Simple,
                 placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                 placeholderValue: defaultStyleConfig.symbol.fixed,
                 showSourceRadio: false,

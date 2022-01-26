@@ -19,15 +19,6 @@ enum RegularShapeId {
   x = 'x',
 }
 
-const MarkerShapePath = {
-  circle: 'img/icons/marker/circle.svg',
-  square: 'img/icons/marker/square.svg',
-  triangle: 'img/icons/marker/triangle.svg',
-  star: 'img/icons/marker/star.svg',
-  cross: 'img/icons/marker/cross.svg',
-  x: 'img/icons/marker/x-mark.svg',
-};
-
 export function getFillColor(cfg: StyleConfigValues) {
   const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
   if (opacity === 1) {
@@ -115,13 +106,13 @@ const makers: SymbolMaker[] = [
   {
     id: RegularShapeId.circle,
     name: 'Circle',
-    aliasIds: [MarkerShapePath.circle],
+    aliasIds: ['img/icons/simple/circle.svg', 'img/icons/marker/circle.svg'],
     make: circleMarker,
   },
   {
     id: RegularShapeId.square,
     name: 'Square',
-    aliasIds: [MarkerShapePath.square],
+    aliasIds: ['img/icons/simple/square.svg', 'img/icons/marker/square.svg'],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
       const rotation = cfg.rotation ?? 0;
@@ -140,7 +131,7 @@ const makers: SymbolMaker[] = [
   {
     id: RegularShapeId.triangle,
     name: 'Triangle',
-    aliasIds: [MarkerShapePath.triangle],
+    aliasIds: ['img/icons/simple/triangle.svg', 'img/icons/marker/triangle.svg'],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
       const rotation = cfg.rotation ?? 0;
@@ -160,7 +151,7 @@ const makers: SymbolMaker[] = [
   {
     id: RegularShapeId.star,
     name: 'Star',
-    aliasIds: [MarkerShapePath.star],
+    aliasIds: ['img/icons/simple/star.svg', 'img/icons/marker/star.svg'],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
       const rotation = cfg.rotation ?? 0;
@@ -181,7 +172,7 @@ const makers: SymbolMaker[] = [
   {
     id: RegularShapeId.cross,
     name: 'Cross',
-    aliasIds: [MarkerShapePath.cross],
+    aliasIds: ['img/icons/simple/cross.svg', 'img/icons/marker/cross.svg'],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
       const rotation = cfg.rotation ?? 0;
@@ -201,7 +192,7 @@ const makers: SymbolMaker[] = [
   {
     id: RegularShapeId.x,
     name: 'X',
-    aliasIds: [MarkerShapePath.x],
+    aliasIds: ['img/icons/simple/x-mark.svg', 'img/icons/marker/x-mark.svg'],
     make: (cfg: StyleConfigValues) => {
       const radius = cfg.size ?? DEFAULT_SIZE;
       const rotation = cfg.rotation ?? 0;
