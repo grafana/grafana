@@ -47,7 +47,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 		SQLStore:         sqlStore,
 		SettingsProvider: setting.ProvideProvider(cfg),
 		pluginStore:      &fakePluginStore{},
-		updateChecker:    &updatechecker.Service{},
+		updateChecker:    &updatechecker.GrafanaService{},
 		AccessControl:    accesscontrolmock.New().WithDisabled(),
 	}
 

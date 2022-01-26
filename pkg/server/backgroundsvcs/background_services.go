@@ -30,7 +30,7 @@ func ProvideBackgroundServiceRegistry(
 	live *live.GrafanaLive, pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService,
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
-	metrics *metrics.InternalMetricsService, usageStats *uss.UsageStats, updateChecker *updatechecker.Service,
+	metrics *metrics.InternalMetricsService, usageStats *uss.UsageStats, updateChecker *updatechecker.GrafanaService,
 	tracing tracing.Tracer, remoteCache *remotecache.RemoteCache, secretsService *secretsManager.SecretsService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *plugindashboards.Service, _ *dashboardsnapshots.Service, _ *pluginsettings.Service,
