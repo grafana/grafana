@@ -66,7 +66,7 @@ type RenderCSVResult struct {
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
 
-type FeatureSupportRequestResult struct {
+type CapabilitySupportRequestResult struct {
 	IsSupported      bool
 	SemverConstraint string
 }
@@ -74,7 +74,7 @@ type FeatureSupportRequestResult struct {
 type Service interface {
 	IsAvailable() bool
 	Version() string
-	SupportsFeature(feature Feature) (FeatureSupportRequestResult, error)
+	HasCapability(capability Capability) (CapabilitySupportRequestResult, error)
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
 	RenderErrorImage(theme Theme, error error) (*RenderResult, error)

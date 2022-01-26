@@ -17,92 +17,92 @@ func (d *dummyPluginManager) Renderer() *plugins.Plugin {
 }
 
 var dummyRendererUrl = "http://dummyurl.com"
-var testFeatureSemverConstraint = "> 1.0.0"
+var testCapabilitySemverConstraint = "> 1.0.0"
 
-func TestEnabledFeature(t *testing.T) {
+func TestCapabilities(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
 		Cfg:                   cfg,
 		RendererPluginManager: &dummyPluginManager{},
-		log:                   log.New("test-rendering-service"),
+		log:                   log.New("test-capabilities-rendering-service"),
 	}
 
 	t.Run("When node renderer is not available", func(t *testing.T) {
 		rs.Cfg.RendererUrl = ""
-		res, err := rs.SupportsFeature(TestFeature)
+		res, err := rs.HasCapability(TestCapability)
 
 		require.ErrorIs(t, err, ErrRenderUnavailable)
-		require.Equal(t, FeatureSupportRequestResult{
+		require.Equal(t, CapabilitySupportRequestResult{
 			IsSupported:      false,
-			SemverConstraint: testFeatureSemverConstraint,
+			SemverConstraint: testCapabilitySemverConstraint,
 		}, res)
 	})
 
 	t.Run("When renderer version is not yet populated", func(t *testing.T) {
 		rs.Cfg.RendererUrl = dummyRendererUrl
 		rs.version = ""
-		res, err := rs.SupportsFeature(TestFeature)
+		res, err := rs.HasCapability(TestCapability)
 
 		require.ErrorIs(t, err, ErrInvalidPluginVersion)
-		require.Equal(t, FeatureSupportRequestResult{
+		require.Equal(t, CapabilitySupportRequestResult{
 			IsSupported:      false,
-			SemverConstraint: testFeatureSemverConstraint,
+			SemverConstraint: testCapabilitySemverConstraint,
 		}, res)
 	})
 
 	t.Run("When renderer version is not a valid semver", func(t *testing.T) {
 		rs.Cfg.RendererUrl = dummyRendererUrl
 		rs.version = "xabc123"
-		res, err := rs.SupportsFeature(TestFeature)
+		res, err := rs.HasCapability(TestCapability)
 
 		require.ErrorIs(t, err, ErrInvalidPluginVersion)
-		require.Equal(t, FeatureSupportRequestResult{
+		require.Equal(t, CapabilitySupportRequestResult{
 			IsSupported:      false,
-			SemverConstraint: testFeatureSemverConstraint,
+			SemverConstraint: testCapabilitySemverConstraint,
 		}, res)
 	})
 
 	t.Run("When renderer version does not match target constraint", func(t *testing.T) {
 		rs.Cfg.RendererUrl = dummyRendererUrl
 		rs.version = "1.0.0"
-		res, err := rs.SupportsFeature(TestFeature)
+		res, err := rs.HasCapability(TestCapability)
 
 		require.NoError(t, err)
-		require.Equal(t, FeatureSupportRequestResult{
+		require.Equal(t, CapabilitySupportRequestResult{
 			IsSupported:      false,
-			SemverConstraint: testFeatureSemverConstraint,
+			SemverConstraint: testCapabilitySemverConstraint,
 		}, res)
 	})
 
 	t.Run("When renderer version does not match target constraint", func(t *testing.T) {
 		rs.Cfg.RendererUrl = dummyRendererUrl
 		rs.version = "2.0.0"
-		res, err := rs.SupportsFeature(TestFeature)
+		res, err := rs.HasCapability(TestCapability)
 
 		require.NoError(t, err)
-		require.Equal(t, FeatureSupportRequestResult{
+		require.Equal(t, CapabilitySupportRequestResult{
 			IsSupported:      true,
-			SemverConstraint: testFeatureSemverConstraint,
+			SemverConstraint: testCapabilitySemverConstraint,
 		}, res)
 	})
 
-	t.Run("When feature is unsupported", func(t *testing.T) {
+	t.Run("When capability is unknown", func(t *testing.T) {
 		rs.Cfg.RendererUrl = dummyRendererUrl
 		rs.version = "2.0.0"
-		res, err := rs.SupportsFeature("unknown")
+		res, err := rs.HasCapability("unknown")
 
-		require.ErrorIs(t, err, ErrUnsupportedFeature)
-		require.Equal(t, FeatureSupportRequestResult{
+		require.ErrorIs(t, err, ErrUnknownCapability)
+		require.Equal(t, CapabilitySupportRequestResult{
 			IsSupported:      false,
 			SemverConstraint: "",
 		}, res)
 	})
 
-	t.Run("When feature has invalid semver constraint", func(t *testing.T) {
+	t.Run("When capability has invalid semver constraint", func(t *testing.T) {
 		rs.Cfg.RendererUrl = dummyRendererUrl
 		rs.version = "2.0.0"
-		_, err := rs.SupportsFeature(TestFeatureInvalidSemver)
+		_, err := rs.HasCapability(TestCapabilityInvalidSemver)
 
-		require.ErrorIs(t, err, ErrUnsupportedFeature)
+		require.ErrorIs(t, err, ErrUnknownCapability)
 	})
 }
