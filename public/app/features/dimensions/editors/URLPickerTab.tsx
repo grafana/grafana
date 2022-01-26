@@ -4,7 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import SVG from 'react-inlinesvg';
 
-import { getPublicOrAbsoluteUrl, MediaType } from '..';
+import { MediaType } from '../types';
+import { getPublicOrAbsoluteUrl } from '../resource';
 
 interface Props {
   newValue: string;

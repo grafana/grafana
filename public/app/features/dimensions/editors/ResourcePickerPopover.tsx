@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 
-import { MediaType, PickerTabType, ResourceFolderName } from '..';
+import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
 

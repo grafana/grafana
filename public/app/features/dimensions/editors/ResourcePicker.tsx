@@ -4,7 +4,7 @@ import { Button, InlineField, InlineFieldRow, Input, Popover, PopoverController,
 import { GrafanaTheme2 } from '@grafana/data';
 import SVG from 'react-inlinesvg';
 
-import { MediaType, ResourceFolderName } from '..';
+import { MediaType, ResourceFolderName } from '../types';
 import { closePopover } from '@grafana/ui/src/utils/closePopover';
 import { ResourcePickerPopover } from './ResourcePickerPopover';
 
