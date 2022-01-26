@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -19,7 +18,7 @@ import (
 type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, _ *template.Template, fn GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
+func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Template, fn GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Reason: "no settings supplied"}
 	}

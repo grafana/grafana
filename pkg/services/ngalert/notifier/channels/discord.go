@@ -19,7 +19,7 @@ import (
 type DiscordNotifier struct {
 	*Base
 	log                log.Logger
-	ns                 *notifications.NotificationService
+	ns                 notifications.WebhookSender
 	tmpl               *template.Template
 	Content            string
 	AvatarURL          string
@@ -27,7 +27,7 @@ type DiscordNotifier struct {
 	UseDiscordUsername bool
 }
 
-func NewDiscordNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*DiscordNotifier, error) {
+func NewDiscordNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*DiscordNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

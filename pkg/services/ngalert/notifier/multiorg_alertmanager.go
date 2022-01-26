@@ -46,12 +46,12 @@ type MultiOrgAlertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
-	ns      *notifications.NotificationService
+	ns      notifications.Service
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
 	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager,
-	ns *notifications.NotificationService, l log.Logger,
+	ns notifications.Service, l log.Logger,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		logger:        l,

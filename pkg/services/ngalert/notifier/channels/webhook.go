@@ -23,14 +23,14 @@ type WebhookNotifier struct {
 	HTTPMethod string
 	MaxAlerts  int
 	log        log.Logger
-	ns         *notifications.NotificationService
+	ns         notifications.WebhookSender
 	tmpl       *template.Template
 	orgID      int64
 }
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
+func NewWebHookNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

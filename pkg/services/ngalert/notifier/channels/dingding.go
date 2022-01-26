@@ -17,7 +17,7 @@ import (
 const defaultDingdingMsgType = "link"
 
 // NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*DingDingNotifier, error) {
+func NewDingDingNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -53,7 +53,7 @@ type DingDingNotifier struct {
 	URL     string
 	Message string
 	tmpl    *template.Template
-	ns      *notifications.NotificationService
+	ns      notifications.WebhookSender
 	log     log.Logger
 }
 

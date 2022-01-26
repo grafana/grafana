@@ -22,13 +22,13 @@ type EmailNotifier struct {
 	SingleEmail bool
 	Message     string
 	log         log.Logger
-	ns          *notifications.NotificationService
+	ns          notifications.EmailSender
 	tmpl        *template.Template
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*EmailNotifier, error) {
+func NewEmailNotifier(model *NotificationChannelConfig, ns notifications.EmailSender, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

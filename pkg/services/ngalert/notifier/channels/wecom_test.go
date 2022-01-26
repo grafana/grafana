@@ -98,7 +98,7 @@ func TestWeComNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWeComNotifier(m, tmpl, decryptFn)
+			pn, err := NewWeComNotifier(m, nil, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return

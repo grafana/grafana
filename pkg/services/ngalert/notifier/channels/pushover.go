@@ -36,11 +36,11 @@ type PushoverNotifier struct {
 	Message          string
 	tmpl             *template.Template
 	log              log.Logger
-	ns               *notifications.NotificationService
+	ns               notifications.WebhookSender
 }
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewPushoverNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
+func NewPushoverNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*PushoverNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

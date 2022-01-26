@@ -117,7 +117,7 @@ func TestKafkaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewKafkaNotifier(m, tmpl)
+			pn, err := NewKafkaNotifier(m, nil, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

@@ -274,7 +274,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewGoogleChatNotifier(m, tmpl)
+			pn, err := NewGoogleChatNotifier(m, nil, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

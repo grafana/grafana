@@ -21,12 +21,12 @@ type GoogleChatNotifier struct {
 	*Base
 	URL     string
 	log     log.Logger
-	ns      *notifications.NotificationService
+	ns      notifications.WebhookSender
 	tmpl    *template.Template
 	content string
 }
 
-func NewGoogleChatNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*GoogleChatNotifier, error) {
+func NewGoogleChatNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*GoogleChatNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

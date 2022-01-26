@@ -148,7 +148,7 @@ func TestSensuGoNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			sn, err := NewSensuGoNotifier(m, tmpl, decryptFn)
+			sn, err := NewSensuGoNotifier(m, nil, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

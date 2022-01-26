@@ -18,7 +18,7 @@ var (
 )
 
 // NewLineNotifier is the constructor for the LINE notifier
-func NewLineNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*LineNotifier, error) {
+func NewLineNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*LineNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -52,7 +52,7 @@ type LineNotifier struct {
 	*Base
 	Token string
 	log   log.Logger
-	ns    *notifications.NotificationService
+	ns    notifications.WebhookSender
 	tmpl  *template.Template
 }
 

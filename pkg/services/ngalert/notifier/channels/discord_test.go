@@ -143,7 +143,7 @@ func TestDiscordNotifier(t *testing.T) {
 				Settings: settingsJson,
 			}
 
-			dn, err := NewDiscordNotifier(m, tmpl)
+			dn, err := NewDiscordNotifier(m, nil, tmpl)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return

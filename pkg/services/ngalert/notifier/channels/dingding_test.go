@@ -99,7 +99,7 @@ func TestDingdingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewDingDingNotifier(m, tmpl)
+			pn, err := NewDingDingNotifier(m, nil, tmpl)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return

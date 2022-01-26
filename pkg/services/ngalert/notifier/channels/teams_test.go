@@ -123,7 +123,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewTeamsNotifier(m, tmpl)
+			pn, err := NewTeamsNotifier(m, nil, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

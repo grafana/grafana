@@ -91,7 +91,7 @@ type Alertmanager struct {
 	Store               store.AlertingStore
 	fileStore           *FileStore
 	Metrics             *metrics.Alertmanager
-	NotificationService *notifications.NotificationService
+	NotificationService notifications.Service
 
 	notificationLog *nflog.Log
 	marker          types.Marker
@@ -127,7 +127,7 @@ type Alertmanager struct {
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
-	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns *notifications.NotificationService, m *metrics.Alertmanager) (*Alertmanager, error) {
+	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:            cfg,
 		stopc:               make(chan struct{}),
@@ -533,7 +533,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "opsgenie":
 		n, err = channels.NewOpsgenieNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "prometheus-alertmanager":
-		n, err = channels.NewAlertmanagerNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
+		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
 	default:
 		return nil, InvalidReceiverError{
 			Receiver: r,

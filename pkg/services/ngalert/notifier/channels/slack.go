@@ -45,7 +45,7 @@ type SlackNotifier struct {
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *NotificationChannelConfig, _ *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, _ notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

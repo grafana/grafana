@@ -32,7 +32,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model, tmpl)
+		_, err := NewEmailNotifier(model, nil, tmpl)
 		require.Error(t, err)
 	})
 
@@ -48,7 +48,7 @@ func TestEmailNotifier(t *testing.T) {
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, tmpl)
+		}, nil, tmpl)
 
 		require.NoError(t, err)
 

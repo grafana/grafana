@@ -17,7 +17,7 @@ import (
 type SensuGoNotifier struct {
 	*Base
 	log  log.Logger
-	ns   *notifications.NotificationService
+	ns   notifications.WebhookSender
 	tmpl *template.Template
 
 	URL       string
@@ -30,7 +30,7 @@ type SensuGoNotifier struct {
 }
 
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
-func NewSensuGoNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*SensuGoNotifier, error) {
+func NewSensuGoNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

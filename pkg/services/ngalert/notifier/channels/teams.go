@@ -21,11 +21,11 @@ type TeamsNotifier struct {
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
-	ns      *notifications.NotificationService
+	ns      notifications.WebhookSender
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*TeamsNotifier, error) {
+func NewTeamsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*TeamsNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

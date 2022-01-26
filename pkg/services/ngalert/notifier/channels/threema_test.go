@@ -112,7 +112,7 @@ func TestThreemaNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewThreemaNotifier(m, tmpl, decryptFn)
+			pn, err := NewThreemaNotifier(m, nil, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

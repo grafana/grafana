@@ -38,11 +38,11 @@ type OpsgenieNotifier struct {
 	SendTagsAs       string
 	tmpl             *template.Template
 	log              log.Logger
-	ns               *notifications.NotificationService
+	ns               notifications.WebhookSender
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*OpsgenieNotifier, error) {
+func NewOpsgenieNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*OpsgenieNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

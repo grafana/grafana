@@ -27,12 +27,12 @@ type ThreemaNotifier struct {
 	RecipientID string
 	APISecret   string
 	log         log.Logger
-	ns          *notifications.NotificationService
+	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
+func NewThreemaNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}

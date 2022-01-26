@@ -527,7 +527,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			case "opsgenie":
 				_, err = channels.NewOpsgenieNotifier(cfg, nil, nil, decryptFunc)
 			case "prometheus-alertmanager":
-				_, err = channels.NewAlertmanagerNotifier(cfg, nil, nil, decryptFunc)
+				_, err = channels.NewAlertmanagerNotifier(cfg, nil, decryptFunc)
 			default:
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}

@@ -27,7 +27,7 @@ const (
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*VictoropsNotifier, error) {
+func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*VictoropsNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -61,7 +61,7 @@ type VictoropsNotifier struct {
 	URL         string
 	MessageType string
 	log         log.Logger
-	ns          *notifications.NotificationService
+	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
 

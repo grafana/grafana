@@ -14,7 +14,7 @@ import (
 )
 
 // NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
+func NewWeComNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
 	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 
 	if url == "" {
@@ -44,7 +44,7 @@ type WeComNotifier struct {
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
-	ns      *notifications.NotificationService
+	ns      notifications.WebhookSender
 }
 
 // Notify send an alert notification to WeCom.

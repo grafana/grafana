@@ -100,7 +100,7 @@ func TestTelegramNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewTelegramNotifier(m, tmpl, decryptFn)
+			pn, err := NewTelegramNotifier(m, nil, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

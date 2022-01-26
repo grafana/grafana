@@ -17,6 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type WebhookSender interface {
+	SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error
+}
+type EmailSender interface {
+	SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error
+}
+type Service interface {
+	WebhookSender
+	EmailSender
+}
+
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"

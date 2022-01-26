@@ -95,7 +95,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewVictoropsNotifier(m, tmpl)
+			pn, err := NewVictoropsNotifier(m, nil, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

@@ -41,7 +41,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService *notifications.NotificationService, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -53,7 +53,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		QuotaService:        quotaService,
 		SecretsService:      secretsService,
 		Metrics:             m,
-		NotificationService: *notificationService,
+		NotificationService: notificationService,
 		Log:                 log.New("ngalert"),
 	}
 
@@ -80,7 +80,7 @@ type AlertNG struct {
 	QuotaService        *quota.QuotaService
 	SecretsService      secrets.Service
 	Metrics             *metrics.NGAlert
-	NotificationService notifications.NotificationService
+	NotificationService notifications.Service
 	Log                 log.Logger
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
@@ -107,7 +107,7 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, &ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
 	if err != nil {
 		return err
 	}

@@ -22,12 +22,12 @@ type KafkaNotifier struct {
 	Endpoint string
 	Topic    string
 	log      log.Logger
-	ns       *notifications.NotificationService
+	ns       notifications.WebhookSender
 	tmpl     *template.Template
 }
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
-func NewKafkaNotifier(model *NotificationChannelConfig, ns *notifications.NotificationService, t *template.Template) (*KafkaNotifier, error) {
+func NewKafkaNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*KafkaNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
