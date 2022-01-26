@@ -12,7 +12,6 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
@@ -235,7 +234,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	}
 
 	loginInfo.ExternalUser = *buildExternalUserInfo(token, userInfo, name)
-	loginInfo.User, err = syncUser(ctx, &loginInfo.ExternalUser, connect)
+	loginInfo.User, err = hs.syncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return nil
@@ -301,7 +300,7 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 }
 
 // syncUser syncs a Grafana user profile with the corresponding OAuth profile.
-func syncUser(
+func (hs *HTTPServer) syncUser(
 	ctx *models.ReqContext,
 	extUser *models.ExternalUserInfo,
 	connect social.SocialConnector,
@@ -313,7 +312,7 @@ func syncUser(
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-	if err := bus.Dispatch(ctx.Req.Context(), cmd); err != nil {
+	if err := hs.Bus.Dispatch(ctx.Req.Context(), cmd); err != nil {
 		return nil, err
 	}
 

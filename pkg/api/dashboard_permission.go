@@ -19,7 +19,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -70,7 +70,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}

@@ -115,19 +115,19 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/verify", hs.Index)
 	r.Get("/signup", hs.Index)
 	r.Get("/api/user/signup/options", routing.Wrap(GetSignUpOptions))
-	r.Post("/api/user/signup", quota("user"), routing.Wrap(SignUp))
+	r.Post("/api/user/signup", quota("user"), routing.Wrap(hs.SignUp))
 	r.Post("/api/user/signup/step2", routing.Wrap(hs.SignUpStep2))
 
 	// invited
-	r.Get("/api/user/invite/:code", routing.Wrap(GetInviteInfoByCode))
+	r.Get("/api/user/invite/:code", routing.Wrap(hs.GetInviteInfoByCode))
 	r.Post("/api/user/invite/complete", routing.Wrap(hs.CompleteInvite))
 
 	// reset password
 	r.Get("/user/password/send-reset-email", reqNotSignedIn, hs.Index)
 	r.Get("/user/password/reset", hs.Index)
 
-	r.Post("/api/user/password/send-reset-email", routing.Wrap(SendResetPasswordEmail))
-	r.Post("/api/user/password/reset", routing.Wrap(ResetPassword))
+	r.Post("/api/user/password/send-reset-email", routing.Wrap(hs.SendResetPasswordEmail))
+	r.Post("/api/user/password/reset", routing.Wrap(hs.ResetPassword))
 
 	// dashboard snapshots
 	r.Get("/dashboard/snapshot/*", reqNoAuth, hs.Index)
@@ -153,7 +153,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
-			userRoute.Get("/quotas", routing.Wrap(GetUserQuotas))
+			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
 			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
 			// For dev purpose
 			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
@@ -215,9 +215,9 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUserForCurrentOrg))
 
 			// invites
-			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), quota("user"), routing.Wrap(AddOrgInvite))
-			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(RevokeInvite))
+			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.GetPendingOrgInvites))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), quota("user"), routing.Wrap(hs.AddOrgInvite))
+			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.RevokeInvite))
 
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))
@@ -233,7 +233,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/orgs", authorizeInOrg(reqSignedIn, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsCreate)), quota("org"), routing.Wrap(hs.CreateOrg))
 
 		// search all orgs
-		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(SearchOrgs))
+		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.SearchOrgs))
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
@@ -255,31 +255,31 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", authorize(reqOrgAdmin, sa.ActionApikeyListEv), routing.Wrap(GetAPIKeys))
+			keysRoute.Get("/", authorize(reqOrgAdmin, sa.ActionApikeyListEv), routing.Wrap(hs.GetAPIKeys))
 			keysRoute.Post("/", authorize(reqOrgAdmin, sa.ActionApikeyAddEv), quota("api_key"), routing.Wrap(hs.AddAPIKey))
 			keysRoute.Post("/additional", authorize(reqOrgAdmin, sa.ActionApikeyAddAdditionalEv), quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
-			keysRoute.Delete("/:id", authorize(reqOrgAdmin, sa.ActionApikeyRemoveEv), routing.Wrap(DeleteAPIKey))
+			keysRoute.Delete("/:id", authorize(reqOrgAdmin, sa.ActionApikeyRemoveEv), routing.Wrap(hs.DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
-			prefRoute.Post("/set-home-dash", routing.Wrap(SetHomeDashboard))
+			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
 		})
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSources))
-			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), routing.Wrap(AddDataSource))
+			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), routing.Wrap(hs.AddDataSource))
 			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesWrite, ScopeDatasourceID)), routing.Wrap(hs.UpdateDataSource))
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceUID)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceName)), routing.Wrap(hs.DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceById))
 			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(GetDataSourceByName))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByName))
 		})
 
-		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesIDRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceIdByName))
+		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesIDRead, ScopeDatasourceName)), routing.Wrap(hs.GetDataSourceIdByName))
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
@@ -340,12 +340,12 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
-			dashboardRoute.Get("/tags", GetDashboardTags)
+			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 			dashboardRoute.Post("/import", routing.Wrap(hs.ImportDashboard))
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", routing.Wrap(GetDashboardVersion))
+				dashIdRoute.Get("/versions", routing.Wrap(hs.GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", routing.Wrap(hs.GetDashboardVersion))
 				dashIdRoute.Post("/restore", routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
@@ -357,23 +357,23 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/", routing.Wrap(SearchDashboardSnapshots))
+			dashboardRoute.Get("/", routing.Wrap(hs.SearchDashboardSnapshots))
 		})
 
 		// Playlist
 		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-			playlistRoute.Get("/", routing.Wrap(SearchPlaylists))
-			playlistRoute.Get("/:id", ValidateOrgPlaylist, routing.Wrap(GetPlaylist))
-			playlistRoute.Get("/:id/items", ValidateOrgPlaylist, routing.Wrap(GetPlaylistItems))
-			playlistRoute.Get("/:id/dashboards", ValidateOrgPlaylist, routing.Wrap(GetPlaylistDashboards))
-			playlistRoute.Delete("/:id", reqEditorRole, ValidateOrgPlaylist, routing.Wrap(DeletePlaylist))
-			playlistRoute.Put("/:id", reqEditorRole, ValidateOrgPlaylist, routing.Wrap(UpdatePlaylist))
-			playlistRoute.Post("/", reqEditorRole, routing.Wrap(CreatePlaylist))
+			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
+			playlistRoute.Get("/:id", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
+			playlistRoute.Get("/:id/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
+			playlistRoute.Get("/:id/dashboards", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistDashboards))
+			playlistRoute.Delete("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
+			playlistRoute.Put("/:id", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
+			playlistRoute.Post("/", reqEditorRole, routing.Wrap(hs.CreatePlaylist))
 		})
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
-		apiRoute.Get("/search/", routing.Wrap(Search))
+		apiRoute.Get("/search/", routing.Wrap(hs.Search))
 
 		// metrics
 		apiRoute.Post("/tsdb/query", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesQuery)), routing.Wrap(hs.QueryMetrics))
@@ -383,10 +383,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(PauseAlert))
-			alertsRoute.Get("/:alertId", ValidateOrgAlert, routing.Wrap(GetAlert))
-			alertsRoute.Get("/", routing.Wrap(GetAlerts))
-			alertsRoute.Get("/states-for-dashboard", routing.Wrap(GetAlertStatesForDashboard))
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert))
+			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
+			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
+			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		})
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
@@ -394,20 +394,20 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
-			alertNotifications.Get("/", routing.Wrap(GetAlertNotifications))
-			alertNotifications.Post("/test", routing.Wrap(NotificationTest))
-			alertNotifications.Post("/", routing.Wrap(CreateAlertNotification))
+			alertNotifications.Get("/", routing.Wrap(hs.GetAlertNotifications))
+			alertNotifications.Post("/test", routing.Wrap(hs.NotificationTest))
+			alertNotifications.Post("/", routing.Wrap(hs.CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", routing.Wrap(hs.UpdateAlertNotification))
-			alertNotifications.Get("/:notificationId", routing.Wrap(GetAlertNotificationByID))
-			alertNotifications.Delete("/:notificationId", routing.Wrap(DeleteAlertNotification))
-			alertNotifications.Get("/uid/:uid", routing.Wrap(GetAlertNotificationByUID))
+			alertNotifications.Get("/:notificationId", routing.Wrap(hs.GetAlertNotificationByID))
+			alertNotifications.Delete("/:notificationId", routing.Wrap(hs.DeleteAlertNotification))
+			alertNotifications.Get("/uid/:uid", routing.Wrap(hs.GetAlertNotificationByUID))
 			alertNotifications.Put("/uid/:uid", routing.Wrap(hs.UpdateAlertNotificationByUID))
-			alertNotifications.Delete("/uid/:uid", routing.Wrap(DeleteAlertNotificationByUID))
+			alertNotifications.Delete("/uid/:uid", routing.Wrap(hs.DeleteAlertNotificationByUID))
 		}, reqEditorRole)
 
 		// alert notifications without requirement of user to be org editor
 		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/lookup", routing.Wrap(GetAlertNotificationLookup))
+			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
 		})
 
 		apiRoute.Get("/annotations", routing.Wrap(GetAnnotations))
@@ -460,8 +460,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
-		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(PauseAllAlerts))
+		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
+		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts))
 
 		if hs.ThumbService != nil {
 			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StartCrawler))
@@ -485,13 +485,13 @@ func (hs *HTTPServer) registerRoutes() {
 		userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
-		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(AdminUpdateUserPassword))
+		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
 		adminUserRoute.Put("/:id/permissions", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(AdminDeleteUser))
+		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
 		adminUserRoute.Post("/:id/disable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
-		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(AdminEnableUser))
-		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(GetUserQuotas))
-		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(UpdateUserQuota))
+		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
+		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
+		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
 
 		adminUserRoute.Post("/:id/logout", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
 		adminUserRoute.Get("/:id/auth-tokens", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))
@@ -509,11 +509,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Snapshots
-	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, CreateDashboardSnapshot)
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
-	r.Get("/api/snapshots/:key", routing.Wrap(GetDashboardSnapshot))
-	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(DeleteDashboardSnapshot))
+	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
+	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
+	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)

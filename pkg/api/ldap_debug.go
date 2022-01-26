@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -53,6 +54,7 @@ type LDAPUserDTO struct {
 	IsDisabled     bool                     `json:"isDisabled"`
 	OrgRoles       []LDAPRoleDTO            `json:"roles"`
 	Teams          []models.TeamOrgGroupDTO `json:"teams"`
+	SQLStore       *sqlstore.SQLStore
 }
 
 // LDAPServerDTO is a serializer for LDAP server statuses
@@ -74,7 +76,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.Dispatch(ctx, q); err != nil {
+	if err := user.SQLStore.SearchOrgs(ctx, q); err != nil {
 		return err
 	}
 
@@ -171,7 +173,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil { // validate the userId exists
+	if err := hs.Bus.Dispatch(c.Req.Context(), &query); err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -181,7 +183,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
 
-	if err := bus.Dispatch(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if err := hs.Bus.Dispatch(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -223,7 +225,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
-	err = bus.Dispatch(c.Req.Context(), upsertCmd)
+	err = hs.Bus.Dispatch(c.Req.Context(), upsertCmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
@@ -312,7 +314,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	}
 
 	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
-	err = bus.Dispatch(c.Req.Context(), cmd)
+	err = hs.Bus.Dispatch(c.Req.Context(), cmd)
 	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
