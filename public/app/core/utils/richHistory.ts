@@ -11,7 +11,7 @@ import { createErrorNotification, createWarningNotification } from 'app/core/cop
 import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistoryService } from '../history/richHistoryStorageProvider';
+import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
 import {
   RichHistoryServiceError,
   RichHistoryStorageWarning,
@@ -70,7 +70,7 @@ export async function addToRichHistory(
     let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
-      warning = await getRichHistoryService().addToRichHistory(newRichHistory);
+      warning = await getRichHistoryStorage().addToRichHistory(newRichHistory);
     } catch (error) {
       if (error.name === RichHistoryServiceError.StorageFull) {
         richHistoryStorageFull = true;
@@ -84,6 +84,7 @@ export async function addToRichHistory(
 
     // Limit exceeded but new entry was added. Notify that old entries have been removed.
     if (warning && warning.type === RichHistoryStorageWarning.LimitExceeded) {
+      limitExceeded = true;
       showLimitExceededWarning && dispatch(notifyApp(createWarningNotification(warning.message)));
     }
 
@@ -96,11 +97,11 @@ export async function addToRichHistory(
 }
 
 export async function getRichHistory(): Promise<RichHistoryQuery[]> {
-  return await getRichHistoryService().getRichHistory();
+  return await getRichHistoryStorage().getRichHistory();
 }
 
 export async function deleteAllFromRichHistory(): Promise<void> {
-  return getRichHistoryService().deleteAll();
+  return getRichHistoryStorage().deleteAll();
 }
 
 export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
@@ -121,7 +122,7 @@ export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[]
   }
 
   try {
-    await getRichHistoryService().updateStarred(ts, updatedQuery.starred);
+    await getRichHistoryStorage().updateStarred(ts, updatedQuery.starred);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -148,7 +149,7 @@ export async function updateCommentInRichHistory(
   }
 
   try {
-    await getRichHistoryService().updateComment(ts, newComment);
+    await getRichHistoryStorage().updateComment(ts, newComment);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -162,7 +163,7 @@ export async function deleteQueryInRichHistory(
 ): Promise<RichHistoryQuery[]> {
   const updatedHistory = richHistory.filter((query) => query.ts !== ts);
   try {
-    await getRichHistoryService().deleteRichHistory(ts);
+    await getRichHistoryStorage().deleteRichHistory(ts);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
