@@ -153,9 +153,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
-	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
-	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
-	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	tracing.ProvideService,
 	metrics.ProvideService,
 	testdatasource.ProvideService,
@@ -194,6 +191,9 @@ var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -201,6 +201,11 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
+
+	notifications.MockNotificationService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
