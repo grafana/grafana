@@ -16,28 +16,16 @@ type Store interface {
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
-
 	// Add adds a plugin to the store.
 	Add(ctx context.Context, pluginID, version string) error
-	// AddWithFactory adds a plugin to the store.
-	AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc, resolver PluginPathResolver) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
-}
-
-type PluginPathResolver func() (string, error)
-
-type AddOpts struct {
-	PluginInstallDir, PluginZipURL, PluginRepoURL string
 }
 
 // Loader is responsible for loading plugins from the file system.
 type Loader interface {
 	// Load will return a list of plugins found in the provided file system paths.
-	Load(paths []string, ignore map[string]struct{}) ([]*Plugin, error)
-	// LoadWithFactory will return a plugin found in the provided file system path and use the provided factory to
-	// construct the plugin backend client.
-	LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
+	Load(ctx context.Context, class Class, paths []string, ignore map[string]struct{}) ([]*Plugin, error)
 }
 
 // Installer is responsible for managing plugins (add / remove) on the file system.
@@ -63,6 +51,11 @@ type Client interface {
 
 	// CollectMetrics collects metrics from a plugin.
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+}
+
+// BackendFactoryProvider provides a backend factory for a provided plugin.
+type BackendFactoryProvider interface {
+	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
 type RendererManager interface {

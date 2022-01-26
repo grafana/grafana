@@ -1,23 +1,28 @@
 package loader
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/gosimple/slug"
+
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -28,7 +33,7 @@ var (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	cfg                *setting.Cfg
+	cfg                *plugins.Cfg
 	pluginFinder       finder.Finder
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
@@ -37,62 +42,33 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) (*Loader, error) {
-	return New(license, cfg, authorizer), nil
+func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
+	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
 }
 
-func New(license models.Licensing, cfg *setting.Cfg, authorizer plugins.PluginLoaderAuthorizer) *Loader {
+func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,
-		pluginFinder:       finder.New(cfg),
-		pluginInitializer:  initializer.New(cfg, license),
+		pluginFinder:       finder.New(),
+		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
 	}
 }
 
-func (l *Loader) Load(paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
 		l.log.Error("plugin finder encountered an error", "err", err)
 	}
 
-	return l.loadPlugins(pluginJSONPaths, ignore)
+	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
 }
 
-func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	p, err := l.load(path, map[string]struct{}{})
-	if err != nil {
-		l.log.Error("failed to load core plugin", "err", err)
-		return nil, err
-	}
-
-	err = l.pluginInitializer.InitializeWithFactory(p, factory)
-
-	return p, err
-}
-
-func (l *Loader) load(path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
-	if err != nil {
-		l.log.Error("failed to find plugin", "err", err)
-		return nil, err
-	}
-
-	loadedPlugins, err := l.loadPlugins(pluginJSONPaths, ignore)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(loadedPlugins) == 0 {
-		return nil, fmt.Errorf("could not load plugin at path %s", path)
-	}
-
-	return loadedPlugins[0], nil
-}
-
-func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 
 	// load plugin.json files and map directory to JSON data
@@ -121,11 +97,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := &plugins.Plugin{
-			JSONData:  pluginJSON,
-			PluginDir: pluginDir,
-			Class:     l.pluginClass(pluginDir),
-		}
+		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -160,7 +132,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 	}
 
 	// validate signatures
-	verifiedPlugins := []*plugins.Plugin{}
+	verifiedPlugins := make([]*plugins.Plugin, 0)
 	for _, plugin := range loadedPlugins {
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
@@ -188,14 +160,23 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 			}
 		}
 
+		if plugin.IsApp() {
+			setDefaultNavURL(plugin, l.cfg.AppSubURL)
+		}
+
+		if plugin.Parent != nil && plugin.Parent.IsApp() {
+			configureAppChildOPlugin(plugin.Parent, plugin)
+		}
+
 		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 
 	for _, p := range verifiedPlugins {
-		err := l.pluginInitializer.Initialize(p)
+		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
 			return nil, err
 		}
+		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 
 	return verifiedPlugins, nil
@@ -233,7 +214,105 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 		plugin.Name = "Pie Chart (old)"
 	}
 
+	if len(plugin.Dependencies.Plugins) == 0 {
+		plugin.Dependencies.Plugins = []plugins.Dependency{}
+	}
+
+	if plugin.Dependencies.GrafanaVersion == "" {
+		plugin.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range plugin.Includes {
+		if include.Role == "" {
+			include.Role = models.ROLE_VIEWER
+		}
+	}
+
 	return plugin, nil
+}
+
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, logger log.Logger) *plugins.Plugin {
+	plugin := &plugins.Plugin{
+		JSONData:  pluginJSON,
+		PluginDir: pluginDir,
+		BaseURL:   baseURL(pluginJSON, class, pluginDir),
+		Module:    module(pluginJSON, class, pluginDir),
+		Class:     class,
+	}
+
+	plugin.SetLogger(logger.New("pluginID", plugin.ID))
+	setImages(plugin)
+
+	return plugin
+}
+
+func setImages(p *plugins.Plugin) {
+	p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
+	p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
+
+	for i := 0; i < len(p.Info.Screenshots); i++ {
+		p.Info.Screenshots[i].Path = evalRelativePluginURLPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
+	}
+}
+
+func setDefaultNavURL(p *plugins.Plugin, appSubURL string) {
+	// slugify pages
+	for _, include := range p.Includes {
+		if include.Slug == "" {
+			include.Slug = slug.Make(include.Name)
+		}
+		if include.Type == "page" && include.DefaultNav {
+			p.DefaultNavURL = appSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
+		}
+		if include.Type == "dashboard" && include.DefaultNav {
+			p.DefaultNavURL = appSubURL + "/dashboard/db/" + include.Slug
+		}
+	}
+}
+
+func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+	if !parent.IsApp() {
+		return
+	}
+	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
+	child.IncludedInAppID = parent.ID
+	child.BaseURL = parent.BaseURL
+
+	if parent.IsCorePlugin() {
+		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
+	} else {
+		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
+	}
+}
+
+func pluginLogoURL(pluginType plugins.Type, path, baseURL string) string {
+	if path == "" {
+		return defaultLogoPath(pluginType)
+	}
+
+	return evalRelativePluginURLPath(path, baseURL, pluginType)
+}
+
+func defaultLogoPath(pluginType plugins.Type) string {
+	return "public/img/icn-" + string(pluginType) + ".svg"
+}
+
+func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type) string {
+	if pathStr == "" {
+		return ""
+	}
+
+	u, _ := url.Parse(pathStr)
+	if u.IsAbs() {
+		return pathStr
+	}
+
+	// is set as default or has already been prefixed with base path
+	if pathStr == defaultLogoPath(pluginType) || strings.HasPrefix(pathStr, baseURL) {
+		return pathStr
+	}
+
+	return path.Join(baseURL, pathStr)
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {
@@ -248,6 +327,22 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	return errs
 }
 
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+	}
+
+	return path.Join("public/plugins", pluginJSON.ID)
+}
+
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+	}
+
+	return path.Join("plugins", pluginJSON.ID, "module")
+}
+
 func validatePluginJSON(data plugins.JSONData) error {
 	if data.ID == "" || !data.Type.IsValid() {
 		return ErrInvalidPluginJSON
@@ -255,41 +350,15 @@ func validatePluginJSON(data plugins.JSONData) error {
 	return nil
 }
 
-func (l *Loader) pluginClass(pluginDir string) plugins.Class {
-	isSubDir := func(base, target string) bool {
-		path, err := filepath.Rel(base, target)
-		if err != nil {
-			return false
-		}
-
-		if !strings.HasPrefix(path, "..") {
-			return true
-		}
-
-		return false
-	}
-
-	corePluginsDir := filepath.Join(l.cfg.StaticRootPath, "app/plugins")
-	if isSubDir(corePluginsDir, pluginDir) {
-		return plugins.Core
-	}
-
-	if isSubDir(l.cfg.BundledPluginsPath, pluginDir) {
-		return plugins.Bundled
-	}
-
-	return plugins.External
-}
-
 type foundPlugins map[string]plugins.JSONData
 
 // stripDuplicates will strip duplicate plugins or plugins that already exist
 func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}, log log.Logger) {
 	pluginsByID := make(map[string]struct{})
-	for path, scannedPlugin := range *f {
+	for k, scannedPlugin := range *f {
 		if _, existing := existingPlugins[scannedPlugin.ID]; existing {
 			log.Debug("Skipping plugin as it's already installed", "plugin", scannedPlugin.ID)
-			delete(*f, path)
+			delete(*f, k)
 			continue
 		}
 

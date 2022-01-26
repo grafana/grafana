@@ -53,7 +53,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 8,
 				"w": 6,
@@ -91,7 +93,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -195,7 +199,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 15,
 				"w": 6,
@@ -233,7 +239,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-graphite-1.0",
+			"datasource": {
+				"type": "graphite"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -302,7 +310,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-graphite-1.0",
+			"datasource": {
+				"type": "graphite"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -379,7 +389,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "8.0.0-beta2",
@@ -400,7 +411,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 13,
 				"w": 6,
@@ -438,7 +451,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -512,7 +527,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -611,7 +628,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 3,
 				"w": 24,
@@ -649,7 +668,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -723,7 +744,8 @@
 				"showValue": "auto",
 				"text": {},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -775,7 +797,9 @@
 			"repeatDirection": "h"
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -853,7 +877,8 @@
 				"showValue": "auto",
 				"text": {},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"targets": [
@@ -875,7 +900,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 3,
 				"w": 24,
@@ -913,7 +940,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 6,
 				"w": 6,
@@ -951,7 +980,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1034,7 +1065,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1078,7 +1110,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1161,7 +1195,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1205,7 +1240,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1288,7 +1325,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1332,7 +1370,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 8,
 				"w": 6,
@@ -1370,7 +1410,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1437,7 +1479,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1480,7 +1523,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"description": "",
 			"fieldConfig": {
 				"defaults": {
@@ -1550,7 +1595,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1593,7 +1639,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"description": "",
 			"fieldConfig": {
 				"defaults": {
@@ -1663,7 +1711,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1706,7 +1755,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 5,
 				"w": 6,
@@ -1744,7 +1795,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -1865,7 +1918,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "multi"
+					"mode": "multi",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -1967,7 +2021,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 5,
 				"w": 6,
@@ -2005,7 +2061,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2163,7 +2221,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -2336,7 +2395,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2494,7 +2555,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -2667,7 +2729,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2757,7 +2821,8 @@
 					"isVisible": false
 				},
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.4.0-beta1",
@@ -2801,7 +2866,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"gridPos": {
 				"h": 3,
 				"w": 24,
@@ -2839,7 +2906,9 @@
 			}
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -2951,7 +3020,9 @@
 			"transformations": []
 		},
 		{
-			"datasource": "gdev-testdata",
+			"datasource": {
+				"type": "testdata"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -3061,7 +3132,7 @@
 		}
 	],
 	"refresh": false,
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

@@ -34,7 +34,7 @@ To create your first dashboard:
 1. Click the **+** icon on the side menu.
 1. On the dashboard, click **Add an empty panel**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
-1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting `-- Grafana --` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
+1. Configure your [query]({{< relref "../panels/query-a-data-source/add-a-query" >}}) by selecting `-- Grafana --` from the data source selector. This generates the Random Walk dashboard.
 1. Click the **Save** icon in the top right corner of your screen to save the dashboard.
 1. Add a descriptive name, and then click **Save**.
 

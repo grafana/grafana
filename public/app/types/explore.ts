@@ -13,8 +13,8 @@ import {
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
 
 export enum ExploreId {
   left = 'left',
@@ -58,6 +58,9 @@ export interface ExploreState {
    */
   richHistoryLimitExceededWarningShown: boolean;
 }
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -171,6 +174,7 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {

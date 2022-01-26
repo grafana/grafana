@@ -1,29 +1,30 @@
+import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { filter, startsWith } from 'lodash';
-import UrlBuilder from './url_builder';
-import ResponseParser from './response_parser';
-import SupportedNamespaces from './supported_namespaces';
+
+import { resourceTypeDisplayNames } from '../azureMetadata';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
-  AzureMonitorQuery,
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
+  AzureMonitorQuery,
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   DatasourceValidationResult,
 } from '../types';
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
-import { resourceTypeDisplayNames } from '../azureMetadata';
 import { routeNames } from '../utils/common';
+import ResponseParser from './response_parser';
+import SupportedNamespaces from './supported_namespaces';
+import UrlBuilder from './url_builder';
 
 const defaultDropdownValue = 'select';
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
+  listByResourceGroupApiVersion = '2021-04-01';
   defaultSubscriptionId?: string;
   resourcePath: string;
   azurePortalUrl: string;
@@ -134,7 +135,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`
+      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
     ).then((result: AzureMonitorResourceGroupsResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
@@ -142,7 +143,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
     return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.listByResourceGroupApiVersion}`
     )
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
@@ -193,18 +194,35 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
-    return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
-    ).then((result: any) => {
-      if (!startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
-        return ResponseParser.parseResourceNames(result, metricDefinition);
+  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+    let url =
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
+      `$filter=resourceType eq '${metricDefinition}'&` +
+      `api-version=${this.listByResourceGroupApiVersion}`;
+    if (skipToken) {
+      url += `&$skiptoken=${skipToken}`;
+    }
+    return this.getResource(url).then(async (result: any) => {
+      let list: Array<{ text: string; value: string }> = [];
+      if (startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
+        list = ResponseParser.parseResourceNames(result, 'Microsoft.Storage/storageAccounts');
+        for (let i = 0; i < list.length; i++) {
+          list[i].text += '/default';
+          list[i].value += '/default';
+        }
+      } else {
+        list = ResponseParser.parseResourceNames(result, metricDefinition);
       }
 
-      const list = ResponseParser.parseResourceNames(result, 'Microsoft.Storage/storageAccounts');
-      for (let i = 0; i < list.length; i++) {
-        list[i].text += '/default';
-        list[i].value += '/default';
+      if (result.nextLink) {
+        // If there is a nextLink, we should request more pages
+        const nextURL = new URL(result.nextLink);
+        const nextToken = nextURL.searchParams.get('$skiptoken');
+        if (!nextToken) {
+          throw Error('unable to request the next page of resources');
+        }
+        const nextPage = await this.getResourceNames(subscriptionId, resourceGroup, metricDefinition, nextToken);
+        list = list.concat(nextPage);
       }
 
       return list;

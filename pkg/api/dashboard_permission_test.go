@@ -32,7 +32,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 404, sc.resp.Code)
@@ -47,7 +47,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
@@ -75,7 +75,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -90,7 +90,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
@@ -127,7 +127,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
@@ -150,7 +150,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
@@ -188,7 +188,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
@@ -229,7 +229,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
@@ -258,7 +258,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				updateDashboardPermissionScenario(t, updatePermissionContext{
 					desc:         "When calling POST on",
 					url:          "/api/dashboards/id/1/permissions",
-					routePattern: "/api/dashboards/id/:id/permissions",
+					routePattern: "/api/dashboards/id/:dashboardId/permissions",
 					cmd:          cmd,
 					fn: func(sc *scenarioContext) {
 						callUpdateDashboardPermissions(t, sc)
@@ -300,7 +300,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
@@ -344,7 +344,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			var resp []*models.DashboardAclInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
@@ -375,7 +375,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:id/permissions",
+				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()

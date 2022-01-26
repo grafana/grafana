@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -67,7 +68,11 @@ func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	userID := c.ParamsInt64(":id")
+
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if len(form.Password) < 4 {
 		return response.Error(400, "New password too short", nil)
@@ -102,9 +107,12 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
-	err := updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
+	err = updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
@@ -117,7 +125,10 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 }
 
 func AdminDeleteUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	cmd := models.DeleteUserCommand{UserId: userID}
 
@@ -133,7 +144,10 @@ func AdminDeleteUser(c *models.ReqContext) response.Response {
 
 // POST /api/admin/users/:id/disable
 func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
@@ -149,7 +163,7 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to disable user", err)
 	}
 
-	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
 		return response.Error(500, "Failed to disable user", err)
 	}
@@ -159,7 +173,10 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 
 // POST /api/admin/users/:id/enable
 func AdminEnableUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
@@ -180,7 +197,10 @@ func AdminEnableUser(c *models.ReqContext) response.Response {
 
 // POST /api/admin/users/:id/logout
 func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if c.UserId == userID {
 		return response.Error(400, "You cannot logout yourself", nil)
@@ -191,7 +211,10 @@ func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
 
 // GET /api/admin/users/:id/auth-tokens
 func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return hs.getUserAuthTokensInternal(c, userID)
 }
 
@@ -201,7 +224,10 @@ func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Re
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }
 

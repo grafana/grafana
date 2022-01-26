@@ -74,4 +74,4 @@ from(bucket: "grafana")
   |> yield(name: "mean")
 ```
 
-You can view the interpolated version of a query with the query inspector. For more information, refer to [Inspect a panel]({{< relref "../../panels/inspect-panel.md" >}}) and [Queries]({{< relref "../../panels/queries.md" >}}).
+You can view the interpolated version of a query with the query inspector. For more information, refer to [Navigate the Query Inspector]({{< relref "../../panels/working-with-panels/navigate-inspector-panel.md" >}}).

@@ -8,33 +8,31 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type Finder struct {
-	cfg *setting.Cfg
 	log log.Logger
 }
 
-func New(cfg *setting.Cfg) Finder {
-	return Finder{cfg: cfg, log: log.New("plugin.finder")}
+func New() Finder {
+	return Finder{log: log.New("plugin.finder")}
 }
 
-func (f *Finder) Find(pluginDirs []string) ([]string, error) {
+func (f *Finder) Find(pluginPaths []string) ([]string, error) {
 	var pluginJSONPaths []string
 
-	for _, dir := range pluginDirs {
-		exists, err := fs.Exists(dir)
+	for _, path := range pluginPaths {
+		exists, err := fs.Exists(path)
 		if err != nil {
-			f.log.Warn("Error occurred when checking if plugin directory exists", "dir", dir, "err", err)
+			f.log.Warn("Error occurred when checking if plugin directory exists", "path", path, "err", err)
 		}
 		if !exists {
-			f.log.Warn("Skipping finding plugins as directory does not exist", "dir", dir)
+			f.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
 			continue
 		}
 
-		paths, err := f.getPluginJSONPaths(dir)
+		paths, err := f.getAbsPluginJSONPaths(path)
 		if err != nil {
 			return nil, err
 		}
@@ -44,16 +42,16 @@ func (f *Finder) Find(pluginDirs []string) ([]string, error) {
 	return pluginJSONPaths, nil
 }
 
-func (f *Finder) getPluginJSONPaths(dir string) ([]string, error) {
+func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 	var pluginJSONPaths []string
 
 	var err error
-	dir, err = filepath.Abs(dir)
+	path, err = filepath.Abs(path)
 	if err != nil {
 		return []string{}, err
 	}
 
-	if err := util.Walk(dir, true, true,
+	if err := util.Walk(path, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
@@ -75,11 +73,11 @@ func (f *Finder) getPluginJSONPaths(dir string) ([]string, error) {
 			return nil
 		}); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", dir, "err", err)
+			f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
 			return []string{}, nil
 		}
 		if errors.Is(err, os.ErrPermission) {
-			f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", dir, "err", err)
+			f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
 			return []string{}, nil
 		}
 
