@@ -4,19 +4,19 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	dashboards2 "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type FakeDashboardService struct {
-	dashboards2.DashboardService
+	dashboards.DashboardService
 
 	SaveDashboardResult *models.Dashboard
 	SaveDashboardError  error
-	SavedDashboards     []*dashboards2.SaveDashboardDTO
+	SavedDashboards     []*dashboards.SaveDashboardDTO
 	ProvisionedDashData *models.DashboardProvisioning
 }
 
-func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *dashboards2.SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
+func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
 	s.SavedDashboards = append(s.SavedDashboards, dto)
 
 	if s.SaveDashboardResult == nil && s.SaveDashboardError == nil {
@@ -26,7 +26,7 @@ func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *dashboard
 	return s.SaveDashboardResult, s.SaveDashboardError
 }
 
-func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *dashboards2.SaveDashboardDTO) (*models.Dashboard, error) {
+func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	return s.SaveDashboard(ctx, dto, true)
 }
 

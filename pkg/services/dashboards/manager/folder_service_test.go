@@ -2,15 +2,16 @@ package manager
 
 import (
 	"context"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 var orgID = int64(1)
@@ -18,7 +19,7 @@ var user = &models.SignedInUser{UserId: 1}
 
 func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
-		store := &fakeDashboardStore{}
+		store := &database.FakeDashboardStore{}
 		service := ProvideFolderService(
 			&FakeDashboardService{DashboardService: ProvideDashboardService(store)},
 			store,
@@ -33,13 +34,7 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			origStore := service.dashboardStore
-			t.Cleanup(func() {
-				service.dashboardStore = origStore
-			})
-			service.dashboardStore = &fakeDashboardStore{
-				validationError: models.ErrDashboardUpdateAccessDenied,
-			}
+			store.On("SaveDashboard", mock.Anything).Return(nil, models.ErrDashboardUpdateAccessDenied).Once()
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), user, 1, orgID)

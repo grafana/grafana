@@ -26,6 +26,7 @@ type DashboardProvisioningService interface {
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 }
 
+//go:generate mockery --name Store --structname FakeDashboardStore --output database --outpkg database --filename database_mock.go
 // Store is a dashboard store.
 type Store interface {
 	// ValidateDashboardBeforeSave validates a dashboard before save.

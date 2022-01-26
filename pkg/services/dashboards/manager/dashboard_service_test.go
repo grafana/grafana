@@ -3,13 +3,14 @@ package manager
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	m "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		bus.ClearBusHandlers()
 
-		fakeStore := fakeDashboardStore{}
+		fakeStore := database.FakeDashboardStore{}
 		service := &DashboardServiceImpl{
 			log:            log.New("test.logger"),
 			dashboardStore: &fakeStore,
@@ -88,11 +89,6 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				t.Cleanup(func() {
-					fakeStore.provisionedData = nil
-				})
-				fakeStore.provisionedData = &models.DashboardProvisioning{}
-
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
@@ -100,6 +96,8 @@ func TestDashboardService(t *testing.T) {
 				validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
+
+				fakeStore.On("SaveDashboard", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -204,9 +202,9 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				t.Cleanup(func() {
-					fakeStore.provisionedData = nil
+					fakeStore.ProvisionedData = nil
 				})
-				fakeStore.provisionedData = &models.DashboardProvisioning{}
+				fakeStore.ProvisionedData = &models.DashboardProvisioning{}
 
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
@@ -271,14 +269,14 @@ type Result struct {
 	deleteWasCalled bool
 }
 
-func setupDeleteHandlers(t *testing.T, fakeStore *fakeDashboardStore, provisioned bool) *Result {
+func setupDeleteHandlers(t *testing.T, fakeStore *database.FakeDashboardStore, provisioned bool) *Result {
 	t.Helper()
 
 	t.Cleanup(func() {
-		fakeStore.provisionedData = nil
+		fakeStore.ProvisionedData = nil
 	})
 	if provisioned {
-		fakeStore.provisionedData = &models.DashboardProvisioning{}
+		fakeStore.ProvisionedData = &models.DashboardProvisioning{}
 	}
 
 	result := &Result{}
@@ -290,33 +288,4 @@ func setupDeleteHandlers(t *testing.T, fakeStore *fakeDashboardStore, provisione
 	})
 
 	return result
-}
-
-type fakeDashboardStore struct {
-	dashboards.Store
-
-	validationError error
-	provisionedData *models.DashboardProvisioning
-}
-
-func (s *fakeDashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (
-	bool, error) {
-	return false, s.validationError
-}
-
-func (s *fakeDashboardStore) GetProvisionedDataByDashboardID(int64) (*models.DashboardProvisioning, error) {
-	return s.provisionedData, nil
-}
-
-func (s *fakeDashboardStore) SaveProvisionedDashboard(models.SaveDashboardCommand,
-	*models.DashboardProvisioning) (*models.Dashboard, error) {
-	return nil, nil
-}
-
-func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
-	return cmd.GetDashboardModel(), nil
-}
-
-func (s *fakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
-	return nil
 }
