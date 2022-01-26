@@ -24,14 +24,17 @@ export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.last, label: 'Last', description: 'Get the last value' },
 ];
 
-export const ReplaceNNMode = 'replaceNN';
-export const NoneMode = '';
+export enum ReducerMode {
+  None = '', // backend API wants an empty string to support "none" mode
+  ReplaceNonNumbers = 'replaceNN',
+  DropNonNumbers = 'dropNN',
+}
 
-export const reducerMode: Array<SelectableValue<string>> = [
-  { value: NoneMode, label: 'None', description: 'Do nothing' },
-  { value: 'dropNN', label: 'Drop Non Numbers', description: 'Remove NaN, +/-Inf, null' },
+export const reducerMode: Array<SelectableValue<ReducerMode>> = [
+  { value: ReducerMode.None, label: 'None', description: 'Do nothing' },
+  { value: ReducerMode.DropNonNumbers, label: 'Drop Non Numbers', description: 'Remove NaN, +/-Inf, null' },
   {
-    value: ReplaceNNMode,
+    value: ReducerMode.ReplaceNonNumbers,
     label: 'Replace Non Numbers ',
     description: 'Replace NaN, +/-Inf and null with constant value',
   },
@@ -66,7 +69,7 @@ export interface ExpressionQuery extends DataQuery {
 }
 
 export interface ExpressionQuerySettings {
-  mode?: string;
+  mode?: ReducerMode;
   replaceWithValue?: number;
 }
 
@@ -87,8 +90,6 @@ export interface ClassicCondition {
   };
   type: 'query';
 }
-
-export const ReduceModeDropNN = 'dropNN';
 
 export type ReducerType =
   | 'avg'

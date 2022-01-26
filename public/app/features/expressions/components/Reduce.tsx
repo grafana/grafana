@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import { ExpressionQuery, ExpressionQuerySettings, NoneMode, reducerMode, reducerTypes, ReplaceNNMode } from '../types';
+import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerMode, reducerTypes } from '../types';
 
 interface Props {
   labelWidth: number;
@@ -25,16 +25,16 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
     onChange({ ...query, settings: settings });
   };
 
-  const onModeChanged = (value: SelectableValue<string>) => {
+  const onModeChanged = (value: SelectableValue<ReducerMode>) => {
     let newSettings: ExpressionQuerySettings;
     switch (value.value) {
-      case ReplaceNNMode:
+      case ReducerMode.ReplaceNonNumbers:
         let replaceWithNumber = 0;
-        if (query.settings?.mode === ReplaceNNMode) {
+        if (query.settings?.mode === ReducerMode.ReplaceNonNumbers) {
           replaceWithNumber = query.settings?.replaceWithValue ?? 0;
         }
         newSettings = {
-          mode: ReplaceNNMode,
+          mode: ReducerMode.ReplaceNonNumbers,
           replaceWithValue: replaceWithNumber,
         };
         break;
@@ -48,14 +48,14 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
 
   const onReplaceWithChanged = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.valueAsNumber;
-    onSettingsChanged({ mode: ReplaceNNMode, replaceWithValue: value ?? 0 });
+    onSettingsChanged({ mode: ReducerMode.ReplaceNonNumbers, replaceWithValue: value ?? 0 });
   };
 
   //TODO what if unknown mode?
-  const mode = query.settings?.mode ?? NoneMode;
+  const mode = query.settings?.mode ?? ReducerMode.None;
 
   const replaceWithNumber = () => {
-    if (mode !== ReplaceNNMode) {
+    if (mode !== ReducerMode.ReplaceNonNumbers) {
       return;
     }
     return (
