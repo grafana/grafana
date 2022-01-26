@@ -31,7 +31,7 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	settings := &setting.OSSImpl{Cfg: cfg}
-	assert.True(tb, settings.IsFeatureToggleEnabled("envelopeEncryption"))
+	assert.True(tb, settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption))
 	assert.True(tb, features.IsEnabled(featuremgmt.FlagEnvelopeEncryption))
 
 	encryption := ossencryption.ProvideService()
