@@ -82,10 +82,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
-	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 
-	customFrameMeta := map[string]interface{}{}
 	for _, series := range response.TimeSeriesData {
 		seriesLabels := make(map[string]string)
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -93,25 +91,23 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
 		}
+		labels := make(map[string]string)
 
 		for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
 			key := toSnakeCase(d.Key)
 			key = strings.Replace(key, ".", ".label.", 1)
-			if _, ok := labels[key]; !ok {
-				labels[key] = map[string]bool{}
-			}
 
 			labelValue := series.LabelValues[n]
 			switch d.ValueType {
 			case "BOOL":
 				strVal := strconv.FormatBool(labelValue.BoolValue)
-				labels[key][strVal] = true
+				labels[key] = strVal
 				seriesLabels[key] = strVal
 			case "INT64":
-				labels[key][labelValue.Int64Value] = true
+				labels[key] = labelValue.Int64Value
 				seriesLabels[key] = labelValue.Int64Value
 			default:
-				labels[key][labelValue.StringValue] = true
+				labels[key] = labelValue.StringValue
 				seriesLabels[key] = labelValue.StringValue
 			}
 		}
@@ -125,10 +121,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 				continue
 			}
 
-			if _, ok := labels["metric.name"]; !ok {
-				labels["metric.name"] = map[string]bool{}
-			}
-			labels["metric.name"][d.Key] = true
+			labels["metric.name"] = d.Key
 			seriesLabels["metric.name"] = d.Key
 			defaultMetricName := d.Key
 
@@ -239,26 +232,18 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 				frames = append(frames, buckets[i])
 			}
 		}
-	}
-	if len(response.TimeSeriesData) > 0 {
-		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit)
-	}
 
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
-		}
-	}
-	customFrameMeta["labels"] = labelsByKey
-
-	for _, frame := range frames {
+		customFrameMeta := map[string]interface{}{}
+		customFrameMeta["labels"] = labels
 		if frame.Meta != nil {
 			frame.Meta.Custom = customFrameMeta
 		} else {
 			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
 		}
+	}
+	if len(response.TimeSeriesData) > 0 {
+		dl := timeSeriesQuery.buildDeepLink()
+		frames = addConfigData(frames, dl, response.Unit)
 	}
 
 	queryRes.Frames = frames

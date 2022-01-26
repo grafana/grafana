@@ -42,10 +42,16 @@
 		</div>
 	</div>
 
+</div>
+
+<h3 class="page-heading">TLS/SSL Auth</h3>
+
+<div class="gf-form-group">
+
 	<div class="gf-form">
-		<label class="gf-form-label width-7" for="encrypt-select">Encrypt</label>
+		<label class="gf-form-label width-15" for="encrypt-select">Encrypt</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-			<select id="encrypt-select" class="gf-form-input" ng-model="ctrl.current.jsonData.encrypt" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsonData.encrypt" aria-labelledby="encrypt-label"></select>
+			<select id="encrypt-select" class="gf-form-input" ng-model="ctrl.current.jsonData.encrypt" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsonData.encrypt" ng-change="ctrl.onEncryptChange()" aria-labelledby="encrypt-label"></select>
 			<info-popover mode="right-absolute">
 				Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
 				<ul>
@@ -57,6 +63,33 @@
 			</info-popover>
 		</div>
 	</div>
+
+  <div class="gf-form" ng-show="ctrl.showTlsConfig">
+    <gf-form-switch class="gf-form" label="Skip TLS/SSL Verify" label-class="width-15"
+                      tooltip="Skip verifying Server Certificate for TLS/SSL. If this is enabled, any certificate presented by the server and any host name in that certificate will be accepted. In this mode, TLS is susceptible to man-in-the-middle attacks. This should be used only for testing."
+                      checked="ctrl.current.jsonData.tlsSkipVerify" switch-class="max-width-8"
+                      on-change="ctrl.onEncryptChange()"></gf-form-switch>
+  </div>
+
+  <div class="gf-form max-width-30" ng-show="ctrl.showCertificateConfig">
+    <span class="gf-form-label width-15">TLS/SSL Root Certificate</span>
+    <input type="text" class="gf-form-input" style="width: 352px" ng-model='ctrl.current.jsonData.sslRootCertFile'
+           placeholder="TLS/SSL root certificate file"></input>
+    <info-popover mode="right-absolute">
+      Path to file containing the public key certificate of the CA that signed the SQL Server certificate. Needed when
+      the server certificate is self signed.
+    </info-popover>
+  </div>
+
+  <div class="gf-form max-width-30" ng-show="ctrl.showCertificateConfig">
+    <span class="gf-form-label width-15">Hostname in server certificate</span>
+    <input type="text" class="gf-form-input" style="width: 352px" ng-model='ctrl.current.jsonData.serverName'
+           placeholder="Common Name (CN) in server certificate"></input>
+    <info-popover mode="right-absolute">
+      Specifies the Common Name (CN) in the server certificate. Default is the server host.
+    </info-popover>
+  </div>
+
 </div>
 
 <h3 class="page-heading">Connection limits</h3>
