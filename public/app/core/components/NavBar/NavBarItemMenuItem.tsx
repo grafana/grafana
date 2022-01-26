@@ -60,6 +60,12 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
     <>
       <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
         {rendered}
+        {/* {!!item.value.children?.length && item.value.menuItemType === NavMenuItemType.Item && (
+        <>
+          <span style={{ marginLeft: 'auto' }}>{<Icon name={'angle-right'} />}</span>
+          <NestedSubMenu items={item.value.children} />
+        </>
+      )} */}
       </li>
     </>
   );
@@ -74,8 +80,11 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
   }
   return {
     menuItem: css`
+      position: relative;
       background-color: ${backgroundColor};
       color: ${theme.colors.text.primary};
+      display: flex;
+      align-items: center;
 
       &:focus-visible {
         background-color: ${theme.colors.action.hover};
@@ -84,6 +93,13 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         outline: 2px solid ${theme.colors.primary.main};
         outline-offset: -2px;
         transition: none;
+      }
+
+      &:hover {
+        & > ul {
+          opacity: 1;
+          visibility: visible;
+        }
       }
     `,
     upgradeBoxContainer: css`

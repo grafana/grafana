@@ -89,6 +89,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
     height: 1px;
     margin: ${theme.spacing(1)} 0;
     overflow: hidden;
+    flex: 1;
   `,
   listItem: css`
     position: relative;
@@ -115,6 +116,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverr
     padding: 5px 12px 5px 10px;
     text-align: left;
     white-space: nowrap;
+    // width: 100%;
 
     &:focus-visible {
       outline: none;
