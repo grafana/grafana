@@ -170,7 +170,8 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // Stubbable by tests.
 var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, permission string) error {
 	teamIDString := strconv.FormatInt(teamID, 10)
-	_, err := resourcePermissionService.SetUserPermission(ctx, orgID, userID, teamIDString, permission)
-
-	return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
+	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, userID, teamIDString, permission); err != nil {
+		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
+	}
+	return nil
 }
