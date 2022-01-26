@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEFAULT_RUNDIR=e2e/tmp
+DEFAULT_RUNDIR=scripts/grafana-server/tmp
 RUNDIR=${RUNDIR:-$DEFAULT_RUNDIR}
 HOME_PATH=$PWD/$RUNDIR
 PIDFILE=$RUNDIR/pid
