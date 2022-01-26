@@ -49,7 +49,6 @@ func (rs *RenderingService) SupportsFeature(feature Feature) (FeatureSupportRequ
 	if err != nil {
 		rs.log.Error("Failed to parse semver constraint", "constraint", semverConstraint, "feature", feature, "error", err.Error())
 		return FeatureSupportRequestResult{IsSupported: false, SemverConstraint: semverConstraint}, ErrUnsupportedFeature
-
 	}
 
 	imageRendererVersion := rs.Version()
