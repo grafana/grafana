@@ -3,7 +3,7 @@ import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AlertList } from './AlertList';
 import { UnifiedAlertList } from './UnifiedAlertList';
-import { AlertListOptions, DisplayMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
+import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { config, DataSourcePicker } from '@grafana/runtime';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
@@ -152,16 +152,24 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder
     .addRadio({
-      path: 'displayMode',
-      name: 'Display mode',
-      description: 'How the alert panel should be rendered',
-      defaultValue: DisplayMode.Grouped,
+      path: 'groupMode',
+      name: 'Group mode',
+      description: 'How alert instances should be grouped',
+      defaultValue: GroupMode.Default,
       settings: {
         options: [
-          { value: DisplayMode.Grouped, label: 'Grouped by alert' },
-          { value: DisplayMode.List, label: 'List of alert instances' },
+          { value: GroupMode.Default, label: 'Default grouping' },
+          { value: GroupMode.Custom, label: 'Custom grouping' },
         ],
       },
+      category: ['Options'],
+    })
+    .addTextInput({
+      path: 'groupBy',
+      name: 'Group by',
+      description: 'Filter alerts using label querying',
+      defaultValue: 'alertname',
+      showIf: (options) => options.groupMode === GroupMode.Custom,
       category: ['Options'],
     })
     .addNumberInput({

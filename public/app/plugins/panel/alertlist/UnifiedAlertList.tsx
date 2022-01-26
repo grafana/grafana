@@ -7,10 +7,10 @@ import { css } from '@emotion/css';
 
 import { AlertInstances } from './AlertInstances';
 import alertDef from 'app/features/alerting/state/alertDef';
-import { SortOrder, UnifiedAlertListOptions } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
 
 import { flattenRules, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
-import { PromRuleWithLocation } from 'app/types/unified-alerting';
+import { Alert, PromRuleWithLocation } from 'app/types/unified-alerting';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import {
@@ -22,6 +22,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { AlertLabel } from 'app/features/alerting/unified/components/AlertLabel';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -62,55 +63,96 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const noAlertsMessage = rules.length ? '' : 'No alerts';
 
+  // support for grouped view – filter already filtered rules for instances that match groupBy key
+  // and use groupBy key for grouping
+  type GroupedRules = Map<string, Alert[]>;
+
+  const groupedRules = useMemo<GroupedRules>(() => {
+    const groupByKey = props.options.groupBy;
+    const groupedRules = new Map();
+
+    const hasInstancesWithLabel = (rule: PromRuleWithLocation) =>
+      groupByKey ? (rule.rule.alerts ?? []).some((alert) => alert.labels[groupByKey]) : true;
+
+    const rulesWithCustomLabel = rules.filter(hasInstancesWithLabel);
+    rulesWithCustomLabel.forEach((rule: PromRuleWithLocation) => {
+      (rule.rule.alerts ?? []).forEach((alert) => {
+        const labelKey = groupByKey + '=' + alert.labels[groupByKey];
+        const existingAlerts = groupedRules.get(labelKey) ?? [];
+        groupedRules.set(labelKey, [...existingAlerts, alert]);
+      });
+    });
+
+    return groupedRules;
+  }, [props.options.groupBy, rules]);
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
         {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
-          <ol className={styles.alertRuleList}>
-            {haveResults &&
-              rulesToDisplay.map((ruleWithLocation, index) => {
-                const { rule, namespaceName, groupName } = ruleWithLocation;
-                const firstActiveAt = getFirstActiveAt(rule);
-                return (
-                  <li
-                    className={styles.alertRuleItem}
-                    key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}
-                  >
-                    <div className={stateStyle.icon}>
-                      <Icon
-                        name={alertDef.getStateDisplayModel(rule.state).iconClass as IconName}
-                        className={stateStyle[alertStateToState[rule.state]]}
-                        size={'lg'}
-                      />
+          {props.options.groupMode === GroupMode.Custom &&
+            haveResults &&
+            Array.from(groupedRules).map(([key, alerts]) => (
+              <li className={styles.alertRuleItem} key={key}>
+                <div>
+                  <div className={styles.instanceDetails}>
+                    <div className={styles.alertName} title={key}>
+                      <AlertLabel labelKey={key.split('=')[0]} value={key.split('=')[1]} />
                     </div>
-                    <div>
-                      <div className={styles.instanceDetails}>
-                        <div className={styles.alertName} title={rule.name}>
-                          {rule.name}
-                        </div>
-                        <div className={styles.alertDuration}>
-                          <span className={stateStyle[alertStateToState[rule.state]]}>{rule.state.toUpperCase()}</span>{' '}
-                          {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
-                            <>
-                              for{' '}
-                              <span>
-                                {intervalToAbbreviatedDurationString({
-                                  start: firstActiveAt,
-                                  end: Date.now(),
-                                })}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                  </div>
+                  <AlertInstances alerts={alerts} options={props.options} />
+                </div>
+              </li>
+            ))}
+          {props.options.groupMode === GroupMode.Default && (
+            <ol className={styles.alertRuleList}>
+              {haveResults &&
+                rulesToDisplay.map((ruleWithLocation, index) => {
+                  const { rule, namespaceName, groupName } = ruleWithLocation;
+                  const firstActiveAt = getFirstActiveAt(rule);
+                  return (
+                    <li
+                      className={styles.alertRuleItem}
+                      key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}
+                    >
+                      <div className={stateStyle.icon}>
+                        <Icon
+                          name={alertDef.getStateDisplayModel(rule.state).iconClass as IconName}
+                          className={stateStyle[alertStateToState[rule.state]]}
+                          size={'lg'}
+                        />
                       </div>
-                      <AlertInstances ruleWithLocation={ruleWithLocation} options={props.options} />
-                    </div>
-                  </li>
-                );
-              })}
-          </ol>
+                      <div>
+                        <div className={styles.instanceDetails}>
+                          <div className={styles.alertName} title={rule.name}>
+                            {rule.name}
+                          </div>
+                          <div className={styles.alertDuration}>
+                            <span className={stateStyle[alertStateToState[rule.state]]}>
+                              {rule.state.toUpperCase()}
+                            </span>{' '}
+                            {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
+                              <>
+                                for{' '}
+                                <span>
+                                  {intervalToAbbreviatedDurationString({
+                                    start: firstActiveAt,
+                                    end: Date.now(),
+                                  })}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <AlertInstances alerts={ruleWithLocation.rule.alerts ?? []} options={props.options} />
+                      </div>
+                    </li>
+                  );
+                })}
+            </ol>
+          )}
         </section>
       </div>
     </CustomScrollbar>
@@ -160,7 +202,7 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
     const matchers = parseMatchers(options.alertInstanceLabelFilter);
     // Reduce rules and instances to only those that match
     filteredRules = filteredRules.reduce((rules, rule) => {
-      const filteredAlerts = rule.rule.alerts.filter(({ labels }) => labelsMatchMatchers(labels, matchers));
+      const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
       if (filteredAlerts.length) {
         rules.push({ ...rule, rule: { ...rule.rule, alerts: filteredAlerts } });
       }

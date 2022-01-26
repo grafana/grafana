@@ -28,7 +28,7 @@ interface RuleBase {
 }
 
 export interface AlertingRule extends RuleBase {
-  alerts: Alert[];
+  alerts?: Alert[];
   labels: {
     [key: string]: string;
   };
