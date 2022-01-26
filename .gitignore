@@ -156,7 +156,6 @@ compilation-stats.json
 
 # auto generated Go files
 *_gen.go
-!pkg/services/featuremgmt/toggles_gen.go
 
 # Auto-generated localisation files
 public/locales/_build/

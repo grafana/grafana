@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -128,6 +127,10 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addDashboardVersionQueryAndCommandHandlers()
 	ss.addAPIKeysQueryAndCommandHandlers()
 	ss.addPlaylistQueryAndCommandHandlers()
+	ss.addLoginAttemptQueryAndCommandHandlers()
+	ss.addTeamQueryAndCommandHandlers()
+	ss.addDashboardProvisioningQueryAndCommandHandlers()
+	ss.addOrgQueryAndCommandHandlers()
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -327,7 +330,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FLAG_database_metrics) {
+	if ss.Cfg.IsDatabaseMetricsEnabled() {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -493,7 +496,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
