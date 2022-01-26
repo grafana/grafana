@@ -10955,9 +10955,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:2.2.2":
-  version: 2.2.2
-  resolution: "@visx/tooltip@npm:2.2.2"
+"@visx/tooltip@npm:2.8.0":
+  version: 2.8.0
+  resolution: "@visx/tooltip@npm:2.8.0"
   dependencies:
     "@types/react": "*"
     "@visx/bounds": 2.1.2
@@ -10967,7 +10967,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0-0 || ^17.0.0-0
     react-dom: ^16.8.0-0 || ^17.0.0-0
-  checksum: 5287f58f78c88df3745c4ea5dfb58e918e716df5429825eacd401e0385767a6226dd2105dd4f5b472bb15df9b9f30da0fc67263f512d3f372a172d2c9a8c3e16
+  checksum: 0c55f1b6b1fae4a6631d1f0eb3f6340754ef839e17d64fd41259aed75634f954b2e7df67040a3103eb7fd088e481d4f38b76d7e231eaddb6e7d63a7639e0bf3a
   languageName: node
   linkType: hard
 
@@ -19869,7 +19869,7 @@ __metadata:
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.4.0
-    "@visx/tooltip": 2.2.2
+    "@visx/tooltip": 2.8.0
     "@welldone-software/why-did-you-render": 6.2.3
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.6
     angular: 1.8.2
