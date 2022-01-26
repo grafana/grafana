@@ -5,20 +5,22 @@ import { isEmpty } from 'lodash';
 import { UnifiedAlertListOptions } from './types';
 
 export function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
-  if (isEmpty(options.stateFilter)) {
+  const { stateFilter } = options;
+
+  if (isEmpty(stateFilter)) {
     return alerts;
   }
 
   return alerts.filter((alert) => {
     return (
-      (options.stateFilter.firing &&
+      (stateFilter.firing &&
         (alert.state === GrafanaAlertState.Alerting || alert.state === PromAlertingRuleState.Firing)) ||
-      (options.stateFilter.pending &&
+      (stateFilter.pending &&
         (alert.state === GrafanaAlertState.Pending || alert.state === PromAlertingRuleState.Pending)) ||
-      (options.stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
-      (options.stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
-      (options.stateFilter.error && alert.state === GrafanaAlertState.Error) ||
-      (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
+      (stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
+      (stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
+      (stateFilter.error && alert.state === GrafanaAlertState.Error) ||
+      (stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
     );
   });
 }
