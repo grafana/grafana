@@ -64,6 +64,8 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                           target={childLink.target}
                           text={childLink.text}
                           url={childLink.url}
+                          isMobile={true}
+                          childrenItems={childLink.children}
                         />
                       )
                   )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
@@ -12,9 +12,23 @@ export interface Props {
   target?: HTMLAnchorElement['target'];
   text: string;
   url?: string;
+  adjustHeightForBorder?: boolean;
+  isMobile?: boolean;
+  childrenItems?: NavModelItem[];
 }
 
-export function NavBarMenuItem({ icon, isActive, isDivider, onClick, styleOverrides, target, text, url }: Props) {
+export function NavBarMenuItem({
+  icon,
+  isActive,
+  isDivider,
+  onClick,
+  styleOverrides,
+  target,
+  text,
+  url,
+  isMobile = false,
+  childrenItems = [],
+}: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, styleOverrides);
 
@@ -47,6 +61,31 @@ export function NavBarMenuItem({ icon, isActive, isDivider, onClick, styleOverri
           {linkContent}
         </a>
       );
+  }
+  if (isMobile) {
+    return (
+      <>
+        {isDivider ? (
+          <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
+        ) : (
+          <li>{element}</li>
+        )}
+        {!!childrenItems.length &&
+          childrenItems.map((item) => (
+            <NavBarMenuItem
+              text={item.text}
+              key={item.id}
+              isDivider={item.divider}
+              icon={item.icon as IconName}
+              target={item.target}
+              onClick={item.onClick}
+              url={item.url}
+              styleOverrides={styleOverrides}
+              childrenItems={item.children}
+            />
+          ))}
+      </>
+    );
   }
 
   return isDivider ? <li data-testid="dropdown-child-divider" className={styles.divider} /> : <li>{element}</li>;
