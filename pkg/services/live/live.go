@@ -15,6 +15,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 
 	"github.com/centrifugal/centrifuge"
@@ -67,9 +68,10 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
+		Features:              toggles,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		pluginStore:           pluginStore,
@@ -174,7 +176,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
+	if g.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
@@ -391,6 +393,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 type GrafanaLive struct {
 	PluginContextProvider *plugincontext.Provider
 	Cfg                   *setting.Cfg
+	Features              featuremgmt.FeatureToggles
 	RouteRegister         routing.RouteRegister
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService

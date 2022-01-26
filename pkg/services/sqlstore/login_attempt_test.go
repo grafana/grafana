@@ -20,24 +20,25 @@ func mockTime(mock time.Time) time.Time {
 
 func TestLoginAttempts(t *testing.T) {
 	var beginningOfTime, timePlusOneMinute, timePlusTwoMinutes time.Time
+	var sqlStore *SQLStore
 	user := "user"
 
 	setup := func(t *testing.T) {
-		InitTestDB(t)
+		sqlStore = InitTestDB(t)
 		beginningOfTime = mockTime(time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local))
-		err := CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
+		err := sqlStore.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 		timePlusOneMinute = mockTime(beginningOfTime.Add(time.Minute * 1))
-		err = CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
+		err = sqlStore.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 		timePlusTwoMinutes = mockTime(beginningOfTime.Add(time.Minute * 2))
-		err = CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
+		err = sqlStore.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
@@ -93,7 +94,7 @@ func TestLoginAttempts(t *testing.T) {
 		cmd := models.DeleteOldLoginAttemptsCommand{
 			OlderThan: beginningOfTime,
 		}
-		err := DeleteOldLoginAttempts(context.Background(), &cmd)
+		err := sqlStore.DeleteOldLoginAttempts(context.Background(), &cmd)
 
 		require.Nil(t, err)
 		require.Equal(t, int64(0), cmd.DeletedRows)
@@ -104,7 +105,7 @@ func TestLoginAttempts(t *testing.T) {
 		cmd := models.DeleteOldLoginAttemptsCommand{
 			OlderThan: timePlusOneMinute,
 		}
-		err := DeleteOldLoginAttempts(context.Background(), &cmd)
+		err := sqlStore.DeleteOldLoginAttempts(context.Background(), &cmd)
 
 		require.Nil(t, err)
 		require.Equal(t, int64(1), cmd.DeletedRows)
@@ -115,7 +116,7 @@ func TestLoginAttempts(t *testing.T) {
 		cmd := models.DeleteOldLoginAttemptsCommand{
 			OlderThan: timePlusTwoMinutes,
 		}
-		err := DeleteOldLoginAttempts(context.Background(), &cmd)
+		err := sqlStore.DeleteOldLoginAttempts(context.Background(), &cmd)
 
 		require.Nil(t, err)
 		require.Equal(t, int64(2), cmd.DeletedRows)
@@ -126,7 +127,7 @@ func TestLoginAttempts(t *testing.T) {
 		cmd := models.DeleteOldLoginAttemptsCommand{
 			OlderThan: timePlusTwoMinutes.Add(time.Second * 1),
 		}
-		err := DeleteOldLoginAttempts(context.Background(), &cmd)
+		err := sqlStore.DeleteOldLoginAttempts(context.Background(), &cmd)
 
 		require.Nil(t, err)
 		require.Equal(t, int64(3), cmd.DeletedRows)

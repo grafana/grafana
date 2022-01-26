@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -39,8 +40,8 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, renderService rendering.Service, gl *live.GrafanaLive) Service {
-	if !cfg.IsDashboardPreviesEnabled() {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, renderService rendering.Service, gl *live.GrafanaLive) Service {
+	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
 

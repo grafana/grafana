@@ -207,7 +207,7 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
-	if err := sqlstore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
+	if err := s.sqlStore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
 		return err
 	}
 	return nil

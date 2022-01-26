@@ -312,8 +312,18 @@ const (
 	ActionLicensingDelete      = "licensing:delete"
 	ActionLicensingReportsRead = "licensing.reports:read"
 
-	// Team actions
-	ActionTeamsCreate = "teams:create"
+	// Team related actions
+	ActionTeamsCreate           = "teams:create"
+	ActionTeamsDelete           = "teams:delete"
+	ActionTeamsRead             = "teams:read"
+	ActionTeamsWrite            = "teams:write"
+	ActionTeamsPermissionsRead  = "teams.permissions:read"
+	ActionTeamsPermissionsWrite = "teams.permissions:write"
+)
+
+var (
+	// Team scope
+	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
