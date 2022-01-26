@@ -4,13 +4,13 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
   switch (statementPosition) {
     case StatementPosition.PredefinedFunction:
       return [SuggestionKind.FunctionsWithArguments];
-    case StatementPosition.SecondaryArgAfterPredefinedFunction:
+    case StatementPosition.PredefinedFuncSecondArg:
       return [SuggestionKind.FunctionsWithArguments, SuggestionKind.KeywordArguments];
     case StatementPosition.AfterFunction:
       return [SuggestionKind.Operators];
-    case StatementPosition.SecondArgAfterSearchFunc:
+    case StatementPosition.SearchFuncSecondArg:
       return [SuggestionKind.Statistic];
-    case StatementPosition.ThirdArgAfterSearchFunc:
+    case StatementPosition.SearchFuncThirdArg:
       return [SuggestionKind.Period];
   }
 

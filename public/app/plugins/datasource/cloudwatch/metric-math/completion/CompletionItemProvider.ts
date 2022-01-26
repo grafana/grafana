@@ -94,9 +94,16 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
               command: TRIGGER_SUGGEST,
             })
           );
+          break;
 
         case SuggestionKind.Period:
-          METRIC_MATH_PERIODS.map((s) => addSuggestion(s.toString()));
+          METRIC_MATH_PERIODS.map((s, idx) =>
+            addSuggestion(s.toString(), {
+              kind: monaco.languages.CompletionItemKind.Value,
+              sortText: String.fromCharCode(97 + idx), // converts index 0, 1 to "a", "b", etc needed to show the time periods in numerical order
+            })
+          );
+          break;
       }
     }
 

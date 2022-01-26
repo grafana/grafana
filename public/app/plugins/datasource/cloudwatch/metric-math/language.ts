@@ -63,7 +63,7 @@ export const METRIC_MATH_OPERATORS = [
   '||',
 ];
 
-export const METRIC_MATH_PERIODS = [10, 60, 300, 900, 3500, 21600, 86400];
+export const METRIC_MATH_PERIODS = [10, 60, 300, 900, 3000, 21600, 86400];
 
 export const language: monacoType.languages.IMonarchLanguage = {
   id: 'metricMath',

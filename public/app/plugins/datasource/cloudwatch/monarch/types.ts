@@ -36,10 +36,11 @@ export enum StatementPosition {
   AfterOrderByDirection,
   // metric math
   PredefinedFunction,
-  SecondArgAfterSearchFunc,
-  ThirdArgAfterSearchFunc,
-  SecondaryArgAfterPredefinedFunction,
+  SearchFuncSecondArg,
+  SearchFuncThirdArg,
+  PredefinedFuncSecondArg,
   AfterFunction,
+  WithinString,
 }
 
 export enum SuggestionKind {

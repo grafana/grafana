@@ -15,12 +15,12 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
           lastComma.range.startLineNumber >= currentFunction.range.startLineNumber;
 
         if (lastCommaIsAfterSearch) {
-          return StatementPosition.ThirdArgAfterSearchFunc;
+          return StatementPosition.SearchFuncThirdArg;
         }
       }
-      return StatementPosition.SecondArgAfterSearchFunc;
+      return StatementPosition.SearchFuncSecondArg;
     }
-    return StatementPosition.SecondaryArgAfterPredefinedFunction;
+    return StatementPosition.PredefinedFuncSecondArg;
   }
 
   if (previousNonWhiteSpace?.endsWith(')')) {
@@ -29,6 +29,10 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
 
   if (!currentToken || !currentToken.isString()) {
     return StatementPosition.PredefinedFunction;
+  }
+
+  if (currentToken && currentToken.isString()) {
+    return StatementPosition.WithinString;
   }
 
   return StatementPosition.Unknown;
