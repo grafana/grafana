@@ -76,7 +76,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
-		OnSetUser: func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
+		OnSetUser: func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error {
 			switch permission {
 			case "":
 				// call handler remove user from team
