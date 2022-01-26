@@ -79,6 +79,9 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			return nil, err
 		}
 
+		if cfg.Env == setting.Dev {
+			logger.Debug("getEngine", "connection", cnnstr)
+		}
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mssql",
 			ConnectionString:  cnnstr,
