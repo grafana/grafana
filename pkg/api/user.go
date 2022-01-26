@@ -42,7 +42,7 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 
 	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
-	if err := hs.Implementation.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true

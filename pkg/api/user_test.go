@@ -46,7 +46,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		srv := authinfoservice.ProvideAuthInfoService(bus.New(), sqlStore, &authinfoservice.OSSUserProtectionImpl{}, secretsService)
-		hs.Implementation = srv
+		hs.authInfoService = srv
 
 		createUserCmd := models.CreateUserCommand{
 			Email:   fmt.Sprint("user", "@test.com"),
