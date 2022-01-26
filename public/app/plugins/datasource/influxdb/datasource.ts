@@ -343,6 +343,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         if (this.isFlux) {
           return {
             ...query,
+            datasource: this.getRef(),
             query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'),
           };
         }
@@ -354,7 +355,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
           limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
           slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
-          tz: this.templateSrv.replace(query.tz ?? '', scopedVars, 'regex'),
+          tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
         };
 
         if (query.rawQuery) {
