@@ -119,7 +119,7 @@ type HTTPServer struct {
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
-	Implementation            *authinfoservice.Implementation
+	Implementation            authinfoservice.Service
 }
 
 type ServerOptions struct {
@@ -144,7 +144,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service, implementation *authinfoservice.Implementation) (*HTTPServer, error) {
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	implementation authinfoservice.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
