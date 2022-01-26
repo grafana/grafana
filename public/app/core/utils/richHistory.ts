@@ -1,5 +1,5 @@
 // Libraries
-import { isEqual, omit } from 'lodash';
+import { omit } from 'lodash';
 
 // Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } from '@grafana/data';
@@ -11,7 +11,12 @@ import { createErrorNotification, createWarningNotification } from 'app/core/cop
 import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistoryService } from '../history/richHistoryServiceProvider';
+import { getRichHistoryService } from '../history/richHistoryStorageProvider';
+import {
+  RichHistoryServiceError,
+  RichHistoryStorageWarning,
+  RichHistoryStorageWarningDetails,
+} from '../history/richHistoryStorage';
 
 export const RICH_HISTORY_SETTING_KEYS = {
   retentionPeriod: 'grafana.explore.richHistory.retentionPeriod',
@@ -49,32 +54,7 @@ export async function addToRichHistory(
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
-  const queriesToKeep = await getRichHistoryService().purgeQueries(richHistory);
   if (newQueriesToSave.length > 0) {
-    /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
-     * which can be different) don't save it in rich history.
-     */
-    const newQueriesToCompare = newQueriesToSave.map((q) => omit(q, ['key', 'refId']));
-    const lastQueriesToCompare =
-      queriesToKeep.length > 0 &&
-      queriesToKeep[0].queries.map((q) => {
-        return omit(q, ['key', 'refId']);
-      });
-
-    if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
-      return { richHistory };
-    }
-
-    let limitExceeded = false;
-    try {
-      await getRichHistoryService().checkLimits(queriesToKeep);
-    } catch (error) {
-      limitExceeded = true;
-      showLimitExceededWarning && dispatch(notifyApp(createWarningNotification(error.message)));
-    }
-
-    let localStorageFull = false;
-
     let newRichHistory: RichHistoryQuery = {
       queries: newQueriesToSave,
       ts,
@@ -85,21 +65,33 @@ export async function addToRichHistory(
       sessionName,
     };
 
-    let updatedHistory: RichHistoryQuery[] = [newRichHistory, ...queriesToKeep];
+    let localStorageFull = false;
+    let limitExceeded = false;
+    let warning: RichHistoryStorageWarningDetails;
 
     try {
-      await getRichHistoryService().addToRichHistory(updatedHistory);
+      warning = await getRichHistoryService().addToRichHistory(newRichHistory);
     } catch (error) {
-      if (error.name === 'StorageFull') {
+      if (error.name === RichHistoryServiceError.StorageFull) {
         localStorageFull = true;
         showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-      } else {
-        dispatch(notifyApp(createErrorNotification(error.message)));
+      } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
+        dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
       }
+      // Saving failed. Do not add new entry.
+      return { richHistory, localStorageFull, limitExceeded };
     }
-    return { richHistory: updatedHistory, localStorageFull, limitExceeded };
+
+    // Limit exceeded but new entry was added. Notify that old entries have been removed.
+    if (warning && warning.type === RichHistoryStorageWarning.LimitExceeded) {
+      showLimitExceededWarning && dispatch(notifyApp(createWarningNotification(warning.message)));
+    }
+
+    // Saving successful - add new entry.
+    return { richHistory: [newRichHistory, ...richHistory], localStorageFull, limitExceeded };
   }
 
+  // Nothing to save
   return { richHistory };
 }
 
@@ -112,7 +104,8 @@ export async function deleteAllFromRichHistory(): Promise<void> {
 }
 
 export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  let updatedQuery;
+  let updatedQuery: RichHistoryQuery | undefined;
+
   const updatedHistory = richHistory.map((query) => {
     /* Timestamps are currently unique - we can use them to identify specific queries */
     if (query.ts === ts) {
@@ -123,8 +116,12 @@ export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[]
     return query;
   });
 
+  if (!updatedQuery) {
+    return richHistory;
+  }
+
   try {
-    await getRichHistoryService().updateStarred(updatedHistory);
+    await getRichHistoryService().updateStarred(ts, updatedQuery.starred);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -137,7 +134,7 @@ export async function updateCommentInRichHistory(
   ts: number,
   newComment: string | undefined
 ) {
-  let updatedQuery;
+  let updatedQuery: RichHistoryQuery | undefined;
   const updatedHistory = richHistory.map((query) => {
     if (query.ts === ts) {
       updatedQuery = Object.assign({}, query, { comment: newComment });
@@ -146,8 +143,12 @@ export async function updateCommentInRichHistory(
     return query;
   });
 
+  if (!updatedQuery) {
+    return richHistory;
+  }
+
   try {
-    await getRichHistoryService().updateComment(updatedHistory);
+    await getRichHistoryService().updateComment(ts, newComment);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -161,7 +162,7 @@ export async function deleteQueryInRichHistory(
 ): Promise<RichHistoryQuery[]> {
   const updatedHistory = richHistory.filter((query) => query.ts !== ts);
   try {
-    await getRichHistoryService().deleteRichHistory(updatedHistory);
+    await getRichHistoryService().deleteRichHistory(ts);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
