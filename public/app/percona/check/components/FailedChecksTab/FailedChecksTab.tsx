@@ -45,15 +45,12 @@ export const FailedChecksTab: FC = () => {
     setRunChecksPending(true);
     try {
       await CheckService.runDbChecks();
+      appEvents.emit(AppEvents.alertSuccess, [Messages.checksExecutionStarted]);
     } catch (e) {
       logger.error(e);
-    }
-    // TODO (nicolalamacchia): remove this timeout when the API will become synchronous
-    setTimeout(async () => {
+    } finally {
       setRunChecksPending(false);
-      await fetchAlerts();
-      appEvents.emit(AppEvents.alertSuccess, ['Done running DB checks. The latest results are displayed.']);
-    }, 10000);
+    }
   };
 
   const toggleShowSilenced = () => {
