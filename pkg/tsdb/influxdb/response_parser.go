@@ -21,28 +21,23 @@ var (
 
 func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
-	queryRes := backend.DataResponse{}
 
 	response, jsonErr := parseJSON(buf)
 	if jsonErr != nil {
-		queryRes.Error = jsonErr
-		resp.Responses["A"] = queryRes
+		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
 		return resp
 	}
 
 	if response.Error != "" {
-		queryRes.Error = fmt.Errorf(response.Error)
-		resp.Responses["A"] = queryRes
+		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf(response.Error)}
 		return resp
 	}
 
 	for i, result := range response.Results {
 		if result.Error != "" {
-			queryRes.Error = fmt.Errorf(result.Error)
-			resp.Responses["A"] = queryRes
+			resp.Responses[queries[i].RefID] = backend.DataResponse{Error: fmt.Errorf(result.Error)}
 		} else {
-			queryRes.Frames = transformRows(result.Series, queries[i])
-			resp.Responses[queries[i].RefID] = queryRes
+			resp.Responses[queries[i].RefID] = backend.DataResponse{Frames: transformRows(result.Series, queries[i])}
 		}
 	}
 

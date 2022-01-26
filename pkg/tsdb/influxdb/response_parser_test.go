@@ -522,6 +522,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		`
 
 		query := &Query{}
+		var queries = addQueryToQueries(*query)
+		queryB := &Query{}
+		queryB.RefID = "B"
+		queries = append(queries, *queryB)
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
 		newField := data.NewField("value", labels, []*float64{
@@ -538,14 +542,14 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
-		result := parser.Parse(prepare(response), addQueryToQueries(*query))
+		result := parser.Parse(prepare(response), queries)
 
 		frame := result.Responses["A"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
-		require.EqualError(t, result.Responses["A"].Error, "query-timeout limit exceeded")
+		require.EqualError(t, result.Responses["B"].Error, "query-timeout limit exceeded")
 	})
 
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
