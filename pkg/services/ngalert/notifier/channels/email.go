@@ -8,9 +8,9 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -22,12 +22,13 @@ type EmailNotifier struct {
 	SingleEmail bool
 	Message     string
 	log         log.Logger
+	ns          notifications.EmailSender
 	tmpl        *template.Template
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
+func NewEmailNotifier(model *NotificationChannelConfig, ns notifications.EmailSender, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -54,6 +55,7 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 		SingleEmail: singleEmail,
 		Message:     model.Settings.Get("message").MustString(),
 		log:         log.New("alerting.notifier.email"),
+		ns:          ns,
 		tmpl:        t,
 	}, nil
 }
@@ -103,7 +105,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		en.log.Warn("failed to template email message", "err", tmplErr.Error())
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := en.ns.SendEmailCommandHandlerSync(ctx, cmd); err != nil {
 		return false, err
 	}
 
