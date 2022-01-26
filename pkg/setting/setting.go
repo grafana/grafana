@@ -171,9 +171,6 @@ var (
 	// Explore UI
 	ExploreEnabled bool
 
-	// Query history
-	QueryHistoryEnabled bool
-
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -430,6 +427,9 @@ type Cfg struct {
 
 	// Unified Alerting
 	UnifiedAlerting UnifiedAlertingSettings
+
+	// Query history
+	QueryHistoryEnabled bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -978,7 +978,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
-	QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)

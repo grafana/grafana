@@ -6,15 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-func ValidateQueryHistoryEnabled(c *models.ReqContext) {
-	if !setting.QueryHistoryEnabled {
-		c.JsonApiErr(http.StatusBadRequest, "query history is not enabled", nil)
-	}
-}
 
 func (hs *HTTPServer) addToQueryHistory(c *models.ReqContext) response.Response {
 	cmd := dtos.AddToQueryHistoryCmd{}
