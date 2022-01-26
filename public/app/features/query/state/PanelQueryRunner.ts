@@ -184,7 +184,7 @@ export class PanelQueryRunner {
           }
 
           const replace = (option: string): string => {
-            return getTemplateSrv().replace(option);
+            return getTemplateSrv().replace(option, data?.request?.scopedVars);
           };
           transformations.forEach((transform: any) => {
             transform.replace = replace;
