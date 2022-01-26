@@ -2,6 +2,7 @@ package resourceservices
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -77,15 +78,24 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
 		OnSetUser: func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error {
-			switch permission {
-			case "":
-				// call handler remove user from team
-			case "Member":
-				// call handler to add member
-			case "Admin":
-				// call handler to add admin
+			teamId, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
 			}
-			return nil
+			switch permission {
+			case "Member":
+				return sqlstore.AddOrUpdateTeamMemberHook(session, userID, orgID, teamId, false, 0)
+			case "Admin":
+				return sqlstore.AddOrUpdateTeamMemberHook(session, userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+			case "":
+				return sqlstore.RemoveTeamMemberHook(session, &models.RemoveTeamMemberCommand{
+					OrgId:  orgID,
+					UserId: userID,
+					TeamId: teamId,
+				})
+			default:
+				return fmt.Errorf("invalid team permission type %s", permission)
+			}
 		},
 	}
 

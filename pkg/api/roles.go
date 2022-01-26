@@ -186,14 +186,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
-	teamWriterGrants := []string{string(models.ROLE_ADMIN)}
+	teamCreatorGrants := []string{string(models.ROLE_ADMIN)}
 	if hs.Cfg.EditorsCanAdmin {
-		teamWriterGrants = append(teamWriterGrants, string(models.ROLE_EDITOR))
+		teamCreatorGrants = append(teamCreatorGrants, string(models.ROLE_EDITOR))
 	}
-	teamsWriterRole := accesscontrol.RoleRegistration{
+	teamsCreatorRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:teams:writer",
-			DisplayName: "Team writer",
+			Name:        "fixed:teams:creator",
+			DisplayName: "Team creator",
 			Description: "Create teams.",
 			Group:       "Teams",
 			Version:     1,
@@ -203,12 +203,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: teamWriterGrants,
+		Grants: teamCreatorGrants,
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsWriterRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
 	)
 }
 
