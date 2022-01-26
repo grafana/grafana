@@ -91,12 +91,36 @@ func getRecord(keyvals ...interface{}) *record {
 		k, v := keyvals[i], keyvals[i+1]
 
 		if k == "t" {
-			t := v.(fmt.Stringer)
-			time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
-			if err == nil {
-				r.time = time
+			t, ok := v.(fmt.Stringer)
+			if ok {
+				time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
+				if err == nil {
+					r.time = time
+					continue
+				}
 			}
-			continue
+
+			// t2, ok := v.(time.Time)
+			// if ok {
+			// 	r.time = t2
+			// 	continue
+			// }
+
+			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
+			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
+			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX BAD LINE: %v (%T)\n", v, v)
+			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
+			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
+
+			t3, ok := v.(string)
+			if ok {
+				// from alerting:        2022-01-26T12:03:41.655107858-08:00
+				time, err := time.Parse("2006-01-02T15:04:05.999999999-07:00", t3)
+				if err == nil {
+					r.time = time
+					continue
+				}
+			}
 		}
 
 		if keyvals[i] == "msg" {
