@@ -14,7 +14,6 @@ import (
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -214,7 +213,6 @@ type migration struct {
 	// session and mg are attached for convenience.
 	sess *xorm.Session
 	mg   *migrator.Migrator
-	ns   *notifications.NotificationService
 
 	seenChannelUIDs           map[string]struct{}
 	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
