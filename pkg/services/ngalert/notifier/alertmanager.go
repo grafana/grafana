@@ -505,7 +505,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	case "pushover":
 		n, err = channels.NewPushoverNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "slack":
-		n, err = channels.NewSlackNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
+		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
 	case "telegram":
 		n, err = channels.NewTelegramNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "victorops":

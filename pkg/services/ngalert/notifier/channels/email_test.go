@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -44,24 +43,25 @@ func TestEmailNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
+		expected := map[string]interface{}{}
+		mockEmailSender := &notificationServiceMock{
+			emailSender: func(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+				expected["subject"] = cmd.SendEmailCommand.Subject
+				expected["to"] = cmd.SendEmailCommand.To
+				expected["single_email"] = cmd.SendEmailCommand.SingleEmail
+				expected["template"] = cmd.SendEmailCommand.Template
+				expected["data"] = cmd.SendEmailCommand.Data
+				return nil
+			},
+		}
+
 		emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, nil, tmpl)
+		}, mockEmailSender, tmpl)
 
 		require.NoError(t, err)
-
-		expected := map[string]interface{}{}
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.SendEmailCommandSync) error {
-			expected["subject"] = cmd.SendEmailCommand.Subject
-			expected["to"] = cmd.SendEmailCommand.To
-			expected["single_email"] = cmd.SendEmailCommand.SingleEmail
-			expected["template"] = cmd.SendEmailCommand.Template
-			expected["data"] = cmd.SendEmailCommand.Data
-
-			return nil
-		})
 
 		alerts := []*types.Alert{
 			{

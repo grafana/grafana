@@ -501,7 +501,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			case "pushover":
 				_, err = channels.NewPushoverNotifier(cfg, nil, nil, decryptFunc)
 			case "slack":
-				_, err = channels.NewSlackNotifier(cfg, nil, nil, decryptFunc)
+				_, err = channels.NewSlackNotifier(cfg, nil, decryptFunc)
 			case "telegram":
 				_, err = channels.NewTelegramNotifier(cfg, nil, nil, decryptFunc)
 			case "victorops":

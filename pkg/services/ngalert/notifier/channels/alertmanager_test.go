@@ -60,7 +60,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			sn, err := NewAlertmanagerNotifier(m, nil, tmpl, decryptFn)
+			sn, err := NewAlertmanagerNotifier(m, tmpl, decryptFn)
 			if c.expectedInitError != "" {
 				require.Equal(t, c.expectedInitError, err.Error())
 				return
@@ -143,7 +143,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			sn, err := NewAlertmanagerNotifier(m, nil, tmpl, decryptFn)
+			sn, err := NewAlertmanagerNotifier(m, tmpl, decryptFn)
 			require.NoError(t, err)
 
 			var body []byte
