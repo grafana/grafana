@@ -100,18 +100,6 @@ func getRecord(keyvals ...interface{}) *record {
 				}
 			}
 
-			// t2, ok := v.(time.Time)
-			// if ok {
-			// 	r.time = t2
-			// 	continue
-			// }
-
-			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
-			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
-			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX BAD LINE: %v (%T)\n", v, v)
-			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
-			fmt.Printf("XXXXXXXXXXXXXXXXXXXXXX\n")
-
 			t3, ok := v.(string)
 			if ok {
 				// from alerting:        2022-01-26T12:03:41.655107858-08:00
