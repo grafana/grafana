@@ -97,7 +97,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             Array.from(groupedRules).map(([key, alerts]) => (
               <li className={styles.alertRuleItem} key={key}>
                 <div>
-                  <div className={styles.instanceDetails}>
+                  <div className={styles.customGroupDetails}>
                     <div className={styles.alertName} title={key}>
                       <AlertLabel labelKey={key.split('=')[0]} value={key.split('=')[1]} />
                     </div>
@@ -295,6 +295,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  `,
+  customGroupDetails: css`
+    margin-bottom: ${theme.spacing.xs};
   `,
 });
 
