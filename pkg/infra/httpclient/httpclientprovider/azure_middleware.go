@@ -3,8 +3,6 @@ package httpclientprovider
 import (
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,12 +21,12 @@ func AzureMiddleware(cfg *setting.Cfg) httpclient.Middleware {
 			return next
 		}
 
-		tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg, credentials)
+		scopes, err := getAzureEndpointScopes(opts.CustomOptions)
 		if err != nil {
 			return errorResponse(err)
 		}
 
-		scopes, err := getAzureEndpointScopes(opts.CustomOptions)
+		tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg, credentials)
 		if err != nil {
 			return errorResponse(err)
 		}
@@ -54,33 +52,15 @@ func getAzureCredentials(customOptions map[string]interface{}) (azcredentials.Az
 	}
 }
 
-func getAzureEndpointResourceId(customOptions map[string]interface{}) (*url.URL, error) {
-	var value string
-	if untypedValue, ok := customOptions["azureEndpointResourceId"]; !ok {
-		err := fmt.Errorf("the field 'azureEndpointResourceId' should be set")
-		return nil, err
-	} else if value, ok = untypedValue.(string); !ok {
-		err := fmt.Errorf("the field 'azureEndpointResourceId' should be a string")
-		return nil, err
-	}
-
-	resourceId, err := url.Parse(value)
-	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-		err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", value)
-		return nil, err
-	}
-
-	return resourceId, nil
-}
-
 func getAzureEndpointScopes(customOptions map[string]interface{}) ([]string, error) {
-	resourceId, err := getAzureEndpointResourceId(customOptions)
-	if err != nil {
+	var scopes []string
+	if untypedValue, ok := customOptions["_azureScopes"]; !ok {
+		err := fmt.Errorf("the field '_azureScopes' should be set")
+		return nil, err
+	} else if scopes, ok = untypedValue.([]string); !ok {
+		err := fmt.Errorf("the field '_azureScopes' should be a string array of scopes")
 		return nil, err
 	}
-
-	resourceId.Path = path.Join(resourceId.Path, ".default")
-	scopes := []string{resourceId.String()}
 
 	return scopes, nil
 }

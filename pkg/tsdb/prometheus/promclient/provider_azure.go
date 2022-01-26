@@ -2,6 +2,8 @@ package promclient
 
 import (
 	"fmt"
+	"net/url"
+	"path"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -18,13 +20,21 @@ func (p *Provider) configureAzureAuthentication(opts sdkhttpclient.Options) erro
 	if credentials != nil {
 		opts.CustomOptions["_azureCredentials"] = credentials
 
-		resourceId, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
+		resourceIdStr, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
 		if err != nil {
 			return err
 		}
 
-		if resourceId != "" {
-			opts.CustomOptions["azureEndpointResourceId"] = resourceId
+		if resourceIdStr != "" {
+			resourceId, err := url.Parse(resourceIdStr)
+			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+				err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", resourceIdStr)
+				return err
+			}
+
+			resourceId.Path = path.Join(resourceId.Path, ".default")
+			scopes := []string{resourceId.String()}
+			opts.CustomOptions["_azureScopes"] = scopes
 		}
 	}
 

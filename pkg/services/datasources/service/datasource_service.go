@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -303,6 +305,7 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		}
 	}
 
+	// Azure authentication
 	if ds.JsonData != nil {
 		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), s.DecryptedValues(ds))
 		if err != nil {
@@ -312,6 +315,19 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 
 		if credentials != nil {
 			opts.CustomOptions["_azureCredentials"] = credentials
+
+			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
+			if resourceIdStr != "" {
+				resourceId, err := url.Parse(resourceIdStr)
+				if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+					err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", resourceIdStr)
+					return nil, err
+				}
+
+				resourceId.Path = path.Join(resourceId.Path, ".default")
+				scopes := []string{resourceId.String()}
+				opts.CustomOptions["_azureScopes"] = scopes
+			}
 		}
 	}
 
