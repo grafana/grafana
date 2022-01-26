@@ -1,6 +1,11 @@
 package channels
 
-import "time"
+import (
+	"context"
+	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 // mockTimeNow replaces function timeNow to return constant time.
 // It returns a function that resets the variable back to its original value.
@@ -21,3 +26,20 @@ func mockTimeNow(constTime time.Time) func() {
 func resetTimeNow() {
 	timeNow = time.Now
 }
+
+type notificationServiceMock struct {
+	Webhook     models.SendWebhookSync
+	Email       models.SendEmailCommandSync
+	ShouldError error
+}
+
+func (ns *notificationServiceMock) SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error {
+	ns.Webhook = *cmd
+	return ns.ShouldError
+}
+func (ns *notificationServiceMock) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+	ns.Email = *cmd
+	return ns.ShouldError
+}
+
+func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
