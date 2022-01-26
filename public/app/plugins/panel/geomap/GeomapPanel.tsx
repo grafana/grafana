@@ -288,6 +288,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.forceUpdate(); // first render
 
     // Tooltip listener
+    this.map.on('singleclick', this.pointerClickListener);
     this.map.on('pointermove', this.pointerMoveListener);
     this.map.getViewport().addEventListener('mouseout', (evt) => {
       this.props.eventBus.publish(new DataHoverClearEvent());
@@ -310,9 +311,17 @@ export class GeomapPanel extends Component<Props, State> {
     }
   };
 
+  pointerClickListener = (evt: MapBrowserEvent<UIEvent>) => {
+    if (this.pointerMoveListener(evt)) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      console.log('CLICK!!!', this.state.ttip?.features);
+    }
+  };
+
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
     if (!this.map) {
-      return;
+      return false;
     }
     const mouse = evt.originalEvent as any;
     const pixel = this.map.getEventPixel(mouse);
@@ -361,6 +370,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     this.setState({ ttip: { ...hoverPayload } });
+    return features.length ? true : false;
   };
 
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
