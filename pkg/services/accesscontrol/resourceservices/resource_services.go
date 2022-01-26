@@ -2,6 +2,7 @@ package resourceservices
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -11,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*ResourceServices, error) {
+func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*ResourceServices, error) {
 	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
@@ -32,19 +33,19 @@ func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
 
 var (
 	TeamMemberActions = []string{
-		"teams:read",
+		accesscontrol.ActionTeamsRead,
 	}
 
 	TeamAdminActions = []string{
-		"teams:read",
-		"teams:delete",
-		"teams:write",
-		"teams.permissions:read",
-		"teams.permissions:write",
+		accesscontrol.ActionTeamsRead,
+		accesscontrol.ActionTeamsDelete,
+		accesscontrol.ActionTeamsWrite,
+		accesscontrol.ActionTeamsPermissionsRead,
+		accesscontrol.ActionTeamsPermissionsWrite,
 	}
 )
 
-func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store accesscontrol.ResourcePermissionsStore) (*resourcepermissions.Service, error) {
+func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
@@ -54,7 +55,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 				return err
 			}
 
-			err = sqlstore.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
+			err = sql.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
 				OrgId: orgID,
 				Id:    id,
 			})
@@ -76,18 +77,27 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
-		OnSetUser: func(ctx context.Context, orgID, userID int64, resourceID, permission string) error {
-			switch permission {
-			case "":
-				// call handler remove user from team
-			case "Member":
-				// call handler to add member
-			case "Admin":
-				// call handler to add admin
+		OnSetUser: func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error {
+			teamId, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
 			}
-			return nil
+			switch permission {
+			case "Member":
+				return sqlstore.AddOrUpdateTeamMemberHook(session, userID, orgID, teamId, false, 0)
+			case "Admin":
+				return sqlstore.AddOrUpdateTeamMemberHook(session, userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+			case "":
+				return sqlstore.RemoveTeamMemberHook(session, &models.RemoveTeamMemberCommand{
+					OrgId:  orgID,
+					UserId: userID,
+					TeamId: teamId,
+				})
+			default:
+				return fmt.Errorf("invalid team permission type %s", permission)
+			}
 		},
 	}
 
-	return resourcepermissions.New(options, router, ac, store)
+	return resourcepermissions.New(options, router, ac, store, sql)
 }

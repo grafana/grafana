@@ -20,6 +20,17 @@ export enum Interval {
   Millisecond = 'millisecond',
 }
 
+const UNITS = [
+  Interval.Year,
+  Interval.Month,
+  Interval.Week,
+  Interval.Day,
+  Interval.Hour,
+  Interval.Minute,
+  Interval.Second,
+  Interval.Millisecond,
+];
+
 const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
   [Interval.Year]: 31536000,
   [Interval.Month]: 2592000,
@@ -206,17 +217,6 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     return v;
   }
 
-  const units = [
-    { long: Interval.Year },
-    { long: Interval.Month },
-    { long: Interval.Week },
-    { long: Interval.Day },
-    { long: Interval.Hour },
-    { long: Interval.Minute },
-    { long: Interval.Second },
-    { long: Interval.Millisecond },
-  ];
-
   // convert $size to milliseconds
   // intervals_in_seconds uses seconds (duh), convert them to milliseconds here to minimize floating point errors
   size *= INTERVALS_IN_SECONDS[timeScale] * 1000;
@@ -231,13 +231,13 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     decimalsCount = decimals as number;
   }
 
-  for (let i = 0; i < units.length && decimalsCount >= 0; i++) {
-    const interval = INTERVALS_IN_SECONDS[units[i].long] * 1000;
+  for (let i = 0; i < UNITS.length && decimalsCount >= 0; i++) {
+    const interval = INTERVALS_IN_SECONDS[UNITS[i]] * 1000;
     const value = size / interval;
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
       const floor = Math.floor(value);
-      const unit = units[i].long + (floor !== 1 ? 's' : '');
+      const unit = UNITS[i] + (floor !== 1 ? 's' : '');
       strings.push(floor + ' ' + unit);
       size = size % interval;
       decimalsCount--;

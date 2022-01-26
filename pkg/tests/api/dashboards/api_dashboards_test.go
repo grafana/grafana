@@ -32,6 +32,7 @@ func TestDashboardQuota(t *testing.T) {
 		EnableQuota:       true,
 		DashboardOrgQuota: &dashboardQuota,
 	})
+
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, models.CreateUserCommand{

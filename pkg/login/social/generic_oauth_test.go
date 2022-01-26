@@ -728,6 +728,14 @@ func TestPayloadCompression(t *testing.T) {
 			ExpectedEmail: "john.doe@example.com",
 		},
 		{
+			Name: "Given a valid DEFLATE compressed id_token with numeric header, return userInfo",
+			OAuth2Extra: map[string]interface{}{
+				// Generated from https://token.dev/
+				"id_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsInZlciI6NH0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTY0MjUxNjYwNSwiZXhwIjoxNjQyNTIwMjA1LCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.ANndoPWIHNjKPG8na7UUq7nan1RgF8-ze8STU31RXcA",
+			},
+			ExpectedEmail: "john.doe@example.com",
+		},
+		{
 			Name: "Given an invalid DEFLATE compressed id_token, return nil",
 			OAuth2Extra: map[string]interface{}{
 				// { "role": "Admin", "email": "john.doe@example.com" }

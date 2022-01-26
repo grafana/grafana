@@ -28,6 +28,11 @@ export interface DataSourceSrv {
     ref?: DataSourceRef | string | null,
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined;
+
+  /**
+   * Reloads the DataSourceSrv
+   */
+  reload(): void;
 }
 
 /** @public */

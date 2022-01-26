@@ -70,21 +70,48 @@ func (s *ServiceAccountsStoreImpl) UpgradeServiceAccounts(ctx context.Context) e
 		s.log.Info("Launching background thread to upgrade API keys to service accounts", "numberKeys", len(basicKeys))
 		go func() {
 			for _, key := range basicKeys {
-				sa, err := s.sqlStore.CreateServiceAccountForApikey(ctx, key.OrgId, key.Name, key.Role)
+				err := s.CreateServiceAccountFromApikey(ctx, key)
 				if err != nil {
-					s.log.Error("Failed to create service account for API key", "err", err, "keyId", key.Id)
-					continue
+					s.log.Error("migating to service accounts failed with error", err)
 				}
-
-				err = s.sqlStore.UpdateApikeyServiceAccount(ctx, key.Id, sa.Id)
-				if err != nil {
-					s.log.Error("Failed to attach new service account to API key", "err", err, "keyId", key.Id, "newServiceAccountId", sa.Id)
-					continue
-				}
-				s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
 			}
 		}()
 	}
+	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
+	basicKeys := s.sqlStore.GetNonServiceAccountAPIKeys(ctx)
+	if len(basicKeys) == 0 {
+		return nil
+	}
+	if len(basicKeys) != len(keys) {
+		return fmt.Errorf("one of the keys already has a serviceaccount")
+	}
+	for _, key := range basicKeys {
+		if !contains(keys, key.Id) {
+			s.log.Error("convert service accounts stopped for keyId %d as it is not part of the query to convert or already has a service account", key.Id)
+			continue
+		}
+		err := s.CreateServiceAccountFromApikey(ctx, key)
+		if err != nil {
+			s.log.Error("converting to service accounts failed with error", err)
+		}
+	}
+	return nil
+}
+
+func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
+	sa, err := s.sqlStore.CreateServiceAccountForApikey(ctx, key.OrgId, key.Name, key.Role)
+	if err != nil {
+		return fmt.Errorf("failed to create service account for API key with error : %w", err)
+	}
+
+	err = s.sqlStore.UpdateApikeyServiceAccount(ctx, key.Id, sa.Id)
+	if err != nil {
+		return fmt.Errorf("failed to attach new service account to API key for keyId: %d and newServiceAccountId: %d with error: %w", key.Id, sa.Id, err)
+	}
+	s.log.Debug("Updated basic api key", "keyId", key.Id, "newServiceAccountId", sa.Id)
 	return nil
 }
 
@@ -125,4 +152,13 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	}
 
 	return query.Result[0], err
+}
+
+func contains(s []int64, e int64) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
