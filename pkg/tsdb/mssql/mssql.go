@@ -79,10 +79,6 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			return nil, err
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
-		}
-
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mssql",
 			ConnectionString:  cnnstr,
@@ -139,7 +135,14 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 		}
 	}
 
-	logger.Info("Generating connection string from", "args", dsInfo)
+	args := []interface{}{
+		"url", dsInfo.URL, "host", addr.Host,
+	}
+	if addr.Port != "0" {
+		args = append(args, "port", addr.Port)
+	}
+	logger.Debug("Generating connection string", args...)
+
 	encrypt := dsInfo.JsonData.Encrypt
 	tlsSkipVerify := dsInfo.JsonData.TlsSkipVerify
 	hostNameInCertificate := dsInfo.JsonData.Servername
@@ -164,7 +167,6 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 			connStr += fmt.Sprintf("certificate=%s;", certificate)
 		}
 	}
-	logger.Info("connection", "value", connStr)
 	return connStr, nil
 }
 

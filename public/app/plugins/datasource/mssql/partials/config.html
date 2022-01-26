@@ -49,9 +49,9 @@
 <div class="gf-form-group">
 
 	<div class="gf-form">
-		<label class="gf-form-label width-15">Encrypt</label>
+		<label class="gf-form-label width-15" for="encrypt-select">Encrypt</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-			<select class="gf-form-input" ng-model="ctrl.current.jsonData.encrypt" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsonData.encrypt" ng-change="ctrl.onEncryptChange()"></select>
+			<select id="encrypt-select" class="gf-form-input" ng-model="ctrl.current.jsonData.encrypt" ng-options="mode for mode in ['disable', 'false', 'true']" ng-init="ctrl.current.jsonData.encrypt" ng-change="ctrl.onEncryptChange()" aria-labelledby="encrypt-label"></select>
 			<info-popover mode="right-absolute">
 				Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
 				<ul>
