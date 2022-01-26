@@ -66,9 +66,15 @@ type RenderCSVResult struct {
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
 
+type FeatureSupportRequestResult struct {
+	IsSupported      bool
+	SemverConstraint string
+}
+
 type Service interface {
 	IsAvailable() bool
 	Version() string
+	SupportsFeature(feature Feature) (FeatureSupportRequestResult, error)
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
 	RenderErrorImage(theme Theme, error error) (*RenderResult, error)
