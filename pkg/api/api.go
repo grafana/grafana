@@ -180,13 +180,13 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Post("/", authorize(reqCanAccessTeams, ac.EvalPermission(ActionTeamsCreate)), routing.Wrap(hs.CreateTeam))
+			teamsRoute.Post("/", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), routing.Wrap(hs.CreateTeam))
 			teamsRoute.Put("/:teamId", reqCanAccessTeams, routing.Wrap(hs.UpdateTeam))
 			teamsRoute.Delete("/:teamId", reqCanAccessTeams, routing.Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", reqCanAccessTeams, routing.Wrap(hs.GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", reqCanAccessTeams, routing.Wrap(hs.AddTeamMember))
-			teamsRoute.Put("/:teamId/members/:userId", reqCanAccessTeams, routing.Wrap(hs.UpdateTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", reqCanAccessTeams, routing.Wrap(hs.RemoveTeamMember))
+			teamsRoute.Get("/:teamId/members", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsPermissionsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamMembers))
+			teamsRoute.Post("/:teamId/members", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.AddTeamMember))
+			teamsRoute.Put("/:teamId/members/:userId", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.UpdateTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsPermissionsWrite, ac.ScopeTeamsID)), routing.Wrap(hs.RemoveTeamMember))
 			teamsRoute.Get("/:teamId/preferences", reqCanAccessTeams, routing.Wrap(hs.GetTeamPreferences))
 			teamsRoute.Put("/:teamId/preferences", reqCanAccessTeams, routing.Wrap(hs.UpdateTeamPreferences))
 		})
