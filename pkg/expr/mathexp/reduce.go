@@ -69,6 +69,17 @@ func Count(fv *Float64Field) *float64 {
 	return &f
 }
 
+func Last(fv *Float64Field) *float64 {
+	var f float64
+	if fv.Len() == 0 {
+		f = math.NaN()
+		return &f
+	}
+	v := fv.GetValue(fv.Len() - 1)
+	f = *v
+	return &f
+}
+
 // Reduce turns the Series into a Number based on the given reduction function
 func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	var l data.Labels
@@ -90,6 +101,8 @@ func (s Series) Reduce(refID, rFunc string) (Number, error) {
 		f = Max(&floatField)
 	case "count":
 		f = Count(&floatField)
+	case "last":
+		f = Last(&floatField)
 	default:
 		return number, fmt.Errorf("reduction %v not implemented", rFunc)
 	}

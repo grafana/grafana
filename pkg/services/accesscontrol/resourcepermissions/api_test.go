@@ -155,16 +155,16 @@ func TestApi_getPermissions(t *testing.T) {
 			// seed team 1 with "Edit" permission on dashboard 1
 			team, err := sql.CreateTeam("test", "test@test.com", 1)
 			require.NoError(t, err)
-			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, tt.resourceID, "Edit")
 			require.NoError(t, err)
 			// seed user 1 with "View" permission on dashboard 1
 			u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
 			require.NoError(t, err)
-			_, err = service.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, []string{"dashboards:read"})
+			_, err = service.SetUserPermission(context.Background(), u.OrgId, u.Id, tt.resourceID, "View")
 			require.NoError(t, err)
 
-			// seed built in role Admin with "View" permission on dashboard 1
-			_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, []string{"dashboards:read", "dashboards:write", "dashboards:delete"})
+			// seed built in role Admin with "Edit" permission on dashboard 1
+			_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", tt.resourceID, "Edit")
 			require.NoError(t, err)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)

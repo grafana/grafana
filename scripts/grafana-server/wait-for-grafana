@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 
-. e2e/variables
+. scripts/grafana-server/variables
 
 HOST=${HOST:-$DEFAULT_HOST}
 PORT=${PORT:-$DEFAULT_PORT}

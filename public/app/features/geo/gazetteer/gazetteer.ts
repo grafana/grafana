@@ -161,7 +161,16 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
       }
       return undefined;
     },
-    examples: (v) => [],
+    examples: (v) => {
+      const ex: string[] = [];
+      for (let k of lookup.keys()) {
+        ex.push(k);
+        if (ex.length > v) {
+          break;
+        }
+      }
+      return ex;
+    },
     frame: () => frame,
     count: frame.length,
   };

@@ -103,49 +103,6 @@ func TestInitializer_Initialize(t *testing.T) {
 	})
 }
 
-func TestInitializer_InitializeWithFactory(t *testing.T) {
-	t.Run("happy path", func(t *testing.T) {
-		p := &plugins.Plugin{}
-		i := &Initializer{
-			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
-		}
-
-		factoryInvoked := false
-
-		factory := backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
-			factoryInvoked = true
-			return testPlugin{}, nil
-		})
-
-		err := i.InitializeWithFactory(p, factory)
-		assert.NoError(t, err)
-
-		assert.True(t, factoryInvoked)
-		client, exists := p.Client()
-		assert.True(t, exists)
-		assert.NotNil(t, client.(testPlugin))
-	})
-
-	t.Run("invalid factory", func(t *testing.T) {
-		p := &plugins.Plugin{}
-		i := &Initializer{
-			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-		}
-
-		err := i.InitializeWithFactory(p, nil)
-		assert.Errorf(t, err, "could not initialize plugin test-plugin")
-
-		c, exists := p.Client()
-		assert.False(t, exists)
-		assert.Nil(t, c)
-	})
-}
-
 func TestInitializer_envVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
 		p := &plugins.Plugin{
@@ -252,10 +209,6 @@ func (*testLicensingService) EnabledFeatures() map[string]bool {
 
 func (*testLicensingService) FeatureEnabled(feature string) bool {
 	return false
-}
-
-type testPlugin struct {
-	backendplugin.Plugin
 }
 
 type fakeLogger struct {

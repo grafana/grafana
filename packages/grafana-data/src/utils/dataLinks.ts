@@ -1,11 +1,13 @@
 import {
   DataLink,
   DataQuery,
+  ExplorePanelsState,
   Field,
   InternalDataLink,
   InterpolateFunction,
   LinkModel,
   ScopedVars,
+  SplitOpen,
   TimeRange,
 } from '../types';
 import { locationUtil } from './location';
@@ -33,26 +35,28 @@ export type LinkToExploreOptions = {
   range: TimeRange;
   field: Field;
   internalLink: InternalDataLink;
-  onClickFn?: (options: { datasourceUid: string; query: any; range?: TimeRange }) => void;
+  onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
 };
 
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
   const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
-  const interpolatedQuery = interpolateQuery(link, scopedVars, replaceVariables);
+  const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
+  const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
 
   return {
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(internalLink.datasourceName, interpolatedQuery, range),
+    href: generateInternalHref(internalLink.datasourceName, interpolatedQuery, range, interpolatedPanelsState),
     onClick: onClickFn
       ? () => {
           onClickFn({
             datasourceUid: internalLink.datasourceUid,
             query: interpolatedQuery,
+            panelsState: interpolatedPanelsState,
             range,
           });
         }
@@ -65,26 +69,32 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 /**
  * Generates href for internal derived field link.
  */
-function generateInternalHref<T extends DataQuery = any>(datasourceName: string, query: T, range: TimeRange): string {
+function generateInternalHref<T extends DataQuery = any>(
+  datasourceName: string,
+  query: T,
+  range: TimeRange,
+  panelsState?: ExplorePanelsState
+): string {
   return locationUtil.assureBaseUrl(
     `/explore?left=${encodeURIComponent(
       serializeStateToUrlParam({
         range: range.raw,
         datasource: datasourceName,
         queries: [query],
+        panelsState: panelsState,
       })
     )}`
   );
 }
 
-function interpolateQuery<T extends DataQuery = any>(
-  link: DataLink,
+function interpolateObject<T extends object>(
+  object: T | undefined,
   scopedVars: ScopedVars,
   replaceVariables: InterpolateFunction
 ): T {
   let stringifiedQuery = '';
   try {
-    stringifiedQuery = JSON.stringify(link.internal?.query || '');
+    stringifiedQuery = JSON.stringify(object || {});
   } catch (err) {
     // should not happen and not much to do about this, possibly something non stringifiable in the query
     console.error(err);

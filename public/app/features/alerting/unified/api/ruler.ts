@@ -108,9 +108,6 @@ async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string,
     }
 
     const notFoundError = error.status === 404;
-    const rulerNotSupported =
-      error.status === 500 &&
-      error.data.error?.includes('unexpected content type from upstream. expected YAML, got text/html');
 
     if (notFoundError) {
       // the endpoint will return 404 but confirm that it's a Cortex endpoint
@@ -119,7 +116,7 @@ async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string,
       }
       // any other 404 should throw an exception
       throw new Error('404 from rules config endpoint. Perhaps ruler API is not enabled?');
-    } else if (rulerNotSupported) {
+    } else if (isRulerNotSupported(error)) {
       // assert if the endoint is not supported at all
       throw {
         ...error,
@@ -139,8 +136,15 @@ function isResponseError(error: unknown): error is FetchResponse<ErrorResponseMe
   return hasErrorCode && hasErrorMessage;
 }
 
+function isRulerNotSupported(error: FetchResponse<ErrorResponseMessage>) {
+  return (
+    error.status === 500 &&
+    error.data.message?.includes('unexpected content type from upstream. expected YAML, got text/html')
+  );
+}
+
 function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
-  return error.data.error?.includes('group does not exist') || error.data.error?.includes('no rule groups found');
+  return error.data.message?.includes('group does not exist') || error.data.message?.includes('no rule groups found');
 }
 
 export async function deleteNamespace(dataSourceName: string, namespace: string): Promise<void> {
