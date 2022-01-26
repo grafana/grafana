@@ -1,10 +1,12 @@
-import React from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Metrics, LabelFilter, GroupBy, Preprocessor, Alignment } from '.';
-import { MetricQuery, MetricDescriptor, CustomMetaData, SLOQuery } from '../types';
+import React from 'react';
+
+import { Alignment, GroupBy, LabelFilter, Metrics, Preprocessor } from '.';
 import CloudMonitoringDatasource from '../datasource';
+import { CustomMetaData, MetricDescriptor, MetricQuery, SLOQuery } from '../types';
 
 export interface Props {
+  refId: string;
   customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
   onMetricTypeChange: (query: MetricDescriptor) => void;
@@ -15,6 +17,7 @@ export interface Props {
 }
 
 function Editor({
+  refId,
   query,
   labels,
   datasource,
@@ -25,6 +28,7 @@ function Editor({
 }: React.PropsWithChildren<Props>) {
   return (
     <Metrics
+      refId={refId}
       templateSrv={datasource.templateSrv}
       projectName={query.projectName}
       metricType={query.metricType}
@@ -42,6 +46,7 @@ function Editor({
           />
           <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
           <GroupBy
+            refId={refId}
             labels={Object.keys(labels)}
             query={query}
             onChange={onChange}
@@ -49,6 +54,7 @@ function Editor({
             metricDescriptor={metric}
           />
           <Alignment
+            refId={refId}
             datasource={datasource}
             templateVariableOptions={variableOptionGroup.options}
             query={query}

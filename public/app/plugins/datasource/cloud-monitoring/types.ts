@@ -1,13 +1,9 @@
 import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
-
-export enum AuthType {
-  JWT = 'jwt',
-  GCE = 'gce',
-}
+import { GoogleAuthType } from '@grafana/google-sdk';
 
 export const authTypes: Array<SelectableValue<string>> = [
-  { label: 'Google JWT File', value: AuthType.JWT },
-  { label: 'GCE Default Service Account', value: AuthType.GCE },
+  { label: 'Google JWT File', value: GoogleAuthType.JWT },
+  { label: 'GCE Default Service Account', value: GoogleAuthType.GCE },
 ];
 
 export enum MetricFindQueryTypes {
@@ -153,7 +149,7 @@ export interface CloudMonitoringQuery extends DataQuery {
 export interface CloudMonitoringOptions extends DataSourceJsonData {
   defaultProject?: string;
   gceDefaultProject?: string;
-  authenticationType?: string;
+  authenticationType: GoogleAuthType;
   clientEmail?: string;
   tokenUri?: string;
 }
