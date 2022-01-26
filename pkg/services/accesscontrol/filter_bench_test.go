@@ -33,7 +33,6 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
 		query, args, err := accesscontrol.Filter(
 			context.Background(),
-			&FakeDriver{name: "sqlite3"},
 			"data_source.id",
 			"datasources",
 			"datasources:read",
