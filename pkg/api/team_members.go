@@ -75,7 +75,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(400, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, getPermissionName(cmd.Permission))
 	if err != nil {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
@@ -115,11 +115,21 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(404, "Team member not found.", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, userId, orgId, teamId, false, cmd.Permission)
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, userId, orgId, teamId, getPermissionName(cmd.Permission))
 	if err != nil {
 		return response.Error(500, "Failed to update team member.", err)
 	}
 	return response.Success("Team member updated")
+}
+
+func getPermissionName(permission models.PermissionType) string {
+	permissionName := permission.String()
+	// Team member permission is 0, which maps to an empty string.
+	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.
+	if permissionName == "" {
+		permissionName = "Member"
+	}
+	return permissionName
 }
 
 // DELETE /api/teams/:teamId/members/:userId
@@ -141,7 +151,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, userId, teamIDString, []string{}); err != nil {
+	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, userId, teamIDString, ""); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
@@ -158,17 +168,10 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // addOrUpdateTeamMember adds or updates a team member.
 //
 // Stubbable by tests.
-var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
-	permission models.PermissionType) error {
-	permissionString := permission.String()
-	// Team member permission is 0, which maps to an empty string.
-	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.
-	if permissionString == "" {
-		permissionString = "Member"
-	}
-	actions := resourcePermissionService.MapPermission(permissionString)
+var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, permission string) error {
 	teamIDString := strconv.FormatInt(teamID, 10)
-	_, err := resourcePermissionService.SetUserPermission(context.TODO(), orgID, userID, teamIDString, actions)
-
-	return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
+	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, userID, teamIDString, permission); err != nil {
+		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
+	}
+	return nil
 }

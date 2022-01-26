@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -94,8 +95,8 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		}
 
 		addTeamMemberCalled := 0
-		addOrUpdateTeamMember = func(resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, isExternal bool,
-			permission models.PermissionType) error {
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
+			permission string) error {
 			addTeamMemberCalled++
 			return nil
 		}
@@ -180,7 +181,7 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: ActionTeamsCreate}}, 1)
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}, 1)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})

@@ -345,8 +345,9 @@ func isTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (boo
 	return true, nil
 }
 
-// AddOrUpdateTeamMember adds user to a team or updates user permissions in a team
-func (ss *SQLStore) AddOrUpdateTeamMember(sess *DBSession, userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+// AddOrUpdateTeamMemberHook is called from team resource permission service
+// it adds user to a team or updates user permissions in a team within the given transaction session
+func (ss *SQLStore) AddOrUpdateTeamMemberHook(sess *DBSession, userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
 		isMember, err := isTeamMember(sess, orgID, teamID, userID)
 		if err != nil {
 			return err
@@ -404,27 +405,37 @@ func updateTeamMember(sess *DBSession, orgID, teamID, userID int64, permission m
 // RemoveTeamMember removes a member from a team
 func (ss *SQLStore) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
-			return err
-		}
-
-		_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
-		if err != nil {
-			return err
-		}
-
-		var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
-		res, err := sess.Exec(rawSQL, cmd.OrgId, cmd.TeamId, cmd.UserId)
-		if err != nil {
-			return err
-		}
-		rows, err := res.RowsAffected()
-		if rows == 0 {
-			return models.ErrTeamMemberNotFound
-		}
-
-		return err
+		return removeTeamMember(sess, cmd)
 	})
+}
+
+// RemoveTeamMemberHook is called from team resource permission service
+// it removes a member from a team within the given transaction session
+func RemoveTeamMemberHook(sess *DBSession, cmd *models.RemoveTeamMemberCommand) error {
+	return removeTeamMember(sess, cmd)
+}
+
+func removeTeamMember(sess *DBSession, cmd *models.RemoveTeamMemberCommand) error {
+	if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+		return err
+	}
+
+	_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
+	if err != nil {
+		return err
+	}
+
+	var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
+	res, err := sess.Exec(rawSQL, cmd.OrgId, cmd.TeamId, cmd.UserId)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if rows == 0 {
+		return models.ErrTeamMemberNotFound
+	}
+
+	return err
 }
 
 func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool, error) {
