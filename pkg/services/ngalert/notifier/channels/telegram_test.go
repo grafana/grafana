@@ -98,9 +98,10 @@ func TestTelegramNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewTelegramNotifier(m, tmpl, decryptFn)
+			pn, err := NewTelegramNotifier(m, webhookSender, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
