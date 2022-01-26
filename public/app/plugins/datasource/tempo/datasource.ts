@@ -310,6 +310,15 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         throw new Error(errorRes.error!.message);
       }
 
+      if (responses[0].data.length === 0) {
+        return {
+          error: {
+            message: 'No service graph data found. Please check your linked datasource is configured correctly.',
+          },
+          data: [],
+        };
+      }
+
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
       nodes.fields[0].config = {
         links: [

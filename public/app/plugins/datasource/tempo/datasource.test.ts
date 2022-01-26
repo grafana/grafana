@@ -117,6 +117,24 @@ describe('Tempo data source', () => {
     expect(response.state).toBe(LoadingState.Done);
   });
 
+  it('should return error if no service graph data returned', async () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        serviceMap: {
+          datasourceUid: 'prom',
+        },
+      },
+    });
+    setDataSourceSrv(backendSrvWithEmptyPrometheus as any);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+    );
+
+    expect(response.data).toEqual([]);
+    expect(response.error).toBeTruthy();
+  });
+
   it('should handle json file upload', async () => {
     const ds = new TempoDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
@@ -225,6 +243,19 @@ const backendSrvWithPrometheus = {
       return {
         query() {
           return of({ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] });
+        },
+      };
+    }
+    throw new Error('unexpected uid');
+  },
+};
+
+const backendSrvWithEmptyPrometheus = {
+  async get(uid: string) {
+    if (uid === 'prom') {
+      return {
+        query() {
+          return of({ data: [] });
         },
       };
     }
