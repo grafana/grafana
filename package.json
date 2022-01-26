@@ -266,7 +266,7 @@
     "@visx/group": "2.1.0",
     "@visx/scale": "2.2.2",
     "@visx/shape": "2.4.0",
-    "@visx/tooltip": "2.2.2",
+    "@visx/tooltip": "2.8.0",
     "@welldone-software/why-did-you-render": "6.2.3",
     "angular": "1.8.2",
     "angular-bindonce": "0.3.1",
