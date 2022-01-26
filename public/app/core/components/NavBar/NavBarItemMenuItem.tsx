@@ -63,7 +63,7 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
       </li>
       {item.value.highlightText && (
         <li className={styles.upgradeBoxContainer}>
-          <UpgradeBox text={item.value.highlightText} className={styles.upgradeBox} />
+          <UpgradeBox text={item.value.highlightText} className={styles.upgradeBox} size={'sm'} />
         </li>
       )}
     </>
