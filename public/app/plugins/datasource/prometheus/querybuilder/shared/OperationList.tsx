@@ -94,7 +94,14 @@ export function OperationList<T extends QueryWithOperations>({
           </DragDropContext>
         )}
         <div className={styles.addButton}>
-          <ButtonCascader key="cascader" icon="plus" options={addOptions} onChange={onAddOperation} />
+          <ButtonCascader
+            key="cascader"
+            icon="plus"
+            options={addOptions}
+            onChange={onAddOperation}
+            variant="secondary"
+            hideDownIcon={true}
+          />
         </div>
       </Stack>
     </Stack>

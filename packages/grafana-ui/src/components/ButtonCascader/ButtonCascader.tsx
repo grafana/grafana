@@ -7,7 +7,8 @@ import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button } from '../Button';
+import { Button, ButtonProps } from '../Button';
+import { Icon } from '../Icon/Icon';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -20,6 +21,9 @@ export interface ButtonCascaderProps {
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;
   className?: string;
+  variant?: ButtonProps['variant'];
+  buttonProps?: ButtonProps;
+  hideDownIcon?: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -40,9 +44,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 });
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
-  const { onChange, className, loadData, icon, ...rest } = props;
+  const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  // Weird way to do this bit it goes around a styling issue in Button where even null/undefined child triggers
+  // styling change which messes up the look if there is only single icon content.
+  let content: any = props.children;
+  if (!hideDownIcon) {
+    content = [props.children, <Icon key={'down-icon'} name="angle-down" className={styles.icons.right} />];
+  }
 
   return (
     <RCCascader
@@ -52,9 +63,8 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
       {...rest}
       expandIcon={null}
     >
-      <Button icon={icon} disabled={props.disabled} variant="secondary">
-        {props.children}
-        {/* <Icon name="angle-down" className={styles.icons.right} /> */}
+      <Button icon={icon} disabled={disabled} variant={variant} {...(buttonProps ?? {})}>
+        {content}
       </Button>
     </RCCascader>
   );
