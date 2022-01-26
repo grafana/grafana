@@ -206,7 +206,7 @@ export type RichHistoryQuery = {
   datasourceName: string;
   datasourceId: string;
   starred: boolean;
-  comment: string | undefined;
+  comment: string;
   queries: DataQuery[];
   sessionName: string;
   timeRange?: string;

@@ -2,7 +2,7 @@
 import { omit } from 'lodash';
 
 // Services & Utils
-import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } from '@grafana/data';
+import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
@@ -338,7 +338,7 @@ export function notEmptyQuery(query: DataQuery) {
 
 export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
   return queries.filter((query) => {
-    if (query.comment?.includes(searchFilter)) {
+    if (query.comment.includes(searchFilter)) {
       return true;
     }
 

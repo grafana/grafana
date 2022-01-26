@@ -72,9 +72,9 @@ describe('richHistory', () => {
       mock.storedHistory[0],
     ];
 
-    it('should append query to query history', () => {
+    it('should append query to query history', async () => {
       Date.now = jest.fn(() => 2);
-      const { richHistory: newHistory } = addToRichHistory(
+      const { richHistory: newHistory } = await addToRichHistory(
         mock.storedHistory,
         mock.testDatasourceId,
         mock.testDatasourceName,
@@ -106,9 +106,9 @@ describe('richHistory', () => {
       expect(store.getObject(key)).toMatchObject(expectedResult);
     });
 
-    it('should not append duplicated query to query history', () => {
+    it('should not append duplicated query to query history', async () => {
       Date.now = jest.fn(() => 2);
-      const { richHistory: newHistory } = addToRichHistory(
+      const { richHistory: newHistory } = await addToRichHistory(
         mock.storedHistory,
         mock.storedHistory[0].datasourceId,
         mock.storedHistory[0].datasourceName,
@@ -138,7 +138,7 @@ describe('richHistory', () => {
       expect(store.exists(key)).toBeFalsy();
     });
 
-    it('should not save more than MAX_HISTORY_ITEMS', () => {
+    it('should not save more than MAX_HISTORY_ITEMS', async () => {
       Date.now = jest.fn(() => 2);
       const extraItems = 100;
 
@@ -160,7 +160,7 @@ describe('richHistory', () => {
       expect(history.filter((h) => h.starred)).toHaveLength(starredItemsInHistory);
       expect(history.filter((h) => !h.starred)).toHaveLength(notStarredItemsInHistory);
 
-      const { richHistory: newHistory } = addToRichHistory(
+      const { richHistory: newHistory } = await addToRichHistory(
         (history as any) as RichHistoryQuery[],
         mock.storedHistory[0].datasourceId,
         mock.storedHistory[0].datasourceName,
@@ -180,20 +180,20 @@ describe('richHistory', () => {
   });
 
   describe('updateStarredInRichHistory', () => {
-    it('should update starred in query in history', () => {
-      const updatedStarred = updateStarredInRichHistory(mock.storedHistory, 1);
+    it('should update starred in query in history', async () => {
+      const updatedStarred = await updateStarredInRichHistory(mock.storedHistory, 1);
       expect(updatedStarred[0].starred).toEqual(false);
     });
-    it('should update starred in localStorage', () => {
-      updateStarredInRichHistory(mock.storedHistory, 1);
+    it('should update starred in localStorage', async () => {
+      await updateStarredInRichHistory(mock.storedHistory, 1);
       expect(store.exists(key)).toBeTruthy();
       expect(store.getObject(key)[0].starred).toEqual(false);
     });
   });
 
   describe('updateCommentInRichHistory', () => {
-    it('should update comment in query in history', () => {
-      const updatedComment = updateCommentInRichHistory(mock.storedHistory, 1, 'new comment');
+    it('should update comment in query in history', async () => {
+      const updatedComment = await updateCommentInRichHistory(mock.storedHistory, 1, 'new comment');
       expect(updatedComment[0].comment).toEqual('new comment');
     });
     it('should update comment in localStorage', () => {
