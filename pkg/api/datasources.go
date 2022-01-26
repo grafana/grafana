@@ -307,11 +307,9 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	var err error
-	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
+	if cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64); err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
