@@ -749,7 +749,7 @@ func TestNotificationChannels(t *testing.T) {
 	// we try to issue a real POST request here
 	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
-			res.Body.Close()
+			_ = res.Body.Close()
 		}
 		return nil
 	}
