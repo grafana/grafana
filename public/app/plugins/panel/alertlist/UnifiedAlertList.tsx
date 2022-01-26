@@ -66,25 +66,25 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   // support for grouped view – filter already filtered rules for instances that match groupBy key
   // and use groupBy key for grouping
   type GroupedRules = Map<string, Alert[]>;
+  const groupByKeys = props.options.groupBy.split(',').map((s) => s.trim()); // TODO improve this
 
   const groupedRules = useMemo<GroupedRules>(() => {
-    const groupByKey = props.options.groupBy;
     const groupedRules = new Map();
 
-    const hasInstancesWithLabel = (rule: PromRuleWithLocation) =>
-      groupByKey ? (rule.rule.alerts ?? []).some((alert) => alert.labels[groupByKey]) : true;
+    const hasInstancesWithMatchingLabels = (rule: PromRuleWithLocation) =>
+      groupByKeys ? alertHasEveryLabel(rule, groupByKeys) : true;
 
-    const rulesWithCustomLabel = rules.filter(hasInstancesWithLabel);
-    rulesWithCustomLabel.forEach((rule: PromRuleWithLocation) => {
+    const matchingRules = rules.filter(hasInstancesWithMatchingLabels);
+    matchingRules.forEach((rule: PromRuleWithLocation) => {
       (rule.rule.alerts ?? []).forEach((alert) => {
-        const labelKey = groupByKey + '=' + alert.labels[groupByKey];
+        const labelKey = groupByKeys.map((key) => key + '=' + alert.labels[key]).join(',');
         const existingAlerts = groupedRules.get(labelKey) ?? [];
         groupedRules.set(labelKey, [...existingAlerts, alert]);
       });
     });
 
     return groupedRules;
-  }, [props.options.groupBy, rules]);
+  }, [groupByKeys, rules]);
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
@@ -99,7 +99,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
                 <div>
                   <div className={styles.customGroupDetails}>
                     <div className={styles.alertName} title={key}>
-                      <AlertLabel labelKey={key.split('=')[0]} value={key.split('=')[1]} />
+                      {key.split(',').map((key: string) => (
+                        <AlertLabel key={key} labelKey={key.split('=')[0]} value={key.split('=')[1]} />
+                      ))}
                     </div>
                   </div>
                   <AlertInstances alerts={alerts} options={props.options} />
@@ -157,6 +159,12 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       </div>
     </CustomScrollbar>
   );
+}
+
+function alertHasEveryLabel(rule: PromRuleWithLocation, groupByKeys: string[]) {
+  return groupByKeys.every((key) => {
+    return (rule.rule.alerts ?? []).some((alert) => alert.labels[key]);
+  });
 }
 
 function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
