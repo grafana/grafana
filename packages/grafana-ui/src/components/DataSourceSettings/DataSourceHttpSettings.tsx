@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
@@ -125,6 +126,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
+      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
     />
   );
@@ -135,13 +137,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField
-              aria-label="Datasource HTTP settings url"
-              label="URL"
-              labelWidth={13}
-              tooltip={urlTooltip}
-              inputEl={urlInput}
-            />
+            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
           </div>
 
           {showAccessOptions && (

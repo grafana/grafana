@@ -60,15 +60,15 @@ var (
 )
 
 const (
-	pluginID string = "stackdriver"
+	pluginID = "stackdriver"
 
-	gceAuthentication         string = "gce"
-	jwtAuthentication         string = "jwt"
-	metricQueryType           string = "metrics"
-	sloQueryType              string = "slo"
-	mqlEditorMode             string = "mql"
-	crossSeriesReducerDefault string = "REDUCE_NONE"
-	perSeriesAlignerDefault   string = "ALIGN_MEAN"
+	gceAuthentication         = "gce"
+	jwtAuthentication         = "jwt"
+	metricQueryType           = "metrics"
+	sloQueryType              = "slo"
+	mqlEditorMode             = "mql"
+	crossSeriesReducerDefault = "REDUCE_NONE"
+	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store,
