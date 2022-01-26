@@ -29,12 +29,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/repository"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -76,6 +79,7 @@ type HTTPServer struct {
 	Bus                       bus.Bus
 	RenderService             rendering.Service
 	Cfg                       *setting.Cfg
+	Features                  *featuremgmt.FeatureManager
 	SettingsProvider          setting.Provider
 	HooksService              *hooks.HooksService
 	CacheService              *localcache.CacheService
@@ -119,6 +123,7 @@ type HTTPServer struct {
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
+	TeamPermissionsService    *resourcepermissions.Service
 }
 
 type ServerOptions struct {
@@ -137,13 +142,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, pluginRepo repository.Repository,
-	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
+	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
+	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG, pluginRepo repository.Repository,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -170,6 +176,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AuthTokenService:          userTokenService,
 		cleanUpService:            cleanUpService,
 		ShortURLService:           shortURLService,
+		Features:                  features,
 		ThumbService:              thumbService,
 		RemoteCacheService:        remoteCache,
 		ProvisioningService:       provisioningService,
@@ -198,6 +205,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
 		serviceAccountsService:    serviceaccountsService,
+		TeamPermissionsService:    resourcePermissionServices.GetTeamService(),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
