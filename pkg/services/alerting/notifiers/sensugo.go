@@ -72,7 +72,7 @@ func init() {
 }
 
 // NewSensuGoNotifier is the constructor for the Sensu Go Notifier.
-func NewSensuGoNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
+func NewSensuGoNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), setting.SecretKey)
 

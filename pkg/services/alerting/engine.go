@@ -53,7 +53,7 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	notificationService *notifications.NotificationService, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *AlertEngine {
+	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
 		RenderService:     renderer,
@@ -183,7 +183,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
-	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.sqlStore)
 	evalContext.Ctx = alertCtx
 
 	go func() {

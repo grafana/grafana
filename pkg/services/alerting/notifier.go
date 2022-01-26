@@ -306,7 +306,7 @@ func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn, notif
 type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
 
 // NotifierFactory is a signature for creating notifiers.
-type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn, *notifications.NotificationService) (Notifier, error)
+type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 

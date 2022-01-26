@@ -25,13 +25,13 @@ type NotifierBase struct {
 	DisableResolveMessage bool
 	Frequency             time.Duration
 
-	NotificationService *notifications.NotificationService
+	NotificationService notifications.Service
 
 	log log.Logger
 }
 
 // NewNotifierBase returns a new `NotifierBase`.
-func NewNotifierBase(model *models.AlertNotification, notificationService *notifications.NotificationService) NotifierBase {
+func NewNotifierBase(model *models.AlertNotification, notificationService notifications.Service) NotifierBase {
 	uploadImage := true
 	if value, exists := model.Settings.CheckGet("uploadImage"); exists {
 		uploadImage = value.MustBool()

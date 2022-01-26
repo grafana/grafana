@@ -50,7 +50,7 @@ func init() {
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier
-func NewAlertmanagerNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
+func NewAlertmanagerNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	urlString := model.Settings.Get("url").MustString()
 	if urlString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}

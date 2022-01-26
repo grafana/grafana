@@ -61,7 +61,7 @@ func init() {
 }
 
 // NewSensuNotifier is the constructor for the Sensu Notifier.
-func NewSensuNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
+func NewSensuNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}

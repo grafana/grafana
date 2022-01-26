@@ -41,7 +41,7 @@ func init() {
 }
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
-func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns *notifications.NotificationService) (alerting.Notifier, error) {
+func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find kafka rest proxy endpoint property in settings"}
