@@ -145,19 +145,19 @@ func (hs *HTTPServer) registerRoutes() {
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
 			userRoute.Get("/", routing.Wrap(hs.GetSignedInUser))
-			userRoute.Put("/", routing.Wrap(UpdateSignedInUser))
-			userRoute.Post("/using/:id", routing.Wrap(UserSetUsingOrg))
-			userRoute.Get("/orgs", routing.Wrap(GetSignedInUserOrgList))
-			userRoute.Get("/teams", routing.Wrap(GetSignedInUserTeamList))
+			userRoute.Put("/", routing.Wrap(hs.UpdateSignedInUser))
+			userRoute.Post("/using/:id", routing.Wrap(hs.UserSetUsingOrg))
+			userRoute.Get("/orgs", routing.Wrap(hs.GetSignedInUserOrgList))
+			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
 
-			userRoute.Put("/password", routing.Wrap(ChangeUserPassword))
+			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(GetUserQuotas))
-			userRoute.Put("/helpflags/:id", routing.Wrap(SetHelpFlag))
+			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
 			// For dev purpose
-			userRoute.Get("/helpflags/clear", routing.Wrap(ClearHelpFlags))
+			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
 
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
@@ -171,12 +171,12 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
-			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersTeamRead, userIDScope)), routing.Wrap(GetUserTeams))
-			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(GetUserOrgList))
+			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersTeamRead, userIDScope)), routing.Wrap(hs.GetUserTeams))
+			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
-			usersRoute.Get("/lookup", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(GetUserByLoginOrEmail))
-			usersRoute.Put("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(UpdateUser))
-			usersRoute.Post("/:id/using/:orgId", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(UpdateUserActiveOrg))
+			usersRoute.Get("/lookup", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.GetUserByLoginOrEmail))
+			usersRoute.Put("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUser))
+			usersRoute.Post("/:id/using/:orgId", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUserActiveOrg))
 		})
 
 		// team (admin permission required)
