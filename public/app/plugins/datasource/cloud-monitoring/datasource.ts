@@ -187,7 +187,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
                 if (!acc[key]) {
                   acc[key] = new Set<string>();
                 }
-                acc[key].add(labels[key]);
+                if (labels[key]) {
+                  acc[key].add(labels[key]);
+                }
               }
               return acc;
             }, {});
