@@ -16,6 +16,7 @@ const (
 	FlagEnvelopeEncryption = "envelopeEncryption"
 
 	// FlagHttpclientproviderAzureAuth
+	// use http client for azure auth
 	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
 
 	// FlagServiceAccounts
@@ -59,7 +60,7 @@ const (
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
 	// FlagFullRangeLogsVolume
-	// Show full range logs volume in expore
+	// Show full range logs volume in explore
 	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
 
 	// FlagAccesscontrol
@@ -71,7 +72,7 @@ const (
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
 	// FlagNewNavigation
-	// Try the next gen naviation model
+	// Try the next gen navigation model
 	FlagNewNavigation = "newNavigation"
 
 	// FlagShowFeatureFlagsInUI
@@ -79,6 +80,7 @@ const (
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
 
 	// FlagDisableHttpRequestHistogram
+	// Do not create histograms for http requests
 	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
 
 	// FlagValidatedQueries

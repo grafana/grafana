@@ -22,8 +22,9 @@ var (
 		},
 
 		{
-			Name:  "httpclientprovider_azure_auth",
-			State: FeatureStateBeta,
+			Name:        "httpclientprovider_azure_auth",
+			Description: "use http client for azure auth",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "service-accounts",
@@ -83,7 +84,7 @@ var (
 		},
 		{
 			Name:         "fullRangeLogsVolume",
-			Description:  "Show full range logs volume in expore",
+			Description:  "Show full range logs volume in explore",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
@@ -100,7 +101,7 @@ var (
 		},
 		{
 			Name:        "newNavigation",
-			Description: "Try the next gen naviation model",
+			Description: "Try the next gen navigation model",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -110,8 +111,9 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:  "disable_http_request_histogram",
-			State: FeatureStateAlpha,
+			Name:        "disable_http_request_histogram",
+			Description: "Do not create histograms for http requests",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "validatedQueries",
