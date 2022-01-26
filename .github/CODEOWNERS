@@ -30,6 +30,7 @@ go.sum @grafana/backend-platform
 /scripts/drone/ @grafana/grafana-release-eng
 
 # Cloud Datasources backend code
+/pkg/tsdb/cloudwatch @grafana/cloud-datasources
 /pkg/tsdb/azuremonitor @grafana/cloud-datasources
 /pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
 
