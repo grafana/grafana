@@ -4,13 +4,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:            "caching",
-			Description:     "Temporarily store data source query results.",
-			State:           FeatureStateStable,
-			DocsURL:         "https://grafana.com/docs/grafana/latest/enterprise/query-caching/",
-			RequiresLicense: true,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,

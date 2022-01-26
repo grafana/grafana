@@ -3,10 +3,6 @@
 package featuremgmt
 
 const (
-	// FlagCaching
-	// Temporarily store data source query results.
-	FlagCaching = "caching"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
