@@ -2,15 +2,14 @@ package manager
 
 import (
 	"context"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,6 +19,7 @@ var user = &models.SignedInUser{UserId: 1}
 func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &database.FakeDashboardStore{}
+		defer store.AssertExpectations(t)
 		service := ProvideFolderService(
 			&FakeDashboardService{DashboardService: ProvideDashboardService(store)},
 			store,
@@ -33,8 +33,6 @@ func TestFolderService(t *testing.T) {
 				query.Result = models.NewDashboardFolder("Folder")
 				return nil
 			})
-
-			store.On("SaveDashboard", mock.Anything).Return(nil, models.ErrDashboardUpdateAccessDenied).Once()
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(context.Background(), user, 1, orgID)
@@ -53,6 +51,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
 				_, err := service.CreateFolder(context.Background(), user, orgID, "Folder", "")
 				require.Equal(t, err, models.ErrFolderAccessDenied)
 			})
@@ -88,15 +87,6 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			origUpdateAlerting := UpdateAlerting
-			t.Cleanup(func() {
-				UpdateAlerting = origUpdateAlerting
-			})
-			UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
-				user *models.SignedInUser) error {
-				return nil
-			}
-
 			bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
 				cmd.Result = dash
 				return nil
@@ -107,11 +97,14 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
+				store.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
 				_, err := service.CreateFolder(context.Background(), user, orgID, "Folder", "")
 				require.NoError(t, err)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
+				store.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
 				err := service.UpdateFolder(context.Background(), user, orgID, "uid", &models.UpdateFolderCommand{
 					Uid:   "uid",
 					Title: "Folder",
