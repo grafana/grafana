@@ -21,44 +21,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   async getRichHistory(): Promise<RichHistoryQuery[]> {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const transformedRichHistory = migrateRichHistory(richHistory);
-    return this.cleanUp(transformedRichHistory);
-  }
-
-  /**
-   * Removes entries that do not match retention policy criteria.
-   */
-  private cleanUp(richHistory: RichHistoryQuery[]): RichHistoryQuery[] {
-    const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
-    const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
-
-    /* Keep only queries, that are within the selected retention period or that are starred.
-     * If no queries, initialize with empty array
-     */
-    const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
-
-    store.setObject(RICH_HISTORY_KEY, queriesToKeep);
-    return queriesToKeep;
-  }
-
-  /**
-   * Ensures the entry can be added. Throws an error if current limit has been hit.
-   * Returns queries that should be saved back giving space for one extra query.
-   */
-  private checkLimits(
-    queriesToKeep: RichHistoryQuery[]
-  ): { queriesToKeep: RichHistoryQuery[]; limitExceeded: boolean } {
-    // remove oldest non-starred items to give space for the recent query
-    let limitExceeded = false;
-    let current = queriesToKeep.length - 1;
-    while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
-      if (!queriesToKeep[current].starred) {
-        queriesToKeep.splice(current, 1);
-        limitExceeded = true;
-      }
-      current--;
-    }
-
-    return { queriesToKeep, limitExceeded };
+    return cleanUp(transformedRichHistory);
   }
 
   async addToRichHistory(richHistoryQuery: RichHistoryQuery): Promise<RichHistoryStorageWarningDetails | undefined> {
@@ -80,7 +43,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       throw error;
     }
 
-    const { queriesToKeep, limitExceeded } = this.checkLimits(richHistory);
+    const { queriesToKeep, limitExceeded } = checkLimits(richHistory);
 
     let updatedHistory: RichHistoryQuery[] = [richHistoryQuery, ...queriesToKeep];
 
@@ -134,6 +97,41 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     });
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
+}
+
+/**
+ * Removes entries that do not match retention policy criteria.
+ */
+function cleanUp(richHistory: RichHistoryQuery[]): RichHistoryQuery[] {
+  const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
+  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
+
+  /* Keep only queries, that are within the selected retention period or that are starred.
+   * If no queries, initialize with empty array
+   */
+  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
+
+  store.setObject(RICH_HISTORY_KEY, queriesToKeep);
+  return queriesToKeep;
+}
+
+/**
+ * Ensures the entry can be added. Throws an error if current limit has been hit.
+ * Returns queries that should be saved back giving space for one extra query.
+ */
+function checkLimits(queriesToKeep: RichHistoryQuery[]): { queriesToKeep: RichHistoryQuery[]; limitExceeded: boolean } {
+  // remove oldest non-starred items to give space for the recent query
+  let limitExceeded = false;
+  let current = queriesToKeep.length - 1;
+  while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
+    if (!queriesToKeep[current].starred) {
+      queriesToKeep.splice(current, 1);
+      limitExceeded = true;
+    }
+    current--;
+  }
+
+  return { queriesToKeep, limitExceeded };
 }
 
 function migrateRichHistory(richHistory: RichHistoryQuery[]) {
