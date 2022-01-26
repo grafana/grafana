@@ -113,7 +113,8 @@ type HTTPServer struct {
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
 	tracer                    tracing.Tracer
-	updateChecker             *updatechecker.GrafanaService
+	grafanaUpdateChecker      *updatechecker.GrafanaService
+	pluginsUpdateChecker      *updatechecker.PluginsService
 	searchUsersService        searchusers.Service
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
@@ -140,7 +141,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
-	encryptionService encryption.Internal, updateChecker *updatechecker.GrafanaService, searchUsersService searchusers.Service,
+	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
+	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -162,7 +164,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStaticRouteResolver: pluginStaticRouteResolver,
 		pluginDashboardManager:    pluginDashboardManager,
 		pluginErrorResolver:       pluginErrorResolver,
-		updateChecker:             updateChecker,
+		grafanaUpdateChecker:      grafanaUpdateChecker,
+		pluginsUpdateChecker:      pluginsUpdateChecker,
 		SettingsProvider:          settingsProvider,
 		DataSourceCache:           dataSourceCache,
 		AuthTokenService:          userTokenService,

@@ -16,6 +16,8 @@ import (
 )
 
 type PluginsService struct {
+	availableUpdates map[string]PluginUpdate
+
 	enabled        bool
 	grafanaVersion string
 	pluginStore    plugins.Store
@@ -23,13 +25,19 @@ type PluginsService struct {
 	log            log.Logger
 }
 
+type PluginUpdate struct {
+	GcomVersion string
+	HasUpdate   bool
+}
+
 func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store) *PluginsService {
 	return &PluginsService{
-		enabled:        cfg.CheckForUpdates,
-		grafanaVersion: cfg.BuildVersion,
-		httpClient:     http.Client{Timeout: 10 * time.Second},
-		pluginStore:    pluginStore,
-		log:            log.New("plugins.update.checker"),
+		enabled:          cfg.CheckForUpdates,
+		grafanaVersion:   cfg.BuildVersion,
+		httpClient:       http.Client{Timeout: 10 * time.Second},
+		log:              log.New("plugins.update.checker"),
+		pluginStore:      pluginStore,
+		availableUpdates: make(map[string]PluginUpdate),
 	}
 }
 
@@ -53,6 +61,15 @@ func (s *PluginsService) Run(ctx context.Context) error {
 	}
 
 	return ctx.Err()
+}
+
+func (s *PluginsService) HasUpdate(_ context.Context, pluginID string) (PluginUpdate, bool) {
+	val, exists := s.availableUpdates[pluginID]
+	if exists {
+		return val, true
+	}
+
+	return PluginUpdate{}, false
 }
 
 func (s *PluginsService) checkForUpdates(ctx context.Context) {
@@ -91,16 +108,22 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	for _, localP := range localPlugins {
 		for _, gcomP := range gcomPlugins {
 			if gcomP.Slug == localP.ID {
-				localP.GrafanaComVersion = gcomP.Version
-
 				plugVersion, err1 := version.NewVersion(localP.Info.Version)
 				gplugVersion, err2 := version.NewVersion(gcomP.Version)
 
+				var updateDetails PluginUpdate
 				if err1 != nil || err2 != nil {
-					localP.GrafanaComHasUpdate = localP.Info.Version != localP.GrafanaComVersion
+					updateDetails = PluginUpdate{
+						GcomVersion: gcomP.Version,
+						HasUpdate:   localP.Info.Version != gcomP.Version,
+					}
 				} else {
-					localP.GrafanaComHasUpdate = plugVersion.LessThan(gplugVersion)
+					updateDetails = PluginUpdate{
+						GcomVersion: gcomP.Version,
+						HasUpdate:   plugVersion.LessThan(gplugVersion),
+					}
 				}
+				s.availableUpdates[localP.ID] = updateDetails
 			}
 		}
 	}

@@ -44,11 +44,11 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererManager{},
 		},
-		SQLStore:         sqlStore,
-		SettingsProvider: setting.ProvideProvider(cfg),
-		pluginStore:      &fakePluginStore{},
-		updateChecker:    &updatechecker.GrafanaService{},
-		AccessControl:    accesscontrolmock.New().WithDisabled(),
+		SQLStore:             sqlStore,
+		SettingsProvider:     setting.ProvideProvider(cfg),
+		pluginStore:          &fakePluginStore{},
+		grafanaUpdateChecker: &updatechecker.GrafanaService{},
+		AccessControl:        accesscontrolmock.New().WithDisabled(),
 	}
 
 	m := web.New()

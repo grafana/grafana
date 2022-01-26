@@ -102,13 +102,13 @@ func (s *GrafanaService) checkForUpdates() {
 	}
 }
 
-func (s *GrafanaService) GrafanaUpdateAvailable() bool {
+func (s *GrafanaService) UpdateAvailable() bool {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.hasUpdate
 }
 
-func (s *GrafanaService) LatestGrafanaVersion() string {
+func (s *GrafanaService) LatestVersion() string {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	return s.latestVersion
