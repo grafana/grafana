@@ -347,7 +347,7 @@ func isTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (boo
 
 // AddOrUpdateTeamMemberHook is called from team resource permission service
 // it adds user to a team or updates user permissions in a team within the given transaction session
-func (ss *SQLStore) AddOrUpdateTeamMemberHook(sess *DBSession, userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+func AddOrUpdateTeamMemberHook(sess *DBSession, userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
 		isMember, err := isTeamMember(sess, orgID, teamID, userID)
 		if err != nil {
 			return err
