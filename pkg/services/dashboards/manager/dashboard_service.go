@@ -131,6 +131,10 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	return cmd, nil
 }
 
+func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error {
+	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
+}
+
 var validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dash, dash.OrgId, user)
 	return extractor.ValidateAlerts(ctx)

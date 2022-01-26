@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +24,13 @@ import (
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		hs := &HTTPServer{Cfg: settings}
+
+		db := sqlstore.InitTestDB(t)
+
+		hs := &HTTPServer{
+			Cfg:              settings,
+			dashboardService: manager.ProvideDashboardService(database.ProvideDashboardStore(db)),
+		}
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
 			setUp := func() {

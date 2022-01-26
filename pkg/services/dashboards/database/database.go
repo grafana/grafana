@@ -76,6 +76,9 @@ func (d *DashboardStore) GetProvisionedDataByDashboardID(dashboardID int64) (*mo
 		return err
 	})
 
+	if data.DashboardId == 0 {
+		return nil, nil
+	}
 	return &data, err
 }
 

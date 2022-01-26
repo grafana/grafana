@@ -12,6 +12,7 @@ type DashboardService interface {
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
+	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.

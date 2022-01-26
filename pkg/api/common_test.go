@@ -7,6 +7,7 @@ import (
 	"fmt"
 	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -332,7 +333,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		RouteRegister:      routing.NewRouteRegister(),
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
-		dashboardStore:     database.ProvideDashboardStore(db),
+		dashboardService:   manager.ProvideDashboardService(database.ProvideDashboardStore(db)),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
