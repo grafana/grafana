@@ -170,8 +170,8 @@ func TestOpsgenieNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			webhookSender := mockWebhookSender()
-			webhookSender.webhook.Body = "<not-sent>"
+			webhookSender := mockNotificationService()
+			webhookSender.Webhook.Body = "<not-sent>"
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewOpsgenieNotifier(m, webhookSender, tmpl, decryptFn)
@@ -196,9 +196,9 @@ func TestOpsgenieNotifier(t *testing.T) {
 
 			if c.expMsg == "" {
 				// No notification was expected.
-				require.Equal(t, "<not-sent>", webhookSender.Body())
+				require.Equal(t, "<not-sent>", webhookSender.Webhook.Body)
 			} else {
-				require.JSONEq(t, c.expMsg, webhookSender.Body())
+				require.JSONEq(t, c.expMsg, webhookSender.Webhook.Body)
 			}
 		})
 	}

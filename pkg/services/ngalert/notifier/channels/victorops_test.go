@@ -93,7 +93,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			pn, err := NewVictoropsNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
@@ -115,7 +115,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			require.True(t, ok)
 
 			// Remove the non-constant timestamp
-			j, err := simplejson.NewJson([]byte(webhookSender.Body()))
+			j, err := simplejson.NewJson([]byte(webhookSender.Webhook.Body))
 			require.NoError(t, err)
 			j.Del("timestamp")
 			b, err := j.MarshalJSON()

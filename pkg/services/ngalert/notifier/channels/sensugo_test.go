@@ -144,7 +144,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			sn, err := NewSensuGoNotifier(m, webhookSender, tmpl, decryptFn)
@@ -170,7 +170,7 @@ func TestSensuGoNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Body())
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

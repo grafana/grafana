@@ -115,7 +115,7 @@ func TestKafkaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			pn, err := NewKafkaNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
@@ -136,8 +136,8 @@ func TestKafkaNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expUrl, webhookSender.Webhook().Url)
-			require.JSONEq(t, c.expMsg, webhookSender.Body())
+			require.Equal(t, c.expUrl, webhookSender.Webhook.Url)
+			require.JSONEq(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}
 }

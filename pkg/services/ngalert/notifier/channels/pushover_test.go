@@ -144,7 +144,7 @@ func TestPushoverNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewPushoverNotifier(m, webhookSender, tmpl, decryptFn)
@@ -167,7 +167,7 @@ func TestPushoverNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			bodyReader := multipart.NewReader(strings.NewReader(webhookSender.Body()), boundary)
+			bodyReader := multipart.NewReader(strings.NewReader(webhookSender.Webhook.Body), boundary)
 			for {
 				part, err := bodyReader.NextPart()
 				if part == nil || errors.Is(err, io.EOF) {

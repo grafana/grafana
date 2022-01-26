@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestEmailNotifier(t *testing.T) {
@@ -43,23 +42,13 @@ func TestEmailNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
-		expected := map[string]interface{}{}
-		mockEmailSender := &notificationServiceMock{
-			emailSender: func(ctx context.Context, cmd *models.SendEmailCommandSync) error {
-				expected["subject"] = cmd.SendEmailCommand.Subject
-				expected["to"] = cmd.SendEmailCommand.To
-				expected["single_email"] = cmd.SendEmailCommand.SingleEmail
-				expected["template"] = cmd.SendEmailCommand.Template
-				expected["data"] = cmd.SendEmailCommand.Data
-				return nil
-			},
-		}
+		emailSender := mockNotificationService()
 
 		emailNotifier, err := NewEmailNotifier(&NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, mockEmailSender, tmpl)
+		}, emailSender, tmpl)
 
 		require.NoError(t, err)
 
@@ -76,6 +65,13 @@ func TestEmailNotifier(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ok)
 
+		expected := map[string]interface{}{
+			"subject":      emailSender.Email.Subject,
+			"to":           emailSender.Email.To,
+			"single_email": emailSender.Email.SingleEmail,
+			"template":     emailSender.Email.Template,
+			"data":         emailSender.Email.Data,
+		}
 		require.Equal(t, map[string]interface{}{
 			"subject":      "[FIRING:1]  (AlwaysFiring warning)",
 			"to":           []string{"someops@example.com", "somedev@example.com"},

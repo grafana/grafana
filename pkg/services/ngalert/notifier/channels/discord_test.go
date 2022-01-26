@@ -141,7 +141,7 @@ func TestDiscordNotifier(t *testing.T) {
 				Settings: settingsJson,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			dn, err := NewDiscordNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
@@ -164,7 +164,7 @@ func TestDiscordNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Body())
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

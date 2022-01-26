@@ -90,7 +90,7 @@ func TestLineNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewLineNotifier(m, webhookSender, tmpl, decryptFn)
@@ -113,8 +113,8 @@ func TestLineNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expHeaders, webhookSender.Webhook().HttpHeader)
-			require.Equal(t, c.expMsg, webhookSender.Body())
+			require.Equal(t, c.expHeaders, webhookSender.Webhook.HttpHeader)
+			require.Equal(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}
 }

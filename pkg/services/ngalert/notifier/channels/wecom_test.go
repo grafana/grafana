@@ -94,7 +94,7 @@ func TestWeComNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewWeComNotifier(m, webhookSender, tmpl, decryptFn)
@@ -119,7 +119,7 @@ func TestWeComNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Body())
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

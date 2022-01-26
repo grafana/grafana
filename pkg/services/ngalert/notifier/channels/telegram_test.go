@@ -98,7 +98,7 @@ func TestTelegramNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewTelegramNotifier(m, webhookSender, tmpl, decryptFn)

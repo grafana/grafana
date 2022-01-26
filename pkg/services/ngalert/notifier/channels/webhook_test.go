@@ -190,7 +190,7 @@ func TestWebhookNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
 			pn, err := NewWebHookNotifier(m, webhookSender, tmpl, decryptFn)
@@ -217,11 +217,11 @@ func TestWebhookNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Body())
-			require.Equal(t, c.expUrl, webhookSender.Webhook().Url)
-			require.Equal(t, c.expUsername, webhookSender.Webhook().User)
-			require.Equal(t, c.expPassword, webhookSender.Webhook().Password)
-			require.Equal(t, c.expHttpMethod, webhookSender.Webhook().HttpMethod)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
+			require.Equal(t, c.expUrl, webhookSender.Webhook.Url)
+			require.Equal(t, c.expUsername, webhookSender.Webhook.User)
+			require.Equal(t, c.expPassword, webhookSender.Webhook.Password)
+			require.Equal(t, c.expHttpMethod, webhookSender.Webhook.HttpMethod)
 		})
 	}
 }

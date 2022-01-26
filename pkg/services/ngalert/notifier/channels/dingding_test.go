@@ -97,7 +97,7 @@ func TestDingdingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			pn, err := NewDingDingNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
@@ -120,7 +120,7 @@ func TestDingdingNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Body())
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

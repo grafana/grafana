@@ -121,7 +121,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			webhookSender := mockWebhookSender()
+			webhookSender := mockNotificationService()
 			pn, err := NewTeamsNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
@@ -145,7 +145,7 @@ func TestTeamsNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), webhookSender.Body())
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }
