@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/extensions/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -123,7 +122,6 @@ func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) i
 }
 
 var (
-	teamMemberGetRoute    = "/api/teams/%s/members"
 	teamMemberAddRoute    = "/api/teams/%s/members"
 	createTeamMemberCmd   = `{"userId": %d}`
 	teamMemberUpdateRoute = "/api/teams/%s/members/%s"
@@ -182,7 +180,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensingtest.ValidLicense{}
+	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
@@ -262,7 +260,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensingtest.ValidLicense{}
+	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	setupTeamTestScenario(teamMemberCount, sc.db, t)
@@ -336,7 +334,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.hs.License = &licensingtest.ValidLicense{}
+	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	setupTeamTestScenario(teamMemberCount, sc.db, t)
