@@ -6,10 +6,11 @@ import RichHistoryStorage, {
 import { RichHistoryQuery } from '../../types';
 import store from '../store';
 import { DataQuery } from '@grafana/data';
-import { createRetentionPeriodBoundary, MAX_HISTORY_ITEMS, RICH_HISTORY_SETTING_KEYS } from '../utils/richHistory';
 import { isEqual, omit } from 'lodash';
+import { createRetentionPeriodBoundary, RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
+export const MAX_HISTORY_ITEMS = 10000;
 
 /**
  * Local storage implementation for Rich History. It keeps all entries in Browser's local storage.

@@ -9,18 +9,13 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
-import {
-  SortOrder,
-  mapNumbertoTimeInSlider,
-  mapQueriesToHeadings,
-  createDatasourcesList,
-  filterAndSortQueries,
-} from 'app/core/utils/richHistory';
+import { mapNumbertoTimeInSlider, mapQueriesToHeadings, createDatasourcesList } from 'app/core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { useDebounce } from 'react-use';
+import { filterAndSortQueries, SortOrder } from 'app/core/history/richHistoryLocalStorageUtils';
 
 export interface Props {
   queries: RichHistoryQuery[];
