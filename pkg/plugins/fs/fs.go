@@ -36,9 +36,8 @@ func ProvideService() *Service {
 	return New(logger.NewLogger("plugin.fs", true))
 }
 
-func (s *Service) Add(ctx context.Context, pluginArchive *zip.ReadCloser, pluginID,
-	pluginsPath string) (*ExtractedPluginArchive, error) {
-
+func (s *Service) Add(ctx context.Context, pluginArchive *zip.ReadCloser, pluginID, pluginsPath string) (
+	*ExtractedPluginArchive, error) {
 	pluginDir, err := s.extractFiles(ctx, pluginArchive, pluginID, pluginsPath)
 	if err != nil {
 		return nil, errutil.Wrap("failed to extract plugin archive", err)
