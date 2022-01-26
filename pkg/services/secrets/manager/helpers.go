@@ -25,7 +25,7 @@ func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
 		secret_key = ` + defaultKey))
 	require.NoError(tb, err)
 
-	features := featuremgmt.WithFeatures("envelopeEncryption")
+	features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
 
 	cfg := &setting.Cfg{Raw: raw}
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
