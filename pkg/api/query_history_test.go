@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -42,15 +41,12 @@ func TestQueryHistoryEndpoint(t *testing.T) {
 			},
 		}
 
-		addToQueryHistoryScenario(t, "When feature enabled and calling POST on", "/api/query-history", "/api/query-history", cmd, service,
+		addToQueryHistoryScenario(t, "When calling POST on", "/api/query-history", "/api/query-history", cmd, service,
 			func(sc *scenarioContext) {
 				callAddToQueryHistory(sc)
-
-				queryHistory := dtos.AddToQueryHistoryCmd{}
-				err := json.NewDecoder(sc.resp.Body).Decode(&queryHistory)
-				require.NoError(t, err)
 				require.Equal(t, 200, sc.resp.Code)
-			}, true)
+
+			})
 	})
 }
 
@@ -58,7 +54,7 @@ func callAddToQueryHistory(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func addToQueryHistoryScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AddToQueryHistoryCmd, queryHistoryService queryhistory.Service, fn scenarioFunc, featureEnabled bool) {
+func addToQueryHistoryScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AddToQueryHistoryCmd, queryHistoryService queryhistory.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
