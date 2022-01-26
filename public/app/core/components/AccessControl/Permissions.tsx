@@ -20,6 +20,9 @@ const INITIAL_DESCRIPTION: Description = {
 };
 
 export type Props = {
+  title?: string;
+  buttonLabel?: string;
+  addPermissionTitle?: string;
   resource: string;
   resourceId: number;
 
@@ -27,7 +30,15 @@ export type Props = {
   canSetPermissions: boolean;
 };
 
-export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions }: Props) => {
+export const Permissions = ({
+  title = 'Permissions',
+  buttonLabel = 'Add a permission',
+  resource,
+  resourceId,
+  canListUsers,
+  canSetPermissions,
+  addPermissionTitle,
+}: Props) => {
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
@@ -114,11 +125,11 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
   return (
     <div>
       <div className="page-action-bar">
-        <h3 className="page-sub-heading">Permissions</h3>
+        <h3 className="page-sub-heading">{title}</h3>
         <div className="page-action-bar__spacer" />
         {canSetPermissions && (
           <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
-            Add a permission
+            {buttonLabel}
           </Button>
         )}
       </div>
@@ -126,6 +137,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
       <div>
         <SlideDown in={isAdding}>
           <AddPermission
+            title={addPermissionTitle}
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
@@ -134,28 +146,28 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
           />
         </SlideDown>
         <PermissionList
-          title="Roles"
+          title="Role"
           items={builtInRoles}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
         <PermissionList
-          title="Users"
+          title="User"
           items={users}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
         <PermissionList
-          title="Teams"
+          title="Team"
           items={teams}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
-          canRemove={canSetPermissions}
+          canSet={canSetPermissions}
         />
       </div>
     </div>
@@ -171,8 +183,8 @@ const getDescription = async (resource: string): Promise<Description> => {
   }
 };
 
-const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> =>
-  getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
+const getPermissions = (resource: string, resourceId: number): Promise<ResourcePermission[]> =>
+  getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`);
 
 const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
   setPermission(resource, resourceId, 'users', userId, permission);

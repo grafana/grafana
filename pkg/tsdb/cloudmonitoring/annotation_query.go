@@ -18,7 +18,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 		return resp, err
 	}
 
-	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo)
+	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, s.tracer)
 	if err != nil {
 		return resp, err
 	}

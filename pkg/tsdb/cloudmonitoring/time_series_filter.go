@@ -12,11 +12,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/opentracing/opentracing-go"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
@@ -55,22 +56,15 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		}
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring query")
-	span.SetTag("target", timeSeriesFilter.Target)
-	span.SetTag("from", req.Queries[0].TimeRange.From)
-	span.SetTag("until", req.Queries[0].TimeRange.To)
-	span.SetTag("datasource_id", dsInfo.id)
-	span.SetTag("org_id", req.PluginContext.OrgID)
+	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
+	span.SetAttributes("target", timeSeriesFilter.Target, attribute.Key("target").String(timeSeriesFilter.Target))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
-	defer span.Finish()
-
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(r.Header)); err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
-	}
+	defer span.End()
+	tracer.Inject(ctx, r.Header, span)
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
@@ -91,16 +85,13 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 //nolint: gocyclo
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
-	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 
-	customFrameMeta := map[string]interface{}{}
-	customFrameMeta["alignmentPeriod"] = timeSeriesFilter.Params.Get("aggregation.alignmentPeriod")
-	customFrameMeta["perSeriesAligner"] = timeSeriesFilter.Params.Get("aggregation.perSeriesAligner")
 	for _, series := range response.TimeSeries {
 		seriesLabels := data.Labels{}
 		defaultMetricName := series.Metric.Type
-		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
+		labels := make(map[string]string)
+		labels["resource.type"] = series.Resource.Type
 		seriesLabels["resource.type"] = series.Resource.Type
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -110,10 +101,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		}
 
 		for key, value := range series.Metric.Labels {
-			if _, ok := labels["metric.label."+key]; !ok {
-				labels["metric.label."+key] = map[string]bool{}
-			}
-			labels["metric.label."+key][value] = true
+			labels["metric.label."+key] = value
 			seriesLabels["metric.label."+key] = value
 
 			if len(timeSeriesFilter.GroupBys) == 0 || containsLabel(timeSeriesFilter.GroupBys, "metric.label."+key) {
@@ -122,10 +110,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		}
 
 		for key, value := range series.Resource.Labels {
-			if _, ok := labels["resource.label."+key]; !ok {
-				labels["resource.label."+key] = map[string]bool{}
-			}
-			labels["resource.label."+key][value] = true
+			labels["resource.label."+key] = value
 			seriesLabels["resource.label."+key] = value
 
 			if containsLabel(timeSeriesFilter.GroupBys, "resource.label."+key) {
@@ -136,22 +121,19 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
 				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-				if _, ok := labels[key]; !ok {
-					labels[key] = map[string]bool{}
-				}
 
 				switch v := labelValue.(type) {
 				case string:
-					labels[key][v] = true
+					labels[key] = v
 					seriesLabels[key] = v
 				case bool:
 					strVal := strconv.FormatBool(v)
-					labels[key][strVal] = true
+					labels[key] = strVal
 					seriesLabels[key] = strVal
 				case []interface{}:
 					for _, v := range v {
 						strVal := v.(string)
-						labels[key][strVal] = true
+						labels[key] = strVal
 						if len(seriesLabels[key]) > 0 {
 							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
 						}
@@ -159,6 +141,17 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 					}
 				}
 			}
+		}
+
+		customFrameMeta := map[string]interface{}{}
+		customFrameMeta["alignmentPeriod"] = timeSeriesFilter.Params.Get("aggregation.alignmentPeriod")
+		customFrameMeta["perSeriesAligner"] = timeSeriesFilter.Params.Get("aggregation.perSeriesAligner")
+		customFrameMeta["labels"] = labels
+		customFrameMeta["groupBys"] = timeSeriesFilter.GroupBys
+		if frame.Meta != nil {
+			frame.Meta.Custom = customFrameMeta
+		} else {
+			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
 		}
 
 		// reverse the order to be ascending
@@ -238,23 +231,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 	if len(response.TimeSeries) > 0 {
 		dl := timeSeriesFilter.buildDeepLink()
 		frames = addConfigData(frames, dl, response.Unit)
-	}
-
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
-		}
-	}
-	customFrameMeta["labels"] = labelsByKey
-	customFrameMeta["groupBys"] = timeSeriesFilter.GroupBys
-
-	for _, frame := range frames {
-		if frame.Meta != nil {
-			frame.Meta.Custom = customFrameMeta
-		} else {
-			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
-		}
 	}
 
 	queryRes.Frames = frames

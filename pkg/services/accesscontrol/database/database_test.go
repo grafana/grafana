@@ -64,7 +64,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
-				})
+				}, nil)
 				require.NoError(t, err)
 			}
 
@@ -73,7 +73,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
-				})
+				}, nil)
 				require.NoError(t, err)
 			}
 
@@ -82,7 +82,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
-				})
+				}, nil)
 				require.NoError(t, err)
 			}
 
