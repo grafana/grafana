@@ -196,7 +196,7 @@ func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	newUserId = createUser(sc.db, testOrgId, t)
-	input = strings.NewReader(fmt.Sprintf(createTeamCmd, newUserId))
+	input = strings.NewReader(fmt.Sprintf(teamCmd, newUserId))
 	t.Run("Access control prevents from adding a team member with the wrong permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
