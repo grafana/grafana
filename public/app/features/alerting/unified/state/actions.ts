@@ -401,7 +401,7 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   }
 }
 
-function getUniqueGroupName(currentGroupName: string, existingGroups: RulerRuleGroupDTO[]) {
+export function getUniqueGroupName(currentGroupName: string, existingGroups: RulerRuleGroupDTO[]) {
   let newGroupName = currentGroupName;
   let idx = 1;
   while (!!existingGroups.find((g) => g.name === newGroupName)) {
