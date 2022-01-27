@@ -77,9 +77,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     const matchingRules = rules.filter(hasInstancesWithMatchingLabels);
     matchingRules.forEach((rule: PromRuleWithLocation) => {
       (rule.rule.alerts ?? []).forEach((alert) => {
-        const labelKey = groupBy.map((key) => key + '=' + alert.labels[key]).join(',');
-        const existingAlerts = groupedRules.get(labelKey) ?? [];
-        groupedRules.set(labelKey, [...existingAlerts, alert]);
+        const mapKey = createMapKey(groupBy, alert.labels);
+        const existingAlerts = groupedRules.get(mapKey) ?? [];
+        groupedRules.set(mapKey, [...existingAlerts, alert]);
       });
     });
 
@@ -99,9 +99,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
                 <div>
                   <div className={styles.customGroupDetails}>
                     <div className={styles.alertName} title={key}>
-                      {key.split(',').map((key: string) => (
-                        <AlertLabel key={key} labelKey={key.split('=')[0]} value={key.split('=')[1]} />
-                      ))}
+                      {key &&
+                        parseMapKey(key).map(([key, value]) => <AlertLabel key={key} labelKey={key} value={value} />)}
+                      {!key && 'No grouping'}
                     </div>
                   </div>
                   <AlertInstances alerts={alerts} options={props.options} />
@@ -159,6 +159,15 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
       </div>
     </CustomScrollbar>
   );
+}
+
+function createMapKey(groupBy: string[], labels: Record<string, string>): string {
+  return new URLSearchParams(groupBy.map((key) => [key, labels[key]])).toString();
+}
+
+function parseMapKey(key: string): Array<[string, string]> {
+  // @ts-ignore dom.iterable is not added to the @grafana/tsconfig but this works just fine
+  return [...new URLSearchParams(key)];
 }
 
 function alertHasEveryLabel(rule: PromRuleWithLocation, groupByKeys: string[]) {
