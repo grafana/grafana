@@ -86,6 +86,16 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
+  onClearResults = () => {
+    // Run clear query to clear results
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({
+      ...query,
+      queryType: 'clear',
+    });
+    onRunQuery();
+  };
+
   render() {
     const { query, onChange, datasource } = this.props;
     // Find query field from linked datasource
@@ -124,14 +134,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
               options={queryTypeOptions}
               value={query.queryType}
               onChange={(v) => {
-                // Run clear query to clear results
-                onChange({
-                  ...query,
-                  queryType: 'clear',
-                });
-                this.props.onRunQuery();
+                this.onClearResults();
 
-                // Update to actual query type
                 onChange({
                   ...query,
                   queryType: v,
