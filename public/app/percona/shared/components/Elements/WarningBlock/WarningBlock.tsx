@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { Icon, IconName, useStyles } from '@grafana/ui';
 import { WarningBlockProps, WarningType } from './WarningBlock.types';
 import { getStyles } from './WarningBlock.styles';

@@ -2,7 +2,7 @@
 import React, { FC, useCallback, useState, useMemo } from 'react';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Column } from 'react-table';
-import { TextInputField, TextareaInputField, validators, Modal, CheckboxField } from '@percona/platform-core';
+import { Modal, CheckboxField } from '@percona/platform-core';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Form } from 'react-final-form';

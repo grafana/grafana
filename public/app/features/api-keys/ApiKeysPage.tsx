@@ -23,8 +23,6 @@ import { WarningBlock } from 'app/percona/shared/components/Elements/WarningBloc
 import { Messages } from './ApiKeys.messages';
 import { getStyles } from './ApiKeys.styles';
 
-const { Switch } = LegacyForms;
-
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
