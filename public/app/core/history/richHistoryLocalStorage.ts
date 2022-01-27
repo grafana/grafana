@@ -13,7 +13,7 @@ export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
 
 /**
- * Local storage implementation for Rich History. It keeps all entries in Browser's local storage.
+ * Local storage implementation for Rich History. It keeps all entries in browser's local storage.
  */
 export default class RichHistoryLocalStorage implements RichHistoryStorage {
   /**
@@ -22,11 +22,11 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   async getRichHistory(): Promise<RichHistoryQuery[]> {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const transformedRichHistory = migrateRichHistory(richHistory);
-    return cleanUp(transformedRichHistory);
+    return transformedRichHistory;
   }
 
   async addToRichHistory(richHistoryQuery: RichHistoryQuery): Promise<RichHistoryStorageWarningDetails | undefined> {
-    let richHistory = await this.getRichHistory();
+    let richHistory = cleanUp(await this.getRichHistory());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
@@ -110,10 +110,7 @@ function cleanUp(richHistory: RichHistoryQuery[]): RichHistoryQuery[] {
   /* Keep only queries, that are within the selected retention period or that are starred.
    * If no queries, initialize with empty array
    */
-  const queriesToKeep = richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
-
-  store.setObject(RICH_HISTORY_KEY, queriesToKeep);
-  return queriesToKeep;
+  return richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
 }
 
 /**

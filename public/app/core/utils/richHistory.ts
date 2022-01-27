@@ -63,9 +63,6 @@ export async function addToRichHistory(
     let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
-      console.log('1', getRichHistoryStorage());
-      console.log('2', getRichHistoryStorage().addToRichHistory);
-      console.log('3', await getRichHistoryStorage().addToRichHistory(newRichHistory));
       warning = await getRichHistoryStorage().addToRichHistory(newRichHistory);
     } catch (error) {
       if (error.name === RichHistoryServiceError.StorageFull) {

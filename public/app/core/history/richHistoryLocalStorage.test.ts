@@ -90,9 +90,11 @@ describe('RichHistoryLocalStorage', () => {
       ];
       store.setObject(key, history);
 
+      await storage.addToRichHistory(mockItem);
       const richHistory = await storage.getRichHistory();
 
       expect(richHistory).toMatchObject([
+        mockItem,
         { starred: true, ts: 0, queries: [] },
         { starred: true, ts: now, queries: [] },
         { starred: false, ts: now, queries: [] },
