@@ -21,10 +21,10 @@ import { getPublicOrAbsoluteUrl } from '../resource';
 
 interface Props {
   onChange: (value?: string) => void;
-  onClear: (event: React.MouseEvent) => void;
   mediaType: MediaType;
   folderName: ResourceFolderName;
   size: ResourcePickerSize;
+  onClear?: (event: React.MouseEvent) => void;
   value?: string; //img/icons/unicons/0-plus.svg
   src?: string;
   name?: string;

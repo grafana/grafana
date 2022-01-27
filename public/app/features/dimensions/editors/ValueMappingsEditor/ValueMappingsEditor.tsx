@@ -3,6 +3,8 @@ import { GrafanaTheme2, MappingType, ValueMapping } from '@grafana/data';
 import { css } from '@emotion/css';
 import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
 import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
+import { ResourcePicker } from '../ResourcePicker';
 
 export interface Props {
   value: ValueMapping[];
@@ -21,6 +23,14 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
   const onChangeColor = useCallback(
     (color: string, index: number) => {
       rows[index].result.color = color;
+      onChange(editModelToSaveModel(rows));
+    },
+    [rows, onChange]
+  );
+
+  const onChangeIcon = useCallback(
+    (icon: string | undefined, index: number) => {
+      rows[index].result.icon = icon;
       onChange(editModelToSaveModel(rows));
     },
     [rows, onChange]
@@ -46,15 +56,27 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
                 <Icon name="arrow-right" />
               </td>
               <td>{row.result.text}</td>
-              <td>
-                {row.result.color && (
+              {row.result.color && (
+                <td>
                   <ColorPicker
                     color={row.result.color}
                     onChange={(color) => onChangeColor(color, rowIndex)}
                     enableNamedColors={true}
                   />
-                )}
-              </td>
+                </td>
+              )}
+              {row.result.icon && (
+                <td>
+                  <ResourcePicker
+                    onChange={(icon) => onChangeIcon(icon, rowIndex)}
+                    value={row.result.icon}
+                    size={ResourcePickerSize.SMALL}
+                    folderName={ResourceFolderName.Icon}
+                    mediaType={MediaType.Icon}
+                    color={row.result.color}
+                  />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

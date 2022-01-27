@@ -28,23 +28,15 @@ export function getColorDimensionForField(
       get: (i) => v,
     };
   }
-  const mode = getFieldColorModeForField(field);
-  if (!mode.isByValue) {
-    const fixed = mode.getCalculator(field, theme)(0, 0);
-    return {
-      fixed,
-      value: () => fixed,
-      get: (i) => fixed,
-      field,
-    };
-  }
-  const scale = getScaleCalculator(field, theme);
+
+  const getColor = (value: any): string => {
+    const disp = field.display!;
+    return disp(value).color ?? '#ccc';
+  };
+
   return {
-    get: (i) => {
-      const val = field.values.get(i);
-      return scale(val).color;
-    },
     field,
-    value: () => scale(getLastNotNullFieldValue(field)).color,
+    get: (index: number): string => getColor(field.values.get(index)),
+    value: () => getColor(getLastNotNullFieldValue(field)),
   };
 }
