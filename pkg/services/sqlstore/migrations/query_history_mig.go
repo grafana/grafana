@@ -11,7 +11,7 @@ func addQueryHistoryMigrations(mg *Migrator) {
 			{Name: "id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "datasource_uid", Type: DB_Text, Length: 40, Nullable: false},
+			{Name: "datasource_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "created_by", Type: DB_Int, Nullable: false},
 			{Name: "created_at", Type: DB_Int, Nullable: false},
 			{Name: "comment", Type: DB_Text, Nullable: false},

@@ -13,13 +13,13 @@ import (
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister) *QueryHistoryService {
 	s := &QueryHistoryService{
 		SQLStore:      sqlStore,
-		cfg:           cfg,
+		Cfg:           cfg,
 		RouteRegister: routeRegister,
 		log:           log.New("query-history"),
 	}
 
 	// Register routes only when query history is enabled
-	if s.cfg.QueryHistoryEnabled {
+	if s.Cfg.QueryHistoryEnabled {
 		s.registerAPIEndpoints()
 	}
 
@@ -32,7 +32,7 @@ type Service interface {
 
 type QueryHistoryService struct {
 	SQLStore      *sqlstore.SQLStore
-	cfg           *setting.Cfg
+	Cfg           *setting.Cfg
 	RouteRegister routing.RouteRegister
 	log           log.Logger
 }
