@@ -243,38 +243,40 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
 export function buildEditRowModels(value: ValueMapping[]) {
   const editRows: ValueMappingEditRowModel[] = [];
 
-  for (const mapping of value) {
-    switch (mapping.type) {
-      case MappingType.ValueToText:
-        for (const key of Object.keys(mapping.options)) {
+  if (value) {
+    for (const mapping of value) {
+      switch (mapping.type) {
+        case MappingType.ValueToText:
+          for (const key of Object.keys(mapping.options)) {
+            editRows.push({
+              type: mapping.type,
+              result: mapping.options[key],
+              key,
+            });
+          }
+          break;
+        case MappingType.RangeToText:
           editRows.push({
             type: mapping.type,
-            result: mapping.options[key],
-            key,
+            result: mapping.options.result,
+            from: mapping.options.from ?? 0,
+            to: mapping.options.to ?? 0,
           });
-        }
-        break;
-      case MappingType.RangeToText:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          from: mapping.options.from ?? 0,
-          to: mapping.options.to ?? 0,
-        });
-        break;
-      case MappingType.RegexToText:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          pattern: mapping.options.pattern,
-        });
-        break;
-      case MappingType.SpecialValue:
-        editRows.push({
-          type: mapping.type,
-          result: mapping.options.result,
-          specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
-        });
+          break;
+        case MappingType.RegexToText:
+          editRows.push({
+            type: mapping.type,
+            result: mapping.options.result,
+            pattern: mapping.options.pattern,
+          });
+          break;
+        case MappingType.SpecialValue:
+          editRows.push({
+            type: mapping.type,
+            result: mapping.options.result,
+            specialMatch: mapping.options.match ?? SpecialValueMatch.Null,
+          });
+      }
     }
   }
 

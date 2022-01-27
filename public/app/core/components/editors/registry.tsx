@@ -5,6 +5,7 @@ import {
   FieldType,
   standardEditorsRegistry,
   StandardEditorsRegistryItem,
+  stringOverrideProcessor,
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
   ThresholdsMode,
@@ -13,7 +14,7 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
 } from '@grafana/data';
-import { ValueMappingsValueEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/mappings';
+import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
 
 /**
@@ -31,7 +32,7 @@ export const getAllOptionEditors = () => {
     id: 'mappings',
     name: 'Mappings',
     description: 'Allows defining value mappings',
-    editor: ValueMappingsValueEditor as any,
+    editor: ValueMappingsEditor as any,
   };
 
   const thresholds: StandardEditorsRegistryItem<ThresholdsConfig> = {
@@ -84,5 +85,17 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  return [...getStandardFieldConfigs(), mappings, thresholds];
+  const icon: FieldConfigPropertyItem<any, string, any> = {
+    id: 'icon',
+    path: 'icon',
+    name: 'Icon',
+    editor: standardEditorsRegistry.get('text').editor as any,
+    override: standardEditorsRegistry.get('text').editor as any,
+    requireExplicitAdd: true,
+    hideFromDefaults: true,
+    shouldApply: () => true,
+    process: stringOverrideProcessor,
+  };
+
+  return [...getStandardFieldConfigs(), icon, mappings, thresholds];
 };

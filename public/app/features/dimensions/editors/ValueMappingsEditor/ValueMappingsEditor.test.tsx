@@ -26,6 +26,8 @@ const setup = (spy?: any, propOverrides?: object) => {
         },
       },
     ],
+    item: {} as any,
+    context: {} as any,
   };
 
   Object.assign(props, propOverrides);
