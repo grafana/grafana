@@ -179,7 +179,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if !runner.SettingsProvider.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !runner.Features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
 		return nil
 	}

@@ -23,6 +23,7 @@ type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
 	settings   setting.Provider
+	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	currentProviderID secrets.ProviderID
@@ -36,6 +37,7 @@ func ProvideSecretsService(
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	settings setting.Provider,
+	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
 	providers, err := kmsProvidersService.Provide()
@@ -44,7 +46,7 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption)
+	enabled := features.IsEnabled(featuremgmt.FlagEnvelopeEncryption)
 	currentProviderID := readCurrentProviderID(settings)
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
@@ -65,6 +67,7 @@ func ProvideSecretsService(
 		providers:         providers,
 		currentProviderID: currentProviderID,
 		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		features:          features,
 		log:               logger,
 	}
 
@@ -88,7 +91,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+		if s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -131,7 +134,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -174,7 +177,7 @@ func (s *SecretsService) keyName(scope string) string {
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
 	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
