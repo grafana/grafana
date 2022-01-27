@@ -3,10 +3,12 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -40,6 +42,33 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
+// TODO testme
+func dashboardAndPanelExist(c *models.ReqContext, dashboardId string) bool {
+	id, err := strconv.ParseInt(dashboardId, 10, 64)
+	if err != nil {
+		return false //response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	query := models.GetDataSourceQuery{
+		Id:    id,
+		OrgId: c.OrgId,
+	}
+
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+		return false
+		//if errors.Is(err, models.ErrDataSourceNotFound) {
+		///return response.Error(404, "Data source not found", nil)
+		//}
+		//if errors.Is(err, models.ErrDataSourceIdentifierNotSet) {
+		//return response.Error(400, "Datasource id is missing", nil)
+		//}
+		//return response.Error(500, "Failed to query datasources", err)
+	}
+
+	// search for panel ID in dashboardJson
+
+	return true
+}
+
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
@@ -55,6 +84,11 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	if dashboardId == "" || panelId == "" {
 		// TODO: Is this an appropriate status code?
 		return response.Error(http.StatusForbidden, "missing dashboard or panel ID", nil)
+	}
+
+	// search for dashboard 404 if not found
+	if !dashboardAndPanelExist(c, dashboardId) {
+		return response.Error(http.StatusNotFound, "Dashboard or panel not found", nil)
 	}
 
 	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
