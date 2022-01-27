@@ -3,6 +3,7 @@ import store from 'app/core/store';
 import { RichHistoryQuery } from '../../types';
 import { DataQuery } from '@grafana/data';
 import { afterEach, beforeEach } from '../../../test/lib/common';
+import { RichHistoryStorageWarning } from './richHistoryStorage';
 
 const key = 'grafana.explore.richHistory';
 
@@ -118,12 +119,14 @@ describe('RichHistoryLocalStorage', () => {
       const starredItemsInHistory = (MAX_HISTORY_ITEMS + extraItems) / 2;
       const notStarredItemsInHistory = (MAX_HISTORY_ITEMS + extraItems) / 2;
 
-      console.log(starredItemsInHistory, notStarredItemsInHistory);
       expect(history.filter((h) => h.starred)).toHaveLength(starredItemsInHistory);
       expect(history.filter((h) => !h.starred)).toHaveLength(notStarredItemsInHistory);
 
       store.setObject(key, history);
-      await storage.addToRichHistory(mockItem);
+      const warning = await storage.addToRichHistory(mockItem);
+      expect(warning).toMatchObject({
+        type: RichHistoryStorageWarning.LimitExceeded,
+      });
 
       // one not starred replaced with a newly added starred item
       const removedNotStarredItems = extraItems + 1; // + 1 to make space for the new item

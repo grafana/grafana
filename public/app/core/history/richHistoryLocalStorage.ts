@@ -53,17 +53,19 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     } catch (error) {
       if (error.name === 'QuotaExceededError') {
         throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
-      } else if (limitExceeded) {
-        return {
-          type: RichHistoryStorageWarning.LimitExceeded,
-          message: `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items have been removed.`,
-        };
       } else {
         throw error;
       }
     }
 
-    return;
+    if (limitExceeded) {
+      return {
+        type: RichHistoryStorageWarning.LimitExceeded,
+        message: `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items have been removed.`,
+      };
+    } else {
+      return undefined;
+    }
   }
 
   async deleteAll(): Promise<void> {
