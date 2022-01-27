@@ -17,14 +17,14 @@ import (
 var requests = map[string]*models.ReqContext{}
 
 type Server struct {
-	t             *testing.T
+	t             testing.TB
 	Mux           *web.Mux
 	RouteRegister routing.RouteRegister
 	TestServer    *httptest.Server
 }
 
 // NewServer starts and returns a new server.
-func NewServer(t *testing.T, routeRegister routing.RouteRegister) *Server {
+func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 	t.Helper()
 
 	m := web.New()
@@ -32,8 +32,6 @@ func NewServer(t *testing.T, routeRegister routing.RouteRegister) *Server {
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		initCtx.AllowAnonymous = false
-		initCtx.IsSignedIn = false
 		c.Map(initCtx)
 	})
 
