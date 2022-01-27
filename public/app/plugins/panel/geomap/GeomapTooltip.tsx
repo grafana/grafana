@@ -39,10 +39,11 @@ export const GeomapTooltip = (props: Props) => {
     <Portal>
       {ttip && ttip.layers && (
         <FocusScope contain autoFocus restoreFocus>
-          <section ref={ref} {...overlayProps}></section>
-          <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
-            <DataHoverView {...ttip} />
-          </VizTooltipContainer>
+          <section ref={ref} {...overlayProps}>
+            <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
+              <DataHoverView {...ttip} />
+            </VizTooltipContainer>
+          </section>
         </FocusScope>
       )}
     </Portal>

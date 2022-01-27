@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory, Tab, TabsBar } from '@grafana/ui';
 import {
   arrayUtils,
   DataFrame,
@@ -30,6 +30,11 @@ export class DataHoverView extends PureComponent<Props> {
       console.log('hover', layers);
       return (
         <div>
+          <TabsBar>
+            {layers.map((g, index) => (
+              <Tab key={index} label={g.layer.getName()} active={false} counter={g.features.length} />
+            ))}
+          </TabsBar>
           {layers.map((g) => (
             <div key={g.layer.getName()}>
               <b>{g.layer.getName()}</b>
