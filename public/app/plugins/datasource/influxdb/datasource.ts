@@ -32,6 +32,7 @@ import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { buildRawQuery } from './queryUtils';
+import config from 'app/core/config';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -402,7 +403,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux || this.access === 'proxy') {
+    if (this.isFlux || (config.featureToggles.influxBackendMigration && this.access === 'proxy')) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
