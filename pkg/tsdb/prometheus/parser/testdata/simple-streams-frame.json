@@ -1,0 +1,52 @@
+{
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            },
+            "labels": {
+              "filename": "/var/log/myproject.log",
+              "job": "varlogs",
+              "level": "info"
+            }
+          },
+          {
+            "name": "TS",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            0,0
+          ],
+          [
+            "foo","bar"
+          ],
+          [
+            "1568234281726420425","1568234269716526880"
+          ]
+        ]
+      }
+    }
+  ]
+}

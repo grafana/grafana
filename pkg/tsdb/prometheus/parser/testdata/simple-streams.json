@@ -1,0 +1,28 @@
+{
+    "status": "success",
+    "data": {
+      "resultType": "streams",
+      "result": [
+        {
+          "stream": {
+            "filename": "/var/log/myproject.log",
+            "job": "varlogs",
+            "level": "info"
+          },
+          "values": [
+            [
+              "1568234281726420425",
+              "foo"
+            ],
+            [
+              "1568234269716526880",
+              "bar"
+            ]
+          ]
+        }
+      ],
+      "stats": {
+
+      }
+    }
+  }

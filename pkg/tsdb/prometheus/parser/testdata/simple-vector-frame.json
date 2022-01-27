@@ -1,0 +1,76 @@
+{
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-many"
+        },
+        "fields": [
+          {
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "up",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "job": "prometheus",
+              "instance": "localhost:9090"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781451000
+          ],
+          [
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-many"
+        },
+        "fields": [
+          {
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "up",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "job": "node",
+              "instance": "localhost:9100"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781451000
+          ],
+          [
+            0
+          ]
+        ]
+      }
+    }
+  ]
+}

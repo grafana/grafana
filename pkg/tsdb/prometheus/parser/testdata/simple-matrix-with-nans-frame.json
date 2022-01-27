@@ -1,0 +1,53 @@
+{
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-many"
+        },
+        "fields": [
+          {
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "handler": "/api/v1/query_range",
+              "job": "prometheus"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1641889530000,1641889531000,1641889532000
+          ],
+          [
+            null,null,null
+          ]
+        ],
+        "entities": [
+          null,
+          {
+            "NaN": [
+              1
+            ],
+            "Inf": [
+              0
+            ],
+            "NegInf": [
+              2
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

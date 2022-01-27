@@ -1,0 +1,92 @@
+{
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "test_exemplar_metric_total",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "instance": "localhost:8090",
+              "job": "prometheus",
+              "service": "bar"
+            }
+          },
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1600096945000
+          ],
+          [
+            6
+          ],
+          [
+            "EpTxMJ40fUus7aGY"
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "test_exemplar_metric_total",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "job": "prometheus",
+              "service": "foo",
+              "instance": "localhost:8090"
+            }
+          },
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1600096955000,1600096965000
+          ],
+          [
+            19,20
+          ],
+          [
+            "Olp9XHlq763ccsfa","hCtjygkIHwAN9vs4"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+    "status" : "success",
+    "data" : [
+       {
+          "__name__" : "up",
+          "job" : "prometheus",
+          "instance" : "localhost:9090"
+       },
+       {
+          "__name__" : "up",
+          "job" : "node",
+          "instance" : "localhost:9091"
+       },
+       {
+          "__name__" : "process_start_time_seconds",
+          "job" : "prometheus",
+          "instance" : "localhost:9090"
+       }
+    ]
+ }
+ 
