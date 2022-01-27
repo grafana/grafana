@@ -39,6 +39,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore: sqlStore,
 		}
 
+		service.Cfg.QueryHistoryEnabled = true
+
 		user := models.SignedInUser{
 			UserId:     testUserID,
 			Name:       "Signed In User",

@@ -945,7 +945,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	queryHistory := iniFile.Section("query_history")
-	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
