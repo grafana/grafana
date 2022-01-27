@@ -94,7 +94,7 @@ func TestErrorResponse(t *testing.T) {
 		{
 			name:         "parse an error response in plain text",
 			body:         []byte("parse error at line 1, col 8: something is wrong"),
-			contentType:  "application/json; charset=utf-8",
+			contentType:  "text/plain; charset=utf-8",
 			errorMessage: "Run out of attempts while querying the server",
 		},
 	}
