@@ -18,7 +18,9 @@ type pluginSettingsStore interface {
 
 func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, pluginStore plugins.Store,
 	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
-	return new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService)
+	s := new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService)
+	s.updateAppDashboards()
+	return s
 }
 
 func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugins.Store,
@@ -32,7 +34,6 @@ func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugi
 		logger:                 log.New("plugindashboards"),
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
-	s.updateAppDashboards()
 
 	return s
 }
@@ -134,14 +135,14 @@ func (s *Service) handlePluginStateChanged(ctx context.Context, event *models.Pl
 		s.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := bus.Dispatch(ctx, &query); err != nil {
+		if err := s.bus.Dispatch(ctx, &query); err != nil {
 			return err
 		}
 
 		for _, dash := range query.Result {
 			s.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 			deleteCmd := models.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
-			if err := bus.Dispatch(ctx, &deleteCmd); err != nil {
+			if err := s.bus.Dispatch(ctx, &deleteCmd); err != nil {
 				return err
 			}
 		}
