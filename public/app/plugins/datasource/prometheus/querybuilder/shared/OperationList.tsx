@@ -101,6 +101,7 @@ export function OperationList<T extends QueryWithOperations>({
             onChange={onAddOperation}
             variant="secondary"
             hideDownIcon={true}
+            buttonProps={{ 'aria-label': 'Add operation' }}
           />
         </div>
       </Stack>

@@ -28,6 +28,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     <EditorFieldGroup>
       <EditorField label="Metric">
         <Select
+          inputId="prometheus-metric-select"
           className={styles.select}
           value={query.metric ? toOption(query.metric) : undefined}
           placeholder="Select metric"

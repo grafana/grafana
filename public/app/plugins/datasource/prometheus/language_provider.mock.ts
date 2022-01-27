@@ -6,16 +6,10 @@ export class EmptyLanguageProviderMock {
       resolve('');
     });
   }
-  getLabelKeys() {
-    return [];
-  }
-  getLabelValues() {
-    return [];
-  }
-  fetchSeries() {
-    return [];
-  }
-  fetchSeriesLabels() {
-    return [];
-  }
+  getLabelKeys = jest.fn().mockReturnValue([]);
+  getLabelValues = jest.fn().mockReturnValue([]);
+  getSeries = jest.fn().mockReturnValue({ __name__: [] });
+  fetchSeries = jest.fn().mockReturnValue([]);
+  fetchSeriesLabels = jest.fn().mockReturnValue([]);
+  fetchLabels = jest.fn();
 }
