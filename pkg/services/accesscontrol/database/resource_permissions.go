@@ -50,7 +50,7 @@ func (s *AccessControlStore) SetUserResourcePermission(
 			return hook(sess, orgID, userID, cmd.ResourceID, cmd.Permission)
 		}
 
-		return nil
+		return err
 	})
 
 	if err != nil {
