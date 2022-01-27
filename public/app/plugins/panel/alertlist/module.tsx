@@ -165,7 +165,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       },
       category: ['Options'],
     })
-    .addCustomEditor<void, string[]>({
+    .addCustomEditor({
       path: 'groupBy',
       name: 'Group by',
       description: 'Filter alerts using label querying',

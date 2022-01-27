@@ -279,8 +279,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     font-weight: ${theme.typography.weight.bold};
   `,
   alertLabels: css`
-    font-size: ${theme.typography.size.md};
-    font-weight: ${theme.typography.weight.bold};
     > * {
       margin-right: ${theme.spacing.xs};
     }
