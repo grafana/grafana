@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var sch *schema.ThemaSchema
@@ -102,6 +103,10 @@ type DataSource struct {
 	//ReadOnly         bool                   `json:"readOnly"`
 	// AccessControl     accesscontrol.Metadata `json:"accessControl,omitempty"`
 	//AccessControl map[string]bool `json:"accessControl,omitempty"`
+}
+
+func (ds *DataSource) DeepCopyObject() runtime.Object {
+	panic("not implemented")
 }
 
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
