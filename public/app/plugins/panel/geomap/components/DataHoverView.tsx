@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { stylesFactory } from '@grafana/ui';
 import {
-  ArrayDataFrame,
   arrayUtils,
   DataFrame,
   Field,
@@ -11,12 +10,12 @@ import {
 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import { FeatureLike } from 'ol/Feature';
 import { SortOrder } from '@grafana/schema';
+import { GeomapLayerHover } from '../event';
 
 export interface Props {
   data?: DataFrame; // source data
-  feature?: FeatureLike;
+  layers?: GeomapLayerHover[];
   rowIndex?: number | null; // the hover row
   columnIndex?: number | null; // the hover column
   sortOrder?: SortOrder;
@@ -26,13 +25,26 @@ export class DataHoverView extends PureComponent<Props> {
   style = getStyles(config.theme2);
 
   render() {
-    const { feature, columnIndex, sortOrder } = this.props;
-    let { data, rowIndex } = this.props;
-    if (feature) {
-      const { geometry, ...properties } = feature.getProperties();
-      data = new ArrayDataFrame([properties]);
-      rowIndex = 0;
+    const { layers, columnIndex, sortOrder } = this.props;
+    if (layers) {
+      console.log('hover', layers);
+      return (
+        <div>
+          {layers.map((g) => (
+            <div key={g.layer.getName()}>
+              <b>{g.layer.getName()}</b>
+              <div>
+                {g.features.map((f, idx) => (
+                  <div key={idx}>FEATURE: {`${f}`}</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
     }
+
+    let { data, rowIndex } = this.props;
 
     if (!data || rowIndex == null) {
       return null;
