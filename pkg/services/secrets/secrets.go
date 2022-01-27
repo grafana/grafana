@@ -8,10 +8,6 @@ import (
 	"xorm.io/xorm"
 )
 
-const (
-	EnvelopeEncryptionFeatureToggle = "envelopeEncryption"
-)
-
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
 // It is a replacement for encryption.Service
 type Service interface {

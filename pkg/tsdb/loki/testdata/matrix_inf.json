@@ -1,0 +1,19 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "level": "info",
+          "location": "moon",
+          "protocol": "http"
+        },
+        "values": [
+          [1643021611.9, "+Inf"],
+          [1643021911.9, "-Inf"]
+        ]
+      }
+    ]
+  }
+}

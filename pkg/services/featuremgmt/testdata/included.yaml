@@ -1,0 +1,13 @@
+include:
+ - features.yaml # make sure we avoid recusion!
+
+# variables that can be used in expressions
+vars:
+  stack: something
+  deep: 1
+  valA: value from included.yaml
+
+flags: 
+  - name: featureFromIncludedFile
+    description: an inlcuded file
+    expression: invalid expression string here

@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -23,13 +23,14 @@ type WebhookNotifier struct {
 	HTTPMethod string
 	MaxAlerts  int
 	log        log.Logger
+	ns         notifications.WebhookSender
 	tmpl       *template.Template
 	orgID      int64
 }
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
+func NewWebHookNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -55,6 +56,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, 
 		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
 		log:        log.New("alerting.notifier.webhook"),
+		ns:         ns,
 		tmpl:       t,
 	}, nil
 }
@@ -118,7 +120,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpMethod: wn.HTTPMethod,
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, err
 	}
 
