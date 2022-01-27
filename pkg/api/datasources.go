@@ -258,8 +258,6 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 
 func validateURL(cmdType string, url string) response.Response {
 	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
-		datasourcesLogger.Error("Received invalid data source URL as part of data source command",
-			"url", url)
 		return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", url), err)
 	}
 
