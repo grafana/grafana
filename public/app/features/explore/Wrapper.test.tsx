@@ -12,6 +12,7 @@ import {
   FieldType,
   QueryEditorProps,
   ScopedVars,
+  serializeStateToUrlParam,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -66,13 +67,23 @@ describe('Wrapper', () => {
     // At this point url should be initialised to some defaults
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
     });
     expect(datasources.loki.query).not.toBeCalled();
   });
 
   it('runs query when url contains query and renders results', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
+    const query = {
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: '{ label="value"}' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+    };
     const { datasources, store } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -155,7 +166,11 @@ describe('Wrapper', () => {
     expect(datasources.elastic.query).not.toBeCalled();
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      left: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
+      left: serializeStateToUrlParam({
+        datasource: 'elastic',
+        queries: [{ refId: 'A' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
     });
   });
 
@@ -172,8 +187,16 @@ describe('Wrapper', () => {
 
   it('inits with two panes if specified in url', async () => {
     const query = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error', refId: 'A' }]),
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: '{ label="value"}' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+      right: serializeStateToUrlParam({
+        datasource: 'elastic',
+        queries: [{ refId: 'A', expr: 'error' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
     };
 
     const { datasources } = setup({ query });
