@@ -10,7 +10,7 @@ import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryEditorMode } from '../shared/types';
 import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
-import { PromQueryBuilderExplained } from './PromQueryBuilderExplaind';
+import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
