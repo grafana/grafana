@@ -6,7 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
-import { AbsoluteTimeRange, DataFrame, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import { QueryRows } from './QueryRows';
@@ -33,6 +33,7 @@ import { ExploreGraphLabel } from './ExploreGraphLabel';
 import appEvents from 'app/core/app_events';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { Unsubscribable } from 'rxjs';
+import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -283,20 +284,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { exploreId, showTrace, queryResponse } = this.props;
     return (
       <NodeGraphContainer
-        dataFrames={this.getNodeGraphDataFrames(queryResponse.series)}
+        dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
         exploreId={exploreId}
         withTraceView={showTrace}
       />
     );
   }
 
-  getNodeGraphDataFrames = memoizeOne((frames: DataFrame[]) => {
-    // TODO: this not in sync with how other types of responses are handled. Other types have a query response
-    //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
-    //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
-    //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
-    return frames.filter((frame) => frame.meta?.preferredVisualisationType === 'nodeGraph');
-  });
+  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   renderTraceViewPanel() {
     const { queryResponse, splitOpen, exploreId } = this.props;
