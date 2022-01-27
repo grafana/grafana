@@ -170,7 +170,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       name: 'Group by',
       description: 'Filter alerts using label querying',
       id: 'groupBy',
-      defaultValue: ['alertname'],
+      defaultValue: [],
       showIf: (options) => options.groupMode === GroupMode.Custom,
       category: ['Options'],
       editor: (props) => {
