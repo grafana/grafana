@@ -91,8 +91,8 @@ func TestPluginManager_int_init(t *testing.T) {
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, nil, loader.New(pmCfg, license,
-		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, provider.ProvideService(coreRegistry)), nil)
+	pm, err := ProvideService(cfg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+		provider.ProvideService(coreRegistry)), nil)
 	require.NoError(t, err)
 
 	verifyCorePluginCatalogue(t, pm)
