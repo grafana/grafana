@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,19 +20,19 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, er
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
-		if dashboardErr.StatusCode != 400 {
+		if dashboardErr.StatusCode != http.StatusBadRequest {
 			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 		}
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
 	}
 
 	if errors.Is(err, models.ErrFolderNotFound) {
-		return response.Error(400, err.Error(), nil)
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	var validationErr alerting.ValidationError
 	if ok := errors.As(err, &validationErr); ok {
-		return response.Error(422, validationErr.Error(), err)
+		return response.Error(http.StatusUnprocessableEntity, validationErr.Error(), err)
 	}
 
 	var pluginErr models.UpdatePluginDashboardError
@@ -41,8 +42,8 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, er
 		if plugin, exists := pluginStore.Plugin(ctx, pluginErr.PluginId); exists {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", plugin.Name)
 		}
-		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "plugin-dashboard", "message": message})
 	}
 
-	return response.Error(500, "Failed to save dashboard", err)
+	return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
 }

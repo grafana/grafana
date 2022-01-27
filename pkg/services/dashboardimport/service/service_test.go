@@ -38,7 +38,19 @@ func TestImportDashboardService(t *testing.T) {
 				}, nil
 			},
 		}
-		libraryPanelService := &libraryPanelServiceMock{}
+
+		importLibraryPanelsForDashboard := false
+		connectLibraryPanelsForDashboardCalled := false
+		libraryPanelService := &libraryPanelServiceMock{
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard, folderID int64) error {
+				importLibraryPanelsForDashboard = true
+				return nil
+			},
+			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+				connectLibraryPanelsForDashboardCalled = true
+				return nil
+			},
+		}
 		s := &ImportDashboardService{
 			pluginDashboardManager: pluginDashboardManager,
 			dashboardService:       dashboardService,
@@ -67,6 +79,9 @@ func TestImportDashboardService(t *testing.T) {
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
+
+		require.True(t, importLibraryPanelsForDashboard)
+		require.True(t, connectLibraryPanelsForDashboardCalled)
 	})
 
 	t.Run("When importing a non-plugin dashboard should save dashboard and sync library panels", func(t *testing.T) {
