@@ -209,6 +209,7 @@ describe('Silence edit', () => {
 
       const start = new Date();
       const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      const now = dateTime().format('YYYY-MM-DD HH:mm');
 
       const startDateString = dateTime(start).format('YYYY-MM-DD');
       const endDateString = dateTime(end).format('YYYY-MM-DD');
@@ -246,15 +247,13 @@ describe('Silence edit', () => {
       userEvent.tab();
       userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
 
-      userEvent.type(ui.editor.comment.get(), 'Test');
-
       userEvent.click(ui.editor.submit.get());
 
       await waitFor(() =>
         expect(mocks.api.createOrUpdateSilence).toHaveBeenCalledWith(
           'grafana',
           expect.objectContaining({
-            comment: 'Test',
+            comment: `created ${now}`,
             matchers: [
               { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
               { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },
