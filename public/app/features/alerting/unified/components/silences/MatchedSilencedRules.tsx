@@ -4,7 +4,7 @@ import { useDebounce } from 'react-use';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Badge, useStyles2 } from '@grafana/ui';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { RuleState } from '../rules/RuleState';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -48,7 +48,12 @@ export const MatchedSilencedRules = () => {
 
   return (
     <div>
-      <h4>Affected alerts {matchedAlertRules.length > 0 ? `(${matchedAlertRules.length})` : ''}</h4>
+      <h4 className={styles.title}>
+        Affected alerts
+        {matchedAlertRules.length > 0 ? (
+          <Badge className={styles.badge} color="blue" text={matchedAlertRules.length} />
+        ) : null}{' '}
+      </h4>
       <div className={styles.table}>
         {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
           <span>Add a valid matcher to see affected alerts</span>
@@ -100,5 +105,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   moreMatches: css`
     margin-top: ${theme.spacing(1)};
+  `,
+  title: css`
+    display: flex;
+    align-items: center;
+  `,
+  badge: css`
+    margin-left: ${theme.spacing(1)};
   `,
 });
