@@ -11,6 +11,7 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   getFieldDisplayName,
+  getDisplayProcessor,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
@@ -23,6 +24,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
   VizLegendOptions,
+  StackingMode,
 } from '@grafana/schema';
 import { collectStackingGroups, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
@@ -36,7 +38,10 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync; legend?: VizLegendOptions }> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
+  sync?: () => DashboardCursorSync;
+  legend?: VizLegendOptions;
+}> = ({
   frame,
   theme,
   timeZone,
@@ -65,6 +70,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   let xScaleUnit = '_x';
   let yScaleKey = '';
 
+  const xFieldAxisPlacement =
+    xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
+  const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
+
   if (xField.type === FieldType.time) {
     xScaleUnit = 'time';
     builder.addScale({
@@ -81,7 +90,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addAxis({
       scaleKey: xScaleKey,
       isTime: true,
-      placement: AxisPlacement.Bottom,
+      placement: xFieldAxisPlacement,
+      show: xFieldAxisShow,
       label: xField.config.custom?.axisLabel,
       timeZone,
       theme,
@@ -101,7 +111,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     builder.addAxis({
       scaleKey: xScaleKey,
-      placement: AxisPlacement.Bottom,
+      placement: xFieldAxisPlacement,
+      show: xFieldAxisShow,
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
@@ -135,8 +146,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     // TODO: skip this for fields with custom renderers?
     field.state!.seriesIndex = seriesIndex++;
 
-    const fmt = field.display ?? defaultFormatter;
-
+    let fmt = field.display ?? defaultFormatter;
+    if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
+      fmt = getDisplayProcessor({
+        field: {
+          ...field,
+          config: {
+            ...field.config,
+            unit: 'percentunit',
+          },
+        },
+        theme,
+      });
+    }
     const scaleKey = buildScaleKey(config);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
@@ -250,9 +272,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
             series: [t, b],
             fill: undefined, // using null will have the band use fill options from `t`
           });
-        }
-        if (!fillOpacity) {
-          fillOpacity = 35; // default from flot
+
+          if (!fillOpacity) {
+            fillOpacity = 35; // default from flot
+          }
+        } else {
+          fillOpacity = 0;
         }
       }
     }
@@ -386,7 +411,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     },
   };
 
-  if (sync !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off) {
     const payload: DataHoverPayload = {
       point: {
         [xScaleKey]: null,
@@ -399,6 +424,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
+
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;

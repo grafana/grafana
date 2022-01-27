@@ -17,25 +17,37 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type WebhookSender interface {
+	SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error
+}
+type EmailSender interface {
+	SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error
+}
+type Service interface {
+	WebhookSender
+	EmailSender
+}
+
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
 		log:          log.New("notifications"),
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
+		mailer:       mailer,
 	}
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
 	ns.Bus.AddHandler(ns.validateResetPasswordCode)
 	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
-	ns.Bus.AddHandler(ns.sendEmailCommandHandlerSync)
+	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
 	ns.Bus.AddHandler(ns.SendWebhookSync)
 
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
@@ -70,6 +82,7 @@ type NotificationService struct {
 
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
+	mailer       Mailer
 	log          log.Logger
 }
 
@@ -117,7 +130,7 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	return ""
 }
 
-func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
 	message, err := ns.buildEmailMessage(&models.SendEmailCommand{
 		Data:          cmd.Data,
 		Info:          cmd.Info,
@@ -125,6 +138,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
 		EmbeddedFiles: cmd.EmbeddedFiles,
+		AttachedFiles: cmd.AttachedFiles,
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
 	})

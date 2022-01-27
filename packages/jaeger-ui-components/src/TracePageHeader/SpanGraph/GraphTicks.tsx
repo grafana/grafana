@@ -14,9 +14,9 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
-import { createStyle } from '../../Theme';
+import { useStyles2 } from '@grafana/ui';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     GraphTick: css`
       label: GraphTick;
@@ -24,7 +24,7 @@ const getStyles = createStyle(() => {
       stroke-width: 1px;
     `,
   };
-});
+};
 
 type GraphTicksProps = {
   numTicks: number;
@@ -32,11 +32,12 @@ type GraphTicksProps = {
 
 export default function GraphTicks(props: GraphTicksProps) {
   const { numTicks } = props;
+  const styles = useStyles2(getStyles);
   const ticks = [];
   // i starts at 1, limit is `i < numTicks` so the first and last ticks aren't drawn
   for (let i = 1; i < numTicks; i++) {
     const x = `${(i / numTicks) * 100}%`;
-    ticks.push(<line className={getStyles().GraphTick} x1={x} y1="0%" x2={x} y2="100%" key={i / numTicks} />);
+    ticks.push(<line className={styles.GraphTick} x1={x} y1="0%" x2={x} y2="100%" key={i / numTicks} />);
   }
 
   return (

@@ -131,10 +131,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     direction: vizOrientation.xDir,
   });
 
+  const xFieldAxisPlacement =
+    frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden
+      ? vizOrientation.xOri === ScaleOrientation.Horizontal
+        ? AxisPlacement.Bottom
+        : AxisPlacement.Left
+      : AxisPlacement.Hidden;
+  const xFieldAxisShow = frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden;
+
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
-    placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
+    placement: xFieldAxisPlacement,
     label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
     values: config.xValues,
@@ -143,6 +151,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     gap: 15,
     tickLabelRotation: xTickLabelRotation * -1,
     theme,
+    show: xFieldAxisShow,
   });
 
   let seriesIndex = 0;

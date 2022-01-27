@@ -86,7 +86,10 @@
 			"transformations": []
 		},
 		{
-			"datasource": "-- Dashboard --",
+			"datasource": {
+				"type": "datasource",
+				"uid": "-- Dashboard --"
+			},
 			"fieldConfig": {
 				"defaults": {
 					"color": {
@@ -460,7 +463,7 @@
 			"repeatDirection": "h"
 		}
 	],
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

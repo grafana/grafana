@@ -132,6 +132,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Infrequently used",
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionDatasourcesQuery},
+				{Action: ActionDatasourcesRead},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -185,9 +186,47 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
+	teamCreatorGrants := []string{string(models.ROLE_ADMIN)}
+	if hs.Cfg.EditorsCanAdmin {
+		teamCreatorGrants = append(teamCreatorGrants, string(models.ROLE_EDITOR))
+	}
+	teamsCreatorRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:teams:creator",
+			DisplayName: "Team creator",
+			Description: "Create teams.",
+			Group:       "Teams",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsCreate},
+			},
+		},
+		Grants: teamCreatorGrants,
+	}
+
+	teamsWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:teams:writer",
+			DisplayName: "Team writer",
+			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
+			Group:       "Teams",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsCreate},
+				{Action: accesscontrol.ActionTeamsDelete, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsWrite, Scope: accesscontrol.ScopeTeamsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole,
 	)
 }
 

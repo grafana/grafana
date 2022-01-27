@@ -1,9 +1,8 @@
 package accesscontrol
 
 import (
-	"bytes"
+	"context"
 	"fmt"
-	"html/template"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,8 +13,8 @@ var logger = log.New("accesscontrol.evaluator")
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string][]string) (bool, error)
-	// Inject params into the evaluator's templated scopes. e.g. "settings:" + eval.Parameters(":id") and returns a new Evaluator
-	Inject(params ScopeParams) (Evaluator, error)
+	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
+	MutateScopes(context.Context, ...ScopeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
 	String() string
 }
@@ -89,18 +88,22 @@ func match(scope, target string) (bool, error) {
 	return scope == target, nil
 }
 
-func (p permissionEvaluator) Inject(params ScopeParams) (Evaluator, error) {
+func (p permissionEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+	var err error
+	if p.Scopes == nil {
+		return EvalPermission(p.Action), nil
+	}
+
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
-		tmpl, err := template.New("scope").Parse(scope)
-		if err != nil {
-			return nil, err
+		modified := scope
+		for _, modifier := range modifiers {
+			modified, err = modifier(ctx, modified)
+			if err != nil {
+				return nil, err
+			}
 		}
-		var buf bytes.Buffer
-		if err = tmpl.Execute(&buf, params); err != nil {
-			return nil, err
-		}
-		scopes = append(scopes, buf.String())
+		scopes = append(scopes, modified)
 	}
 	return EvalPermission(p.Action, scopes...), nil
 }
@@ -129,16 +132,16 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
 	return true, nil
 }
 
-func (a allEvaluator) Inject(params ScopeParams) (Evaluator, error) {
-	var injected []Evaluator
+func (a allEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+	var modified []Evaluator
 	for _, e := range a.allOf {
-		i, err := e.Inject(params)
+		i, err := e.MutateScopes(ctx, modifiers...)
 		if err != nil {
 			return nil, err
 		}
-		injected = append(injected, i)
+		modified = append(modified, i)
 	}
-	return EvalAll(injected...), nil
+	return EvalAll(modified...), nil
 }
 
 func (a allEvaluator) String() string {
@@ -173,16 +176,16 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
 	return false, nil
 }
 
-func (a anyEvaluator) Inject(params ScopeParams) (Evaluator, error) {
-	var injected []Evaluator
+func (a anyEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+	var modified []Evaluator
 	for _, e := range a.anyOf {
-		i, err := e.Inject(params)
+		i, err := e.MutateScopes(ctx, modifiers...)
 		if err != nil {
 			return nil, err
 		}
-		injected = append(injected, i)
+		modified = append(modified, i)
 	}
-	return EvalAny(injected...), nil
+	return EvalAny(modified...), nil
 }
 
 func (a anyEvaluator) String() string {
