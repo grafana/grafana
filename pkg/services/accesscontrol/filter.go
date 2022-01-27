@@ -31,7 +31,7 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 	var ids []interface{}
 	for _, scope := range user.Permissions[user.OrgId][action] {
 		if strings.HasPrefix(scope, prefix) {
-			if scope[len(scope)-1] == '*' {
+			if id := strings.TrimPrefix(scope, prefix); id == ":*" || id == ":id:*" {
 				hasWildcard = true
 				break
 			}
