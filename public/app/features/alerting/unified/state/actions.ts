@@ -370,24 +370,21 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   }
 
   // if creating new rule or folder was changed, create rule in a new group
-  const existingNamespace = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
+  const targetFolderGroups = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
 
   // set group name to rule name, but be super paranoid and check that this group does not already exist
-  let group = values.name;
-  let idx = 1;
-  while (!!existingNamespace.find((g) => g.name === group)) {
-    group = `${values.name}-${++idx}`;
-  }
+  const groupName = getUniqueGroupName(values.name, targetFolderGroups);
+  formRule.grafana_alert.title = groupName;
 
   const payload: PostableRulerRuleGroupDTO = {
-    name: group,
+    name: groupName,
     interval: evaluateEvery,
     rules: [formRule],
   };
   await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, payload);
 
   // now refetch this group to get the uid, hah
-  const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, group);
+  const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, groupName);
   const newUid = (result?.rules[0] as RulerGrafanaRuleDTO)?.grafana_alert?.uid;
   if (newUid) {
     // if folder has changed, delete the old one
@@ -402,6 +399,16 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   } else {
     throw new Error('Failed to fetch created rule.');
   }
+}
+
+function getUniqueGroupName(currentGroupName: string, existingGroups: RulerRuleGroupDTO[]) {
+  let newGroupName = currentGroupName;
+  let idx = 1;
+  while (!!existingGroups.find((g) => g.name === newGroupName)) {
+    newGroupName = `${currentGroupName}-${++idx}`;
+  }
+
+  return newGroupName;
 }
 
 export const saveRuleFormAction = createAsyncThunk(
