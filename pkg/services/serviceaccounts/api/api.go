@@ -40,9 +40,9 @@ func NewServiceAccountsAPI(
 }
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
-	features *featuremgmt.FeatureToggles,
+	features featuremgmt.FeatureToggles,
 ) {
-	if !features.IsServiceAccountsEnabled() {
+	if !features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		return
 	}
 

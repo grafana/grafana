@@ -25,6 +25,7 @@ type Server struct {
 
 // NewServer starts and returns a new server.
 func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
+func NewServer(t *testing.T, routeRegister routing.RouteRegister) *Server {
 	t.Helper()
 
 	m := web.New()
@@ -90,7 +91,10 @@ func RequestWithWebContext(req *http.Request, c *models.ReqContext) *http.Reques
 }
 
 func RequestWithSignedInUser(req *http.Request, user *models.SignedInUser) *http.Request {
-	return RequestWithWebContext(req, &models.ReqContext{SignedInUser: &models.SignedInUser{}})
+	return RequestWithWebContext(req, &models.ReqContext{
+		SignedInUser: &models.SignedInUser{},
+		IsSignedIn:   true,
+	})
 }
 
 func requestContextFromRequest(req *http.Request) *models.ReqContext {
@@ -106,6 +110,11 @@ func requestContextFromRequest(req *http.Request) *models.ReqContext {
 func requestContextMiddleware() web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *models.ReqContext) {
 		ctx := requestContextFromRequest(req)
+		if ctx == nil {
+			c.Next()
+			return
+		}
+
 		c.SignedInUser = ctx.SignedInUser
 		c.UserToken = ctx.UserToken
 		c.IsSignedIn = ctx.IsSignedIn
