@@ -47,3 +47,79 @@ export const wholeIncrs = oneIncrs.filter(onlyWhole);
 export const numIncrs = decIncrs.concat(oneIncrs);
 
 export const niceLinearIncrs = decIncrs.concat(wholeIncrs);
+
+const sec = 1 * 1e3;
+const min = 60 * sec;
+const hour = 60 * min;
+const day = 24 * hour;
+const year = 365 * day;
+
+// in milliseconds
+export const niceTimeIncrs = [
+  1,
+  2,
+  4,
+  5,
+  10,
+  20,
+  25,
+  40,
+  50,
+  100,
+  200,
+  250,
+  400,
+  500,
+
+  sec,
+  2 * sec,
+  4 * sec,
+  5 * sec,
+  10 * sec,
+  15 * sec,
+  20 * sec,
+  30 * sec,
+
+  min,
+  2 * min,
+  4 * min,
+  5 * min,
+  10 * min,
+  15 * min,
+  20 * min,
+  30 * min,
+
+  hour,
+  2 * hour,
+  4 * hour,
+  6 * hour,
+  8 * hour,
+  12 * hour,
+  18 * hour,
+
+  day,
+  2 * day,
+  3 * day,
+  4 * day,
+  5 * day,
+  6 * day,
+  7 * day,
+  10 * day,
+  15 * day,
+  30 * day,
+  45 * day,
+  60 * day,
+  90 * day,
+  180 * day,
+
+  year,
+  2 * year,
+  3 * year,
+  4 * year,
+  5 * year,
+  6 * year,
+  7 * year,
+  8 * year,
+  9 * year,
+  10 * year,
+];

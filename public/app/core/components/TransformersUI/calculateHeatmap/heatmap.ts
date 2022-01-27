@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { map } from 'rxjs';
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
-import { niceLinearIncrs } from './utils';
+import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
@@ -64,6 +64,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   let heat2d = heatmap(xs, ys, {
     xSorted: true,
+    xTime: true,
     xUnit: options.xAxis?.mode,
     xSize: +(options.xAxis?.value ?? 0),
     yUnit: options.yAxis?.mode,
@@ -116,6 +117,9 @@ interface HeatmapOpts {
   xLog?: 2 | 10;
   yLog?: 2 | 10;
 
+  xTime?: boolean;
+  yTime?: boolean;
+
   // optimization hints for known data ranges (sorted, pre-scanned, etc)
   xMin?: number;
   xMax?: number;
@@ -162,7 +166,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   // fall back to 10 buckets if invalid settings
   if (!Number.isFinite(xBinIncr) || xBinIncr <= 0) {
     xUnit = HeatmapCalculationMode.Count;
-    xBinIncr = 30;
+    xBinIncr = 20;
   }
   if (!Number.isFinite(yBinIncr) || yBinIncr <= 0) {
     yUnit = HeatmapCalculationMode.Count;
@@ -173,16 +177,22 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     // TODO: optionally use view range min/max instead of data range for bucket sizing
     let approx = (maxX - minX) / Math.max(xBinIncr - 1, 1);
     // nice-ify
-    // TODO: snap to logical time incrs? 1s,2s,5s,10s,15s,30s,60s
-    xBinIncr = niceLinearIncrs[niceLinearIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
+    let xIncrs = opts?.xTime ? niceTimeIncrs : niceLinearIncrs;
+    xBinIncr = xIncrs[xIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
   }
 
   if (yUnit === HeatmapCalculationMode.Count) {
     // TODO: optionally use view range min/max instead of data range for bucket sizing
     let approx = (maxY - minY) / Math.max(yBinIncr - 1, 1);
     // nice-ify
-    yBinIncr = niceLinearIncrs[niceLinearIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
+    let yIncrs = opts?.yTime ? niceTimeIncrs : niceLinearIncrs;
+    yBinIncr = yIncrs[yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
   }
+
+  console.log({
+    yBinIncr,
+    xBinIncr,
+  });
 
   let binX = opts?.xCeil ? (v: number) => incrRoundUp(v, xBinIncr) : (v: number) => incrRoundDn(v, xBinIncr);
   let binY = opts?.yCeil ? (v: number) => incrRoundUp(v, yBinIncr) : (v: number) => incrRoundDn(v, yBinIncr);
