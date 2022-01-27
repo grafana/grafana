@@ -13,6 +13,13 @@ export interface ResourceRow {
   typeLabel: string;
   location?: string;
   children?: ResourceRowGroup;
+  loading?: boolean;
+  expanded?: boolean;
+  selected?: boolean;
 }
 
 export type ResourceRowGroup = ResourceRow[];
+
+export interface ResourceRowData {
+  resourceRowGroup: ResourceRowGroup;
+}
