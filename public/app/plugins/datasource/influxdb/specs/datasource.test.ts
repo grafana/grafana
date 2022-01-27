@@ -173,4 +173,55 @@ describe('InfluxDataSource', () => {
       });
     });
   });
+
+  describe('Interpolating query variables for dashboard->explore', () => {
+    const templateSrv: any = { replace: jest.fn() };
+    const instanceSettings: any = {};
+    const ds = new InfluxDatasource(instanceSettings, templateSrv);
+    const text = 'interpolationText';
+
+    it('Should interpolate all variables', () => {
+      const query = {
+        refId: 'x',
+        measurement: '$interpolationVar',
+        policy: '$interpolationVar',
+        limit: '$interpolationVar',
+        slimit: '$interpolationVar',
+        tz: '$interpolationVar',
+        tags: [
+          {
+            key: 'cpu',
+            operator: '=~',
+            value: '/^$interpolationVar$/',
+          },
+        ],
+        groupBy: [
+          {
+            params: ['$interpolationVar'],
+            type: 'tag',
+          },
+        ],
+        select: [
+          [
+            {
+              params: ['$interpolationVar'],
+              type: 'field',
+            },
+          ],
+        ],
+      };
+      templateSrv.replace.mockReturnValue(text);
+
+      const queries = ds.interpolateVariablesInQueries([query], { interpolationVar: { text: text, value: text } });
+      expect(templateSrv.replace).toBeCalledTimes(8);
+      expect(queries[0].measurement).toBe(text);
+      expect(queries[0].policy).toBe(text);
+      expect(queries[0].limit).toBe(text);
+      expect(queries[0].slimit).toBe(text);
+      expect(queries[0].tz).toBe(text);
+      expect(queries[0].tags![0].value).toBe(text);
+      expect(queries[0].groupBy![0].params![0]).toBe(text);
+      expect(queries[0].select![0][0].params![0]).toBe(text);
+    });
+  });
 });
