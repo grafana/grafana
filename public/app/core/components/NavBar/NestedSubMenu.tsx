@@ -32,7 +32,7 @@ export const NestedSubMenu: FC<Props> = ({ items = [] }) => {
   );
 };
 
-const getStyles = ({ colors, components, spacing }: GrafanaTheme2) => {
+const getStyles = ({ colors, components, spacing, zIndex }: GrafanaTheme2) => {
   return {
     menu: css`
       background-color: ${colors.background.primary};
@@ -44,6 +44,7 @@ const getStyles = ({ colors, components, spacing }: GrafanaTheme2) => {
       list-style: none;
       opacity: 0;
       visibility: hidden;
+      z-index: ${zIndex.sidemenu};
 
       & > li {
         position: relative;
