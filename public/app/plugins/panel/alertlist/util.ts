@@ -24,3 +24,7 @@ export function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['optio
     );
   });
 }
+
+export function isPrivateLabel(label: string) {
+  return !(label.startsWith('__') && label.endsWith('__'));
+}

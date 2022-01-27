@@ -66,25 +66,25 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   // support for grouped view – filter already filtered rules for instances that match groupBy key
   // and use groupBy key for grouping
   type GroupedRules = Map<string, Alert[]>;
-  const groupByKeys = props.options.groupBy.split(',').map((s) => s.trim()); // TODO improve this
+  const groupBy = props.options.groupBy;
 
   const groupedRules = useMemo<GroupedRules>(() => {
     const groupedRules = new Map();
 
     const hasInstancesWithMatchingLabels = (rule: PromRuleWithLocation) =>
-      groupByKeys ? alertHasEveryLabel(rule, groupByKeys) : true;
+      groupBy ? alertHasEveryLabel(rule, groupBy) : true;
 
     const matchingRules = rules.filter(hasInstancesWithMatchingLabels);
     matchingRules.forEach((rule: PromRuleWithLocation) => {
       (rule.rule.alerts ?? []).forEach((alert) => {
-        const labelKey = groupByKeys.map((key) => key + '=' + alert.labels[key]).join(',');
+        const labelKey = groupBy.map((key) => key + '=' + alert.labels[key]).join(',');
         const existingAlerts = groupedRules.get(labelKey) ?? [];
         groupedRules.set(labelKey, [...existingAlerts, alert]);
       });
     });
 
     return groupedRules;
-  }, [groupByKeys, rules]);
+  }, [groupBy, rules]);
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">

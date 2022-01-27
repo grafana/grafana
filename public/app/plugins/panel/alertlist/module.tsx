@@ -13,6 +13,7 @@ import {
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 import { AlertListSuggestionsSupplier } from './suggestions';
+import { GroupBy } from './GroupByWithLoading';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;
@@ -164,13 +165,23 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       },
       category: ['Options'],
     })
-    .addTextInput({
+    .addCustomEditor<void, string[]>({
       path: 'groupBy',
       name: 'Group by',
       description: 'Filter alerts using label querying',
-      defaultValue: 'alertname',
+      id: 'groupBy',
+      defaultValue: ['alertname'],
       showIf: (options) => options.groupMode === GroupMode.Custom,
       category: ['Options'],
+      editor: (props) => {
+        return (
+          <GroupBy
+            id={props.id ?? 'groupBy'}
+            defaultValue={props.value.map((value: string) => ({ label: value, value }))}
+            onChange={props.onChange}
+          />
+        );
+      },
     })
     .addNumberInput({
       name: 'Max items',

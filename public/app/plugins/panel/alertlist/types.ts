@@ -49,7 +49,7 @@ export interface UnifiedAlertListOptions {
   sortOrder: SortOrder;
   dashboardAlerts: boolean;
   groupMode: GroupMode;
-  groupBy: string;
+  groupBy: string[];
   alertName: string;
   showInstances: boolean;
   folder: { id: number; title: string };
