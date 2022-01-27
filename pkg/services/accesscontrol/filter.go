@@ -14,6 +14,7 @@ var sqlIDAcceptList = map[string]struct{}{
 }
 
 const denyQuery = " 1 = 0"
+const allowAllQuery = " 1 = 1"
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
@@ -41,7 +42,7 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 	}
 
 	if hasWildcard {
-		return " 1 = 1", nil, nil
+		return allowAllQuery, nil, nil
 	}
 
 	if len(ids) == 0 {
