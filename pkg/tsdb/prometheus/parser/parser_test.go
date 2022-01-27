@@ -25,6 +25,8 @@ func TestReadPromFrames(t *testing.T) {
 
 	for _, name := range files {
 		t.Run(name, func(t *testing.T) {
+			// nolint:gosec
+			// We can ignore the gosec G304 because this is a test with static defined paths
 			f, err := os.Open(path.Join("testdata", name+".json"))
 			require.NoError(t, err)
 
@@ -36,6 +38,9 @@ func TestReadPromFrames(t *testing.T) {
 
 			save := false
 			fpath := path.Join("testdata", name+"-frame.json")
+
+			// nolint:gosec
+			// We can ignore the gosec G304 because this is a test with static defined paths
 			current, err := ioutil.ReadFile(fpath)
 			if err == nil {
 				same := assert.JSONEq(t, string(out), string(current))
