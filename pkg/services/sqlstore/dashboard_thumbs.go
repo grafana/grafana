@@ -7,7 +7,6 @@ import (
 )
 
 func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
-
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {

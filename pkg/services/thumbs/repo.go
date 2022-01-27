@@ -2,12 +2,13 @@ package thumbs
 
 import (
 	"bufio"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func newThumbnailRepo(store *sqlstore.SQLStore) thumbnailRepo {

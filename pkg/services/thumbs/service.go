@@ -1,6 +1,7 @@
 package thumbs
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -148,7 +149,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		Kind:         models.ThumbnailKindDefault,
 	})
 
-	if err == models.ErrDashboardThumbnailNotFound {
+	if errors.Is(err, models.ErrDashboardThumbnailNotFound) {
 		c.Resp.WriteHeader(404)
 		return
 	}
