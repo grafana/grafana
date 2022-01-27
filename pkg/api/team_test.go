@@ -216,6 +216,18 @@ func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
 	})
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
+	t.Run("Access control allows updating teams with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:*"}}, 1)
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
+		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		require.NoError(t, err)
+		assert.Equal(t, "MyTestTeam2", teamQuery.Result.Name)
+	})
+
+	input = strings.NewReader(fmt.Sprintf(teamCmd, 3))
 	t.Run("Access control prevents updating teams with the incorrect permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
@@ -224,7 +236,7 @@ func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
 		err := sc.db.GetTeamById(context.Background(), teamQuery)
 		assert.NoError(t, err)
-		assert.Equal(t, "MyTestTeam1", teamQuery.Result.Name)
+		assert.Equal(t, "MyTestTeam2", teamQuery.Result.Name)
 	})
 }
 

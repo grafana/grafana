@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
@@ -147,6 +148,7 @@ func (ss *SQLStore) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamComman
 			"DELETE FROM team_member WHERE org_id=? and team_id = ?",
 			"DELETE FROM team WHERE org_id=? and id = ?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",
+			"DELETE FROM team_role WHERE org_id=? and team_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -155,7 +157,10 @@ func (ss *SQLStore) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamComman
 				return err
 			}
 		}
-		return nil
+
+		_, err := sess.Exec("DELETE FROM permission WHERE scope=?", ac.Scope("teams", "id", fmt.Sprint(cmd.Id)))
+
+		return err
 	})
 }
 
