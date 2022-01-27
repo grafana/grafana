@@ -15,7 +15,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	t.Run("feature toggle present, should call store function", func(t *testing.T) {
 		storeMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}}
 		svc := ServiceAccountsService{
-			features: featuremgmt.WithToggles("service-accounts", true),
+			features: featuremgmt.WithFeatures("service-accounts", true),
 			store:    storeMock}
 		err := svc.DeleteServiceAccount(context.Background(), 1, 1)
 		require.NoError(t, err)
@@ -25,7 +25,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	t.Run("no feature toggle present, should not call store function", func(t *testing.T) {
 		svcMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}}
 		svc := ServiceAccountsService{
-			features: featuremgmt.WithToggles("service-accounts", false),
+			features: featuremgmt.WithFeatures("service-accounts", false),
 			store:    svcMock,
 			log:      log.New("serviceaccounts-manager-test"),
 		}

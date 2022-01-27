@@ -16,13 +16,6 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
-  recordedQueries?: boolean;
-  teamsync?: boolean;
-  ldapsync?: boolean;
-  caching?: boolean;
-  dspermissions?: boolean;
-  analytics?: boolean;
-  ['enterprise.plugins']?: boolean;
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
@@ -42,4 +35,5 @@ export interface FeatureToggles {
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
+  validatedQueries?: boolean;
 }

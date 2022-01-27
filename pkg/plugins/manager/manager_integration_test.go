@@ -51,7 +51,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
-	features := featuremgmt.WithToggles()
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
 		Raw:                    ini.Empty(),
 		Env:                    setting.Prod,

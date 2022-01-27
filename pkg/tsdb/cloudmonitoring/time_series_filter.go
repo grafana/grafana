@@ -85,16 +85,13 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 //nolint: gocyclo
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
-	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
 
-	customFrameMeta := map[string]interface{}{}
-	customFrameMeta["alignmentPeriod"] = timeSeriesFilter.Params.Get("aggregation.alignmentPeriod")
-	customFrameMeta["perSeriesAligner"] = timeSeriesFilter.Params.Get("aggregation.perSeriesAligner")
 	for _, series := range response.TimeSeries {
 		seriesLabels := data.Labels{}
 		defaultMetricName := series.Metric.Type
-		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
+		labels := make(map[string]string)
+		labels["resource.type"] = series.Resource.Type
 		seriesLabels["resource.type"] = series.Resource.Type
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
@@ -104,10 +101,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		}
 
 		for key, value := range series.Metric.Labels {
-			if _, ok := labels["metric.label."+key]; !ok {
-				labels["metric.label."+key] = map[string]bool{}
-			}
-			labels["metric.label."+key][value] = true
+			labels["metric.label."+key] = value
 			seriesLabels["metric.label."+key] = value
 
 			if len(timeSeriesFilter.GroupBys) == 0 || containsLabel(timeSeriesFilter.GroupBys, "metric.label."+key) {
@@ -116,10 +110,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		}
 
 		for key, value := range series.Resource.Labels {
-			if _, ok := labels["resource.label."+key]; !ok {
-				labels["resource.label."+key] = map[string]bool{}
-			}
-			labels["resource.label."+key][value] = true
+			labels["resource.label."+key] = value
 			seriesLabels["resource.label."+key] = value
 
 			if containsLabel(timeSeriesFilter.GroupBys, "resource.label."+key) {
@@ -130,22 +121,19 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
 				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-				if _, ok := labels[key]; !ok {
-					labels[key] = map[string]bool{}
-				}
 
 				switch v := labelValue.(type) {
 				case string:
-					labels[key][v] = true
+					labels[key] = v
 					seriesLabels[key] = v
 				case bool:
 					strVal := strconv.FormatBool(v)
-					labels[key][strVal] = true
+					labels[key] = strVal
 					seriesLabels[key] = strVal
 				case []interface{}:
 					for _, v := range v {
 						strVal := v.(string)
-						labels[key][strVal] = true
+						labels[key] = strVal
 						if len(seriesLabels[key]) > 0 {
 							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
 						}
@@ -153,6 +141,17 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 					}
 				}
 			}
+		}
+
+		customFrameMeta := map[string]interface{}{}
+		customFrameMeta["alignmentPeriod"] = timeSeriesFilter.Params.Get("aggregation.alignmentPeriod")
+		customFrameMeta["perSeriesAligner"] = timeSeriesFilter.Params.Get("aggregation.perSeriesAligner")
+		customFrameMeta["labels"] = labels
+		customFrameMeta["groupBys"] = timeSeriesFilter.GroupBys
+		if frame.Meta != nil {
+			frame.Meta.Custom = customFrameMeta
+		} else {
+			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
 		}
 
 		// reverse the order to be ascending
@@ -232,23 +231,6 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 	if len(response.TimeSeries) > 0 {
 		dl := timeSeriesFilter.buildDeepLink()
 		frames = addConfigData(frames, dl, response.Unit)
-	}
-
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
-		}
-	}
-	customFrameMeta["labels"] = labelsByKey
-	customFrameMeta["groupBys"] = timeSeriesFilter.GroupBys
-
-	for _, frame := range frames {
-		if frame.Meta != nil {
-			frame.Meta.Custom = customFrameMeta
-		} else {
-			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
-		}
 	}
 
 	queryRes.Frames = frames

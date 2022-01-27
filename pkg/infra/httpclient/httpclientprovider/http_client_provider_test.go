@@ -23,7 +23,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		})
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
-		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, tracer, featuremgmt.WithToggles())
+		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, tracer, featuremgmt.WithFeatures())
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 6)
@@ -47,7 +47,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		})
 		tracer, err := tracing.InitializeTracerForTest()
 		require.NoError(t, err)
-		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, tracer, featuremgmt.WithToggles())
+		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, tracer, featuremgmt.WithFeatures())
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 7)

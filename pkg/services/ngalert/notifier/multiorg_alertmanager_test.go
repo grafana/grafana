@@ -46,7 +46,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -173,7 +173,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -224,7 +224,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
 	ctx := context.Background()
 

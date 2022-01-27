@@ -20,7 +20,7 @@ If you have the grafana/website repo checked out in the same directory as the gr
 
 Edit content in the `sources` directory.
 
-### [Contributing](https://github.com/grafana/grafana/blob/main/contribute/documentation.md)
+### [Contributing](/contribute/documentation/README.md)
 
 ### Using `relref` for internal links
 
