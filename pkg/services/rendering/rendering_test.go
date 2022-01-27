@@ -138,7 +138,7 @@ func TestRenderLimitImage(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
-			result, err := rs.Render(context.Background(), opts)
+			result, err := rs.Render(context.Background(), opts, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
 		})

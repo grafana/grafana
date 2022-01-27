@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -19,7 +20,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	accessControlEnabled := hs.Cfg.FeatureToggles["accesscontrol"]
+	accessControlEnabled := hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)
 	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
