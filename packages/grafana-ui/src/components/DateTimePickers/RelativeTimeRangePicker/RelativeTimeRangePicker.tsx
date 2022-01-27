@@ -18,6 +18,7 @@ import {
 import { Field } from '../../Forms/Field';
 import { getInputStyles, Input } from '../../Input/Input';
 import { Icon } from '../../Icon/Icon';
+import { Tooltip } from '../../Tooltip/Tooltip';
 
 /**
  * @internal
@@ -115,14 +116,22 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
               </CustomScrollbar>
               <div className={styles.rightSide}>
                 <div className={styles.title}>
-                  <TimePickerTitle>Specify time range</TimePickerTitle>
-                  <div className={styles.description}>
-                    Specify a relative time range, for more information see{' '}
-                    <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
-                      docs <Icon name="external-link-alt" />
-                    </a>
-                    .
-                  </div>
+                  <TimePickerTitle>
+                    <Tooltip
+                      content={
+                        <>
+                          <div>Supported formats</div>
+                          <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
+                        </>
+                      }
+                      placement="bottom"
+                      theme="info"
+                    >
+                      <div>
+                        Specify time range <Icon name="info-circle" />
+                      </div>
+                    </Tooltip>
+                  </TimePickerTitle>
                 </div>
                 <Field label="From" invalid={!from.validation.isValid} error={from.validation.errorMessage}>
                   <Input
@@ -219,6 +228,9 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
     `,
     title: css`
       margin-bottom: ${theme.spacing(1)};
+    `,
+    tooltip: css`
+      margin: 0;
     `,
   };
 };
