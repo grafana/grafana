@@ -34,7 +34,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const info = useMemo(() => prepareHeatmapData(data?.series, options, theme), [data, options, theme]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const palette = useMemo(() => palettes9.Oranges.slice().reverse(), [options, theme]);
+  const palette = useMemo(() => palettes9[options.scheme].slice().reverse(), [options, theme]);
 
   const builder = useMemo(() => {
     let builder = new UPlotConfigBuilder(timeZone);

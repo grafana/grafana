@@ -54,20 +54,27 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         let xSize = valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff);
         let ySize = valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff);
 
+        // bucket agg direction
+        let xCeil = false;
+        let yCeil = false;
+
+        let xOffset = xCeil ? -xSize : 0;
+        let yOffset = yCeil ? 0 : -ySize;
+
         // pre-compute x and y offsets
-        let cys = ys.slice(0, yBinQty).map((y) => Math.round(valToPosY(y, scaleY, yDim, yOff) - ySize / 2));
+        let cys = ys.slice(0, yBinQty).map((y) => Math.round(valToPosY(y, scaleY, yDim, yOff) + yOffset));
         let cxs = Array.from({ length: xBinQty }, (v, i) =>
-          Math.round(valToPosX(xs[i * yBinQty], scaleX, xDim, xOff) - xSize / 2)
+          Math.round(valToPosX(xs[i * yBinQty], scaleX, xDim, xOff) + xOffset)
         );
 
         for (let i = 0; i < dlen; i++) {
           // filter out 0 counts and out of view
           if (
             counts[i] > 0 &&
-            xs[i] >= scaleX.min &&
-            xs[i] <= scaleX.max &&
-            ys[i] >= scaleY.min &&
-            ys[i] <= scaleY.max
+            xs[i] + xBinIncr >= scaleX.min &&
+            xs[i] - xBinIncr <= scaleX.max &&
+            ys[i] + yBinIncr >= scaleY.min &&
+            ys[i] - yBinIncr <= scaleY.max
           ) {
             let cx = cxs[~~(i / yBinQty)];
             let cy = cys[i % yBinQty];
@@ -106,15 +113,14 @@ export function heatmapPaths(opts: PathbuilderOpts) {
 }
 
 export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) => {
-  let counts = u.data[seriesIdx][2];
-  // fast but might fail for arrays > 65k; can switch to slower Math.max(...new Set(counts))
-  let maxCount = Math.max(...counts);
+  let counts = u.data[seriesIdx][2]!;
+  let maxCount = counts.length > 65535 ? Math.max(...new Set(counts)) : Math.max(...counts);
   let cols = palette.length;
 
   let indexedFills = Array(counts.length);
 
   for (let i = 0; i < counts.length; i++) {
-    indexedFills[i] = ~~((counts[i] / maxCount) * cols) - 1;
+    indexedFills[i] = counts[i] === 0 ? -1 : Math.max(Math.round((counts[i] / maxCount) * cols) - 1, 0);
   }
 
   return indexedFills;

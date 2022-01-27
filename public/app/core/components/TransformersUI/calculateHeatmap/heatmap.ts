@@ -3,13 +3,13 @@ import {
   DataFrame,
   DataTransformerID,
   FieldType,
-  histogramBucketSizes as linearBucketSizes,
   incrRoundUp,
   incrRoundDn,
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { map } from 'rxjs';
-import { HeatmapCalculationOptions } from './models.gen';
+import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
+import { niceLinearIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
@@ -64,10 +64,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   let heat2d = heatmap(xs, ys, {
     xSorted: true,
-    xUnit: BucketSizeUnit.Value,
-    xSize: +(options.xAxis?.value ?? 60e3),
-    yUnit: BucketSizeUnit.Value,
-    ySize: +(options.yAxis?.value ?? 10),
+    xUnit: options.xAxis?.mode,
+    xSize: +(options.xAxis?.value ?? 0),
+    yUnit: options.yAxis?.mode,
+    ySize: +(options.yAxis?.value ?? 0),
   });
 
   let frame = {
@@ -101,15 +101,10 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   return frame;
 }
 
-const enum BucketSizeUnit {
-  Value = 1,
-  Percent = 2,
-}
-
 interface HeatmapOpts {
   // default is 10% of data range, snapped to a "nice" increment
-  xUnit?: BucketSizeUnit;
-  yUnit?: BucketSizeUnit;
+  xUnit?: HeatmapCalculationMode;
+  yUnit?: HeatmapCalculationMode;
   xSize?: number;
   ySize?: number;
 
@@ -159,22 +154,34 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   //let scaleX = opts?.xLog === 10 ? Math.log10 : opts?.xLog === 2 ? Math.log2 : (v: number) => v;
   //let scaleY = opts?.yLog === 10 ? Math.log10 : opts?.yLog === 2 ? Math.log2 : (v: number) => v;
 
-  // todo: optionally use view range instead of data range for bucket sizing
-  let xUnit = opts?.xUnit ?? BucketSizeUnit.Percent;
-  let yUnit = opts?.yUnit ?? BucketSizeUnit.Percent;
-  let xBinIncr = opts?.xSize ?? 0.1; // linear default
-  let yBinIncr = opts?.ySize ?? 0.1; // linear default
+  let xBinIncr = opts?.xSize;
+  let yBinIncr = opts?.ySize;
+  let xUnit = opts?.xUnit;
+  let yUnit = opts?.yUnit;
 
-  if (xUnit === BucketSizeUnit.Percent) {
-    let approx = (maxX - minX) * xBinIncr;
-    // nice-ify
-    xBinIncr = linearBucketSizes[linearBucketSizes.findIndex((bucketSize) => bucketSize > approx) - 1];
+  // fall back to 10 buckets if invalid settings
+  if (!Number.isFinite(xBinIncr) || xBinIncr <= 0) {
+    xUnit = HeatmapCalculationMode.Count;
+    xBinIncr = 30;
+  }
+  if (!Number.isFinite(yBinIncr) || yBinIncr <= 0) {
+    yUnit = HeatmapCalculationMode.Count;
+    yBinIncr = 10;
   }
 
-  if (yUnit === BucketSizeUnit.Percent) {
-    let approx = (maxY - minY) * yBinIncr;
+  if (xUnit === HeatmapCalculationMode.Count) {
+    // TODO: optionally use view range min/max instead of data range for bucket sizing
+    let approx = (maxX - minX) / Math.max(xBinIncr - 1, 1);
     // nice-ify
-    yBinIncr = linearBucketSizes[linearBucketSizes.findIndex((bucketSize) => bucketSize > approx) - 1];
+    // TODO: snap to logical time incrs? 1s,2s,5s,10s,15s,30s,60s
+    xBinIncr = niceLinearIncrs[niceLinearIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
+  }
+
+  if (yUnit === HeatmapCalculationMode.Count) {
+    // TODO: optionally use view range min/max instead of data range for bucket sizing
+    let approx = (maxY - minY) / Math.max(yBinIncr - 1, 1);
+    // nice-ify
+    yBinIncr = niceLinearIncrs[niceLinearIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
   }
 
   let binX = opts?.xCeil ? (v: number) => incrRoundUp(v, xBinIncr) : (v: number) => incrRoundDn(v, xBinIncr);
@@ -185,8 +192,8 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let minYBin = binY(minY);
   let maxYBin = binY(maxY);
 
-  let xBinQty = (maxXBin - minXBin) / xBinIncr + 1;
-  let yBinQty = (maxYBin - minYBin) / yBinIncr + 1;
+  let xBinQty = Math.round((maxXBin - minXBin) / xBinIncr) + 1;
+  let yBinQty = Math.round((maxYBin - minYBin) / yBinIncr) + 1;
 
   let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr);
 

@@ -7,6 +7,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 import { heatmapChangedHandler } from './migrations';
 import { addHeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/editor/helper';
+import { palettes9 } from './palettes';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
@@ -36,6 +37,20 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       //   path: 'xxx',
       // });
     }
+
+    builder.addSelect({
+      path: `scheme`,
+      name: 'Color scheme',
+      description: '',
+      defaultValue: 'Oranges',
+      settings: {
+        options: Object.keys(palettes9).map((name) => ({
+          value: name,
+          label: name,
+          //description: 'Set a geometry field based on the results of other fields',
+        })),
+      },
+    });
 
     builder.addNumberInput({
       name: 'Cell padding',
