@@ -20,6 +20,15 @@ const (
 	CrawlerModeMigrate CrawlerMode = "migrate"
 )
 
+type crawlerState string
+
+const (
+	initializing crawlerState = "initializing"
+	running      crawlerState = "running"
+	stopping     crawlerState = "stopping"
+	stopped      crawlerState = "stopped"
+)
+
 type previewRequest struct {
 	OrgID int64                `json:"orgId"`
 	UID   string               `json:"uid"`
@@ -33,13 +42,13 @@ type crawlCmd struct {
 }
 
 type crawlStatus struct {
-	State    string    `json:"state"`
-	Started  time.Time `json:"started,omitempty"`
-	Finished time.Time `json:"finished,omitempty"`
-	Complete int       `json:"complete"`
-	Errors   int       `json:"errors"`
-	Queue    int       `json:"queue"`
-	Last     time.Time `json:"last,omitempty"`
+	State    crawlerState `json:"state"`
+	Started  time.Time    `json:"started,omitempty"`
+	Finished time.Time    `json:"finished,omitempty"`
+	Complete int          `json:"complete"`
+	Errors   int          `json:"errors"`
+	Queue    int          `json:"queue"`
+	Last     time.Time    `json:"last,omitempty"`
 }
 
 type dashRenderer interface {
