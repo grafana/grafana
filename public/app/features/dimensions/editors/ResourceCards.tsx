@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '@grafana/ui';
 import SVG from 'react-inlinesvg';
 import { css, cx } from '@emotion/css';
-import { ResourceItem } from './ResourcePicker';
+import { ResourceItem } from './FolderPickerTab';
 
 interface CellProps {
   columnIndex: number;

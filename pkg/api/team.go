@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -19,7 +20,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	accessControlEnabled := hs.Features.Toggles().IsAccesscontrolEnabled()
+	accessControlEnabled := hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol)
 	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
@@ -37,8 +38,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addTeamMember(hs.SQLStore, c.SignedInUser.UserId, c.OrgId, team.Id, false,
-				models.PERMISSION_ADMIN); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, c.SignedInUser.UserId, c.OrgId, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
