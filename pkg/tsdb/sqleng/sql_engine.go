@@ -56,11 +56,13 @@ type JsonData struct {
 	Timescaledb         bool   `json:"timescaledb"`
 	Mode                string `json:"sslmode"`
 	ConfigurationMethod string `json:"tlsConfigurationMethod"`
+	TlsSkipVerify       bool   `json:"tlsSkipVerify"`
 	RootCertFile        string `json:"sslRootCertFile"`
 	CertFile            string `json:"sslCertFile"`
 	CertKeyFile         string `json:"sslKeyFile"`
 	Timezone            string `json:"timezone"`
 	Encrypt             string `json:"encrypt"`
+	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
 }
 
@@ -258,7 +260,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	defer session.Close()
 	db := session.DB()
 
-	rows, err := db.Query(interpolatedQuery)
+	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
 		return

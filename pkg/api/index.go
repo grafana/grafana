@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -85,7 +86,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			SortWeight: dtos.WeightPlugin,
 		}
 
-		if hs.Cfg.IsNewNavigationEnabled() {
+		if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 			appLink.Section = dtos.NavSectionPlugin
 		} else {
 			appLink.Section = dtos.NavSectionCore
@@ -126,6 +127,10 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		if len(appLink.Children) > 0 {
+			// If we only have one child and it's the app default nav then remove it from children
+			if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
+				appLink.Children = []*dtos.NavLink{}
+			}
 			appLinks = append(appLinks, appLink)
 		}
 	}
@@ -138,11 +143,21 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 	return appLinks, nil
 }
 
+func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN &&
+		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) &&
+		hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
+}
+
+func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)
+}
+
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	if hs.Cfg.IsNewNavigationEnabled() {
+	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Home",
 			Id:         "home",
@@ -153,7 +168,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hasEditPerm && !hs.Cfg.IsNewNavigationEnabled() {
+	if hasEditPerm && !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		children := hs.buildCreateNavLinks(c)
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Create",
@@ -169,7 +184,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
 
 	dashboardsUrl := "/"
-	if hs.Cfg.IsNewNavigationEnabled() {
+	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		dashboardsUrl = "/dashboards"
 	}
 
@@ -205,9 +220,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
-	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
+	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled || uaVisibleForOrg {
+	if setting.AlertingEnabled != nil && *setting.AlertingEnabled || uaVisibleForOrg {
 		alertChildNavs := hs.buildAlertNavLinks(c, uaVisibleForOrg)
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Alerting",
@@ -239,7 +254,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)) {
+	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Users",
 			Id:          "users",
@@ -249,7 +264,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR) {
+	if enableTeams(hs, c) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
@@ -288,8 +303,19 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
 		})
 	}
+	// needs both feature flag and migration to be able to show service accounts
+	if enableServiceAccount(hs, c) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Service accounts",
+			Id:          "serviceaccounts",
+			Description: "Manage service accounts",
+			// TODO: change icon to "key-skeleton-alt" when it's available
+			Icon: "key-skeleton-alt",
+			Url:  hs.Cfg.AppSubURL + "/org/serviceaccounts",
+		})
+	}
 
-	if hs.Cfg.FeatureToggles["live-pipeline"] {
+	if hs.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		liveNavLinks := []*dtos.NavLink{}
 
 		liveNavLinks = append(liveNavLinks, &dtos.NavLink{
@@ -323,7 +349,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			SortWeight: dtos.WeightConfig,
 			Children:   configNodes,
 		}
-		if hs.Cfg.IsNewNavigationEnabled() {
+		if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 			configNode.Section = dtos.NavSectionConfig
 		} else {
 			configNode.Section = dtos.NavSectionCore
@@ -335,7 +361,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if len(adminNavLinks) > 0 {
 		navSection := dtos.NavSectionCore
-		if hs.Cfg.IsNewNavigationEnabled() {
+		if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 			navSection = dtos.NavSectionConfig
 		}
 		serverAdminNode := navlinks.GetServerAdminNode(adminNavLinks, navSection)
@@ -363,7 +389,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
 	dashboardChildNavs := []*dtos.NavLink{}
-	if !hs.Cfg.IsNewNavigationEnabled() {
+	if !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true,
 		})
@@ -394,7 +420,7 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 		})
 	}
 
-	if hasEditPerm && hs.Cfg.IsNewNavigationEnabled() {
+	if hasEditPerm && hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
@@ -419,10 +445,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 	alertChildNavs := []*dtos.NavLink{
 		{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
 	}
-	if uaVisibleForOrg {
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
-	}
+
 	if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
 		if uaVisibleForOrg {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
@@ -436,6 +459,10 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 				Icon: "comment-alt-share",
 			})
 		}
+	}
+	if uaVisibleForOrg {
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 	if c.OrgRole == models.ROLE_ADMIN && uaVisibleForOrg {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
@@ -462,9 +489,9 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	})
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
-	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.Enabled && !uaIsDisabledForOrg
+	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled || uaVisibleForOrg {
+	if setting.AlertingEnabled != nil && *setting.AlertingEnabled || uaVisibleForOrg {
 		children = append(children, &dtos.NavLink{
 			Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
@@ -514,7 +541,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
 	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.DispatchCtx(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return nil, err
 	}
 	hasEditPerm := hasEditPermissionInFoldersQuery.Result
@@ -527,7 +554,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.DispatchCtx(c.Req.Context(), &prefsQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
 	prefs := prefsQuery.Result
@@ -587,7 +614,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		NewGrafanaVersion:       hs.updateChecker.LatestGrafanaVersion(),
 		NewGrafanaVersionExists: hs.updateChecker.GrafanaUpdateAvailable(),
 		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
+		AppNameBodyClass:        "app-grafana",
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
@@ -598,7 +625,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		LoadingLogo:             "public/img/grafana_icon.svg",
 	}
 
-	if hs.Cfg.FeatureToggles["accesscontrol"] {
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
 		if err != nil {
 			return nil, err
@@ -655,12 +682,4 @@ func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
 	}
 
 	c.HTML(404, "index", data)
-}
-
-func getAppNameBodyClass(validLicense bool) string {
-	if validLicense {
-		return "app-enterprise"
-	}
-
-	return "app-grafana"
 }

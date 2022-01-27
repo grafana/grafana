@@ -6,7 +6,7 @@ import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardModel } from '../../state/DashboardModel';
-import { SaveDashboardButton, SaveDashboardAsButton } from '../SaveDashboard/SaveDashboardButton';
+import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 import { GeneralSettings } from './GeneralSettings';
@@ -15,7 +15,7 @@ import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
 import { GrafanaTheme2, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -138,6 +138,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
             <aside className="dashboard-settings__aside">
               {pages.map((page) => (
                 <Link
+                  onClick={() => reportInteraction(`Dashboard settings navigation to ${page.id}`)}
                   to={(loc) => locationUtil.updateSearchParams(loc.search, `editview=${page.id}`)}
                   className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
                   key={page.id}

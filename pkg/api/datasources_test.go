@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,13 +12,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
 )
 
 const (
@@ -27,9 +27,9 @@ const (
 )
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
-	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
+	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
 			assert.Equal(t, testOrgID, query.OrgId)
 			query.Result = []*models.DataSource{
 				{Name: "mmm"},
@@ -60,7 +60,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	})
 
 	loggedInUserScenario(t, "Should be able to save a data source when calling DELETE on non-existing",
-		"/api/datasources/name/12345", func(sc *scenarioContext) {
+		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
 			// handler func being tested
 			hs := &HTTPServer{
 				Bus:         bus.GetBus(),
@@ -80,10 +80,13 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: "Test",
-			Url:  "invalid:url",
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   "Test",
+			Url:    "invalid:url",
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -99,7 +102,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.AddHandler("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -110,10 +113,13 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: name,
-			Url:  url,
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   name,
+			Url:    url,
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -128,10 +134,13 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: "Test",
-			Url:  "invalid:url",
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   "Test",
+			Url:    "invalid:url",
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -147,7 +156,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.AddHandler("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -158,10 +167,13 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
-		return AddDataSource(c, models.AddDataSourceCommand{
-			Name: name,
-			Url:  url,
+		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
+			Name:   name,
+			Url:    url,
+			Access: "direct",
+			Type:   "test",
 		})
+		return AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -179,26 +191,51 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		Type:   "postgresql",
 		Access: "Proxy",
 	}
-	getDatasourceStub := func(query *models.GetDataSourceQuery) error {
+	testDatasourceReadOnly := models.DataSource{
+		Id:       4,
+		Uid:      "testUID",
+		OrgId:    testOrgID,
+		Name:     "test",
+		Url:      "http://localhost:5432",
+		Type:     "postgresql",
+		Access:   "Proxy",
+		ReadOnly: true,
+	}
+	getDatasourceStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
 		result := testDatasource
 		result.Id = query.Id
 		result.OrgId = query.OrgId
 		query.Result = &result
 		return nil
 	}
-	getDatasourcesStub := func(cmd *models.GetDataSourcesQuery) error {
+	getDatasourcesStub := func(ctx context.Context, cmd *models.GetDataSourcesQuery) error {
 		cmd.Result = []*models.DataSource{}
 		return nil
 	}
-	addDatasourceStub := func(cmd *models.AddDataSourceCommand) error {
+	addDatasourceStub := func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 		cmd.Result = &testDatasource
 		return nil
 	}
-	updateDatasourceStub := func(cmd *models.UpdateDataSourceCommand) error {
+	updateDatasourceStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = &testDatasource
 		return nil
 	}
-	deleteDatasourceStub := func(cmd *models.DeleteDataSourceCommand) error {
+	updateDatasourceReadOnlyStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+		cmd.Result = &testDatasourceReadOnly
+		return nil
+	}
+
+	getDatasourceNotFoundStub := func(ctx context.Context, cmd *models.GetDataSourceQuery) error {
+		cmd.Result = nil
+		return models.ErrDataSourceNotFound
+	}
+
+	getDatasourceReadOnlyStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
+		query.Result = &testDatasourceReadOnly
+		return nil
+	}
+
+	deleteDatasourceStub := func(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 		cmd.DeletedDatasourcesCount = 1
 		return nil
 	}
@@ -220,13 +257,28 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		})
 		return bytes.NewReader(s)
 	}
-
 	type acTestCaseWithHandler struct {
 		busStubs []bus.HandlerFunc
 		body     func() io.Reader
 		accessControlTestCase
 	}
 	tests := []acTestCaseWithHandler{
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceNotFoundStub, updateDatasourceStub},
+			body:     updateDatasourceBody,
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusNotFound,
+				desc:         "DatasourcesPut should return 404 if datasource not found",
+				url:          fmt.Sprintf("/api/datasources/%v", "12345678"),
+				method:       http.MethodPut,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesWrite,
+						Scope:  ScopeDatasourcesAll,
+					},
+				},
+			},
+		},
 		{
 			busStubs: []bus.HandlerFunc{getDatasourcesStub},
 			accessControlTestCase: accessControlTestCase{
@@ -289,6 +341,22 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
 				method:       http.MethodPut,
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceReadOnlyStub, updateDatasourceReadOnlyStub},
+			body:     updateDatasourceBody,
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesPut should return 403 for read only datasource",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasourceReadOnly.Id),
+				method:       http.MethodPut,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesWrite,
+						Scope:  fmt.Sprintf("datasources:id:%v", testDatasourceReadOnly.Id),
+					},
+				},
 			},
 		},
 		{
@@ -492,6 +560,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			} else {
 				sc.req, err = http.NewRequest(test.method, test.url, nil)
 			}
+
 			assert.NoError(t, err)
 
 			sc.exec()

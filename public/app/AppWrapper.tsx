@@ -16,6 +16,7 @@ import { AppNotificationList } from './core/components/AppNotifications/AppNotif
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { AngularRoot } from './angular/AngularRoot';
+import { I18nProvider } from './core/localisation';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -36,6 +37,7 @@ export function addBodyRenderHook(fn: ComponentType) {
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
+
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 
@@ -91,39 +93,41 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   render() {
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = config.featureToggles.newNavigation;
+    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <ConfigContext.Provider value={config}>
-            <ThemeProvider>
-              <ModalsProvider>
-                <GlobalStyles />
-                <div className="grafana-app">
-                  <Router history={locationService.getHistory()}>
-                    {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
-                    <main className="main-view">
-                      {pageBanners.map((Banner, index) => (
-                        <Banner key={index.toString()} />
-                      ))}
+        <I18nProvider>
+          <ErrorBoundaryAlert style="page">
+            <ConfigContext.Provider value={config}>
+              <ThemeProvider>
+                <ModalsProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
+                      <main className="main-view">
+                        {pageBanners.map((Banner, index) => (
+                          <Banner key={index.toString()} />
+                        ))}
 
-                      <AngularRoot ref={this.container} />
-                      <AppNotificationList />
-                      <SearchWrapper />
-                      {this.state.ngInjector && this.renderRoutes()}
-                      {bodyRenderHooks.map((Hook, index) => (
-                        <Hook key={index.toString()} />
-                      ))}
-                    </main>
-                  </Router>
-                </div>
-                <LiveConnectionWarning />
-                <ModalRoot />
-              </ModalsProvider>
-            </ThemeProvider>
-          </ConfigContext.Provider>
-        </ErrorBoundaryAlert>
+                        <AngularRoot ref={this.container} />
+                        <AppNotificationList />
+                        <SearchWrapper />
+                        {this.state.ngInjector && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </main>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                </ModalsProvider>
+              </ThemeProvider>
+            </ConfigContext.Provider>
+          </ErrorBoundaryAlert>
+        </I18nProvider>
       </Provider>
     );
   }

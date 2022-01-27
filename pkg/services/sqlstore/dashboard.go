@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -26,23 +27,23 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetDashboard)
-	bus.AddHandlerCtx("sql", GetDashboards)
-	bus.AddHandlerCtx("sql", DeleteDashboard)
-	bus.AddHandlerCtx("sql", GetDashboardTags)
-	bus.AddHandlerCtx("sql", GetDashboardSlugById)
-	bus.AddHandlerCtx("sql", GetDashboardsByPluginId)
-	bus.AddHandlerCtx("sql", GetDashboardPermissionsForUser)
-	bus.AddHandlerCtx("sql", GetDashboardsBySlug)
-	bus.AddHandlerCtx("sql", HasEditPermissionInFolders)
-	bus.AddHandlerCtx("sql", HasAdminPermissionInFolders)
+	bus.AddHandler("sql", GetDashboard)
+	bus.AddHandler("sql", GetDashboardTags)
+	bus.AddHandler("sql", GetDashboardSlugById)
+	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", GetDashboardsBySlug)
+	bus.AddHandler("sql", HasEditPermissionInFolders)
+	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
 }
 
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetDashboardUIDById)
-	bus.AddHandlerCtx("sql", ss.SearchDashboards)
+	bus.AddHandler("sql", ss.GetDashboardUIDById)
+	bus.AddHandler("sql", ss.SearchDashboards)
+	bus.AddHandler("sql", ss.DeleteDashboard)
+	bus.AddHandler("sql", ss.GetDashboards)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -214,18 +215,13 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
-	has, err := ss.engine.Get(&dashboard)
+	has, err := ss.engine.Table(&models.Dashboard{}).Where("is_folder = " + dialect.BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
 	if err != nil {
 		return nil, err
-	} else if !has {
+	}
+	if !has {
 		return nil, models.ErrDashboardNotFound
 	}
-
-	// if there is a dashboard instead of a folder with that title
-	if !dashboard.IsFolder {
-		return nil, models.ErrDashboardNotFound
-	}
-
 	dashboard.SetId(dashboard.Id)
 	dashboard.SetUid(dashboard.Uid)
 	return &dashboard, nil
@@ -414,8 +410,8 @@ func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) 
 	return err
 }
 
-func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return deleteDashboard(cmd, sess)
 	})
 }
@@ -513,7 +509,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 	return nil
 }
 
-func GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	if len(query.DashboardIds) == 0 {
 		return models.ErrCommandValidationFailed
 	}

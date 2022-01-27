@@ -7,6 +7,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
   getLegacyAngularInjector,
+  getBackendSrv,
 } from '@grafana/runtime';
 // Types
 import {
@@ -26,6 +27,7 @@ import {
 import { DataSourceVariableModel } from '../variables/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -62,7 +64,10 @@ export class DatasourceSrv implements DataSourceService {
     return this.settingsMapByUid[uid];
   }
 
-  getInstanceSettings(ref: string | null | undefined | DataSourceRef): DataSourceInstanceSettings | undefined {
+  getInstanceSettings(
+    ref: string | null | undefined | DataSourceRef,
+    scopedVars?: ScopedVars
+  ): DataSourceInstanceSettings | undefined {
     const isstring = typeof ref === 'string';
     let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
 
@@ -81,7 +86,7 @@ export class DatasourceSrv implements DataSourceService {
     // Complex logic to support template variable data source names
     // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
-      const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
+      const interpolatedName = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
       let dsSettings;
 
@@ -265,15 +270,24 @@ export class DatasourceSrv implements DataSourceService {
 
     if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
-        base.push(this.getInstanceSettings('-- Mixed --')!);
+        const mixedInstanceSettings = this.getInstanceSettings('-- Mixed --');
+        if (mixedInstanceSettings) {
+          base.push(mixedInstanceSettings);
+        }
       }
 
       if (filters.dashboard) {
-        base.push(this.getInstanceSettings('-- Dashboard --')!);
+        const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
+        if (dashboardInstanceSettings) {
+          base.push(dashboardInstanceSettings);
+        }
       }
 
       if (!filters.tracing) {
-        base.push(this.getInstanceSettings('-- Grafana --')!);
+        const grafanaInstanceSettings = this.getInstanceSettings('-- Grafana --');
+        if (grafanaInstanceSettings) {
+          base.push(grafanaInstanceSettings);
+        }
       }
     }
 
@@ -311,6 +325,13 @@ export class DatasourceSrv implements DataSourceService {
         meta: x.meta,
       };
     });
+  }
+
+  async reload() {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    config.datasources = settings.datasources;
+    config.defaultDatasource = settings.defaultDatasource;
+    this.init(settings.datasources, settings.defaultDatasource);
   }
 }
 

@@ -48,6 +48,12 @@ export enum AccessControlAction {
   DataSourcesPermissionsRead = 'datasources.permissions:read',
 
   ActionServerStatsRead = 'server.stats:read',
+
+  ActionTeamsCreate = 'teams:create',
+
+  ActionRolesList = 'roles:list',
+  ActionBuiltinRolesList = 'roles.builtin:list',
+  ActionUserRolesList = 'users.roles:list',
 }
 
 export interface Role {
@@ -57,6 +63,7 @@ export interface Role {
   description: string;
   group: string;
   global: boolean;
+  delegatable?: boolean;
   version: number;
   created: string;
   updated: string;

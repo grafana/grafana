@@ -17,6 +17,8 @@ jest.mock('@grafana/runtime', () => ({
 
 type Args = { response?: any; throws?: boolean; templateSrv?: TemplateSrv };
 
+const fetchMock = jest.spyOn(backendSrv, 'fetch');
+
 function getTestcontext({ response = {}, throws = false, templateSrv = new TemplateSrv() }: Args = {}) {
   jest.clearAllMocks();
 
@@ -26,9 +28,12 @@ function getTestcontext({ response = {}, throws = false, templateSrv = new Templ
     },
   } as unknown) as DataSourceInstanceSettings<CloudMonitoringOptions>;
 
-  const timeSrv = {} as TimeSrv;
-
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  const timeSrv = {
+    timeRange: () => ({
+      from: toUtc('2017-08-22T20:00:00Z'),
+      to: toUtc('2017-08-22T23:59:00Z'),
+    }),
+  } as TimeSrv;
 
   throws
     ? fetchMock.mockImplementation(() => throwError(response))
@@ -82,6 +87,41 @@ describe('CloudMonitoringDataSource', () => {
     });
   });
 
+  describe('When loading labels', () => {
+    describe('and no aggregation was specified', () => {
+      it('should use default values', async () => {
+        const { ds } = getTestcontext();
+        await ds.getLabels('cpu', 'a', 'default-proj');
+
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].metricQuery).toMatchObject({
+          crossSeriesReducer: 'REDUCE_NONE',
+          groupBys: [],
+          metricType: 'cpu',
+          projectName: 'default-proj',
+          view: 'HEADERS',
+        });
+      });
+    });
+
+    describe('and an aggregation was specified', () => {
+      it('should use the provided aggregation', async () => {
+        const { ds } = getTestcontext();
+        await ds.getLabels('sql', 'b', 'default-proj', {
+          crossSeriesReducer: 'REDUCE_MEAN',
+          groupBys: ['metadata.system_label.name'],
+        });
+
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].metricQuery).toMatchObject({
+          crossSeriesReducer: 'REDUCE_MEAN',
+          groupBys: ['metadata.system_label.name'],
+          metricType: 'sql',
+          projectName: 'default-proj',
+          view: 'HEADERS',
+        });
+      });
+    });
+  });
+
   describe('when interpolating a template variable for the filter', () => {
     describe('and is single value variable', () => {
       it('should replace the variable with the value', () => {
@@ -112,6 +152,22 @@ describe('CloudMonitoringDataSource', () => {
         const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
 
         expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
+      });
+
+      it('should not escape a regex', () => {
+        const templateSrv = initTemplateSrv('/[a-Z]*.html', true);
+        const { ds } = getTestcontext({ templateSrv });
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+
+        expect(interpolated[2]).toBe('/[a-Z]*.html');
+      });
+
+      it('should not escape an array of regexes but join them as a regex', () => {
+        const templateSrv = initTemplateSrv(['/[a-Z]*.html', '/foo.html'], true);
+        const { ds } = getTestcontext({ templateSrv });
+        const interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+
+        expect(interpolated[2]).toBe('(/[a-Z]*.html|/foo.html)');
       });
     });
   });

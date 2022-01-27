@@ -29,6 +29,7 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
     { value: FieldType.string, label: 'String' },
     { value: FieldType.time, label: 'Time' },
     { value: FieldType.boolean, label: 'Boolean' },
+    { value: FieldType.other, label: 'JSON' },
   ];
 
   const onSelectField = useCallback(
@@ -113,7 +114,10 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
               />
             </InlineField>
             {c.destinationType === FieldType.time && (
-              <InlineField label={'Date Format'}>
+              <InlineField
+                label="Input format"
+                tooltip="Specify the format of the input field so Grafana can parse the date string correctly."
+              >
                 <Input value={c.dateFormat} placeholder={'e.g. YYYY-MM-DD'} onChange={onInputFormat(idx)} width={24} />
               </InlineField>
             )}

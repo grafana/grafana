@@ -2,6 +2,8 @@ package api
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func GetAnnotations(c *models.ReqContext) response.Response {
@@ -51,7 +54,11 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.Response {
+func PostAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.PostAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -98,7 +105,11 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd) response.Response {
+func PostGraphiteAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.PostGraphiteAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
@@ -149,8 +160,16 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 	})
 }
 
-func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) response.Response {
-	annotationID := c.ParamsInt64(":annotationId")
+func UpdateAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.UpdateAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
 
 	repo := annotations.GetRepository()
 
@@ -175,8 +194,15 @@ func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) respo
 	return response.Success("Annotation updated")
 }
 
-func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) response.Response {
-	annotationID := c.ParamsInt64(":annotationId")
+func PatchAnnotation(c *models.ReqContext) response.Response {
+	cmd := dtos.PatchAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
 
 	repo := annotations.GetRepository()
 
@@ -223,7 +249,11 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) respons
 	return response.Success("Annotation patched")
 }
 
-func DeleteAnnotations(c *models.ReqContext, cmd dtos.DeleteAnnotationsCmd) response.Response {
+func DeleteAnnotations(c *models.ReqContext) response.Response {
+	cmd := dtos.DeleteAnnotationsCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
@@ -242,13 +272,16 @@ func DeleteAnnotations(c *models.ReqContext, cmd dtos.DeleteAnnotationsCmd) resp
 
 func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	repo := annotations.GetRepository()
-	annotationID := c.ParamsInt64(":annotationId")
+	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
+	}
 
 	if resp := canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
 
-	err := repo.Delete(&annotations.DeleteParams{
+	err = repo.Delete(&annotations.DeleteParams{
 		OrgId: c.OrgId,
 		Id:    annotationID,
 	})

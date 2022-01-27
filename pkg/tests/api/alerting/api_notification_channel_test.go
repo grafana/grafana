@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -32,16 +33,18 @@ import (
 
 func TestTestReceivers(t *testing.T) {
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
@@ -63,27 +66,25 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		// nolint
@@ -149,27 +150,25 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert invalid receiver returns 400 Bad Request", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		// nolint
@@ -230,29 +229,27 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert timed out receiver returns 408 Request Timeout", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandlerWithTimeout{
 			timeout: 5 * time.Second,
 		}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		req, err := http.NewRequest(http.MethodPost, testReceiversURL, strings.NewReader(`{
@@ -321,29 +318,27 @@ func TestTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert multiple different errors returns 207 Multi Status", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandlerWithTimeout{
 			timeout: 5 * time.Second,
 		}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		req, err := http.NewRequest(http.MethodPost, testReceiversURL, strings.NewReader(`{
@@ -438,27 +433,25 @@ func TestTestReceivers(t *testing.T) {
 
 func TestTestReceiversAlertCustomization(t *testing.T) {
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		// nolint
@@ -535,27 +528,25 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 
 	t.Run("assert custom annotations can replace default annotations", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		// nolint
@@ -627,27 +618,25 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 
 	t.Run("assert custom labels can replace default label", func(t *testing.T) {
+		_, err := tracing.InitializeTracerForTest()
+		require.NoError(t, err)
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
 		})
 
-		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-		store.Bus = bus.GetBus()
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		env.SQLStore.Bus = bus.GetBus()
 
-		createUser(t, store, models.CreateUserCommand{
+		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
-		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
-		})
+		env.NotificationService.EmailHandler = mockEmails.sendEmailCommandHandlerSync
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
 		// nolint
@@ -719,14 +708,17 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 }
 
 func TestNotificationChannels(t *testing.T) {
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 	})
 
-	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
-	s.Bus = bus.GetBus()
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	env.SQLStore.Bus = bus.GetBus()
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
@@ -737,13 +729,11 @@ func TestNotificationChannels(t *testing.T) {
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 		channels.LineNotifyURL, channels.ThreemaGwBaseURL
 	originalTemplate := channels.DefaultTemplateString
-	originalEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 	t.Cleanup(func() {
 		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
 		channels.DefaultTemplateString = originalTemplate
-		bus.AddHandlerCtx("", originalEmailBus)
 	})
 	channels.DefaultTemplateString = channels.TemplateForTestsString
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
@@ -753,10 +743,19 @@ func TestNotificationChannels(t *testing.T) {
 	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	channels.GetBoundary = func() string { return "abcd" }
-	bus.AddHandlerCtx("", mockEmail.sendEmailCommandHandlerSync)
+
+	env.NotificationService.EmailHandler = mockEmail.sendEmailCommandHandlerSync
+	// As we are using a NotificationService mock here, but he test expects real NotificationService -
+	// we try to issue a real POST request here
+	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
+		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
+			_ = res.Body.Close()
+		}
+		return nil
+	}
 
 	// Create a user to make authenticated requests
-	createUser(t, s, models.CreateUserCommand{
+	createUser(t, env.SQLStore, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -773,7 +772,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		_, err := createFolder(t, s, 0, "default")
+		_, err := createFolder(t, env.SQLStore, 0, "default")
 		require.NoError(t, err)
 
 		// Post the alertmanager config.

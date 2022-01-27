@@ -34,11 +34,15 @@ datasources:
     type: prometheus
     access: proxy
     url: http://localhost:9090
+    jsonData:
+      manageAlerts: false
 
   - name: gdev-slow-prometheus
     type: prometheus
     access: proxy
     url: http://localhost:3011
+    jsonData:
+      manageAlerts: false
 
   - name: gdev-testdata
     isDefault: true
@@ -251,6 +255,17 @@ datasources:
     secureJsonData:
       password: Password!
 
+  - name: gdev-mssql-tls
+    type: mssql
+    url: localhost:1434
+    database: grafana
+    user: grafana
+    jsonData:
+      encrypt: "true"
+      tlsSkipVerify: true
+    secureJsonData:
+      password: Password!
+
   - name: gdev-mssql-ds-tests
     type: mssql
     url: localhost:1433
@@ -293,6 +308,7 @@ datasources:
     url: http://localhost:3100
     editable: false
     jsonData:
+      manageAlerts: false
       derivedFields:
         - name: "traceID"
           matcherRegex: "traceID=(\\w+)"

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -19,11 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -39,19 +41,20 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:               cfg,
-		DataSourceCache:   dataSourceCache,
-		RouteRegister:     routeRegister,
-		SQLStore:          sqlStore,
-		KVStore:           kvStore,
-		ExpressionService: expressionService,
-		DataProxy:         dataProxy,
-		QuotaService:      quotaService,
-		SecretsService:    secretsService,
-		Metrics:           m,
-		Log:               log.New("ngalert"),
+		Cfg:                 cfg,
+		DataSourceCache:     dataSourceCache,
+		RouteRegister:       routeRegister,
+		SQLStore:            sqlStore,
+		KVStore:             kvStore,
+		ExpressionService:   expressionService,
+		DataProxy:           dataProxy,
+		QuotaService:        quotaService,
+		SecretsService:      secretsService,
+		Metrics:             m,
+		NotificationService: notificationService,
+		Log:                 log.New("ngalert"),
 	}
 
 	if ng.IsDisabled() {
@@ -67,19 +70,20 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg               *setting.Cfg
-	DataSourceCache   datasources.CacheService
-	RouteRegister     routing.RouteRegister
-	SQLStore          *sqlstore.SQLStore
-	KVStore           kvstore.KVStore
-	ExpressionService *expr.Service
-	DataProxy         *datasourceproxy.DataSourceProxyService
-	QuotaService      *quota.QuotaService
-	SecretsService    secrets.Service
-	Metrics           *metrics.NGAlert
-	Log               log.Logger
-	schedule          schedule.ScheduleService
-	stateManager      *state.Manager
+	Cfg                 *setting.Cfg
+	DataSourceCache     datasources.CacheService
+	RouteRegister       routing.RouteRegister
+	SQLStore            *sqlstore.SQLStore
+	KVStore             kvstore.KVStore
+	ExpressionService   *expr.Service
+	DataProxy           *datasourceproxy.DataSourceProxyService
+	QuotaService        *quota.QuotaService
+	SecretsService      secrets.Service
+	Metrics             *metrics.NGAlert
+	NotificationService notifications.Service
+	Log                 log.Logger
+	schedule            schedule.ScheduleService
+	stateManager        *state.Manager
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -103,7 +107,7 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, log.New("ngalert.multiorg.alertmanager"))
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
 	if err != nil {
 		return err
 	}
@@ -118,7 +122,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:            baseInterval,
 		Logger:                  ng.Log,
 		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
+		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log, DataSourceCache: ng.DataSourceCache},
 		InstanceStore:           store,
 		RuleStore:               store,
 		AdminConfigStore:        store,
@@ -185,7 +189,7 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.UnifiedAlerting.Enabled
+	return !ng.Cfg.UnifiedAlerting.IsEnabled()
 }
 
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.

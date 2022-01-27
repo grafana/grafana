@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
@@ -73,6 +78,99 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	}
 }
 
+func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
+	testDB := sqlutil.SQLite3TestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+	_, err = x.Exec("CREATE TABLE alert ( id bigint )")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, err = x.Exec("DROP TABLE alert")
+		require.NoError(t, err)
+	})
+
+	tests := []struct {
+		title                   string
+		legacyAlertExists       bool
+		legacyIsDefined         bool
+		legacyValue             bool
+		expectedUnifiedAlerting bool
+	}{
+		{
+			title:                   "enable unified alerting when there are no legacy alerts",
+			legacyIsDefined:         false,
+			legacyAlertExists:       false,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "enable unified alerting when there are no legacy alerts and legacy enabled",
+			legacyIsDefined:         true,
+			legacyValue:             true,
+			legacyAlertExists:       false,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "enable unified alerting when there are no legacy alerts and legacy disabled",
+			legacyIsDefined:         true,
+			legacyValue:             false,
+			legacyAlertExists:       false,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "enable unified alerting when there are legacy alerts but legacy disabled",
+			legacyIsDefined:         true,
+			legacyValue:             false,
+			legacyAlertExists:       true,
+			expectedUnifiedAlerting: true,
+		},
+		{
+			title:                   "disable unified alerting when there are legacy alerts",
+			legacyIsDefined:         false,
+			legacyAlertExists:       true,
+			expectedUnifiedAlerting: false,
+		},
+		{
+			title:                   "disable unified alerting when there are legacy alerts and it is enabled",
+			legacyIsDefined:         true,
+			legacyValue:             true,
+			legacyAlertExists:       true,
+			expectedUnifiedAlerting: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.title, func(t *testing.T) {
+			setting.AlertingEnabled = nil
+			if test.legacyIsDefined {
+				value := test.legacyValue
+				setting.AlertingEnabled = &value
+			}
+
+			if test.legacyAlertExists {
+				_, err := x.Exec("INSERT INTO alert VALUES (1)")
+				require.NoError(t, err)
+			} else {
+				_, err := x.Exec("DELETE FROM alert")
+				require.NoError(t, err)
+			}
+
+			cfg := setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: nil,
+				},
+			}
+			mg := migrator.NewMigrator(x, &cfg)
+
+			err := CheckUnifiedAlertingEnabledByDefault(mg)
+			require.NoError(t, err)
+			require.NotNil(t, setting.AlertingEnabled)
+			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
+			require.Equal(t, *cfg.UnifiedAlerting.Enabled, test.expectedUnifiedAlerting)
+			require.Equal(t, *setting.AlertingEnabled, !test.expectedUnifiedAlerting)
+		})
+	}
+}
+
 func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
 	t.Helper()
 
@@ -86,3 +184,33 @@ func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *Po
 }
 
 const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�"
+
+func Test_getAlertFolderNameFromDashboard(t *testing.T) {
+	t.Run("should include full title", func(t *testing.T) {
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
+			Title: "TEST",
+		}
+		folder := getAlertFolderNameFromDashboard(dash)
+		require.Contains(t, folder, dash.Title)
+		require.Contains(t, folder, dash.Uid)
+	})
+	t.Run("should cut title to the length", func(t *testing.T) {
+		title := ""
+		for {
+			title += util.GenerateShortUID()
+			if len(title) > MaxFolderName {
+				title = title[:MaxFolderName]
+				break
+			}
+		}
+
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
+			Title: title,
+		}
+		folder := getAlertFolderNameFromDashboard(dash)
+		require.Len(t, folder, MaxFolderName)
+		require.Contains(t, folder, dash.Uid)
+	})
+}

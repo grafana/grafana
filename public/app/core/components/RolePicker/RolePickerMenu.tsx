@@ -30,14 +30,16 @@ const fixedRoleGroupNames: Record<string, string> = {
 };
 
 interface RolePickerMenuProps {
-  builtInRole: OrgRole;
-  builtInRoles: BuiltInRoles;
+  builtInRole?: OrgRole;
+  builtInRoles?: BuiltInRoles;
   options: Role[];
   appliedRoles: Role[];
   showGroups?: boolean;
+  builtinRolesDisabled?: boolean;
+  showBuiltInRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
-  onUpdate: (newBuiltInRole: OrgRole, newRoles: string[]) => void;
+  onUpdate: (newRoles: string[], newBuiltInRole?: OrgRole) => void;
   onClear?: () => void;
 }
 
@@ -47,13 +49,15 @@ export const RolePickerMenu = ({
   options,
   appliedRoles,
   showGroups,
+  builtinRolesDisabled,
+  showBuiltInRole,
   onSelect,
   onBuiltInRoleSelect,
   onUpdate,
   onClear,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole>(builtInRole);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
@@ -69,7 +73,7 @@ export const RolePickerMenu = ({
   }, [selectedOptions, onSelect]);
 
   useEffect(() => {
-    if (onBuiltInRoleSelect) {
+    if (onBuiltInRoleSelect && selectedBuiltInRole) {
       onBuiltInRoleSelect(selectedBuiltInRole);
     }
   }, [selectedBuiltInRole, onBuiltInRoleSelect]);
@@ -166,23 +170,26 @@ export const RolePickerMenu = ({
       const roleUID = selectedOptions[key]?.uid;
       selectedCustomRoles.push(roleUID);
     }
-    onUpdate(selectedBuiltInRole, selectedCustomRoles);
+    onUpdate(selectedCustomRoles, selectedBuiltInRole);
   };
 
   return (
     <div className={cx(styles.menu, customStyles.menuWrapper)}>
       <div className={customStyles.menu} aria-label="Role picker menu">
         <CustomScrollbar autoHide={false} autoHeightMax="300px" hideHorizontalTrack hideVerticalTrack>
-          <div className={customStyles.menuSection}>
-            <div className={customStyles.groupHeader}>Built-in roles</div>
-            <RadioButtonGroup
-              className={customStyles.builtInRoleSelector}
-              options={BuiltinRoleOption}
-              value={selectedBuiltInRole}
-              onChange={onSelectedBuiltinRoleChange}
-              fullWidth={true}
-            />
-          </div>
+          {showBuiltInRole && (
+            <div className={customStyles.menuSection}>
+              <div className={customStyles.groupHeader}>Built-in roles</div>
+              <RadioButtonGroup
+                className={customStyles.builtInRoleSelector}
+                options={BuiltinRoleOption}
+                value={selectedBuiltInRole}
+                onChange={onSelectedBuiltinRoleChange}
+                fullWidth={true}
+                disabled={builtinRolesDisabled}
+              />
+            </div>
+          )}
           {!!fixedRoles.length &&
             (showGroups && !!optionGroups.length ? (
               <div className={customStyles.menuSection}>
@@ -194,6 +201,7 @@ export const RolePickerMenu = ({
                       key={i}
                       isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
                       partiallySelected={groupPartiallySelected(option.value)}
+                      disabled={option.options?.every(isNotDelegatable)}
                       onChange={onGroupChange}
                       onOpenSubMenu={onOpenSubMenu}
                       onCloseSubMenu={onCloseSubMenu}
@@ -221,6 +229,7 @@ export const RolePickerMenu = ({
                       data={option}
                       key={i}
                       isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                      disabled={isNotDelegatable(option)}
                       onChange={onChange}
                       hideDescription
                     />
@@ -237,6 +246,7 @@ export const RolePickerMenu = ({
                     data={option}
                     key={i}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                    disabled={isNotDelegatable(option)}
                     onChange={onChange}
                     hideDescription
                   />
@@ -329,7 +339,9 @@ export const RolePickerSubMenu = ({
                     disabledOptions?.find((opt) => opt.uid === option.uid))
                 )
               }
-              disabled={!!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid))}
+              disabled={
+                !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
+              }
               onChange={onSelect}
               hideDescription
             />
@@ -507,6 +519,10 @@ const capitalize = (s: string): string => {
 
 const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
 
+const isNotDelegatable = (role: Role) => {
+  return role.delegatable !== undefined && !role.delegatable;
+};
+
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuWrapper: css`
@@ -564,7 +580,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     menuOptionBody: css`
       font-weight: ${theme.typography.fontWeightRegular};
-      padding: ${theme.spacing(0, 1, 0, 0)};
+      padding: ${theme.spacing(0, 1.5, 0, 0)};
     `,
     menuOptionDisabled: css`
       color: ${theme.colors.text.disabled};

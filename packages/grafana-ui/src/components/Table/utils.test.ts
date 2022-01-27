@@ -55,6 +55,13 @@ describe('Table utils', () => {
       expect(columns[0].width).toBe(450);
       expect(columns[1].width).toBe(100);
     });
+
+    it('Should set field on columns', () => {
+      const columns = getColumns(getData(), 1000, 120);
+
+      expect(columns[0].field.name).toBe('Time');
+      expect(columns[1].field.name).toBe('Value');
+    });
   });
 
   describe('getTextAlign', () => {
@@ -179,7 +186,6 @@ describe('Table utils', () => {
             title: '1.0',
             text: '1.0',
           }),
-          parse: (value: any) => '1.0',
         };
         const rows: any[] = [];
 

@@ -14,19 +14,19 @@ Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin t
 
 To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
 
-| Name             | Description                                                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                 |
-| `Default`        | Default data source means that it will be pre-selected for new panels.                                                                |
-| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If the port is omitted, the driver default will be used (0).       |
-| `Database`       | Name of your MS SQL database.                                                                                                         |
-| `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
-| `User`           | Database user's login/username                                                                                                        |
-| `Password`       | Database user's password                                                                                                              |
-| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`. |
-| `Max open`       | The maximum number of open connections to the database, default `unlimited`.                                                          |
-| `Max idle`       | The maximum number of connections in the idle connection pool, default `2`.                                                           |
-| `Max lifetime`   | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                            |
+| Name             | Description                                                                                                                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                 |
+| `Default`        | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                |
+| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If you omit the port, then the driver default is used (0). You can specify multiple connection properties such as ApplicationIntent using ';' character to separate each property. |
+| `Database`       | Name of your MS SQL database.                                                                                                                                                                                                                         |
+| `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).                                                                                                                             |
+| `User`           | Database user's login/username                                                                                                                                                                                                                        |
+| `Password`       | Database user's password                                                                                                                                                                                                                              |
+| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`.                                                                                                                 |
+| `Max open`       | The maximum number of open connections to the database, default `unlimited`.                                                                                                                                                                          |
+| `Max idle`       | The maximum number of connections in the idle connection pool, default `2`.                                                                                                                                                                           |
+| `Max lifetime`   | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                                                                                                                                            |
 
 ### Min time interval
 
@@ -174,7 +174,7 @@ A time series query result is returned in a [wide data frame format]({{< relref 
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-You can optionally customize the default series name formatting using instructions in [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}).
+You can optionally customize the default series name formatting using instructions in [Reference: Standard field definitions]({{< relref "../panels/reference-standard-field-definitions.md#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -218,7 +218,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Reference: Standard field definitions]({{< relref "../panels/reference-standard-field-definitions.md#display-name" >}}) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 

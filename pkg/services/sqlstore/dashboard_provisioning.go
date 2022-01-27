@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandlerCtx("sql", UnprovisionDashboard)
-	bus.AddHandlerCtx("sql", DeleteOrphanedProvisionedDashboards)
+func (ss *SQLStore) addDashboardProvisioningQueryAndCommandHandlers() {
+	bus.AddHandler("sql", UnprovisionDashboard)
+	bus.AddHandler("sql", ss.DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {
@@ -30,6 +30,30 @@ func (ss *SQLStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.
 		return &data, nil
 	}
 	return nil, nil
+}
+
+func (ss *SQLStore) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	var provisionedDashboard models.DashboardProvisioning
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		var dashboard models.Dashboard
+		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.
+				ErrDashboardNotFound
+		}
+		exists, err = sess.Where("dashboard_id = ?", dashboard.Id).Get(&provisionedDashboard)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.ErrProvisionedDashboardNotFound
+		}
+		return nil
+	})
+	return &provisionedDashboard, err
 }
 
 func (ss *SQLStore) SaveProvisionedDashboard(cmd models.SaveDashboardCommand,
@@ -87,7 +111,7 @@ func UnprovisionDashboard(ctx context.Context, cmd *models.UnprovisionDashboardC
 	return nil
 }
 
-func DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+func (ss *SQLStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	var result []*models.DashboardProvisioning
 
 	convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
@@ -101,7 +125,7 @@ func DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.Delete
 	}
 
 	for _, deleteDashCommand := range result {
-		err := DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		err := ss.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
 		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 			return err
 		}

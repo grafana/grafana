@@ -1,9 +1,10 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -12,9 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) response.Response {
+func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
+	form := dtos.AdminCreateUserForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	cmd := models.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
@@ -57,8 +63,16 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreat
 	return response.JSON(200, result)
 }
 
-func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPasswordForm) response.Response {
-	userID := c.ParamsInt64(":id")
+func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
+	form := dtos.AdminUpdateUserPasswordForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if len(form.Password) < 4 {
 		return response.Error(400, "New password too short", nil)
@@ -66,7 +80,7 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
@@ -80,7 +94,7 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update user password", err)
 	}
 
@@ -88,10 +102,17 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 }
 
 // PUT /api/admin/users/:id/permissions
-func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserPermissionsForm) response.Response {
-	userID := c.ParamsInt64(":id")
+func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.Response {
+	form := dtos.AdminUpdateUserPermissionsForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
-	err := updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
+	err = updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
@@ -104,11 +125,14 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext, form dtos
 }
 
 func AdminDeleteUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	cmd := models.DeleteUserCommand{UserId: userID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -120,23 +144,26 @@ func AdminDeleteUser(c *models.ReqContext) response.Response {
 
 // POST /api/admin/users/:id/disable
 func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.DispatchCtx(context.TODO(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := bus.Dispatch(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
-	if err := bus.Dispatch(&disableCmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return response.Error(500, "Failed to disable user", err)
 	}
 
-	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
 		return response.Error(500, "Failed to disable user", err)
 	}
@@ -146,16 +173,19 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 
 // POST /api/admin/users/:id/enable
 func AdminEnableUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.DispatchCtx(context.TODO(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := bus.Dispatch(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
-	if err := bus.Dispatch(&disableCmd); err != nil {
+	if err := bus.Dispatch(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -167,7 +197,10 @@ func AdminEnableUser(c *models.ReqContext) response.Response {
 
 // POST /api/admin/users/:id/logout
 func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if c.UserId == userID {
 		return response.Error(400, "You cannot logout yourself", nil)
@@ -178,13 +211,23 @@ func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
 
 // GET /api/admin/users/:id/auth-tokens
 func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return hs.getUserAuthTokensInternal(c, userID)
 }
 
 // POST /api/admin/users/:id/revoke-auth-token
-func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) response.Response {
-	userID := c.ParamsInt64(":id")
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
+	cmd := models.RevokeAuthTokenCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }
 

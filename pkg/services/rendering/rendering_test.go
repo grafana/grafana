@@ -3,9 +3,13 @@ package rendering
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -106,6 +110,7 @@ func TestRenderLimitImage(t *testing.T) {
 			HomePath: path,
 		},
 		inProgressCount: 2,
+		log:             log.New("test"),
 	}
 
 	tests := []struct {
@@ -133,9 +138,74 @@ func TestRenderLimitImage(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
-			result, err := rs.Render(context.Background(), opts)
+			result, err := rs.Render(context.Background(), opts, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
 		})
 	}
+}
+
+func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
+	cfg := setting.NewCfg()
+	rs := &RenderingService{
+		Cfg: cfg,
+		log: log.New("rendering-test"),
+	}
+
+	t.Run("When renderer responds with correct version should return that version", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte("{\"version\":\"2.7.1828\"}"))
+			require.NoError(t, err)
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererUrl = server.URL + "/render"
+		version, err := rs.getRemotePluginVersion()
+
+		require.NoError(t, err)
+		require.Equal(t, "2.7.1828", version)
+	})
+
+	t.Run("When renderer responds with 404 should assume a valid but old version", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererUrl = server.URL + "/render"
+		version, err := rs.getRemotePluginVersion()
+
+		require.NoError(t, err)
+		require.Equal(t, version, "1.0.0")
+	})
+
+	t.Run("When renderer responds with 500 should retry until success", func(t *testing.T) {
+		tries := uint(0)
+		ctx, cancel := context.WithCancel(context.Background())
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			tries++
+
+			if tries < remoteVersionFetchRetries {
+				w.WriteHeader(http.StatusInternalServerError)
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte("{\"version\":\"3.1.4159\"}"))
+				require.NoError(t, err)
+				cancel()
+			}
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererUrl = server.URL + "/render"
+		remoteVersionFetchInterval = time.Millisecond
+		remoteVersionFetchRetries = 5
+		go func() {
+			require.NoError(t, rs.Run(ctx))
+		}()
+
+		require.Eventually(t, func() bool { return rs.Version() == "3.1.4159" }, time.Second, time.Millisecond)
+	})
 }

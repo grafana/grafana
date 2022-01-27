@@ -34,7 +34,7 @@ func OrgRedirect(cfg *setting.Cfg) web.Handler {
 		}
 
 		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
-		if err := bus.Dispatch(&cmd); err != nil {
+		if err := bus.Dispatch(ctx.Req.Context(), &cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
 			} else {
@@ -44,7 +44,16 @@ func OrgRedirect(cfg *setting.Cfg) web.Handler {
 			return
 		}
 
-		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode())
+		urlParams := c.Req.URL.Query()
+		qs := urlParams.Encode()
+
+		if urlParams.Has("kiosk") && urlParams.Get("kiosk") == "" {
+			urlParams.Del("kiosk")
+			qs = fmt.Sprintf("%s&kiosk", urlParams.Encode())
+		}
+
+		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), qs)
+
 		c.Redirect(newURL, 302)
 	}
 }

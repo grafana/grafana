@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -45,7 +46,9 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 func TestEngineProcessJob(t *testing.T) {
 	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg(), tracer)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -53,7 +56,7 @@ func TestEngineProcessJob(t *testing.T) {
 	job := &Job{running: true, Rule: &Rule{}}
 
 	t.Run("Should register usage metrics func", func(t *testing.T) {
-		bus.AddHandler(func(q *models.GetAllAlertsQuery) error {
+		bus.AddHandler(func(ctx context.Context, q *models.GetAllAlertsQuery) error {
 			settings, err := simplejson.NewJson([]byte(`{"conditions": [{"query": { "datasourceId": 1}}]}`))
 			if err != nil {
 				return err
@@ -62,7 +65,7 @@ func TestEngineProcessJob(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler(func(q *models.GetDataSourceQuery) error {
+		bus.AddHandler(func(ctx context.Context, q *models.GetDataSourceQuery) error {
 			q.Result = &models.DataSource{Id: 1, Type: models.DS_PROMETHEUS}
 			return nil
 		})
@@ -124,7 +127,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(0)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})
@@ -134,7 +137,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(1)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})
@@ -144,7 +147,7 @@ func TestEngineProcessJob(t *testing.T) {
 			evalHandler := NewFakeEvalHandler(expectedAttempts)
 			engine.evalHandler = evalHandler
 
-			err := engine.processJobWithRetry(context.TODO(), job)
+			err := engine.processJobWithRetry(context.Background(), job)
 			require.Nil(t, err)
 			require.Equal(t, expectedAttempts, evalHandler.CallNb)
 		})

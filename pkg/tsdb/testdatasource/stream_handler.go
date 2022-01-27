@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
+
+var random20HzStreamRegex = regexp.MustCompile(`random-20Hz-stream(-\d+)?`)
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	s.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
@@ -34,7 +38,7 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 		}
 	}
 
-	if s.cfg.FeatureToggles["live-pipeline"] {
+	if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		// While developing Live pipeline avoid sending initial data.
 		initialData = nil
 	}
@@ -55,30 +59,30 @@ func (s *Service) PublishStream(_ context.Context, req *backend.PublishStreamReq
 func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	s.logger.Debug("New stream call", "path", request.Path)
 	var conf testStreamConfig
-	switch request.Path {
-	case "random-2s-stream":
+	switch {
+	case request.Path == "random-2s-stream":
 		conf = testStreamConfig{
 			Interval: 2 * time.Second,
 		}
-	case "random-flakey-stream":
+	case request.Path == "random-flakey-stream":
 		conf = testStreamConfig{
 			Interval: 100 * time.Millisecond,
 			Drop:     0.75, // keep 25%
 		}
-	case "random-labeled-stream":
+	case request.Path == "random-labeled-stream":
 		conf = testStreamConfig{
 			Interval: 200 * time.Millisecond,
 			Drop:     0.2, // keep 80%
 			Labeled:  true,
 		}
-	case "random-20Hz-stream":
-		conf = testStreamConfig{
-			Interval: 50 * time.Millisecond,
-		}
-	case "flight-5hz-stream":
+	case request.Path == "flight-5hz-stream":
 		conf = testStreamConfig{
 			Interval: 200 * time.Millisecond,
 			Flight:   newFlightConfig(),
+		}
+	case random20HzStreamRegex.MatchString(request.Path):
+		conf = testStreamConfig{
+			Interval: 50 * time.Millisecond,
 		}
 	default:
 		return fmt.Errorf("testdata plugin does not support path: %s", request.Path)
@@ -123,7 +127,7 @@ func (s *Service) runTestStream(ctx context.Context, path string, conf testStrea
 			}
 
 			mode := data.IncludeDataOnly
-			if s.cfg.FeatureToggles["live-pipeline"] {
+			if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
 				mode = data.IncludeAll
 			}
 

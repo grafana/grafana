@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 	editorRole := models.ROLE_EDITOR
 
 	setUp := func(confs ...setUpConf) {
-		bus.AddHandler("test", func(query *models.GetAlertByIdQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertByIdQuery) error {
 			query.Result = singleAlert
 			return nil
 		})
@@ -36,12 +37,12 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 				aclMockResp = c.aclMockResp
 			}
 		}
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 			query.Result = []*models.TeamDTO{}
 			return nil
 		})
@@ -85,13 +86,13 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			setUp()
 
 			var searchQuery *search.Query
-			bus.AddHandler("test", func(query *search.Query) error {
+			bus.AddHandler("test", func(ctx context.Context, query *search.Query) error {
 				searchQuery = query
 				return nil
 			})
 
 			var getAlertsQuery *models.GetAlertsQuery
-			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertsQuery) error {
 				getAlertsQuery = query
 				return nil
 			})
@@ -109,7 +110,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			setUp()
 
 			var searchQuery *search.Query
-			bus.AddHandler("test", func(query *search.Query) error {
+			bus.AddHandler("test", func(ctx context.Context, query *search.Query) error {
 				searchQuery = query
 				query.Result = search.HitList{
 					&search.Hit{ID: 1},
@@ -119,7 +120,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			})
 
 			var getAlertsQuery *models.GetAlertsQuery
-			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
+			bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertsQuery) error {
 				getAlertsQuery = query
 				return nil
 			})
@@ -152,7 +153,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 }
 
 func callPauseAlert(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.PauseAlertCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.PauseAlertCommand) error {
 		return nil
 	})
 
@@ -166,12 +167,13 @@ func postAlertScenario(t *testing.T, desc string, url string, routePattern strin
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PauseAlert(c, cmd)
+			return PauseAlert(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

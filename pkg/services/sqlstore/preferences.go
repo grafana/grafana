@@ -10,9 +10,9 @@ import (
 )
 
 func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetPreferences)
-	bus.AddHandlerCtx("sql", ss.GetPreferencesWithDefaults)
-	bus.AddHandlerCtx("sql", ss.SavePreferences)
+	bus.AddHandler("sql", ss.GetPreferences)
+	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
+	bus.AddHandler("sql", ss.SavePreferences)
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {

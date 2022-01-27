@@ -37,6 +37,7 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
+import { renderLegendFormat } from '../prometheus/legend';
 
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
@@ -282,17 +283,12 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
   let label =
     options === undefined || isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
+      : renderLegendFormat(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
   }
   return label;
-}
-
-function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
 }
 
 function getOriginalMetricName(labelData: { [key: string]: string }) {

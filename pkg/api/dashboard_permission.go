@@ -2,16 +2,22 @@ package api
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
+	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
 
 	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
@@ -50,12 +56,19 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 	return response.JSON(200, filteredAcls)
 }
 
-func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+	apiCmd := dtos.UpdateDashboardAclCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashID := c.ParamsInt64(":dashboardId")
+	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	}
 
 	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
