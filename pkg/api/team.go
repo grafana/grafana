@@ -130,11 +130,19 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		page = 1
 	}
 
+	var userIdFilter int64
+	// Using accesscontrol the filtering is done based on user permissions
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if hs.Cfg.EditorsCanAdmin && c.OrgRole != models.ROLE_ADMIN {
+			userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+		}
+	}
+
 	query := models.SearchTeamsQuery{
 		OrgId:        c.OrgId,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
-		UserIdFilter: userFilter(hs.Cfg.EditorsCanAdmin, c),
+		UserIdFilter: userIdFilter,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
