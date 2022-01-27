@@ -160,7 +160,6 @@ export interface AzureResourceSummaryItem {
 }
 
 export interface RawAzureSubscriptionItem {
-  subscriptionURI: string;
   subscriptionName: string;
   subscriptionId: string;
 }

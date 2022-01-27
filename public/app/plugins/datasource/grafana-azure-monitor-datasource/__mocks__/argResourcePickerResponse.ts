@@ -9,32 +9,26 @@ export const createMockARGSubscriptionResponse = (): AzureGraphResponse<RawAzure
   data: [
     {
       subscriptionId: '1',
-      subscriptionURI: '/subscriptions/abc-123',
       subscriptionName: 'Primary Subscription',
     },
     {
       subscriptionId: '2',
-      subscriptionURI: '/subscriptions/def-456',
       subscriptionName: 'Dev Subscription',
     },
     {
       subscriptionId: '3',
-      subscriptionURI: '/subscriptions/def-456',
       subscriptionName: 'Dev Subscription',
     },
     {
       subscriptionId: '4',
-      subscriptionURI: '/subscriptions/abc-123',
       subscriptionName: 'Primary Subscription',
     },
     {
       subscriptionId: '5',
-      subscriptionURI: '/subscriptions/abc-123',
       subscriptionName: 'Primary Subscription',
     },
     {
       subscriptionId: '6',
-      subscriptionURI: '/subscriptions/def-456',
       subscriptionName: 'Dev Subscription',
     },
   ],
