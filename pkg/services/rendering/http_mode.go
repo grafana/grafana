@@ -58,7 +58,7 @@ func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string,
 	rendererURL.RawQuery = queryParams.Encode()
 
 	// gives service some additional time to timeout and return possible errors.
-	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
 	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)
@@ -103,7 +103,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	rendererURL.RawQuery = queryParams.Encode()
 
 	// gives service some additional time to timeout and return possible errors.
-	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	reqContext, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
 	resp, err := rs.doRequest(reqContext, rendererURL, opts.Headers)

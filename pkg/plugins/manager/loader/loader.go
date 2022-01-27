@@ -97,12 +97,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := &plugins.Plugin{
-			JSONData:  pluginJSON,
-			PluginDir: pluginDir,
-			Class:     class,
-		}
-		plugin.SetLogger(l.log.New("pluginID", plugin.ID))
+		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -165,15 +160,23 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			}
 		}
 
+		if plugin.IsApp() {
+			setDefaultNavURL(plugin, l.cfg.AppSubURL)
+		}
+
+		if plugin.Parent != nil && plugin.Parent.IsApp() {
+			configureAppChildOPlugin(plugin.Parent, plugin)
+		}
+
 		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 
 	for _, p := range verifiedPlugins {
-		l.setDefaults(p)
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
 			return nil, err
 		}
+		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 
 	return verifiedPlugins, nil
@@ -228,56 +231,49 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func (l *Loader) setDefaults(p *plugins.Plugin) {
-	setModule(p)
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, logger log.Logger) *plugins.Plugin {
+	plugin := &plugins.Plugin{
+		JSONData:  pluginJSON,
+		PluginDir: pluginDir,
+		BaseURL:   baseURL(pluginJSON, class, pluginDir),
+		Module:    module(pluginJSON, class, pluginDir),
+		Class:     class,
+	}
 
+	plugin.SetLogger(logger.New("pluginID", plugin.ID))
+	setImages(plugin)
+
+	return plugin
+}
+
+func setImages(p *plugins.Plugin) {
 	p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
 	p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
 
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		p.Info.Screenshots[i].Path = evalRelativePluginURLPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
 	}
+}
 
-	if p.IsApp() {
-		for _, child := range p.Children {
-			setPathsBasedOnApp(p, child)
+func setDefaultNavURL(p *plugins.Plugin, appSubURL string) {
+	// slugify pages
+	for _, include := range p.Includes {
+		if include.Slug == "" {
+			include.Slug = slug.Make(include.Name)
 		}
-
-		// slugify pages
-		for _, include := range p.Includes {
-			if include.Slug == "" {
-				include.Slug = slug.Make(include.Name)
-			}
-			if include.Type == "page" && include.DefaultNav {
-				p.DefaultNavURL = l.cfg.AppSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
-			}
-			if include.Type == "dashboard" && include.DefaultNav {
-				p.DefaultNavURL = l.cfg.AppSubURL + "/dashboard/db/" + include.Slug
-			}
+		if include.Type == "page" && include.DefaultNav {
+			p.DefaultNavURL = appSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
+		}
+		if include.Type == "dashboard" && include.DefaultNav {
+			p.DefaultNavURL = appSubURL + "/dashboard/db/" + include.Slug
 		}
 	}
 }
 
-func setModule(p *plugins.Plugin) {
-	if p.IsCorePlugin() {
-		// Previously there was an assumption that the Core plugins directory
-		// should be public/app/plugins/<plugin type>/<plugin id>
-		// However this can be an issue if the Core plugins directory is renamed
-		baseDir := filepath.Base(p.PluginDir)
-
-		// use path package for the following statements because these are not file paths
-		p.Module = path.Join("app/plugins", string(p.Type), baseDir, "module")
-		p.BaseURL = path.Join("public/app/plugins", string(p.Type), baseDir)
+func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+	if !parent.IsApp() {
 		return
 	}
-
-	metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-
-	p.Module = path.Join("plugins", p.ID, "module")
-	p.BaseURL = path.Join("public/plugins", p.ID)
-}
-
-func setPathsBasedOnApp(parent *plugins.Plugin, child *plugins.Plugin) {
 	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
@@ -329,6 +325,22 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	}
 
 	return errs
+}
+
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+	}
+
+	return path.Join("public/plugins", pluginJSON.ID)
+}
+
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+	}
+
+	return path.Join("plugins", pluginJSON.ID, "module")
 }
 
 func validatePluginJSON(data plugins.JSONData) error {

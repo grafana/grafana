@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,7 +44,7 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
+	enabled := settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption)
 	currentProviderID := readCurrentProviderID(settings)
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
@@ -87,7 +88,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+		if s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -130,11 +131,11 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
 	keyName := s.keyName(scope)
 
@@ -172,12 +173,12 @@ func (s *SecretsService) keyName(scope string) string {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if secrets.EnvelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
+	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
