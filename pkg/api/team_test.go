@@ -216,7 +216,7 @@ func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
 	})
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
-	t.Run("Access control allows updating teams with the correct permissions", func(t *testing.T) {
+	t.Run("Access control allows updating teams with the correct global permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:*"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
