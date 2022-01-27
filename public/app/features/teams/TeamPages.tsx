@@ -15,6 +15,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 
 interface TeamPageRouteParams {
   id: string;
@@ -127,7 +128,17 @@ export class TeamPages extends PureComponent<Props, State> {
       case PageTypes.Settings:
         return isSignedInUserTeamAdmin && <TeamSettings team={team!} />;
       case PageTypes.GroupSync:
-        return isSignedInUserTeamAdmin && isSyncEnabled && <TeamGroupSync />;
+        if (isSignedInUserTeamAdmin && isSyncEnabled) {
+          return <TeamGroupSync />;
+        } else if (config.featureHighlights.enabled) {
+          return (
+            <UpgradeBox
+              text={
+                "Team Sync immediately updates each user's Grafana teams and permissions based on their LDAP or Oauth group membership, instead of updating when users sign in."
+              }
+            />
+          );
+        }
     }
 
     return null;
