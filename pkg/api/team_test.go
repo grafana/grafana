@@ -134,8 +134,9 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	})
 }
 
-var (
+const (
 	createTeamURL = "/api/teams/"
+	detailTeamURL = "/api/teams/%d"
 	createTeamCmd = `{"name": "MyTestTeam%d"}`
 )
 
@@ -187,5 +188,74 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "teams:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+// Given a team with a user, when the user is granted X permission,
+// Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
+// else return 403
+func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.db = sqlstore.InitTestDB(t)
+	_, err := sc.db.CreateTeam("team1", "", 1)
+
+	require.NoError(t, err)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	input := strings.NewReader(fmt.Sprintf(createTeamCmd, 1))
+	t.Run("Access control allows updating teams with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
+		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		require.NoError(t, err)
+		assert.Equal(t, "MyTestTeam1", teamQuery.Result.Name)
+	})
+
+	input = strings.NewReader(fmt.Sprintf(createTeamCmd, 2))
+	t.Run("Access control prevents updating teams with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+
+		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
+		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		assert.NoError(t, err)
+		assert.Equal(t, "MyTestTeam1", teamQuery.Result.Name)
+	})
+}
+
+// Given a team with a user, when the user is granted X permission,
+// Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
+// else return 403
+func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.db = sqlstore.InitTestDB(t)
+	_, err := sc.db.CreateTeam("team1", "", 1)
+	require.NoError(t, err)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	t.Run("Access control prevents deleting teams with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:7"}}, 1)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+
+		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
+		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		require.NoError(t, err)
+	})
+
+	t.Run("Access control allows deleting teams with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"}}, 1)
+		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
+		err := sc.db.GetTeamById(context.Background(), teamQuery)
+		require.ErrorIs(t, err, models.ErrTeamNotFound)
 	})
 }
