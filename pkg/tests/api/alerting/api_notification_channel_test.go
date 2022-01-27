@@ -829,7 +829,7 @@ func TestNotificationChannels(t *testing.T) {
 	// nolint:gosec
 	require.Eventually(t, func() bool {
 		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) && len(mockEmail.emails) >= 1
-	}, 30*time.Second, 1*time.Second)
+	}, 60*time.Second, 1*time.Second)
 
 	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
 	require.Equal(t, expEmailNotifications, mockEmail.emails)
