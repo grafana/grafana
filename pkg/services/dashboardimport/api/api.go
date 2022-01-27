@@ -3,11 +3,13 @@ package api
 import (
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -16,13 +18,16 @@ type ImportDashboardAPI struct {
 	dashboardImportService dashboardimport.Service
 	quotaService           QuotaService
 	schemaLoaderService    SchemaLoaderService
+	pluginStore            plugins.Store
 }
 
-func New(dashboardImportService dashboardimport.Service, quotaService QuotaService, schemaLoaderService SchemaLoaderService) *ImportDashboardAPI {
+func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
+	schemaLoaderService SchemaLoaderService, pluginStore plugins.Store) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		schemaLoaderService:    schemaLoaderService,
+		pluginStore:            pluginStore,
 	}
 }
 
@@ -62,7 +67,7 @@ func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Re
 	req.User = c.SignedInUser
 	resp, err := api.dashboardImportService.ImportDashboard(c.Req.Context(), &req)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to import dashboard", err)
+		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginStore, err)
 	}
 
 	return response.JSON(http.StatusOK, resp)

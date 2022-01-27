@@ -18,7 +18,7 @@ import (
 
 func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
-	pluginDashboardManager plugins.PluginDashboardManager,
+	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store,
 	libraryPanelService librarypanels.Service) *ImportDashboardService {
 	s := &ImportDashboardService{
 		pluginDashboardManager: pluginDashboardManager,
@@ -26,7 +26,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegi
 		libraryPanelService:    libraryPanelService,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService)
+	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s

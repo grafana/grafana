@@ -33,7 +33,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService, nil)
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -120,7 +120,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), schemaLoaderService, nil)
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -147,7 +147,7 @@ func TestImportDashboardAPI(t *testing.T) {
 	t.Run("Quota reached", func(t *testing.T) {
 		service := &serviceMock{}
 		schemaLoaderService := &schemaLoaderServiceMock{}
-		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), schemaLoaderService)
+		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), schemaLoaderService, nil)
 
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
