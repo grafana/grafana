@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -363,7 +362,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		require.NoError(t, err)
 		hs.TeamPermissionsService = teamPermissionService
 	} else {
-		hs.AccessControl = ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t}, acdb.ProvideService(db))
+		hs.AccessControl = ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t}, database.ProvideService(db))
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
