@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -21,11 +22,18 @@ type sqlThumbnailRepository struct {
 }
 
 func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error) {
-	file, err := os.Open(filePath)
+	file, err := os.Open(filepath.Clean(filePath))
+
 	if err != nil {
 		tlog.Error("error opening file", "dashboardUID", meta.DashboardUID, "err", err)
 		return 0, err
 	}
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			tlog.Warn("Failed to close thumbnail file", "path", filePath, "err", err)
+		}
+	}()
 
 	reader := bufio.NewReader(file)
 	content, err := ioutil.ReadAll(reader)
