@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Services & Utils
 import store from 'app/core/store';
+import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
 
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
@@ -15,7 +16,6 @@ import { RichHistory, Tabs } from './RichHistory';
 //Actions
 import { deleteRichHistory } from '../state/history';
 import { ExploreDrawer } from '../ExploreDrawer';
-import { RICH_HISTORY_SETTING_KEYS } from '../../../core/history/richHistoryLocalStorageUtils';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;

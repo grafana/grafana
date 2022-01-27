@@ -1,12 +1,6 @@
 import { RichHistoryQuery } from '../../types';
 import { omit } from 'lodash';
-
-export enum SortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-  DatasourceAZ = 'Datasource A-Z',
-  DatasourceZA = 'Datasource Z-A',
-}
+import { SortOrder } from '../utils/richHistoryTypes';
 
 /**
  * Temporary place for local storage specific items that are still in use in richHistory.ts
@@ -32,22 +26,6 @@ export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [nu
       q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
       q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
   );
-}
-
-export function filterAndSortQueries(
-  queries: RichHistoryQuery[],
-  sortOrder: SortOrder,
-  listOfDatasourceFilters: string[],
-  searchFilter: string,
-  timeFilter?: [number, number]
-) {
-  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
-  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
-  const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
-    : filteredQueriesByDsAndSearchFilter;
-
-  return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {

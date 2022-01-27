@@ -17,7 +17,15 @@ import {
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/richHistoryStorage';
-import { SortOrder } from '../history/richHistoryLocalStorageUtils';
+import {
+  filterQueriesByDataSource,
+  filterQueriesBySearchFilter,
+  filterQueriesByTime,
+  sortQueries,
+} from 'app/core/history/richHistoryLocalStorageUtils';
+import { SortOrder } from './richHistoryTypes';
+
+export { SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
@@ -157,6 +165,22 @@ export async function deleteQueryInRichHistory(
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
   }
+}
+
+export function filterAndSortQueries(
+  queries: RichHistoryQuery[],
+  sortOrder: SortOrder,
+  listOfDatasourceFilters: string[],
+  searchFilter: string,
+  timeFilter?: [number, number]
+) {
+  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
+  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
+  const filteredQueriesToBeSorted = timeFilter
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
+    : filteredQueriesByDsAndSearchFilter;
+
+  return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {

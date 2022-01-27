@@ -8,13 +8,12 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 // Utils
 import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
+import { filterAndSortQueries, createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { useDebounce } from 'react-use';
-import { filterAndSortQueries, SortOrder } from 'app/core/history/richHistoryLocalStorageUtils';
 
 export interface Props {
   queries: RichHistoryQuery[];
