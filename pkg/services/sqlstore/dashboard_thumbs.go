@@ -2,8 +2,10 @@ package sqlstore
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/models"
+	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
@@ -23,7 +25,7 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
-		if err != nil && err != models.ErrDashboardThumbnailNotFound {
+		if err != nil && !errors.Is(err, models.ErrDashboardThumbnailNotFound) {
 			return err
 		}
 

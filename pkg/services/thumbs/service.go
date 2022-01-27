@@ -204,7 +204,6 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		fmt.Println(err)
 		c.JSON(400, map[string]string{"error": "error reading file"})
 		return
-
 	}
 
 	_, err = hs.thumbnailRepo.saveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
