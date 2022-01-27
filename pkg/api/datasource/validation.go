@@ -60,7 +60,6 @@ var reURL = regexp.MustCompile("^[^:]*://")
 // The data source's type and URL must be provided. If successful, the valid URL object is returned, otherwise an
 // error is returned.
 func ValidateURL(typeName, urlStr string) (*url.URL, error) {
-
 	// Check for empty URLs
 	if _, exists := requiredURL[typeName]; exists && strings.TrimSpace(urlStr) == "" {
 		return nil, URLValidationError{Err: errors.New("empty URL string"), URL: ""}
