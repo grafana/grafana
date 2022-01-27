@@ -40,6 +40,10 @@ export enum AccessControlAction {
   LDAPUsersSync = 'ldap.user:sync',
   LDAPStatusRead = 'ldap.status:read',
 
+  LicensingRead = 'licensing:read',
+  LicensingUpdate = 'licensing:update',
+  LicensingReportsRead = 'licensing.reports:read',
+
   DataSourcesExplore = 'datasources:explore',
   DataSourcesRead = 'datasources:read',
   DataSourcesCreate = 'datasources:create',
