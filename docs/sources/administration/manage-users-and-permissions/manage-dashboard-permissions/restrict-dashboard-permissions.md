@@ -1,7 +1,7 @@
 +++
 title = "Restrict access to dashboards"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/restrict-dashboard-permissions.md"]
+weight = 50
 +++
 
 # Restrict access to dashboards
@@ -50,4 +50,4 @@ Dashboard permissions settings:
 
 Result: You receive a message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions because the system applies the highest permissions.
 
-> Refer to [Fine-grained access Control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how to use fine-grained permissions to restrict access.
+> Refer to [Fine-grained access Control]({{< relref "../../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how to use fine-grained permissions to restrict access.

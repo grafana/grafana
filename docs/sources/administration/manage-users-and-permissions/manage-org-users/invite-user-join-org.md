@@ -1,12 +1,12 @@
 +++
 title = "Invite a user to join an organization"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org.md"]
+weight = 10
 +++
 
 # Invite a user to join an organization
 
-You can invite users to join an organization, which grants them access to the dashboards and data sources owned by the organization.
+When you invite users to join an organization, you assign the **Admin**, **Editor**, or **Viewer** role which controls user access to the dashboards and data sources owned by the organization. Users receive an email that prompts them to accept the invitation.
 
 - If you know that the user already has access Grafana and you know their user name, then you issue an invitation by entering their user name.<!--- It's weird to me that I cannot see all users, so that I know their user name -->
 - If the user is new to Grafana, then use their email address to issue an invitation. The system automatically creates the user account on first sign in.
@@ -20,7 +20,10 @@ You can invite users to join an organization, which grants them access to the da
 **To invite or add an existing user account to your organization**:
 
 1. Sign in to Grafana as an organization administrator.
-1. To switch your organization, hover your mouse over your profile and click **Switch organization**.
+1. To switch to the organization to which you want to invite a user, hover your mouse over your profile and click **Switch organization** and select an organization.
+
+   > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
+
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
 1. Click **Invite**.
 1. Enter the following information:

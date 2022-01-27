@@ -1,9 +1,13 @@
 +++
-title = "Manage organization users"
-aliases = ["path here"]
-weight = 70
+title = "Manage organization user permissions"
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/_index.md"]
+weight = 400
 +++
 
-# Manage organization users
+# Manage organization user permissions
 
-xxx.
+Organization administrators invite users to join their organization. Organization users have access to organization resources based on their role, which is **Admin**, **Editor**, or **Viewer**. Permissions associated with each role determine the tasks a user can perform in the system.
+
+For more information about organization user permissions, refer to [Organization users and permissions]({{< relref "../about-users-and-permissions/#organization-users-and-permissions">}}).
+
+{{< section >}}

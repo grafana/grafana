@@ -1,7 +1,7 @@
 +++
 title = "View user sessions"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/view-user-sessions.md"]
+weight = 80
 +++
 
 # View user sessions
@@ -15,10 +15,6 @@ Grafana displays information about user sessions such as when the user logged in
 **To view user sessions**:
 
 1. Sign in to Grafana as a server administrator.
-
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-server-user-list.md" >}}
-
+1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
 1. Click a user.
 1. Scroll down to the **Sessions** section to view the sessions associated with the user.
-   {{< /docs/list >}}

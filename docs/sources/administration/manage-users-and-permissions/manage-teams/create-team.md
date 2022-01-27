@@ -1,7 +1,7 @@
 +++
 title = "Create a team"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-teams/create-team.md"]
+weight = 10
 +++
 
 # Create a team

@@ -1,7 +1,7 @@
 +++
 title = "Add a team member"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-teams/add-team-member.md"]
+weight = 20
 +++
 
 # Add a team member

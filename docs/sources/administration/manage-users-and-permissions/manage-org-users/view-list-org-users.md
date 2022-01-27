@@ -1,7 +1,7 @@
 +++
 title = "View a list of organization users"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/view-list-org-users.md"]
+weight = 50
 +++
 
 # View a list of organization users

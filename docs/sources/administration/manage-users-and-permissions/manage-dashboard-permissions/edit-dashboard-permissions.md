@@ -1,7 +1,7 @@
 +++
 title = "Edit dashboard permissions"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/edit-dashboard-permissions.md"]
+weight = 40
 +++
 
 # Edit dashboard permissions

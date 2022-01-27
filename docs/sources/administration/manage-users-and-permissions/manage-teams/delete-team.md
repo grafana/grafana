@@ -1,7 +1,7 @@
 +++
-title = "Delete a team member"
-aliases = ["path here"]
-weight = 70
+title = "Delete a team"
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-teams/delete-team.md"]
+weight = 50
 +++
 
 # Delete a team

@@ -1,7 +1,7 @@
 +++
 title = "Change a user's organization permissions"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions.md"]
+weight = 30
 +++
 
 # Change a user's organization permissions
