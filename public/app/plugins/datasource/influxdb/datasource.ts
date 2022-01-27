@@ -113,6 +113,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   database: any;
   basicAuth: any;
   withCredentials: any;
+  access: 'direct' | 'proxy';
   interval: any;
   responseParser: any;
   httpMode: string;
@@ -135,6 +136,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
+    this.access = instanceSettings.access;
     const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
@@ -183,9 +185,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
-    // this only works in flux-mode, it should not be called in non-flux-mode
     if (!this.isFlux) {
-      throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
+      return query;
     }
 
     // We want to interpolate these variables on backend
@@ -401,10 +402,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux) {
+    if (this.isFlux || this.access === 'proxy') {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
+        rawQuery: true,
       };
       return lastValueFrom(
         super.query({
