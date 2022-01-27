@@ -25,7 +25,6 @@ type Server struct {
 
 // NewServer starts and returns a new server.
 func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
-func NewServer(t *testing.T, routeRegister routing.RouteRegister) *Server {
 	t.Helper()
 
 	m := web.New()
