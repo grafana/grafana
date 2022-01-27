@@ -20,7 +20,7 @@ type MatchedRulesTableItemProps = DynamicTableItemProps<{
 type MatchedRulesTableColumnProps = DynamicTableColumnProps<{ matchedRule: CombinedRule }>;
 
 export const MatchedSilencedRules = () => {
-  const [matchedAlertRules, setMatchedAlertRules] = useState<MatchedRulesTableItemProps[]>();
+  const [matchedAlertRules, setMatchedAlertRules] = useState<MatchedRulesTableItemProps[]>([]);
   const formApi = useFormContext<SilenceFormFields>();
   const dispatch = useDispatch();
   const { watch } = formApi;
@@ -48,21 +48,17 @@ export const MatchedSilencedRules = () => {
 
   return (
     <div>
-      <h4>
-        Affected alerts {matchedAlertRules && matchedAlertRules.length > 0 ? `(${matchedAlertRules.length})` : ''}
-      </h4>
+      <h4>Affected alerts {matchedAlertRules.length > 0 ? `(${matchedAlertRules.length})` : ''}</h4>
       <div className={styles.table}>
         {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
           <span>Add a valid matcher to see affected alerts</span>
         ) : (
-          matchedAlertRules && (
-            <>
-              <DynamicTable items={matchedAlertRules?.slice(0, 5) ?? []} isExpandable={false} cols={columns} />
-              {matchedAlertRules?.length > 5 && (
-                <div className={styles.moreMatches}>and {matchedAlertRules.length - 5} more</div>
-              )}
-            </>
-          )
+          <>
+            <DynamicTable items={matchedAlertRules.slice(0, 5) ?? []} isExpandable={false} cols={columns} />
+            {matchedAlertRules.length > 5 && (
+              <div className={styles.moreMatches}>and {matchedAlertRules.length - 5} more</div>
+            )}
+          </>
         )}
       </div>
     </div>

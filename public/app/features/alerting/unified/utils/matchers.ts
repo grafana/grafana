@@ -27,7 +27,14 @@ export const getMatcherQueryParams = (labels: Labels) => {
   return matcherUrlParams;
 };
 
-export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: MatcherFieldValue[]) => {
+interface MatchedRule {
+  id: string;
+  data: {
+    matchedRule: CombinedRule;
+  };
+}
+
+export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: MatcherFieldValue[]): MatchedRule[] => {
   const hasMatcher = (rule: CombinedRule, matcher: MatcherFieldValue) => {
     return Object.entries(rule.labels).some(([key, value]) => {
       if (!matcher.name || !matcher.value) {
@@ -54,7 +61,7 @@ export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: Matc
   });
   const mappedRules = filteredRules.map((rule) => ({
     id: `${rule.namespace}-${rule.name}`,
-    data: { rule, matchedRule: rule },
+    data: { matchedRule: rule },
   }));
 
   return mappedRules;
