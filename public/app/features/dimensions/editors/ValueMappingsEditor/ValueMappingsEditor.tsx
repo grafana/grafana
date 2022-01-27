@@ -9,9 +9,10 @@ import { ResourcePicker } from '../ResourcePicker';
 export interface Props {
   value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
+  showIconPicker?: boolean;
 }
 
-export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
+export const ValueMappingsEditor = React.memo(({ value, onChange, showIconPicker }: Props) => {
   const styles = useStyles2(getStyles);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const onCloseEditor = useCallback(() => {
@@ -65,7 +66,7 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
                   />
                 </td>
               )}
-              {row.result.icon && (
+              {showIconPicker && row.result.icon && (
                 <td>
                   <ResourcePicker
                     onChange={(icon) => onChangeIcon(icon, rowIndex)}
@@ -93,7 +94,12 @@ export const ValueMappingsEditor = React.memo(({ value, onChange }: Props) => {
         className={styles.modal}
         closeOnBackdropClick={false}
       >
-        <ValueMappingsEditorModal value={value} onChange={onChange} onClose={onCloseEditor} />
+        <ValueMappingsEditorModal
+          value={value}
+          onChange={onChange}
+          onClose={onCloseEditor}
+          showIconPicker={showIconPicker}
+        />
       </Modal>
     </VerticalGroup>
   );

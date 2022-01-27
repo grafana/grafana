@@ -9,9 +9,10 @@ export interface Props {
   value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
   onClose: () => void;
+  showIconPicker?: boolean;
 }
 
-export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
+export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPicker }: Props) {
   const styles = useStyles2(getStyles);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
@@ -98,7 +99,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
               </th>
               <th style={{ textAlign: 'left' }}>Display text</th>
               <th style={{ width: '10%' }}>Color</th>
-              <th style={{ width: '10%' }}>Icon</th>
+              {showIconPicker && <th style={{ width: '10%' }}>Icon</th>}
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
@@ -114,6 +115,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                       onChange={onChangeMapping}
                       onRemove={onRemoveRow}
                       onDuplicate={onDuplicateMapping}
+                      showIconPicker={showIconPicker}
                     />
                   ))}
                   {provided.placeholder}

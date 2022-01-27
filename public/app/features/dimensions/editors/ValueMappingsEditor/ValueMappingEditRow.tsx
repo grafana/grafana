@@ -23,9 +23,10 @@ interface Props {
   onChange: (index: number, mapping: ValueMappingEditRowModel) => void;
   onRemove: (index: number) => void;
   onDuplicate: (index: number) => void;
+  showIconPicker?: boolean;
 }
 
-export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDuplicate }: Props) {
+export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
   const { key, result } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -197,22 +198,24 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
               </ColorPicker>
             )}
           </td>
-          <td className={styles.textAlignCenter}>
-            <HorizontalGroup spacing="sm" justify="center">
-              <ResourcePicker
-                onChange={onChangeIcon}
-                onClear={onClearIcon}
-                value={result.icon}
-                size={ResourcePickerSize.SMALL}
-                folderName={ResourceFolderName.Icon}
-                mediaType={MediaType.Icon}
-                color={result.color}
-              />
-              {result.icon && (
-                <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
-              )}
-            </HorizontalGroup>
-          </td>
+          {showIconPicker && (
+            <td className={styles.textAlignCenter}>
+              <HorizontalGroup spacing="sm" justify="center">
+                <ResourcePicker
+                  onChange={onChangeIcon}
+                  onClear={onClearIcon}
+                  value={result.icon}
+                  size={ResourcePickerSize.SMALL}
+                  folderName={ResourceFolderName.Icon}
+                  mediaType={MediaType.Icon}
+                  color={result.color}
+                />
+                {result.icon && (
+                  <IconButton name="times" onClick={onClearIcon} tooltip="Remove icon" tooltipPlacement="top" />
+                )}
+              </HorizontalGroup>
+            </td>
+          )}
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
               <IconButton name="copy" onClick={() => onDuplicate(index)} data-testid="duplicate-value-mapping" />
