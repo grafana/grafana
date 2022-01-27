@@ -124,6 +124,10 @@ export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
 }
 
+export class DashboardPanelsRenderAllEvent extends BusEventBase {
+  static type = 'dashboard-panels-render-all';
+}
+
 export class PanelDirectiveReadyEvent extends BusEventBase {
   static type = 'panel-directive-ready';
 }

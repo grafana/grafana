@@ -41,7 +41,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, DashboardPanelsRenderAllEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
@@ -376,7 +376,10 @@ export class DashboardModel {
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
-  startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
+  startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }, refreshOffscreenPanels = false) {
+    if (refreshOffscreenPanels) {
+      this.events.publish(new DashboardPanelsRenderAllEvent());
+    }
     this.events.publish(new RefreshEvent());
     this.lastRefresh = Date.now();
 

@@ -13,7 +13,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { Subscription } from 'rxjs';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, DashboardPanelsRenderAllEvent } from 'app/types/events';
 import { GridPos } from '../state/PanelModel';
 import { config } from '@grafana/runtime';
 
@@ -33,6 +33,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private windowHeight = 1200;
   private windowWidth = 1920;
   private gridWidth = 0;
+  renderAll = false;
   /** Used to keep track of mobile panel layout position */
   private lastPanelBottom = 0;
 
@@ -47,6 +48,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   componentDidMount() {
     const { dashboard } = this.props;
     this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
+    this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsRenderAllEvent, this.triggerRenderAll));
   }
 
   componentWillUnmount() {
@@ -104,6 +106,13 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   triggerForceUpdate = () => {
     this.forceUpdate();
+  };
+
+  triggerRenderAll = () => {
+    this.renderAll = true;
+    this.forceUpdate(() => {
+      this.renderAll = false;
+    });
   };
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
@@ -198,6 +207,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         isViewing={panel.isViewing}
         width={width}
         height={height}
+        lazy={!this.renderAll}
       />
     );
   }
