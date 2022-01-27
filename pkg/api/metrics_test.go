@@ -10,6 +10,8 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -33,6 +35,19 @@ var (
 			}
 		]
 	}`
+
+	testDataSource = models.DataSource{
+		Id:     3,
+		Uid:    "testUID",
+		OrgId:  testOrgID,
+		Name:   "test",
+		Url:    "http://localhost:5432",
+		Type:   "postgresql",
+		Access: "Proxy",
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"jsonDataKey": "jsonDataValue",
+		}),
+	}
 )
 
 type fakePluginRequestValidator struct {
@@ -127,4 +142,74 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
+
+	t.Run("Get 404 when dashboardId does not exist", func(t *testing.T) {
+		defer bus.ClearBusHandlers()
+
+		// stub 404 response
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
+			//query.Result = &models.DataSource{}
+			return models.ErrDataSourceNotFound
+		})
+
+		response := callAPI(
+			sc.server,
+			http.MethodPost,
+			"/api/dashboards/id/1/panels/1/query",
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
+
+	//t.Run("Get 404 when panelId does not exist", func(t *testing.T) {
+	//response := callAPI(
+	//sc.server,
+	//http.MethodPost,
+	//"/api/dashboards/id/1/panels/1/query",
+	//strings.NewReader(queryDatasourceInput),
+	//t,
+	//)
+	//assert.Equal(t, http.StatusNotFound, response.Code)
+	//})
 }
+
+// datasource response data.
+// is a panel a frame?
+// is the ID refID?
+// is the ID also the name of the object in the results?
+// cross reference this object in the metrics.go
+
+//{
+//"results": {
+//"A": {
+//"frames": [
+//{
+//"schema": {
+//"refId": "A",
+//"fields": [
+//{
+//"name": "time",
+//"type": "time",
+//"typeInfo": {
+//"frame": "time.Time",
+//"nullable": true
+//}
+//},
+//{
+//"name": "A-series",
+//"type": "number",
+//"typeInfo": {
+//"frame": "float64",
+//"nullable": true
+//},
+//"labels": {}
+//}
+//]
+//},
+//"data": { "values": [ [ ], [] ] }
+//}
+//]
+//}
+//}
+//}
