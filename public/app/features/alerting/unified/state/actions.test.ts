@@ -3,7 +3,7 @@ import { getUniqueGroupName } from './actions';
 
 describe('getUniqueGroupName', () => {
   it('Should return the original value when there are no duplicates', () => {
-    // Arragne
+    // Arrange
     const originalGroupName = 'file-system-out-of-space';
     const existingGroups: RulerRuleGroupDTO[] = [];
 
@@ -15,7 +15,7 @@ describe('getUniqueGroupName', () => {
   });
 
   it('Should increment suffix counter until a unique name created', () => {
-    // Arragne
+    // Arrange
     const originalGroupName = 'file-system-out-of-space';
     const existingGroups: RulerRuleGroupDTO[] = [
       { name: 'file-system-out-of-space', rules: [] },
