@@ -97,9 +97,10 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	permissions := ac.getFixedPermissions(ctx, user)
 
 	dbPermissions, err := ac.provider.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:  user.OrgId,
-		UserID: user.UserId,
-		Roles:  ac.GetUserBuiltInRoles(user),
+		OrgID:   user.OrgId,
+		UserID:  user.UserId,
+		Roles:   ac.GetUserBuiltInRoles(user),
+		Actions: []string{},
 	})
 	if err != nil {
 		return nil, err
