@@ -28,7 +28,8 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   const { focusProps } = useFocus({ onFocusChange: setFocused, isDisabled });
   const theme = useTheme2();
   const isSection = item.value.menuItemType === 'section';
-  const styles = getStyles(theme, isFocused, isSection);
+  const isDivider = !!item.value.divider;
+  const styles = getStyles(theme, isFocused, isSection, isDivider);
   const onAction = () => {
     onNavigate(item.value);
     onClose();
@@ -69,20 +70,17 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   );
 }
 
-function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean) {
-  let backgroundColor = 'transparent';
-  if (isFocused) {
-    backgroundColor = theme.colors.action.hover;
-  } else if (isSection) {
-    backgroundColor = theme.colors.background.secondary;
-  }
+function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean, isDivider: boolean) {
   return {
     menuItem: css`
       position: relative;
-      background-color: ${backgroundColor};
       color: ${theme.colors.text.primary};
       display: flex;
       align-items: center;
+
+      &:hover {
+        background-color: ${isDivider ? 'transparent' : theme.colors.action.hover};
+      }
 
       &:focus-visible {
         background-color: ${theme.colors.action.hover};
