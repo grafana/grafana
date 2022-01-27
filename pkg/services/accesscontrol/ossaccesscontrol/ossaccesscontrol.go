@@ -14,15 +14,20 @@ import (
 )
 
 func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
-	s := &OSSAccessControlService{
+	s := ProvideOSSAccessControl(features, usageStats, provider)
+	s.registerUsageMetrics()
+	return s
+}
+
+// ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
+func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, usageStats usagestats.Service, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+	return &OSSAccessControlService{
 		features:      features,
 		provider:      provider,
 		usageStats:    usageStats,
 		log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
 	}
-	s.registerUsageMetrics()
-	return s
 }
 
 // OSSAccessControlService is the service implementing role based access control.
