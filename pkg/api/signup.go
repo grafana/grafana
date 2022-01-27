@@ -110,7 +110,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	}
 
 	// mark temp user as completed
-	if ok, rsp := updateTempUserStatus(c.Req.Context(), form.Code, models.TmpUserCompleted); !ok {
+	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), form.Code, models.TmpUserCompleted); !ok {
 		return rsp
 	}
 
@@ -122,7 +122,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	apiResponse := util.DynMap{"message": "User sign up completed successfully", "code": "redirect-to-landing-page"}
 	for _, invite := range invitesQuery.Result {
-		if ok, rsp := applyUserInvite(c.Req.Context(), user, invite, false); !ok {
+		if ok, rsp := hs.applyUserInvite(c.Req.Context(), user, invite, false); !ok {
 			return rsp
 		}
 		apiResponse["code"] = "redirect-to-select-org"

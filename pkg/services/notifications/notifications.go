@@ -22,6 +22,7 @@ type WebhookSender interface {
 }
 type EmailSender interface {
 	SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error
+	SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error
 }
 type Service interface {
 	WebhookSender
@@ -45,7 +46,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
 	ns.Bus.AddHandler(ns.validateResetPasswordCode)
-	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
+	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
 
 	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
 	ns.Bus.AddHandler(ns.SendWebhookSync)
@@ -151,7 +152,7 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 	return err
 }
 
-func (ns *NotificationService) sendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
+func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
 	message, err := ns.buildEmailMessage(cmd)
 
 	if err != nil {
@@ -167,7 +168,7 @@ func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *
 	if err != nil {
 		return err
 	}
-	return ns.sendEmailCommandHandler(ctx, &models.SendEmailCommand{
+	return ns.SendEmailCommandHandler(ctx, &models.SendEmailCommand{
 		To:       []string{cmd.User.Email},
 		Template: tmplResetPassword,
 		Data: map[string]interface{}{
@@ -211,7 +212,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 		return nil
 	}
 
-	err := ns.sendEmailCommandHandler(ctx, &models.SendEmailCommand{
+	err := ns.SendEmailCommandHandler(ctx, &models.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplSignUpStarted,
 		Data: map[string]interface{}{
@@ -234,7 +235,7 @@ func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *
 		return nil
 	}
 
-	return ns.sendEmailCommandHandler(ctx, &models.SendEmailCommand{
+	return ns.SendEmailCommandHandler(ctx, &models.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{

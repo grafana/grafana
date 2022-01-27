@@ -57,7 +57,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 				Template: "alert_notification",
 			}
 
-			err := ns.sendEmailCommandHandler(context.Background(), cmd)
+			err := ns.SendEmailCommandHandler(context.Background(), cmd)
 			require.NoError(t, err)
 
 			sentMsg := <-ns.mailQueue

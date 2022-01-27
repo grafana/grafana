@@ -29,7 +29,8 @@ func resetTimeNow() {
 
 type notificationServiceMock struct {
 	Webhook     models.SendWebhookSync
-	Email       models.SendEmailCommandSync
+	EmailSync   models.SendEmailCommandSync
+	Emailx      models.SendEmailCommand
 	ShouldError error
 }
 
@@ -38,7 +39,11 @@ func (ns *notificationServiceMock) SendWebhookSync(ctx context.Context, cmd *mod
 	return ns.ShouldError
 }
 func (ns *notificationServiceMock) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
-	ns.Email = *cmd
+	ns.EmailSync = *cmd
+	return ns.ShouldError
+}
+func (ns *notificationServiceMock) SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
+	ns.Emailx = *cmd
 	return ns.ShouldError
 }
 
