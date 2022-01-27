@@ -18,6 +18,8 @@ func (d *dummyPluginManager) Renderer() *plugins.Plugin {
 
 var dummyRendererUrl = "http://dummyurl.com"
 var testCapabilitySemverConstraint = "> 1.0.0"
+var testCapabilityName = CapabilityName("TestCap")
+var testCapabilityNameInvalidSemver = CapabilityName("TestCapInvalidSemver")
 
 func TestCapabilities(t *testing.T) {
 	cfg := setting.NewCfg()
@@ -25,84 +27,133 @@ func TestCapabilities(t *testing.T) {
 		Cfg:                   cfg,
 		RendererPluginManager: &dummyPluginManager{},
 		log:                   log.New("test-capabilities-rendering-service"),
+		capabilities: []Capability{
+			{name: testCapabilityName, semverConstraint: testCapabilitySemverConstraint},
+			{name: testCapabilityNameInvalidSemver, semverConstraint: "asfasf"},
+		},
 	}
+	//	tests := []struct {
+	//		name       string
+	//		user       *models.SignedInUser
+	//		permission Permission
+	//		want       Permission
+	//		wantErr    bool
+	//	}{
+	//		{
+	//			name:       "no scope",
+	//			user:       testUser,
+	//			permission: Permission{Action: "users:read"},
+	//			want:       Permission{Action: "users:read"},
+	//			wantErr:    false,
+	//		},
+	//		{
+	//			name:       "user if resolution",
+	//			user:       testUser,
+	//			permission: Permission{Action: "users:read", Scope: "users:self"},
+	//			want:       Permission{Action: "users:read", Scope: "users:id:2"},
+	//			wantErr:    false,
+	//		},
+	//	}
+	//	for _, tt := range tests {
 
-	t.Run("When node renderer is not available", func(t *testing.T) {
-		rs.Cfg.RendererUrl = ""
-		res, err := rs.HasCapability(TestCapability)
+	tests := []struct {
+		name            string
+		rendererUrl     string
+		rendererVersion string
+		capabilityName  CapabilityName
+		expectedError   error
+		expectedResult  CapabilitySupportRequestResult
+	}{
+		{
+			name:            "when image-renderer plugin is not available",
+			rendererUrl:     "",
+			rendererVersion: "",
+			capabilityName:  testCapabilityName,
+			expectedError:   ErrRenderUnavailable,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      false,
+				SemverConstraint: testCapabilitySemverConstraint,
+			},
+		},
+		{
+			name:            "when image-renderer plugin version is not populated",
+			rendererUrl:     dummyRendererUrl,
+			rendererVersion: "",
+			capabilityName:  testCapabilityName,
+			expectedError:   ErrInvalidPluginVersion,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      false,
+				SemverConstraint: testCapabilitySemverConstraint,
+			},
+		},
+		{
+			name:            "when image-renderer plugin version is not valid",
+			rendererUrl:     dummyRendererUrl,
+			rendererVersion: "abcd",
+			capabilityName:  testCapabilityName,
+			expectedError:   ErrInvalidPluginVersion,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      false,
+				SemverConstraint: testCapabilitySemverConstraint,
+			},
+		},
+		{
+			name:            "when image-renderer version does not match target constraint",
+			rendererUrl:     dummyRendererUrl,
+			rendererVersion: "1.0.0",
+			capabilityName:  testCapabilityName,
+			expectedError:   nil,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      false,
+				SemverConstraint: testCapabilitySemverConstraint,
+			},
+		},
+		{
+			name:            "when image-renderer version matches target constraint",
+			rendererUrl:     dummyRendererUrl,
+			rendererVersion: "2.0.0",
+			capabilityName:  testCapabilityName,
+			expectedError:   nil,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      true,
+				SemverConstraint: testCapabilitySemverConstraint,
+			},
+		},
+		{
+			name:            "when capability is unknown",
+			rendererUrl:     dummyRendererUrl,
+			rendererVersion: "1.0.0",
+			capabilityName:  CapabilityName("unknown"),
+			expectedError:   ErrUnknownCapability,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      false,
+				SemverConstraint: "",
+			},
+		},
+		{
+			name:            "when capability has invalid semver constraint",
+			rendererUrl:     dummyRendererUrl,
+			rendererVersion: "1.0.0",
+			capabilityName:  testCapabilityNameInvalidSemver,
+			expectedError:   ErrUnknownCapability,
+			expectedResult: CapabilitySupportRequestResult{
+				IsSupported:      false,
+				SemverConstraint: "asfasf",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rs.Cfg.RendererUrl = tt.rendererUrl
+			rs.version = tt.rendererVersion
+			res, err := rs.HasCapability(tt.capabilityName)
 
-		require.ErrorIs(t, err, ErrRenderUnavailable)
-		require.Equal(t, CapabilitySupportRequestResult{
-			IsSupported:      false,
-			SemverConstraint: testCapabilitySemverConstraint,
-		}, res)
-	})
-
-	t.Run("When renderer version is not yet populated", func(t *testing.T) {
-		rs.Cfg.RendererUrl = dummyRendererUrl
-		rs.version = ""
-		res, err := rs.HasCapability(TestCapability)
-
-		require.ErrorIs(t, err, ErrInvalidPluginVersion)
-		require.Equal(t, CapabilitySupportRequestResult{
-			IsSupported:      false,
-			SemverConstraint: testCapabilitySemverConstraint,
-		}, res)
-	})
-
-	t.Run("When renderer version is not a valid semver", func(t *testing.T) {
-		rs.Cfg.RendererUrl = dummyRendererUrl
-		rs.version = "xabc123"
-		res, err := rs.HasCapability(TestCapability)
-
-		require.ErrorIs(t, err, ErrInvalidPluginVersion)
-		require.Equal(t, CapabilitySupportRequestResult{
-			IsSupported:      false,
-			SemverConstraint: testCapabilitySemverConstraint,
-		}, res)
-	})
-
-	t.Run("When renderer version does not match target constraint", func(t *testing.T) {
-		rs.Cfg.RendererUrl = dummyRendererUrl
-		rs.version = "1.0.0"
-		res, err := rs.HasCapability(TestCapability)
-
-		require.NoError(t, err)
-		require.Equal(t, CapabilitySupportRequestResult{
-			IsSupported:      false,
-			SemverConstraint: testCapabilitySemverConstraint,
-		}, res)
-	})
-
-	t.Run("When renderer version does not match target constraint", func(t *testing.T) {
-		rs.Cfg.RendererUrl = dummyRendererUrl
-		rs.version = "2.0.0"
-		res, err := rs.HasCapability(TestCapability)
-
-		require.NoError(t, err)
-		require.Equal(t, CapabilitySupportRequestResult{
-			IsSupported:      true,
-			SemverConstraint: testCapabilitySemverConstraint,
-		}, res)
-	})
-
-	t.Run("When capability is unknown", func(t *testing.T) {
-		rs.Cfg.RendererUrl = dummyRendererUrl
-		rs.version = "2.0.0"
-		res, err := rs.HasCapability("unknown")
-
-		require.ErrorIs(t, err, ErrUnknownCapability)
-		require.Equal(t, CapabilitySupportRequestResult{
-			IsSupported:      false,
-			SemverConstraint: "",
-		}, res)
-	})
-
-	t.Run("When capability has invalid semver constraint", func(t *testing.T) {
-		rs.Cfg.RendererUrl = dummyRendererUrl
-		rs.version = "2.0.0"
-		_, err := rs.HasCapability(TestCapabilityInvalidSemver)
-
-		require.ErrorIs(t, err, ErrUnknownCapability)
-	})
+			if tt.expectedError == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tt.expectedError)
+			}
+			require.Equal(t, tt.expectedResult, res)
+		})
+	}
 }

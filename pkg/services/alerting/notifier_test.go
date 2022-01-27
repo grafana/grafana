@@ -345,7 +345,7 @@ type testRenderService struct {
 	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
 }
 
-func (s *testRenderService) HasCapability(feature rendering.Capability) (rendering.CapabilitySupportRequestResult, error) {
+func (s *testRenderService) HasCapability(feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
 	return rendering.CapabilitySupportRequestResult{}, nil
 }
 
