@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type ruleReader interface {
@@ -16,11 +15,11 @@ type ruleReader interface {
 
 type defaultRuleReader struct {
 	sync.RWMutex
-	sqlStore *sqlstore.SQLStore
+	sqlStore AlertStore
 	log      log.Logger
 }
 
-func newRuleReader(sqlStore *sqlstore.SQLStore) *defaultRuleReader {
+func newRuleReader(sqlStore AlertStore) *defaultRuleReader {
 	ruleReader := &defaultRuleReader{
 		sqlStore: sqlStore,
 		log:      log.New("alerting.ruleReader"),

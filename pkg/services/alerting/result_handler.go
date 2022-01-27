@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type resultHandler interface {
@@ -22,11 +21,11 @@ type resultHandler interface {
 
 type defaultResultHandler struct {
 	notifier *notificationService
-	sqlStore *sqlstore.SQLStore
+	sqlStore AlertStore
 	log      log.Logger
 }
 
-func newResultHandler(renderService rendering.Service, sqlStore *sqlstore.SQLStore, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
+func newResultHandler(renderService rendering.Service, sqlStore AlertStore, notificationService *notifications.NotificationService, decryptFn GetDecryptedValueFn) *defaultResultHandler {
 	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
 		sqlStore: sqlStore,

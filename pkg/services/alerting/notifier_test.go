@@ -20,20 +20,20 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// FIXME(zserge)
-func XTestNotificationService(t *testing.T) {
+func TestNotificationService(t *testing.T) {
 	testRule := &Rule{Name: "Test", Message: "Something is bad"}
-	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{}, nil)
+	store := &AlertStoreMock{}
+	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{}, store)
 
 	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
-	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, nil)
+	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Tags: map[string]string{
 			"instance": "localhost:3000",
 			"quantile": "0.99",
 		},
 	}}
-	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, nil)
+	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store)
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
 		evalCtx, true, func(sc *scenarioContext) {
@@ -179,7 +179,9 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
+		store := evalCtx.sqlStore.(*AlertStoreMock)
+
+		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 			query.Result = []*models.AlertNotification{
 				{
 					Id:   1,
@@ -190,9 +192,9 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 				},
 			}
 			return nil
-		})
+		}
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
+		store.getOrCreateNotificationState = func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
 			query.Result = &models.AlertNotificationState{
 				AlertId:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
@@ -201,7 +203,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 				State:                        models.AlertNotificationStateUnknown,
 			}
 			return nil
-		})
+		}
 
 		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 			return nil
@@ -265,7 +267,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			},
 		}
 
-		scenarioCtx.notificationService = newNotificationService(renderService, nil, nil, nil)
+		scenarioCtx.notificationService = newNotificationService(renderService, store, nil, nil)
 		fn(scenarioCtx)
 	})
 }

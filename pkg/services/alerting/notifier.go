@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -84,7 +83,7 @@ type ShowWhen struct {
 	Is    string `json:"is"`
 }
 
-func newNotificationService(renderService rendering.Service, sqlStore *sqlstore.SQLStore, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
+func newNotificationService(renderService rendering.Service, sqlStore AlertStore, notificationSvc *notifications.NotificationService, decryptFn GetDecryptedValueFn) *notificationService {
 	return &notificationService{
 		log:                 log.New("alerting.notifier"),
 		renderService:       renderService,
@@ -97,7 +96,7 @@ func newNotificationService(renderService rendering.Service, sqlStore *sqlstore.
 type notificationService struct {
 	log                 log.Logger
 	renderService       rendering.Service
-	sqlStore            *sqlstore.SQLStore
+	sqlStore            AlertStore
 	notificationService *notifications.NotificationService
 	decryptFn           GetDecryptedValueFn
 }

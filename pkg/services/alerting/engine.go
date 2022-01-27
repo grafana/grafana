@@ -18,10 +18,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
+
+// AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
+// A subset is needed to make it easier to mock during the tests.
+type AlertStore interface {
+	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
+	GetDataSource(context.Context, *models.GetDataSourceQuery) error
+	GetDashboardUIDById(context.Context, *models.GetDashboardRefByIdQuery) error
+	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
+	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
+	SetAlertState(context.Context, *models.SetAlertStateCommand) error
+}
 
 // AlertEngine is the background process that
 // schedules alert evaluations and makes sure notifications
@@ -42,7 +54,7 @@ type AlertEngine struct {
 	resultHandler     resultHandler
 	usageStatsService usagestats.Service
 	tracer            tracing.Tracer
-	sqlStore          *sqlstore.SQLStore
+	sqlStore          AlertStore
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
@@ -53,7 +65,7 @@ func (e *AlertEngine) IsDisabled() bool {
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
-	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *AlertEngine {
+	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:               cfg,
 		RenderService:     renderer,
