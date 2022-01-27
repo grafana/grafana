@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { stylesFactory, Tab, TabsBar } from '@grafana/ui';
+import { Collapse, stylesFactory, Tab, TabsBar } from '@grafana/ui';
 import {
   arrayUtils,
   DataFrame,
@@ -37,10 +37,11 @@ export class DataHoverView extends PureComponent<Props> {
           </TabsBar>
           {layers.map((g) => (
             <div key={g.layer.getName()}>
-              <b>{g.layer.getName()}</b>
               <div>
                 {g.features.map((f, idx) => (
-                  <div key={idx}>FEATURE: {`${f}`}</div>
+                  <Collapse key={idx} collapsible label={f.get('name')} isOpen={false} onToggle={() => {}}>
+                    <div>FEATURE: {`${f}`}</div>
+                  </Collapse>
                 ))}
               </div>
             </div>
