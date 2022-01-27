@@ -63,7 +63,6 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 
 	// Check for empty URLs
 	if _, exists := requiredURL[typeName]; exists && strings.TrimSpace(urlStr) == "" {
-		logger.Error("Received empty data source URL as part of data source command")
 		return nil, URLValidationError{Err: errors.New("empty URL string"), URL: ""}
 	}
 
