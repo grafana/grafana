@@ -182,6 +182,36 @@ describe('state functions', () => {
           from: 'now - 5h',
           to: 'now',
         },
+        panelsState: undefined,
+      };
+      const serialized = serializeStateToUrlParam(state, true);
+      const parsed = parseUrlState(serialized);
+      expect(state).toMatchObject(parsed);
+    });
+
+    it('can parse serialized panelsState into the original state', () => {
+      const state = {
+        ...DEFAULT_EXPLORE_STATE,
+        datasource: 'foo',
+        queries: [
+          {
+            expr: 'metric{test="a/b"}',
+            refId: 'A',
+          },
+          {
+            expr: 'super{foo="x/z"}',
+            refId: 'B',
+          },
+        ],
+        range: {
+          from: 'now - 5h',
+          to: 'now',
+        },
+        panelsState: {
+          trace: {
+            spanId: 'abcdef',
+          },
+        },
       };
       const serialized = serializeStateToUrlParam(state, true);
       const parsed = parseUrlState(serialized);

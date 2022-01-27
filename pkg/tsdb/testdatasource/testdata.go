@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureToggles) *Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		features:  features,
 		queryMux:  datasource.NewQueryTypeMux(),
@@ -48,7 +48,7 @@ type Service struct {
 	labelFrame      *data.Frame
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
-	features        *featuremgmt.FeatureToggles
+	features        featuremgmt.FeatureToggles
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

@@ -89,7 +89,6 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
       top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};
-      list-style: none;
     `,
     subtitle: css`
       background-color: transparent;

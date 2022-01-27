@@ -15,14 +15,14 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
-func init() {
+func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
-	bus.AddHandler("sql", UpdateOrg)
-	bus.AddHandler("sql", UpdateOrgAddress)
+	bus.AddHandler("sql", ss.UpdateOrg)
+	bus.AddHandler("sql", ss.UpdateOrgAddress)
 	bus.AddHandler("sql", GetOrgByName)
 	bus.AddHandler("sql", SearchOrgs)
-	bus.AddHandler("sql", DeleteOrg)
+	bus.AddHandler("sql", ss.DeleteOrg)
 }
 
 func SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
@@ -164,8 +164,8 @@ func CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	return nil
 }
 
-func UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -197,8 +197,8 @@ func UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
 	})
 }
 
-func UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		org := models.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -224,8 +224,8 @@ func UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) 
 	})
 }
 
-func DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {

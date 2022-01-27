@@ -17,7 +17,7 @@ import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 import IoNetwork from 'react-icons/lib/io/network';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import cx from 'classnames';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -41,6 +41,18 @@ const viewClassName = 'jaegerView';
 const nameColumnClassName = 'nameColumn';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const animations = {
+    flash: keyframes`
+    label: flash;
+    from {
+      background-color: ${autoColor(theme, '#68b9ff')};
+    }
+    to {
+      background-color: default;
+    }
+  `,
+  };
+
   return {
     nameWrapper: css`
       label: nameWrapper;
@@ -168,6 +180,25 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,
+    rowFocused: css`
+      label: rowFocused;
+      background-color: ${autoColor(theme, '#cbe7ff')};
+      animation: ${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0);
+      & .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName} {
+        background-color: ${autoColor(theme, '#cbe7ff')};
+        animation: ${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0);
+      }
+      & .${spanBarClassName} {
+        opacity: 1;
+      }
+      & .${spanBarLabelClassName} {
+        color: ${autoColor(theme, '#000')};
+      }
+      &:hover .${nameWrapperClassName}, :hover .${viewClassName} {
+        background: ${autoColor(theme, '#d5ebff')};
+        box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
+      }
+    `,
 
     rowExpandedAndMatchingFilter: css`
       label: rowExpandedAndMatchingFilter;
@@ -268,6 +299,7 @@ type SpanBarRowProps = {
   isChildrenExpanded: boolean;
   isDetailExpanded: boolean;
   isMatchingFilter: boolean;
+  isFocused: boolean;
   onDetailToggled: (spanID: string) => void;
   onChildrenToggled: (spanID: string) => void;
   numTicks: number;
@@ -330,6 +362,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isChildrenExpanded,
       isDetailExpanded,
       isMatchingFilter,
+      isFocused,
       numTicks,
       rpc,
       noInstrumentedServer,
@@ -377,6 +410,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             [styles.rowExpanded]: isDetailExpanded,
             [styles.rowMatchingFilter]: isMatchingFilter,
             [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+            [styles.rowFocused]: isFocused,
             [styles.rowClippingLeft]: clippingLeft,
             [styles.rowClippingRight]: clippingRight,
           },

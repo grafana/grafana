@@ -10,19 +10,40 @@ import (
 
 func TestFeatureService(t *testing.T) {
 	license := stubLicenseServier{
-		flags: map[string]bool{
-			"some.feature": true,
-			"another":      true,
+		flags: []FeatureFlag{
+			{
+				Name:            "a.yes.default",
+				RequiresLicense: true,
+				Expression:      "true",
+			},
+			{
+				Name:            "a.yes",
+				RequiresLicense: true,
+				Expression:      "",
+			},
+			{
+				Name:            "b.no",
+				RequiresLicense: true,
+			},
+		},
+		enabled: map[string]bool{
+			"a.yes.default": true,
+			"a.yes":         true,
 		},
 	}
+	require.False(t, license.FeatureEnabled("unknown"))
+	require.False(t, license.FeatureEnabled("b.no"))
+	require.True(t, license.FeatureEnabled("a.yes"))
+	require.True(t, license.FeatureEnabled("a.yes.default"))
+
 	cfg := setting.NewCfg()
 	mgmt, err := ProvideManagerService(cfg, license)
 	require.NoError(t, err)
 	require.NotNil(t, mgmt)
 
-	require.False(t, license.FeatureEnabled("test"))
-	require.True(t, license.FeatureEnabled("some.feature"))
-	require.True(t, mgmt.IsEnabled("some.feature"))
+	// Enterprise features do not fall though automatically
+	require.False(t, mgmt.IsEnabled("a.yes.default"))
+	require.False(t, mgmt.IsEnabled("a.yes")) // licensed, but not enabled
 }
 
 var (
@@ -30,7 +51,8 @@ var (
 )
 
 type stubLicenseServier struct {
-	flags map[string]bool
+	flags   []FeatureFlag
+	enabled map[string]bool
 }
 
 func (s stubLicenseServier) Expiry() int64 {
@@ -54,9 +76,9 @@ func (s stubLicenseServier) StateInfo() string {
 }
 
 func (s stubLicenseServier) EnabledFeatures() map[string]bool {
-	return s.flags
+	return map[string]bool{}
 }
 
 func (s stubLicenseServier) FeatureEnabled(feature string) bool {
-	return s.flags[feature]
+	return s.enabled[feature]
 }

@@ -29,7 +29,6 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 func init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
-	bus.AddHandler("sql", DeleteDashboard)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
@@ -44,6 +43,7 @@ func init() {
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboardUIDById)
 	bus.AddHandler("sql", ss.SearchDashboards)
+	bus.AddHandler("sql", ss.DeleteDashboard)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -305,7 +305,7 @@ func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersis
 	}
 
 	if len(query.FolderIds) > 0 {
-		filters = append(filters, searchstore.FolderFilter{Dialect: dialect, IDs: query.FolderIds})
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
 	var res []DashboardSearchProjection
@@ -410,8 +410,8 @@ func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) 
 	return err
 }
 
-func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return deleteDashboard(cmd, sess)
 	})
 }
