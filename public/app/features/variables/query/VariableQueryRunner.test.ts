@@ -5,9 +5,13 @@ import { delay } from 'rxjs/operators';
 import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
 import { queryBuilder } from '../shared/testing/builders';
 import { QueryRunner, QueryRunners } from './queryRunners';
-import { toVariableIdentifier, VariableIdentifier } from '../state/types';
+import { DashboardVariableIdentifier } from '../state/types';
 import { QueryVariableModel } from '../types';
 import { updateVariableOptions } from './reducer';
+import { toUidAction } from '../state/dashboardVariablesReducer';
+import { initialTransactionState } from '../state/transactionReducer';
+import { getPreloadedState } from '../state/helpers';
+import { toDashboardVariableIdentifier } from '../utils';
 
 type DoneCallback = {
   (...args: any[]): any;
@@ -16,7 +20,7 @@ type DoneCallback = {
 
 function expectOnResults(args: {
   runner: VariableQueryRunner;
-  identifier: VariableIdentifier;
+  identifier: DashboardVariableIdentifier;
   done: DoneCallback;
   expect: (results: UpdateOptionsResults[]) => void;
 }) {
@@ -32,7 +36,7 @@ function expectOnResults(args: {
           done();
         } catch (err) {
           subscription.unsubscribe();
-          done.fail(err);
+          done(err);
         }
       }
     },
@@ -40,25 +44,23 @@ function expectOnResults(args: {
 }
 
 function getTestContext(variable?: QueryVariableModel) {
-  variable = variable ?? queryBuilder().withId('query').build();
   const getTimeSrv = jest.fn().mockReturnValue({
     timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
   });
+  const uid = '0123456789';
+  variable = variable ?? queryBuilder().withId('query').withDashboardUid(uid).withName('query').build();
   const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
-  const identifier = toVariableIdentifier(variable);
+  const identifier = toDashboardVariableIdentifier(variable);
   const searchFilter = undefined;
   const getTemplatedRegex = jest.fn().mockReturnValue('getTemplatedRegex result');
   const dispatch = jest.fn().mockResolvedValue({});
-  const getState = jest.fn().mockReturnValue({
-    templating: {
-      transaction: {
-        uid: '0123456789',
-      },
-    },
+  const templatingState = {
+    transaction: { ...initialTransactionState, uid },
     variables: {
       [variable.id]: variable,
     },
-  });
+  };
+  const getState = jest.fn().mockReturnValue(getPreloadedState(uid, templatingState));
   const queryRunner: QueryRunner = {
     type: VariableSupportType.Standard,
     canRun: jest.fn().mockReturnValue(true),
@@ -68,19 +70,20 @@ function getTestContext(variable?: QueryVariableModel) {
   const queryRunners = ({
     getRunnerForDatasource: jest.fn().mockReturnValue(queryRunner),
   } as unknown) as QueryRunners;
-  const getVariable = jest.fn().mockReturnValue(variable);
+  const getDashboardVariable = jest.fn().mockReturnValue(variable);
   const runRequest = jest.fn().mockReturnValue(of({}));
   const runner = new VariableQueryRunner({
     getTimeSrv,
     getTemplatedRegex,
     dispatch,
     getState,
-    getVariable,
+    getDashboardVariable,
     queryRunners,
     runRequest,
   });
 
   return {
+    uid,
     identifier,
     datasource,
     runner,
@@ -90,7 +93,7 @@ function getTestContext(variable?: QueryVariableModel) {
     getState,
     queryRunner,
     queryRunners,
-    getVariable,
+    getDashboardVariable,
     runRequest,
     variable,
     getTimeSrv,
@@ -101,11 +104,12 @@ describe('VariableQueryRunner', () => {
   describe('happy case', () => {
     it('then it should work as expected', (done) => {
       const {
+        uid,
         identifier,
         runner,
         datasource,
         getState,
-        getVariable,
+        getDashboardVariable,
         queryRunners,
         queryRunner,
         dispatch,
@@ -123,7 +127,7 @@ describe('VariableQueryRunner', () => {
 
           // verify that mocks have been called as expected
           expect(getState).toHaveBeenCalledTimes(3);
-          expect(getVariable).toHaveBeenCalledTimes(1);
+          expect(getDashboardVariable).toHaveBeenCalledTimes(1);
           expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
           expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
           expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
@@ -132,11 +136,14 @@ describe('VariableQueryRunner', () => {
           // updateVariableOptions and validateVariableSelectionState
           expect(dispatch).toHaveBeenCalledTimes(2);
           expect(dispatch.mock.calls[0][0]).toEqual(
-            updateVariableOptions({
-              id: 'query',
-              type: 'query',
-              data: { results: [], templatedRegex: 'getTemplatedRegex result' },
-            })
+            toUidAction(
+              uid,
+              updateVariableOptions({
+                id: 'query',
+                type: 'query',
+                data: { results: [], templatedRegex: 'getTemplatedRegex result' },
+              })
+            )
           );
         },
         done,
@@ -154,7 +161,7 @@ describe('VariableQueryRunner', () => {
           runner,
           datasource,
           getState,
-          getVariable,
+          getDashboardVariable,
           queryRunners,
           queryRunner,
           dispatch,
@@ -176,7 +183,7 @@ describe('VariableQueryRunner', () => {
 
             // verify that mocks have been called as expected
             expect(getState).toHaveBeenCalledTimes(2);
-            expect(getVariable).toHaveBeenCalledTimes(1);
+            expect(getDashboardVariable).toHaveBeenCalledTimes(1);
             expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).not.toHaveBeenCalled();
             expect(queryRunner.runRequest).not.toHaveBeenCalled();
@@ -197,7 +204,7 @@ describe('VariableQueryRunner', () => {
           runner,
           datasource,
           getState,
-          getVariable,
+          getDashboardVariable,
           queryRunners,
           queryRunner,
           dispatch,
@@ -217,7 +224,7 @@ describe('VariableQueryRunner', () => {
 
             // verify that mocks have been called as expected
             expect(getState).toHaveBeenCalledTimes(2);
-            expect(getVariable).toHaveBeenCalledTimes(1);
+            expect(getDashboardVariable).toHaveBeenCalledTimes(1);
             expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
             expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);

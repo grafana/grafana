@@ -4,10 +4,10 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { initialIntervalVariableModelState, intervalVariableReducer } from './reducer';
-import { toVariableIdentifier } from '../state/types';
 import { IntervalVariableEditor } from './IntervalVariableEditor';
 import { updateAutoValue, updateIntervalVariableOptions } from './actions';
 import { optionPickerFactory } from '../pickers';
+import { toDashboardVariableIdentifier } from '../utils';
 
 export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariableModel> => {
   return {
@@ -22,18 +22,18 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(updateAutoValue(toVariableIdentifier(variable)));
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
+      await dispatch(updateAutoValue(toDashboardVariableIdentifier(variable)));
+      await dispatch(setOptionAsCurrent(toDashboardVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(updateAutoValue(toVariableIdentifier(variable)));
-      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(updateAutoValue(toDashboardVariableIdentifier(variable)));
+      await dispatch(setOptionFromUrl(toDashboardVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateIntervalVariableOptions(toVariableIdentifier(variable)));
+      await dispatch(updateIntervalVariableOptions(toDashboardVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
-      const { index, id, state, global, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, dashboardUid, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: (variable) => {

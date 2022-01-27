@@ -4,9 +4,10 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { updateConstantVariableOptions } from './actions';
 import { getRootReducer, RootReducerType } from '../state/helpers';
 import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);
@@ -22,6 +23,7 @@ describe('constant actions', () => {
       const variable: ConstantVariableModel = {
         ...initialVariableModelState,
         id: '0',
+        dashboardUid: 'uid',
         index: 0,
         type: 'constant',
         name: 'Constant',
@@ -36,12 +38,14 @@ describe('constant actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        createConstantOptionsFromQuery(toVariablePayload(variable)),
-        setCurrentVariableValue(toVariablePayload(variable, { option }))
+        toUidAction('uid', createConstantOptionsFromQuery(toVariablePayload(variable))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });

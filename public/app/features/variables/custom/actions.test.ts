@@ -4,9 +4,10 @@ import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer, RootReducerType } from '../state/helpers';
 import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { toVariablePayload } from '../state/types';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { createCustomOptionsFromQuery } from './reducer';
+import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('custom actions', () => {
   variableAdapters.setInit(() => [createCustomVariableAdapter()]);
@@ -22,6 +23,7 @@ describe('custom actions', () => {
       const variable: CustomVariableModel = {
         ...initialVariableModelState,
         id: '0',
+        dashboardUid: 'uid',
         index: 0,
         type: 'custom',
         name: 'Custom',
@@ -49,12 +51,14 @@ describe('custom actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        createCustomOptionsFromQuery(toVariablePayload(variable)),
-        setCurrentVariableValue(toVariablePayload(variable, { option }))
+        toUidAction('uid', createCustomOptionsFromQuery(toVariablePayload(variable))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });

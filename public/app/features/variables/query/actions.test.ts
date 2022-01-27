@@ -3,9 +3,8 @@ import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data'
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
 import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
-import { toVariablePayload } from '../state/types';
 import {
   addVariable,
   changeVariableProp,
@@ -26,6 +25,7 @@ import { updateVariableOptions } from './reducer';
 import {
   addVariableEditorError,
   changeVariableEditorExtended,
+  initialVariableEditorState,
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
@@ -39,6 +39,8 @@ import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunn
 import { setDataSourceSrv } from '@grafana/runtime';
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -89,8 +91,10 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenNoActionsWhereDispatched();
     });
@@ -105,16 +109,18 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        updateVariableOptions(toVariablePayload(variable, update)),
-        setCurrentVariableValue(toVariablePayload(variable, { option }))
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });
@@ -128,21 +134,19 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [updateOptions, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+      );
     });
   });
 
@@ -155,23 +159,21 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenActionIsDispatched(toUidAction('uid', setIdInEditor({ id: variable.id })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [clearErrors, updateOptions, setCurrentAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', removeVariableEditorError({ errorProp: 'update' })),
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+      );
     });
   });
 
@@ -184,21 +186,22 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable), 'search'), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenActionIsDispatched(toUidAction('uid', setIdInEditor({ id: variable.id })))
+        .whenAsyncActionIsDispatched(
+          updateQueryVariableOptions(toDashboardVariableIdentifier(variable), 'search'),
+          true
+        );
 
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [clearErrors, updateOptions] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', removeVariableEditorError({ errorProp: 'update' })),
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update)))
+      );
     });
   });
 
@@ -212,19 +215,26 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
-        .whenAsyncActionIsDispatched(updateOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenActionIsDispatched(toUidAction('uid', setIdInEditor({ id: variable.id })))
+        .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 5;
 
-        expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(variable)));
-        expect(dispatchedActions[1]).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        expect(dispatchedActions[2]).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
+        expect(dispatchedActions[0]).toEqual(toUidAction('uid', variableStateFetching(toVariablePayload(variable))));
+        expect(dispatchedActions[1]).toEqual(toUidAction('uid', removeVariableEditorError({ errorProp: 'update' })));
+        expect(dispatchedActions[2]).toEqual(
+          toUidAction('uid', addVariableEditorError({ errorProp: 'update', errorText: error.message }))
+        );
         expect(dispatchedActions[3]).toEqual(
-          variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
+          toUidAction(
+            'uid',
+            variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
+          )
         );
         expect(dispatchedActions[4].type).toEqual(notifyApp.type);
         expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');
@@ -249,20 +259,16 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(setDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
-        );
-        expect(setEditor).toEqual(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+      );
     });
   });
 
@@ -279,20 +285,16 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(setDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
-        );
-        expect(setEditor).toEqual(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+      );
     });
   });
 
@@ -308,20 +310,16 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(setDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
-        );
-        expect(setEditor).toEqual(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+      );
     });
   });
 
@@ -331,17 +329,15 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(setDatasource).toEqual(changeVariableEditorExtended({ propName: 'dataSource', propValue: undefined }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: undefined }))
+      );
     });
   });
 
@@ -356,33 +352,29 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
+          changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), { uid: 'datasource' }),
           true
         );
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [updateDatasource, updateEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
-        );
-        expect(updateEditor).toEqual(
-          changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })),
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+      );
     });
 
     describe('and data source type changed', () => {
       it('then correct actions are dispatched', async () => {
         const variable = createVariable({ datasource: { uid: 'other' } });
         const editor = {};
-        const preloadedState: any = { templating: { editor: { extended: { dataSource: { type: 'previous' } } } } };
+        const templatingState = {
+          editor: { ...initialVariableEditorState, extended: { dataSource: { type: 'previous' } } },
+        };
+        const preloadedState = getPreloadedState('uid', templatingState);
 
         mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
           components: { VariableQueryEditor: editor },
@@ -391,30 +383,19 @@ describe('query actions', () => {
         const tester = await reduxTester<RootReducerType>({ preloadedState })
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable }))
+            toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
           )
-          .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
+          .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
           .whenAsyncActionIsDispatched(
-            changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
+            changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), { uid: 'datasource' }),
             true
           );
 
-        tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-          const [changeVariable, updateDatasource, updateEditor] = actions;
-          const expectedNumberOfActions = 3;
-
-          expect(changeVariable).toEqual(
-            changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: '' }))
-          );
-          expect(updateDatasource).toEqual(
-            changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
-          );
-          expect(updateEditor).toEqual(
-            changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
-          );
-
-          return actions.length === expectedNumberOfActions;
-        });
+        tester.thenDispatchedActionsShouldEqual(
+          toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: '' }))),
+          toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })),
+          toUidAction('uid', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+        );
       });
     });
   });
@@ -430,26 +411,19 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableDataSource(toVariablePayload(variable), { uid: 'datasource' }),
+          changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), { uid: 'datasource' }),
           true
         );
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [updateDatasource, updateEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
-        );
-        expect(updateEditor).toEqual(
-          changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })),
+        toUidAction('uid', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+      );
     });
   });
 
@@ -465,21 +439,29 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          true
+        );
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        removeVariableEditorError({ errorProp: 'query' }),
-        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
-        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
-        variableStateFetching(toVariablePayload(variable)),
-        updateVariableOptions(toVariablePayload(variable, update)),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        variableStateCompleted(toVariablePayload(variable))
+        toUidAction('uid', removeVariableEditorError({ errorProp: 'query' })),
+        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))),
+        toUidAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
+        ),
+        toUidAction('uid', variableStateFetching(toVariablePayload(variable))),
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toUidAction('uid', variableStateCompleted(toVariablePayload(variable)))
       );
     });
   });
@@ -496,21 +478,29 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          true
+        );
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        removeVariableEditorError({ errorProp: 'query' }),
-        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
-        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
-        variableStateFetching(toVariablePayload(variable)),
-        updateVariableOptions(toVariablePayload(variable, update)),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        variableStateCompleted(toVariablePayload(variable))
+        toUidAction('uid', removeVariableEditorError({ errorProp: 'query' })),
+        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))),
+        toUidAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
+        ),
+        toUidAction('uid', variableStateFetching(toVariablePayload(variable))),
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toUidAction('uid', variableStateCompleted(toVariablePayload(variable)))
       );
     });
   });
@@ -526,21 +516,29 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          true
+        );
 
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        removeVariableEditorError({ errorProp: 'query' }),
-        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
-        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
-        variableStateFetching(toVariablePayload(variable)),
-        updateVariableOptions(toVariablePayload(variable, update)),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        variableStateCompleted(toVariablePayload(variable))
+        toUidAction('uid', removeVariableEditorError({ errorProp: 'query' })),
+        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))),
+        toUidAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
+        ),
+        toUidAction('uid', variableStateFetching(toVariablePayload(variable))),
+        toUidAction('uid', updateVariableOptions(toVariablePayload(variable, update))),
+        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toUidAction('uid', variableStateCompleted(toVariablePayload(variable)))
       );
     });
   });
@@ -553,19 +551,20 @@ describe('query actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(changeQueryVariableQuery(toVariablePayload(variable), query, definition), true);
+        .whenActionIsDispatched(
+          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          true
+        );
 
       const errorText = 'Query cannot contain a reference to itself. Variable: $' + variable.name;
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [editorError] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(editorError).toEqual(addVariableEditorError({ errorProp: 'query', errorText }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toUidAction('uid', addVariableEditorError({ errorProp: 'query', errorText }))
+      );
     });
   });
 
@@ -741,6 +740,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
   return {
     type: 'query',
     id: '0',
+    dashboardUid: 'uid',
     global: false,
     current: createOption(''),
     options: [],

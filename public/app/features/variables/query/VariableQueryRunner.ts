@@ -11,8 +11,8 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { VariableIdentifier } from '../state/types';
-import { getVariable } from '../state/selectors';
+import { DashboardVariableIdentifier } from '../state/types';
+import { getDashboardVariable, getLastUid } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
@@ -24,14 +24,14 @@ import { runRequest } from '../../query/state/runRequest';
 import { toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
 
 interface UpdateOptionsArgs {
-  identifier: VariableIdentifier;
+  identifier: DashboardVariableIdentifier;
   datasource: DataSourceApi;
   searchFilter?: string;
 }
 
 export interface UpdateOptionsResults {
   state: LoadingState;
-  identifier: VariableIdentifier;
+  identifier: DashboardVariableIdentifier;
   error?: any;
   cancelled?: boolean;
 }
@@ -39,7 +39,7 @@ export interface UpdateOptionsResults {
 interface VariableQueryRunnerArgs {
   dispatch: ThunkDispatch;
   getState: () => StoreState;
-  getVariable: typeof getVariable;
+  getDashboardVariable: typeof getDashboardVariable;
   getTemplatedRegex: typeof getTemplatedRegex;
   getTimeSrv: typeof getTimeSrv;
   queryRunners: QueryRunners;
@@ -49,14 +49,14 @@ interface VariableQueryRunnerArgs {
 export class VariableQueryRunner {
   private readonly updateOptionsRequests: Subject<UpdateOptionsArgs>;
   private readonly updateOptionsResults: Subject<UpdateOptionsResults>;
-  private readonly cancelRequests: Subject<{ identifier: VariableIdentifier }>;
+  private readonly cancelRequests: Subject<{ identifier: DashboardVariableIdentifier }>;
   private readonly subscription: Unsubscribable;
 
   constructor(
     private dependencies: VariableQueryRunnerArgs = {
       dispatch,
       getState,
-      getVariable,
+      getDashboardVariable,
       getTemplatedRegex,
       getTimeSrv,
       queryRunners: new QueryRunners(),
@@ -65,7 +65,7 @@ export class VariableQueryRunner {
   ) {
     this.updateOptionsRequests = new Subject<UpdateOptionsArgs>();
     this.updateOptionsResults = new Subject<UpdateOptionsResults>();
-    this.cancelRequests = new Subject<{ identifier: VariableIdentifier }>();
+    this.cancelRequests = new Subject<{ identifier: DashboardVariableIdentifier }>();
     this.onNewRequest = this.onNewRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
   }
@@ -74,11 +74,11 @@ export class VariableQueryRunner {
     this.updateOptionsRequests.next(args);
   }
 
-  getResponse(identifier: VariableIdentifier): Observable<UpdateOptionsResults> {
+  getResponse(identifier: DashboardVariableIdentifier): Observable<UpdateOptionsResults> {
     return this.updateOptionsResults.asObservable().pipe(filter((result) => result.identifier === identifier));
   }
 
-  cancelRequest(identifier: VariableIdentifier): void {
+  cancelRequest(identifier: DashboardVariableIdentifier): void {
     this.cancelRequests.next({ identifier });
   }
 
@@ -93,17 +93,17 @@ export class VariableQueryRunner {
         dispatch,
         runRequest,
         getTemplatedRegex: getTemplatedRegexFunc,
-        getVariable,
+        getDashboardVariable,
         queryRunners,
         getTimeSrv,
         getState,
       } = this.dependencies;
 
-      const beforeUid = getState().templating.transaction.uid;
+      const beforeUid = getLastUid(getState());
 
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
-      const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+      const variable = getDashboardVariable<QueryVariableModel>(identifier, getState());
       const timeSrv = getTimeSrv();
       const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
       const runner = queryRunners.getRunnerForDatasource(datasource);
@@ -115,7 +115,7 @@ export class VariableQueryRunner {
         .pipe(
           filter(() => {
             // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
-            const afterUid = getState().templating.transaction.uid;
+            const afterUid = getLastUid(getState());
 
             return beforeUid === afterUid;
           }),

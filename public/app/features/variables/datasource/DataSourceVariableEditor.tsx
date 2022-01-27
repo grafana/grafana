@@ -5,7 +5,7 @@ import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableEditorState } from '../editor/reducer';
+import { initialVariableEditorState, VariableEditorState } from '../editor/reducer';
 import { DataSourceVariableEditorState } from './reducer';
 import { initDataSourceVariableEditor } from './actions';
 import { StoreState } from '../../../types';
@@ -15,6 +15,7 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
 import { VariableTextField } from '../editor/VariableTextField';
+import { getDashboardVariablesState } from '../state/selectors';
 
 export interface OwnProps extends VariableEditorProps<DataSourceVariableModel> {}
 
@@ -31,7 +32,13 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initDataSourceVariableEditor();
+    const { dashboardUid: uid } = this.props.variable;
+    if (!uid) {
+      console.error('DataSourceVariableEditor: variable has no dashboardUid');
+      return;
+    }
+
+    this.props.initDataSourceVariableEditor(uid);
   }
 
   onRegExChange = (event: FormEvent<HTMLInputElement>) => {
@@ -118,9 +125,19 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.templating.editor as VariableEditorState<DataSourceVariableEditorState>,
-});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
+  const { dashboardUid: uid } = ownProps.variable;
+  if (!uid) {
+    console.error('DataSourceVariableEditor: variable has no dashboardUid');
+    return {
+      editor: initialVariableEditorState as VariableEditorState<DataSourceVariableEditorState>,
+    };
+  }
+
+  return {
+    editor: getDashboardVariablesState(uid, state).editor as VariableEditorState<DataSourceVariableEditorState>,
+  };
+};
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   initDataSourceVariableEditor,

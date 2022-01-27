@@ -9,6 +9,8 @@ import { variableAdapters } from './adapters';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { StoreState } from '../../types';
 import { getState } from '../../store/store';
+import { getDashboardVariablesState } from './state/selectors';
+import { DashboardVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -256,6 +258,36 @@ export function ensureStringValues(value: any | any[]): string | string[] {
   return '';
 }
 
-export function hasOngoingTransaction(state: StoreState = getState()): boolean {
-  return state.templating.transaction.status !== TransactionStatus.NotStarted;
+export function hasOngoingTransaction(uid: string, state: StoreState = getState()): boolean {
+  return getDashboardVariablesState(uid, state).transaction.status !== TransactionStatus.NotStarted;
+}
+
+export function toStateKey(uid: string | null | undefined): string {
+  return String(uid);
+}
+
+export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {
+  return { type: variable.type, id: variable.id };
+};
+
+export const toDashboardVariableIdentifier = (variable: VariableModel): DashboardVariableIdentifier => {
+  if (!variable.dashboardUid) {
+    throw new Error(`Dashboard uid not found for variable with id:${variable.id}`);
+  }
+
+  return { type: variable.type, id: variable.id, dashboardUid: variable.dashboardUid };
+};
+
+export function toVariablePayload<T extends any = undefined>(
+  identifier: VariableIdentifier,
+  data?: T
+): VariablePayload<T>;
+// eslint-disable-next-line
+export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+// eslint-disable-next-line
+export function toVariablePayload<T extends any = undefined>(
+  obj: VariableIdentifier | VariableModel,
+  data?: T
+): VariablePayload<T> {
+  return { type: obj.type, id: obj.id, data: data as T };
 }

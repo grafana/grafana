@@ -21,7 +21,7 @@ export interface OptionsPickerState {
   multi: boolean;
 }
 
-export const initialState: OptionsPickerState = {
+export const initialOptionPickerState: OptionsPickerState = {
   id: '',
   highlightIndex: -1,
   queryValue: '',
@@ -106,7 +106,7 @@ const updateAllSelection = (state: OptionsPickerState): OptionsPickerState => {
 
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
-  initialState,
+  initialState: initialOptionPickerState,
   reducers: {
     showOptions: (state, action: PayloadAction<VariableWithOptions>): OptionsPickerState => {
       const { query, options } = action.payload;
@@ -131,7 +131,7 @@ const optionsPickerSlice = createSlice({
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     hideOptions: (state, action: PayloadAction): OptionsPickerState => {
-      return { ...initialState };
+      return { ...initialOptionPickerState };
     },
     toggleOption: (state, action: PayloadAction<ToggleOption>): OptionsPickerState => {
       const { option, clearOthers, forceSelect } = action.payload;
@@ -212,7 +212,7 @@ const optionsPickerSlice = createSlice({
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
-    cleanPickerState: () => initialState,
+    cleanPickerState: () => initialOptionPickerState,
   },
 });
 

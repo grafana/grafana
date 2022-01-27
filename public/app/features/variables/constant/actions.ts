@@ -1,11 +1,14 @@
 import { validateVariableSelectionState } from '../state/actions';
 import { ThunkResult } from 'app/types';
 import { createConstantOptionsFromQuery } from './reducer';
-import { toVariablePayload, VariableIdentifier } from '../state/types';
+import { DashboardVariableIdentifier } from '../state/types';
+import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toVariablePayload } from '../utils';
 
-export const updateConstantVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
+export const updateConstantVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    await dispatch(createConstantOptionsFromQuery(toVariablePayload(identifier)));
+    const { dashboardUid: uid } = identifier;
+    await dispatch(toUidAction(uid, createConstantOptionsFromQuery(toVariablePayload(identifier))));
     await dispatch(validateVariableSelectionState(identifier));
   };
 };

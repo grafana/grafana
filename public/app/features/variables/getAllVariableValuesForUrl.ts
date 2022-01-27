@@ -6,7 +6,6 @@ export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {
   const params: UrlQueryMap = {};
   const variables = getTemplateSrv().getVariables();
 
-  // console.log(variables)
   for (let i = 0; i < variables.length; i++) {
     const variable = variables[i];
     if (scopedVars && scopedVars[variable.name] !== void 0) {

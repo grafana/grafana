@@ -1,18 +1,21 @@
 import { rangeUtil } from '@grafana/data';
 
-import { toVariablePayload, VariableIdentifier } from '../state/types';
+import { DashboardVariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
-import { getVariable } from '../state/selectors';
+import { getDashboardVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toVariablePayload } from '../utils';
 
-export const updateIntervalVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async (
+export const updateIntervalVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => async (
   dispatch
 ) => {
-  await dispatch(createIntervalOptions(toVariablePayload(identifier)));
+  const { dashboardUid: uid } = identifier;
+  await dispatch(toUidAction(uid, createIntervalOptions(toVariablePayload(identifier))));
   await dispatch(updateAutoValue(identifier));
   await dispatch(validateVariableSelectionState(identifier));
 };
@@ -24,14 +27,14 @@ export interface UpdateAutoValueDependencies {
 }
 
 export const updateAutoValue = (
-  identifier: VariableIdentifier,
+  identifier: DashboardVariableIdentifier,
   dependencies: UpdateAutoValueDependencies = {
     calculateInterval: rangeUtil.calculateInterval,
     getTimeSrv: getTimeSrv,
     templateSrv: getTemplateSrv(),
   }
 ): ThunkResult<void> => (dispatch, getState) => {
-  const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
+  const variableInState = getDashboardVariable<IntervalVariableModel>(identifier, getState());
   if (variableInState.auto) {
     const res = dependencies.calculateInterval(
       dependencies.getTimeSrv().timeRange(),

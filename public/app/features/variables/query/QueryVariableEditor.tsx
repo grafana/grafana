@@ -10,10 +10,9 @@ import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
-import { VariableEditorState } from '../editor/reducer';
+import { initialVariableEditorState, VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
-import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { isLegacyQueryEditor, isQueryEditor } from '../guard';
@@ -21,10 +20,22 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
+import { getDashboardVariablesState } from '../state/selectors';
+import { toDashboardVariableIdentifier } from '../utils';
 
-const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
-});
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { dashboardUid: uid } = ownProps.variable;
+  if (!uid) {
+    console.error('QueryVariableEditor: variable has no dashboardUid');
+    return {
+      editor: initialVariableEditorState as VariableEditorState<QueryVariableEditorState>,
+    };
+  }
+
+  return {
+    editor: getDashboardVariablesState(uid, state).editor as VariableEditorState<QueryVariableEditorState>,
+  };
+};
 
 const mapDispatchToProps = {
   initQueryVariableEditor,
@@ -53,13 +64,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   async componentDidMount() {
-    await this.props.initQueryVariableEditor(toVariableIdentifier(this.props.variable));
+    await this.props.initQueryVariableEditor(toDashboardVariableIdentifier(this.props.variable));
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.variable.datasource !== this.props.variable.datasource) {
       this.props.changeQueryVariableDataSource(
-        toVariableIdentifier(this.props.variable),
+        toDashboardVariableIdentifier(this.props.variable),
         this.props.variable.datasource
       );
     }
@@ -74,7 +85,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onLegacyQueryChange = async (query: any, definition: string) => {
     if (this.props.variable.query !== query) {
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toDashboardVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
@@ -86,7 +97,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         definition = query.query;
       }
 
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toDashboardVariableIdentifier(this.props.variable), query, definition);
     }
   };
 

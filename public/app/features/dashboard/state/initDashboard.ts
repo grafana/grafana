@@ -24,6 +24,7 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { getIfExistsLastUid } from '../../variables/state/selectors';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -169,7 +170,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const runner = createDashboardQueryRunner({ dashboard, timeSrv });
     runner.run({ dashboard, range: timeSrv.timeRange() });
 
-    if (getState().templating.transaction.uid !== args.urlUid) {
+    if (getIfExistsLastUid(getState()) !== String(args.urlUid)) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
       // but the args.urlUid will be the same as before initVariablesTransaction was called so then we can't continue initializing
       // the previous dashboard.

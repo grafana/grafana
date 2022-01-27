@@ -3,8 +3,9 @@ import { initialVariableModelState, QueryVariableModel } from '../types';
 import { VariableAdapter, variableAdapters } from '../adapters';
 import { createAction } from '@reduxjs/toolkit';
 import { cleanVariables, variablesReducer } from './variablesReducer';
-import { VariablesState, toVariablePayload, VariablePayload } from './types';
+import { VariablesState, VariablePayload } from './types';
 import { VariableType } from '@grafana/data';
+import { toVariablePayload } from '../utils';
 
 const variableAdapter: VariableAdapter<QueryVariableModel> = {
   id: ('mock' as unknown) as VariableType,

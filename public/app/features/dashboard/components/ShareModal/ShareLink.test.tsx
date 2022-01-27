@@ -95,7 +95,7 @@ function shareLinkScenario(description: string, scenarioFn: (ctx: ScenarioContex
 }
 
 describe('ShareModal', () => {
-  let templateSrv = initTemplateSrv([]);
+  let templateSrv = initTemplateSrv('uid', []);
 
   beforeAll(() => {
     variableAdapters.register(createQueryVariableAdapter());

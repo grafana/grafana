@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash';
 import {
   cleanPickerState,
   hideOptions,
-  initialState as optionsPickerInitialState,
+  initialOptionPickerState as optionsPickerInitialState,
   moveOptionsHighlight,
   OPTIONS_LIMIT,
   optionsPickerReducer,

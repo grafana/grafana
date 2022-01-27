@@ -11,8 +11,9 @@ import {
   VariableSort,
 } from '../types';
 
-import { getInstanceState, initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT, NONE_VARIABLE_VALUE } from '../constants';
+import { getInstanceState } from '../state/selectors';
 
 interface VariableOptionsUpdate {
   templatedRegex: string;

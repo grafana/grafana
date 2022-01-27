@@ -1,10 +1,11 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { adHocVariableReducer, filterAdded, filterRemoved, filtersRestored, filterUpdated } from './reducer';
 import { AdHocVariableFilter, AdHocVariableModel } from '../types';
 import { createAdHocVariableAdapter } from './adapter';
+import { toVariablePayload } from '../utils';
 
 describe('adHocVariableReducer', () => {
   const adapter = createAdHocVariableAdapter();

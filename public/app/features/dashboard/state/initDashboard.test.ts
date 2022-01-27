@@ -11,7 +11,7 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { variablesInitTransaction } from '../../variables/state/transactionReducer';
+import { initialTransactionState, variablesInitTransaction } from '../../variables/state/transactionReducer';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
@@ -22,6 +22,7 @@ import {
 } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 import { TransactionStatus } from '../../variables/types';
+import { getPreloadedState } from '../../variables/state/helpers';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -121,10 +122,10 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             queries: [],
           },
         },
-        templating: {
+        ...getPreloadedState('DGmvKKxZz', {
           variables: {},
-          transaction: { uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
-        },
+          transaction: { ...initialTransactionState, uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
+        }),
       },
       setup: (fn: () => void) => {
         setupFn = fn;
@@ -260,7 +261,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   });
 
   it('Should initialize redux variables if newVariables is enabled', () => {
-    expect(ctx.actions[2].type).toBe(variablesInitTransaction.type);
+    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
   });
 });
 

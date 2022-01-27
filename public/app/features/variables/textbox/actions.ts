@@ -1,31 +1,39 @@
 import { TextBoxVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getVariable } from '../state/selectors';
+import { getDashboardVariable } from '../state/selectors';
 import { variableAdapters } from '../adapters';
 import { createTextBoxOptions } from './reducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { DashboardVariableIdentifier } from '../state/types';
 import { setOptionFromUrl } from '../state/actions';
 import { UrlQueryValue } from '@grafana/data';
 import { changeVariableProp } from '../state/sharedReducer';
-import { ensureStringValues } from '../utils';
+import { ensureStringValues, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toUidAction } from '../state/dashboardVariablesReducer';
 
-export const updateTextBoxVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
+export const updateTextBoxVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    await dispatch(createTextBoxOptions(toVariablePayload(identifier)));
+    const { dashboardUid: uid, type } = identifier;
+    dispatch(toUidAction(uid, createTextBoxOptions(toVariablePayload(identifier))));
 
-    const variableInState = getVariable<TextBoxVariableModel>(identifier.id, getState());
-    await variableAdapters.get(identifier.type).setValue(variableInState, variableInState.options[0], true);
+    const variableInState = getDashboardVariable<TextBoxVariableModel>(identifier, getState());
+    await variableAdapters.get(type).setValue(variableInState, variableInState.options[0], true);
   };
 };
 
 export const setTextBoxVariableOptionsFromUrl = (
-  identifier: VariableIdentifier,
+  identifier: DashboardVariableIdentifier,
   urlValue: UrlQueryValue
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<TextBoxVariableModel>(identifier.id, getState());
+  const { dashboardUid: uid } = identifier;
+  const variableInState = getDashboardVariable<TextBoxVariableModel>(identifier, getState());
 
   const stringUrlValue = ensureStringValues(urlValue);
-  dispatch(changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue })));
+  dispatch(
+    toUidAction(
+      uid,
+      changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue }))
+    )
+  );
 
-  await dispatch(setOptionFromUrl(toVariableIdentifier(variableInState), stringUrlValue));
+  await dispatch(setOptionFromUrl(toDashboardVariableIdentifier(variableInState), stringUrlValue));
 };

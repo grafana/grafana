@@ -1,6 +1,6 @@
 import { variableQueryObserver } from './variableQueryObserver';
 import { LoadingState } from '@grafana/data';
-import { VariableIdentifier } from '../state/types';
+import { DashboardVariableIdentifier } from '../state/types';
 import { UpdateOptionsResults } from './VariableQueryRunner';
 
 function getTestContext(args: { next?: UpdateOptionsResults; error?: any; complete?: boolean }) {
@@ -27,7 +27,7 @@ function getTestContext(args: { next?: UpdateOptionsResults; error?: any; comple
   return { resolve, reject, subscription, observer };
 }
 
-const identifier: VariableIdentifier = { id: 'id', type: 'query' };
+const identifier: DashboardVariableIdentifier = { id: 'id', type: 'query', dashboardUid: 'uid' };
 
 describe('variableQueryObserver', () => {
   describe('when receiving a Done state', () => {

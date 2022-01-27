@@ -68,7 +68,7 @@ function expectOnResults(args: {
         done();
       } catch (err) {
         subscription?.unsubscribe();
-        done.fail(err);
+        done(err);
       }
     },
   });

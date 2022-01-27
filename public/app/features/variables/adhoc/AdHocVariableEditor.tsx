@@ -5,16 +5,28 @@ import { DataSourceRef, SelectableValue } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
-import { VariableEditorState } from '../editor/reducer';
+import { initialVariableEditorState, VariableEditorState } from '../editor/reducer';
 import { AdHocVariableEditorState } from './reducer';
 import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { StoreState } from 'app/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
+import { getDashboardVariablesState } from '../state/selectors';
+import { toDashboardVariableIdentifier } from '../utils';
 
-const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor as VariableEditorState<AdHocVariableEditorState>,
-});
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { dashboardUid: uid } = ownProps.variable;
+  if (!uid) {
+    console.error('AdHocVariableEditor: variable has no dashboardUid');
+    return {
+      editor: initialVariableEditorState as VariableEditorState<AdHocVariableEditorState>,
+    };
+  }
+
+  return {
+    editor: getDashboardVariablesState(uid, state).editor as VariableEditorState<AdHocVariableEditorState>,
+  };
+};
 
 const mapDispatchToProps = {
   initAdHocVariableEditor,
@@ -29,11 +41,17 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initAdHocVariableEditor();
+    const { dashboardUid: uid } = this.props.variable;
+    if (!uid) {
+      console.error('AdHocVariableEditor: variable has no dashboardUid');
+      return;
+    }
+
+    this.props.initAdHocVariableEditor(uid);
   }
 
   onDatasourceChanged = (option: SelectableValue<DataSourceRef>) => {
-    this.props.changeVariableDatasource(option.value);
+    this.props.changeVariableDatasource(toDashboardVariableIdentifier(this.props.variable), option.value);
   };
 
   render() {

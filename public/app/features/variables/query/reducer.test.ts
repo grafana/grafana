@@ -8,9 +8,10 @@ import {
 import { QueryVariableModel, VariableSort } from '../types';
 import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
 import { MetricFindValue } from '@grafana/data';
+import { toVariablePayload } from '../utils';
 
 describe('queryVariableReducer', () => {
   const adapter = createQueryVariableAdapter();

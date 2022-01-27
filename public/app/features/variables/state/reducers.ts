@@ -1,20 +1,41 @@
-import { combineReducers } from '@reduxjs/toolkit';
-import { optionsPickerReducer } from '../pickers/OptionsPicker/reducer';
-import { variableEditorReducer } from '../editor/reducer';
+import { CombinedState, combineReducers, Reducer } from 'redux';
+import { initialOptionPickerState, optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
+import { initialVariableEditorState, variableEditorReducer, VariableEditorState } from '../editor/reducer';
 import { variablesReducer } from './variablesReducer';
-import { transactionReducer } from './transactionReducer';
-import { variableInspectReducer } from '../inspect/reducer';
+import { initialTransactionState, transactionReducer, TransactionState } from './transactionReducer';
+import { initialVariableInspectState, variableInspectReducer, VariableInspectState } from '../inspect/reducer';
+import { initialVariablesState, VariablesState } from './types';
 
-export const templatingReducers = combineReducers({
-  editor: variableEditorReducer,
-  variables: variablesReducer,
-  optionsPicker: optionsPickerReducer,
-  transaction: transactionReducer,
-  inspect: variableInspectReducer,
-});
+export interface TemplatingState {
+  editor: VariableEditorState;
+  variables: VariablesState;
+  optionsPicker: OptionsPickerState;
+  transaction: TransactionState;
+  inspect: VariableInspectState;
+}
 
-export type TemplatingState = ReturnType<typeof templatingReducers>;
+let templatingReducers: Reducer<CombinedState<TemplatingState>>;
 
-export default {
-  templating: templatingReducers,
-};
+export function getTemplatingReducers() {
+  if (!templatingReducers) {
+    templatingReducers = combineReducers({
+      editor: variableEditorReducer,
+      variables: variablesReducer,
+      optionsPicker: optionsPickerReducer,
+      transaction: transactionReducer,
+      inspect: variableInspectReducer,
+    });
+  }
+
+  return templatingReducers;
+}
+
+export function getInitialTemplatingState() {
+  return {
+    editor: initialVariableEditorState,
+    variables: initialVariablesState,
+    optionsPicker: initialOptionPickerState,
+    transaction: initialTransactionState,
+    inspect: initialVariableInspectState,
+  };
+}

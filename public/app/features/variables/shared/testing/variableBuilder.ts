@@ -19,6 +19,11 @@ export class VariableBuilder<T extends VariableModel> {
     return this;
   }
 
+  withDashboardUid(uid: string) {
+    this.variable.dashboardUid = uid;
+    return this;
+  }
+
   build(): T {
     return this.variable;
   }

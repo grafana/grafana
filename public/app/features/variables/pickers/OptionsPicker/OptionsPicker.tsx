@@ -1,36 +1,58 @@
 import React, { ComponentType, PureComponent } from 'react';
+import { bindActionCreators } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { LoadingState } from '@grafana/data';
 
-import { StoreState } from 'app/types';
+import { StoreState, ThunkDispatch } from 'app/types';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
-import { OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
+import { initialOptionPickerState, OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
 import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
 import { isMulti } from '../../guard';
-import { VariablePickerProps } from '../types';
+import { NavigationKey, VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
-import { toVariableIdentifier } from '../../state/types';
+import { DashboardVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { VariableLink } from '../shared/VariableLink';
+import { getDashboardVariablesState } from '../../state/selectors';
+import { toUidAction } from '../../state/dashboardVariablesReducer';
+import { toDashboardVariableIdentifier } from '../../utils';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
   VariablePickerProps<Model>
 > => {
-  const mapDispatchToProps = {
-    openOptions,
-    commitChangesToVariable,
-    filterOrSearchOptions,
-    toggleAllOptions,
-    toggleOption,
-    navigateOptions,
+  const mapDispatchToProps = (dispatch: ThunkDispatch) => {
+    return {
+      ...bindActionCreators({ openOptions, commitChangesToVariable, navigateOptions }, dispatch),
+      filterOrSearchOptions: (identifier: DashboardVariableIdentifier, filter = '') => {
+        dispatch(filterOrSearchOptions(identifier, filter));
+      },
+      toggleAllOptions: (identifier: DashboardVariableIdentifier) =>
+        dispatch(toUidAction(identifier.dashboardUid, toggleAllOptions())),
+      toggleOption: (
+        identifier: DashboardVariableIdentifier,
+        option: VariableOption,
+        clearOthers: boolean,
+        forceSelect: boolean
+      ) => dispatch(toUidAction(identifier.dashboardUid, toggleOption({ option, clearOthers, forceSelect }))),
+    };
   };
 
-  const mapStateToProps = (state: StoreState) => ({
-    picker: state.templating.optionsPicker,
-  });
+  const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+    const { dashboardUid: uid } = ownProps.variable;
+    if (!uid) {
+      console.error('OptionPickerFactory: variable has no dashboardUid');
+      return {
+        picker: initialOptionPickerState,
+      };
+    }
+
+    return {
+      picker: getDashboardVariablesState(uid, state).optionsPicker,
+    };
+  };
 
   const connector = connect(mapStateToProps, mapDispatchToProps);
 
@@ -40,8 +62,15 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
   class OptionsPickerUnconnected extends PureComponent<Props> {
     onShowOptions = () =>
-      this.props.openOptions(toVariableIdentifier(this.props.variable), this.props.onVariableChange);
-    onHideOptions = () => this.props.commitChangesToVariable(this.props.onVariableChange);
+      this.props.openOptions(toDashboardVariableIdentifier(this.props.variable), this.props.onVariableChange);
+    onHideOptions = () => {
+      if (!this.props.variable.dashboardUid) {
+        console.error('Variable has no dashboardUid');
+        return;
+      }
+
+      this.props.commitChangesToVariable(this.props.variable.dashboardUid, this.props.onVariableChange);
+    };
 
     onToggleOption = (option: VariableOption, clearOthers: boolean) => {
       const toggleFunc =
@@ -52,12 +81,29 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     onToggleSingleValueVariable = (option: VariableOption, clearOthers: boolean) => {
-      this.props.toggleOption({ option, clearOthers, forceSelect: false });
+      this.props.toggleOption(toDashboardVariableIdentifier(this.props.variable), option, clearOthers, false);
       this.onHideOptions();
     };
 
     onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
-      this.props.toggleOption({ option, clearOthers, forceSelect: false });
+      this.props.toggleOption(toDashboardVariableIdentifier(this.props.variable), option, clearOthers, false);
+    };
+
+    onToggleAllOptions = () => {
+      this.props.toggleAllOptions(toDashboardVariableIdentifier(this.props.variable));
+    };
+
+    onFilterOrSearchOptions = (filter: string) => {
+      this.props.filterOrSearchOptions(toDashboardVariableIdentifier(this.props.variable), filter);
+    };
+
+    onNavigate = (key: NavigationKey, clearOthers: boolean) => {
+      if (!this.props.variable.dashboardUid) {
+        console.error('Variable has no dashboardUid');
+        return;
+      }
+
+      this.props.navigateOptions(this.props.variable.dashboardUid, key, clearOthers);
     };
 
     render() {
@@ -87,7 +133,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     }
 
     onCancel = () => {
-      getVariableQueryRunner().cancelRequest(toVariableIdentifier(this.props.variable));
+      getVariableQueryRunner().cancelRequest(toDashboardVariableIdentifier(this.props.variable));
     };
 
     renderOptions(picker: OptionsPickerState) {
@@ -97,15 +143,15 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
           <VariableInput
             id={id}
             value={picker.queryValue}
-            onChange={this.props.filterOrSearchOptions}
-            onNavigate={this.props.navigateOptions}
+            onChange={this.onFilterOrSearchOptions}
+            onNavigate={this.onNavigate}
             aria-expanded={true}
             aria-controls={`options-${id}`}
           />
           <VariableOptions
             values={picker.options}
             onToggle={this.onToggleOption}
-            onToggleAll={this.props.toggleAllOptions}
+            onToggleAll={this.onToggleAllOptions}
             highlightIndex={picker.highlightIndex}
             multi={picker.multi}
             selectedValues={picker.selectedValues}

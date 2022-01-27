@@ -5,7 +5,7 @@ import { DataSourceRef } from '@grafana/data';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getVariable } from '../state/selectors';
+import { getDashboardVariable, getDashboardVariablesState } from '../state/selectors';
 import {
   addVariableEditorError,
   changeVariableEditorExtended,
@@ -13,27 +13,29 @@ import {
   VariableEditorState,
 } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { DashboardVariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
-import { hasOngoingTransaction } from '../utils';
+import { hasOngoingTransaction, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toUidAction } from '../state/dashboardVariablesReducer';
 
 export const updateQueryVariableOptions = (
-  identifier: VariableIdentifier,
+  identifier: DashboardVariableIdentifier,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      if (!hasOngoingTransaction(getState())) {
+      const { dashboardUid: uid } = identifier;
+      if (!hasOngoingTransaction(uid, getState())) {
         // we might have cancelled a batch so then variable state is removed
         return;
       }
 
-      const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-      if (getState().templating.editor.id === variableInState.id) {
-        dispatch(removeVariableEditorError({ errorProp: 'update' }));
+      const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
+      if (getDashboardVariablesState(uid, getState()).editor.id === variableInState.id) {
+        dispatch(toUidAction(uid, removeVariableEditorError({ errorProp: 'update' })));
       }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
@@ -49,8 +51,9 @@ export const updateQueryVariableOptions = (
       });
     } catch (err) {
       const error = toDataQueryError(err);
-      if (getState().templating.editor.id === identifier.id) {
-        dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
+      const { dashboardUid: uid } = identifier;
+      if (getDashboardVariablesState(uid, getState()).editor.id === identifier.id) {
+        dispatch(toUidAction(uid, addVariableEditorError({ errorProp: 'update', errorText: error.message })));
       }
 
       throw error;
@@ -58,30 +61,38 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkResult<void> => async (
+export const initQueryVariableEditor = (identifier: DashboardVariableIdentifier): ThunkResult<void> => async (
   dispatch,
   getState
 ) => {
-  const variable = getVariable<QueryVariableModel>(identifier.id, getState());
-  await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
+  const variable = getDashboardVariable<QueryVariableModel>(identifier, getState());
+  await dispatch(changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), variable.datasource));
 };
 
 export const changeQueryVariableDataSource = (
-  identifier: VariableIdentifier,
+  identifier: DashboardVariableIdentifier,
   name: DataSourceRef | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const editorState = getState().templating.editor as VariableEditorState<QueryVariableEditorState>;
-      const previousDatasource = editorState.extended?.dataSource;
+      const { dashboardUid: uid } = identifier;
+      const state = getDashboardVariablesState(uid, getState()).editor as VariableEditorState<QueryVariableEditorState>;
+      const previousDatasource = state.extended?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {
-        dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })));
+        dispatch(
+          toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })))
+        );
       }
-      dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
+      dispatch(toUidAction(uid, changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource })));
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);
-      dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
+      dispatch(
+        toUidAction(
+          uid,
+          changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor })
+        )
+      );
     } catch (err) {
       console.error(err);
     }
@@ -89,24 +100,34 @@ export const changeQueryVariableDataSource = (
 };
 
 export const changeQueryVariableQuery = (
-  identifier: VariableIdentifier,
+  identifier: DashboardVariableIdentifier,
   query: any,
   definition?: string
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
+  const { dashboardUid: uid } = identifier;
+  const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
   if (hasSelfReferencingQuery(variableInState.name, query)) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
-    dispatch(addVariableEditorError({ errorProp: 'query', errorText }));
+    dispatch(toUidAction(uid, addVariableEditorError({ errorProp: 'query', errorText })));
     return;
   }
 
-  dispatch(removeVariableEditorError({ errorProp: 'query' }));
-  dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+  dispatch(toUidAction(uid, removeVariableEditorError({ errorProp: 'query' })));
+  dispatch(
+    toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })))
+  );
 
   if (definition) {
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
+    dispatch(
+      toUidAction(
+        uid,
+        changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition }))
+      )
+    );
   } else if (typeof query === 'string') {
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })));
+    dispatch(
+      toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })))
+    );
   }
 
   await dispatch(updateOptions(identifier));

@@ -2,12 +2,12 @@ import { variableAdapters } from '../adapters';
 import { customBuilder } from '../shared/testing/builders';
 import { DashboardState, StoreState } from '../../../types';
 import { initialState } from '../../dashboard/state/reducers';
-import { TemplatingState } from './reducers';
 import { ExtendedUrlQueryMap } from '../utils';
 import { templateVarsChangedInUrl } from './actions';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { VariablesState } from './types';
 import { DashboardModel } from '../../dashboard/state';
+import { getPreloadedState } from './helpers';
 
 const dashboardModel = new DashboardModel({});
 
@@ -16,7 +16,13 @@ variableAdapters.setInit(() => [createCustomVariableAdapter()]);
 async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}) {
   jest.clearAllMocks();
 
-  const custom = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('A', 'B', 'C').build();
+  const uid = 'uid';
+  const custom = customBuilder()
+    .withId('custom')
+    .withDashboardUid(uid)
+    .withCurrent(['A', 'C'])
+    .withOptions('A', 'B', 'C')
+    .build();
   const setValueFromUrlMock = jest.fn();
   variableAdapters.get('custom').setValueFromUrl = setValueFromUrlMock;
 
@@ -33,15 +39,14 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}) {
   };
 
   const variables: VariablesState = { custom };
-  const templating = ({ variables } as unknown) as TemplatingState;
   const state: Partial<StoreState> = {
     dashboard,
-    templating,
+    ...getPreloadedState(uid, { variables }),
   };
   const getState = () => (state as unknown) as StoreState;
 
   const dispatch = jest.fn();
-  const thunk = templateVarsChangedInUrl(urlQueryMap);
+  const thunk = templateVarsChangedInUrl(uid, urlQueryMap);
 
   await thunk(dispatch, getState, undefined);
 

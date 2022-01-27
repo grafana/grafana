@@ -6,9 +6,10 @@ import { DataSourceVariableModel } from '../types';
 import { getVariableTestContext } from '../state/helpers';
 import { cloneDeep } from 'lodash';
 import { createDataSourceVariableAdapter } from './adapter';
-import { toVariablePayload, VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { getMockPlugins } from '../../plugins/__mocks__/pluginMocks';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
+import { toVariablePayload } from '../utils';
 
 describe('dataSourceVariableReducer', () => {
   const adapter = createDataSourceVariableAdapter();

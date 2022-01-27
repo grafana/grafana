@@ -13,9 +13,10 @@ import {
 
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { templatingReducers, TemplatingState } from './reducers';
-import { DashboardState } from '../../../types';
+import { DashboardState, StoreState } from '../../../types';
 import { NEW_VARIABLE_ID } from '../constants';
+import { dashboardVariablesReducer, DashboardVariablesState } from './dashboardVariablesReducer';
+import { getInitialTemplatingState, TemplatingState } from './reducers';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -86,6 +87,7 @@ export const getVariableState = (
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
       id: index.toString(),
+      dashboardUid: 'uid',
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -102,6 +104,7 @@ export const getVariableState = (
   if (includeEmpty) {
     variables[NEW_VARIABLE_ID] = {
       id: NEW_VARIABLE_ID,
+      dashboardUid: 'uid',
       type: 'query',
       name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
@@ -125,6 +128,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
   const defaultVariable = {
     ...adapter.initialState,
     id: '0',
+    dashboardUid: 'uid',
     index: 0,
     name: '0',
   };
@@ -139,14 +143,31 @@ export const getVariableTestContext = <Model extends VariableModel>(
 export const getRootReducer = () =>
   combineReducers({
     dashboard: dashboardReducer,
-    templating: templatingReducers,
+    dashboardVariables: dashboardVariablesReducer,
   });
 
-export type RootReducerType = { dashboard: DashboardState; templating: TemplatingState };
+export type RootReducerType = { dashboard: DashboardState; dashboardVariables: DashboardVariablesState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
-    templating: templatingReducers,
+    dashboardVariables: dashboardVariablesReducer,
   });
 
-export type TemplatingReducerType = { templating: TemplatingState };
+export type TemplatingReducerType = { dashboardVariables: DashboardVariablesState };
+
+export function getPreloadedState(
+  uid: string,
+  templatingState: Partial<TemplatingState>
+): Pick<StoreState, 'dashboardVariables'> {
+  return {
+    dashboardVariables: {
+      lastUid: uid,
+      slices: {
+        [uid]: {
+          ...getInitialTemplatingState(),
+          ...templatingState,
+        },
+      },
+    },
+  };
+}
