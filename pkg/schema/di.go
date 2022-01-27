@@ -1,11 +1,79 @@
 package schema
 
 import (
+	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/grafana/thema"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// Package state backing for RegisterCoreSchema.
+var cr *CoreRegistry
+
+// atomic guard on registry
+var regguard int32
+
+// RegisterCoreSchema registers a core schema, storing it in package-level
+// state.
+//
+// This is decidedly not-good - package-level registries are an antipattern for
+// both testing and possible buggy duplicate registration reasons: https://dave.cheney.net/2017/06/11/go-without-package-scoped-variables
+//
+// However, it's quite difficult to get wire to accept a slice of the same type.
+// There's been discussion, but it seems dead:
+// https://github.com/google/wire/issues/207
+//
+// Without that, there'd have to be a lot of explicit enumeration of types on
+// the provider side (each schema component would need to make its own
+// type-identity of ThemaSchema or GoSchema, and that's horribly verbose.) Then,
+// that would all have to be repeated in the arguments to the constructor called
+// by the injector func to actually return a properly-populated CoreRegistry.
+//
+// NOTE: Attempting to registering the same schema name twice will panic.
+// Attempting to call this from anywhere but an init function is likely to
+// panic.
+func RegisterCoreSchema(sch ObjectSchema) {
+	// panic if guard has been set by a read
+	if !atomic.CompareAndSwapInt32(&regguard, 0, 0) {
+		panic("do not call RegisterCoreSchema() outside of an init() function; core registry has been read from and may no longer be written to;")
+	}
+
+	// panic on duplicate. It's not impossible that this would be hit, but it's
+	// better to do it now rather than risk profoundly confusing errors later,
+	// given that we at least theoretically have recourse have recourse to
+	// refactor to get away from this global state via wire
+	if _, has := cr.Load(sch.Name()); has {
+		panic(fmt.Sprintf("core object schema with name %s already exists", sch.Name()))
+	}
+	cr.Store(sch)
+}
+
+func LoadCoreSchema(name string) (ObjectSchema, bool) {
+	// No more writes allowed
+	atomic.CompareAndSwapInt32(&regguard, 0, 1)
+	return cr.Load(name)
+}
+
+// ProvideReadOnlyCoreRegistry provides a listing of all known core ObjectSchema
+// - those known at compile time.
+//
+// We return a (slice of) interfaces here. That's against the guidance to return
+// concrete types with wire, but we have no choice, as our inputs are interfaces.
+func ProvideReadOnlyCoreRegistry() CoreSchemaList {
+	// No more writes allowed
+	atomic.CompareAndSwapInt32(&regguard, 0, 1)
+
+	var sl []ObjectSchema
+	cr.M.Range(func(key, value interface{}) bool {
+		sl = append(sl, value.(ObjectSchema))
+		return true
+	})
+	return sl
+}
+
+type CoreSchemaList []ObjectSchema
 
 // GoSchema contains a Grafana schema where the canonical schema expression is made
 // with Go types, in traditional Kubernetes style.
@@ -62,14 +130,6 @@ type CoreRegistry = schemaRegistry
 // group condition rules
 type schemaRegistry struct {
 	M sync.Map
-}
-
-var cr *CoreRegistry = &CoreRegistry{}
-
-// ProvideCoreRegistry provides the CoreRegistry instance that collects all core
-// (knowable at compile time) schemas.
-func ProvideCoreRegistry() *CoreRegistry {
-	return cr
 }
 
 func (r *schemaRegistry) Store(sch ObjectSchema) {

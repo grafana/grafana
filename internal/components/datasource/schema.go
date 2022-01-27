@@ -8,24 +8,27 @@ import (
 	"testing/fstest"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var sch *schema.ThemaSchema
 
-func RegisterDatasourceSchema(lib thema.Library, reg *schema.CoreRegistry) {
+func init() {
+	// FIXME derive lib from some central place
+	lib := thema.NewLibrary(cuecontext.New())
 	lin, err := DatasourceLineage(lib)
 	if err != nil {
 		panic(err)
 	}
-	sch = &schema.ThemaSchema{
+	sch := &schema.ThemaSchema{
 		Lineage: lin,
 	}
-	reg.Store(sch)
-	return
+	schema.RegisterCoreSchema(sch)
 }
 
 //go:embed datasource.cue
@@ -100,6 +103,10 @@ type DataSource struct {
 	//ReadOnly         bool                   `json:"readOnly"`
 	// AccessControl     accesscontrol.Metadata `json:"accessControl,omitempty"`
 	//AccessControl map[string]bool `json:"accessControl,omitempty"`
+}
+
+func (ds *DataSource) DeepCopyObject() runtime.Object {
+	panic("not implemented")
 }
 
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
