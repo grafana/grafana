@@ -4087,7 +4087,7 @@ __metadata:
     "@types/lodash": 4.14.149
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.19
-    "@types/prismjs": 1.16.6
+    "@types/prismjs": 1.26.0
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-calendar": 3.4.4
@@ -9957,10 +9957,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.16.6":
-  version: 1.16.6
-  resolution: "@types/prismjs@npm:1.16.6"
-  checksum: fcb489d19d21292ceffc661fd9c9aa8ba36bcd2835388fa85812aa60cdf14d4720ceb22be7a088aa753c48462e75bcd8191d178a085e4a8b0d3f34471d30d86a
+"@types/prismjs@npm:1.26.0":
+  version: 1.26.0
+  resolution: "@types/prismjs@npm:1.26.0"
+  checksum: cd5e7a6214c1f4213ec512a5fcf6d8fe37a56b813fc57ac95b5ff5ee074742bfdbd2f2730d9fd985205bf4586728e09baa97023f739e5aa1c9735a7c1ecbd11a
   languageName: node
   linkType: hard
 
@@ -19838,7 +19838,7 @@ __metadata:
     "@types/node": 16.11.19
     "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
-    "@types/prismjs": 1.16.6
+    "@types/prismjs": 1.26.0
     "@types/rc-time-picker": ^3
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
