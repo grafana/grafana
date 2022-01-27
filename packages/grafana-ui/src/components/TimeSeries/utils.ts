@@ -272,9 +272,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             series: [t, b],
             fill: undefined, // using null will have the band use fill options from `t`
           });
-        }
-        if (!fillOpacity) {
-          fillOpacity = 35; // default from flot
+
+          if (!fillOpacity) {
+            fillOpacity = 35; // default from flot
+          }
+        } else {
+          fillOpacity = 0;
         }
       }
     }
