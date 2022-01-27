@@ -25,7 +25,7 @@ while IFS=" " read -r -a package; do
     echo ""
     echo "${PACKAGE_PATH}"
     echo "================================================="
-    npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT"
+    npm exec -- @grafana/levitate@0.2.0 compare --prev "$PREV" --current "$CURRENT"
 
     # Check if the comparison returned with a non-zero exit code
     # Record the output, maybe with some additional information
