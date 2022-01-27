@@ -23,7 +23,7 @@ export interface AmRoutesTableProps {
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
 type RouteTableItemProps = DynamicTableItemProps<FormAmRoute>;
 
-const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
+export const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: string, contactPointQuery?: string) => {
   const matchers = parseMatchers(labelMatcherQuery ?? '');
 
   let filteredRoutes = routes;

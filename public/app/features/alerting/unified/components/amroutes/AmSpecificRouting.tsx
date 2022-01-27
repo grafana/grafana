@@ -110,7 +110,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
                   }
                   queryString={filters.queryString ?? ''}
                   className={styles.filterInput}
-                />{' '}
+                />
                 <div className={styles.filterInput}>
                   <Label>Search by contact point</Label>
                   <Input
