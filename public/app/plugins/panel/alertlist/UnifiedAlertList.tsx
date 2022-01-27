@@ -98,7 +98,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
               <li className={styles.alertRuleItem} key={key}>
                 <div>
                   <div className={styles.customGroupDetails}>
-                    <div className={styles.alertName} title={key}>
+                    <div className={styles.alertLabels}>
                       {key &&
                         parseMapKey(key).map(([key, value]) => <AlertLabel key={key} labelKey={key} value={value} />)}
                       {!key && 'No grouping'}
@@ -277,6 +277,13 @@ const getStyles = (theme: GrafanaTheme) => ({
   alertName: css`
     font-size: ${theme.typography.size.md};
     font-weight: ${theme.typography.weight.bold};
+  `,
+  alertLabels: css`
+    font-size: ${theme.typography.size.md};
+    font-weight: ${theme.typography.weight.bold};
+    > * {
+      margin-right: ${theme.spacing.xs};
+    }
   `,
   alertDuration: css`
     font-size: ${theme.typography.size.sm};
