@@ -14,13 +14,14 @@ import (
 )
 
 func AddTeamMembershipMigrations(mg *migrator.Migrator) {
-	mg.AddMigration("teams permissions migration", &teamPermissionMigrator{})
+	mg.AddMigration("teams permissions migration", &teamPermissionMigrator{editorsCanAdmin: mg.Cfg.EditorsCanAdmin})
 }
 
 var _ migrator.CodeMigration = new(teamPermissionMigrator)
 
 type teamPermissionMigrator struct {
 	migrator.MigrationBase
+	editorsCanAdmin bool
 }
 
 func (p *teamPermissionMigrator) SQL(dialect migrator.Dialect) string {
@@ -132,8 +133,35 @@ func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.Permissio
 	}
 }
 
+func (p *teamPermissionMigrator) getUserRoleByOrgMapping(sess *xorm.Session) (map[int64]map[int64]string, error) {
+	var orgUsers []*models.OrgUserDTO
+	if err := sess.SQL(`SELECT * FROM org_user`).Cols("org_user.org_id", "org_user.user_id", "org_user.role").Find(&orgUsers); err != nil {
+		return nil, err
+	}
+
+	userRolesByOrg := map[int64]map[int64]string{}
+
+	// Loop through users and organise them by organization ID
+	for _, orgUser := range orgUsers {
+		orgRoles, initialized := userRolesByOrg[orgUser.OrgId]
+		if !initialized {
+			orgRoles = map[int64]string{}
+		}
+
+		orgRoles[orgUser.UserId] = orgUser.Role
+		userRolesByOrg[orgUser.OrgId] = orgRoles
+	}
+
+	return userRolesByOrg, nil
+}
+
 // migrateMemberships generate managed permissions for users based on their memberships to teams
 func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
+	userRolesByOrg, err := p.getUserRoleByOrgMapping(sess)
+	if err != nil {
+		return err
+	}
+
 	var teamMemberships []models.TeamMember
 	if err := sess.SQL(`SELECT * FROM team_member`).Find(&teamMemberships); err != nil {
 		return err
@@ -143,6 +171,18 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 
 	// Loop through memberships and generate associated permissions
 	for _, m := range teamMemberships {
+		// Downgrade team permissions if needed - only organisation admins or organisation editors (when editorsCanAdmin feature is enabled)
+		// can access team administration endpoints
+		if m.Permission == models.PERMISSION_ADMIN {
+			if userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_VIEWER) || (userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_EDITOR) && !p.editorsCanAdmin) {
+				m.Permission = 0
+				_, err := sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", m.OrgId, m.TeamId, m.UserId).Update(m)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		userPermissions, initialized := userPermissionsByOrg[m.OrgId]
 		if !initialized {
 			userPermissions = map[int64][]accesscontrol.Permission{}
