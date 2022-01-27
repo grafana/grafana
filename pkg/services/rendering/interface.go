@@ -26,6 +26,16 @@ const (
 	ThemeDark  Theme = "dark"
 )
 
+func ParseTheme(str string) (Theme, error) {
+	switch str {
+	case string(ThemeLight):
+		return ThemeLight, nil
+	case string(ThemeDark):
+		return ThemeDark, nil
+	}
+	return ThemeDark, errors.New("unknown theme " + str)
+}
+
 type TimeoutOpts struct {
 	Timeout                  time.Duration // Timeout param passed to image-renderer service
 	RequestTimeoutMultiplier time.Duration // RequestTimeoutMultiplier used for plugin/HTTP request context timeout
