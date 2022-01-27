@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,20 +24,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			return nil, err
 		}
 
-		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
-			User:        c.SignedInUser,
-			Datasources: query.Result,
+		filtered, err := filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+		if err != nil {
+			return nil, err
 		}
 
-		if err := bus.Dispatch(c.Req.Context(), &dsFilterQuery); err != nil {
-			if !errors.Is(err, bus.ErrHandlerNotFound) {
-				return nil, err
-			}
-
-			orgDataSources = query.Result
-		} else {
-			orgDataSources = dsFilterQuery.Result
-		}
+		orgDataSources = filtered
 	}
 
 	dataSources := make(map[string]plugins.DataSourceDTO)
@@ -258,7 +249,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"edition":         hs.License.Edition(),
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,

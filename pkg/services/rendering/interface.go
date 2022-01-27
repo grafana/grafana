@@ -26,18 +26,8 @@ const (
 	ThemeDark  Theme = "dark"
 )
 
-func ParseTheme(str string) (Theme, error) {
-	switch str {
-	case string(ThemeLight):
-		return ThemeLight, nil
-	case string(ThemeDark):
-		return ThemeDark, nil
-	}
-	return ThemeDark, errors.New("unknown theme " + str)
-}
-
 type TimeoutOpts struct {
-	Timeout                  time.Duration // Timeout param passed to node-renderer service
+	Timeout                  time.Duration // Timeout param passed to image-renderer service
 	RequestTimeoutMultiplier time.Duration // RequestTimeoutMultiplier used for plugin/HTTP request context timeout
 }
 
@@ -47,7 +37,7 @@ type AuthOpts struct {
 	OrgRole models.RoleType
 }
 
-func GetRequestTimeout(opt TimeoutOpts) time.Duration {
+func getRequestTimeout(opt TimeoutOpts) time.Duration {
 	if opt.RequestTimeoutMultiplier == 0 {
 		return opt.Timeout * 2 // default
 	}

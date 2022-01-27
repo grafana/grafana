@@ -231,13 +231,19 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		return nil
 	}
 
-	var header map[string]string
+	var header map[string]interface{}
 	if err := json.Unmarshal(headerBytes, &header); err != nil {
 		s.log.Error("Error deserializing header", "error", err)
 		return nil
 	}
 
-	if compression, ok := header["zip"]; ok {
+	if compressionVal, exists := header["zip"]; exists {
+		compression, ok := compressionVal.(string)
+		if !ok {
+			s.log.Warn("Unknown compression algorithm")
+			return nil
+		}
+
 		if compression != "DEF" {
 			s.log.Warn("Unknown compression algorithm", "algorithm", compression)
 			return nil

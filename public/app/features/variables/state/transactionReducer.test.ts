@@ -4,11 +4,11 @@ import {
   initialTransactionState,
   transactionReducer,
   TransactionState,
-  TransactionStatus,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
+import { TransactionStatus } from '../types';
 
 describe('transactionReducer', () => {
   describe('when variablesInitTransaction is dispatched', () => {

@@ -4,8 +4,7 @@ import { toVariableIdentifier } from './types';
 import { upgradeLegacyQueries } from './actions';
 import { changeVariableProp } from './sharedReducer';
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
-import { VariableModel } from '../types';
-import { TransactionStatus } from './transactionReducer';
+import { TransactionStatus, VariableModel } from '../types';
 
 interface Args {
   query?: any;

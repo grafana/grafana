@@ -101,14 +101,14 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 	r.mode = mode
 	r.thumbnailKind = thumbnailKind
 	r.opts = rendering.Opts{
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout:                  10 * time.Second,
-			RequestTimeoutMultiplier: 3,
-		},
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   c.OrgId,
 			UserID:  c.UserId,
 			OrgRole: c.OrgRole,
+		},
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout:                  10 * time.Second,
+			RequestTimeoutMultiplier: 3,
 		},
 		Theme:           theme,
 		ConcurrentLimit: 10,
@@ -188,15 +188,11 @@ func (r *simpleCrawler) walk() {
 		// Hack (for now) pick a URL that will render
 		panelURL := strings.TrimPrefix(url, "/") + "?kiosk"
 		res, err := r.renderService.Render(context.Background(), rendering.Opts{
-			TimeoutOpts: r.opts.TimeoutOpts,
-			AuthOpts: rendering.AuthOpts{
-				OrgRole: r.opts.OrgRole,
-				OrgID:   r.opts.OrgID,
-				UserID:  r.opts.UserID,
-			},
 			Width:             320,
 			Height:            240,
 			Path:              panelURL,
+			AuthOpts:          r.opts.AuthOpts,
+			TimeoutOpts:       r.opts.TimeoutOpts,
 			ConcurrentLimit:   r.opts.ConcurrentLimit,
 			Theme:             r.opts.Theme,
 			DeviceScaleFactor: -5, // negative numbers will render larger then scale down

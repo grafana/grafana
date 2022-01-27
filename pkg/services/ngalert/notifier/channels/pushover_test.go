@@ -11,9 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -146,21 +144,16 @@ func TestPushoverNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewPushoverNotifier(m, tmpl, decryptFn)
+			pn, err := NewPushoverNotifier(m, webhookSender, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			body := ""
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -174,7 +167,7 @@ func TestPushoverNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			bodyReader := multipart.NewReader(strings.NewReader(body), boundary)
+			bodyReader := multipart.NewReader(strings.NewReader(webhookSender.Webhook.Body), boundary)
 			for {
 				part, err := bodyReader.NextPart()
 				if part == nil || errors.Is(err, io.EOF) {

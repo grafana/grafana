@@ -23,10 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -34,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -112,11 +115,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.PluginDashboardManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(plugins.Loader), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	cloudwatch.ProvideService,
-	cloudwatch.ProvideLogsService,
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
@@ -181,12 +184,19 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
+	wire.Bind(new(authinfoservice.Service), new(*authinfoservice.Implementation)),
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	resourceservices.ProvideResourceServices,
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -194,6 +204,11 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
+
+	notifications.MockNotificationService,
+	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
+	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
