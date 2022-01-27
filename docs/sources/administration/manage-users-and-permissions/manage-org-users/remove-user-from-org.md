@@ -1,7 +1,7 @@
 +++
 title = "Remove a user from an organization"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org.md"]
+weight = 40
 +++
 
 # Remove a user from an organization

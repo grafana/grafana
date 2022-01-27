@@ -1,7 +1,7 @@
 +++
 title = "Add a user"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/add-user.md"]
+weight = 10
 +++
 
 # Add a user
@@ -20,14 +20,10 @@ When you create a user, the system assigns the user viewer permissions in a defa
 
 **To add a user**:
 
-1. Sign in to Grafana as a system administrator.
-
-{{< docs/list >}}
-{{< docs/shared "manage-users/view-server-user-list.md" >}}
-
+1. Sign in to Grafana as a server administrator.
+1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
 1. Click **New user**.
 1. Complete the fields and click **Create user**.
-   {{< /docs/list >}}
 
 <!--- Is the user made aware that they have been added? Through email maybe? -->
 

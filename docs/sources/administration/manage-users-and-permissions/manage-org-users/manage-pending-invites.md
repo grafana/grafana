@@ -1,14 +1,14 @@
 +++
 title = "Manage a pending invitation"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/manage-pending-invites.md"]
+weight = 20
 +++
 
 # Manage a pending invitation
 
 Periodically review invitations you have sent so that you can see a list of users that have not yet accepted the invitation or cancel a pending invitation.
 
-> **Note:** The button is only visible if there are unanswered invitations.
+> **Note:** The **Pending Invites** button is only visible if there are unanswered invitations.
 
 ## Before you begin
 

@@ -1,7 +1,7 @@
 +++
 title = "Enable viewers to preview dashboards and use Explore"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/enable-dashboard-preview-explore.md"]
+weight = 30
 +++
 
 # Enable viewers to preview dashboards and use Explore
@@ -12,13 +12,13 @@ This modification is useful for public Grafana installations where you want anon
 
 ## Before you begin
 
-- Ensure you have organization administrator privileges
+- Ensure that you have access to the Grafana server
 
 **To enable viewers to preview dashboards and use Explore**:
 
 1. Open the Grafana configuration file.
 
-   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../administration/configuration">}}).
+   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../administration/configuration">}}).
 
 1. Locate the `viewers_can_edit` parameter.
 1. Set the `viewers_can_edit` value to `true`.

@@ -1,7 +1,7 @@
 +++
 title = "Remove a team member"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-teams/remove-team-member.md"]
+weight = 40
 +++
 
 # Remove a team member

@@ -1,7 +1,7 @@
 +++
 title = "Grant team member permissions"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-teams/grant-team-member-permissions.md"]
+weight = 30
 +++
 
 # Grant team member permissions
@@ -10,8 +10,7 @@ Complete this task when you want to add or modify team member permissions.
 
 ## Before you begin
 
-- - Ensure that you have either organization administrator permissions or team administrator permissions
-- xxx.
+- Ensure that you have either organization administrator permissions or team administrator permissions
 
 **To grant team member permissions**:
 

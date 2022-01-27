@@ -1,7 +1,7 @@
 +++
 title = "View a list of teams"
 aliases = ["path here"]
-weight = 70
+weight = 60
 +++
 
 # View a list of teams

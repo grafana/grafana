@@ -1,7 +1,7 @@
 +++
 title = "Grant dashboard folder permissions"
-aliases = ["path here"]
-weight = 70
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/grant-dashboard-folder-permissions.md"]
+weight = 10
 +++
 
 # Grant dashboard folder permissions
