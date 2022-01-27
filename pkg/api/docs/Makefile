@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := openapi
+.DEFAULT_GOAL := copy
 
 API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
@@ -20,10 +20,10 @@ spec.json: $(GO_PKG_FILES)
 	-x "github.com/prometheus/alertmanager" \
 	-i ${HOME}/grafana/pkg/api/docs/tags.json
 
-merge: spec.json
+merged.json: spec.json
 	go run merge/merge_specs.go spec.json ../../services/ngalert/api/tooling/post.json
 
-validate: merge
+validate: merged.json
 	docker run --rm -it \
 	-e GOPATH=${HOME}/go:/go \
 	-e SWAGGER_GENERATE_EXTENSION=false \
@@ -41,9 +41,12 @@ spec-mac: ensure_go-swagger_mac $(GO_PKG_FILES) $(ENTERPRISE_GO_PKG_FILES)
 	-x "github.com/prometheus/alertmanager" \
 	-i tags.json
 
-.PHONY: openapi
-openapi: merge
-	docker-compose up
+openapi: merged.json
+	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
+
+.PHONY: copy
+copy: merged.json
+	cp merged.json ../../../swagger-ui/
 
 clean:
 	rm spec.json merged.json
@@ -51,7 +54,7 @@ clean:
 clean-containers:
 	docker-compose down
 
-client-go: merge
+client-go: merged.json
 	docker run --rm \
 	-e GOPATH=${HOME}/go:/go \
 	--user $$(id -u):$$(id -g) \
@@ -67,7 +70,7 @@ client-go: merge
 	--type-mappings Json=simplejson.Json
 	goimports -w -v ../clients/go
 
-client-python: merge
+client-python: merged.json
 	docker run --rm \
 	--user $$(id -u):$$(id -g) \
 	-v $$(pwd)/../../..:${HOME}/grafana \

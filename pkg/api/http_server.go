@@ -418,6 +418,11 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.Recovery(hs.Cfg))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+
+	if hs.Cfg.IsSwaggerUIEnabled() {
+		hs.mapStatic(m, hs.Cfg.HomePath, "swagger-ui", "swagger-ui")
+	}
+
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
@@ -548,6 +553,7 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 			SkipLogging: true,
 			Prefix:      prefix,
 			AddHeaders:  headers,
+			IndexFile:   "index.html",
 		},
 	))
 }

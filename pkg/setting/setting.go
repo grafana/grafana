@@ -449,6 +449,10 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 	return cfg.FeatureToggles["database_metrics"]
 }
 
+func (cfg Cfg) IsSwaggerUIEnabled() bool {
+	return cfg.FeatureToggles["swagger-ui"]
+}
+
 // IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
 // This feature toggle will be removed in Grafana 8.x but gives the operator
 // some graceperiod to update all the monitoring tools.
