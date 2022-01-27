@@ -154,19 +154,109 @@ func TestGetAzurePortalUrl(t *testing.T) {
 }
 
 func TestUnmarshalResponse(t *testing.T) {
-	body := "{\"error\":{\"code\":\"BadRequest\",\"message\":\"Please provide below info when asking for support: timestamp = 2021-06-04T05:09:13.1870573Z, correlationId = f1c5d97f-26db-4bdc-b023-1f0a862004db.\",\"details\":[{\"code\":\"InvalidQuery\",\"message\":\"Queryisinvalid.PleaserefertothedocumentationfortheAzureResourceGraphserviceandfixtheerrorbeforeretrying.\"},{\"code\":\"ParserFailure\",\"message\":\"ParserFailure\",\"line\":2,\"token\":\"<\"},{\"code\":\"ParserFailure\",\"message\":\"ParserFailure\",\"line\":4,\"characterPositionInLine\":23,\"token\":\"<\"}]}}"
-	datasource := &AzureResourceGraphDatasource{}
-	res, err := datasource.unmarshalResponse(&http.Response{
-		StatusCode: 400,
-		Status:     "400 Bad Request",
-		Body:       io.NopCloser(strings.NewReader((body))),
-	})
-	expectedRes := AzureResourceGraphResponse{
-		Data: AzureResponseTable{},
-	}
-	expectedErrMsg := "request failed, status: 400 Bad Request, body: " + body
+	bodyShort := `{
+		"error":{
+		   "code":"BadRequest",
+		   "message":"Please provide below info when asking for support: timestamp = 2022-01-17T15:50:07.9782199Z, correlationId = 7ba435e5-6371-458f-a1b5-1c7ffdba6ff4.",
+		   "details":[
+			  {
+				 "code":"InvalidQuery",
+				 "message":"Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying."
+			  },
+			  {
+				 "code":"UnknownFunction",
+				 "message":"Unknown function: 'cout'."
+			  }
+		   ]
+		}
+	 }`
+	expectedErrMsgShort := `request failed, status: 400 Bad Request
+BadRequest: Please provide below info when asking for support: timestamp = 2022-01-17T15:50:07.9782199Z, correlationId = 7ba435e5-6371-458f-a1b5-1c7ffdba6ff4.
+Details:
+Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
+Unknown function: 'cout'.`
+	bodyWithLines := `{
+		"error":
+		{
+			"code": "BadRequest",
+			"message": "Please provide below info when asking for support: timestamp = 2021-06-04T05:09:13.1870573Z, correlationId = f1c5d97f-26db-4bdc-b023-1f0a862004db.",
+			"details":
+			[
+				{
+					"code": "InvalidQuery",
+					"message": "Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying."
+				},
+				{
+					"code": "ParserFailure",
+					"message": "ParserFailure",
+					"line": 2,
+					"token": "<"
+				},
+				{
+					"code": "ParserFailure",
+					"message": "ParserFailure",
+					"line": 4,
+					"characterPositionInLine": 23,
+					"token": "<"
+				}
+			]
+		}
+	}`
+	expectedErrMsgWithLines := `request failed, status: 400 Bad Request
+BadRequest: Please provide below info when asking for support: timestamp = 2021-06-04T05:09:13.1870573Z, correlationId = f1c5d97f-26db-4bdc-b023-1f0a862004db.
+Details:
+Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
+ParserFailure: line 2, "<"
+ParserFailure: line 4, pos 23, "<"`
+	bodyUnexpected := `{
+		"error":"I m an expected field but of wrong type ! "
+	}`
+	expectedErrMsgUnexpectedError := "request failed, status: 400 Bad Request, body: " + bodyUnexpected
+	bodyUnexpected2 := `{
+		"myerror":"I m completly unexpected and you won't know how to parse me ! ",
+		"code":"boom"
+	}`
+	expectedErrMsgUnexpectedError2 := "request failed, status: 400 Bad Request, body: " + bodyUnexpected2
 
-	assert.Error(t, err)
-	assert.EqualErrorf(t, err, expectedErrMsg, "Unexpected Error message")
-	assert.Equal(t, expectedRes, res)
+	tests := []struct {
+		name           string
+		body           string
+		expectedErrMsg string
+	}{
+		{
+			name:           "short error",
+			body:           bodyShort,
+			expectedErrMsg: expectedErrMsgShort,
+		},
+		{
+			name:           "error with lines",
+			body:           bodyWithLines,
+			expectedErrMsg: expectedErrMsgWithLines,
+		},
+		{
+			name:           "unexpected error format",
+			body:           bodyUnexpected,
+			expectedErrMsg: expectedErrMsgUnexpectedError,
+		},
+		{
+			name:           "unexpected error format",
+			body:           bodyUnexpected2,
+			expectedErrMsg: expectedErrMsgUnexpectedError2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			datasource := &AzureResourceGraphDatasource{}
+			res, err := datasource.unmarshalResponse(&http.Response{
+				StatusCode: 400,
+				Status:     "400 Bad Request",
+				Body:       io.NopCloser(strings.NewReader((tt.body))),
+			})
+
+			assert.Equal(t, tt.expectedErrMsg, err.Error())
+			assert.Empty(t, res)
+		})
+	}
 }
