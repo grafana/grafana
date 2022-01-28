@@ -21,21 +21,38 @@ export enum HeatmapSourceMode {
   Data = 'data', // Use the data as is
 }
 
+export enum HeatmapColorMode {
+  Opacity = 'opacity',
+  Scheme = 'scheme',
+}
+
+export enum HeatmapColorScale {
+  Linear = 'linear',
+  Exponential = 'exponential',
+}
+
+export interface HeatmapColorOptions {
+  mode: HeatmapColorMode;
+  scheme: string; // when in scheme mode -- the d3 scheme name
+  fill: string; // when opacity mode, the target color
+  scale: HeatmapColorScale; // for opacity mode
+  exponent: number; // when scale== sqrt
+  steps: number; // 2-256
+
+  // Clamp the colors to the value range
+  field?: string;
+  min?: number;
+  max?: number;
+}
+
 export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
   source: HeatmapSourceMode;
 
+  color: HeatmapColorOptions;
   heatmap?: HeatmapCalculationOptions;
 
   cellPadding?: number; // was cardPadding
   cellRadius?: number; // was cardRadius
-
-  // color: {
-  //   mode: 'spectrum',
-  //   cardColor: '#b4ff00',
-  //   colorScale: 'sqrt',
-  //   exponent: 0.5,
-  //   colorScheme: 'interpolateOranges',
-  // },
 
   hideZeroBuckets?: boolean;
   reverseYBuckets?: boolean;
@@ -43,6 +60,14 @@ export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
 
 export const defaultPanelOptions: PanelOptions = {
   source: HeatmapSourceMode.Auto,
+  color: {
+    mode: HeatmapColorMode.Scheme,
+    scheme: 'Oranges',
+    fill: 'red-dark',
+    scale: HeatmapColorScale.Exponential,
+    exponent: 0.5,
+    steps: 128,
+  },
   legend: {
     displayMode: LegendDisplayMode.Hidden,
     placement: 'bottom',

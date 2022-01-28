@@ -1,4 +1,4 @@
-import { DataFrame, GrafanaTheme2, PanelData } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
   createHeatmapFromBuckets,
@@ -57,8 +57,4 @@ export function prepareHeatmapData(
   const heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
   // TODO, check for error etc
   return { heatmap };
-
-  return {
-    warning: 'TODO... actualy create heatmap',
-  };
 }

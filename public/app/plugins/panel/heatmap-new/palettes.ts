@@ -1,5 +1,6 @@
 import { GrafanaTheme2 } from '@grafana/data';
 import * as d3ScaleChromatic from 'd3-scale-chromatic';
+import { HeatmapColorOptions, defaultPanelOptions } from './models.gen';
 
 // https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
 
@@ -60,12 +61,14 @@ type Interpolator = (t: number) => string;
 
 const DEFAULT_SCHEME = colorSchemes.find((scheme) => scheme.name === 'Spectral');
 
-export function quantizeScheme(schemeName: string, steps: number, theme: GrafanaTheme2) {
-  let scheme = colorSchemes.find((scheme) => scheme.name === schemeName) ?? DEFAULT_SCHEME!;
+export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2): string[] {
+  const options = { ...defaultPanelOptions.color, ...opts };
+  const scheme = colorSchemes.find((scheme) => scheme.name === options.scheme) ?? DEFAULT_SCHEME!;
   let fnName = 'interpolate' + (scheme.name2 ?? scheme.name);
-  const interpolate: Interpolator = d3ScaleChromatic[fnName];
+  const interpolate: Interpolator = (d3ScaleChromatic as any)[fnName];
 
   let palette = [];
+  let steps = options.steps ?? 128;
 
   steps--;
 

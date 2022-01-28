@@ -1,6 +1,6 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { HeatmapSourceMode, PanelOptions } from './models.gen';
+import { HeatmapSourceMode, PanelOptions, defaultPanelOptions } from './models.gen';
 
 /**
  * This is called when the panel changes from another panel
@@ -25,6 +25,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
 
   const options: PanelOptions = {
     source: HeatmapSourceMode.Auto,
+    color: defaultPanelOptions.color,
     cellPadding: asNumber(angular.cards?.cardPadding),
     cellRadius: asNumber(angular.cards?.cardRound),
     legend: {

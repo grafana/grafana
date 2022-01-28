@@ -34,8 +34,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const palette = useMemo(() => quantizeScheme(options.scheme, options.maxSteps ?? 64, theme), [options, theme]);
+  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const builder = useMemo(() => {
     let builder = new UPlotConfigBuilder(timeZone);
@@ -89,7 +88,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
             index: palette,
           },
         },
-      }),
+      }) as any,
       theme,
       scaleKey: '', // facets' scales used (above)
     });
@@ -113,7 +112,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
           //   {JSON.stringify(scatterData, null, 2)}
           // </pre>
-          <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
             {/*children ? children(config, alignedFrame) : null*/}
           </UPlotChart>
         )}
