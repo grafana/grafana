@@ -127,7 +127,7 @@
     "@types/node": "16.11.19",
     "@types/papaparse": "5.3.1",
     "@types/pluralize": "^0.0.29",
-    "@types/prismjs": "1.16.6",
+    "@types/prismjs": "1.26.0",
     "@types/rc-time-picker": "^3",
     "@types/react": "17.0.38",
     "@types/react-beautiful-dnd": "13.1.2",
