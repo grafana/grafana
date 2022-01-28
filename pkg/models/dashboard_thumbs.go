@@ -19,9 +19,15 @@ const (
 )
 
 const (
+	// ThumbnailStateDefault is the initial state for all thumbnails. Thumbnails in the "default" state will be considered stale,
+	// and thus refreshed by the crawler, if the dashboard version from the time of taking the thumbnail is different from the current dashboard version
 	ThumbnailStateDefault ThumbnailState = "default"
-	ThumbnailStateStale   ThumbnailState = "stale"
-	ThumbnailStateLocked  ThumbnailState = "locked"
+
+	// ThumbnailStateStale is a manually assigned state. Thumbnails in the "stale" state will be refreshed on the next crawler run
+	ThumbnailStateStale ThumbnailState = "stale"
+
+	// ThumbnailStateLocked is a manually assigned state. Thumbnails in the "locked" state will not be refreshed by the crawler as long as they remain in the "locked" state.
+	ThumbnailStateLocked ThumbnailState = "locked"
 )
 
 func ParseThumbnailState(str string) (ThumbnailState, error) {
