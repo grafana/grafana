@@ -41,7 +41,7 @@ func TestSearch_SortedResults(t *testing.T) {
 		},
 	}
 
-	err := svc.searchHandler(context.Background(), query)
+	err := svc.SearchHandler(context.Background(), query)
 	require.Nil(t, err)
 
 	// Assert results are sorted.

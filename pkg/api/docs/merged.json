@@ -546,19 +546,21 @@
 				"operationId": "addUserRole",
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"x-go-name": "UserID",
+						"name": "user_id",
+						"in": "path",
+						"required": true
+					},
+					{
+						"x-go-name": "Body",
 						"name": "body",
 						"in": "body",
 						"required": true,
 						"schema": {
 							"$ref": "#/definitions/AddUserRoleCommand"
 						}
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "user_id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -588,6 +590,14 @@
 				"operationId": "removeUserRole",
 				"parameters": [
 					{
+						"type": "integer",
+						"format": "int64",
+						"x-go-name": "UserID",
+						"name": "user_id",
+						"in": "path",
+						"required": true
+					},
+					{
 						"type": "string",
 						"name": "roleUID",
 						"in": "path",
@@ -598,13 +608,6 @@
 						"description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
 						"name": "global",
 						"in": "query"
-					},
-					{
-						"type": "integer",
-						"format": "int64",
-						"name": "user_id",
-						"in": "path",
-						"required": true
 					}
 				],
 				"responses": {
@@ -3935,7 +3938,7 @@
 						"in": "body",
 						"required": true,
 						"schema": {
-							"$ref": "#/definitions/ImportDashboardCommand"
+							"$ref": "#/definitions/ImportDashboardRequest"
 						}
 					}
 				],
@@ -4683,13 +4686,15 @@
 				"parameters": [
 					{
 						"type": "string",
-						"name": "permissionId",
+						"x-go-name": "DatasourceID",
+						"name": "datasource_id",
 						"in": "path",
 						"required": true
 					},
 					{
 						"type": "string",
-						"name": "datasource_id",
+						"x-go-name": "PermissionID",
+						"name": "permissionId",
 						"in": "path",
 						"required": true
 					}
@@ -6909,7 +6914,7 @@
 					"enterprise"
 				],
 				"summary": "Render report for dashboard.",
-				"operationId": "rendeReportPDF",
+				"operationId": "renderReportPDF",
 				"parameters": [
 					{
 						"type": "integer",
@@ -11696,8 +11701,32 @@
 			},
 			"x-go-package": "github.com/prometheus/alertmanager/config"
 		},
-		"ImportDashboardCommand": {
+		"ImportDashboardInput": {
 			"type": "object",
+			"title": "ImportDashboardInput definition of input parameters when importing a dashboard.",
+			"properties": {
+				"name": {
+					"type": "string",
+					"x-go-name": "Name"
+				},
+				"pluginId": {
+					"type": "string",
+					"x-go-name": "PluginId"
+				},
+				"type": {
+					"type": "string",
+					"x-go-name": "Type"
+				},
+				"value": {
+					"type": "string",
+					"x-go-name": "Value"
+				}
+			},
+			"x-go-package": "github.com/grafana/grafana/pkg/services/dashboardimport"
+		},
+		"ImportDashboardRequest": {
+			"type": "object",
+			"title": "ImportDashboardRequest request object for importing a dashboard.",
 			"properties": {
 				"dashboard": {
 					"$ref": "#/definitions/Json"
@@ -11724,24 +11753,74 @@
 				"pluginId": {
 					"type": "string"
 				}
-			}
+			},
+			"x-go-package": "github.com/grafana/grafana/pkg/services/dashboardimport"
 		},
-		"ImportDashboardInput": {
+		"ImportDashboardResponse": {
 			"type": "object",
+			"title": "ImportDashboardResponse response object returned when importing a dashboard.",
 			"properties": {
-				"name": {
-					"type": "string"
+				"dashboardId": {
+					"type": "integer",
+					"format": "int64",
+					"x-go-name": "DashboardId"
+				},
+				"description": {
+					"type": "string",
+					"x-go-name": "Description"
+				},
+				"folderId": {
+					"type": "integer",
+					"format": "int64",
+					"x-go-name": "FolderId"
+				},
+				"imported": {
+					"type": "boolean",
+					"x-go-name": "Imported"
+				},
+				"importedRevision": {
+					"type": "integer",
+					"format": "int64",
+					"x-go-name": "ImportedRevision"
+				},
+				"importedUri": {
+					"type": "string",
+					"x-go-name": "ImportedUri"
+				},
+				"importedUrl": {
+					"type": "string",
+					"x-go-name": "ImportedUrl"
+				},
+				"path": {
+					"type": "string",
+					"x-go-name": "Path"
 				},
 				"pluginId": {
 					"type": "string"
 				},
-				"type": {
-					"type": "string"
+				"removed": {
+					"type": "boolean",
+					"x-go-name": "Removed"
 				},
-				"value": {
-					"type": "string"
+				"revision": {
+					"type": "integer",
+					"format": "int64",
+					"x-go-name": "Revision"
+				},
+				"slug": {
+					"type": "string",
+					"x-go-name": "Slug"
+				},
+				"title": {
+					"type": "string",
+					"x-go-name": "Title"
+				},
+				"uid": {
+					"type": "string",
+					"x-go-name": "UID"
 				}
-			}
+			},
+			"x-go-package": "github.com/grafana/grafana/pkg/services/dashboardimport"
 		},
 		"InclusiveRange": {
 			"type": "object",
@@ -16692,7 +16771,7 @@
 		"importDashboardResponse": {
 			"description": "",
 			"schema": {
-				"$ref": "#/definitions/ImportDashboardInput"
+				"$ref": "#/definitions/ImportDashboardResponse"
 			}
 		},
 		"internalServerError": {

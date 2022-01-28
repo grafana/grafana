@@ -48,7 +48,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
           <MatcherFilter
             className={styles.rowChild}
             key={queryStringKey}
-            queryString={queryString}
+            defaultQueryString={queryString}
             onFilterChange={(value) => setQueryString(value)}
           />
           <AlertInstanceStateFilter

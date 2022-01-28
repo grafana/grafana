@@ -11,7 +11,7 @@ interface FieldInfo {
 // http://geojson.xyz/
 
 export function frameFromGeoJSON(body: Document | Element | Object | string): DataFrame {
-  const data = new GeoJSON().readFeatures(body);
+  const data = new GeoJSON().readFeatures(body, { featureProjection: 'EPSG:3857' });
   const length = data.length;
 
   const geo: Geometry[] = new Array(length).fill(null);
@@ -58,7 +58,7 @@ export function frameFromGeoJSON(body: Document | Element | Object | string): Da
 
     for (const key of feature.getKeys()) {
       const val = feature.get(key);
-      if (key === 'geometry' && val === geo[i]) {
+      if (val === geo[i] || val == null) {
         continue;
       }
       const field = getField(key);

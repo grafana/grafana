@@ -3,7 +3,7 @@ package definitions
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
 )
 
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
@@ -142,7 +142,7 @@ type TrimDashboardParam struct {
 type ImportDashboardParam struct {
 	// in:body
 	// required:true
-	Body dtos.ImportDashboardCommand
+	Body dashboardimport.ImportDashboardRequest
 }
 
 // swagger:response dashboardResponse
@@ -241,7 +241,7 @@ type DashboardsTagsResponse struct {
 // swagger:response importDashboardResponse
 type ImportDashboardResponse struct {
 	// in: body
-	Body plugins.ImportDashboardInput `json:"body"`
+	Body dashboardimport.ImportDashboardResponse `json:"body"`
 }
 
 // Get home dashboard response.
