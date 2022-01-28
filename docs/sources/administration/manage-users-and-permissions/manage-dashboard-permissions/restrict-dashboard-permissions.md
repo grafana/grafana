@@ -1,6 +1,6 @@
 +++
 title = "Restrict access to dashboards"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/restrict-dashboard-permissions.md"]
+aliases = ["docs/sources/permissions/restricting-access.md", "docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/restrict-dashboard-permissions.md"]
 weight = 50
 +++
 
