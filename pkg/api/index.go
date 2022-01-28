@@ -158,13 +158,24 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+		navbarPrefsQuery := models.GetNavbarPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
+		if err := hs.SQLStore.GetNavbarPreferences(c.Req.Context(), &navbarPrefsQuery); err != nil {
+			return nil, err
+		}
+		showHome := true
+		for _, v := range *navbarPrefsQuery.Result {
+			if v.NavItemId == "home" {
+				showHome = v.ShowInNavbar
+			}
+		}
 		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Home",
-			Id:         "home",
-			Icon:       "home-alt",
-			Url:        hs.Cfg.AppSubURL + "/",
-			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightHome,
+			Text:         "Home",
+			Id:           "home",
+			Icon:         "home-alt",
+			Url:          hs.Cfg.AppSubURL + "/",
+			Section:      dtos.NavSectionCore,
+			SortWeight:   dtos.WeightHome,
+			ShowInNavBar: showHome,
 		})
 	}
 
