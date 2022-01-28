@@ -1,6 +1,6 @@
 +++
 title = "Manage users"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/_index.md"]
+aliases = ["docs/sources/manage-users/server-admin/_index.md", "docs/sources/manage-users/server-admin/server-admin-manage-users.md", "docs/sources/administration/manage-users-and-permissions/manage-server-users/_index.md"]
 weight = 300
 +++
 

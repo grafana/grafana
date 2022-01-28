@@ -1,6 +1,6 @@
 +++
 title = "View a list of teams"
-aliases = ["path here"]
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-teams/view-team-list.md"]
 weight = 60
 +++
 

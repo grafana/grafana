@@ -1,6 +1,6 @@
 +++
 title = "About users and permissions"
-aliases = ["path here"]
+aliases = ["docs/sources/manage-users/_index.md", "docs/sources/administration/manage-users-and-permissions/about-users-and-permissions.md"]
 weight = 100
 +++
 

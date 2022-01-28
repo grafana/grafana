@@ -1,6 +1,6 @@
 +++
 title = "Manage organization user permissions"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/_index.md"]
+aliases = ["docs/sources/manage-users/org-admin/index.md", "docs/sources/administration/manage-users-and-permissions/manage-org-users/_index.md"]
 weight = 400
 +++
 
