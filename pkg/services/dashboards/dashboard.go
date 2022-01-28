@@ -15,6 +15,7 @@ type DashboardService interface {
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 }
 
+//go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
