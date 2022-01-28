@@ -52,7 +52,7 @@ export const MatchedSilencedRules = () => {
         Affected alerts
         {matchedAlertRules.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={matchedAlertRules.length} />
-        ) : null}{' '}
+        ) : null}
       </h4>
       <div className={styles.table}>
         {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
