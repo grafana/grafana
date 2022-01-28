@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e/src';
+import { e2e } from '@grafana/e2e';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 const flakyTimeout = 5000;
