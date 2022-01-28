@@ -3,7 +3,7 @@ import { PanelProps } from '@grafana/data';
 import {
   AxisPlacement,
   ScaleDirection,
-  ScaleDistribution,
+  //ScaleDistribution,
   ScaleOrientation,
   UPlotChart,
   UPlotConfigBuilder,
@@ -14,7 +14,7 @@ import { prepareHeatmapData } from './fields';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { PanelOptions } from './models.gen';
 import { countsToFills, heatmapPaths } from './render';
-import { palettes9 } from './palettes';
+import { quantizeScheme } from './palettes';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -35,7 +35,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const palette = useMemo(() => palettes9[options.scheme].slice().reverse(), [options, theme]);
+  const palette = useMemo(() => quantizeScheme(options.scheme, options.maxSteps ?? 64, theme), [options, theme]);
 
   const builder = useMemo(() => {
     let builder = new UPlotConfigBuilder(timeZone);

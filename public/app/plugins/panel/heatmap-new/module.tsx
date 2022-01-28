@@ -7,7 +7,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 import { heatmapChangedHandler } from './migrations';
 import { addHeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/editor/helper';
-import { palettes9 } from './palettes';
+import { colorSchemes } from './palettes';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
@@ -44,11 +44,22 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       description: '',
       defaultValue: 'Oranges',
       settings: {
-        options: Object.keys(palettes9).map((name) => ({
-          value: name,
-          label: name,
+        options: colorSchemes.map((scheme) => ({
+          value: scheme.name,
+          label: scheme.name,
           //description: 'Set a geometry field based on the results of other fields',
         })),
+      },
+    });
+
+    builder.addSliderInput({
+      path: 'maxSteps',
+      name: 'Max steps',
+      defaultValue: 64,
+      settings: {
+        min: 2, // 1 for on/off?
+        max: 128,
+        step: 1,
       },
     });
 

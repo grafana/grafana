@@ -254,8 +254,8 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   //let scaleX = opts?.xLog === 10 ? Math.log10 : opts?.xLog === 2 ? Math.log2 : (v: number) => v;
   //let scaleY = opts?.yLog === 10 ? Math.log10 : opts?.yLog === 2 ? Math.log2 : (v: number) => v;
 
-  let xBinIncr = opts?.xSize;
-  let yBinIncr = opts?.ySize;
+  let xBinIncr = opts?.xSize ?? 0;
+  let yBinIncr = opts?.ySize ?? 0;
   let xUnit = opts?.xUnit;
   let yUnit = opts?.yUnit;
 
@@ -285,10 +285,10 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     yBinIncr = yIncrs[yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
   }
 
-  console.log({
-    yBinIncr,
-    xBinIncr,
-  });
+  // console.log({
+  //   yBinIncr,
+  //   xBinIncr,
+  // });
 
   let binX = opts?.xCeil ? (v: number) => incrRoundUp(v, xBinIncr) : (v: number) => incrRoundDn(v, xBinIncr);
   let binY = opts?.yCeil ? (v: number) => incrRoundUp(v, yBinIncr) : (v: number) => incrRoundDn(v, yBinIncr);
