@@ -109,18 +109,6 @@ export class QueryRows extends PureComponent<Props, State> {
         return item;
       }
 
-      const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
-
-      // compatible datasource
-      if (previous?.type === settings.type) {
-        return copyModel(item, settings.uid);
-      }
-
-      // this does not make any sense, is this for backwards compat?
-      if (previous?.type === settings.uid) {
-        return copyModel(item, settings.uid);
-      }
-
       return copyModel(item, settings.uid);
     });
     onQueriesChange(updatedQueries);
