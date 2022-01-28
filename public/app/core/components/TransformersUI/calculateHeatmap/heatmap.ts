@@ -6,6 +6,7 @@ import {
   incrRoundUp,
   incrRoundDn,
   SynchronousDataTransformerInfo,
+  DataFrameType,
 } from '@grafana/data';
 import { map } from 'rxjs';
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
@@ -35,7 +36,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   },
 };
 
-export function createHeatmapFromBuckets(frames: DataFrame[]) {
+/** Given existing buckets, create a values style frame */
+export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
   frames = frames.slice();
 
   // sort ASC by frame.name (Prometheus bucket bound)
@@ -108,6 +110,9 @@ export function createHeatmapFromBuckets(frames: DataFrame[]) {
 
   return {
     length: xs.length,
+    meta: {
+      type: DataFrameType.HeatmapValues,
+    },
     fields: [
       {
         name: 'xMin',
@@ -169,6 +174,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   let frame = {
     length: heat2d.x.length,
+    meta: {
+      type: DataFrameType.HeatmapValues,
+    },
     fields: [
       {
         name: 'xMin',

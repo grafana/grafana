@@ -1,10 +1,9 @@
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, DataFrameType, GrafanaTheme2 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
   createHeatmapFromBuckets,
 } from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
-//import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 export interface HeatmapData {
   // List of heatmap frames
@@ -22,16 +21,27 @@ export function prepareHeatmapData(
   options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData {
-  // let dataSrcType = data.request?.targets[0].datasource?.type;
-
-  // if (dataSrcType === DataSourceType.Prometheus) {
-  //   console.log(data.series);
-  // } else if (dataSrcType === 'testdata') {
-  //   console.log(data.series);
-  // }
-
   if (!frames?.length) {
     return {};
+  }
+
+  const { source } = options;
+  if (source === HeatmapSourceMode.Calculate) {
+    const heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
+    // TODO, check for error etc
+    return { heatmap };
+  }
+
+  // Find a well defined heatmap
+  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapValues);
+  if (heatmap) {
+    return { heatmap };
+  }
+
+  if (source === HeatmapSourceMode.Data) {
+    // TODO: check for names xMin, yMin etc...
+    heatmap = createHeatmapFromBuckets(frames);
+    return { heatmap };
   }
 
   // detect a frame-per-bucket heatmap frame
@@ -41,20 +51,7 @@ export function prepareHeatmapData(
     return { heatmap };
   }
 
-  const { source } = options;
-  if (source === HeatmapSourceMode.Calculate) {
-    const heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
-    // TODO, check for error etc
-    return { heatmap };
-  } else if (source === HeatmapSourceMode.Data) {
-    console.log('TODO find heatmap in the data');
-  } else {
-    // AUTO
-    //console.log('1. try to find it');
-    //console.log('1. calculate');
-  }
-
-  const heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
+  heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
   // TODO, check for error etc
   return { heatmap };
 }

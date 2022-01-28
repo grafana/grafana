@@ -10,13 +10,13 @@ export enum DataFrameType {
   TimeSeriesMany = 'timeseries-many',
 
   /**
-   * First field is X, the rest are bucket counds
+   * First field is X, the rest are bucket values
    */
   HeatmapBuckets = 'heatmap-buckets',
 
   /**
    * Explicit fields for:
-   *  xmin, xmax, ymin, ymax, count (xLayout, yLayout, meta)?
+   *  xMin, xMax?, yMin, yMax, count
    */
-  HeatmapSparse = 'heatmap-sparse',
+  HeatmapValues = 'heatmap-values',
 }
