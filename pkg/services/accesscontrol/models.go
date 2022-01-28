@@ -323,6 +323,30 @@ const (
 
 	// Team related scopes
 	ScopeTeamsAll = "teams:*"
+
+	// Dashboard actions
+	ActionDashboardsCreate           = "dashboards:create"
+	ActionDashboardsRead             = "dashboards:read"
+	ActionDashboardsEdit             = "dashboards:edit"
+	ActionDashboardsWrite            = "dashboards:write"
+	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
+	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
+
+	// Dashboard scopes
+	ScopeDashboardsAll = "dashboards:*"
+
+	// Folder actions
+	ActionFoldersCreate           = "folders:create"
+	ActionFoldersRead             = "folders:read"
+	ActionFoldersEdit             = "folders:edit"
+	ActionFoldersWrite            = "folders:write"
+	ActionFoldersDelete           = "folders:delete"
+	ActionFoldersPermissionsRead  = "folders.permissions:read"
+	ActionFoldersPermissionsWrite = "folders.permissions:write"
+
+	// Folder scopes
+	ScopeFoldersAll = "folders:*"
 )
 
 var (
