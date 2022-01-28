@@ -28,7 +28,7 @@ type Options struct {
 	// RoleGroup is the group name for the generated fixed roles
 	RoleGroup string
 	// OnSetUser if configured will be called each time a permission is set for a user
-	OnSetUser func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error
+	OnSetUser func(session *sqlstore.DBSession, orgID int64, user User, resourceID, permission string) error
 	// OnSetTeam if configured will be called each time a permission is set for a team
 	OnSetTeam func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role

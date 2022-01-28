@@ -152,7 +152,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, userId, teamIDString, ""); err != nil {
+	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, resourcepermissions.User{ID: userId}, teamIDString, ""); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
@@ -171,7 +171,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // Stubbable by tests.
 var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, permission string) error {
 	teamIDString := strconv.FormatInt(teamID, 10)
-	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, userID, teamIDString, permission); err != nil {
+	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, resourcepermissions.User{ID: userID}, teamIDString, permission); err != nil {
 		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 	}
 	return nil
