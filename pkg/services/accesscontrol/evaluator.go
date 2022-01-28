@@ -155,7 +155,7 @@ func (a allEvaluator) String() string {
 		permissions = append(permissions, e.String())
 	}
 
-	return fmt.Sprintf("all of [%s]", strings.Join(permissions, " "))
+	return fmt.Sprintf("all of %s", strings.Join(permissions, ", "))
 }
 
 func (a allEvaluator) GoString() string {
@@ -209,7 +209,7 @@ func (a anyEvaluator) String() string {
 		permissions = append(permissions, e.String())
 	}
 
-	return fmt.Sprintf("any of [%s]", strings.Join(permissions, " "))
+	return fmt.Sprintf("any of %s", strings.Join(permissions, ", "))
 }
 
 func (a anyEvaluator) GoString() string {
