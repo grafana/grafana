@@ -139,7 +139,7 @@ func (ng *AlertNG) init() error {
 		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager

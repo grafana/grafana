@@ -143,7 +143,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &query); err != nil {
+		if _, err := hs.SQLStore.GetDashboard(c.Req.Context(), &query); err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
