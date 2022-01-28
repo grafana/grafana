@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,21 +18,21 @@ type Store interface {
 	SetUserResourcePermission(
 		ctx context.Context, orgID, userID int64,
 		cmd accesscontrol.SetResourcePermissionCommand,
-		hook func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error,
+		hook types.UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
 		ctx context.Context, orgID, teamID int64,
 		cmd accesscontrol.SetResourcePermissionCommand,
-		hook func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error,
+		hook types.TeamResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetBuiltInResourcePermission sets permissions for managed builtin role on a resource
 	SetBuiltInResourcePermission(
 		ctx context.Context, orgID int64, builtinRole string,
 		cmd accesscontrol.SetResourcePermissionCommand,
-		hook func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error,
+		hook types.BuiltinResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// GetResourcesPermissions will return all permission for all supplied resource ids

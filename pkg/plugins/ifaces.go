@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
@@ -76,20 +75,26 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
+type PluginDashboardInfoDTO struct {
+	UID              string `json:"uid"`
+	PluginId         string `json:"pluginId"`
+	Title            string `json:"title"`
+	Imported         bool   `json:"imported"`
+	ImportedUri      string `json:"importedUri"`
+	ImportedUrl      string `json:"importedUrl"`
+	Slug             string `json:"slug"`
+	DashboardId      int64  `json:"dashboardId"`
+	FolderId         int64  `json:"folderId"`
+	ImportedRevision int64  `json:"importedRevision"`
+	Revision         int64  `json:"revision"`
+	Description      string `json:"description"`
+	Path             string `json:"path"`
+	Removed          bool   `json:"removed"`
+}
+
 type PluginDashboardManager interface {
 	// GetPluginDashboards gets dashboards for a certain org/plugin.
 	GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
 	// LoadPluginDashboard loads a plugin dashboard.
 	LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error)
-	// ImportDashboard imports a dashboard.
-	ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
-		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser) (PluginDashboardInfoDTO,
-		*models.Dashboard, error)
-}
-
-type ImportDashboardInput struct {
-	Type     string `json:"type"`
-	PluginId string `json:"pluginId"`
-	Name     string `json:"name"`
-	Value    string `json:"value"`
 }

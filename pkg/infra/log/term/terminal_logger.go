@@ -47,9 +47,9 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	b := &bytes.Buffer{}
 	lvl := strings.ToUpper(r.level.String())
 	if r.color > 0 {
-		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg)
+		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	} else {
-		fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.time.Format(termTimeFormat), r.msg)
+		fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	}
 
 	// try to justify the log output for short messages
@@ -160,7 +160,7 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
 
 		// XXX: we should probably check that all of your key bytes aren't invalid
 		if color > 0 {
-			fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v)
+			fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v) // lgtm[go/log-injection]
 		} else {
 			buf.WriteString(k)
 			buf.WriteByte('=')
