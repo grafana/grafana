@@ -16,29 +16,28 @@ import (
 )
 
 type PluginsService struct {
-	availableUpdates map[string]PluginUpdate
+	availableUpdates map[string]string
 
 	enabled        bool
 	grafanaVersion string
 	pluginStore    plugins.Store
-	httpClient     http.Client
+	httpClient     httpClient
 	log            log.Logger
-}
-
-type PluginUpdate struct {
-	GcomVersion string
-	HasUpdate   bool
 }
 
 func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store) *PluginsService {
 	return &PluginsService{
 		enabled:          cfg.CheckForUpdates,
 		grafanaVersion:   cfg.BuildVersion,
-		httpClient:       http.Client{Timeout: 10 * time.Second},
+		httpClient:       &http.Client{Timeout: 10 * time.Second},
 		log:              log.New("plugins.update.checker"),
 		pluginStore:      pluginStore,
-		availableUpdates: make(map[string]PluginUpdate),
+		availableUpdates: make(map[string]string),
 	}
+}
+
+type httpClient interface {
+	Get(url string) (resp *http.Response, err error)
 }
 
 func (s *PluginsService) IsDisabled() bool {
@@ -63,24 +62,24 @@ func (s *PluginsService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (PluginUpdate, bool) {
-	update, updateAvailable := s.availableUpdates[pluginID]
-	if updateAvailable {
+func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string, bool) {
+	if update, updateAvailable := s.availableUpdates[pluginID]; updateAvailable {
 		// check if plugin has already been updated since the last invocation of `checkForUpdates`
 		plugin, exists := s.pluginStore.Plugin(ctx, pluginID)
 		if !exists {
-			return PluginUpdate{}, false
+			return "", false
 		}
 
 		// can ignore update as the update data is stale
-		if sameVersion(plugin.Info.Version, update.GcomVersion) {
-			return PluginUpdate{}, false
+		if !canUpgrade(plugin.Info.Version, update) {
+			delete(s.availableUpdates, pluginID)
+			return "", false
 		}
 
 		return update, true
 	}
 
-	return PluginUpdate{}, false
+	return "", false
 }
 
 func (s *PluginsService) checkForUpdates(ctx context.Context) {
@@ -121,10 +120,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 			delete(s.availableUpdates, localP.ID)
 
 			if canUpgrade(localP.Info.Version, gcomP.Version) {
-				s.availableUpdates[localP.ID] = PluginUpdate{
-					GcomVersion: gcomP.Version,
-					HasUpdate:   true,
-				}
+				s.availableUpdates[localP.ID] = gcomP.Version
 			}
 		}
 	}
@@ -141,23 +137,6 @@ func canUpgrade(v1, v2 string) bool {
 	}
 
 	return ver1.LessThan(ver2)
-}
-
-func sameVersion(v1, v2 string) bool {
-	if v1 == v2 {
-		return true
-	}
-
-	ver1, err1 := version.NewVersion(v1)
-	if err1 != nil {
-		return false
-	}
-	ver2, err2 := version.NewVersion(v2)
-	if err2 != nil {
-		return false
-	}
-
-	return ver1.Equal(ver2)
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]plugins.PluginDTO) string {

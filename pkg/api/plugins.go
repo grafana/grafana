@@ -83,8 +83,8 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
 		if exists {
-			listItem.LatestVersion = update.GcomVersion
-			listItem.HasUpdate = update.HasUpdate
+			listItem.LatestVersion = update
+			listItem.HasUpdate = true
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
@@ -155,8 +155,8 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
 	if exists {
-		dto.LatestVersion = update.GcomVersion
-		dto.HasUpdate = update.HasUpdate
+		dto.LatestVersion = update
+		dto.HasUpdate = true
 	}
 
 	return response.JSON(200, dto)
