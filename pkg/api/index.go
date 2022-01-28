@@ -158,24 +158,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		navbarPrefsQuery := models.GetNavbarPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
-		if err := hs.SQLStore.GetNavbarPreferences(c.Req.Context(), &navbarPrefsQuery); err != nil {
-			return nil, err
-		}
-		showHome := true
-		for _, v := range *navbarPrefsQuery.Result {
-			if v.NavItemId == "home" {
-				showHome = v.ShowInNavbar
-			}
-		}
 		navTree = append(navTree, &dtos.NavLink{
-			Text:         "Home",
-			Id:           "home",
-			Icon:         "home-alt",
-			Url:          hs.Cfg.AppSubURL + "/",
-			Section:      dtos.NavSectionCore,
-			SortWeight:   dtos.WeightHome,
-			ShowInNavBar: showHome,
+			Text:       "Home",
+			Id:         "home",
+			Icon:       "home-alt",
+			Url:        hs.Cfg.AppSubURL + "/",
+			Section:    dtos.NavSectionCore,
+			SortWeight: dtos.WeightHome,
 		})
 	}
 
@@ -394,6 +383,26 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Section:    dtos.NavSectionConfig,
 		Children:   []*dtos.NavLink{},
 	})
+
+	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+		// query navbar_preferences table for any preferences
+		navbarPrefsQuery := models.GetNavbarPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
+		if err := hs.SQLStore.GetNavbarPreferences(c.Req.Context(), &navbarPrefsQuery); err != nil {
+			return nil, err
+		}
+
+		for _, navItem := range navTree {
+			// show everything by default
+			navItem.ShowInNavBar = true
+
+			// override with preference if exists
+			for _, navbarPref := range *navbarPrefsQuery.Result {
+				if navItem.Id == navbarPref.NavItemId {
+					navItem.ShowInNavBar = navbarPref.ShowInNavbar
+				}
+			}
+		}
+	}
 
 	return navTree, nil
 }
