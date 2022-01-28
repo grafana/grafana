@@ -22,6 +22,10 @@ var ErrUnknownCapability = errors.New("unknown capability")
 var ErrInvalidPluginVersion = errors.New("invalid plugin version")
 
 func (rs *RenderingService) HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error) {
+	if !rs.IsAvailable() {
+		return CapabilitySupportRequestResult{IsSupported: false, SemverConstraint: ""}, ErrRenderUnavailable
+	}
+
 	var semverConstraint string
 	for i := range rs.capabilities {
 		if rs.capabilities[i].name == capability {
@@ -32,10 +36,6 @@ func (rs *RenderingService) HasCapability(capability CapabilityName) (Capability
 
 	if semverConstraint == "" {
 		return CapabilitySupportRequestResult{}, ErrUnknownCapability
-	}
-
-	if !rs.IsAvailable() {
-		return CapabilitySupportRequestResult{IsSupported: false, SemverConstraint: semverConstraint}, ErrRenderUnavailable
 	}
 
 	compiledSemverConstraint, err := semver.NewConstraint(semverConstraint)

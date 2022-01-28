@@ -49,7 +49,7 @@ func TestCapabilities(t *testing.T) {
 			expectedError:   ErrRenderUnavailable,
 			expectedResult: CapabilitySupportRequestResult{
 				IsSupported:      false,
-				SemverConstraint: testCapabilitySemverConstraint,
+				SemverConstraint: "",
 			},
 		},
 		{
