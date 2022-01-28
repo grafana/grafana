@@ -245,7 +245,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		err := sqlStore.SaveAlerts(context.Background(), testDash.Id, items)
 		require.Nil(t, err)
 
-		err = DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
+		err = sqlStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 			OrgId: 1,
 			Id:    testDash.Id,
 		})
