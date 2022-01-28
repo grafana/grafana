@@ -2,6 +2,7 @@ package resourceservices
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -18,8 +19,20 @@ func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStor
 		return nil, err
 	}
 
+	dashboardsService, err := provideDashboardService(sql, router, ac, store)
+	if err != nil {
+		return nil, err
+	}
+
+	folderService, err := provideFolderService(sql, router, ac, store)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ResourceServices{services: map[string]*resourcepermissions.Service{
-		"teams": teamPermissions,
+		"teams":      teamPermissions,
+		"folders":    folderService,
+		"dashboards": dashboardsService,
 	}}, nil
 }
 
@@ -29,6 +42,14 @@ type ResourceServices struct {
 
 func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
 	return s.services["teams"]
+}
+
+func (s *ResourceServices) GetDashboardService() *resourcepermissions.Service {
+	return s.services["dashboards"]
+}
+
+func (s *ResourceServices) GetFolderService() *resourcepermissions.Service {
+	return s.services["folders"]
 }
 
 var (
@@ -100,4 +121,80 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 	}
 
 	return resourcepermissions.New(options, router, ac, store, sql)
+}
+
+var dashboardsView = []string{accesscontrol.ActionDashboardsRead}
+var dashboardsEdit = append(dashboardsView, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
+var dashboardsAdmin = append(dashboardsEdit, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
+var foldersView = []string{accesscontrol.ActionFoldersRead}
+var foldersEdit = append(foldersView, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
+var foldersAdmin = append(foldersEdit, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
+
+func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegister, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+	options := resourcepermissions.Options{
+		Resource: "dashboards",
+		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			id, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			if dash, err := sql.GetDashboard(id, orgID, "", ""); err != nil {
+				return err
+			} else if dash.IsFolder {
+				return errors.New("not found")
+			}
+
+			return nil
+		},
+		Assignments: resourcepermissions.Assignments{
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
+		},
+		PermissionsToActions: map[string][]string{
+			"View":  dashboardsView,
+			"Edit":  dashboardsEdit,
+			"Admin": dashboardsAdmin,
+		},
+		ReaderRoleName: "Dashboard permission reader",
+		WriterRoleName: "Dashboard permission writer",
+		RoleGroup:      "Dashboards",
+	}
+
+	return resourcepermissions.New(options, router, accesscontrol, store, sql)
+}
+
+func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+	options := resourcepermissions.Options{
+		Resource: "folders",
+		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			id, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
+			if dashboard, err := sql.GetDashboard(id, orgID, "", ""); err != nil {
+				return err
+			} else if !dashboard.IsFolder {
+				return errors.New("not found")
+			}
+
+			return nil
+		},
+		Assignments: resourcepermissions.Assignments{
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
+		},
+		PermissionsToActions: map[string][]string{
+			"View":  append(dashboardsView, foldersView...),
+			"Edit":  append(dashboardsEdit, foldersEdit...),
+			"Admin": append(dashboardsAdmin, foldersAdmin...),
+		},
+		ReaderRoleName: "Folder permission reader",
+		WriterRoleName: "Folder permission writer",
+		RoleGroup:      "Folders",
+	}
+
+	return resourcepermissions.New(options, router, accesscontrol, store, sql)
 }
