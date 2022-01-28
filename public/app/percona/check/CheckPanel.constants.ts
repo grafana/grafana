@@ -1,7 +1,4 @@
-import { PageModel } from '../../core/components/Breadcrumb';
-
-import { Messages } from './CheckPanel.messages';
-import { Failed } from './components';
+import { Failed } from './components/Failed/Failed';
 import { CheckPanelOptions, Column, SeverityMap, TabKeys } from './types';
 
 export const PMM_SETTINGS_URL = '/graph/settings/advanced-settings';
