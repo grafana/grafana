@@ -27,7 +27,9 @@ type Store interface {
 	GetUserOrgList(context.Context, *models.GetUserOrgListQuery) error
 	UpdateOrgUser(context.Context, *models.UpdateOrgUserCommand) error
 	RemoveOrgUser(context.Context, *models.RemoveOrgUserCommand) error
+	AddOrgUser(context.Context, *models.AddOrgUserCommand) error
 	SetUsingOrg(context.Context, *models.SetUsingOrgCommand) error
+	DisableUser(context.Context, *models.DisableUserCommand) error
 }
 
 func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
@@ -95,7 +97,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 				AuthId:     extUser.AuthId,
 				OAuthToken: extUser.OAuthToken,
 			}
-			if err := ls.Bus.Dispatch(ctx, cmd2); err != nil {
+			if err := ls.AuthInfoService.SetAuthInfo(ctx, cmd2); err != nil {
 				return err
 			}
 		}
@@ -117,7 +119,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 		if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if err := ls.Bus.Dispatch(ctx, &models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
+			if err := ls.Store.DisableUser(ctx, &models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
 				return err
 			}
 		}
@@ -246,7 +248,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *models.User, e
 
 		// add role
 		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
-		err := bus.Dispatch(ctx, cmd)
+		err := ls.Store.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}

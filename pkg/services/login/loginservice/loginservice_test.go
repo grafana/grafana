@@ -20,26 +20,10 @@ type MockStore struct {
 	removeOrgUser  func(context.Context, *models.RemoveOrgUserCommand) error
 }
 
-func (m *MockStore) CreateUser(_ context.Context, _ models.CreateUserCommand) (*models.User, error) {
-	return nil, nil
-}
-
-func (m *MockStore) UpdateUserPermissions(_ int64, _ bool) error {
-	return nil
-}
-
-func (m *MockStore) UpdateUser(_ context.Context, _ *models.UpdateUserCommand) error {
-	return nil
-}
-
 func (m *MockStore) GetUserOrgList(c context.Context, cmd *models.GetUserOrgListQuery) error {
 	if m.getUserOrgList != nil {
 		return m.getUserOrgList(c, cmd)
 	}
-	return nil
-}
-
-func (m *MockStore) UpdateOrgUser(_ context.Context, _ *models.UpdateOrgUserCommand) error {
 	return nil
 }
 
@@ -49,10 +33,17 @@ func (m *MockStore) RemoveOrgUser(c context.Context, cmd *models.RemoveOrgUserCo
 	}
 	return nil
 }
-
-func (m *MockStore) SetUsingOrg(_ context.Context, _ *models.SetUsingOrgCommand) error {
+func (m *MockStore) AddOrgUser(context.Context, *models.AddOrgUserCommand) error { return nil }
+func (m *MockStore) CreateUser(_ context.Context, _ models.CreateUserCommand) (*models.User, error) {
+	return nil, nil
+}
+func (m *MockStore) UpdateUserPermissions(_ int64, _ bool) error                     { return nil }
+func (m *MockStore) UpdateUser(_ context.Context, _ *models.UpdateUserCommand) error { return nil }
+func (m *MockStore) UpdateOrgUser(_ context.Context, _ *models.UpdateOrgUserCommand) error {
 	return nil
 }
+func (m *MockStore) SetUsingOrg(_ context.Context, _ *models.SetUsingOrgCommand) error { return nil }
+func (m *MockStore) DisableUser(context.Context, *models.DisableUserCommand) error     { return nil }
 
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
 	store := &MockStore{}
@@ -121,6 +112,9 @@ func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models
 	return a.user, a.err
 }
 func (a *authInfoServiceMock) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	return nil
+}
+func (a *authInfoServiceMock) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	return nil
 }
 
