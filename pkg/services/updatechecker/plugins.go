@@ -63,10 +63,21 @@ func (s *PluginsService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *PluginsService) HasUpdate(_ context.Context, pluginID string) (PluginUpdate, bool) {
-	val, exists := s.availableUpdates[pluginID]
-	if exists {
-		return val, true
+func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (PluginUpdate, bool) {
+	update, updateAvailable := s.availableUpdates[pluginID]
+	if updateAvailable {
+		// check if plugin has already been updated since the last invocation of `checkForUpdates`
+		plugin, exists := s.pluginStore.Plugin(ctx, pluginID)
+		if !exists {
+			return PluginUpdate{}, false
+		}
+
+		// can ignore update as the update data is stale
+		if sameVersion(plugin.Info.Version, update.GcomVersion) {
+			return PluginUpdate{}, false
+		}
+
+		return update, true
 	}
 
 	return PluginUpdate{}, false
@@ -105,47 +116,66 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 		return
 	}
 
-	for _, localP := range localPlugins {
-		for _, gcomP := range gcomPlugins {
-			if gcomP.Slug == localP.ID {
-				plugVersion, err1 := version.NewVersion(localP.Info.Version)
-				gplugVersion, err2 := version.NewVersion(gcomP.Version)
+	for _, gcomP := range gcomPlugins {
+		if localP, exists := localPlugins[gcomP.Slug]; exists {
+			delete(s.availableUpdates, localP.ID)
 
-				var updateDetails PluginUpdate
-				if err1 != nil || err2 != nil {
-					updateDetails = PluginUpdate{
-						GcomVersion: gcomP.Version,
-						HasUpdate:   localP.Info.Version != gcomP.Version,
-					}
-				} else {
-					updateDetails = PluginUpdate{
-						GcomVersion: gcomP.Version,
-						HasUpdate:   plugVersion.LessThan(gplugVersion),
-					}
+			if canUpgrade(localP.Info.Version, gcomP.Version) {
+				s.availableUpdates[localP.ID] = PluginUpdate{
+					GcomVersion: gcomP.Version,
+					HasUpdate:   true,
 				}
-				s.availableUpdates[localP.ID] = updateDetails
 			}
 		}
 	}
 }
 
-func (s *PluginsService) pluginIDsCSV(list []plugins.PluginDTO) string {
+func canUpgrade(v1, v2 string) bool {
+	ver1, err1 := version.NewVersion(v1)
+	if err1 != nil {
+		return false
+	}
+	ver2, err2 := version.NewVersion(v2)
+	if err2 != nil {
+		return false
+	}
+
+	return ver1.LessThan(ver2)
+}
+
+func sameVersion(v1, v2 string) bool {
+	if v1 == v2 {
+		return true
+	}
+
+	ver1, err1 := version.NewVersion(v1)
+	if err1 != nil {
+		return false
+	}
+	ver2, err2 := version.NewVersion(v2)
+	if err2 != nil {
+		return false
+	}
+
+	return ver1.Equal(ver2)
+}
+
+func (s *PluginsService) pluginIDsCSV(m map[string]plugins.PluginDTO) string {
 	var ids []string
-	for _, p := range list {
-		ids = append(ids, p.ID)
+	for pluginID := range m {
+		ids = append(ids, pluginID)
 	}
 
 	return strings.Join(ids, ",")
 }
 
-func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
+func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map[string]plugins.PluginDTO {
+	result := make(map[string]plugins.PluginDTO)
 	for _, p := range s.pluginStore.Plugins(ctx) {
 		if p.IsCorePlugin() {
 			continue
 		}
-
-		result = append(result, p)
+		result[p.ID] = p
 	}
 
 	return result
