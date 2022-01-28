@@ -244,7 +244,7 @@
     "@kusto/monaco-kusto": "4.1.2",
     "@lingui/core": "3.13.0",
     "@lingui/react": "3.13.0",
-    "@opentelemetry/api": "1.0.4",
+    "@opentelemetry/api": "1.1.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.0.1",
     "@popperjs/core": "2.11.2",
