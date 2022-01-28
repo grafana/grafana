@@ -319,6 +319,9 @@ const (
 	ActionTeamsWrite            = "teams:write"
 	ActionTeamsPermissionsRead  = "teams.permissions:read"
 	ActionTeamsPermissionsWrite = "teams.permissions:write"
+
+	// Team related scopes
+	ScopeTeamsAll = "teams:*"
 )
 
 var (

@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/fs"
 	"github.com/grafana/grafana/pkg/plugins/repository"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -546,9 +545,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		DevMode: false,
 	}
 
-	requestValidator := &testPluginRequestValidator{}
-	loader := &fakeLoader{}
-	pm := New(cfg, requestValidator, nil, loader, &fakeFsManager{}, &sqlstore.SQLStore{})
+	pm := New(cfg, nil, &fakeLoader{}, &fakeFsManager{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -573,9 +570,8 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
-	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	manager := New(cfg, requestValidator, nil, loader, &fakeFsManager{}, nil)
+	manager := New(cfg, nil, loader, &fakeFsManager{})
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -758,12 +754,6 @@ func (pc *fakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *fakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
-}
-
-type testPluginRequestValidator struct{}
-
-func (t *testPluginRequestValidator) Validate(string, *http.Request) error {
-	return nil
 }
 
 type fakeLogger struct {
