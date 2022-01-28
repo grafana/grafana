@@ -19,7 +19,11 @@ func TestProvisioningStore(t *testing.T) {
 			UID: "asdf",
 		}
 
+<<<<<<< HEAD
 		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
+=======
+		provenance, err := dbstore.GetProvenance(&rule)
+>>>>>>> e2d3a70cd5 (Improved type safety for provisioned objects)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, provenance)
@@ -29,10 +33,17 @@ func TestProvisioningStore(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "123",
 		}
+<<<<<<< HEAD
 		err := dbstore.SetProvenance(context.Background(), &rule, models.ProvenanceFile)
 		require.NoError(t, err)
 
 		p, err := dbstore.GetProvenance(context.Background(), &rule)
+=======
+		err := dbstore.SetProvenance(&rule, models.File)
+		require.NoError(t, err)
+
+		p, err := dbstore.GetProvenance(&rule)
+>>>>>>> e2d3a70cd5 (Improved type safety for provisioned objects)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
