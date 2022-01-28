@@ -315,7 +315,11 @@ function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
+  const {
+    richHistory: nextRichHistory,
+    localStorageFull,
+    limitExceeded,
+  } = addToRichHistory(
     state.richHistory || [],
     datasourceId,
     datasource.name,

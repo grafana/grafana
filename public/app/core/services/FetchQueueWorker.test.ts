@@ -7,23 +7,23 @@ import { expect } from '../../../test/lib/common';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const getTestContext = (http2Enabled = false) => {
-  const config: GrafanaBootConfig = ({ http2Enabled } as unknown) as GrafanaBootConfig;
+  const config: GrafanaBootConfig = { http2Enabled } as unknown as GrafanaBootConfig;
   const dataUrl = 'http://localhost:3000/api/ds/query?=abc';
   const apiUrl = 'http://localhost:3000/api/alerts?state=all';
   const updates: Subject<FetchQueueUpdate> = new Subject<FetchQueueUpdate>();
 
-  const queueMock: FetchQueue = ({
+  const queueMock: FetchQueue = {
     add: jest.fn(),
     setInProgress: jest.fn(),
     setDone: jest.fn(),
     getUpdates: () => updates.asObservable(),
-  } as unknown) as FetchQueue;
+  } as unknown as FetchQueue;
 
   const addMock = jest.fn();
-  const responseQueueMock: ResponseQueue = ({
+  const responseQueueMock: ResponseQueue = {
     add: addMock,
     getResponses: jest.fn(),
-  } as unknown) as ResponseQueue;
+  } as unknown as ResponseQueue;
 
   new FetchQueueWorker(queueMock, responseQueueMock, config);
 

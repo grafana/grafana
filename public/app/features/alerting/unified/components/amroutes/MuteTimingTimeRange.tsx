@@ -13,7 +13,11 @@ export const MuteTimingTimeRange: FC<Props> = ({ intervalIndex }) => {
   const styles = useStyles2(getStyles);
   const { register, formState } = useFormContext<MuteTimingFields>();
 
-  const { fields: timeRanges, append: addTimeRange, remove: removeTimeRange } = useFieldArray<MuteTimingFields>({
+  const {
+    fields: timeRanges,
+    append: addTimeRange,
+    remove: removeTimeRange,
+  } = useFieldArray<MuteTimingFields>({
     name: `time_intervals.${intervalIndex}.times`,
   });
 

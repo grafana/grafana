@@ -62,9 +62,9 @@ export function ChannelOptions<R extends ChannelValues>({
           );
         }
 
-        const error: FieldError | DeepMap<any, FieldError> | undefined = ((option.secure
-          ? errors?.secureSettings
-          : errors?.settings) as DeepMap<any, FieldError> | undefined)?.[option.propertyName];
+        const error: FieldError | DeepMap<any, FieldError> | undefined = (
+          (option.secure ? errors?.secureSettings : errors?.settings) as DeepMap<any, FieldError> | undefined
+        )?.[option.propertyName];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 

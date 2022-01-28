@@ -308,15 +308,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
   render() {
     const { ExtraFieldElement, data, query, datasource, allowCustomValue } = this.props;
-    const {
-      selectedLogGroups,
-      availableLogGroups,
-      regions,
-      selectedRegion,
-      loadingLogGroups,
-      hint,
-      invalidLogGroups,
-    } = this.state;
+    const { selectedLogGroups, availableLogGroups, regions, selectedRegion, loadingLogGroups, hint, invalidLogGroups } =
+      this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;

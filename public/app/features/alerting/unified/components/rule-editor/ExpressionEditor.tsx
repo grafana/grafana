@@ -15,7 +15,11 @@ export interface ExpressionEditorProps {
 export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
   const [query, setQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
-  const { error, loading, value: dataSource } = useAsync(() => {
+  const {
+    error,
+    loading,
+    value: dataSource,
+  } = useAsync(() => {
     return getDataSourceSrv().get(dataSourceName);
   }, [dataSourceName]);
 

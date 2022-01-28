@@ -109,7 +109,7 @@ const simpleWorldmapConfig = {
 
 describe('geomap migrations', () => {
   it('updates marker', () => {
-    const panel = ({
+    const panel = {
       type: 'geomap',
       options: {
         layers: [
@@ -134,7 +134,7 @@ describe('geomap migrations', () => {
         ],
       },
       pluginVersion: '8.2.0',
-    } as any) as PanelModel;
+    } as any as PanelModel;
     panel.options = mapMigrationHandler(panel);
 
     expect(panel).toMatchInlineSnapshot(`

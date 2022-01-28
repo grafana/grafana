@@ -18,10 +18,10 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
-  const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
-    rules,
-    rulesDataSources,
-  ]);
+  const dataSourcesLoading = useMemo(
+    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading),
+    [rules, rulesDataSources]
+  );
 
   return (
     <section className={styles.wrapper}>

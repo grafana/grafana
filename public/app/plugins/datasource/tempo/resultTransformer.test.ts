@@ -48,7 +48,7 @@ describe('transformToOTLP()', () => {
 describe('transformFromOTLP()', () => {
   test('transforms OTLP format to dataFrame', () => {
     const res = transformFromOTLP(
-      (otlpResponse.batches as unknown) as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      otlpResponse.batches as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
       false
     );
     expect(res.data[0]).toMatchObject(otlpDataFrameFromResponse);

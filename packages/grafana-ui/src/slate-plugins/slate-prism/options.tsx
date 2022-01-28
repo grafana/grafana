@@ -54,7 +54,8 @@ class Options
     getSyntax: defaultGetSyntax,
     renderDecoration: defaultRenderDecoration,
   })
-  implements OptionsFormat {
+  implements OptionsFormat
+{
   declare readonly onlyIn: (node: Node) => boolean;
   declare readonly getSyntax: (node: Node) => string;
   declare readonly renderDecoration: (

@@ -31,7 +31,7 @@ describe('AutoRefreshIntervals', () => {
 
   describe('when component is mounted without refreshIntervals', () => {
     it('then default intervals should be shown', () => {
-      setupTestContext({ refreshIntervals: (null as unknown) as string[] });
+      setupTestContext({ refreshIntervals: null as unknown as string[] });
 
       expect(screen.getByRole('textbox')).toHaveValue('5s,10s,30s,1m,5m,15m,30m,1h,2h,1d');
     });
@@ -96,9 +96,9 @@ describe('getValidIntervals', () => {
       const emptyIntervals = ['', '5s', ' ', '10s', '  '];
       const dependencies = {
         getTimeSrv: () =>
-          (({
+          ({
             getValidIntervals: (intervals: any) => intervals,
-          } as unknown) as TimeSrv),
+          } as unknown as TimeSrv),
       };
 
       const result = getValidIntervals(emptyIntervals, dependencies);
@@ -112,9 +112,9 @@ describe('getValidIntervals', () => {
       const duplicateIntervals = ['5s', '10s', '1m', '5s', '30s', '10s', '5s', '2m'];
       const dependencies = {
         getTimeSrv: () =>
-          (({
+          ({
             getValidIntervals: (intervals: any) => intervals,
-          } as unknown) as TimeSrv),
+          } as unknown as TimeSrv),
       };
 
       const result = getValidIntervals(duplicateIntervals, dependencies);
@@ -128,9 +128,9 @@ describe('getValidIntervals', () => {
       const duplicateIntervals = [' 5s', '10s ', ' 1m ', ' 3 0 s ', '   2      m     '];
       const dependencies = {
         getTimeSrv: () =>
-          (({
+          ({
             getValidIntervals: (intervals: any) => intervals,
-          } as unknown) as TimeSrv),
+          } as unknown as TimeSrv),
       };
 
       const result = getValidIntervals(duplicateIntervals, dependencies);
@@ -145,9 +145,9 @@ describe('validateIntervals', () => {
     it('then it should return null', () => {
       const dependencies = {
         getTimeSrv: () =>
-          (({
+          ({
             getValidIntervals: (intervals: any) => intervals,
-          } as unknown) as TimeSrv),
+          } as unknown as TimeSrv),
       };
 
       const result = validateIntervals(defaultIntervals, dependencies);
@@ -160,11 +160,11 @@ describe('validateIntervals', () => {
     it('then it should return the exception message', () => {
       const dependencies = {
         getTimeSrv: () =>
-          (({
+          ({
             getValidIntervals: () => {
               throw new Error('Some error');
             },
-          } as unknown) as TimeSrv),
+          } as unknown as TimeSrv),
       };
 
       const result = validateIntervals(defaultIntervals, dependencies);

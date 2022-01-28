@@ -55,7 +55,7 @@ describe('DataLinksListItem', () => {
     it('then the link title should be replaced by [Data link title not provided]', () => {
       const link = {
         ...baseLink,
-        title: (undefined as unknown) as string,
+        title: undefined as unknown as string,
       };
       setupTestContext({ link });
 
@@ -67,7 +67,7 @@ describe('DataLinksListItem', () => {
     it('then the link url should be replaced by [Data link url not provided]', () => {
       const link = {
         ...baseLink,
-        url: (undefined as unknown) as string,
+        url: undefined as unknown as string,
       };
       setupTestContext({ link });
 

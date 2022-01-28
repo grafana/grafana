@@ -8,7 +8,7 @@ import { PlaylistForm } from './PlaylistForm';
 
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   const onSubmitMock = jest.fn();
-  const playlist = ({ name, items, interval } as unknown) as Playlist;
+  const playlist = { name, items, interval } as unknown as Playlist;
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
   return { onSubmitMock, playlist, rerender };

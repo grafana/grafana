@@ -135,7 +135,7 @@ describe('shared actions', () => {
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
       const preloadedState = {
-        templating: ({} as unknown) as TemplatingState,
+        templating: {} as unknown as TemplatingState,
       };
       const locationService: any = { getSearchObject: () => ({}) };
       runtime.setLocationService(locationService);
@@ -208,7 +208,7 @@ describe('shared actions', () => {
       const locationService: any = { getSearchObject: () => query };
       runtime.setLocationService(locationService);
       const preloadedState = {
-        templating: ({} as unknown) as TemplatingState,
+        templating: {} as unknown as TemplatingState,
       };
 
       const tester = await reduxTester<TemplatingReducerType>({ preloadedState })

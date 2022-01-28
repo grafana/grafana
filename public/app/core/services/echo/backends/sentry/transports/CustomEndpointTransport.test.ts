@@ -42,9 +42,9 @@ describe('CustomEndpointTransport', () => {
     const rateLimiterResponse = {
       status: 429,
       ok: false,
-      headers: (new Headers({
+      headers: new Headers({
         'Retry-After': '1', // 1 second
-      }) as any) as Headers,
+      }) as any as Headers,
     } as Response;
     fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
     const transport = new CustomEndpointTransport({ endpoint: '/log' });
@@ -67,9 +67,9 @@ describe('CustomEndpointTransport', () => {
     const rateLimiterResponse = {
       status: 429,
       ok: false,
-      headers: (new Headers({
+      headers: new Headers({
         'Retry-After': '1', // 1 second
-      }) as any) as Headers,
+      }) as any as Headers,
     } as Response;
     fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
     const transport = new CustomEndpointTransport({ endpoint: '/log' });

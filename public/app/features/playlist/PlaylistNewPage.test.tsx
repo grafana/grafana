@@ -21,7 +21,7 @@ jest.mock('@grafana/runtime', () => ({
 
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
-  const playlist = ({ name, items, interval } as unknown) as Playlist;
+  const playlist = { name, items, interval } as unknown as Playlist;
   const queryParams = {};
   const route: any = {};
   const match: any = {};

@@ -218,9 +218,9 @@ describe('reducer', () => {
   describe('query rows', () => {
     it('adds a new query row', () => {
       reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, ({
+        .givenReducer(queryReducer, {
           queries: [],
-        } as unknown) as ExploreItemState)
+        } as unknown as ExploreItemState)
         .whenActionIsDispatched(
           addQueryRowAction({
             exploreId: ExploreId.left,
@@ -228,10 +228,10 @@ describe('reducer', () => {
             index: 0,
           })
         )
-        .thenStateShouldEqual(({
+        .thenStateShouldEqual({
           queries: [{ refId: 'A', key: 'mockKey' }],
           queryKeys: ['mockKey-0'],
-        } as unknown) as ExploreItemState);
+        } as unknown as ExploreItemState);
     });
   });
 
@@ -335,7 +335,7 @@ describe('reducer', () => {
     beforeEach(() => {
       unsubscribes = [];
       mockLogsVolumeDataProvider = () => {
-        return ({
+        return {
           subscribe: () => {
             const unsubscribe = jest.fn();
             unsubscribes.push(unsubscribe);
@@ -343,7 +343,7 @@ describe('reducer', () => {
               unsubscribe,
             };
           },
-        } as unknown) as Observable<DataQueryResponse>;
+        } as unknown as Observable<DataQueryResponse>;
       };
 
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({

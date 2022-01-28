@@ -62,12 +62,12 @@ describe('urlParser', () => {
 
   describe('parsing toUrl with filters with undefined values', () => {
     it('then url params should be correct', () => {
-      const a = ({
+      const a = {
         value: undefined,
         key: 'key',
         operator: undefined,
         condition: '',
-      } as unknown) as AdHocVariableFilter;
+      } as unknown as AdHocVariableFilter;
 
       const filters: AdHocVariableFilter[] = [a];
 
@@ -80,12 +80,12 @@ describe('urlParser', () => {
 
   describe('parsing toUrl with filters with number values', () => {
     it('then url params should be correct', () => {
-      const a = ({
+      const a = {
         value: 1974,
         key: 'key',
         operator: '=',
         condition: '',
-      } as unknown) as AdHocVariableFilter;
+      } as unknown as AdHocVariableFilter;
 
       const filters: AdHocVariableFilter[] = [a];
 
@@ -98,12 +98,12 @@ describe('urlParser', () => {
 
   describe('parsing toUrl with filters with boolean values', () => {
     it('then url params should be correct', () => {
-      const a = ({
+      const a = {
         value: false,
         key: 'key',
         operator: '=',
         condition: '',
-      } as unknown) as AdHocVariableFilter;
+      } as unknown as AdHocVariableFilter;
 
       const filters: AdHocVariableFilter[] = [a];
 

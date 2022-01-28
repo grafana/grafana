@@ -1382,7 +1382,7 @@ describe('ElasticResponse', () => {
         expect(r._source).toEqual(
           flatten(
             response.responses[0].hits.hits[i]._source,
-            (null as unknown) as { delimiter?: any; maxDepth?: any; safe?: any }
+            null as unknown as { delimiter?: any; maxDepth?: any; safe?: any }
           )
         );
       }

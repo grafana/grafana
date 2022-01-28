@@ -13,22 +13,18 @@ export function useViewRange() {
   });
 
   const updateNextViewRangeTime = useCallback(function updateNextViewRangeTime(update: ViewRangeTimeUpdate) {
-    setViewRange(
-      (prevRange): ViewRange => {
-        const time = { ...prevRange.time, ...update };
-        return { ...prevRange, time };
-      }
-    );
+    setViewRange((prevRange): ViewRange => {
+      const time = { ...prevRange.time, ...update };
+      return { ...prevRange, time };
+    });
   }, []);
 
   const updateViewRangeTime = useCallback(function updateViewRangeTime(start: number, end: number) {
     const current: [number, number] = [start, end];
     const time = { current };
-    setViewRange(
-      (prevRange): ViewRange => {
-        return { ...prevRange, time };
-      }
-    );
+    setViewRange((prevRange): ViewRange => {
+      return { ...prevRange, time };
+    });
   }, []);
 
   return { viewRange, updateViewRangeTime, updateNextViewRangeTime };

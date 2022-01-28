@@ -302,7 +302,7 @@ const prepConfig = (
           arc
         ) => {
           const scatterInfo = scatterSeries[seriesIdx - 1];
-          let d = (u.data[seriesIdx] as unknown) as FacetSeries;
+          let d = u.data[seriesIdx] as unknown as FacetSeries;
 
           let showLine = scatterInfo.line !== ScatterLineMode.None;
           let showPoints = scatterInfo.point === VisibilityMode.Always;

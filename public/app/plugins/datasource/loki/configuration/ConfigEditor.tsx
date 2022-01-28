@@ -8,18 +8,17 @@ import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/uti
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
-const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
-  options: DataSourceSettings<LokiOptions>,
-  value: T
-): DataSourceSettings<LokiOptions> => {
-  return {
-    ...options,
-    jsonData: {
-      ...options.jsonData,
-      [field]: value,
-    },
+const makeJsonUpdater =
+  <T extends any>(field: keyof LokiOptions) =>
+  (options: DataSourceSettings<LokiOptions>, value: T): DataSourceSettings<LokiOptions> => {
+    return {
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        [field]: value,
+      },
+    };
   };
-};
 
 const setMaxLines = makeJsonUpdater('maxLines');
 const setDerivedFields = makeJsonUpdater('derivedFields');

@@ -10,7 +10,7 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { lastValueFrom } from 'rxjs';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 

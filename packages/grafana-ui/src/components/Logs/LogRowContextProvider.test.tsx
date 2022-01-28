@@ -179,7 +179,7 @@ const row: LogRowModel = {
   rowIndex: 0,
   dataFrame: new MutableDataFrame(),
   entry: '4',
-  labels: (null as any) as Labels,
+  labels: null as any as Labels,
   hasAnsi: false,
   hasUnescapedContent: false,
   raw: '4',

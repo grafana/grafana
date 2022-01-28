@@ -19,7 +19,7 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
 
   constructor(private data: DataFrame) {
     super();
-    const obj = ({} as unknown) as T;
+    const obj = {} as unknown as T;
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];

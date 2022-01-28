@@ -277,7 +277,7 @@ describe('PanelQueryRunner', () => {
     {
       getFieldOverrideOptions: () => undefined,
       // @ts-ignore
-      getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
+      getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );
@@ -320,7 +320,7 @@ describe('PanelQueryRunner', () => {
         theme: grafanaData.createTheme(),
       }),
       // @ts-ignore
-      getTransformations: () => [({} as unknown) as grafanaData.DataTransformerConfig],
+      getTransformations: () => [{} as unknown as grafanaData.DataTransformerConfig],
       getDataSupport: () => ({ annotations: false, alertStates: false }),
     }
   );

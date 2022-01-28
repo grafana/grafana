@@ -92,19 +92,18 @@ export const commitChangesToVariable = (callback?: (updated: any) => void): Thun
   };
 };
 
-export const openOptions = ({ id }: VariableIdentifier, callback?: (updated: any) => void): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
-  const picker = getState().templating.optionsPicker;
+export const openOptions =
+  ({ id }: VariableIdentifier, callback?: (updated: any) => void): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const picker = getState().templating.optionsPicker;
 
-  if (picker.id && picker.id !== id) {
-    await dispatch(commitChangesToVariable(callback));
-  }
+    if (picker.id && picker.id !== id) {
+      await dispatch(commitChangesToVariable(callback));
+    }
 
-  const variable = getVariable<VariableWithMultiSupport>(id, getState());
-  dispatch(showOptions(variable));
-};
+    const variable = getVariable<VariableWithMultiSupport>(id, getState());
+    dispatch(showOptions(variable));
+  };
 
 export const toggleOptionByHighlight = (clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {

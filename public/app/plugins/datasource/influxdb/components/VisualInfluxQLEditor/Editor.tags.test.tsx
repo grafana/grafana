@@ -86,9 +86,9 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
   it('should not send fields in tag-structures to metadata queries', async () => {
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
-    const datasource: InfluxDatasource = ({
+    const datasource: InfluxDatasource = {
       metricFindQuery: () => Promise.resolve([]),
-    } as unknown) as InfluxDatasource;
+    } as unknown as InfluxDatasource;
     render(<Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />);
 
     // when the editor-widget mounts, it calls getTagKeysForMeasurementAndTags

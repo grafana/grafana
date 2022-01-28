@@ -334,9 +334,9 @@ describe('RuleEditor', () => {
       }),
     };
 
-    const backendSrv = ({
+    const backendSrv = {
       getFolderByUid,
-    } as any) as BackendSrv;
+    } as any as BackendSrv;
     setBackendSrv(backendSrv);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();

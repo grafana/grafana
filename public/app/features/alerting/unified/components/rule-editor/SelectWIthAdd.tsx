@@ -37,10 +37,10 @@ export const SelectWithAdd: FC<Props> = ({
     }
   }, [custom]);
 
-  const _options = useMemo((): Array<SelectableValue<string>> => [...options, { value: '__add__', label: addLabel }], [
-    options,
-    addLabel,
-  ]);
+  const _options = useMemo(
+    (): Array<SelectableValue<string>> => [...options, { value: '__add__', label: addLabel }],
+    [options, addLabel]
+  );
 
   if (isCustom) {
     return (

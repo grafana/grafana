@@ -29,7 +29,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
     },
   }),
 }));
-const getTimeSrvMock = (getTimeSrv as any) as jest.Mock<TimeSrv>;
+const getTimeSrvMock = getTimeSrv as any as jest.Mock<TimeSrv>;
 
 beforeEach(() => {
   getTimeSrvMock.mockClear();

@@ -60,7 +60,7 @@ export class AppendedVectors<T = any> implements Vector<T> {
         return src.values.get(index - src.start);
       }
     }
-    return (undefined as unknown) as T;
+    return undefined as unknown as T;
   }
 
   toArray(): T[] {

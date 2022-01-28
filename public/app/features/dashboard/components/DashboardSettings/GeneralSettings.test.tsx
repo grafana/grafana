@@ -10,7 +10,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    dashboard: ({
+    dashboard: {
       title: 'test dashboard title',
       description: 'test dashboard description',
       timepicker: {
@@ -22,7 +22,7 @@ const setupTestContext = (options: Partial<Props>) => {
         folderTitle: 'test',
       },
       timezone: 'utc',
-    } as unknown) as DashboardModel,
+    } as unknown as DashboardModel,
     updateTimeZone: jest.fn(),
     updateWeekStart: jest.fn(),
   };

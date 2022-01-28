@@ -64,10 +64,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onRunQuery();
   };
 
-  const currentScenario = useMemo(() => scenarioList?.find((scenario) => scenario.id === query.scenarioId), [
-    scenarioList,
-    query,
-  ]);
+  const currentScenario = useMemo(
+    () => scenarioList?.find((scenario) => scenario.id === query.scenarioId),
+    [scenarioList, query]
+  );
   const scenarioId = currentScenario?.id;
 
   const onScenarioChange = (item: SelectableValue<string>) => {

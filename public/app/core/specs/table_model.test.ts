@@ -184,13 +184,13 @@ describe('mergeTables', () => {
       columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value' }],
       rows: [[time, 'Label Value 1', 42]],
     }),
-    ({
+    {
       target: 'series1',
       datapoints: [
         [12.12, time],
         [14.44, time + 1],
       ],
-    } as any) as TableModel,
+    } as any as TableModel,
   ];
 
   it('should return the single table as is', () => {

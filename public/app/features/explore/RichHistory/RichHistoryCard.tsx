@@ -143,16 +143,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
 });
 
 export function RichHistoryCard(props: Props) {
-  const {
-    query,
-    dsImg,
-    isRemoved,
-    updateRichHistory,
-    changeDatasource,
-    exploreId,
-    datasourceInstance,
-    setQueries,
-  } = props;
+  const { query, dsImg, isRemoved, updateRichHistory, changeDatasource, exploreId, datasourceInstance, setQueries } =
+    props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
   const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);

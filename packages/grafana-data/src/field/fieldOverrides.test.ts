@@ -257,7 +257,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: (undefined as any) as InterpolateFunction,
+      replaceVariables: undefined as any as InterpolateFunction,
       theme: createTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -284,7 +284,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: (undefined as any) as InterpolateFunction,
+      replaceVariables: undefined as any as InterpolateFunction,
       theme: createTheme(),
     })[0];
     const valueColumn = data.fields[1];
@@ -321,7 +321,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: (undefined as any) as InterpolateFunction,
+      replaceVariables: undefined as any as InterpolateFunction,
       theme: createTheme(),
     })[0];
 
@@ -659,7 +659,7 @@ describe('applyRawFieldOverrides', () => {
       steps: [
         {
           color: 'green',
-          value: (null as unknown) as number,
+          value: null as unknown as number,
         },
         {
           color: 'red',

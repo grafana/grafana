@@ -54,10 +54,10 @@ describe('Explore item reducer', () => {
     describe('when changeRangeAction is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester<ExploreItemState>()
-          .givenReducer(timeReducer, ({
+          .givenReducer(timeReducer, {
             range: null,
             absoluteRange: null,
-          } as unknown) as ExploreItemState)
+          } as unknown as ExploreItemState)
           .whenActionIsDispatched(
             changeRangeAction({
               exploreId: ExploreId.left,
@@ -65,10 +65,10 @@ describe('Explore item reducer', () => {
               range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
             })
           )
-          .thenStateShouldEqual(({
+          .thenStateShouldEqual({
             absoluteRange: { from: 1546297200000, to: 1546383600000 },
             range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
-          } as unknown) as ExploreItemState);
+          } as unknown as ExploreItemState);
       });
     });
   });

@@ -49,7 +49,7 @@ describe('historySrv', () => {
     });
 
     it('should return an empty array when not given a dashboard', () => {
-      return historySrv.getHistoryList((null as unknown) as DashboardModel, historyListOpts).then((versions: any) => {
+      return historySrv.getHistoryList(null as unknown as DashboardModel, historyListOpts).then((versions: any) => {
         expect(versions).toEqual([]);
       });
     });

@@ -5,7 +5,7 @@ import { GrafanaDatasource } from './datasource';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => ({
     replace: (val: string) => {
@@ -79,7 +79,7 @@ describe('grafana data source', () => {
 });
 
 function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
-  return ({
+  return {
     annotation: {
       target: annotation,
     },
@@ -89,5 +89,5 @@ function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>
       to: dateTime(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
-  } as unknown) as AnnotationQueryRequest<GrafanaQuery>;
+  } as unknown as AnnotationQueryRequest<GrafanaQuery>;
 }

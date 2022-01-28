@@ -18,14 +18,13 @@ export const updateTextBoxVariableOptions = (identifier: VariableIdentifier): Th
   };
 };
 
-export const setTextBoxVariableOptionsFromUrl = (
-  identifier: VariableIdentifier,
-  urlValue: UrlQueryValue
-): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<TextBoxVariableModel>(identifier.id, getState());
+export const setTextBoxVariableOptionsFromUrl =
+  (identifier: VariableIdentifier, urlValue: UrlQueryValue): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const variableInState = getVariable<TextBoxVariableModel>(identifier.id, getState());
 
-  const stringUrlValue = ensureStringValues(urlValue);
-  dispatch(changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue })));
+    const stringUrlValue = ensureStringValues(urlValue);
+    dispatch(changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue })));
 
-  await dispatch(setOptionFromUrl(toVariableIdentifier(variableInState), stringUrlValue));
-};
+    await dispatch(setOptionFromUrl(toVariableIdentifier(variableInState), stringUrlValue));
+  };

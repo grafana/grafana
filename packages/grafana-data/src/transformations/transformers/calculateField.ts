@@ -210,7 +210,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return (undefined as unknown) as Vector;
+      return undefined as unknown as Vector;
     }
 
     return new BinaryOperationVector(left, right, operator.operation);

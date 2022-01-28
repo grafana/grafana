@@ -10,7 +10,7 @@ describe('PromSettings', () => {
     describe('when called with undefined', () => {
       it('then it should return empty string', () => {
         const result = getValueFromEventItem(
-          (undefined as unknown) as SyntheticEvent<HTMLInputElement> | SelectableValue<string>
+          undefined as unknown as SyntheticEvent<HTMLInputElement> | SelectableValue<string>
         );
         expect(result).toEqual('');
       });

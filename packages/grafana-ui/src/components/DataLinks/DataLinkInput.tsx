@@ -87,9 +87,10 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 
     // Used to get the height of the suggestion elements in order to scroll to them.
     const activeRef = useRef<HTMLDivElement>(null);
-    const activeIndexPosition = useMemo(() => getElementPosition(activeRef.current, suggestionsIndex), [
-      suggestionsIndex,
-    ]);
+    const activeIndexPosition = useMemo(
+      () => getElementPosition(activeRef.current, suggestionsIndex),
+      [suggestionsIndex]
+    );
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);

@@ -67,7 +67,8 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithLogsVolumeSupport<ElasticsearchQuery> {
+    DataSourceWithLogsVolumeSupport<ElasticsearchQuery>
+{
   basicAuth?: string;
   withCredentials?: boolean;
   url: string;

@@ -39,7 +39,7 @@ describe('textPanelMigrationHandler', () => {
     it('then should just pass options through', () => {
       const panel: PanelModel<PanelOptions> = {
         id: 1,
-        fieldConfig: ({} as unknown) as FieldConfigSource,
+        fieldConfig: {} as unknown as FieldConfigSource,
         options: {
           content: `# Title
 
@@ -61,10 +61,10 @@ describe('textPanelMigrationHandler', () => {
 
   describe('when invoked and previous version was using text mode', () => {
     it('then should switch to markdown', () => {
-      const mode = ('text' as unknown) as TextMode;
+      const mode = 'text' as unknown as TextMode;
       const panel: PanelModel<PanelOptions> = {
         id: 1,
-        fieldConfig: ({} as unknown) as FieldConfigSource,
+        fieldConfig: {} as unknown as FieldConfigSource,
         options: {
           content: `# Title
 

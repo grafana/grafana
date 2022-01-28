@@ -33,12 +33,12 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}) {
   };
 
   const variables: VariablesState = { custom };
-  const templating = ({ variables } as unknown) as TemplatingState;
+  const templating = { variables } as unknown as TemplatingState;
   const state: Partial<StoreState> = {
     dashboard,
     templating,
   };
-  const getState = () => (state as unknown) as StoreState;
+  const getState = () => state as unknown as StoreState;
 
   const dispatch = jest.fn();
   const thunk = templateVarsChangedInUrl(urlQueryMap);
@@ -86,14 +86,10 @@ describe('templateVarsChangedInUrl', () => {
 
     describe('and the values in url query map are the not the same as current in state', () => {
       it('then the value should change to the value in url query map and dashboard should be refreshed', async () => {
-        const {
-          setValueFromUrlMock,
-          templateVariableValueUpdatedMock,
-          startRefreshMock,
-          custom,
-        } = await getTestContext({
-          'var-custom': { value: 'B' },
-        });
+        const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, custom } =
+          await getTestContext({
+            'var-custom': { value: 'B' },
+          });
 
         expect(setValueFromUrlMock).toHaveBeenCalledTimes(1);
         expect(setValueFromUrlMock).toHaveBeenCalledWith(custom, 'B');
@@ -103,14 +99,10 @@ describe('templateVarsChangedInUrl', () => {
 
       describe('but the values in url query map were removed', () => {
         it('then the value should change to the value in dashboard json and dashboard should be refreshed', async () => {
-          const {
-            setValueFromUrlMock,
-            templateVariableValueUpdatedMock,
-            startRefreshMock,
-            custom,
-          } = await getTestContext({
-            'var-custom': { value: '', removed: true },
-          });
+          const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, custom } =
+            await getTestContext({
+              'var-custom': { value: '', removed: true },
+            });
 
           expect(setValueFromUrlMock).toHaveBeenCalledTimes(1);
           expect(setValueFromUrlMock).toHaveBeenCalledWith(custom, ['A', 'C']);

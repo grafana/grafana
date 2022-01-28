@@ -134,16 +134,15 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         ]),
   ];
 
-  const filteredRoutes = useMemo(() => getFilteredRoutes(routes, filters?.queryString, filters?.contactPoint), [
-    routes,
-    filters,
-  ]);
+  const filteredRoutes = useMemo(
+    () => getFilteredRoutes(routes, filters?.queryString, filters?.contactPoint),
+    [routes, filters]
+  );
 
-  const dynamicTableRoutes = useMemo(() => prepareItems(isAddMode ? routes : filteredRoutes), [
-    isAddMode,
-    routes,
-    filteredRoutes,
-  ]);
+  const dynamicTableRoutes = useMemo(
+    () => prepareItems(isAddMode ? routes : filteredRoutes),
+    [isAddMode, routes, filteredRoutes]
+  );
 
   // expand the last item when adding
   useEffect(() => {

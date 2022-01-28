@@ -47,7 +47,7 @@ describe('interval actions', () => {
     silenceConsoleOutput();
     const originalTimeSrv = getTimeSrv();
     beforeEach(() => {
-      const timeSrvMock = ({
+      const timeSrvMock = {
         timeRange: jest.fn().mockReturnValue({
           from: dateTime(new Date()).subtract(1, 'days').toDate(),
           to: new Date(),
@@ -56,7 +56,7 @@ describe('interval actions', () => {
             to: 'now',
           },
         }),
-      } as unknown) as TimeSrv;
+      } as unknown as TimeSrv;
       setTimeSrv(timeSrvMock);
     });
 
@@ -132,7 +132,7 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),
           getTimeSrv: () => {
-            return ({
+            return {
               timeRange: jest.fn().mockReturnValue({
                 from: '2001-01-01',
                 to: '2001-01-02',
@@ -141,11 +141,11 @@ describe('interval actions', () => {
                   to: '2001-01-02',
                 },
               }),
-            } as unknown) as TimeSrv;
+            } as unknown as TimeSrv;
           },
-          templateSrv: ({
+          templateSrv: {
             setGrafanaVariable: jest.fn(),
-          } as unknown) as TemplateSrv,
+          } as unknown as TemplateSrv,
         };
 
         await reduxTester<RootReducerType>()
@@ -183,13 +183,13 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
           getTimeSrv: () => {
-            return ({
+            return {
               timeRange: timeRangeMock,
-            } as unknown) as TimeSrv;
+            } as unknown as TimeSrv;
           },
-          templateSrv: ({
+          templateSrv: {
             setGrafanaVariable: setGrafanaVariableMock,
-          } as unknown) as TemplateSrv,
+          } as unknown as TemplateSrv,
         };
 
         await reduxTester<RootReducerType>()

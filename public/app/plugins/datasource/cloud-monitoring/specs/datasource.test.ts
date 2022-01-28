@@ -11,7 +11,7 @@ import { initialCustomVariableModelState } from '../../../../features/variables/
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -22,11 +22,11 @@ const fetchMock = jest.spyOn(backendSrv, 'fetch');
 function getTestcontext({ response = {}, throws = false, templateSrv = new TemplateSrv() }: Args = {}) {
   jest.clearAllMocks();
 
-  const instanceSettings = ({
+  const instanceSettings = {
     jsonData: {
       defaultProject: 'testproject',
     },
-  } as unknown) as DataSourceInstanceSettings<CloudMonitoringOptions>;
+  } as unknown as DataSourceInstanceSettings<CloudMonitoringOptions>;
 
   const timeSrv = {
     timeRange: () => ({

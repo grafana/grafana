@@ -26,20 +26,18 @@ export type Ctrl = {
   };
 };
 
-export const createResetHandler = (ctrl: Ctrl, field: PasswordFieldEnum) => (
-  event: SyntheticEvent<HTMLInputElement>
-) => {
-  event.preventDefault();
-  // Reset also normal plain text password to remove it and only save it in secureJsonData.
-  ctrl.current[field] = undefined;
-  ctrl.current.secureJsonFields[field] = false;
-  ctrl.current.secureJsonData = ctrl.current.secureJsonData || {};
-  ctrl.current.secureJsonData[field] = '';
-};
+export const createResetHandler =
+  (ctrl: Ctrl, field: PasswordFieldEnum) => (event: SyntheticEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    // Reset also normal plain text password to remove it and only save it in secureJsonData.
+    ctrl.current[field] = undefined;
+    ctrl.current.secureJsonFields[field] = false;
+    ctrl.current.secureJsonData = ctrl.current.secureJsonData || {};
+    ctrl.current.secureJsonData[field] = '';
+  };
 
-export const createChangeHandler = (ctrl: any, field: PasswordFieldEnum) => (
-  event: SyntheticEvent<HTMLInputElement>
-) => {
-  ctrl.current.secureJsonData = ctrl.current.secureJsonData || {};
-  ctrl.current.secureJsonData[field] = event.currentTarget.value;
-};
+export const createChangeHandler =
+  (ctrl: any, field: PasswordFieldEnum) => (event: SyntheticEvent<HTMLInputElement>) => {
+    ctrl.current.secureJsonData = ctrl.current.secureJsonData || {};
+    ctrl.current.secureJsonData[field] = event.currentTarget.value;
+  };

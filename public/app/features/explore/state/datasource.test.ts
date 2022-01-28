@@ -17,11 +17,11 @@ describe('Datasource reducer', () => {
     } as DataSourceApi;
     const queries: DataQuery[] = [];
     const queryKeys: string[] = [];
-    const initialState: ExploreItemState = ({
+    const initialState: ExploreItemState = {
       datasourceInstance: null,
       queries,
       queryKeys,
-    } as unknown) as ExploreItemState;
+    } as unknown as ExploreItemState;
 
     const result = datasourceReducer(
       initialState,

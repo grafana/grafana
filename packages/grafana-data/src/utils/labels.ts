@@ -45,7 +45,7 @@ export function findCommonLabels(labelsSets: Labels[]): Labels {
       });
     }
     return acc;
-  }, (undefined as unknown) as Labels);
+  }, undefined as unknown as Labels);
 }
 
 /**

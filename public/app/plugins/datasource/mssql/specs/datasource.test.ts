@@ -9,7 +9,7 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TimeSrvStub } from 'test/specs/helpers';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 

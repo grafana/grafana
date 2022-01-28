@@ -41,11 +41,8 @@ const serviceAccountsSlice = createSlice({
   },
 });
 
-export const {
-  setServiceAccountsSearchQuery,
-  setServiceAccountsSearchPage,
-  serviceAccountsLoaded,
-} = serviceAccountsSlice.actions;
+export const { setServiceAccountsSearchQuery, setServiceAccountsSearchPage, serviceAccountsLoaded } =
+  serviceAccountsSlice.actions;
 
 export const { serviceAccountLoaded } = serviceAccountProfileSlice.actions;
 

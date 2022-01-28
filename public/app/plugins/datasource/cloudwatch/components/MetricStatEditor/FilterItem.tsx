@@ -38,10 +38,10 @@ export const FilterItem: FunctionComponent<Props> = ({
   onChange,
   onDelete,
 }) => {
-  const dimensionsExcludingCurrentKey = useMemo(() => excludeCurrentKey(dimensions ?? {}, filter.key), [
-    dimensions,
-    filter,
-  ]);
+  const dimensionsExcludingCurrentKey = useMemo(
+    () => excludeCurrentKey(dimensions ?? {}, filter.key),
+    [dimensions, filter]
+  );
 
   const loadDimensionValues = async () => {
     if (!filter.key) {

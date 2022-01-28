@@ -109,50 +109,16 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
   $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
   $scope.addOverrideOption('Hidden Series', 'hiddenSeries', [true, false]);
-  $scope.addOverrideOption('Dash Length', 'dashLength', [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-  ]);
-  $scope.addOverrideOption('Dash Space', 'spaceLength', [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-  ]);
+  $scope.addOverrideOption(
+    'Dash Length',
+    'dashLength',
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  );
+  $scope.addOverrideOption(
+    'Dash Space',
+    'spaceLength',
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  );
   $scope.addOverrideOption('Points', 'points', [true, false]);
   $scope.addOverrideOption('Points Radius', 'pointradius', [1, 2, 3, 4, 5]);
   $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);

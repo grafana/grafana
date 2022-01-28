@@ -41,52 +41,47 @@ export function getDataSourceUID(ref: DataSourceRef | string | null): string | u
   return undefined;
 }
 
-export const onUpdateDatasourceOption = (props: DataSourcePluginOptionsEditorProps, key: keyof DataSourceSettings) => (
-  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  updateDatasourcePluginOption(props, key, event.currentTarget.value);
-};
+export const onUpdateDatasourceOption =
+  (props: DataSourcePluginOptionsEditorProps, key: keyof DataSourceSettings) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    updateDatasourcePluginOption(props, key, event.currentTarget.value);
+  };
 
-export const onUpdateDatasourceJsonDataOption = <J, S, K extends keyof J>(
-  props: DataSourcePluginOptionsEditorProps<J, S>,
-  key: K
-) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-  updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.value);
-};
+export const onUpdateDatasourceJsonDataOption =
+  <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.value);
+  };
 
-export const onUpdateDatasourceSecureJsonDataOption = <J, S extends {} = KeyValue>(
-  props: DataSourcePluginOptionsEditorProps<J, S>,
-  key: string
-) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-  updateDatasourcePluginSecureJsonDataOption(props, key, event.currentTarget.value);
-};
+export const onUpdateDatasourceSecureJsonDataOption =
+  <J, S extends {} = KeyValue>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    updateDatasourcePluginSecureJsonDataOption(props, key, event.currentTarget.value);
+  };
 
-export const onUpdateDatasourceJsonDataOptionSelect = <J, S, K extends keyof J>(
-  props: DataSourcePluginOptionsEditorProps<J, S>,
-  key: K
-) => (selected: SelectableValue) => {
-  updateDatasourcePluginJsonDataOption(props, key, selected.value);
-};
+export const onUpdateDatasourceJsonDataOptionSelect =
+  <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) =>
+  (selected: SelectableValue) => {
+    updateDatasourcePluginJsonDataOption(props, key, selected.value);
+  };
 
-export const onUpdateDatasourceJsonDataOptionChecked = <J, S, K extends keyof J>(
-  props: DataSourcePluginOptionsEditorProps<J, S>,
-  key: K
-) => (event: React.SyntheticEvent<HTMLInputElement>) => {
-  updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.checked);
-};
+export const onUpdateDatasourceJsonDataOptionChecked =
+  <J, S, K extends keyof J>(props: DataSourcePluginOptionsEditorProps<J, S>, key: K) =>
+  (event: React.SyntheticEvent<HTMLInputElement>) => {
+    updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.checked);
+  };
 
-export const onUpdateDatasourceSecureJsonDataOptionSelect = <J, S extends {} = KeyValue>(
-  props: DataSourcePluginOptionsEditorProps<J, S>,
-  key: string
-) => (selected: SelectableValue) => {
-  updateDatasourcePluginSecureJsonDataOption(props, key, selected.value);
-};
+export const onUpdateDatasourceSecureJsonDataOptionSelect =
+  <J, S extends {} = KeyValue>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) =>
+  (selected: SelectableValue) => {
+    updateDatasourcePluginSecureJsonDataOption(props, key, selected.value);
+  };
 
-export const onUpdateDatasourceResetOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
-  event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-) => {
-  updateDatasourcePluginResetOption(props, key);
-};
+export const onUpdateDatasourceResetOption =
+  (props: DataSourcePluginOptionsEditorProps, key: string) =>
+  (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    updateDatasourcePluginResetOption(props, key);
+  };
 
 export function updateDatasourcePluginOption<J, S extends {} = KeyValue>(
   props: DataSourcePluginOptionsEditorProps<J, S>,

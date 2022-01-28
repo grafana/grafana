@@ -23,7 +23,7 @@ const setupTestContext = (options: Partial<Props>) => {
       ...initialVariableEditorState,
       extended: {
         VariableQueryEditor: LegacyVariableQueryEditor,
-        dataSource: ({} as unknown) as DataSourceApi,
+        dataSource: {} as unknown as DataSourceApi,
       },
     },
     onPropChange: jest.fn(),

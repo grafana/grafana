@@ -18,7 +18,7 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
 });
 
 function setup(app: CoreApp): RenderResult {
-  const dataSource = ({
+  const dataSource = {
     createQuery: jest.fn((q) => q),
     getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
@@ -28,7 +28,7 @@ function setup(app: CoreApp): RenderResult {
       getLabelKeys: () => [],
       metrics: [],
     },
-  } as unknown) as PrometheusDatasource;
+  } as unknown as PrometheusDatasource;
 
   return render(
     <PromQueryEditorByApp

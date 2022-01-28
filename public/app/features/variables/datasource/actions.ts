@@ -15,40 +15,42 @@ export interface DataSourceVariableActionDependencies {
   getDatasourceSrv: typeof getDatasourceSrv;
 }
 
-export const updateDataSourceVariableOptions = (
-  identifier: VariableIdentifier,
-  dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
-): ThunkResult<void> => async (dispatch, getState) => {
-  const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
-  const variableInState = getVariable<DataSourceVariableModel>(identifier.id, getState());
-  let regex;
+export const updateDataSourceVariableOptions =
+  (
+    identifier: VariableIdentifier,
+    dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
+  ): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
+    const variableInState = getVariable<DataSourceVariableModel>(identifier.id, getState());
+    let regex;
 
-  if (variableInState.regex) {
-    regex = getTemplateSrv().replace(variableInState.regex, undefined, 'regex');
-    regex = stringToJsRegex(regex);
-  }
+    if (variableInState.regex) {
+      regex = getTemplateSrv().replace(variableInState.regex, undefined, 'regex');
+      regex = stringToJsRegex(regex);
+    }
 
-  dispatch(createDataSourceOptions(toVariablePayload(identifier, { sources, regex })));
-  await dispatch(validateVariableSelectionState(identifier));
-};
+    dispatch(createDataSourceOptions(toVariablePayload(identifier, { sources, regex })));
+    await dispatch(validateVariableSelectionState(identifier));
+  };
 
-export const initDataSourceVariableEditor = (
-  dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
-): ThunkResult<void> => (dispatch) => {
-  const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
-  const dataSourceTypes = chain(dataSources)
-    .uniqBy('meta.id')
-    .map((ds: any) => {
-      return { text: ds.meta.name, value: ds.meta.id };
-    })
-    .value();
+export const initDataSourceVariableEditor =
+  (dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }): ThunkResult<void> =>
+  (dispatch) => {
+    const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
+    const dataSourceTypes = chain(dataSources)
+      .uniqBy('meta.id')
+      .map((ds: any) => {
+        return { text: ds.meta.name, value: ds.meta.id };
+      })
+      .value();
 
-  dataSourceTypes.unshift({ text: '', value: '' });
+    dataSourceTypes.unshift({ text: '', value: '' });
 
-  dispatch(
-    changeVariableEditorExtended({
-      propName: 'dataSourceTypes',
-      propValue: dataSourceTypes,
-    })
-  );
-};
+    dispatch(
+      changeVariableEditorExtended({
+        propName: 'dataSourceTypes',
+        propValue: dataSourceTypes,
+      })
+    );
+  };

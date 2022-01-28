@@ -303,7 +303,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
         for (const variable of this.templateSrv.getVariables()) {
           let value;
           value = '$' + variable.name;
-          if (config.templateQuoter && ((variable as unknown) as VariableWithMultiSupport).multi === false) {
+          if (config.templateQuoter && (variable as unknown as VariableWithMultiSupport).multi === false) {
             value = config.templateQuoter(value);
           }
 

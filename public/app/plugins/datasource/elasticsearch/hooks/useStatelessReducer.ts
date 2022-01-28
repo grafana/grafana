@@ -3,16 +3,15 @@ import { Action } from '@reduxjs/toolkit';
 
 export type Reducer<S, A extends Action> = (state: S, action: A) => S;
 
-export const combineReducers = <S, A extends Action = Action>(reducers: { [P in keyof S]: Reducer<S[P], A> }) => (
-  state: S,
-  action: A
-): Partial<S> => {
-  const newState = {} as S;
-  for (const key in reducers) {
-    newState[key] = reducers[key](state[key], action);
-  }
-  return newState;
-};
+export const combineReducers =
+  <S, A extends Action = Action>(reducers: { [P in keyof S]: Reducer<S[P], A> }) =>
+  (state: S, action: A): Partial<S> => {
+    const newState = {} as S;
+    for (const key in reducers) {
+      newState[key] = reducers[key](state[key], action);
+    }
+    return newState;
+  };
 
 export const useStatelessReducer = <State, A = Action>(
   onChange: (value: State) => void,

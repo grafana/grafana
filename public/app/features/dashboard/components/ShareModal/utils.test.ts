@@ -31,11 +31,11 @@ describe('buildParams', () => {
   `(
     "when called with search: '$search' and useCurrentTimeRange: '$useCurrentTimeRange' and selectedTheme: '$selectedTheme' and panel: '$panel'then result should be '$expected'",
     ({ search, useCurrentTimeRange, selectedTheme, panel, expected }) => {
-      const range: TimeRange = ({
+      const range: TimeRange = {
         from: 1000,
         to: 2000,
         raw: { from: 'now-6h', to: 'now' },
-      } as unknown) as TimeRange;
+      } as unknown as TimeRange;
       const orgId = '2';
       const result = buildParams({ useCurrentTimeRange, selectedTheme, panel, search, range, orgId });
 

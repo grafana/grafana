@@ -44,7 +44,7 @@ describe('InputDatasource', () => {
 
   test('DataFrame descriptions', () => {
     expect(describeDataFrame([])).toEqual('');
-    expect(describeDataFrame((null as unknown) as Array<DataFrameDTO | DataFrame>)).toEqual('');
+    expect(describeDataFrame(null as unknown as Array<DataFrameDTO | DataFrame>)).toEqual('');
     expect(
       describeDataFrame([
         new MutableDataFrame({
