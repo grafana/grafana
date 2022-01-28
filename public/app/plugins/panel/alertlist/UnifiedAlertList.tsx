@@ -166,7 +166,6 @@ function createMapKey(groupBy: string[], labels: Record<string, string>): string
 }
 
 function parseMapKey(key: string): Array<[string, string]> {
-  // @ts-ignore dom.iterable is not added to the @grafana/tsconfig but this works just fine
   return [...new URLSearchParams(key)];
 }
 
