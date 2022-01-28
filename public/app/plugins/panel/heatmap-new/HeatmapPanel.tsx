@@ -3,6 +3,7 @@ import { PanelProps } from '@grafana/data';
 import {
   AxisPlacement,
   ScaleDirection,
+  ScaleDistribution,
   ScaleOrientation,
   UPlotChart,
   UPlotConfigBuilder,
@@ -31,7 +32,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 }) => {
   const theme = useTheme2();
 
-  const info = useMemo(() => prepareHeatmapData(data?.series, options, theme), [data, options, theme]);
+  const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const palette = useMemo(() => palettes9[options.scheme].slice().reverse(), [options, theme]);
@@ -58,6 +59,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     builder.addScale({
       scaleKey: 'y',
       isTime: false,
+      // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
       orientation: ScaleOrientation.Vertical,
       direction: ScaleDirection.Up,
     });

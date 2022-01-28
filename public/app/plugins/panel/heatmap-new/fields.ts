@@ -1,6 +1,10 @@
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { calculateHeatmapFromData } from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
+import { DataFrame, GrafanaTheme2, PanelData } from '@grafana/data';
+import {
+  calculateHeatmapFromData,
+  createHeatmapFromBuckets,
+} from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
+//import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 export interface HeatmapData {
   // List of heatmap frames
@@ -14,17 +18,32 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(
-  series: DataFrame[] | undefined,
+  frames: DataFrame[] | undefined,
   options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData {
-  if (!series?.length) {
+  // let dataSrcType = data.request?.targets[0].datasource?.type;
+
+  // if (dataSrcType === DataSourceType.Prometheus) {
+  //   console.log(data.series);
+  // } else if (dataSrcType === 'testdata') {
+  //   console.log(data.series);
+  // }
+
+  if (!frames?.length) {
     return {};
+  }
+
+  // detect a frame-per-bucket heatmap frame
+  // TODO: improve heuristic?
+  if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.endsWith('Inf'))) {
+    let heatmap = createHeatmapFromBuckets(frames);
+    return { heatmap };
   }
 
   const { source } = options;
   if (source === HeatmapSourceMode.Calculate) {
-    const heatmap = calculateHeatmapFromData(series, options.heatmap ?? {});
+    const heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
     // TODO, check for error etc
     return { heatmap };
   } else if (source === HeatmapSourceMode.Data) {
@@ -35,7 +54,7 @@ export function prepareHeatmapData(
     //console.log('1. calculate');
   }
 
-  const heatmap = calculateHeatmapFromData(series, options.heatmap ?? {});
+  const heatmap = calculateHeatmapFromData(frames, options.heatmap ?? {});
   // TODO, check for error etc
   return { heatmap };
 

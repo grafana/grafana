@@ -35,6 +35,102 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   },
 };
 
+export function createHeatmapFromBuckets(frames: DataFrame[]) {
+  frames = frames.slice();
+
+  // sort ASC by frame.name (Prometheus bucket bound)
+  // or use frame.fields[1].config.displayNameFromDS ?
+  frames.sort((a, b) => {
+    let aBound = a.name === '+Inf' ? Infinity : +(a.name ?? 0);
+    let bBound = b.name === '+Inf' ? Infinity : +(b.name ?? 0);
+
+    return aBound - bBound;
+  });
+
+  let bucketBounds = frames.map((frame, i) => {
+    return i; // until we have y ordinal scales working for facets/scatter
+
+    /*
+    let bound: number;
+
+    if (frame.name === '+Inf') {
+      // TODO: until we have labeled y, treat +Inf as previous bucket + 10%
+      bound = +(frames[i - 1].name ?? 0) * 1.1;
+    } else {
+      bound = +(frame.name ?? 0);
+    }
+
+    return bound;
+    */
+  });
+
+  // assumes all Time fields are identical
+  // TODO: handle null-filling w/ fields[0].config.interval?
+  let timeValues = frames[0].fields[0].values.toArray();
+
+  // similar to initBins() below
+  let len = timeValues.length * bucketBounds.length;
+  let xs = Array(len);
+  let ys = Array(len);
+  let counts2 = Array(len);
+
+  // cumulative counts
+  let counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+
+  // de-accumulate
+  counts.reverse();
+  counts.forEach((bucketCounts, bi) => {
+    if (bi < counts.length - 1) {
+      for (let i = 0; i < bucketCounts.length; i++) {
+        bucketCounts[i] -= counts[bi + 1][i];
+      }
+    }
+  });
+  counts.reverse();
+
+  // transpose
+  counts.forEach((bucketCounts, bi) => {
+    for (let i = 0; i < bucketCounts.length; i++) {
+      counts2[counts.length * i + bi] = bucketCounts[i];
+    }
+  });
+
+  // fill flat/repeating array
+  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
+    ys[i] = bucketBounds[yi];
+
+    if (yi === 0 && i >= bucketBounds.length) {
+      xi++;
+    }
+
+    xs[i] = timeValues[xi];
+  }
+
+  return {
+    length: xs.length,
+    fields: [
+      {
+        name: 'xMin',
+        type: FieldType.time,
+        values: new ArrayVector(xs),
+        config: {},
+      },
+      {
+        name: 'yMin',
+        type: FieldType.number,
+        values: new ArrayVector(ys),
+        config: {},
+      },
+      {
+        name: 'count',
+        type: FieldType.number,
+        values: new ArrayVector(counts2),
+        config: {},
+      },
+    ],
+  };
+}
+
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
   //console.time('calculateHeatmapFromData');
 
