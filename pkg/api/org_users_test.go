@@ -149,7 +149,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			"tags":  "prod",
 		}),
 	}
-	folder, err := sc.dashboardStore.SaveDashboard(cmd)
+	folder, err := sc.dashboardsStore.SaveDashboard(cmd)
 	require.NoError(t, err)
 	require.NotNil(t, folder)
 
@@ -164,7 +164,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			Updated:     time.Now(),
 		},
 	}
-	err = sc.dashboardStore.UpdateDashboardACL(context.Background(), folder.Id, acls)
+	err = sc.dashboardsStore.UpdateDashboardACL(context.Background(), folder.Id, acls)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)

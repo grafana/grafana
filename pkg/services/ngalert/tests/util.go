@@ -3,6 +3,8 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	database2 "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"testing"
 	"time"
 
@@ -37,9 +39,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	dashboardStore := database2.ProvideDashboardStore(sqlStore)
+	folderService := manager.ProvideFolderService(manager.ProvideDashboardService(dashboardStore), dashboardStore)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,
-		nil, nil, nil, nil, secretsService, nil, m,
+		nil, nil, nil, nil, secretsService, nil, m, folderService,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{

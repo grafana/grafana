@@ -5,16 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -33,6 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -41,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
@@ -272,7 +271,7 @@ type accessControlScenarioContext struct {
 	// cfg is the setting provider
 	cfg *setting.Cfg
 
-	dashboardStore dashboardsstore.Store
+	dashboardsStore dashboards.Store
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
@@ -343,6 +342,8 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 
 	bus := bus.GetBus()
 
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
+
 	routeRegister := routing.NewRouteRegister()
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
@@ -354,7 +355,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		RouteRegister:      routeRegister,
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:   manager.ProvideDashboardService(database.ProvideDashboardStore(db)),
+		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -398,12 +399,13 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	hs.RouteRegister.Register(m.Router)
 
 	return accessControlScenarioContext{
-		server:  m,
-		initCtx: initCtx,
-		hs:      hs,
-		acmock:  acmock,
-		db:      db,
-		cfg:     cfg,
+		server:          m,
+		initCtx:         initCtx,
+		hs:              hs,
+		acmock:          acmock,
+		db:              db,
+		cfg:             cfg,
+		dashboardsStore: dashboardsStore,
 	}
 }
 
