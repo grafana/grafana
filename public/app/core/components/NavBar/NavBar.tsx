@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
@@ -7,7 +8,7 @@ import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
-import { KioskMode } from 'app/types';
+import { StoreState, KioskMode } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
@@ -28,7 +29,17 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-export const NavBar = React.memo(() => {
+const mapStateToProps = (state: StoreState) => ({
+  navBarTree: state.navBarTree,
+});
+
+const mapDispatchToProps = {};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export interface Props extends ConnectedProps<typeof connector> {}
+
+export const NavBarUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -38,7 +49,7 @@ export const NavBar = React.memo(() => {
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
+  const navTree = cloneDeep(navBarTree);
   const topItems = navTree.filter((item) => item.section === NavSection.Core);
   const bottomItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
@@ -109,7 +120,9 @@ export const NavBar = React.memo(() => {
   );
 });
 
-NavBar.displayName = 'NavBar';
+NavBarUnconnected.displayName = 'NavBar';
+
+export const NavBar = connector(NavBarUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`

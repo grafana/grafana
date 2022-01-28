@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
 
@@ -359,6 +360,15 @@ var (
 
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(gcInterval)
+	grp, gCtx := errgroup.WithContext(ctx)
+
+	for _, p := range s.providers {
+		if svc, ok := p.(secrets.BackgroundProvider); ok {
+			grp.Go(func() error {
+				return svc.Run(gCtx)
+			})
+		}
+	}
 
 	for {
 		select {
@@ -366,9 +376,14 @@ func (s *SecretsService) Run(ctx context.Context) error {
 			s.log.Debug("removing expired data encryption keys from cache...")
 			s.removeExpiredItems()
 			s.log.Debug("done removing expired data encryption keys from cache")
-		case <-ctx.Done():
+		case <-gCtx.Done():
 			s.log.Debug("grafana is shutting down; stopping...")
 			gc.Stop()
+
+			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+
 			return nil
 		}
 	}
