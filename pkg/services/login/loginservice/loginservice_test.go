@@ -15,36 +15,75 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type MockStore struct {
+	getUserOrgList func(context.Context, *models.GetUserOrgListQuery) error
+	removeOrgUser  func(context.Context, *models.RemoveOrgUserCommand) error
+}
+
+func (m *MockStore) CreateUser(_ context.Context, _ models.CreateUserCommand) (*models.User, error) {
+	return nil, nil
+}
+
+func (m *MockStore) UpdateUserPermissions(_ int64, _ bool) error {
+	return nil
+}
+
+func (m *MockStore) UpdateUser(_ context.Context, _ *models.UpdateUserCommand) error {
+	return nil
+}
+
+func (m *MockStore) GetUserOrgList(c context.Context, cmd *models.GetUserOrgListQuery) error {
+	if m.getUserOrgList != nil {
+		return m.getUserOrgList(c, cmd)
+	}
+	return nil
+}
+
+func (m *MockStore) UpdateOrgUser(_ context.Context, _ *models.UpdateOrgUserCommand) error {
+	return nil
+}
+
+func (m *MockStore) RemoveOrgUser(c context.Context, cmd *models.RemoveOrgUserCommand) error {
+	if m.removeOrgUser != nil {
+		return m.removeOrgUser(c, cmd)
+	}
+	return nil
+}
+
+func (m *MockStore) SetUsingOrg(_ context.Context, _ *models.SetUsingOrgCommand) error {
+	return nil
+}
+
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
+	store := &MockStore{}
+	imp := &Implementation{Store: store}
+
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
 	remResp := createResponseWithOneErrLastOrgAdminItem()
 
-	bus.ClearBusHandlers()
-	defer bus.ClearBusHandlers()
-	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
+	store.getUserOrgList = func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
-
 		return nil
-	})
+	}
 
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	store.removeOrgUser = func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
-	})
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-		return nil
-	})
+	}
 
-	err := syncOrgRoles(context.Background(), &user, &externalUser)
+	err := imp.syncOrgRoles(context.Background(), &user, &externalUser)
 	require.Empty(t, remResp)
 	require.NoError(t, err)
 }
 
 func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
+	store := &MockStore{}
+	imp := &Implementation{Store: store}
+
 	buf := &bytes.Buffer{}
 	logger.SetLogger(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
 
@@ -54,23 +93,21 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
+
+	store.getUserOrgList = func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
 		return nil
-	})
+	}
 
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	store.removeOrgUser = func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
-	})
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-		return nil
-	})
+	}
 
-	err := syncOrgRoles(context.Background(), &user, &externalUser)
+	err := imp.syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
 	assert.Contains(t, buf.String(), models.ErrLastOrgAdmin.Error())
 }
@@ -82,6 +119,9 @@ type authInfoServiceMock struct {
 
 func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	return a.user, a.err
+}
+func (a *authInfoServiceMock) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	return nil
 }
 
 func (a *authInfoServiceMock) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
