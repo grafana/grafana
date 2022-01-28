@@ -117,9 +117,11 @@ export class QueryRows extends PureComponent<Props, State> {
         };
       }
 
+      const { refId, hide } = item.model;
       return {
         ...item,
         datasourceUid: settings.uid,
+        model: { refId, hide },
       };
     });
     onQueriesChange(updatedQueries);
