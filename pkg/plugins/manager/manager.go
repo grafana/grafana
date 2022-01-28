@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -32,7 +31,6 @@ var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg              *plugins.Cfg
-	sqlStore         *sqlstore.SQLStore
 	store            map[string]*plugins.Plugin
 	pluginInstaller  plugins.Installer
 	pluginLoader     plugins.Loader
@@ -42,13 +40,12 @@ type PluginManager struct {
 	log              log.Logger
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore, dashboardService dashboards.DashboardService) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader, dashboardService dashboards.DashboardService) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
 		plugins.Core:     corePluginPaths(grafanaCfg),
 		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
 		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
-	}, pluginLoader, sqlStore, dashboardService)
+	}, pluginLoader, dashboardService)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
@@ -56,7 +53,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader,
 }
 
 func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore, dashboardService dashboards.DashboardService) *PluginManager {
+	dashboardService dashboards.DashboardService) *PluginManager {
 	return &PluginManager{
 		cfg:              cfg,
 		pluginLoader:     pluginLoader,
@@ -64,7 +61,6 @@ func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader 
 		store:            make(map[string]*plugins.Plugin),
 		log:              log.New("plugin.manager"),
 		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
 	}
 }

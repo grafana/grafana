@@ -2,6 +2,8 @@ package manager
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,8 +27,9 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	pmCfg := plugins.FromGrafanaCfg(cfg)
+	dashboardService := manager.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
 	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
-		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}), &sqlstore.SQLStore{})
+		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}), dashboardService)
 	require.NoError(t, err)
 
 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

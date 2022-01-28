@@ -2,6 +2,8 @@ package manager
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"net/http"
 	"sync"
 	"testing"
@@ -467,7 +469,8 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, nil, &fakeLoader{}, &sqlstore.SQLStore{})
+	dashboardService := manager.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
+	pm := New(&plugins.Cfg{}, nil, &fakeLoader{}, dashboardService)
 
 	for _, cb := range cbs {
 		cb(pm)
