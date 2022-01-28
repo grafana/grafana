@@ -164,7 +164,7 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 		// needs to be increased. Hence, we don't overwrite a role with a
 		// greater version.
 		if storedRole.Version >= role.Version {
-			ac.log.Debug("the has already been stored in a greater version, skipping registration", "role", role.Name)
+			ac.log.Debug("the role has already been stored in a greater version, skipping registration", "role", role.Name)
 			return
 		}
 	}
