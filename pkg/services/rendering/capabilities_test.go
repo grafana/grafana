@@ -32,29 +32,6 @@ func TestCapabilities(t *testing.T) {
 			{name: testCapabilityNameInvalidSemver, semverConstraint: "asfasf"},
 		},
 	}
-	//	tests := []struct {
-	//		name       string
-	//		user       *models.SignedInUser
-	//		permission Permission
-	//		want       Permission
-	//		wantErr    bool
-	//	}{
-	//		{
-	//			name:       "no scope",
-	//			user:       testUser,
-	//			permission: Permission{Action: "users:read"},
-	//			want:       Permission{Action: "users:read"},
-	//			wantErr:    false,
-	//		},
-	//		{
-	//			name:       "user if resolution",
-	//			user:       testUser,
-	//			permission: Permission{Action: "users:read", Scope: "users:self"},
-	//			want:       Permission{Action: "users:read", Scope: "users:id:2"},
-	//			wantErr:    false,
-	//		},
-	//	}
-	//	for _, tt := range tests {
 
 	tests := []struct {
 		name            string
