@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-version"
@@ -22,6 +23,7 @@ type PluginsService struct {
 	grafanaVersion string
 	pluginStore    plugins.Store
 	httpClient     httpClient
+	mutex          sync.RWMutex
 	log            log.Logger
 }
 
@@ -63,7 +65,10 @@ func (s *PluginsService) Run(ctx context.Context) error {
 }
 
 func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string, bool) {
-	if update, updateAvailable := s.availableUpdates[pluginID]; updateAvailable {
+	s.mutex.RLock()
+	update, updateAvailable := s.availableUpdates[pluginID]
+	s.mutex.RUnlock()
+	if updateAvailable {
 		// check if plugin has already been updated since the last invocation of `checkForUpdates`
 		plugin, exists := s.pluginStore.Plugin(ctx, pluginID)
 		if !exists {
@@ -72,7 +77,10 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 
 		// can ignore update as the update data is stale
 		if !canUpgrade(plugin.Info.Version, update) {
+			s.mutex.Lock()
 			delete(s.availableUpdates, pluginID)
+			s.mutex.Unlock()
+
 			return "", false
 		}
 
@@ -117,11 +125,13 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
+			s.mutex.Lock()
 			delete(s.availableUpdates, localP.ID)
 
 			if canUpgrade(localP.Info.Version, gcomP.Version) {
 				s.availableUpdates[localP.ID] = gcomP.Version
 			}
+			s.mutex.Unlock()
 		}
 	}
 }
