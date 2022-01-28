@@ -243,10 +243,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"env":           setting.Env,
 		},
 		"licenseInfo": map[string]interface{}{
-			"expiry":     hs.License.Expiry(),
-			"stateInfo":  hs.License.StateInfo(),
-			"licenseUrl": hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
-			"edition":    hs.License.Edition(),
+			"expiry":          hs.License.Expiry(),
+			"stateInfo":       hs.License.StateInfo(),
+			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, accesscontrol.LicensingPageReaderAccess)),
+			"edition":         hs.License.Edition(),
+			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
@@ -268,7 +269,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
 		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
+			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 		"featureHighlights": map[string]bool{

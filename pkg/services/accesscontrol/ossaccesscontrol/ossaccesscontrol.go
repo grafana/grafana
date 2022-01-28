@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features *featuremgmt.FeatureToggles, usageStats usagestats.Service) *OSSAccessControlService {
+func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		features:      features,
 		UsageStats:    usageStats,
@@ -26,7 +26,7 @@ func ProvideService(features *featuremgmt.FeatureToggles, usageStats usagestats.
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	features      *featuremgmt.FeatureToggles
+	features      featuremgmt.FeatureToggles
 	UsageStats    usagestats.Service
 	Log           log.Logger
 	registrations accesscontrol.RegistrationList
@@ -37,7 +37,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	if ac.features == nil {
 		return true
 	}
-	return !ac.features.IsAccesscontrolEnabled()
+	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {

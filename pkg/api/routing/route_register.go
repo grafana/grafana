@@ -52,7 +52,7 @@ type RouteRegister interface {
 
 type RegisterNamedMiddleware func(name string) web.Handler
 
-func ProvideRegister(features *featuremgmt.FeatureToggles) *RouteRegisterImpl {
+func ProvideRegister(features featuremgmt.FeatureToggles) *RouteRegisterImpl {
 	return NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(features))
 }
 

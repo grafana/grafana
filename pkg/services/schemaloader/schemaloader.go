@@ -26,7 +26,7 @@ type RenderUser struct {
 	OrgRole string
 }
 
-func ProvideService(features *featuremgmt.FeatureToggles) (*SchemaLoaderService, error) {
+func ProvideService(features featuremgmt.FeatureToggles) (*SchemaLoaderService, error) {
 	dashFam, err := load.BaseDashboardFamily(baseLoadPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load dashboard cue schema from path %q: %w", baseLoadPath, err)
@@ -42,14 +42,14 @@ func ProvideService(features *featuremgmt.FeatureToggles) (*SchemaLoaderService,
 type SchemaLoaderService struct {
 	log        log.Logger
 	DashFamily schema.VersionedCueSchema
-	features   *featuremgmt.FeatureToggles
+	features   featuremgmt.FeatureToggles
 }
 
 func (rs *SchemaLoaderService) IsDisabled() bool {
 	if rs.features == nil {
 		return true
 	}
-	return !rs.features.IsTrimDefaultsEnabled()
+	return !rs.features.IsEnabled(featuremgmt.FlagTrimDefaults)
 }
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {
