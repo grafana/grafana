@@ -47,6 +47,13 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   return { queryString, alertState, dataSource, groupBy, ruleType };
 };
 
+export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => {
+  return {
+    queryString: searchParams.get('queryString') ?? undefined,
+    contactPoint: searchParams.get('contactPoint') ?? undefined,
+  };
+};
+
 export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
   const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
   const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);

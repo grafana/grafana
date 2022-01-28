@@ -9,9 +9,9 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,11 +21,12 @@ type GoogleChatNotifier struct {
 	*Base
 	URL     string
 	log     log.Logger
+	ns      notifications.WebhookSender
 	tmpl    *template.Template
 	content string
 }
 
-func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Template) (*GoogleChatNotifier, error) {
+func NewGoogleChatNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*GoogleChatNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -47,6 +48,7 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Templat
 		}),
 		URL:     url,
 		log:     log.New("alerting.notifier.googlechat"),
+		ns:      ns,
 		tmpl:    t,
 		content: content,
 	}, nil
@@ -137,7 +139,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		Body: string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := gcn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
 		return false, err
 	}
