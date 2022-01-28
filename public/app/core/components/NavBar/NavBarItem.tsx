@@ -42,6 +42,7 @@ const NavBarItem = ({
     menuItemType: NavMenuItemType.Section,
   };
   const items: NavModelItem[] = [section].concat(filteredItems);
+
   const onNavigate = (item: NavModelItem) => {
     const { url, target, onClick } = item;
     if (!url) {
@@ -107,6 +108,7 @@ const NavBarItem = ({
       url={link.url}
       onClick={link.onClick}
       target={link.target}
+      highlightText={link.highlightText}
     >
       {children}
     </NavBarItemWithoutMenu>

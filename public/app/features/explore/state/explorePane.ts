@@ -22,13 +22,22 @@ import {
   storeGraphStyle,
 } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { EventBusExtended, DataQuery, ExploreUrlState, TimeRange, HistoryItem, DataSourceApi } from '@grafana/data';
+import {
+  EventBusExtended,
+  DataQuery,
+  ExploreUrlState,
+  TimeRange,
+  HistoryItem,
+  DataSourceApi,
+  ExplorePanelsState,
+  PreferredVisualisationType,
+} from '@grafana/data';
 // Types
 import { ThunkResult } from 'app/types';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction } from './main';
+import { richHistoryUpdatedAction, stateSave } from './main';
 
 //
 // Actions and Payloads
@@ -44,6 +53,38 @@ export interface ChangeSizePayload {
   height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
+
+/**
+ * Tracks the state of explore panels that gets synced with the url.
+ */
+interface ChangePanelsState {
+  exploreId: ExploreId;
+  panelsState: ExplorePanelsState;
+}
+const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+export function changePanelState(
+  exploreId: ExploreId,
+  panel: PreferredVisualisationType,
+  panelState: ExplorePanelsState[PreferredVisualisationType]
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const exploreItem = getState().explore[exploreId];
+    if (exploreItem === undefined) {
+      return;
+    }
+    const { panelsState } = exploreItem;
+    dispatch(
+      changePanelsStateAction({
+        exploreId,
+        panelsState: {
+          ...panelsState,
+          [panel]: panelState,
+        },
+      })
+    );
+    dispatch(stateSave());
+  };
+}
 
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -102,6 +143,8 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
+  panelsState?: ExplorePanelsState,
+
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
@@ -128,6 +171,9 @@ export function initializeExplore(
         history,
       })
     );
+    if (panelsState !== undefined) {
+      dispatch(changePanelsStateAction({ exploreId, panelsState }));
+    }
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
@@ -159,7 +205,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
-    const { datasource, queries, range: urlRange, originPanelId } = newUrlState;
+    const { datasource, queries, range: urlRange, originPanelId, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -176,7 +222,16 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       await dispatch(
-        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, originPanelId)
+        initializeExplore(
+          exploreId,
+          datasource,
+          initialQueries,
+          range,
+          containerWidth,
+          eventBridge,
+          panelsState,
+          originPanelId
+        )
       );
       return;
     }
@@ -187,6 +242,10 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    if (update.panelsState && panelsState !== undefined) {
+      dispatch(changePanelsStateAction({ exploreId, panelsState }));
     }
 
     // always run queries when refresh is needed
@@ -218,6 +277,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeGraphStyleAction.match(action)) {
     const { graphStyle } = action.payload;
     return { ...state, graphStyle };
+  }
+
+  if (changePanelsStateAction.match(action)) {
+    const { panelsState } = action.payload;
+    return { ...state, panelsState };
   }
 
   if (initializeExploreAction.match(action)) {
@@ -254,14 +318,17 @@ export const urlDiff = (
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  panelsState: boolean;
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
   const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
 
   return {
     datasource,
     queries,
     range,
+    panelsState,
   };
 };

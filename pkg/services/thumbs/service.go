@@ -40,8 +40,8 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureToggles, renderService rendering.Service, gl *live.GrafanaLive) Service {
-	if !features.IsDashboardPreviewsEnabled() {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, renderService rendering.Service, gl *live.GrafanaLive) Service {
+	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
 

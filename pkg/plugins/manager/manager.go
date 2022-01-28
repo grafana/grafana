@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"path/filepath"
 	"sync"
 	"time"
@@ -12,12 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -33,41 +30,35 @@ var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg              *plugins.Cfg
-	requestValidator models.PluginRequestValidator
-	sqlStore         *sqlstore.SQLStore
-	store            map[string]*plugins.Plugin
-	pluginInstaller  plugins.Installer
-	pluginLoader     plugins.Loader
-	pluginsMu        sync.RWMutex
-	pluginPaths      map[plugins.Class][]string
-	log              log.Logger
+	cfg             *plugins.Cfg
+	store           map[string]*plugins.Plugin
+	pluginInstaller plugins.Installer
+	pluginLoader    plugins.Loader
+	pluginsMu       sync.RWMutex
+	pluginPaths     map[plugins.Class][]string
+	log             log.Logger
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), requestValidator, map[plugins.Class][]string{
+func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
 		plugins.Core:     corePluginPaths(grafanaCfg),
 		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
 		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
-	}, pluginLoader, sqlStore)
+	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, requestValidator models.PluginRequestValidator, pluginPaths map[plugins.Class][]string,
-	pluginLoader plugins.Loader, sqlStore *sqlstore.SQLStore) *PluginManager {
+func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader) *PluginManager {
 	return &PluginManager{
-		cfg:              cfg,
-		requestValidator: requestValidator,
-		pluginLoader:     pluginLoader,
-		pluginPaths:      pluginPaths,
-		store:            make(map[string]*plugins.Plugin),
-		log:              log.New("plugin.manager"),
-		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		sqlStore:         sqlStore,
+		cfg:             cfg,
+		pluginLoader:    pluginLoader,
+		pluginPaths:     pluginPaths,
+		store:           make(map[string]*plugins.Plugin),
+		log:             log.New("plugin.manager"),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 
@@ -253,26 +244,13 @@ func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*b
 }
 
 func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	var dsURL string
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
-	}
-
-	err := m.requestValidator.Validate(dsURL, nil)
-	if err != nil {
-		return &backend.CheckHealthResult{
-			Status:  http.StatusForbidden,
-			Message: "Access denied",
-		}, nil
-	}
-
 	p, exists := m.plugin(req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
-	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err := instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: req.PluginContext})
 		return
 	})

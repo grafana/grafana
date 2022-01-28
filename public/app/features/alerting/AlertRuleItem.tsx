@@ -25,7 +25,7 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
   );
 
   return (
-    <Card href={ruleUrl}>
+    <Card>
       <Card.Heading>{renderText(rule.name)}</Card.Heading>
       <Card.Figure>
         <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
