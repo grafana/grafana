@@ -3,49 +3,37 @@ import { Alert, CodeEditor } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
 import { isArray } from 'lodash';
 import { toDataQueryResponse } from '@grafana/runtime';
+import { dataFrameToJSON } from '@grafana/data';
 
 export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
   const [error, setError] = useState<string>();
   const [warning, setWarning] = useState<string>();
 
-  // const onContent = (rawFrameContent: string) => {
-  //   onChange({ ...query, rawFrameContent });
-  // };
-
-  // return (
-  //   <InlineField label="Frames" labelWidth={14}>
-  //     <TextArea
-  //       width="100%"
-  //       rows={10}
-  //       onBlur={(e) => onContent(e.currentTarget.value)}
-  //       placeholder="frames array (JSON)"
-  //       defaultValue={query.rawFrameContent ?? '[]'}
-  //     />
-  //   </InlineField>
-  // );
-
   const onSaveFrames = (rawFrameContent: string) => {
     try {
       const json = JSON.parse(rawFrameContent);
       if (isArray(json)) {
-        onChange({ ...query, rawFrameContent });
         setError(undefined);
         setWarning(undefined);
+        onChange({ ...query, rawFrameContent });
         return;
       }
 
       // Chek if it is a copy of the raw resuls
       const v = toDataQueryResponse({ data: json });
       if (v.data?.length && !v.error) {
-        onChange({ ...query, rawFrameContent: JSON.stringify(v.data, null, 2) });
+        const data = v.data.map((f) => dataFrameToJSON(f));
+        console.log('SOURCE', json);
+        console.log('SAVE', data);
         setError(undefined);
         setWarning('Converted to direct frame result');
+        onChange({ ...query, rawFrameContent: JSON.stringify(data, null, 2) });
         return;
       }
 
-      setError('Must be array of data frames');
+      setError('Unable to read dataframes in text');
     } catch (e) {
-      setError('Unable to parse JSON body');
+      setError('Enter JSON array of data frames (or raw query results body)');
       setWarning(undefined);
     }
   };

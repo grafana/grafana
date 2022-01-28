@@ -153,7 +153,6 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
 
   // Find the longest field length
   const length = data ? data.values.reduce((max, vals) => Math.max(max, vals.length), 0) : 0;
-
   const fields = schema.fields.map((f, index) => {
     let buffer = data ? data.values[index] : [];
     let origLen = buffer.length;
