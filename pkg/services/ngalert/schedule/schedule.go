@@ -175,7 +175,7 @@ func (sch *schedule) Run(ctx context.Context) error {
 
 	go func() {
 		defer wg.Done()
-		if err := sch.ruleEvaluationLoop(ctx); err != nil {
+		if err := sch.schedulePeriodic(ctx); err != nil {
 			sch.log.Error("failure while running the rule evaluation loop", "err", err)
 		}
 	}()
@@ -352,17 +352,21 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 	}
 }
 
-func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
+func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
 		case tick := <-sch.heartbeat.C:
+			start := time.Now()
+			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
+
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
 			for disabledOrg := range sch.disabledOrgs {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
-			alertRules := sch.fetchAllDetails(disabledOrgs)
+
+			alertRules := sch.getAlertRules(disabledOrgs)
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
@@ -433,6 +437,8 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 			for key := range registeredDefinitions {
 				sch.DeleteAlertRule(key)
 			}
+
+			sch.metrics.SchedulePeriodicDuration.Observe(time.Since(start).Seconds())
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
 

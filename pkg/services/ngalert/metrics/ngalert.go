@@ -45,10 +45,13 @@ type NGAlert struct {
 }
 
 type Scheduler struct {
-	Registerer   prometheus.Registerer
-	EvalTotal    *prometheus.CounterVec
-	EvalFailures *prometheus.CounterVec
-	EvalDuration *prometheus.SummaryVec
+	Registerer               prometheus.Registerer
+	BehindSeconds            prometheus.Gauge
+	EvalTotal                *prometheus.CounterVec
+	EvalFailures             *prometheus.CounterVec
+	EvalDuration             *prometheus.SummaryVec
+	GetAlertRulesDuration    prometheus.Histogram
+	SchedulePeriodicDuration prometheus.Histogram
 }
 
 type MultiOrgAlertmanager struct {
@@ -120,6 +123,12 @@ func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Reg
 func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 	return &Scheduler{
 		Registerer: r,
+		BehindSeconds: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "scheduler_behind_seconds",
+			Help:      "The total number of seconds the scheduler is behind.",
+		}),
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.
 		EvalTotal: promauto.With(r).NewCounterVec(
@@ -151,6 +160,24 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 			},
 			[]string{"org"},
+		),
+		GetAlertRulesDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "get_alert_rules_duration_seconds",
+				Help:      "The time taken to get all alert rules.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_periodic_duration_seconds",
+				Help:      "The time taken to run the scheduler.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
 		),
 	}
 }
