@@ -13,15 +13,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type Template struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
+type EmbeddedTemplate struct {
+	Name       string `json:"name"`
+	Content    string `json:"content"`
+	Provenance string `json:"provance"`
 }
 
 type TemplateService interface {
-	GetTemplates(orgID int64) ([]Template, error)
-	CreateTemplate(orgID int64, template Template) (Template, error)
-	UpdateTemplate(orgID int64, template Template) (Template, error)
+	GetTemplates(orgID int64) ([]EmbeddedTemplate, error)
+	CreateTemplate(orgID int64, template EmbeddedTemplate) (EmbeddedTemplate, error)
+	UpdateTemplate(orgID int64, template EmbeddedTemplate) (EmbeddedTemplate, error)
 	DeleteTemplate(orgID int64, name string) error
 }
 
@@ -47,28 +48,28 @@ func NewEmbeddedTemplateService(store AMStore) *EmbeddedTemplateService {
 	}
 }
 
-func (templateStore *EmbeddedTemplateService) GetTemplates(orgID int64) ([]Template, error) {
+func (templateStore *EmbeddedTemplateService) GetTemplates(orgID int64) ([]EmbeddedTemplate, error) {
 	cfg, _, err := templateStore.getCurrentConfig(orgID)
 	if err != nil {
 		return nil, err
 	}
-	templates := []Template{}
+	templates := []EmbeddedTemplate{}
 	for name, content := range cfg.TemplateFiles {
-		templates = append(templates, Template{Name: name, Content: content})
+		templates = append(templates, EmbeddedTemplate{Name: name, Content: content})
 	}
 	return templates, nil
 }
 
-func (templateStore *EmbeddedTemplateService) CreateTemplate(orgID int64, template Template) (Template, error) {
+func (templateStore *EmbeddedTemplateService) CreateTemplate(orgID int64, template EmbeddedTemplate) (EmbeddedTemplate, error) {
 	if template.Name == "" || template.Content == "" {
-		return Template{}, ErrTemplateNameOrContentEmpty
+		return EmbeddedTemplate{}, ErrTemplateNameOrContentEmpty
 	}
 	cfg, fetchedHash, err := templateStore.getCurrentConfig(orgID)
 	if err != nil {
-		return Template{}, err
+		return EmbeddedTemplate{}, err
 	}
 	if _, exists := cfg.TemplateFiles[template.Name]; exists {
-		return Template{}, ErrTemplateDuplicateName
+		return EmbeddedTemplate{}, ErrTemplateDuplicateName
 	}
 	// notification template content must be wrapped in {{ define "name" }} tag,
 	// but this is not obvious because user also has to provide name separately in the form.
@@ -82,7 +83,7 @@ func (templateStore *EmbeddedTemplateService) CreateTemplate(orgID int64, templa
 	cfg.AlertmanagerConfig.Config.Templates = append(cfg.AlertmanagerConfig.Config.Templates, template.Name)
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return Template{}, err
+		return EmbeddedTemplate{}, err
 	}
 	return template, templateStore.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration:     string(data),
@@ -94,16 +95,16 @@ func (templateStore *EmbeddedTemplateService) CreateTemplate(orgID int64, templa
 	})
 }
 
-func (templateStore *EmbeddedTemplateService) UpdateTemplate(orgID int64, template Template) (Template, error) {
+func (templateStore *EmbeddedTemplateService) UpdateTemplate(orgID int64, template EmbeddedTemplate) (EmbeddedTemplate, error) {
 	if template.Name == "" || template.Content == "" {
-		return Template{}, ErrTemplateNameOrContentEmpty
+		return EmbeddedTemplate{}, ErrTemplateNameOrContentEmpty
 	}
 	cfg, fetchedHash, err := templateStore.getCurrentConfig(orgID)
 	if err != nil {
-		return Template{}, err
+		return EmbeddedTemplate{}, err
 	}
 	if _, exists := cfg.TemplateFiles[template.Name]; !exists {
-		return Template{}, ErrTemplateNotFound
+		return EmbeddedTemplate{}, ErrTemplateNotFound
 	}
 	// notification template content must be wrapped in {{ define "name" }} tag,
 	// but this is not obvious because user also has to provide name separately in the form.
@@ -112,7 +113,7 @@ func (templateStore *EmbeddedTemplateService) UpdateTemplate(orgID int64, templa
 	cfg.TemplateFiles[template.Name] = template.Content
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return Template{}, err
+		return EmbeddedTemplate{}, err
 	}
 	return template, templateStore.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration:     string(data),

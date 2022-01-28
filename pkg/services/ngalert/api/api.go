@@ -89,6 +89,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		service: services.NewGrafanaRuleService(api.RuleStore),
 	}, m)
 
+	api.RegisterContactPointEndpoints(&ContactPointServer{
+		service: services.NewEmbeddedContactPointService(api.AlertingStore, api.SecretsService),
+	}, m)
+
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,

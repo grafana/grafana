@@ -10,60 +10,60 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type TemplateServer struct {
-	service services.TemplateService
+type ContactPointServer struct {
+	service services.ContactPointService
 }
 
-func (s *TemplateServer) RouteGetTemplates(c *api.ReqContext) response.Response {
+func (s *ContactPointServer) RouteGetContactPoint(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_VIEWER) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	templates, err := s.service.GetTemplates(c.OrgId)
+	templates, err := s.service.GetContactPoints(c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, templates)
 }
 
-func (s *TemplateServer) RouteCreateTemplate(c *api.ReqContext) response.Response {
+func (s *ContactPointServer) RouteCreateContactPoint(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	template := services.EmbeddedTemplate{}
-	if err := web.Bind(c.Req, &template); err != nil {
+	contactPoint := services.EmbeddedContactPoint{}
+	if err := web.Bind(c.Req, &contactPoint); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	template, err := s.service.CreateTemplate(c.OrgId, template)
+	contactPoint, err := s.service.CreateContactPoint(c.OrgId, contactPoint)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, template)
+	return response.JSON(http.StatusOK, contactPoint)
 }
 
-func (s *TemplateServer) RouteUpdateTemplate(c *api.ReqContext) response.Response {
+func (s *ContactPointServer) RouteUpdateContactPoint(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	template := services.EmbeddedTemplate{}
-	if err := web.Bind(c.Req, &template); err != nil {
+	contactPoint := services.EmbeddedContactPoint{}
+	if err := web.Bind(c.Req, &contactPoint); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	template, err := s.service.UpdateTemplate(c.OrgId, template)
+	contactPoint, err := s.service.UpdateContactPoint(c.OrgId, contactPoint)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, template)
+	return response.JSON(http.StatusOK, contactPoint)
 }
 
-func (s *TemplateServer) RouteDeleteTemplate(c *api.ReqContext) response.Response {
+func (s *ContactPointServer) RouteDeleteContactPoint(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	template := services.EmbeddedTemplate{}
-	if err := web.Bind(c.Req, &template); err != nil {
+	contactPoint := services.EmbeddedContactPoint{}
+	if err := web.Bind(c.Req, &contactPoint); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	err := s.service.DeleteTemplate(c.OrgId, template.Name)
+	err := s.service.DeleteContactPoint(c.OrgId, contactPoint.UID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
