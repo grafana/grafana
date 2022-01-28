@@ -1,14 +1,13 @@
 import { PREVIEWS_LOCAL_STORAGE_KEY } from '../constants';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config } from '@grafana/runtime/src';
 import { useLocalStorage } from 'react-use';
 
 export const useShowDashboardPreviews = () => {
-  const previewsFeatureEnabled = Boolean(config.featureToggles.dashboardPreviews);
-  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, previewsFeatureEnabled);
+  const previewFeatureEnabled = Boolean(config.featureToggles.dashboardPreviews);
+  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, previewFeatureEnabled);
   const onShowPreviewsChange = (showPreviews: boolean) => {
-    reportInteraction(`${showPreviews ? 'enabled' : 'disabled'}_dashboard_previews`);
     setShowPreviews(showPreviews);
   };
 
-  return { showPreviews: showPreviews && previewsFeatureEnabled, onShowPreviewsChange };
+  return { showPreviews: Boolean(showPreviews && previewFeatureEnabled), previewFeatureEnabled, onShowPreviewsChange };
 };

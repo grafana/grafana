@@ -7,7 +7,6 @@ import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
-import { useShowDashboardPreviews } from '../hooks/useShowDashboardPreviews';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -15,10 +14,12 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
-  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const { results, loading, onToggleSection, onKeyDown, showPreviews, onShowPreviewsChange } = useDashboardSearch(
+    query,
+    onCloseSearch
+  );
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const { showPreviews, onShowPreviewsChange } = useShowDashboardPreviews();
 
   return (
     <div tabIndex={0} className={styles.overlay}>

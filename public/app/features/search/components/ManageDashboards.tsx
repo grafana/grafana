@@ -13,7 +13,6 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { useShowDashboardPreviews } from '../hooks/useShowDashboardPreviews';
 
 export interface Props {
   folder?: FolderDTO;
@@ -22,8 +21,6 @@ export interface Props {
 const { isEditor } = contextSrv;
 
 export const ManageDashboards: FC<Props> = memo(({ folder }) => {
-  const { showPreviews, onShowPreviewsChange } = useShowDashboardPreviews();
-
   const folderId = folder?.id;
   const folderUid = folder?.uid;
   const theme = useTheme();
@@ -64,6 +61,8 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onDeleteItems,
     onMoveItems,
     noFolders,
+    showPreviews,
+    onShowPreviewsChange,
   } = useManageDashboards(query, {}, folder);
 
   const onMoveTo = () => {

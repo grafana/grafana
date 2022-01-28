@@ -6,10 +6,16 @@ import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction
 import { ManageDashboardsState } from '../reducers/manageDashboards';
 import { useManageDashboards } from './useManageDashboards';
 import { GENERAL_FOLDER_ID } from '../constants';
+import { setEchoSrv } from '@grafana/runtime/src';
+import { Echo } from 'app/core/services/echo/Echo';
 
 describe('useManageDashboards', () => {
   const useSearchMock = jest.spyOn(useSearch, 'useSearch');
   const toggle = async (section: DashboardSection) => section;
+
+  beforeAll(() => {
+    setEchoSrv(new Echo());
+  });
 
   function setupTestContext({ results = [] }: { results?: DashboardSection[] } = {}) {
     jest.clearAllMocks();
