@@ -29,7 +29,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
    <br><br>b. Fill in the section with the following values:
    <br>
 
-   - `key_id`: encryption key ID, refer to [Getting the ID for a Key](https://cloud.google.com/kms/docs/getting-resource-ids#getting_the_id_for_a_key_and_version)
+   - `key_id`: encryption key ID, refer to [Getting the ID for a Key](https://cloud.google.com/kms/docs/getting-resource-ids#getting_the_id_for_a_key_and_version).
    - `credentials_file`: path to the JSON file containing a service account credentials.
 
    An example of a Google Cloud KMS provider section in the `grafana.ini` file is as follows:
