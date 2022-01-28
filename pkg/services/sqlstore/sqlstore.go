@@ -458,8 +458,10 @@ var testSQLStoreMutex sync.Mutex
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
+}
 
-	EnableAllFeatures bool
+var featuresEnabledDuringTests = []string{
+	featuremgmt.FlagDashboardPreviews,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -492,13 +494,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false}}
 		}
 
-		var enableAllFeatures bool
-		for _, opt := range opts {
-			if opt.EnableAllFeatures {
-				enableAllFeatures = true
-			}
-		}
-
 		// environment variable present for test db?
 		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 			dbType = db
@@ -506,7 +501,15 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = func(key string) bool { return enableAllFeatures }
+		cfg.IsFeatureToggleEnabled = func(requestedFeature string) bool {
+			for _, enabledFeature := range featuresEnabledDuringTests {
+				if enabledFeature == requestedFeature {
+					return true
+				}
+			}
+
+			return false
+		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err

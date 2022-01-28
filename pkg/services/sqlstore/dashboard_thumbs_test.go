@@ -16,7 +16,7 @@ func TestSqlStorage(t *testing.T) {
 	var savedFolder *models.Dashboard
 
 	setup := func() {
-		sqlStore = InitTestDB(t, InitTestDBOpt{EnableAllFeatures: true})
+		sqlStore = InitTestDB(t)
 		savedFolder = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 	}
 
