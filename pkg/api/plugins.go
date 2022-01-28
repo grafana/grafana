@@ -217,51 +217,6 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	return resp
 }
 
-func (hs *HTTPServer) ImportDashboard(c *models.ReqContext) response.Response {
-	apiCmd := dtos.ImportDashboardCommand{}
-	if err := web.Bind(c.Req, &apiCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	var err error
-	if apiCmd.PluginId == "" && apiCmd.Dashboard == nil {
-		return response.Error(422, "Dashboard must be set", nil)
-	}
-
-	limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
-	if err != nil {
-		return response.Error(500, "failed to get quota", err)
-	}
-	if limitReached {
-		return response.Error(403, "Quota reached", nil)
-	}
-
-	trimDefaults := c.QueryBoolWithDefault("trimdefaults", true)
-	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
-		apiCmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(apiCmd.Dashboard)
-		if err != nil {
-			return response.Error(500, "Error while applying default value to the dashboard json", err)
-		}
-	}
-
-	dashInfo, dash, err := hs.pluginDashboardManager.ImportDashboard(c.Req.Context(), apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
-		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser)
-	if err != nil {
-		return hs.dashboardSaveErrorToApiResponse(c.Req.Context(), err)
-	}
-
-	err = hs.LibraryPanelService.ImportLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash, apiCmd.FolderId)
-	if err != nil {
-		return response.Error(500, "Error while importing library panels", err)
-	}
-
-	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c.Req.Context(), c.SignedInUser, dash)
-	if err != nil {
-		return response.Error(500, "Error while connecting library panels", err)
-	}
-
-	return response.JSON(200, dashInfo)
-}
-
 // CollectPluginMetrics collect metrics from a plugin.
 //
 // /api/plugins/:pluginId/metrics
