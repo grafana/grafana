@@ -26,13 +26,6 @@ type ConfigurationApiForkingService interface {
 	RoutePostNGalertConfig(*models.ReqContext) response.Response
 }
 
-type ConfigurationApiService interface {
-	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
-	RouteGetAlertmanagers(*models.ReqContext) response.Response
-	RouteGetNGalertConfig(*models.ReqContext) response.Response
-	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
-}
-
 func (f *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteNGalertConfig(ctx)
 }

@@ -11,17 +11,22 @@ import (
 
 // ForkedRulerApi will validate and proxy requests to the correct backend type depending on the datasource.
 type ForkedRulerApi struct {
-	LotexRuler, GrafanaRuler RulerApiService
-	DatasourceCache          datasources.CacheService
+	LotexRuler      *LotexRuler
+	GrafanaRuler    *RulerSrv
+	DatasourceCache datasources.CacheService
 }
 
 // NewForkedRuler implements a set of routes that proxy to various Cortex Ruler-compatible backends.
-func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService) *ForkedRulerApi {
+func NewForkedRuler(datasourceCache datasources.CacheService, lotex *LotexRuler, grafana *RulerSrv) *ForkedRulerApi {
 	return &ForkedRulerApi{
 		LotexRuler:      lotex,
 		GrafanaRuler:    grafana,
 		DatasourceCache: datasourceCache,
 	}
+}
+
+func (f *ForkedRulerApi) forkRouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
@@ -30,13 +35,15 @@ func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqCont
 		return ErrResp(400, err, "")
 	}
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.LotexRuler.RouteDeleteNamespaceRulesConfig(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
+}
+
+func (f *ForkedRulerApi) forkRouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
@@ -45,13 +52,15 @@ func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) 
 		return ErrResp(400, err, "")
 	}
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.LotexRuler.RouteDeleteRuleGroupConfig(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
+}
+
+func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetNamespaceRulesConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
@@ -60,13 +69,15 @@ func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext
 		return ErrResp(400, err, "")
 	}
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaRuler.RouteGetNamespaceRulesConfig(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.LotexRuler.RouteGetNamespaceRulesConfig(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
+}
+
+func (f *ForkedRulerApi) forkRouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
@@ -75,13 +86,15 @@ func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) re
 		return ErrResp(400, err, "")
 	}
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.LotexRuler.RouteGetRulegGroupConfig(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
+}
+
+func (f *ForkedRulerApi) forkRouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetRulesConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) response.Response {
@@ -90,13 +103,20 @@ func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) respons
 		return ErrResp(400, err, "")
 	}
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaRuler.RouteGetRulesConfig(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.LotexRuler.RouteGetRulesConfig(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
+}
+
+func (f *ForkedRulerApi) forkRoutePostNameGrafanaRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
+	payloadType := conf.Type()
+	if payloadType != apimodels.GrafanaBackend {
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v) vs payload type (%v)", apimodels.GrafanaBackend, payloadType), "")
+	}
+
+	return f.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf)
 }
 
 func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
@@ -111,8 +131,6 @@ func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, co
 	}
 
 	switch backendType {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf)
 	case apimodels.LoTexRulerBackend:
 		return f.LotexRuler.RoutePostNameRulesConfig(ctx, conf)
 	default:

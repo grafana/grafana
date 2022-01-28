@@ -17,10 +17,6 @@ type {{classname}}ForkingService interface { {{#operation}}
 	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
 }
 
-type {{classname}}Service interface { {{#operation}}
-	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
-}
-
 {{#operations}}{{#operation}}
 func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
 	{{#bodyParams}}
