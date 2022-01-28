@@ -1,12 +1,12 @@
 import React from 'react';
-import { render, screen, getByRole, getAllByRole } from '@testing-library/react';
+import { render, screen, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PrometheusDatasource } from '../../datasource';
-// import { QueryEditorMode } from '../shared/types';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import PromQlLanguageProvider from '../../language_provider';
 import { PromVisualQuery } from '../types';
+import { getLabelSelects } from '../testUtils';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -97,15 +97,6 @@ function getMetricSelect() {
 function openMetricSelect() {
   const select = getMetricSelect();
   userEvent.click(select);
-}
-
-function getLabelSelects(index = 0) {
-  const labels = screen.getByText(/Labels/);
-  const selects = getAllByRole(labels.parentElement!, 'combobox');
-  return {
-    name: selects[3 * index],
-    value: selects[3 * index + 2],
-  };
 }
 
 function openLabelNameSelect(index = 0) {
