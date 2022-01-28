@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -2623,7 +2624,8 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 			"title": folderName,
 		}),
 	}
-	f, err := store.SaveDashboard(cmd)
+	dashboardsStore := database.ProvideDashboardStore(store)
+	f, err := dashboardsStore.SaveDashboard(cmd)
 
 	if err != nil {
 		return "", err

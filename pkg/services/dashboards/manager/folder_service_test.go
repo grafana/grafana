@@ -1,7 +1,8 @@
-package manager
+package service
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,7 +22,7 @@ func TestFolderService(t *testing.T) {
 		store := &database.FakeDashboardStore{}
 		defer store.AssertExpectations(t)
 		service := ProvideFolderService(
-			&FakeDashboardService{DashboardService: ProvideDashboardService(store)},
+			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store)},
 			store,
 		)
 

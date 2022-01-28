@@ -4,19 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"io"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -196,7 +195,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashboard, err := manager.ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), dashItem, true)
+	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -207,8 +206,8 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	t.Helper()
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := manager.ProvideDashboardService(dashboardStore)
-	s := manager.ProvideFolderService(d, dashboardStore)
+	d := dashboardservice.ProvideDashboardService(dashboardStore)
+	s := dashboardservice.ProvideFolderService(d, dashboardStore)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
@@ -289,11 +288,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
-		dashboardService := manager.ProvideDashboardService(dashboardStore)
+		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore)
 		service := LibraryElementService{
 			Cfg:           setting.NewCfg(),
 			SQLStore:      sqlStore,
-			folderService: manager.ProvideFolderService(dashboardService, dashboardStore),
+			folderService: dashboardservice.ProvideFolderService(dashboardService, dashboardStore),
 		}
 
 		user := models.SignedInUser{

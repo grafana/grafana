@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package manager
+package service
 
 import (
 	"context"

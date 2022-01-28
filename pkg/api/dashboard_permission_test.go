@@ -4,32 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/dashboards/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/mock"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
 
-		db := sqlstore.InitTestDB(t)
+		dashboardStore := &database.FakeDashboardStore{}
+		defer dashboardStore.AssertExpectations(t)
 
 		hs := &HTTPServer{
 			Cfg:              settings,
-			dashboardService: manager.ProvideDashboardService(database.ProvideDashboardStore(db)),
+			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore),
 		}
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
@@ -95,6 +95,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				},
 			}
 
+			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
@@ -380,6 +381,11 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 			assert.Len(t, cmd.Items, 3)
 
+			var numOfItems []*models.DashboardAcl
+			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				items := args.Get(2).([]*models.DashboardAcl)
+				numOfItems = items
+			}).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
@@ -387,10 +393,9 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					var gotItems []*models.DashboardAcl
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					assert.Len(t, gotItems, 4)
+					assert.Len(t, numOfItems, 4)
 				},
 			}, hs)
 		})

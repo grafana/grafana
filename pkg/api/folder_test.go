@@ -206,28 +206,28 @@ type fakeFolderService struct {
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(ctx context.Context, limit int64, page int64) ([]*models.Folder, error) {
+func (s *fakeFolderService) GetFolders(ctx context.Context, user *models.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
-func (s *fakeFolderService) GetFolderByID(ctx context.Context, id int64) (*models.Folder, error) {
+func (s *fakeFolderService) GetFolderByID(ctx context.Context, user *models.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
 	return s.GetFolderByIDResult, s.GetFolderByIDError
 }
 
-func (s *fakeFolderService) GetFolderByUID(ctx context.Context, uid string) (*models.Folder, error) {
+func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *models.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
 	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(ctx context.Context, title, uid string) (*models.Folder, error) {
+func (s *fakeFolderService) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
 	return s.CreateFolderResult, s.CreateFolderError
 }
 
-func (s *fakeFolderService) UpdateFolder(ctx context.Context, existingUID string, cmd *models.UpdateFolderCommand) error {
+func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
 	cmd.Result = s.UpdateFolderResult
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, uid string, forceDeleteRules bool) (*models.Folder, error) {
+func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *models.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }

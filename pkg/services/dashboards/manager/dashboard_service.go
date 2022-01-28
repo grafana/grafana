@@ -1,4 +1,4 @@
-package manager
+package service
 
 import (
 	"context"
