@@ -12,26 +12,26 @@ import (
 )
 
 type State struct {
-	AlertRuleUID       string
-	OrgID              int64
-	CacheId            string
-	State              eval.State
-	Resolved           bool
-	Results            []Evaluation
-	StartsAt           time.Time
-	EndsAt             time.Time
-	LastEvaluationTime time.Time
-	EvaluationDuration time.Duration
-	LastSentAt         time.Time
-	Annotations        map[string]string
-	Labels             data.Labels
-	Error              error
+	AlertRuleUID         string
+	OrgID                int64
+	CacheId              string
+	State                eval.State
+	Resolved             bool
+	Results              []Evaluation
+	LastEvaluationString string
+	StartsAt             time.Time
+	EndsAt               time.Time
+	LastEvaluationTime   time.Time
+	EvaluationDuration   time.Duration
+	LastSentAt           time.Time
+	Annotations          map[string]string
+	Labels               data.Labels
+	Error                error
 }
 
 type Evaluation struct {
-	EvaluationTime   time.Time
-	EvaluationState  eval.State
-	EvaluationString string
+	EvaluationTime  time.Time
+	EvaluationState eval.State
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
 	// in classic conditions do not have a RefID.
