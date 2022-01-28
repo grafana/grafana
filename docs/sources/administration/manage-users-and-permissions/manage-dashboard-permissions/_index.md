@@ -1,6 +1,6 @@
 +++
 title = "Manage dashboard permissions"
-aliases = ["path here"]
+aliases = ["docs/sources/administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md"]
 weight = 500
 +++
 
