@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/plugins/developing/snapshot-mode/"]
 
 {{< figure class="float-right"  src="/static/img/docs/Grafana-snapshot-example.png" caption="A dashboard using snapshot data and not live data." >}}
 
-Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../dashboards/json-model.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](http://snapshot.raintank.io/) if you want to send the snapshot to someone who does not have access to your Grafana server.
+Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../dashboards/json-model.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](https://snapshots.raintank.io) if you want to send the snapshot to someone who does not have access to your Grafana server.
 
 {{< figure class="float-right"  src="/static/img/docs/animated_gifs/snapshots.gif" caption="Selecting a snapshot" >}}
 
@@ -72,4 +72,4 @@ loadLocationDataFromFile(reload) {
 
 It is really easy to forget to add this support but it enables a great feature and can be used to demo your panel.
 
-If there is a panel plugin that you would like to be installed on the Raintank Snapshot server then please contact us via [Slack](https://raintank.slack.com) or [GitHub](https://github.com/grafana/grafana).
+If there is a panel plugin that you would like to be installed on the Raintank Snapshot server then please contact us via [Slack](https://slack.grafana.com) or [GitHub](https://github.com/grafana/grafana).

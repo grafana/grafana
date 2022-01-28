@@ -65,8 +65,10 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to update team", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team", err)
+		}
 	}
 
 	if err := hs.SQLStore.UpdateTeam(c.Req.Context(), &cmd); err != nil {
@@ -88,8 +90,10 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	}
 	user := c.SignedInUser
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
-		return response.Error(403, "Not allowed to delete team", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
+			return response.Error(403, "Not allowed to delete team", err)
+		}
 	}
 
 	if err := hs.SQLStore.DeleteTeam(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
