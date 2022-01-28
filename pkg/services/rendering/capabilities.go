@@ -26,6 +26,7 @@ func (rs *RenderingService) HasCapability(capability CapabilityName) (Capability
 	for i := range rs.capabilities {
 		if rs.capabilities[i].name == capability {
 			semverConstraint = rs.capabilities[i].semverConstraint
+			break
 		}
 	}
 
