@@ -11,7 +11,7 @@ Grafana allows you to create alerting rules for an external Cortex or Loki insta
 
 ## Before you begin
 
-- Verify that you have write permissions to the Prometheus data source. Otherwise, you will not be able to create or update Cortex managed alerting rules.
+- Verify that you have write permission to the Prometheus data source. Otherwise, you will not be able to create or update Cortex managed alerting rules.
 
 - For Cortex and Loki data sources, enable the ruler API by configuring their respective services.
 
