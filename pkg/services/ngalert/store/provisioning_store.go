@@ -26,15 +26,9 @@ type ProvisioningStore interface {
 	SetProvenance(o interface{}, p models.Provenance) error
 }
 
-func (st DBstore) GetProvenance(o interface{}) (models.Provenance, error) {
-	recordType := models.GetResourceTypeIdentifier(o)
-	if recordType == "" {
-		return models.None, nil
-	}
-	recordKey := models.GetResourceUniqueIdentifier(o)
-	if recordKey == "" {
-		return models.None, nil
-	}
+func (st DBstore) GetProvenance(o models.ProvisionedObject) (models.Provenance, error) {
+	recordType := o.GetResourceTypeIdentifier()
+	recordKey := o.GetResourceUniqueIdentifier()
 
 	provenance := models.None
 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -58,15 +52,9 @@ func (st DBstore) GetProvenance(o interface{}) (models.Provenance, error) {
 	return provenance, nil
 }
 
-func (st DBstore) SetProvenance(o interface{}, p models.Provenance) error {
-	recordType := models.GetResourceTypeIdentifier(o)
-	if recordType == "" {
-		return nil
-	}
-	recordKey := models.GetResourceUniqueIdentifier(o)
-	if recordKey == "" {
-		return nil
-	}
+func (st DBstore) SetProvenance(o models.ProvisionedObject, p models.Provenance) error {
+	recordType := o.GetResourceTypeIdentifier()
+	recordKey := o.GetResourceUniqueIdentifier()
 
 	/*
 	   NOTES:

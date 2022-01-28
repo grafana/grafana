@@ -8,7 +8,20 @@ const (
 	File Provenance = "file"
 )
 
-func GetResourceTypeIdentifier(o interface{}) string {
+type ProvisionedObject interface {
+	GetResourceTypeIdentifier() string
+	GetResourceUniqueIdentifier() string
+}
+
+func (ar *AlertRule) GetResourceTypeIdentifier() string {
+	return "alertRule"
+}
+
+func (ar *AlertRule) GetResourceUniqueIdentifier() string {
+	return ar.UID
+}
+
+/*func GetResourceTypeIdentifier(o interface{}) string {
 	switch o.(type) {
 	case AlertRule:
 		return "alertRule"
@@ -24,4 +37,4 @@ func GetResourceUniqueIdentifier(o interface{}) string {
 	default:
 		return ""
 	}
-}
+}*/
