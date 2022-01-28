@@ -15,6 +15,7 @@ interface QueryHeaderProps {
   onChange: (query: CloudWatchQuery) => void;
   onRunQuery: () => void;
   sqlCodeEditorIsDirty: boolean;
+  onRegionChange?: (region: string) => Promise<void>;
 }
 
 const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
@@ -22,7 +23,14 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, datasource, onChange, onRunQuery }) => {
+const QueryHeader: React.FC<QueryHeaderProps> = ({
+  query,
+  sqlCodeEditorIsDirty,
+  datasource,
+  onChange,
+  onRunQuery,
+  onRegionChange,
+}) => {
   const { queryMode, region } = query;
 
   const [regions, regionIsLoading] = useRegions(datasource);
@@ -30,12 +38,21 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value !== queryMode) {
       const commonProps = pick(query, 'id', 'region', 'namespace', 'refId', 'hide', 'key', 'queryType', 'datasource');
-
       onChange({
         ...commonProps,
         queryMode: value,
       } as CloudWatchQuery);
     }
+  };
+
+  const onRegion = async ({ value }: SelectableValue<string>) => {
+    if (onRegionChange) {
+      await onRegionChange(value ?? 'default');
+    }
+    onChange({
+      ...query,
+      region: value,
+    } as CloudWatchQuery);
   };
 
   return (
@@ -45,7 +62,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, 
         value={regions.find((v) => v.value === region)}
         placeholder="Select region"
         allowCustomValue
-        onChange={({ value: region }) => region && onChange({ ...query, region: region })}
+        onChange={({ value: region }) => region && onRegion({ value: region })}
         options={regions}
         isLoading={regionIsLoading}
       />
