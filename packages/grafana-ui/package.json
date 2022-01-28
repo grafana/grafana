@@ -131,7 +131,7 @@
     "@types/lodash": "4.14.149",
     "@types/mock-raf": "1.0.3",
     "@types/node": "16.11.19",
-    "@types/prismjs": "1.16.6",
+    "@types/prismjs": "1.26.0",
     "@types/react": "17.0.38",
     "@types/react-beautiful-dnd": "13.1.2",
     "@types/react-calendar": "3.4.4",
