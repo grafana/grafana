@@ -70,7 +70,7 @@
     "rollup": "2.66.1",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "sinon": "12.0.1",
+    "sinon": "13.0.0",
     "tinycolor2": "1.4.2",
     "typescript": "4.4.4"
   }
