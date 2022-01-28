@@ -9,6 +9,8 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  overflow: hidden;
+  height: 100vh;
 }
 
 .explore + .explore {
@@ -19,8 +21,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  padding: $dashboard-padding;
-  padding-top: 0;
+  padding: 0 $dashboard-padding;
 }
 
 .explore-wrapper {
