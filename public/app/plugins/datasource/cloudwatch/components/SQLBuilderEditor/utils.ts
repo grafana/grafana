@@ -230,6 +230,13 @@ export function setMetricName(query: CloudWatchMetricsQuery, metricName: string)
   });
 }
 
+export function removeMetricName(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
+  const queryWithNoParams = { ...query };
+  delete queryWithNoParams.sql?.select?.parameters;
+
+  return queryWithNoParams;
+}
+
 export function setAggregation(query: CloudWatchMetricsQuery, aggregation: string): CloudWatchMetricsQuery {
   return setSql(query, {
     select: {
