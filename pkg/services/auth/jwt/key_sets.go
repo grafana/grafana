@@ -8,11 +8,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,9 +44,21 @@ type keySetHTTP struct {
 	cacheExpiration time.Duration
 }
 
+type keySetHTTPKey struct {
+	url             string
+	log             log.Logger
+	client          *http.Client
+	cache           *remotecache.RemoteCache
+	cacheKey        string
+	cacheExpiration time.Duration
+}
+
 func (s *AuthService) checkKeySetConfiguration() error {
 	var count int
 	if s.Cfg.JWTAuthKeyFile != "" {
+		count++
+	}
+	if s.Cfg.JWTAuthKeyURL != "" {
 		count++
 	}
 	if s.Cfg.JWTAuthJWKSetFile != "" {
@@ -122,6 +136,22 @@ func (s *AuthService) initKeySet() error {
 			jose.JSONWebKeySet{
 				Keys: []jose.JSONWebKey{{Key: key}},
 			},
+		}
+	} else if urlStr := s.Cfg.JWTAuthKeyURL; urlStr != "" {
+		urlParsed, err := url.Parse(urlStr)
+		if err != nil {
+			return err
+		}
+		if urlParsed.Scheme != "https" {
+			return ErrJWTSetURLMustHaveHTTPSScheme
+		}
+		s.keySet = &keySetHTTPKey{
+			url:             urlStr,
+			log:             s.log,
+			client:          &http.Client{},
+			cacheKey:        fmt.Sprintf("auth-jwt:key-%s", urlStr),
+			cacheExpiration: s.Cfg.JWTAuthCacheTTL,
+			cache:           s.RemoteCache,
 		}
 	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {
 		// nolint:gosec
@@ -211,4 +241,104 @@ func (ks keySetHTTP) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, er
 		return nil, err
 	}
 	return jwks.Key(ctx, kid)
+}
+
+func (ks *keySetHTTPKey) getKey(ctx context.Context, kid string) (jose.JSONWebKey, error) {
+	var key jose.JSONWebKey
+
+	url := ks.url
+	cacheKey := ks.cacheKey
+	if strings.Index(url, "{{.kid}}") >= 0 {
+		tmpl, err := template.New("").Parse(url)
+		if err != nil {
+			return key, err
+		}
+		m := map[string]interface{}{
+			"kid": kid,
+		}
+		w := new(strings.Builder)
+		tmpl.Execute(w, m)
+
+		url = w.String()
+		cacheKey += "-" + kid
+	}
+
+	if ks.cacheExpiration > 0 {
+		if val, err := ks.cache.Get(ctx, cacheKey); err == nil {
+			return ks.decode(ctx, kid, val.([]byte))
+		}
+	}
+
+	ks.log.Debug("Getting key from endpoint", "url", url)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return key, err
+	}
+
+	resp, err := ks.client.Do(req)
+	if err != nil {
+		return key, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			ks.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return key, err
+	}
+
+	key, err = ks.decode(ctx, kid, data)
+	if err != nil {
+		return key, err
+	}
+
+	if ks.cacheExpiration > 0 {
+		err = ks.cache.Set(ctx, cacheKey, data, ks.cacheExpiration)
+	}
+	return key, err
+}
+
+func (ks keySetHTTPKey) decode(ctx context.Context, kid string, data []byte) (jose.JSONWebKey, error) {
+	var key jose.JSONWebKey
+
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return key, ErrFailedToParsePemFile
+	}
+
+	var pubkey interface{}
+	var err error
+	switch block.Type {
+	case "PUBLIC KEY":
+		if pubkey, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {
+			return key, err
+		}
+	case "RSA PUBLIC KEY":
+		if pubkey, err = x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
+			return key, err
+		}
+	default:
+		return key, fmt.Errorf("unknown pem block type %q", block.Type)
+	}
+
+	key = jose.JSONWebKey{
+		Key: pubkey,
+	}
+
+	return key, nil
+}
+
+func (ks keySetHTTPKey) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error) {
+	var keys []jose.JSONWebKey
+
+	key, err := ks.getKey(ctx, kid)
+	if err != nil {
+		return keys, err
+	}
+	keys = append(keys, key)
+	return keys, nil
 }

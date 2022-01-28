@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"context"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -177,6 +178,29 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 	})
 }
 
+func TestVerifyUsingKeyURL(t *testing.T) {
+	t.Run("should refuse to start with non-https URL", func(t *testing.T) {
+		var err error
+
+		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuthKeyURL = "https://example.com/{{.kid}}"
+		})
+		require.NoError(t, err)
+
+		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuthKeyURL = "http://example.com/{{.kid}}"
+		})
+		require.Error(t, err)
+	})
+
+	keyURLScenario(t, "verifies a token signed with a key from url", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	})
+}
+
 func TestSignatureWithNoneAlgorithm(t *testing.T) {
 	scenario(t, "rejects a token signed with \"none\" algorithm", func(t *testing.T, sc scenarioContext) {
 		token := signNone(t, jwt.Claims{Subject: "foo"})
@@ -341,6 +365,30 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 			fn(t, cachingScenarioContext{scenarioContext: sc, reqCount: &reqCount})
 		}, append([]configureFunc{configure}, cbs...)...)
 
+		runner(t)
+	})
+}
+
+func keyURLScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) {
+	t.Helper()
+	t.Run(desc, func(t *testing.T) {
+		ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rsaPublicKey := rsaKeys[0].Public()
+			derRsaPublicKey := x509.MarshalPKCS1PublicKey(rsaPublicKey.(*rsa.PublicKey))
+			if err := pem.Encode(w, &pem.Block{Type: "RSA PUBLIC KEY", Bytes: derRsaPublicKey}); err != nil {
+				panic(err)
+			}
+		}))
+		t.Cleanup(ts.Close)
+
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuthKeyURL = ts.URL
+		}
+		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
+			keySet := sc.authJWTSvc.keySet.(*keySetHTTPKey)
+			keySet.client = ts.Client()
+			fn(t, sc)
+		}, append([]configureFunc{configure}, cbs...)...)
 		runner(t)
 	})
 }
