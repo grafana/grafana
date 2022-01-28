@@ -96,6 +96,8 @@ func (ss *SQLStore) FindDashboardsWithStaleThumbnails(cmd *models.FindDashboards
 				"OR dashboard_thumbnail.state = ?", models.DashboardVersionForManualThumbnailUpload, models.ThumbnailStateStale)
 		}
 
+		sess.Where("(dashboard_thumbnail.id IS NULL OR dashboard_thumbnail.state != ?)", models.ThumbnailStateLocked)
+
 		sess.Cols("dashboard.id",
 			"dashboard.uid",
 			"dashboard.version",
