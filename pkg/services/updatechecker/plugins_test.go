@@ -216,7 +216,6 @@ func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugin
 	var result []plugins.PluginDTO
 	for _, p := range pr.plugins {
 		result = append(result, p)
-
 	}
 	return result
 }
