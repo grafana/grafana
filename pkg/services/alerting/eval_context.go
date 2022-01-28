@@ -36,7 +36,7 @@ type EvalContext struct {
 
 	Ctx context.Context
 
-	sqlStore AlertStore
+	Store AlertStore
 }
 
 // NewEvalContext is the EvalContext constructor.
@@ -50,7 +50,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
-		sqlStore:         sqlStore,
+		Store:            sqlStore,
 	}
 }
 
@@ -110,7 +110,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := c.sqlStore.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
+	if err := c.Store.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 

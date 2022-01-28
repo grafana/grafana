@@ -179,7 +179,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
 
-		store := evalCtx.sqlStore.(*AlertStoreMock)
+		store := evalCtx.Store.(*AlertStoreMock)
 
 		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 			query.Result = []*models.AlertNotification{
