@@ -41,7 +41,7 @@ const ResourcePicker = ({
 
   // Request initial data on first mount
   useEffect(() => {
-    if (!azureRows.length && loadingStatus === 'NotStarted') {
+    if (loadingStatus === 'NotStarted') {
       const loadInitialData = async () => {
         try {
           setLoadingStatus('Started');
