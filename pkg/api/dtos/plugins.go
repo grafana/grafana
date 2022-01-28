@@ -1,7 +1,6 @@
 package dtos
 
 import (
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -57,16 +56,6 @@ func (slice PluginList) Less(i, j int) bool {
 
 func (slice PluginList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
-}
-
-type ImportDashboardCommand struct {
-	PluginId  string                         `json:"pluginId"`
-	Path      string                         `json:"path"`
-	Overwrite bool                           `json:"overwrite"`
-	Dashboard *simplejson.Json               `json:"dashboard"`
-	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
-	FolderId  int64                          `json:"folderId"`
-	FolderUid string                         `json:"folderUid"`
 }
 
 type InstallPluginCommand struct {
