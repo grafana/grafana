@@ -140,7 +140,7 @@ const (
 	detailTeamPreferenceURL = "/api/teams/%d/preferences"
 	teamCmd                 = `{"name": "MyTestTeam%d"}`
 	teamPreferenceCmd       = `{"theme": "dark"}`
-	teamPreferenceCmdLight  = `{"theme": "Light"}`
+	teamPreferenceCmdLight  = `{"theme": "light"}`
 )
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
