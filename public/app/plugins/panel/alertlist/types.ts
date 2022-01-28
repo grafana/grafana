@@ -1,3 +1,5 @@
+import { Alert } from 'app/types/unified-alerting';
+
 export enum SortOrder {
   AlphaAsc = 1,
   AlphaDesc,
@@ -57,3 +59,5 @@ export interface UnifiedAlertListOptions {
   alertInstanceLabelFilter: string;
   datasource: string;
 }
+
+export type GroupedRules = Map<string, Alert[]>;

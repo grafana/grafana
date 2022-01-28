@@ -1,16 +1,15 @@
 import React, { useEffect, useMemo } from 'react';
 import { sortBy } from 'lodash';
 import { useDispatch } from 'react-redux';
-import { GrafanaTheme, GrafanaTheme2, intervalToAbbreviatedDurationString, PanelProps } from '@grafana/data';
-import { CustomScrollbar, Icon, IconName, LoadingPlaceholder, useStyles, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme, PanelProps } from '@grafana/data';
+import { CustomScrollbar, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-import { AlertInstances } from './AlertInstances';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
 
-import { flattenRules, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
-import { Alert, PromRuleWithLocation } from 'app/types/unified-alerting';
+import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
+import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import {
@@ -22,7 +21,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { AlertLabel } from 'app/features/alerting/unified/components/AlertLabel';
+import UngroupedModeView from './unified-alerting/UngroupedView';
+import GroupedModeView from './unified-alerting/GroupedView';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -45,7 +45,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   );
 
   const styles = useStyles(getStyles);
-  const stateStyle = useStyles2(getStateTagStyles);
 
   const rules = useMemo(
     () =>
@@ -59,32 +58,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     [props.options, promRulesRequests]
   );
 
-  const rulesToDisplay = rules.length <= props.options.maxItems ? rules : rules.slice(0, props.options.maxItems);
-
   const noAlertsMessage = rules.length ? '' : 'No alerts';
-
-  // support for grouped view – filter already filtered rules for instances that match groupBy key
-  // and use groupBy key for grouping
-  type GroupedRules = Map<string, Alert[]>;
-  const groupBy = props.options.groupBy;
-
-  const groupedRules = useMemo<GroupedRules>(() => {
-    const groupedRules = new Map();
-
-    const hasInstancesWithMatchingLabels = (rule: PromRuleWithLocation) =>
-      groupBy ? alertHasEveryLabel(rule, groupBy) : true;
-
-    const matchingRules = rules.filter(hasInstancesWithMatchingLabels);
-    matchingRules.forEach((rule: PromRuleWithLocation) => {
-      (rule.rule.alerts ?? []).forEach((alert) => {
-        const mapKey = createMapKey(groupBy, alert.labels);
-        const existingAlerts = groupedRules.get(mapKey) ?? [];
-        groupedRules.set(mapKey, [...existingAlerts, alert]);
-      });
-    });
-
-    return groupedRules;
-  }, [groupBy, rules]);
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
@@ -92,87 +66,16 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
-          {props.options.groupMode === GroupMode.Custom &&
-            haveResults &&
-            Array.from(groupedRules).map(([key, alerts]) => (
-              <li className={styles.alertRuleItem} key={key}>
-                <div>
-                  <div className={styles.customGroupDetails}>
-                    <div className={styles.alertLabels}>
-                      {key &&
-                        parseMapKey(key).map(([key, value]) => <AlertLabel key={key} labelKey={key} value={value} />)}
-                      {!key && 'No grouping'}
-                    </div>
-                  </div>
-                  <AlertInstances alerts={alerts} options={props.options} />
-                </div>
-              </li>
-            ))}
-          {props.options.groupMode === GroupMode.Default && (
-            <ol className={styles.alertRuleList}>
-              {haveResults &&
-                rulesToDisplay.map((ruleWithLocation, index) => {
-                  const { rule, namespaceName, groupName } = ruleWithLocation;
-                  const firstActiveAt = getFirstActiveAt(rule);
-                  return (
-                    <li
-                      className={styles.alertRuleItem}
-                      key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}
-                    >
-                      <div className={stateStyle.icon}>
-                        <Icon
-                          name={alertDef.getStateDisplayModel(rule.state).iconClass as IconName}
-                          className={stateStyle[alertStateToState[rule.state]]}
-                          size={'lg'}
-                        />
-                      </div>
-                      <div>
-                        <div className={styles.instanceDetails}>
-                          <div className={styles.alertName} title={rule.name}>
-                            {rule.name}
-                          </div>
-                          <div className={styles.alertDuration}>
-                            <span className={stateStyle[alertStateToState[rule.state]]}>
-                              {rule.state.toUpperCase()}
-                            </span>{' '}
-                            {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
-                              <>
-                                for{' '}
-                                <span>
-                                  {intervalToAbbreviatedDurationString({
-                                    start: firstActiveAt,
-                                    end: Date.now(),
-                                  })}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <AlertInstances alerts={ruleWithLocation.rule.alerts ?? []} options={props.options} />
-                      </div>
-                    </li>
-                  );
-                })}
-            </ol>
+          {props.options.groupMode === GroupMode.Custom && haveResults && (
+            <GroupedModeView rules={rules} options={props.options} />
+          )}
+          {props.options.groupMode === GroupMode.Default && haveResults && (
+            <UngroupedModeView rules={rules} options={props.options} />
           )}
         </section>
       </div>
     </CustomScrollbar>
   );
-}
-
-function createMapKey(groupBy: string[], labels: Record<string, string>): string {
-  return new URLSearchParams(groupBy.map((key) => [key, labels[key]])).toString();
-}
-
-function parseMapKey(key: string): Array<[string, string]> {
-  return [...new URLSearchParams(key)];
-}
-
-function alertHasEveryLabel(rule: PromRuleWithLocation, groupByKeys: string[]) {
-  return groupByKeys.every((key) => {
-    return (rule.rule.alerts ?? []).some((alert) => alert.labels[key]);
-  });
 }
 
 function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
@@ -243,7 +146,7 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
   return filteredRules;
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme) => ({
   cardContainer: css`
     padding: ${theme.spacing.xs} 0 ${theme.spacing.xxs} 0;
     line-height: ${theme.typography.lineHeight.md};
@@ -319,69 +222,5 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   customGroupDetails: css`
     margin-bottom: ${theme.spacing.xs};
-  `,
-});
-
-const getStateTagStyles = (theme: GrafanaTheme2) => ({
-  common: css`
-    width: 70px;
-    text-align: center;
-    align-self: stretch;
-
-    display: inline-block;
-    color: white;
-    border-radius: ${theme.shape.borderRadius()};
-    font-size: ${theme.typography.size.sm};
-    /* padding: ${theme.spacing(2, 0)}; */
-    text-transform: capitalize;
-    line-height: 1.2;
-    flex-shrink: 0;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  `,
-  icon: css`
-    margin-top: ${theme.spacing(2.5)};
-    align-self: flex-start;
-  `,
-  // good: css`
-  //   background-color: ${theme.colors.success.main};
-  //   border: solid 1px ${theme.colors.success.main};
-  //   color: ${theme.colors.success.contrastText};
-  // `,
-  // warning: css`
-  //   background-color: ${theme.colors.warning.main};
-  //   border: solid 1px ${theme.colors.warning.main};
-  //   color: ${theme.colors.warning.contrastText};
-  // `,
-  // bad: css`
-  //   background-color: ${theme.colors.error.main};
-  //   border: solid 1px ${theme.colors.error.main};
-  //   color: ${theme.colors.error.contrastText};
-  // `,
-  // neutral: css`
-  //   background-color: ${theme.colors.secondary.main};
-  //   border: solid 1px ${theme.colors.secondary.main};
-  // `,
-  // info: css`
-  //   background-color: ${theme.colors.primary.main};
-  //   border: solid 1px ${theme.colors.primary.main};
-  //   color: ${theme.colors.primary.contrastText};
-  // `,
-  good: css`
-    color: ${theme.colors.success.main};
-  `,
-  bad: css`
-    color: ${theme.colors.error.main};
-  `,
-  warning: css`
-    color: ${theme.colors.warning.main};
-  `,
-  neutral: css`
-    color: ${theme.colors.secondary.main};
-  `,
-  info: css`
-    color: ${theme.colors.primary.main};
   `,
 });
