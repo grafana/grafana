@@ -287,14 +287,14 @@ func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	t.Run("Access control allows updating team preferences with the correct permissions", func(t *testing.T) {
+	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
 			[]*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
-	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
+	t.Run("Access control prevents getting team preferences with the incorrect permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
