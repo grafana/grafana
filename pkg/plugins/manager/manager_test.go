@@ -2,8 +2,6 @@ package manager
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"net/http"
 	"sync"
 	"testing"
@@ -14,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -524,7 +524,8 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	loader := &fakeLoader{}
-	manager := New(cfg, nil, loader, nil)
+	dashboardService := manager.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
+	manager := New(cfg, nil, loader, dashboardService)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
