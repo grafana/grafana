@@ -113,5 +113,11 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:            "swagger-ui",
+			Description:     "Server swagger UI",
+			State:           FeatureStateBeta,
+			RequiresDevMode: true,
+		},
 	}
 )

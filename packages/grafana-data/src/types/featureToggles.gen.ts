@@ -36,4 +36,5 @@ export interface FeatureToggles {
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
+  ['swagger-ui']?: boolean;
 }

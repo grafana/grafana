@@ -434,7 +434,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 
-	if hs.Cfg.IsSwaggerUIEnabled() {
+	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
 		hs.mapStatic(m, hs.Cfg.HomePath, "swagger-ui", "swagger-ui")
 	}
 
