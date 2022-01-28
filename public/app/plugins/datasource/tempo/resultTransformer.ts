@@ -9,6 +9,7 @@ import {
   TraceKeyValuePair,
   TraceLog,
   TraceSpanRow,
+  dateTimeFormat,
 } from '@grafana/data';
 import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
@@ -527,7 +528,7 @@ function parseJsonFields(frame: DataFrame) {
   }
 }
 
-type SearchResponse = {
+export type SearchResponse = {
   traceID: string;
   rootServiceName: string;
   rootTraceName: string;
@@ -593,10 +594,10 @@ function transformToTraceData(data: SearchResponse) {
 
   const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
 
-  let startTime = new Date(traceStartTime).toTimeString();
+  let startTime = dateTimeFormat(traceStartTime);
 
-  if (Math.abs(differenceInHours(new Date(traceStartTime), new Date())) <= 1) {
-    startTime = formatDistance(new Date(traceStartTime), new Date(), {
+  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
       addSuffix: true,
       includeSeconds: true,
     });
