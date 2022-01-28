@@ -1,4 +1,4 @@
-import { Failed } from './components';
+import { Failed } from './components/Failed/Failed';
 import { CheckPanelOptions, Column, SeverityMap, TabKeys } from './types';
 import { Messages } from './CheckPanel.messages';
 import { PageModel } from '../../core/components/Breadcrumb';
