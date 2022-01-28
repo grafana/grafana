@@ -27,6 +27,7 @@ var (
 type Service interface {
 	Enabled() bool
 	GetImage(c *models.ReqContext)
+	GetSystemRequirements(c *models.ReqContext)
 
 	// from dashboard page
 	SetImage(c *models.ReqContext) // form post
@@ -45,14 +46,16 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rende
 
 	thumbnailRepo := newThumbnailRepo(store)
 	return &thumbService{
-		renderer:      newSimpleCrawler(renderService, gl, thumbnailRepo),
-		thumbnailRepo: thumbnailRepo,
+		renderingService: renderService,
+		crawler:          newSimpleCrawler(renderService, gl, thumbnailRepo),
+		thumbnailRepo:    thumbnailRepo,
 	}
 }
 
 type thumbService struct {
-	renderer      dashRenderer
-	thumbnailRepo thumbnailRepo
+	crawler          dashRenderer
+	thumbnailRepo    thumbnailRepo
+	renderingService rendering.Service
 }
 
 func (hs *thumbService) Enabled() bool {
@@ -166,6 +169,22 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	}
 }
 
+func (hs *thumbService) GetSystemRequirements(c *models.ReqContext) {
+	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
+
+	if err != nil {
+		tlog.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
+		c.JSON(500, map[string]string{"error": "unknown"})
+		return
+	}
+
+	if res.IsSupported {
+		c.JSON(200, map[string]interface{}{"requirementsMet": true})
+	} else {
+		c.JSON(200, map[string]interface{}{"requirementsMet": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
+	}
+}
+
 // Hack for now -- lets you upload images explicitly
 func (hs *thumbService) SetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
@@ -234,7 +253,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	if cmd.Mode == "" {
 		cmd.Mode = CrawlerModeThumbs
 	}
-	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
+	msg, err := hs.crawler.Start(c, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
@@ -242,7 +261,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 }
 
 func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
-	msg, err := hs.renderer.Stop()
+	msg, err := hs.crawler.Stop()
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
@@ -250,7 +269,7 @@ func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 }
 
 func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
-	msg, err := hs.renderer.Status()
+	msg, err := hs.crawler.Status()
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}

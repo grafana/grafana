@@ -24,6 +24,9 @@ func (ds *dummyService) Enabled() bool {
 	return false
 }
 
+func (ds *dummyService) GetSystemRequirements(c *models.ReqContext) {
+}
+
 func (ds *dummyService) StartCrawler(c *models.ReqContext) response.Response {
 	result := make(map[string]string)
 	result["error"] = "Not enabled"
