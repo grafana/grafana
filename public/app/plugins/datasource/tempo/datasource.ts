@@ -28,7 +28,7 @@ import {
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -89,6 +89,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
     const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceId');
+
+    if (targets.clear) {
+      return of({ data: [], state: LoadingState.Done });
+    }
 
     // Run search queries on linked datasource
     if (this.tracesToLogs?.datasourceUid && targets.search?.length > 0) {
