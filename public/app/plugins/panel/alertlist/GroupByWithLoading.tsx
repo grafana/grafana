@@ -46,8 +46,8 @@ export const GroupBy: FC<Props> = (props: Props) => {
     const allLabels = rulesDataSourceNames
       .flatMap((datasource) => promRulesByDatasource[datasource].result ?? [])
       .flatMap((rules) => rules.groups)
-      .flatMap((group) => group.rules.filter((rule) => rule.type === PromRuleType.Alerting))
-      .flatMap((rule) => (rule as AlertingRule).alerts ?? [])
+      .flatMap((group) => group.rules.filter((rule): rule is AlertingRule => rule.type === PromRuleType.Alerting))
+      .flatMap((rule) => rule.alerts ?? [])
       .map((alert) => Object.keys(alert.labels ?? {}))
       .flatMap((labels) => labels.filter(isPrivateLabel));
 
