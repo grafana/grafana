@@ -1,5 +1,5 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { HeatmapSourceMode, PanelOptions, defaultPanelOptions } from './models.gen';
 
 /**
@@ -33,6 +33,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       calcs: [],
       placement: 'bottom',
     },
+    showValue: VisibilityMode.Never,
     tooltip: {
       mode: TooltipDisplayMode.Multi,
       sort: SortOrder.None,

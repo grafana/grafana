@@ -1,4 +1,4 @@
-import { GraphFieldConfig } from '@grafana/schema';
+import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { HeatmapPanel } from './HeatmapPanel';
@@ -33,7 +33,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         options: [
           { label: 'Auto', value: HeatmapSourceMode.Auto },
           { label: 'Calculate', value: HeatmapSourceMode.Calculate },
-          { label: 'Data', value: HeatmapSourceMode.Data },
+          { label: 'Raw data', description: 'The results are already heatmap buckets', value: HeatmapSourceMode.Data },
         ],
       },
     });
@@ -54,6 +54,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       settings: {
         filter: (f: Field) => f.type === FieldType.number,
         noFieldsMessage: 'No numeric fields found',
+        placeholderText: 'Auto',
       },
     });
 
@@ -139,26 +140,40 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
 
     category = ['Cell display'];
 
-    builder.addNumberInput({
-      name: 'Cell padding',
-      path: 'cellPadding',
-      defaultValue: defaultPanelOptions.cellPadding,
-      category,
-      settings: {
-        min: -10,
-        max: 20,
-      },
-    });
-    builder.addNumberInput({
-      name: 'Cell radius',
-      path: 'cellRadius',
-      defaultValue: defaultPanelOptions.cellRadius,
-      category,
-      settings: {
-        min: 0,
-        max: 100,
-      },
-    });
+    builder
+      .addRadio({
+        path: 'showValue',
+        name: 'Show values',
+        defaultValue: defaultPanelOptions.showValue,
+        category,
+        settings: {
+          options: [
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
+          ],
+        },
+      })
+      .addSliderInput({
+        name: 'Cell padding',
+        path: 'cellPadding',
+        defaultValue: defaultPanelOptions.cellPadding,
+        category,
+        settings: {
+          min: -10,
+          max: 20,
+        },
+      })
+      .addSliderInput({
+        name: 'Cell radius',
+        path: 'cellRadius',
+        defaultValue: defaultPanelOptions.cellRadius,
+        category,
+        settings: {
+          min: 0,
+          max: 100,
+        },
+      });
 
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);

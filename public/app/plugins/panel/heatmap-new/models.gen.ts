@@ -10,6 +10,7 @@ import {
   OptionsWithTooltip,
   SortOrder,
   TooltipDisplayMode,
+  VisibilityMode,
 } from '@grafana/schema';
 import { HeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/models.gen';
 
@@ -50,6 +51,7 @@ export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
 
   color: HeatmapColorOptions;
   heatmap?: HeatmapCalculationOptions;
+  showValue: VisibilityMode;
 
   cellPadding?: number; // was cardPadding
   cellRadius?: number; // was cardRadius
@@ -68,6 +70,7 @@ export const defaultPanelOptions: PanelOptions = {
     exponent: 0.5,
     steps: 128,
   },
+  showValue: VisibilityMode.Auto,
   legend: {
     displayMode: LegendDisplayMode.Hidden,
     placement: 'bottom',
