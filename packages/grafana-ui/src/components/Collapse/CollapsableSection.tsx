@@ -32,6 +32,10 @@ export const CollapsableSection: FC<Props> = ({
   const styles = useStyles2(collapsableSectionStyles);
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
   const onClick = (e: React.MouseEvent) => {
+    if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
