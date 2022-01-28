@@ -2,6 +2,7 @@ package loki
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,7 +40,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(makeMockedClient(200, "application/json", bytes), &lokiQuery{})
+			frames, err := runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &lokiQuery{})
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{
@@ -101,7 +101,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(makeMockedClient(400, test.contentType, test.body), &lokiQuery{})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)
@@ -110,13 +110,13 @@ func TestErrorResponse(t *testing.T) {
 	}
 }
 
-type MockedRoundTripper struct {
+type mockedRoundTripper struct {
 	statusCode    int
 	responseBytes []byte
 	contentType   string
 }
 
-func (mockedRT *MockedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (mockedRT *mockedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	header := http.Header{}
 	header.Add("Content-Type", mockedRT.contentType)
 	return &http.Response{
@@ -126,13 +126,10 @@ func (mockedRT *MockedRoundTripper) RoundTrip(req *http.Request) (*http.Response
 	}, nil
 }
 
-func makeMockedClient(statusCode int, contentType string, responseBytes []byte) *client.DefaultClient {
-	client := &client.DefaultClient{
-		Address: "http://localhost:9999",
-		Tripperware: func(t http.RoundTripper) http.RoundTripper {
-			return &MockedRoundTripper{statusCode: statusCode, responseBytes: responseBytes, contentType: contentType}
-		},
+func makeMockedAPI(statusCode int, contentType string, responseBytes []byte) *LokiAPI {
+	client := http.Client{
+		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes},
 	}
 
-	return client
+	return NewLokiAPI(&client, "http://localhost:9999")
 }

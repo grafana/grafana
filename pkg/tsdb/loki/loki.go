@@ -17,12 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
-	"github.com/grafana/loki/pkg/logproto"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
@@ -106,17 +103,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return result, err
 	}
 
-	client := &client.DefaultClient{
-		Address:  dsInfo.URL,
-		Username: dsInfo.BasicAuthUser,
-		Password: dsInfo.BasicAuthPassword,
-		TLSConfig: config.TLSConfig{
-			InsecureSkipVerify: dsInfo.TLSClientConfig.InsecureSkipVerify,
-		},
-		Tripperware: func(t http.RoundTripper) http.RoundTripper {
-			return dsInfo.HTTPClient.Transport
-		},
-	}
+	api := NewLokiAPI(dsInfo.HTTPClient, dsInfo.URL)
 
 	queries, err := parseQuery(req)
 	if err != nil {
@@ -131,7 +118,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
 		defer span.End()
 
-		frames, err := runQuery(client, query)
+		frames, err := runQuery(ctx, api, query)
 		if err != nil {
 			return result, err
 		}
@@ -193,20 +180,20 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(client *client.DefaultClient, query *lokiQuery) (data.Frames, error) {
-	// `limit` only applies to log-producing queries, and we
-	// currently only support metric queries, so this can be set to any value.
-	limit := 1
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
 
-	// we do not use `interval`, so we set it to zero
-	interval := time.Duration(0)
+	// value, err := api.QueryRange(ctx, *query)
+	// if err != nil {
+	// 	return data.Frames{}, err
+	// }
 
-	value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
+	// return parseResponse(value, query)
+	res, err := api.QueryRangeIter(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}
 
-	return parseResponse(value, query)
+	return res.Frames, res.Error
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
