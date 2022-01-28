@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '@grafana/e2e/src';
 
 const PAGE_UNDER_TEST = 'AejrN1AMz';
 
