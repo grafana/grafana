@@ -135,9 +135,12 @@ func TestTeamAPIEndpoint(t *testing.T) {
 }
 
 const (
-	createTeamURL = "/api/teams/"
-	detailTeamURL = "/api/teams/%d"
-	teamCmd       = `{"name": "MyTestTeam%d"}`
+	createTeamURL           = "/api/teams/"
+	detailTeamURL           = "/api/teams/%d"
+	detailTeamPreferenceURL = "/api/teams/%d/preferences"
+	teamCmd                 = `{"name": "MyTestTeam%d"}`
+	teamPreferenceCmd       = `{"theme": "dark"}`
+	teamPreferenceCmdLight  = `{"theme": "light"}`
 )
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
@@ -269,5 +272,68 @@ func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
 		teamQuery := &models.GetTeamByIdQuery{OrgId: 1, SignedInUser: sc.initCtx.SignedInUser, Id: 1, Result: &models.TeamDTO{}}
 		err := sc.db.GetTeamById(context.Background(), teamQuery)
 		require.ErrorIs(t, err, models.ErrTeamNotFound)
+	})
+}
+
+// Given a team with a user, when the user is granted X permission,
+// Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
+// else return 403
+func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.db = sqlstore.InitTestDB(t)
+	_, err := sc.db.CreateTeam("team1", "", 1)
+
+	require.NoError(t, err)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock,
+			[]*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	t.Run("Access control prevents getting team preferences with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+// Given a team with a user, when the user is granted X permission,
+// Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
+// else return 403
+func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.db = sqlstore.InitTestDB(t)
+	_, err := sc.db.CreateTeam("team1", "", 1)
+
+	require.NoError(t, err)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	input := strings.NewReader(teamPreferenceCmd)
+	t.Run("Access control allows updating team preferences with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1, Result: &models.Preferences{}}
+		err := sc.db.GetPreferences(context.Background(), prefQuery)
+		require.NoError(t, err)
+		assert.Equal(t, "dark", prefQuery.Result.Theme)
+	})
+
+	input = strings.NewReader(teamPreferenceCmdLight)
+	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
+		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+
+		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1, Result: &models.Preferences{}}
+		err := sc.db.GetPreferences(context.Background(), prefQuery)
+		assert.NoError(t, err)
+		assert.Equal(t, "dark", prefQuery.Result.Theme)
 	})
 }
