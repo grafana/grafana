@@ -17,6 +17,7 @@ import { queriesWithUpdatedReferences } from './util';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { omit } from 'lodash';
 
 interface Props {
   // The query configuration
@@ -110,19 +111,17 @@ export class QueryRows extends PureComponent<Props, State> {
 
       const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
 
-      if (previous?.type === settings.uid) {
-        return {
-          ...item,
-          datasourceUid: settings.uid,
-        };
+      // compatible datasource
+      if (previous?.type === settings.type) {
+        return copyModel(item, settings.uid);
       }
 
-      const { refId, hide } = item.model;
-      return {
-        ...item,
-        datasourceUid: settings.uid,
-        model: { refId, hide },
-      };
+      // this does not make any sense, is this for backwards compat?
+      if (previous?.type === settings.uid) {
+        return copyModel(item, settings.uid);
+      }
+
+      return copyModel(item, settings.uid);
     });
     onQueriesChange(updatedQueries);
   };
@@ -291,6 +290,14 @@ export class QueryRows extends PureComponent<Props, State> {
       </DragDropContext>
     );
   }
+}
+
+function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+  return {
+    ...item,
+    model: omit(item.model, 'datasource'),
+    datasourceUid: uid,
+  };
 }
 
 interface DatasourceNotFoundProps {
