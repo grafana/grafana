@@ -17,6 +17,10 @@ const singleResourceSelectionURI =
 
 describe('AzureMonitor ResourcePicker', () => {
   const noop: any = () => {};
+
+  beforeEach(() => {
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+  });
   describe('when rendering the resource picker without a selection', () => {
     it('should load subscriptions', async () => {
       const resourePickerDataMock = createMockResourcePickerData({
