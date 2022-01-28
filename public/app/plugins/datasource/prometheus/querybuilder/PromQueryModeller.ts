@@ -1,13 +1,13 @@
 import { FUNCTIONS } from '../promql';
 import { getAggregationOperations } from './aggregations';
-import { getOperationDefintions } from './operations';
+import { getOperationDefinitions } from './operations';
 import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
 import { PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQuery> {
   constructor() {
     super(() => {
-      const allOperations = [...getOperationDefintions(), ...getAggregationOperations()];
+      const allOperations = [...getOperationDefinitions(), ...getAggregationOperations()];
       for (const op of allOperations) {
         const func = FUNCTIONS.find((x) => x.insertText === op.id);
         if (func) {

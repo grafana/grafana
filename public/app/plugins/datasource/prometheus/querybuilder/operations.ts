@@ -12,7 +12,7 @@ import {
 } from './shared/types';
 import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
-export function getOperationDefintions(): QueryBuilderOperationDef[] {
+export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
     {
       id: 'histogram_quantile',
