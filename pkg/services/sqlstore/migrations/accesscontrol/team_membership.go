@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"xorm.io/xorm"
@@ -49,44 +50,64 @@ func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 	return "", fmt.Errorf("failed to generate uid")
 }
 
-// addPermissionsToRole either finds the role or creates a new role
-func (p *teamPermissionMigrator) getOrCreateManagedRole(sess *xorm.Session, orgID, userID int64, name string) (int64, error) {
-	role := &accesscontrol.Role{OrgID: orgID, Name: name}
-	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(role)
+func (p *teamPermissionMigrator) findRole(sess *xorm.Session, orgID, userID int64, name string) (int64, error) {
+	// check if role exists
+	var id int64
+	_, err := sess.Table("role").Select("id").Where("org_id = ? AND name = ?", orgID, name).Get(&id)
 	if err != nil {
 		return 0, err
 	}
+	return id, nil
+}
 
-	if !has {
-		uid, err := generateNewRoleUID(sess, orgID)
+// TODO cut into chunks
+func (p *teamPermissionMigrator) bulkCreateRoles(sess *xorm.Session, roles []accesscontrol.Role) ([]accesscontrol.Role, error) {
+	ts := time.Now()
+	// bulk role creations
+	valueStrings := make([]string, len(roles))
+	args := make([]interface{}, 0, len(roles)*5)
+
+	for i, r := range roles {
+		uid, err := generateNewRoleUID(sess, r.OrgID)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
+		valueStrings[i] = "(?, ?, ?, ?, ?)"
+		args = append(args, r.OrgID, uid, r.Name, ts, ts)
+	}
 
-		now := time.Now()
-		role = &accesscontrol.Role{
-			UID:     uid,
-			Name:    name,
-			OrgID:   orgID,
-			Updated: now,
-			Created: now,
-		}
-		if _, err := sess.Insert(role); err != nil {
-			return 0, err
-		}
+	valueString := strings.Join(valueStrings, ",")
+	sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
 
-		_, err = sess.Table("user_role").Insert(accesscontrol.UserRole{
-			OrgID:   orgID,
-			RoleID:  role.ID,
-			UserID:  userID,
-			Created: time.Now(),
-		})
-		if err != nil {
-			return 0, err
+	createdRoles := make([]accesscontrol.Role, len(roles))
+	err := sess.SQL(sql, args...).Find(&createdRoles)
+
+	return createdRoles, err
+}
+
+// TODO cut into chunks
+// TODO use orgID-roleName as key
+func (p *teamPermissionMigrator) bulkAssignRoles(sess *xorm.Session, rolesMap map[string]*accesscontrol.Role, assignments map[int64][]string) error {
+	ts := time.Now()
+
+	roleAssignments := make([]accesscontrol.UserRole, len(assignments))
+	for userID, roleNames := range assignments {
+		for _, roleName := range roleNames {
+			roleToAssign, ok := rolesMap[roleName]
+			if !ok {
+				return fmt.Errorf("Sorry")
+			}
+			roleAssignments = append(roleAssignments, accesscontrol.UserRole{
+				OrgID:   roleToAssign.OrgID,
+				RoleID:  roleToAssign.ID,
+				UserID:  userID,
+				Created: ts,
+			})
 		}
 	}
 
-	return role.ID, nil
+	_, err := sess.Table("user_role").InsertMulti(roleAssignments)
+	return err
 }
 
 // addPermissionsToRole updates role with any newly added permissions
@@ -176,6 +197,7 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 		if m.Permission == models.PERMISSION_ADMIN {
 			if userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_VIEWER) || (userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_EDITOR) && !p.editorsCanAdmin) {
 				m.Permission = 0
+				// log?
 				_, err := sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", m.OrgId, m.TeamId, m.UserId).Update(m)
 				if err != nil {
 					return err
@@ -191,19 +213,58 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 		userPermissionsByOrg[m.OrgId] = userPermissions
 	}
 
-	// Loop through generated permissions and store them
+	// Create a map of roles to create
+	var rolesToCreate []accesscontrol.Role
+	var assignments map[int64][]string
+	// TODO use orgID-roleName as key
+	rolesMap := make(map[string]*accesscontrol.Role)
 	for orgID, userPermissions := range userPermissionsByOrg {
-		for userID, permissions := range userPermissions {
-			roleID, err := p.getOrCreateManagedRole(sess, orgID, userID, fmt.Sprintf("managed:users:%d:permissions", userID))
-			if err != nil {
-				return err
+		for userID := range userPermissions {
+			roleName := fmt.Sprintf("managed:users:%d:permissions", userID)
+			roleID, errFindingRoles := p.findRole(sess, orgID, userID, roleName)
+			if errFindingRoles != nil {
+				return errFindingRoles
 			}
-			err = p.addPermissionsToRole(sess, roleID, permissions)
-			if err != nil {
-				return err
+			if roleID == 0 {
+				rolesToCreate = append(rolesToCreate, accesscontrol.Role{
+					Name:  roleName,
+					OrgID: orgID,
+				})
+				userAssignments := assignments[userID]
+				userAssignments = append(userAssignments, roleName)
+				assignments[userID] = userAssignments
+
 			}
+			// TODO populate rolesMap with existing role
 		}
 	}
+
+	// Create missing roles
+	createdRoles, errCreate := p.bulkCreateRoles(sess, rolesToCreate)
+	if errCreate != nil {
+		return errCreate
+	}
+
+	// Populate rolesMap with the newly created roles
+	for i := range createdRoles {
+		rolesMap[createdRoles[i].Name] = &createdRoles[i]
+	}
+
+	// Assign missing roles
+	errAssign := p.bulkAssignRoles(sess, rolesMap, assignments)
+	if errAssign != nil {
+		return errAssign
+	}
+
+	// TODO loop through rolesMap and assign
+	// for _, userPermissions := range userPermissionsByOrg {
+	// 	for _, permissions := range userPermissions {
+	// 		err = p.addPermissionsToRole(sess, roleID, permissions)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
 
 	return nil
 }
