@@ -2,7 +2,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
-import { RuleList } from './RuleList';
+import RuleList from './RuleList';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
