@@ -4,7 +4,6 @@ import { act, render, screen } from '@testing-library/react';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../expressions';
-// import selectEvent from 'react-select-event';
 import { selectOptionInTest } from '@grafana/ui';
 
 const { datasource } = setupMockedDataSource();
