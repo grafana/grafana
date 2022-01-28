@@ -107,7 +107,12 @@ export function OperationEditor({
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
-        <div className={styles.card} ref={provided.innerRef} {...provided.draggableProps}>
+        <div
+          className={styles.card}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          data-testid={`operation-wrapper-for-${operation.id}`}
+        >
           <div className={styles.header} {...provided.dragHandleProps}>
             <OperationName
               operation={operation}
