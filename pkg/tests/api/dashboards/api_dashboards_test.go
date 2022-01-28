@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -46,7 +46,7 @@ func TestDashboardQuota(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dashboardimport.ImportDashboardRequest{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestDashboardQuota(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
 		require.NoError(t, err)
 		buf1 := &bytes.Buffer{}
-		err = json.NewEncoder(buf1).Encode(dtos.ImportDashboardCommand{
+		err = json.NewEncoder(buf1).Encode(dashboardimport.ImportDashboardRequest{
 			Dashboard: dashboardDataOne,
 		})
 		require.NoError(t, err)
