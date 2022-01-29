@@ -67,7 +67,7 @@ export const defaultPanelOptions: PanelOptions = {
     fill: 'red-dark',
     scale: HeatmapColorScale.Exponential,
     exponent: 0.5,
-    steps: 128,
+    steps: 64,
   },
   showValue: VisibilityMode.Auto,
   legend: {

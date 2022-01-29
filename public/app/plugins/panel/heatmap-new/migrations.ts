@@ -1,5 +1,9 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
+import {
+  HeatmapCalculationMode,
+  HeatmapCalculationOptions,
+} from 'app/core/components/TransformersUI/calculateHeatmap/models.gen';
 import { HeatmapSourceMode, PanelOptions, defaultPanelOptions } from './models.gen';
 
 /**
@@ -23,9 +27,32 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     overrides: [],
   };
 
+  const source = angular.dataFormat === 'tsbuckets' ? HeatmapSourceMode.Data : HeatmapSourceMode.Calculate;
+  const heatmap: HeatmapCalculationOptions = {
+    ...defaultPanelOptions.heatmap,
+  };
+
+  if (source === HeatmapSourceMode.Calculate) {
+    if (angular.xBucketSize) {
+      heatmap.xAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.xBucketSize}` };
+    } else if (angular.xBucketNumber) {
+      heatmap.xAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.xBucketNumber}` };
+    }
+
+    if (angular.yBucketSize) {
+      heatmap.yAxis = { mode: HeatmapCalculationMode.Size, value: `${angular.yBucketSize}` };
+    } else if (angular.xBucketNumber) {
+      heatmap.yAxis = { mode: HeatmapCalculationMode.Count, value: `${angular.yBucketNumber}` };
+    }
+  }
+
   const options: PanelOptions = {
-    source: HeatmapSourceMode.Auto,
-    color: defaultPanelOptions.color,
+    source,
+    heatmap,
+    color: {
+      ...defaultPanelOptions.color,
+      steps: 256, // best match with existing colors
+    },
     cellPadding: asNumber(angular.cards?.cardPadding),
     cellRadius: asNumber(angular.cards?.cardRound),
     legend: {

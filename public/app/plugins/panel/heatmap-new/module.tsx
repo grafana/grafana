@@ -9,14 +9,13 @@ import {
   HeatmapColorMode,
   HeatmapColorScale,
 } from './models.gen';
-import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 import { heatmapChangedHandler } from './migrations';
 import { addHeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/editor/helper';
 import { colorSchemes } from './palettes';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
-  .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
+  .useFieldConfig()
   .setPanelChangeHandler(heatmapChangedHandler)
   // .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
@@ -175,6 +174,25 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
 
+    category = ['Tooltip'];
+
+    builder.addBooleanSwitch({
+      path: 'tooltip.show',
+      name: 'Show tooltip',
+      defaultValue: defaultPanelOptions.tooltip.show,
+      category,
+    });
+
+    if (opts.tooltip.show) {
+      builder.addBooleanSwitch({
+        path: 'tooltip.yHistogram',
+        name: 'Show histogram (Y axis)',
+        defaultValue: defaultPanelOptions.tooltip.yHistogram,
+        category,
+      });
+    }
+
+    // custom legend?
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());

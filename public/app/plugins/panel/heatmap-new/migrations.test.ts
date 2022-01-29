@@ -32,7 +32,17 @@ describe('Heatmap Migrations', () => {
             "mode": "scheme",
             "scale": "exponential",
             "scheme": "Oranges",
-            "steps": 128,
+            "steps": 256,
+          },
+          "heatmap": Object {
+            "xAxis": Object {
+              "mode": "count",
+              "value": "100",
+            },
+            "yAxis": Object {
+              "mode": "count",
+              "value": "20",
+            },
           },
           "legend": Object {
             "calcs": Array [],
@@ -40,7 +50,7 @@ describe('Heatmap Migrations', () => {
             "placement": "bottom",
           },
           "showValue": "never",
-          "source": "auto",
+          "source": "calculate",
           "tooltip": Object {
             "show": true,
             "yHistogram": true,

@@ -181,7 +181,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
-    xTime: true,
+    xTime: xField.type === FieldType.time,
     xUnit: options.xAxis?.mode,
     xSize: +(options.xAxis?.value ?? 0),
     yUnit: options.yAxis?.mode,
@@ -197,7 +197,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     fields: [
       {
         name: 'xMin',
-        type: FieldType.time,
+        type: xField.type,
         values: new ArrayVector(heat2d.x),
         config: xField.config,
       },
