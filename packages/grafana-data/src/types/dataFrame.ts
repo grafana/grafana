@@ -67,6 +67,12 @@ export interface FieldConfig<TOptions = any> {
   min?: number | null;
   max?: number | null;
 
+  // Interval indicates the expected regular step between values in the series.
+  // When an interval exists, consumers can identify "missing" values when the expected value is not present.
+  // The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
+  // The interval uses the same units as the values.  For time.Time, this is defined in milliseconds.
+  interval?: number | null;
+
   // Convert input values into a display string
   mappings?: ValueMapping[];
 
