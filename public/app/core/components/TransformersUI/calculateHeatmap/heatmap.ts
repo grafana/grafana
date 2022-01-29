@@ -299,11 +299,8 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     let approx = (maxX - minX) / Math.max(xBinIncr - 1, 1);
     // nice-ify
     let xIncrs = opts?.xTime ? niceTimeIncrs : niceLinearIncrs;
-    xBinIncr = xIncrs[xIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
-
-    if (isNaN(xBinIncr)) {
-      xBinIncr = approx;
-    }
+    let xIncrIdx = xIncrs.findIndex((bucketSize) => bucketSize > approx) - 1;
+    xBinIncr = xIncrs[Math.max(xIncrIdx, 0)];
   }
 
   if (yUnit === HeatmapCalculationMode.Count) {
@@ -311,7 +308,8 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     let approx = (maxY - minY) / Math.max(yBinIncr - 1, 1);
     // nice-ify
     let yIncrs = opts?.yTime ? niceTimeIncrs : niceLinearIncrs;
-    yBinIncr = yIncrs[yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
+    let yIncrIdx = yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1;
+    yBinIncr = yIncrs[Math.max(yIncrIdx, 0)];
 
     if (isNaN(yBinIncr)) {
       yBinIncr = approx;
