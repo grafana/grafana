@@ -42,12 +42,15 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
-// TODO testme
-func dashboardAndPanelExist(c *models.ReqContext, dashboardId string) bool {
+// WOOPS! you wrote all these tests to query a datasource. You still need to do
+// that, but you should be querying a dashboard not a datasource. Try again!
+// logic should still be about the same though. :p, from Jeff to Jeff.
+func dashboardAndPanelExist(c *models.ReqContext, dashboardId, panelId string) bool {
 	id, err := strconv.ParseInt(dashboardId, 10, 64)
 	if err != nil {
 		return false //response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
+
 	query := models.GetDataSourceQuery{
 		Id:    id,
 		OrgId: c.OrgId,
@@ -64,9 +67,26 @@ func dashboardAndPanelExist(c *models.ReqContext, dashboardId string) bool {
 		//return response.Error(500, "Failed to query datasources", err)
 	}
 
-	// search for panel ID in dashboardJson
+	// Dashboard has no properties. This would be weird, haven't written a test
+	// for this yet, but would most likely be a bug and return an error from
+	// bus.Dispatch
+	if query.Result == nil {
+		return false
+	}
 
-	return true
+	// dashboard saved but no panels
+	if query.Result.JsonData == nil {
+		return false
+	}
+
+	// not entirely sure this is how we determine a panelId.
+	_, exists := query.Result.JsonData.Get("results").CheckGet(panelId)
+	if exists {
+		return true
+	}
+
+	// no panel with that ID
+	return false
 }
 
 // QueryMetricsV2 returns query metrics.
@@ -86,8 +106,8 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 		return response.Error(http.StatusForbidden, "missing dashboard or panel ID", nil)
 	}
 
-	// search for dashboard 404 if not found
-	if !dashboardAndPanelExist(c, dashboardId) {
+	// 404 if dashboard or panel not found
+	if !dashboardAndPanelExist(c, dashboardId, panelId) {
 		return response.Error(http.StatusNotFound, "Dashboard or panel not found", nil)
 	}
 
