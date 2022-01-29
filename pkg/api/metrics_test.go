@@ -36,6 +36,40 @@ var (
 		]
 	}`
 
+	getDataSourceByQueryOutput = `{
+		"results": {
+			"A": {
+				"frames": [
+				{
+					"schema": {
+						"refId": "A",
+						"fields": [
+						{
+							"name": "time",
+							"type": "time",
+							"typeInfo": {
+								"frame": "time.Time",
+								"nullable": true
+							}
+						},
+						{
+							"name": "A-series",
+							"type": "number",
+							"typeInfo": {
+								"frame": "float64",
+								"nullable": true
+							},
+							"labels": {}
+						}
+						]
+					},
+					"data": { "values": [ [ ], [] ] }
+				}
+				]
+			}
+		}
+	}`
+
 	testDataSource = models.DataSource{
 		Id:     3,
 		Uid:    "testUID",
@@ -99,11 +133,28 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
 
+	dashboardJson, _ := simplejson.NewFromReader(strings.NewReader(getDataSourceByQueryOutput))
+
 	t.Run("Can query a valid dashboard", func(t *testing.T) {
+		defer bus.ClearBusHandlers()
+
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
+			query.Result = &models.DataSource{
+				Id:       1,
+				OrgId:    testOrgID,
+				Name:     "test",
+				Url:      "http://localhost:5432",
+				Type:     "postgresql",
+				Access:   "Proxy",
+				JsonData: dashboardJson,
+			}
+			return nil
+		})
+
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			fmt.Sprintf("/api/dashboards/id/%d/panels/%d/query", 1, 1),
+			fmt.Sprintf("/api/dashboards/id/%s/panels/%s/query", "1", "A"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
@@ -125,7 +176,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/id//panels/1/query",
+			fmt.Sprintf("/api/dashboards/id//panels/%s/query", "1"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
@@ -136,7 +187,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/id/1/panels//query",
+			fmt.Sprintf("/api/dashboards/id/%s/panels//query", "1"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
@@ -155,61 +206,36 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/id/1/panels/1/query",
+			fmt.Sprintf("/api/dashboards/id/%s/panels/%s/query", "1", "A"),
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
 		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 
-	//t.Run("Get 404 when panelId does not exist", func(t *testing.T) {
-	//response := callAPI(
-	//sc.server,
-	//http.MethodPost,
-	//"/api/dashboards/id/1/panels/1/query",
-	//strings.NewReader(queryDatasourceInput),
-	//t,
-	//)
-	//assert.Equal(t, http.StatusNotFound, response.Code)
-	//})
+	t.Run("Get 404 when panelId does not exist", func(t *testing.T) {
+		defer bus.ClearBusHandlers()
+
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
+			query.Result = &models.DataSource{
+				Id:       1,
+				OrgId:    testOrgID,
+				Name:     "test",
+				Url:      "http://localhost:5432",
+				Type:     "postgresql",
+				Access:   "Proxy",
+				JsonData: dashboardJson,
+			}
+			return nil
+		})
+
+		response := callAPI(
+			sc.server,
+			http.MethodPost,
+			fmt.Sprintf("/api/dashboards/id/%s/panels/%s/query", "1", "x"),
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
 }
-
-// datasource response data.
-// is a panel a frame?
-// is the ID refID?
-// is the ID also the name of the object in the results?
-// cross reference this object in the metrics.go
-
-//{
-//"results": {
-//"A": {
-//"frames": [
-//{
-//"schema": {
-//"refId": "A",
-//"fields": [
-//{
-//"name": "time",
-//"type": "time",
-//"typeInfo": {
-//"frame": "time.Time",
-//"nullable": true
-//}
-//},
-//{
-//"name": "A-series",
-//"type": "number",
-//"typeInfo": {
-//"frame": "float64",
-//"nullable": true
-//},
-//"labels": {}
-//}
-//]
-//},
-//"data": { "values": [ [ ], [] ] }
-//}
-//]
-//}
-//}
-//}
