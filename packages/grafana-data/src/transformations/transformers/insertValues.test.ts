@@ -58,16 +58,42 @@ describe('insertValues Transformer (mode: interval)', () => {
     expect(result.fields[1].values.toArray()).toStrictEqual([6, null, 8, 9]);
   });
 
-  test('should handle empty field values with interval', () => {
+  test('should noop on fewer than two values', () => {
     const df = new MutableDataFrame({
       refId: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, values: [] },
-        { name: 'Value', type: FieldType.number, config: { interval: 2 }, values: [] },
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1] },
+        { name: 'Value', type: FieldType.number, values: [1] },
       ],
     });
     const result = insertValuesInterval(df);
-    expect(result.fields[0].values.toArray()).toStrictEqual([]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([1]);
+  });
+
+  test('should noop on invalid interval', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: -1 }, values: [1, 2, 4] },
+        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+      ],
+    });
+    const result = insertValuesInterval(df);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 4]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([1, 1, 1]);
+  });
+
+  test('should noop on missing interval', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 4] },
+        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+      ],
+    });
+    const result = insertValuesInterval(df);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 4]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([1, 1, 1]);
   });
 });

@@ -51,9 +51,9 @@ export const insertValuesTransformer: DataTransformerInfo<InsertValuesTransforme
 
 // expects ascending number values in refField
 function getInterval(refField: Field, guessFromValues = false) {
-  let interval = refField.config?.interval ?? 0;
+  let interval = Math.max(refField.config?.interval ?? 0, 0);
 
-  if (!interval && guessFromValues && refField.values.length > 2) {
+  if (interval === 0 && guessFromValues && refField.values.length > 2) {
     let refVals = refField.values.toArray();
 
     interval = Infinity;
