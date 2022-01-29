@@ -55,6 +55,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     },
     cellPadding: asNumber(angular.cards?.cardPadding),
     cellRadius: asNumber(angular.cards?.cardRound),
+    yAxisLabels: angular.yBucketBound,
+    yAxisReverse: angular.reverseYBuckets,
     legend: {
       displayMode: angular.legend.show ? LegendDisplayMode.List : LegendDisplayMode.Hidden,
       calcs: [],

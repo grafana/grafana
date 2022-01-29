@@ -54,7 +54,8 @@ export interface PanelOptions extends OptionsWithLegend {
   cellRadius?: number; // was cardRadius
 
   hideZeroBuckets?: boolean;
-  reverseYBuckets?: boolean;
+  yAxisLabels?: string;
+  yAxisReverse?: boolean;
 
   tooltip: HeatmapTooltip;
 }

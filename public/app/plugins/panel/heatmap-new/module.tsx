@@ -21,7 +21,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultPanelOptions;
 
-    let category = ['Heatmap data'];
+    let category = ['Heatmap'];
 
     builder.addRadio({
       path: 'source',
@@ -57,7 +57,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    category = ['Heatmap colors'];
+    category = ['Colors'];
 
     builder.addRadio({
       path: `color.mode`,
@@ -137,7 +137,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    category = ['Cell display'];
+    category = ['Display'];
 
     builder
       .addRadio({
@@ -172,6 +172,26 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           min: 0,
           max: 100,
         },
+      })
+      .addRadio({
+        path: 'yAxisLabels',
+        name: 'Axis labels',
+        defaultValue: 'auto',
+        category,
+        settings: {
+          options: [
+            { value: 'auto', label: 'Auto' },
+            { value: 'middle', label: 'Middle' },
+            { value: 'bottom', label: 'Bottom' },
+            { value: 'top', label: 'Top' },
+          ],
+        },
+      })
+      .addBooleanSwitch({
+        path: 'yAxisReverse',
+        name: 'Reverse buckets',
+        defaultValue: defaultPanelOptions.yAxisReverse === true,
+        category,
       });
 
     category = ['Tooltip'];
