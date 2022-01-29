@@ -22,10 +22,6 @@ import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 import { FocusScope } from '@react-aria/focus';
 
-function isHTMLElement(el: Element): el is HTMLElement {
-  return 'accessKey' in el;
-}
-
 interface UserInfo {
   id?: number;
   login?: string;
@@ -203,7 +199,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         const possibleNextTag =
           this.tagListRef.current.querySelector(`[data-tag-id="${parsedTagId + 1}"]`) ??
           this.tagListRef.current.querySelector(`[data-tag-id="${parsedTagId - 1}"]`);
-        if (possibleNextTag && isHTMLElement(possibleNextTag)) {
+        if (possibleNextTag instanceof HTMLElement) {
           nextTag = possibleNextTag;
         }
       }
