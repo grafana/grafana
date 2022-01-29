@@ -36,7 +36,7 @@ var (
 		]
 	}`
 
-	getDataSourceByQueryOutput = `{
+	getDashboardByIdOutput = `{
 		"results": {
 			"A": {
 				"frames": [
@@ -133,13 +133,13 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
 
-	dashboardJson, _ := simplejson.NewFromReader(strings.NewReader(getDataSourceByQueryOutput))
+	dashboardJson, _ := simplejson.NewFromReader(strings.NewReader(getDashboardByIdOutput))
 
 	t.Run("Can query a valid dashboard", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-			query.Result = &models.DataSource{
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardsQuery) error {
+			query.Result = &models.Dashboard{
 				Id:       1,
 				OrgId:    testOrgID,
 				Name:     "test",

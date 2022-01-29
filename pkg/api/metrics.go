@@ -45,15 +45,18 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 // WOOPS! you wrote all these tests to query a datasource. You still need to do
 // that, but you should be querying a dashboard not a datasource. Try again!
 // logic should still be about the same though. :p, from Jeff to Jeff.
+// 1. query the dashboard with GetDashboardsQuery
+// 2. stub respond for GetDashBoardsQuery
+// 2. figure out how to get the dashboard panels
+// 3. figure out how to query the panelId from the dashboard json
 func dashboardAndPanelExist(c *models.ReqContext, dashboardId, panelId string) bool {
 	id, err := strconv.ParseInt(dashboardId, 10, 64)
 	if err != nil {
 		return false //response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	query := models.GetDataSourceQuery{
-		Id:    id,
-		OrgId: c.OrgId,
+	query := models.GetDashboardQuery{
+		Id: id,
 	}
 
 	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
@@ -74,13 +77,15 @@ func dashboardAndPanelExist(c *models.ReqContext, dashboardId, panelId string) b
 		return false
 	}
 
+	dashboard := query.Result
+
 	// dashboard saved but no panels
-	if query.Result.JsonData == nil {
+	if dashboard.Data == nil {
 		return false
 	}
 
 	// not entirely sure this is how we determine a panelId.
-	_, exists := query.Result.JsonData.Get("results").CheckGet(panelId)
+	_, exists := dashboard.Data.Get("results").CheckGet(panelId)
 	if exists {
 		return true
 	}
