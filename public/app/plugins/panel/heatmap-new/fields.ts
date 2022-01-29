@@ -33,7 +33,7 @@ export function prepareHeatmapData(
   }
 
   // Find a well defined heatmap
-  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapValues);
+  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanLines);
   if (heatmap) {
     return { heatmap };
   }

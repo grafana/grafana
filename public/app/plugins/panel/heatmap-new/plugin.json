@@ -1,10 +1,11 @@
 {
   "type": "panel",
-  "name": "Heatmap (NG)",
+  "name": "Heatmap (preview)",
   "id": "heatmap-new",
   "state": "alpha",
 
   "info": {
+    "description": "Next generation heatmap visualization",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

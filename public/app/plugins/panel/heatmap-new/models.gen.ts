@@ -3,15 +3,7 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import {
-  HideableFieldConfig,
-  LegendDisplayMode,
-  OptionsWithLegend,
-  OptionsWithTooltip,
-  SortOrder,
-  TooltipDisplayMode,
-  VisibilityMode,
-} from '@grafana/schema';
+import { HideableFieldConfig, LegendDisplayMode, OptionsWithLegend, VisibilityMode } from '@grafana/schema';
 import { HeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
@@ -46,7 +38,12 @@ export interface HeatmapColorOptions {
   max?: number;
 }
 
-export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
+export interface HeatmapTooltip {
+  show: boolean;
+  yHistogram?: boolean;
+}
+
+export interface PanelOptions extends OptionsWithLegend {
   source: HeatmapSourceMode;
 
   color: HeatmapColorOptions;
@@ -58,6 +55,8 @@ export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
 
   hideZeroBuckets?: boolean;
   reverseYBuckets?: boolean;
+
+  tooltip: HeatmapTooltip;
 }
 
 export const defaultPanelOptions: PanelOptions = {
@@ -77,8 +76,8 @@ export const defaultPanelOptions: PanelOptions = {
     calcs: [],
   },
   tooltip: {
-    mode: TooltipDisplayMode.Multi,
-    sort: SortOrder.None,
+    show: true,
+    yHistogram: false,
   },
 };
 

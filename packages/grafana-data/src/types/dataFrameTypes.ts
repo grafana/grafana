@@ -16,7 +16,9 @@ export enum DataFrameType {
 
   /**
    * Explicit fields for:
-   *  xMin, xMax?, yMin, yMax, count
+   *  xMin, yMin, count, ...
+   *
+   * All values in the grid exist and have regular spacing
    */
-  HeatmapValues = 'heatmap-values',
+  HeatmapScanLines = 'heatmap-scanlines',
 }

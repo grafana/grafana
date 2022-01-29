@@ -7,6 +7,8 @@ import {
   incrRoundDn,
   SynchronousDataTransformerInfo,
   DataFrameType,
+  getFieldDisplayName,
+  Field,
 } from '@grafana/data';
 import { map } from 'rxjs';
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
@@ -49,7 +51,7 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
     return aBound - bBound;
   });
 
-  let bucketBounds = frames.map((frame, i) => {
+  const bucketBounds = frames.map((frame, i) => {
     return i; // until we have y ordinal scales working for facets/scatter
 
     /*
@@ -68,16 +70,16 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
 
   // assumes all Time fields are identical
   // TODO: handle null-filling w/ fields[0].config.interval?
-  let timeValues = frames[0].fields[0].values.toArray();
+  const timeValues = frames[0].fields[0].values.toArray();
 
   // similar to initBins() below
-  let len = timeValues.length * bucketBounds.length;
-  let xs = Array(len);
-  let ys = Array(len);
-  let counts2 = Array(len);
+  const len = timeValues.length * bucketBounds.length;
+  const xs = new Array(len);
+  const ys = new Array(len);
+  const counts2 = new Array(len);
 
   // cumulative counts
-  let counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
+  const counts = frames.map((frame) => frame.fields[1].values.toArray().slice());
 
   // de-accumulate
   counts.reverse();
@@ -111,7 +113,7 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
   return {
     length: xs.length,
     meta: {
-      type: DataFrameType.HeatmapValues,
+      type: DataFrameType.HeatmapScanLines,
     },
     fields: [
       {
@@ -146,24 +148,38 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   //let xMin = Infinity;
   //let xMax = -Infinity;
 
+  let xField: Field | undefined = undefined;
+  let yField: Field | undefined = undefined;
+
   for (let frame of frames) {
     // TODO: assumes numeric timestamps, ordered asc, without nulls
-    let timeValues = frame.fields.find((f) => f.type === FieldType.time)?.values.toArray();
+    const x = frame.fields.find((f) => f.type === FieldType.time);
+    if (!x) {
+      continue;
+    }
 
-    if (timeValues) {
-      //xMin = Math.min(xMin, timeValues[0]);
-      //xMax = Math.max(xMax, timeValues[timeValues.length - 1]);
+    if (!xField) {
+      xField = x; // the first X
+    }
 
-      for (let field of frame.fields) {
-        if (field.type === FieldType.number) {
-          xs = xs.concat(timeValues);
-          ys = ys.concat(field.values.toArray());
+    const xValues = x.values.toArray();
+    for (let field of frame.fields) {
+      if (field !== x && field.type === FieldType.number) {
+        xs = xs.concat(xValues);
+        ys = ys.concat(field.values.toArray());
+
+        if (!yField) {
+          yField = field;
         }
       }
     }
   }
 
-  let heat2d = heatmap(xs, ys, {
+  if (!xField || !yField) {
+    throw 'no heatmap fields found';
+  }
+
+  const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: true,
     xUnit: options.xAxis?.mode,
@@ -172,23 +188,24 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     ySize: +(options.yAxis?.value ?? 0),
   });
 
-  let frame = {
+  const frame = {
     length: heat2d.x.length,
+    name: getFieldDisplayName(yField),
     meta: {
-      type: DataFrameType.HeatmapValues,
+      type: DataFrameType.HeatmapScanLines,
     },
     fields: [
       {
         name: 'xMin',
         type: FieldType.time,
         values: new ArrayVector(heat2d.x),
-        config: {},
+        config: xField.config,
       },
       {
         name: 'yMin',
         type: FieldType.number,
         values: new ArrayVector(heat2d.y),
-        config: {},
+        config: yField.config, // keep units from the original source
       },
       {
         name: 'count',
@@ -283,6 +300,10 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     // nice-ify
     let xIncrs = opts?.xTime ? niceTimeIncrs : niceLinearIncrs;
     xBinIncr = xIncrs[xIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
+
+    if (isNaN(xBinIncr)) {
+      xBinIncr = approx;
+    }
   }
 
   if (yUnit === HeatmapCalculationMode.Count) {
@@ -291,6 +312,10 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     // nice-ify
     let yIncrs = opts?.yTime ? niceTimeIncrs : niceLinearIncrs;
     yBinIncr = yIncrs[yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1];
+
+    if (isNaN(yBinIncr)) {
+      yBinIncr = approx;
+    }
   }
 
   // console.log({
@@ -327,10 +352,10 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
 }
 
 function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin: number, yIncr: number) {
-  let len = xQty * yQty;
-  let xs = Array(len);
-  let ys = Array(len);
-  let counts = Array(len);
+  const len = xQty * yQty;
+  const xs = new Array<number>(len);
+  const ys = new Array<number>(len);
+  const counts = new Array<number>(len);
 
   for (let i = 0, yi = 0, x = xMin; i < len; yi = ++i % yQty) {
     counts[i] = 0;

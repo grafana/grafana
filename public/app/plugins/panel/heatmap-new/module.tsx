@@ -175,7 +175,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         },
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());

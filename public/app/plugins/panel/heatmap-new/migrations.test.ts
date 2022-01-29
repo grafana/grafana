@@ -26,15 +26,24 @@ describe('Heatmap Migrations', () => {
         "options": Object {
           "cellPadding": 2,
           "cellRadius": 10,
+          "color": Object {
+            "exponent": 0.5,
+            "fill": "red-dark",
+            "mode": "scheme",
+            "scale": "exponential",
+            "scheme": "Oranges",
+            "steps": 128,
+          },
           "legend": Object {
             "calcs": Array [],
-            "displayMode": "hidden",
+            "displayMode": "list",
             "placement": "bottom",
           },
+          "showValue": "never",
           "source": "auto",
           "tooltip": Object {
-            "mode": "multi",
-            "sort": "none",
+            "show": true,
+            "yHistogram": true,
           },
         },
       }

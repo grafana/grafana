@@ -10,10 +10,9 @@ describe('Heatmap transformer', () => {
     };
 
     const data = toDataFrame({
-      name: 'locations',
       fields: [
-        { name: 'location', type: FieldType.string, values: ['AL', 'AK', 'Arizona', 'Arkansas', 'Somewhere'] },
-        { name: 'values', type: FieldType.number, values: [0, 10, 5, 1, 5] },
+        { name: 'time', type: FieldType.time, values: [1, 2, 3, 4] },
+        { name: 'temp', type: FieldType.number, values: [1.1, 2.2, 3.3, 4.4] },
       ],
     });
 
