@@ -310,10 +310,6 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     let yIncrs = opts?.yTime ? niceTimeIncrs : niceLinearIncrs;
     let yIncrIdx = yIncrs.findIndex((bucketSize) => bucketSize > approx) - 1;
     yBinIncr = yIncrs[Math.max(yIncrIdx, 0)];
-
-    if (isNaN(yBinIncr)) {
-      yBinIncr = approx;
-    }
   }
 
   // console.log({
