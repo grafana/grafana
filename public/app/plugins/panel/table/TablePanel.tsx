@@ -76,12 +76,14 @@ export class TablePanel extends Component<Props> {
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
+    if (!panelModel) {
+      return;
+    }
 
-    // The datasource ref from the panel model can be null/undefined if a panel uses a default datasource
-    // so we need to resolve it to the real final datasource.
-    const datasourceInstance = getDatasourceSrv().getInstanceSettings(panelModel?.datasource);
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(panelModel.datasource);
     const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
-
     if (!datasourceRef) {
       return;
     }
