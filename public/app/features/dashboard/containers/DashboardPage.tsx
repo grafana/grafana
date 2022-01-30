@@ -10,7 +10,7 @@ import { Branding } from 'app/core/components/Branding/Branding';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { PanelEditor } from '../components/PanelEditor';
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
 import { KioskMode, StoreState } from 'app/types';
@@ -314,7 +314,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, isInitSlow, initError, queryParams, theme } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = getKioskMode(queryParams.kiosk);
+    const kioskMode = getKioskMode();
     const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {
@@ -380,7 +380,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: KioskMode) => {
   const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
