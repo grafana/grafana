@@ -1,4 +1,4 @@
-import uPlot, { Scale, Range } from 'uplot';
+import uPlot, { Scale, Scales, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { ScaleOrientation, ScaleDirection, ScaleDistribution } from '@grafana/schema';
 import { isBooleanUnit } from '@grafana/data';
@@ -23,7 +23,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
-  getConfig(): Scale {
+  getConfig(): Scales {
     let { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range, direction, orientation } = this.props;
     const distribution = !isTime
       ? {
@@ -33,7 +33,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
               : this.props.distribution === ScaleDistribution.Ordinal
               ? 2
               : 1,
-          log: this.props.distribution === ScaleDistribution.Log ? this.props.log || 2 : undefined,
+          log: this.props.distribution === ScaleDistribution.Log ? ((this.props.log || 2) as Scale.LogBase) : undefined,
         }
       : {};
 

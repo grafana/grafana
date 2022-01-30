@@ -445,8 +445,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         },
       },
       // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
+      scales: [xScaleKey, null],
       match: [() => true, () => true],
     };
   }
