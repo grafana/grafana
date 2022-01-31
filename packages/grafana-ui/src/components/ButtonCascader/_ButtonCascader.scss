@@ -1,19 +1,24 @@
 .rc-cascader {
   font-size: 12px;
 
-  &-menus {
-    font-size: 12px;
-    overflow: hidden;
-    background: $page-bg;
+  &-dropdown {
     position: absolute;
-    border: $panel-border;
-    border-radius: $border-radius;
-    box-shadow: $typeahead-shadow;
-    white-space: nowrap;
+    // Required, otherwise the portal that the popup is shown in will render under other components
+    z-index: 9999;
 
     &-hidden {
       display: none;
     }
+  }
+
+  &-menus {
+    //font-size: 12px;
+    overflow: hidden;
+    background: $page-bg;
+    border: $panel-border;
+    border-radius: $border-radius;
+    box-shadow: $typeahead-shadow;
+    white-space: nowrap;
 
     &.slide-up-enter,
     &.slide-up-appear {
@@ -87,7 +92,7 @@
       position: relative;
 
       &:hover {
-        background: $typeahead-selected-bg;
+        background: $colors-action-hover;
       }
 
       &-disabled {
@@ -108,12 +113,11 @@
       }
 
       &-active {
-        color: $typeahead-selected-color;
-        background: $typeahead-selected-bg;
+        color: $text-color-strong;
+        background: $colors-action-selected;
 
         &:hover {
-          color: $typeahead-selected-color;
-          background: $typeahead-selected-bg;
+          background: $colors-action-hover;
         }
       }
 
@@ -126,6 +130,7 @@
           color: $text-color-weak;
           position: absolute;
           right: 16px;
+          top: 0;
           line-height: 32px;
         }
       }

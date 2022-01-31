@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -22,7 +24,10 @@ import (
 var wireSet = wire.NewSet(
 	New,
 	localcache.ProvideService,
+	tracing.ProvideService,
 	bus.ProvideBus,
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	sqlstore.ProvideService,
 	wire.InterfaceValue(new(usagestats.Service), noOpUsageStats{}),
@@ -71,6 +76,6 @@ func (noOpRouteRegister) Group(string, func(routing.RouteRegister), ...web.Handl
 
 func (noOpRouteRegister) Insert(string, func(routing.RouteRegister), ...web.Handler) {}
 
-func (noOpRouteRegister) Register(routing.Router) {}
+func (noOpRouteRegister) Register(routing.Router, ...routing.RegisterNamedMiddleware) {}
 
 func (noOpRouteRegister) Reset() {}

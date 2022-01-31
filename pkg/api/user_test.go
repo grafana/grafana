@@ -2,18 +2,23 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/searchusers"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -23,10 +28,11 @@ import (
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
-	hs := &HTTPServer{Cfg: settings}
-
 	sqlStore := sqlstore.InitTestDB(t)
-	hs.SQLStore = sqlStore
+	hs := &HTTPServer{
+		Cfg:      settings,
+		SQLStore: sqlStore,
+	}
 
 	mockResult := models.SearchUserQueryResult{
 		Users: []*models.UserSearchHitDTO{
@@ -38,55 +44,62 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetUserProfileQuery) error {
-			query.Result = models.UserProfileDTO{
-				Id:             int64(1),
-				Email:          "daniel@grafana.com",
-				Name:           "Daniel",
-				Login:          "danlee",
-				OrgId:          int64(2),
-				IsGrafanaAdmin: true,
-				IsDisabled:     false,
-				IsExternal:     false,
-				UpdatedAt:      fakeNow,
-				CreatedAt:      fakeNow,
-			}
-			return nil
-		})
+		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+		srv := authinfoservice.ProvideAuthInfoService(bus.New(), sqlStore, &authinfoservice.OSSUserProtectionImpl{}, secretsService)
+		hs.authInfoService = srv
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetAuthInfoQuery) error {
-			query.Result = &models.UserAuth{
-				AuthModule: models.AuthModuleLDAP,
-			}
-			return nil
-		})
+		createUserCmd := models.CreateUserCommand{
+			Email:   fmt.Sprint("user", "@test.com"),
+			Name:    "user",
+			Login:   "loginuser",
+			IsAdmin: true,
+		}
+		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
+		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByID
-		avatarUrl := dtos.GetGravatarUrl("daniel@grafana.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": "1"}).exec()
 
-		expected := fmt.Sprintf(`
-			{
-				"id": 1,
-				"email": "daniel@grafana.com",
-				"name": "Daniel",
-				"login": "danlee",
-				"theme": "",
-				"orgId": 2,
-				"isGrafanaAdmin": true,
-				"isDisabled": false,
-				"isExternal": true,
-				"authLabels": [
-					"LDAP"
-				],
-				"avatarUrl": "%s",
-				"updatedAt": "2019-02-11T17:30:40Z",
-				"createdAt": "2019-02-11T17:30:40Z"
-			}
-			`, avatarUrl)
+		token := &oauth2.Token{
+			AccessToken:  "testaccess",
+			RefreshToken: "testrefresh",
+			Expiry:       time.Now(),
+			TokenType:    "Bearer",
+		}
+		idToken := "testidtoken"
+		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
+		query := &models.GetUserByAuthInfoQuery{Login: "loginuser", AuthModule: "test", AuthId: "test"}
+		cmd := &models.UpdateAuthInfoCommand{
+			UserId:     user.Id,
+			AuthId:     query.AuthId,
+			AuthModule: query.AuthModule,
+			OAuthToken: token,
+		}
+		err = srv.UpdateAuthInfo(context.Background(), cmd)
+		require.NoError(t, err)
+		avatarUrl := dtos.GetGravatarUrl("@test.com")
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.Id)}).exec()
 
+		expected := models.UserProfileDTO{
+			Id:             1,
+			Email:          "user@test.com",
+			Name:           "user",
+			Login:          "loginuser",
+			OrgId:          1,
+			IsGrafanaAdmin: true,
+			AuthLabels:     []string{},
+			CreatedAt:      fakeNow,
+			UpdatedAt:      fakeNow,
+			AvatarUrl:      avatarUrl,
+		}
+
+		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
-		require.JSONEq(t, expected, sc.resp.Body.String())
+		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+		resp.CreatedAt = fakeNow
+		resp.UpdatedAt = fakeNow
+		resp.AvatarUrl = avatarUrl
+		require.EqualValues(t, expected, resp)
 	})
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
@@ -109,30 +122,25 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 			return nil
 		})
+		createUserCmd := models.CreateUserCommand{
+			Email:   fmt.Sprint("admin", "@test.com"),
+			Name:    "admin",
+			Login:   "admin",
+			IsAdmin: true,
+		}
+		_, err := sqlStore.CreateUser(context.Background(), createUserCmd)
+		require.Nil(t, err)
 
-		sc.handlerFunc = GetUserByLoginOrEmail
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "danlee"}).exec()
+		sc.handlerFunc = hs.GetUserByLoginOrEmail
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
-		expected := `
-			{
-				"id": 1,
-				"email": "daniel@grafana.com",
-				"name": "Daniel",
-				"login": "danlee",
-				"theme": "light",
-				"orgId": 2,
-				"isGrafanaAdmin": true,
-				"isDisabled": false,
-				"authLabels": null,
-				"isExternal": false,
-				"avatarUrl": "",
-				"updatedAt": "2019-02-11T17:30:40Z",
-				"createdAt": "2019-02-11T17:30:40Z"
-			}
-			`
-
+		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
-		require.JSONEq(t, expected, sc.resp.Body.String())
+		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		require.NoError(t, err)
+		require.Equal(t, "admin", resp.Login)
+		require.Equal(t, "admin@test.com", resp.Email)
+		require.True(t, resp.IsGrafanaAdmin)
 	})
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {

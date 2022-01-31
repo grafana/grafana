@@ -200,11 +200,15 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 	}
 
 	renderOpts := rendering.Opts{
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout: timeout,
+		},
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   evalCtx.Rule.OrgID,
+			OrgRole: models.ROLE_ADMIN,
+		},
 		Width:           1000,
 		Height:          500,
-		Timeout:         timeout,
-		OrgID:           evalCtx.Rule.OrgID,
-		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 		Theme:           rendering.ThemeDark,
 	}
@@ -218,7 +222,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 
 	n.log.Debug("Rendering alert panel image", "ruleId", evalCtx.Rule.ID, "urlPath", renderOpts.Path)
 	start := time.Now()
-	result, err := n.renderService.Render(evalCtx.Ctx, renderOpts)
+	result, err := n.renderService.Render(evalCtx.Ctx, renderOpts, nil)
 	if err != nil {
 		return err
 	}

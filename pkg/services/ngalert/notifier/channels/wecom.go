@@ -7,14 +7,14 @@ import (
 
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 )
 
 // NewWeComNotifier is the constructor for WeCom notifier.
-func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
+func NewWeComNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
 	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 
 	if url == "" {
@@ -31,6 +31,7 @@ func NewWeComNotifier(model *NotificationChannelConfig, t *template.Template, fn
 		}),
 		URL:     url,
 		log:     log.New("alerting.notifier.wecom"),
+		ns:      ns,
 		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		tmpl:    t,
 	}, nil
@@ -43,6 +44,7 @@ type WeComNotifier struct {
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
+	ns      notifications.WebhookSender
 }
 
 // Notify send an alert notification to WeCom.
@@ -74,7 +76,7 @@ func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := w.ns.SendWebhookSync(ctx, cmd); err != nil {
 		w.log.Error("failed to send WeCom webhook", "error", err, "notification", w.Name)
 		return false, err
 	}

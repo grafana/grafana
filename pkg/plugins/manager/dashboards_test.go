@@ -11,14 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
 	cfg := &setting.Cfg{
-		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
 			"test-app": map[string]string{
 				"path": "testdata/test-app",
@@ -26,8 +24,8 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, nil, loader.New(pmCfg, nil,
-		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, &provider.Service{}), &sqlstore.SQLStore{})
+	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
+		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}))
 	require.NoError(t, err)
 
 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

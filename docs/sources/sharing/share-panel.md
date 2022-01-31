@@ -46,14 +46,14 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 
 A panel snapshot shares an interactive panel publicly. Grafana strips sensitive data leaving only the visible metric data and series names embedded into your dashboard. Panel snapshots can be accessed by anyone with the link.
 
-You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service provided by [Raintank](http://raintank.io), that allows you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
+You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that allows you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
 ![Panel share snapshot](/static/img/docs/sharing/share-panel-snapshot-8-0.png)
 
 To publish a snapshot:
 
 1. In the Share Panel dialog, click **Snapshot** to open the tab.
-1. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
+1. Click on **Local Snapshot** or **Publish to snapshots.raintank.io**. This generates the link of the snapshot.
 1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
 If you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
@@ -70,7 +70,7 @@ Here is an example of the HTML code:
 
 ```html
 <iframe
-  src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4"
+  src="https://snapshots.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4"
   width="650"
   height="300"
   frameborder="0"
@@ -79,7 +79,7 @@ Here is an example of the HTML code:
 
 The result is an interactive Grafana graph embedded in an iframe:
 
-<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshots.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
 
 ## Library panel
 
