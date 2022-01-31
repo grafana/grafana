@@ -1,7 +1,9 @@
 import React from 'react';
+import { MessageDescriptor } from '@lingui/core';
+import { Trans as OriginalTrans } from '@lingui/macro';
 
-export const Trans: React.FC = ({ children }) => {
-  return <>{children}</>;
+export const Trans: typeof OriginalTrans = ({ id, children }) => {
+  return <>{children ?? id}</>;
 };
 
 export const Plural: React.FC = () => {
@@ -18,4 +20,9 @@ export const SelectOrdinal: React.FC = () => {
 
 export const t = (msg: string | { message: string }) => {
   return typeof msg === 'string' ? msg : msg.message;
+};
+
+export const defineMessage = (descriptor: MessageDescriptor) => {
+  // We return the message as the ID so we can assert on the plain english value
+  return { ...descriptor, id: descriptor.message };
 };
