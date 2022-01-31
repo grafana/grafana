@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	nbp "github.com/grafana/grafana/pkg/services/navbarpreferences"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -387,7 +386,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		// query navbar_preferences table for any preferences
-		navbarPref,err := nbp.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
+		navbarPref,err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
     
 	  if err != nil {
 		  return nil, err
@@ -398,8 +397,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			navItem.ShowInNavBar = true
 
 			// override with preference if exists
-			for _, pref := range *navbarPref {
-				if navItem.Id == pref.NavItemId {
+			for _, pref := range navbarPref {
+				if navItem.Id == pref.NavItemID {
 					navItem.ShowInNavBar = pref.ShowInNavbar
 				}
 			}

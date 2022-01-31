@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/grafana/grafana/pkg/services/navbarpreferences"
 )
 
 type HTTPServer struct {
@@ -110,6 +111,7 @@ type HTTPServer struct {
 	AlertNG                   *ngalert.AlertNG
 	LibraryPanelService       librarypanels.Service
 	LibraryElementService     libraryelements.Service
+	NavbarPreferencesService  navbarpreferences.Service
 	SocialService             social.Service
 	Listener                  net.Listener
 	EncryptionService         encryption.Internal
