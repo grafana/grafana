@@ -18,9 +18,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type rawPermission struct {
+	Action, Scope string
+}
+
 // Setup users
 var (
-	now   = time.Now()
+	now        = time.Now()
+	team1Scope = accesscontrol.Scope("teams", "id", "1")
+	team2Scope = accesscontrol.Scope("teams", "id", "2")
+
 	users = []models.User{
 		{
 			Id:      1,
@@ -68,7 +75,31 @@ var (
 			Updated: now,
 		},
 	}
+	expectedRolePerms = map[string][]rawPermission{
+		"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
+		"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
+		"managed:users:3:permissions": {{Action: "teams:read", Scope: team1Scope}},
+		"managed:users:4:permissions": {
+			{Action: "teams:read", Scope: team1Scope},
+			{Action: "teams:delete", Scope: team1Scope},
+			{Action: "teams:write", Scope: team1Scope},
+			{Action: "teams.permissions:read", Scope: team1Scope},
+			{Action: "teams.permissions:write", Scope: team1Scope},
+		},
+		"managed:users:5:permissions": {
+			{Action: "teams:read", Scope: team2Scope},
+			{Action: "users:read", Scope: "users:*"},
+		},
+	}
 )
+
+func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermission {
+	raw := make([]rawPermission, len(permissions))
+	for i, p := range permissions {
+		raw[i] = rawPermission{Action: p.Action, Scope: p.Scope}
+	}
+	return raw
+}
 
 func TestMigrations(t *testing.T) {
 	testDB := sqlutil.SQLite3TestDB()
@@ -114,18 +145,31 @@ func TestMigrations(t *testing.T) {
 
 	for _, user := range users {
 		// Check managed roles exist
-		count, err := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, fmt.Sprintf("managed:users:%d:permissions", user.Id)).Count()
+		roleName := fmt.Sprintf("managed:users:%d:permissions", user.Id)
+		role := accesscontrol.Role{}
+		hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, roleName).Get(&role)
 
-		require.NoError(t, err)
-		assert.Equal(t, int64(1), count, user)
+		require.NoError(t, errManagedRoleSearch)
+		assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
 
 		// Check permissions associated with each role
+		perms := []accesscontrol.Permission{}
+		countUserPermissions, errManagedPermsSearch := x.Table("permission").Where("role_id = ?", role.ID).FindAndCount(&perms)
 
-		// Check permissions
+		require.NoError(t, errManagedPermsSearch)
+		assert.Equal(t, int64(len(expectedRolePerms[roleName])), countUserPermissions, "expected role to be tied to permissions", user, role)
+
+		rawPerms := convertToRawPermissions(perms)
+		for _, perm := range rawPerms {
+			assert.Contains(t, expectedRolePerms[roleName], perm)
+		}
 
 		// Check assignment of the roles
+		assign := accesscontrol.UserRole{}
+		has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.Id).Get(&assign)
+		require.NoError(t, errAssignmentSearch)
+		assert.True(t, has, "expected assignment of role to user", role, user)
 	}
-
 }
 
 func setupTeams(t *testing.T, x *xorm.Engine) {
