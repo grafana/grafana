@@ -75,16 +75,7 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 			return "", false
 		}
 
-		// can ignore update as the update data is stale
-		if !canUpgrade(plugin.Info.Version, update) {
-			s.mutex.Lock()
-			delete(s.availableUpdates, pluginID)
-			s.mutex.Unlock()
-
-			return "", false
-		}
-
-		return update, true
+		return update, canUpgrade(plugin.Info.Version, update)
 	}
 
 	return "", false
@@ -123,16 +114,19 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 		return
 	}
 
+	availableUpdates := map[string]string{}
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
-			s.mutex.Lock()
-			delete(s.availableUpdates, localP.ID)
-
 			if canUpgrade(localP.Info.Version, gcomP.Version) {
-				s.availableUpdates[localP.ID] = gcomP.Version
+				availableUpdates[localP.ID] = gcomP.Version
 			}
-			s.mutex.Unlock()
 		}
+	}
+
+	if len(availableUpdates) > 0 {
+		s.mutex.Lock()
+		s.availableUpdates = availableUpdates
+		s.mutex.Unlock()
 	}
 }
 
