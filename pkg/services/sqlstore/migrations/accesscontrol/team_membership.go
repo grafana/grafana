@@ -78,12 +78,16 @@ func (p *teamPermissionMigrator) bulkCreateRoles(roles []*accesscontrol.Role) ([
 		if err != nil {
 			return nil, err
 		}
-		valueStrings[i] = "(?, ?, ?, ?, ?)"
+		valueStrings[i] = "(?, ?, ?, 1, ?, ?)"
 		args = append(args, r.OrgID, uid, r.Name, ts, ts)
 	}
 
+	if len(valueStrings) == 0 {
+		return nil, nil
+	}
+
 	valueString := strings.Join(valueStrings, ",")
-	sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
+	sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, version, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
 
 	createdRoles := make([]*accesscontrol.Role, len(roles))
 	err := p.sess.SQL(sql, args...).Find(&createdRoles)
@@ -110,6 +114,10 @@ func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscont
 				Created: ts,
 			})
 		}
+	}
+
+	if len(roleAssignments) == 0 {
+		return nil
 	}
 
 	_, err := p.sess.Table("user_role").InsertMulti(roleAssignments)
@@ -285,6 +293,7 @@ func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int6
 			}
 		}
 	}
+
 	return rolesToCreate, assignments, rolesByOrg, nil
 }
 
