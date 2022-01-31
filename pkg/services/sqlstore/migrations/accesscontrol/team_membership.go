@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const batchSize = 500
+
 func AddTeamMembershipMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("teams permissions migration", &teamPermissionMigrator{editorsCanAdmin: mg.Cfg.EditorsCanAdmin})
 }
@@ -66,36 +68,61 @@ func (p *teamPermissionMigrator) findRole(orgID int64, name string) (*accesscont
 	return &role, nil
 }
 
-// TODO cut into chunks
-func (p *teamPermissionMigrator) bulkCreateRoles(roles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
-	ts := time.Now()
-	// bulk role creations
-	valueStrings := make([]string, len(roles))
-	args := make([]interface{}, 0, len(roles)*5)
-
-	for i, r := range roles {
-		uid, err := generateNewRoleUID(p.sess, r.OrgID)
-		if err != nil {
-			return nil, err
+func batch(count, batchSize int, eachFn func(start, end int) error) error {
+	for i := 0; i < count; {
+		end := i + batchSize - 1
+		if end > count-1 {
+			end = count - 1
 		}
-		valueStrings[i] = "(?, ?, ?, 1, ?, ?)"
-		args = append(args, r.OrgID, uid, r.Name, ts, ts)
+
+		if err := eachFn(i, end); err != nil {
+			return err
+		}
+
+		i = end + 1
 	}
 
-	if len(valueStrings) == 0 {
-		return nil, nil
-	}
-
-	valueString := strings.Join(valueStrings, ",")
-	sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, version, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
-
-	createdRoles := make([]*accesscontrol.Role, len(roles))
-	err := p.sess.SQL(sql, args...).Find(&createdRoles)
-
-	return createdRoles, err
+	return nil
 }
 
-// TODO cut into chunks
+func (p *teamPermissionMigrator) bulkCreateRoles(allRoles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
+	ts := time.Now()
+	allCreatedRoles := make([]*accesscontrol.Role, len(allRoles))
+
+	// bulk role creations
+	err := batch(len(allRoles), batchSize, func(start, end int) error {
+		roles := allRoles[start:end]
+		createdRoles := make([]*accesscontrol.Role, len(roles))
+		valueStrings := make([]string, len(roles))
+		args := make([]interface{}, 0, len(roles)*5)
+
+		for i, r := range roles {
+			uid, err := generateNewRoleUID(p.sess, r.OrgID)
+			if err != nil {
+				return err
+			}
+
+			valueStrings[i] = "(?, ?, ?, 1, ?, ?)"
+			args = append(args, r.OrgID, uid, r.Name, ts, ts)
+		}
+
+		if len(valueStrings) == 0 {
+			return nil
+		}
+
+		valueString := strings.Join(valueStrings, ",")
+		sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, version, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
+		if errCreate := p.sess.SQL(sql, args...).Find(&createdRoles); errCreate != nil {
+			return errCreate
+		}
+
+		allCreatedRoles = append(allCreatedRoles, createdRoles...)
+		return nil
+	})
+
+	return allCreatedRoles, err
+}
+
 func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscontrol.Role, assignments map[int64]map[string]struct{}) error {
 	ts := time.Now()
 
@@ -120,14 +147,17 @@ func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscont
 		return nil
 	}
 
-	_, err := p.sess.Table("user_role").InsertMulti(roleAssignments)
-	return err
+	return batch(len(roleAssignments), batchSize, func(start, end int) error {
+		roleAssignmentsChunk := roleAssignments[start:end]
+		_, err := p.sess.Table("user_role").InsertMulti(roleAssignmentsChunk)
+		return err
+	})
 }
 
 // setRolePermissions sets the role permissions deleting any team related ones before inserting any.
 func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []accesscontrol.Permission) error {
 	// First drop existing permissions
-	if _, errDeletingPerms := p.sess.SQL("DELETE FROM permission WHERE role_id = ? AND action LIKE ?", roleID, "teams:%").Exec(); errDeletingPerms != nil {
+	if _, errDeletingPerms := p.sess.SQL("DELETE FROM permission WHERE role_id = ? AND (action LIKE ? OR action LIKE ?)", roleID, "teams:%", "teams.permissions:%").Exec(); errDeletingPerms != nil {
 		return errDeletingPerms
 	}
 
