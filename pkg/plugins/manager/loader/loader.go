@@ -75,18 +75,18 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as it's plugin.json is invalid", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as could not read its plugin.json", "path", pluginJSONPath)
 			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as full plugin.json path could not be calculated", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as full plugin.json path could not be calculated", "pluginID", plugin.ID)
 			continue
 		}
 
 		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
