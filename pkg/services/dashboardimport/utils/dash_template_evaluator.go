@@ -1,4 +1,4 @@
-package manager
+package utils
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
@@ -22,12 +22,19 @@ func (e DashboardInputMissingError) Error() string {
 
 type DashTemplateEvaluator struct {
 	template  *simplejson.Json
-	inputs    []plugins.ImportDashboardInput
+	inputs    []dashboardimport.ImportDashboardInput
 	variables map[string]string
 	result    *simplejson.Json
 }
 
-func (e *DashTemplateEvaluator) findInput(varName string, varType string) *plugins.ImportDashboardInput {
+func NewDashTemplateEvaluator(template *simplejson.Json, inputs []dashboardimport.ImportDashboardInput) *DashTemplateEvaluator {
+	return &DashTemplateEvaluator{
+		template: template,
+		inputs:   inputs,
+	}
+}
+
+func (e *DashTemplateEvaluator) findInput(varName string, varType string) *dashboardimport.ImportDashboardInput {
 	for _, input := range e.inputs {
 		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
@@ -50,7 +57,7 @@ func (e *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 
 		// force expressions value to `__expr__`
 		if inputDefJson.Get("pluginId").MustString() == expr.DatasourceType {
-			input = &plugins.ImportDashboardInput{
+			input = &dashboardimport.ImportDashboardInput{
 				Value: expr.DatasourceType,
 			}
 		}

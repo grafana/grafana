@@ -345,6 +345,10 @@ type testRenderService struct {
 	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
 }
 
+func (s *testRenderService) HasCapability(feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
+	return rendering.CapabilitySupportRequestResult{}, nil
+}
+
 func (s *testRenderService) IsAvailable() bool {
 	if s.isAvailableProvider != nil {
 		return s.isAvailableProvider()
@@ -353,7 +357,7 @@ func (s *testRenderService) IsAvailable() bool {
 	return true
 }
 
-func (s *testRenderService) Render(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
+func (s *testRenderService) Render(ctx context.Context, opts rendering.Opts, session rendering.Session) (*rendering.RenderResult, error) {
 	if s.renderProvider != nil {
 		return s.renderProvider(ctx, opts)
 	}
@@ -361,7 +365,7 @@ func (s *testRenderService) Render(ctx context.Context, opts rendering.Opts) (*r
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
 }
 
-func (s *testRenderService) RenderCSV(ctx context.Context, opts rendering.CSVOpts) (*rendering.RenderCSVResult, error) {
+func (s *testRenderService) RenderCSV(ctx context.Context, opts rendering.CSVOpts, session rendering.Session) (*rendering.RenderCSVResult, error) {
 	return nil, nil
 }
 
@@ -379,6 +383,10 @@ func (s *testRenderService) GetRenderUser(ctx context.Context, key string) (*ren
 
 func (s *testRenderService) Version() string {
 	return ""
+}
+
+func (s *testRenderService) CreateRenderingSession(ctx context.Context, authOpts rendering.AuthOpts, sessionOpts rendering.SessionOpts) (rendering.Session, error) {
+	return nil, nil
 }
 
 var _ rendering.Service = &testRenderService{}

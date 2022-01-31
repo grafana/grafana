@@ -317,3 +317,11 @@ export function graphBounds(nodes: NodeDatum[]): Bounds {
     },
   };
 }
+
+export function getNodeGraphDataFrames(frames: DataFrame[]) {
+  // TODO: this not in sync with how other types of responses are handled. Other types have a query response
+  //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
+  //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
+  //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
+  return frames.filter((frame) => frame.meta?.preferredVisualisationType === 'nodeGraph');
+}

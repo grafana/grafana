@@ -430,7 +430,7 @@ export const FUNCTIONS = [
 
 export const PROM_KEYWORDS = FUNCTIONS.map((keyword) => keyword.label);
 
-const tokenizer: Grammar = {
+export const promqlGrammar: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -496,4 +496,4 @@ const tokenizer: Grammar = {
   punctuation: /[{};()`,.]/,
 };
 
-export default tokenizer;
+export default promqlGrammar;

@@ -524,19 +524,19 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			return response.Error(403, "Access denied to datasource", err)
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
 		}
-		return response.Error(500, "Unable to load datasource metadata", err)
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
 	}
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
 	if !exists {
-		return response.Error(500, "Unable to find datasource plugin", err)
+		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 	}
 
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {
-		return response.Error(500, "Unable to get datasource model", err)
+		return response.Error(http.StatusInternalServerError, "Unable to get datasource model", err)
 	}
 	req := &backend.CheckHealthRequest{
 		PluginContext: backend.PluginContext{
@@ -545,6 +545,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 			PluginID:                   plugin.ID,
 			DataSourceInstanceSettings: dsInstanceSettings,
 		},
+	}
+
+	var dsURL string
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
@@ -562,17 +572,17 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(400, payload)
+		return response.JSON(http.StatusBadRequest, payload)
 	}
 
-	return response.JSON(200, payload)
+	return response.JSON(http.StatusOK, payload)
 }
 
 func (hs *HTTPServer) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {

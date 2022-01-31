@@ -1,0 +1,33 @@
+include:
+ - included.yaml # not yet supported
+
+vars: 
+  stack: something
+  level: free
+  valA: value from features.yaml
+
+flags: 
+  - name: feature1
+    description: feature1
+    expression: "false"
+
+  - name: feature3
+    description: feature3
+    expression: "true"
+
+  - name: feature3
+    description: feature3
+    expression: env.level == 'free'
+
+  - name: displaySwedishTheme
+    description: enable swedish background theme
+    expression: |
+      // restrict to users allowing swedish language
+      req.locale.contains("sv")
+  - name: displayFrenchFlag
+    description: sho background theme
+    expression: |
+      // only admins
+      user.id == 1
+      // show to users allowing french language
+      && req.locale.contains("fr")
