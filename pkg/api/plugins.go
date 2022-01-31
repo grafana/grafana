@@ -69,13 +69,17 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Category:      pluginDef.Category,
 			Info:          pluginDef.Info,
 			Dependencies:  pluginDef.Dependencies,
-			LatestVersion: pluginDef.GrafanaComVersion,
-			HasUpdate:     pluginDef.GrafanaComHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavURL,
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
 			SignatureOrg:  pluginDef.SignatureOrg,
+		}
+
+		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
+		if exists {
+			listItem.LatestVersion = update
+			listItem.HasUpdate = true
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
@@ -122,8 +126,6 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		BaseUrl:       plugin.BaseURL,
 		Module:        plugin.Module,
 		DefaultNavUrl: plugin.DefaultNavURL,
-		LatestVersion: plugin.GrafanaComVersion,
-		HasUpdate:     plugin.GrafanaComHasUpdate,
 		State:         plugin.State,
 		Signature:     plugin.Signature,
 		SignatureType: plugin.SignatureType,
@@ -144,6 +146,12 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Enabled = query.Result.Enabled
 		dto.Pinned = query.Result.Pinned
 		dto.JsonData = query.Result.JsonData
+	}
+
+	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
+	if exists {
+		dto.LatestVersion = update
+		dto.HasUpdate = true
 	}
 
 	return response.JSON(200, dto)
