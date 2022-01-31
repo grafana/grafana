@@ -3744,7 +3744,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.1
-    sinon: 12.0.1
+    sinon: 13.0.0
     tinycolor2: 1.4.2
     tslib: 2.3.1
     typescript: 4.4.4
@@ -3863,7 +3863,7 @@ __metadata:
     "@grafana/ui": 8.4.0-pre
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.1.3
-    "@sentry/browser": 6.16.1
+    "@sentry/browser": 6.17.2
     "@testing-library/dom": ^8.11.1
     "@testing-library/react": ^12.1.2
     "@testing-library/user-event": ^13.5.0
@@ -4029,6 +4029,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/tsconfig@npm:^1.1.0-rc1":
+  version: 1.1.0-rc1
+  resolution: "@grafana/tsconfig@npm:1.1.0-rc1"
+  checksum: cc66393faffe4574d63c35a8516b53bab0025c320d89d3acd559647cf2ce81384bbcfb250837e588e39b1abefda7b279e2877cf18bae8ddb0dd6254d5e9688f2
+  languageName: node
+  linkType: hard
+
 "@grafana/ui@8.4.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
@@ -4053,7 +4060,7 @@ __metadata:
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-image": 2.1.1
     "@rollup/plugin-node-resolve": 13.1.3
-    "@sentry/browser": 6.16.1
+    "@sentry/browser": 6.17.2
     "@storybook/addon-a11y": 6.4.13
     "@storybook/addon-actions": 6.4.13
     "@storybook/addon-docs": 6.4.13
@@ -4087,7 +4094,7 @@ __metadata:
     "@types/lodash": 4.14.149
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.19
-    "@types/prismjs": 1.16.6
+    "@types/prismjs": 1.26.0
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-calendar": 3.4.4
@@ -4100,7 +4107,6 @@ __metadata:
     "@types/react-window": 1.8.5
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
-    "@types/slate-react": 0.22.5
     "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
@@ -4269,7 +4275,6 @@ __metadata:
     "@types/react-icons": 2.2.7
     "@types/recompose": 0.30.10
     "@types/reselect": 2.2.0
-    "@types/slate-react": 0.22.5
     "@types/tinycolor2": 1.4.3
     chance: ^1.0.10
     classnames: ^2.2.5
@@ -4291,7 +4296,7 @@ __metadata:
     react-icons: 2.2.7
     recompose: 0.30.0
     reselect: 4.1.5
-    sinon: 12.0.1
+    sinon: 13.0.0
     tinycolor2: 1.4.2
     tslib: 2.3.1
     tween-functions: ^1.2.0
@@ -6243,10 +6248,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.0.4":
-  version: 1.0.4
-  resolution: "@opentelemetry/api@npm:1.0.4"
-  checksum: 793e9b5c21666b647a60c58c46c3e00ad1dac38505102b026ad0ef617571d637aca54a18533a73c1e288c95b5ac77e2db17f96467f11833ac1165338e1184260
+"@opentelemetry/api@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@opentelemetry/api@npm:1.1.0"
+  checksum: 8be8e8dd20a473639a9bb9b4185b8984f537f86e49829ba1d4c4e909f4480309cb22696b7eb7122882878dac0b5f4ce799d66ed72248568bafed085d6269e1bc
   languageName: node
   linkType: hard
 
@@ -7070,67 +7075,67 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/browser@npm:6.16.1":
-  version: 6.16.1
-  resolution: "@sentry/browser@npm:6.16.1"
+"@sentry/browser@npm:6.17.2":
+  version: 6.17.2
+  resolution: "@sentry/browser@npm:6.17.2"
   dependencies:
-    "@sentry/core": 6.16.1
-    "@sentry/types": 6.16.1
-    "@sentry/utils": 6.16.1
+    "@sentry/core": 6.17.2
+    "@sentry/types": 6.17.2
+    "@sentry/utils": 6.17.2
     tslib: ^1.9.3
-  checksum: baae33f5cb008a617b50c4b719e62c64db0ac107741938061902817310c72dc1e83bda560296954510a9dbb933425316d5a56911e455104307aa8e057c7722c2
+  checksum: 81235d9648a8486ba76fbc2c069f4d25889b936c45367b8c3ddf36e4a4a609ac8d65d65219afd1dc1d16177fa2167ed625d88bdeb0276f8230128d195ce4bfbd
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:6.16.1":
-  version: 6.16.1
-  resolution: "@sentry/core@npm:6.16.1"
+"@sentry/core@npm:6.17.2":
+  version: 6.17.2
+  resolution: "@sentry/core@npm:6.17.2"
   dependencies:
-    "@sentry/hub": 6.16.1
-    "@sentry/minimal": 6.16.1
-    "@sentry/types": 6.16.1
-    "@sentry/utils": 6.16.1
+    "@sentry/hub": 6.17.2
+    "@sentry/minimal": 6.17.2
+    "@sentry/types": 6.17.2
+    "@sentry/utils": 6.17.2
     tslib: ^1.9.3
-  checksum: 76f49b270d6acf1b9473822035d7a9a5c191f2df472c5768e01329afbb3f420634792f2a2826cd295982710d39b7c3d53e0c462e1d652451c0ba783c150420d8
+  checksum: 3d0265bacf95df766db90ce582758130cf802ea4a9cc86872519aec8e240a37d69aa0f0e72be3526a6b8d4c59bd6eb0c23518d07e4b7b3477014526e45c5e29a
   languageName: node
   linkType: hard
 
-"@sentry/hub@npm:6.16.1":
-  version: 6.16.1
-  resolution: "@sentry/hub@npm:6.16.1"
+"@sentry/hub@npm:6.17.2":
+  version: 6.17.2
+  resolution: "@sentry/hub@npm:6.17.2"
   dependencies:
-    "@sentry/types": 6.16.1
-    "@sentry/utils": 6.16.1
+    "@sentry/types": 6.17.2
+    "@sentry/utils": 6.17.2
     tslib: ^1.9.3
-  checksum: 032cd76e9de169ba3ee9683ab4c7603d7e5784fc9d5dc4173d7fedcecc3f9dd07c8ee1b95d250befff5943d1bdb2e9ee4d38c9976b723db959b33c10a1b2aead
+  checksum: 1f8e029f6e32fd3b6779103cf425bd813a1caeec91fc27f3a3675ea253a16e50a95d719fce9511d061682c81108a969f25e39eb6d59f469f4d4fd89a57d72eea
   languageName: node
   linkType: hard
 
-"@sentry/minimal@npm:6.16.1":
-  version: 6.16.1
-  resolution: "@sentry/minimal@npm:6.16.1"
+"@sentry/minimal@npm:6.17.2":
+  version: 6.17.2
+  resolution: "@sentry/minimal@npm:6.17.2"
   dependencies:
-    "@sentry/hub": 6.16.1
-    "@sentry/types": 6.16.1
+    "@sentry/hub": 6.17.2
+    "@sentry/types": 6.17.2
     tslib: ^1.9.3
-  checksum: c928c94ce76538b8ad81d6e724f4c149b046087a48de60e43933520f6a51ce13abbcbc94f91575aa215e662901c65204344d9185f8afc6d5b449b3bedf85db54
+  checksum: 4c1d63deee6387c25b3f6fd8d377777f6010f4725230566b24ef103a26daa07a359604e5d1418e8e7f47f31680506a128dab803ecec2eab3e263fad99902e92e
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:6.16.1":
-  version: 6.16.1
-  resolution: "@sentry/types@npm:6.16.1"
-  checksum: 994791c471a83b3e9a3c7052b6b2fef3ab404834eaabb61f3dd15b79782ca9cf6774cfb760040bbc06812a8420e8d40681d81a7d4b51ce7ed578d72d97c9a0b8
+"@sentry/types@npm:6.17.2":
+  version: 6.17.2
+  resolution: "@sentry/types@npm:6.17.2"
+  checksum: 0872f84ef93547a15a9c6567a1e7ce4f79ab4649829879637aba476437c4bb025bd4b0107799620818f8c2188521d3af221b3b35663ce968e5a44dc3a3a18ccb
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:6.16.1":
-  version: 6.16.1
-  resolution: "@sentry/utils@npm:6.16.1"
+"@sentry/utils@npm:6.17.2":
+  version: 6.17.2
+  resolution: "@sentry/utils@npm:6.17.2"
   dependencies:
-    "@sentry/types": 6.16.1
+    "@sentry/types": 6.17.2
     tslib: ^1.9.3
-  checksum: 6a94b7a4706a28a6f0ccd4b4f9553217d17883974e3edf019f301110957ba592f0c33e653e3f0c79db735631ca87f1c03de8a60a69fd086c3a7cc1f88b7d2be2
+  checksum: 15d2885a7da1bb30b78b2de54a031130aab59cb511ad5766d80daffeb2a08c5769b015e2a2687d4435b27e4474f79cc9fd19c1ad6bc0aabb572bea2a388ae0fb
   languageName: node
   linkType: hard
 
@@ -7191,7 +7196,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^8.0.1, @sinonjs/fake-timers@npm:^8.1.0":
+"@sinonjs/fake-timers@npm:^8.0.1":
   version: 8.1.0
   resolution: "@sinonjs/fake-timers@npm:8.1.0"
   dependencies:
@@ -7200,14 +7205,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/samsam@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@sinonjs/samsam@npm:6.0.2"
+"@sinonjs/fake-timers@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@sinonjs/fake-timers@npm:9.0.0"
+  dependencies:
+    "@sinonjs/commons": ^1.7.0
+  checksum: b410feff05afe879798056809dc61941fb2703af74cfeee19a46f10f3bebe8cb734b70cdc406c555d7bfc7cd6063fdcb3bd8a8097c55b4201624a201ae7f2035
+  languageName: node
+  linkType: hard
+
+"@sinonjs/samsam@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@sinonjs/samsam@npm:6.1.1"
   dependencies:
     "@sinonjs/commons": ^1.6.0
     lodash.get: ^4.4.2
     type-detect: ^4.0.8
-  checksum: bc1514edf15f4fa42a1bf27024b15f87654deb2999045c0e427659ff3c734eba44661fceae3624be23cc15ee9c6ddafe5209af2192845c6b267350b54eed1495
+  checksum: a09b0914bf573f0da82bd03c64ba413df81a7c173818dc3f0a90c2652240ac835ef583f4d52f0b215e626633c91a4095c255e0669f6ead97241319f34f05e7fc
   languageName: node
   linkType: hard
 
@@ -9530,7 +9544,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/grafana__slate-react@npm:@types/slate-react@0.22.5, @types/slate-react@npm:0.22.5":
+"@types/grafana__slate-react@npm:@types/slate-react@0.22.5":
   version: 0.22.5
   resolution: "@types/slate-react@npm:0.22.5"
   dependencies:
@@ -9957,10 +9971,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.16.6":
-  version: 1.16.6
-  resolution: "@types/prismjs@npm:1.16.6"
-  checksum: fcb489d19d21292ceffc661fd9c9aa8ba36bcd2835388fa85812aa60cdf14d4720ceb22be7a088aa753c48462e75bcd8191d178a085e4a8b0d3f34471d30d86a
+"@types/prismjs@npm:1.26.0":
+  version: 1.26.0
+  resolution: "@types/prismjs@npm:1.26.0"
+  checksum: cd5e7a6214c1f4213ec512a5fcf6d8fe37a56b813fc57ac95b5ff5ee074742bfdbd2f2730d9fd985205bf4586728e09baa97023f739e5aa1c9735a7c1ecbd11a
   languageName: node
   linkType: hard
 
@@ -19773,7 +19787,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/toolkit": "workspace:*"
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.1.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 4.1.2
@@ -19782,7 +19796,7 @@ __metadata:
     "@lingui/macro": 3.13.0
     "@lingui/react": 3.13.0
     "@microsoft/api-extractor": 7.19.4
-    "@opentelemetry/api": 1.0.4
+    "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.0.1
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.4
@@ -19802,9 +19816,9 @@ __metadata:
     "@react-types/shared": 3.10.1
     "@reduxjs/toolkit": 1.7.1
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
-    "@sentry/browser": 6.16.1
-    "@sentry/types": 6.16.1
-    "@sentry/utils": 6.16.1
+    "@sentry/browser": 6.17.2
+    "@sentry/types": 6.17.2
+    "@sentry/utils": 6.17.2
     "@swc/core": 1.2.127
     "@swc/helpers": 0.3.2
     "@testing-library/dom": 8.11.1
@@ -19838,7 +19852,7 @@ __metadata:
     "@types/node": 16.11.19
     "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
-    "@types/prismjs": 1.16.6
+    "@types/prismjs": 1.26.0
     "@types/rc-time-picker": ^3
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
@@ -19857,7 +19871,6 @@ __metadata:
     "@types/semver": 7.3.9
     "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
-    "@types/slate-react": 0.22.5
     "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
@@ -20014,7 +20027,7 @@ __metadata:
     search-query-parser: 1.6.0
     selecto: 1.13.2
     semver: ^7.1.3
-    sinon: 12.0.1
+    sinon: 13.0.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
     style-loader: 3.3.1
@@ -32139,17 +32152,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sinon@npm:12.0.1":
-  version: 12.0.1
-  resolution: "sinon@npm:12.0.1"
+"sinon@npm:13.0.0":
+  version: 13.0.0
+  resolution: "sinon@npm:13.0.0"
   dependencies:
     "@sinonjs/commons": ^1.8.3
-    "@sinonjs/fake-timers": ^8.1.0
-    "@sinonjs/samsam": ^6.0.2
+    "@sinonjs/fake-timers": ^9.0.0
+    "@sinonjs/samsam": ^6.1.1
     diff: ^5.0.0
     nise: ^5.1.0
     supports-color: ^7.2.0
-  checksum: a264310c28df43e923a6e223c719953b7bd829b8e2fee7fe8b40154647e350b6bb4c18009be6f193e50892687f8e8c5d987d666fc3f6e4e78a9f807211ea365f
+  checksum: bd55dc02f5f632d5b590cd0d35e7886087f25da67ef5e0b2b60d1fce3c2b7d585fff87350a6521b40141d254fa5f0e43606f486bb01bba7a8b1ae655ed5f5bf1
   languageName: node
   linkType: hard
 

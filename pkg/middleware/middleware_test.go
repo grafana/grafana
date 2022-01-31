@@ -68,7 +68,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
 	}, func(cfg *setting.Cfg) {
-		cfg.Protocol = setting.HTTPSScheme
 		cfg.StrictTransportSecurity = true
 		cfg.StrictTransportSecurityMaxAge = 64000
 	})

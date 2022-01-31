@@ -53,3 +53,8 @@ func (id ProviderID) Kind() (string, error) {
 
 	return parts[0], nil
 }
+
+// BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
+type BackgroundProvider interface {
+	Run(ctx context.Context) error
+}
