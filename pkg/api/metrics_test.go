@@ -115,6 +115,7 @@ func setup() *testContext {
 		nil,
 		nil,
 		nil,
+		nil,
 		sc,
 		nil,
 	)
