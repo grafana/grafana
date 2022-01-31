@@ -10,12 +10,10 @@ import { AzureCredentialsForm, CredentialsProps } from './Credentials.types';
 const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance }) => {
   const styles = useStyles(getStyles);
 
-  const onSubmit = useCallback(
-    (values: AzureCredentialsForm) => {
-      onSetCredentials({ ...values });
-    },
-    [onSetCredentials]
-  );
+  const onSubmit = useCallback((values: AzureCredentialsForm) => {
+    onSetCredentials({ ...values });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <FormFinal

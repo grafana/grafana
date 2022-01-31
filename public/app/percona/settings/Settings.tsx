@@ -66,7 +66,8 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
         onError();
       }
     },
-    [generateToken]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const getSettings = useCallback(async () => {
@@ -82,7 +83,8 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
     } finally {
       setLoading(false);
     }
-  }, [generateToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] =>

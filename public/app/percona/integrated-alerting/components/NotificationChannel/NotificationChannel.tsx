@@ -75,7 +75,8 @@ export const NotificationChannel: FC = () => {
       logger.error(e);
     }
     setPendingRequest(false);
-  }, [generateToken, pageIndex, pageSize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageIndex, pageSize]);
 
   const handlePaginationChanged = useCallback(
     (pageSize: number, pageIndex: number) => {

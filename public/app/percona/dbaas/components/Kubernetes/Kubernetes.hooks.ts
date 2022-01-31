@@ -50,7 +50,8 @@ export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernete
       logger.error(e);
     }
     setLoading(false);
-  }, [generateToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const deleteKubernetes = async (kubernetesToDelete: Kubernetes, force?: boolean) => {
     try {

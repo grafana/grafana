@@ -66,7 +66,8 @@ export const AlertRules: FC = () => {
       logger.error(e);
     }
     setPendingRequest(false);
-  }, [generateToken, pageIndex, pageSize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageIndex, pageSize]);
 
   const columns = React.useMemo(
     (): Array<Column<AlertRule>> => [

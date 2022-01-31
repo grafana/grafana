@@ -61,7 +61,8 @@ export const ScheduledBackups: FC = () => {
       logger.error(e);
     }
     setPending(false);
-  }, [generateToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCopy = useCallback(
     async (backup: ScheduledBackup) => {

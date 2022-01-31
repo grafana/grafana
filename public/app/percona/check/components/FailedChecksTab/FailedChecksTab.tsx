@@ -39,7 +39,8 @@ export const FailedChecksTab: FC = () => {
       logger.error(e);
     }
     setFetchAlertsPending(false);
-  }, [generateToken, showSilenced]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSilenced]);
 
   const handleRunChecksClick = async () => {
     setRunChecksPending(true);

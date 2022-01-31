@@ -42,7 +42,8 @@ export const ChunkedLogsViewer: FC<ChunkedLogsViewerProps> = ({ getLogChunks }) 
     };
 
     triggerTimeout(refreshCurrentLogs, STREAM_INTERVAL, true);
-  }, [triggerTimeout, generateToken, getLogChunks, logs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerTimeout, getLogChunks, logs]);
 
   useEffect(() => {
     if (lastLog) {

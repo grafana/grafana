@@ -141,23 +141,21 @@ export const BackupInventory: FC = () => {
     }
   };
 
-  const getData = useCallback(
-    async (showLoading = false) => {
-      showLoading && setPending(true);
+  const getData = useCallback(async (showLoading = false) => {
+    showLoading && setPending(true);
 
-      try {
-        const backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
-        setData(backups);
-      } catch (e) {
-        if (isApiCancelError(e)) {
-          return;
-        }
-        logger.error(e);
+    try {
+      const backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
+      setData(backups);
+    } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
       }
-      setPending(false);
-    },
-    [generateToken]
-  );
+      logger.error(e);
+    }
+    setPending(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDelete = useCallback(
     async (force = false) => {
