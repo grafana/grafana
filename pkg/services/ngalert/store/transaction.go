@@ -18,6 +18,7 @@ type DBTransaction struct {
 	work DBOperation
 }
 
+// NewTransaction starts a unit of work. All work added to the same unit will pass or fail as a single unit.
 func NewTransaction(st *sqlstore.SQLStore) UnitOfWork {
 	return DBTransaction{
 		st:   st,
@@ -25,6 +26,7 @@ func NewTransaction(st *sqlstore.SQLStore) UnitOfWork {
 	}
 }
 
+// Do adds an operation to the open unit.
 func (xact DBTransaction) Do(work DBOperation) UnitOfWork {
 	return DBTransaction{
 		st:   xact.st,
@@ -32,6 +34,7 @@ func (xact DBTransaction) Do(work DBOperation) UnitOfWork {
 	}
 }
 
+// Execute applies the entire unit, rolling back all operations if it fails.
 func (xact DBTransaction) Execute(ctx context.Context) error {
 	return xact.st.WithTransactionalDbSession(ctx, xact.work)
 }
@@ -41,7 +44,7 @@ func empty(*sqlstore.DBSession) error {
 	return nil
 }
 
-// compose is a monad on database operations.
+// compose forms a monad on database operations by chaining them.
 func compose(left, right DBOperation) DBOperation {
 	return func(s *sqlstore.DBSession) error {
 		err := left(s)
