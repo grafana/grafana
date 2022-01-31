@@ -52,13 +52,18 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (mo
 	return provenance, nil
 }
 
-// SetProvenance changes the provenance status for a provisionable object.
 func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
+	xact := NewTransaction(st.SQLStore)
+	xact = st.SetProvenanceTransactional(o, p, xact)
+	return xact.Execute(ctx)
+}
+
+func (st DBstore) SetProvenanceTransactional(o models.Provisionable, p models.Provenance, uow UnitOfWork) UnitOfWork {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 	orgID := o.ResourceOrgID()
 
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	uow = uow.Do(func(sess *sqlstore.DBSession) error {
 		// TODO: Add a unit-of-work pattern, so updating objects + provenance will happen consistently with rollbacks across stores.
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
@@ -82,4 +87,5 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p m
 
 		return nil
 	})
+	return uow
 }
