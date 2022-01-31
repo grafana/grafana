@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -61,7 +62,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if !hs.Cfg.FeatureToggles["accesscontrol"] {
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to add team member", err)
 		}
@@ -101,7 +102,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	}
 	orgId := c.OrgId
 
-	if !hs.Cfg.FeatureToggles["accesscontrol"] {
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to update team member", err)
 		}
@@ -144,7 +145,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 
-	if !hs.Cfg.FeatureToggles["accesscontrol"] {
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to remove team member", err)
 		}

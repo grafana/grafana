@@ -28,7 +28,6 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 
 func init() {
 	bus.AddHandler("sql", GetDashboard)
-	bus.AddHandler("sql", GetDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
@@ -44,6 +43,7 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboardUIDById)
 	bus.AddHandler("sql", ss.SearchDashboards)
 	bus.AddHandler("sql", ss.DeleteDashboard)
+	bus.AddHandler("sql", ss.GetDashboards)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -509,7 +509,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 	return nil
 }
 
-func GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
+func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	if len(query.DashboardIds) == 0 {
 		return models.ErrCommandValidationFailed
 	}

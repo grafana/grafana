@@ -101,7 +101,7 @@ func TestMigrations(t *testing.T) {
 	require.Error(t, err)
 
 	mg := migrator.NewMigrator(x, &setting.Cfg{
-		FeatureToggles: map[string]bool{"accesscontrol": true},
+		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
 	})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
@@ -123,8 +123,8 @@ func TestMigrations(t *testing.T) {
 		{
 			desc: "with editors can admin",
 			config: &setting.Cfg{
-				EditorsCanAdmin: true,
-				FeatureToggles:  map[string]bool{"accesscontrol": true},
+				EditorsCanAdmin:        true,
+				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
 			},
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
@@ -152,7 +152,7 @@ func TestMigrations(t *testing.T) {
 		{
 			desc: "without editors can admin",
 			config: &setting.Cfg{
-				FeatureToggles: map[string]bool{"accesscontrol": true},
+				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
 			},
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},

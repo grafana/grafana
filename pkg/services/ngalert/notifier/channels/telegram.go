@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -25,11 +25,12 @@ type TelegramNotifier struct {
 	ChatID   string
 	Message  string
 	log      log.Logger
+	ns       notifications.WebhookSender
 	tmpl     *template.Template
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -62,6 +63,7 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 		Message:  message,
 		tmpl:     t,
 		log:      log.New("alerting.notifier.telegram"),
+		ns:       ns,
 	}, nil
 }
 
@@ -109,7 +111,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
 		return false, err
 	}

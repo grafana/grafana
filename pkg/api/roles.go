@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // API related actions
@@ -59,6 +60,26 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{accesscontrol.RoleGrafanaAdmin},
+	}
+
+	datasourcesExplorerRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     4,
+			Name:        "fixed:datasources:explorer",
+			DisplayName: "Data source explorer",
+			Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
+			Group:       "Data sources",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionDatasourcesExplore,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_EDITOR)},
+	}
+
+	if setting.ViewersCanEdit {
+		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(models.ROLE_VIEWER))
 	}
 
 	datasourcesReaderRole := accesscontrol.RoleRegistration{
@@ -198,17 +219,35 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Teams",
 			Version:     1,
 			Permissions: []accesscontrol.Permission{
-				{
-					Action: accesscontrol.ActionTeamsCreate,
-				},
+				{Action: accesscontrol.ActionTeamsCreate},
 			},
 		},
 		Grants: teamCreatorGrants,
 	}
 
+	teamsWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:teams:writer",
+			DisplayName: "Team writer",
+			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
+			Group:       "Teams",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsCreate},
+				{Action: accesscontrol.ActionTeamsDelete, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionTeamsWrite, Scope: accesscontrol.ScopeTeamsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 	)
 }
 
