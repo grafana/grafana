@@ -189,7 +189,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - package
+  - build-plugins
+  - build-backend
+  - build-frontend
   detach: true
   environment:
     PORT: 3001
@@ -199,7 +201,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -208,7 +210,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -217,7 +219,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -226,7 +228,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -619,7 +621,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - package
+  - build-plugins
+  - build-backend
+  - build-frontend
   detach: true
   environment:
     PORT: 3001
@@ -629,7 +633,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -638,7 +642,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -647,7 +651,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -656,7 +660,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1226,7 +1230,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - package
+  - build-plugins
+  - build-backend
+  - build-frontend
   detach: true
   environment:
     PORT: 3001
@@ -1236,7 +1242,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1245,7 +1251,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1254,7 +1260,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1263,7 +1269,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1828,7 +1834,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - package
+  - build-plugins
+  - build-backend
+  - build-frontend
   detach: true
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
@@ -1840,7 +1848,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1849,7 +1857,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1858,7 +1866,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1867,7 +1875,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -2982,7 +2990,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - package
+  - build-plugins
+  - build-backend
+  - build-frontend
   detach: true
   environment:
     PORT: 3001
@@ -2992,7 +3002,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3001,7 +3011,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3010,7 +3020,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3019,7 +3029,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3512,7 +3522,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - package
+  - build-plugins
+  - build-backend
+  - build-frontend
   detach: true
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
@@ -3524,7 +3536,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3533,7 +3545,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3542,7 +3554,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3551,7 +3563,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - package
+  - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -4175,6 +4187,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 19229313440a0d96416f34c4c7ac5d8d00f30478e71a0a6072ae106145e1794c
+hmac: 1bec42327418f8b41fb63e12c7fbad397dc37418ee07fcbd0751cbc45a3122a3
 
 ...
