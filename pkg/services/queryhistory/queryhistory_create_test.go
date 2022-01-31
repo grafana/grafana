@@ -11,7 +11,7 @@ func TestCreateQueryInQueryHistory(t *testing.T) {
 	testScenario(t, "When users tries to create query in query history it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{
-				DatasourceUid: "NCzh67i",
+				DatasourceUID: "NCzh67i",
 				Queries: simplejson.NewFromAny(map[string]interface{}{
 					"expr": "test",
 				}),

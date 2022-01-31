@@ -27,7 +27,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 }
 
 type Service interface {
-	CreateQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, cmd CreateQueryInQueryHistoryCommand) error
+	CreateQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error)
+	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
 }
 
 type QueryHistoryService struct {
@@ -37,6 +38,10 @@ type QueryHistoryService struct {
 	log           log.Logger
 }
 
-func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, cmd CreateQueryInQueryHistoryCommand) error {
+func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error) {
 	return s.createQuery(ctx, user, cmd)
+}
+
+func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
+	return s.deleteQuery(ctx, user, UID)
 }
