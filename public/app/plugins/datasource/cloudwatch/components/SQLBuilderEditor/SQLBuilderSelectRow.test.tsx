@@ -1,10 +1,10 @@
 import React from 'react';
-import SQLBuilderSelectRow from './SQLBuilderSelectRow';
+import { selectOptionInTest } from '@grafana/ui';
 import { act, render, screen } from '@testing-library/react';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../types';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../expressions';
-import { selectOptionInTest } from '@grafana/ui';
+import SQLBuilderSelectRow from './SQLBuilderSelectRow';
 
 const { datasource } = setupMockedDataSource();
 datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
@@ -24,42 +24,42 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   sql: sql,
 });
 
-describe('Cloudwatch SQLBuilderSelectRow', () => {
-  const query = makeSQLQuery({
-    select: {
-      type: QueryEditorExpressionType.Function,
-      name: 'AVERAGE',
-      parameters: [
-        {
-          type: QueryEditorExpressionType.FunctionParameter,
-          name: 'm1',
-        },
-      ],
-    },
-    from: {
-      type: QueryEditorExpressionType.Property,
-      property: {
-        type: QueryEditorPropertyType.String,
-        name: 'n1',
+const query = makeSQLQuery({
+  select: {
+    type: QueryEditorExpressionType.Function,
+    name: 'AVERAGE',
+    parameters: [
+      {
+        type: QueryEditorExpressionType.FunctionParameter,
+        name: 'm1',
       },
+    ],
+  },
+  from: {
+    type: QueryEditorExpressionType.Property,
+    property: {
+      type: QueryEditorPropertyType.String,
+      name: 'n1',
     },
-  });
+  },
+});
 
-  const baseProps = {
-    query,
-    datasource,
-    onQueryChange: () => {},
-  };
+const baseProps = {
+  query,
+  datasource,
+  onQueryChange: () => {},
+};
 
-  const namespaces = [
-    { value: 'n1', label: 'n1', text: 'n1' },
-    { value: 'n2', label: 'n2', text: 'n2' },
-  ];
-  const metrics = [
-    { value: 'm1', label: 'm1', text: 'm1' },
-    { value: 'm2', label: 'm2', text: 'm2' },
-  ];
+const namespaces = [
+  { value: 'n1', label: 'n1', text: 'n1' },
+  { value: 'n2', label: 'n2', text: 'n2' },
+];
+const metrics = [
+  { value: 'm1', label: 'm1', text: 'm1' },
+  { value: 'm2', label: 'm2', text: 'm2' },
+];
 
+describe('Cloudwatch SQLBuilderSelectRow', () => {
   beforeEach(() => {
     datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
     datasource.getMetrics = jest.fn().mockResolvedValue([]);
@@ -75,12 +75,8 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
 
     expect(screen.getByText('n1')).toBeInTheDocument();
     expect(screen.getByText('m1')).toBeInTheDocument();
-
     const namespaceSelect = screen.getByLabelText('Namespace');
-
-    await act(async () => {
-      await selectOptionInTest(namespaceSelect, 'n2');
-    });
+    await selectOptionInTest(namespaceSelect, 'n2');
 
     const expectedQuery = makeSQLQuery({
       select: {
@@ -110,7 +106,7 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
       let mockMetrics =
         namespace === 'n1' && region === baseProps.query.region
           ? metrics
-          : [{ value: 'oldNamespaceMetric', label: 'oldNamespaceMetric', text: 'oldNamespaceMetric' }];
+          : [{ value: 'newNamespaceMetric', label: 'newNamespaceMetric', text: 'newNamespaceMetric' }];
       return Promise.resolve(mockMetrics);
     });
     const onQueryChange = jest.fn();
@@ -121,12 +117,8 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
 
     expect(screen.getByText('n1')).toBeInTheDocument();
     expect(screen.getByText('m1')).toBeInTheDocument();
-
     const namespaceSelect = screen.getByLabelText('Namespace');
-
-    await act(async () => {
-      await selectOptionInTest(namespaceSelect, 'n2');
-    });
+    await selectOptionInTest(namespaceSelect, 'n2');
 
     const expectedQuery = makeSQLQuery({
       select: {
