@@ -117,16 +117,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
               <div className={styles.rightSide}>
                 <div className={styles.title}>
                   <TimePickerTitle>
-                    <Tooltip
-                      content={
-                        <>
-                          <div>Supported formats</div>
-                          <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
-                        </>
-                      }
-                      placement="bottom"
-                      theme="info"
-                    >
+                    <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
                       <div>
                         Specify time range <Icon name="info-circle" />
                       </div>
@@ -160,6 +151,23 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
     </div>
   );
 }
+
+const TooltipContent = () => {
+  const styles = useStyles2(toolTipStyles);
+  return (
+    <>
+      <div>Supported formats</div>
+      <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code> <div>Example: now-3h</div>
+      <p>Using a relative time in the future is not supported, eg. now+1h</p>
+    </>
+  );
+};
+
+const toolTipStyles = () => ({
+  tooltip: css`
+    margin: 0;
+  `,
+});
 
 const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme2) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
@@ -228,9 +236,6 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
     `,
     title: css`
       margin-bottom: ${theme.spacing(1)};
-    `,
-    tooltip: css`
-      margin: 0;
     `,
   };
 };
