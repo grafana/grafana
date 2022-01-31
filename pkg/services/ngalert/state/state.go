@@ -2,11 +2,11 @@ package state
 
 import (
 	"errors"
-	"github.com/grafana/grafana/pkg/expr"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
