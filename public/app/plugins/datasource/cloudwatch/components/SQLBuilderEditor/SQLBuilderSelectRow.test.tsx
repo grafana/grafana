@@ -7,10 +7,6 @@ import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../expres
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';
 
 const { datasource } = setupMockedDataSource();
-datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
-datasource.getDimensionValues = jest.fn().mockResolvedValue([]);
-datasource.getNamespaces = jest.fn().mockResolvedValue([]);
-datasource.getMetrics = jest.fn().mockResolvedValue([]);
 
 const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   queryMode: 'Metrics',
@@ -44,10 +40,11 @@ const query = makeSQLQuery({
   },
 });
 
+const onQueryChange = jest.fn();
 const baseProps = {
   query,
   datasource,
-  onQueryChange: () => {},
+  onQueryChange,
 };
 
 const namespaces = [
@@ -63,14 +60,16 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
   beforeEach(() => {
     datasource.getNamespaces = jest.fn().mockResolvedValue(namespaces);
     datasource.getMetrics = jest.fn().mockResolvedValue([]);
+    datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
+    datasource.getDimensionValues = jest.fn().mockResolvedValue([]);
+    onQueryChange.mockReset();
   });
 
   it('Selecting a namespace should not reset metricName if it exist in new namespace', async () => {
     datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
-    const onQueryChange = jest.fn();
 
     await act(async () => {
-      render(<SQLBuilderSelectRow {...baseProps} query={query} onQueryChange={onQueryChange} />);
+      render(<SQLBuilderSelectRow {...baseProps} />);
     });
 
     expect(screen.getByText('n1')).toBeInTheDocument();
@@ -109,10 +108,9 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
           : [{ value: 'newNamespaceMetric', label: 'newNamespaceMetric', text: 'newNamespaceMetric' }];
       return Promise.resolve(mockMetrics);
     });
-    const onQueryChange = jest.fn();
 
     await act(async () => {
-      render(<SQLBuilderSelectRow {...baseProps} query={query} onQueryChange={onQueryChange} />);
+      render(<SQLBuilderSelectRow {...baseProps} />);
     });
 
     expect(screen.getByText('n1')).toBeInTheDocument();
