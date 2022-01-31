@@ -143,9 +143,8 @@ const moduleWrapper = tsserver => {
   let hostInfo = `unknown`;
 
   Object.assign(Session.prototype, {
-    onMessage(/** @type {string | object} */ message) {
-      const isStringMessage = typeof message === 'string';
-      const parsedMessage = isStringMessage ? JSON.parse(message) : message;
+    onMessage(/** @type {string} */ message) {
+      const parsedMessage = JSON.parse(message)
 
       if (
         parsedMessage != null &&
@@ -159,14 +158,9 @@ const moduleWrapper = tsserver => {
         }
       }
 
-      const processedMessageJSON = JSON.stringify(parsedMessage, (key, value) => {
-        return typeof value === 'string' ? fromEditorPath(value) : value;
-      });
-
-      return originalOnMessage.call(
-        this,
-        isStringMessage ? processedMessageJSON : JSON.parse(processedMessageJSON)
-      );
+      return originalOnMessage.call(this, JSON.stringify(parsedMessage, (key, value) => {
+        return typeof value === `string` ? fromEditorPath(value) : value;
+      }));
     },
 
     send(/** @type {any} */ msg) {
