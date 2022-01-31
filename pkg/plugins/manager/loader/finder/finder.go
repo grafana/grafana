@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var walk = util.Walk
+
 type Finder struct {
 	log log.Logger
 }
@@ -51,9 +53,18 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 		return []string{}, err
 	}
 
-	if err := util.Walk(path, true, true,
+	if err := walk(path, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					f.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
+					return nil
+				}
+				if errors.Is(err, os.ErrPermission) {
+					f.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
+					return nil
+				}
+
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 			}
 
@@ -72,15 +83,6 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 			pluginJSONPaths = append(pluginJSONPaths, currentPath)
 			return nil
 		}); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
-			return []string{}, nil
-		}
-		if errors.Is(err, os.ErrPermission) {
-			f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
-			return []string{}, nil
-		}
-
 		return []string{}, err
 	}
 
