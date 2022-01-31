@@ -631,7 +631,7 @@ export const templateVarsChangedInUrl = (
       }
 
       if (variableInModel && isConstant(variableInModel)) {
-        value = variableInModel.query; // revert value to the value stored in dashboard json
+        value = variableInModel.query; // revert value to the value stored in dashboard json, constants don't store current values in dashboard json
       }
     }
 
