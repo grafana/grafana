@@ -12,7 +12,7 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 
 ## PostgreSQL settings
 
-To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
+To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the PostgreSQL data source.
 
 | Name                      | Description                                                                                                                                                                                                                             |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -176,9 +176,10 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID  int64 `json:"-"`
-	UserID int64 `json:"userId"`
-	Roles  []string
+	OrgID   int64 `json:"-"`
+	UserID  int64 `json:"userId"`
+	Roles   []string
+	Actions []string
 }
 
 // ScopeParams holds the parameters used to fill in scope templates
@@ -319,6 +320,9 @@ const (
 	ActionTeamsWrite            = "teams:write"
 	ActionTeamsPermissionsRead  = "teams.permissions:read"
 	ActionTeamsPermissionsWrite = "teams.permissions:write"
+
+	// Team related scopes
+	ScopeTeamsAll = "teams:*"
 )
 
 var (
