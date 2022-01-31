@@ -34,12 +34,16 @@ func TestProvisioningStore(t *testing.T) {
 			UID: "123",
 		}
 <<<<<<< HEAD
+<<<<<<< HEAD
 		err := dbstore.SetProvenance(context.Background(), &rule, models.ProvenanceFile)
 		require.NoError(t, err)
 
 		p, err := dbstore.GetProvenance(context.Background(), &rule)
 =======
 		err := dbstore.SetProvenance(&rule, models.File)
+=======
+		err := dbstore.SetProvenance(&rule, models.ProvenanceFile)
+>>>>>>> 0f585c1af4 (Clean up provisioning model)
 		require.NoError(t, err)
 
 		p, err := dbstore.GetProvenance(&rule)
@@ -47,6 +51,7 @@ func TestProvisioningStore(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
+<<<<<<< HEAD
 	})
 
 	t.Run("Store does not get provenance of record with different org ID", func(t *testing.T) {
@@ -90,5 +95,7 @@ func TestProvisioningStore(t *testing.T) {
 		p, err = dbstore.GetProvenance(context.Background(), &ruleOrg3)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
+=======
+>>>>>>> 0f585c1af4 (Clean up provisioning model)
 	})
 }
