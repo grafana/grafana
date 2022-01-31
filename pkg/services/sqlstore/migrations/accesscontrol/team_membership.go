@@ -110,26 +110,25 @@ func (p *teamPermissionMigrator) bulkAssignRoles(sess *xorm.Session, rolesMap ma
 	return err
 }
 
-// addPermissionsToRole updates role with any newly added permissions
-func (p *teamPermissionMigrator) addPermissionsToRole(sess *xorm.Session, roleID int64, permissions []accesscontrol.Permission) error {
-	var newPermissions []accesscontrol.Permission
-	for _, permission := range permissions {
-		has, err := sess.Where("role_id = ? AND action = ? AND scope = ?", roleID, permission.Action, permission.Scope).Get(&accesscontrol.Permission{})
-		if err != nil {
-			return err
-		}
-		if !has {
-			now := time.Now()
-			permission.RoleID = roleID
-			permission.Created = now
-			permission.Updated = now
-			newPermissions = append(newPermissions, permission)
-		}
+// setRolePermissions sets the role permissions deleting any team related ones before inserting any.
+func (p *teamPermissionMigrator) setRolePermissions(sess *xorm.Session, roleID int64, permissions []accesscontrol.Permission) error {
+	// First drop existing permissions
+	if _, errDeletingPerms := sess.SQL("DELETE FROM permission WHERE role_id = ? AND action LIKE ?", roleID, "teams:%").Exec(); errDeletingPerms != nil {
+		return errDeletingPerms
 	}
 
-	_, err := sess.InsertMulti(&newPermissions)
-	if err != nil {
-		return err
+	// Then insert new permissions
+	var newPermissions []accesscontrol.Permission
+	now := time.Now()
+	for _, permission := range permissions {
+		permission.RoleID = roleID
+		permission.Created = now
+		permission.Updated = now
+		newPermissions = append(newPermissions, permission)
+	}
+
+	if _, errInsertPerms := sess.InsertMulti(&newPermissions); errInsertPerms != nil {
+		return errInsertPerms
 	}
 
 	return nil
@@ -256,15 +255,21 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 		return errAssign
 	}
 
-	// TODO loop through rolesMap and assign
-	// for _, userPermissions := range userPermissionsByOrg {
-	// 	for _, permissions := range userPermissions {
-	// 		err = p.addPermissionsToRole(sess, roleID, permissions)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
+	// Set roles permissions
+	for _, userPermissions := range userPermissionsByOrg {
+		for userID, permissions := range userPermissions {
+			roleName := fmt.Sprintf("managed:users:%d:permissions", userID)
+
+			role, ok := rolesMap[roleName]
+			if !ok {
+				return fmt.Errorf("Sorry")
+			}
+
+			if errSettingPerms := p.setRolePermissions(sess, role.ID, permissions); errSettingPerms != nil {
+				return errSettingPerms
+			}
+		}
+	}
 
 	return nil
 }
