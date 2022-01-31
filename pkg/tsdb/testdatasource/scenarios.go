@@ -630,6 +630,7 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := model.Get("spread").MustFloat64(1)
 	noise := model.Get("noise").MustFloat64(0)
+	drop := model.Get("drop").MustFloat64(0) / 100.0 // value is 0-100
 
 	min, err := model.Get("min").Float64()
 	hasMin := err == nil
@@ -642,6 +643,11 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 	walker := startValue
 
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
+		if drop > 0 && rand.Float64() < drop {
+			timeWalkerMs += query.Interval.Milliseconds()
+			continue
+		}
+
 		nextValue := walker + (rand.Float64() * noise)
 
 		if hasMin && nextValue < min {
@@ -663,7 +669,10 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 	}
 
 	return data.NewFrame("",
-		data.NewField("time", nil, timeVec),
+		data.NewField("time", nil, timeVec).
+			SetConfig(&data.FieldConfig{
+				Interval: float64(query.Interval.Milliseconds()),
+			}),
 		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
 	)
 }
