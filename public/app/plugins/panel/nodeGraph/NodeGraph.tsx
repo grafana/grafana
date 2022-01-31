@@ -180,6 +180,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   const highlightId = useHighlight(focusedNodeId);
 
+  console.log(JSON.stringify(nodes, null, 2));
+
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
@@ -189,7 +191,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
         </div>
       ) : null}
 
-      {dataFrames.length && nodes.length ? (
+      {dataFrames.length && processed.nodes.length ? (
         <svg
           ref={panRef}
           viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
