@@ -3,7 +3,8 @@ import moment from 'moment/moment';
 import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 import { formatRule } from '../AlertRules/AlertRules.utils';
 
-import { Alert, AlertsListResponseLabel, AlertsListResponseAlert, AlertStatus } from './Alerts.types';
+import { PRIMARY_LABELS, HIDDEN_LABELS } from './Alerts.constants';
+import { Alert, AlertsListResponseLabel, AlertsListResponseAlert, AlertStatus, AlertLabels } from './Alerts.types';
 
 export const formatLabel = (label: [string, string]): string => {
   const [key, value] = label;
@@ -11,8 +12,23 @@ export const formatLabel = (label: [string, string]): string => {
   return `${key}=${value}`;
 };
 
-export const formatLabels = (labels: AlertsListResponseLabel): string[] => {
-  return Object.entries(labels).map(formatLabel);
+export const formatLabels = (labels: AlertsListResponseLabel): AlertLabels => {
+  const alertLabels: AlertLabels = {
+    primary: [],
+    secondary: [],
+  };
+
+  Object.entries(labels).forEach(([key, value]) => {
+    const formattedLabel = formatLabel([key, value]);
+
+    if (PRIMARY_LABELS.includes(key)) {
+      alertLabels.primary.push(formattedLabel);
+    } else if (!HIDDEN_LABELS.includes(key)) {
+      alertLabels.secondary.push(formattedLabel);
+    }
+  });
+
+  return alertLabels;
 };
 
 export const formatAlert = (alert: AlertsListResponseAlert): Alert => {

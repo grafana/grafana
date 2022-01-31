@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { cx } from '@emotion/css';
-import { logger } from '@percona/platform-core';
+import { logger, Chip } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
@@ -14,6 +14,7 @@ import { Severity } from '../Severity';
 import { useStoredTablePageSize } from '../Table/Pagination';
 import { Table } from '../Table/Table';
 
+import { AlertDetails } from './AlertDetails/AlertDetails';
 import { ALERT_RULE_TEMPLATES_TABLE_ID, GET_ALERTS_CANCEL_TOKEN } from './Alerts.constants';
 import { AlertsService } from './Alerts.service';
 import { getStyles } from './Alerts.styles';
@@ -86,10 +87,8 @@ export const Alerts: FC = () => {
         Header: labelsColumn,
         accessor: ({ labels }: Alert) => (
           <div className={style.labelsWrapper}>
-            {labels.map((label) => (
-              <span key={label} className={style.label}>
-                {label}
-              </span>
+            {labels.primary.map((label) => (
+              <Chip text={label} key={label} />
             ))}
           </div>
         ),
@@ -129,7 +128,12 @@ export const Alerts: FC = () => {
     [setPageSize]
   );
 
-  const renderSelectedSubRow = React.useCallback((row: Row<Alert>) => <pre>{row.original.rule?.expr}</pre>, []);
+  const renderSelectedSubRow = React.useCallback(
+    (row: Row<Alert>) => (
+      <AlertDetails ruleExpression={row.original.rule?.expr} labels={row.original.labels.secondary} />
+    ),
+    []
+  );
 
   useEffect(() => {
     getAlerts();

@@ -3,9 +3,9 @@ import {
   LoaderButton,
   TextInputField,
   NumberInputField,
-  TextareaInputField,
   logger,
   validators,
+  TextareaInputField,
 } from '@percona/platform-core';
 import React, { FC, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Form, Field } from 'react-final-form';
