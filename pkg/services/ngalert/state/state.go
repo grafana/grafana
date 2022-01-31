@@ -2,11 +2,11 @@ package state
 
 import (
 	"errors"
+	"github.com/grafana/grafana/pkg/expr"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -93,46 +93,50 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
-	// If the evaluation failed because a query returned an error then
-	// update the state with the Datasource UID as a label and the error
-	// message as an annotation so other code can use this metadata to
-	// add context to alerts
-	var queryError expr.QueryError
-	if errors.As(a.Error, &queryError) {
-		for _, next := range alertRule.Data {
-			if next.RefID == queryError.RefID {
-				a.Labels["ref_id"] = next.RefID
-				a.Labels["datasource_uid"] = next.DatasourceUID
-				break
-			}
-		}
-		a.Annotations["Error"] = queryError.Error()
-	}
-
 	// The state can be either alerting or error depending on the
-	// alert state if execution error or timeout
+	// option for execution error or timeout
 	s := eval.Error
 	if alertRule.ExecErrState == ngModels.AlertingErrState {
 		s = eval.Alerting
+	} else if alertRule.ExecErrState == ngModels.ErrorErrState {
+		// If the evaluation failed because a query returned an error then
+		// update the state with the Datasource UID as a label and the error
+		// message as an annotation so other code can use this metadata to
+		// add context to alerts
+		var queryError expr.QueryError
+		if errors.As(a.Error, &queryError) {
+			for _, next := range alertRule.Data {
+				if next.RefID == queryError.RefID {
+					a.Labels["ref_id"] = next.RefID
+					a.Labels["datasource_uid"] = next.DatasourceUID
+					break
+				}
+			}
+			a.Annotations["Error"] = queryError.Error()
+		}
 	}
 
 	if a.State == eval.Alerting || a.State == eval.Error {
+		// If the state is alerting or error then update the end timestamp
 		a.setEndsAt(alertRule, result)
 	} else if a.State == eval.Pending {
-		// If the state is pending make sure at least `for` seconds
-		// have elapsed before moving it out of pending
+		// If the state is pending make sure at least `for` seconds have
+		// elapsed before moving it out of pending
 		if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
 			a.State = s
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 		}
 	} else {
-		// If we should wait at least `for` seconds before changing the state
-		// then set the state to pending. We will change the state once `for`
-		// seconds has elapsed
 		if alertRule.For > 0 {
+			// If the state is neither alerting, error or pending and we should wait
+			// at least `for` seconds before changing the state then set the state to
+			// pending. We will change the state once `for` seconds has elapsed
 			a.State = eval.Pending
 		} else {
+			// If the state is neither alerting, error or pending and we don't need
+			// to wait `for` seconds before changing the state then set the state
+			// depending on the option for execution error or timeout
 			a.State = s
 		}
 		// We don't want to change the start timestamp for subsequent results
