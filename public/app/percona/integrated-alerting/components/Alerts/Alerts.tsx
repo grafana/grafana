@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { useStyles } from '@grafana/ui';
-import { logger } from '@percona/platform-core';
+import { logger, Chip } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
@@ -17,6 +17,7 @@ import { formatAlerts } from './Alerts.utils';
 import { AlertsService } from './Alerts.service';
 import { AlertsActions } from './AlertsActions';
 import { ALERT_RULE_TEMPLATES_TABLE_ID, GET_ALERTS_CANCEL_TOKEN } from './Alerts.constants';
+import { AlertDetails } from './AlertDetails/AlertDetails';
 
 const { noData, columns } = Messages.alerts.table;
 const {
@@ -83,10 +84,8 @@ export const Alerts: FC = () => {
         Header: labelsColumn,
         accessor: ({ labels }: Alert) => (
           <div className={style.labelsWrapper}>
-            {labels.map((label) => (
-              <span key={label} className={style.label}>
-                {label}
-              </span>
+            {labels.primary.map((label) => (
+              <Chip text={label} key={label} />
             ))}
           </div>
         ),
@@ -126,7 +125,12 @@ export const Alerts: FC = () => {
     [setPageSize]
   );
 
-  const renderSelectedSubRow = React.useCallback((row: Row<Alert>) => <pre>{row.original.rule?.expr}</pre>, []);
+  const renderSelectedSubRow = React.useCallback(
+    (row: Row<Alert>) => (
+      <AlertDetails ruleExpression={row.original.rule?.expr} labels={row.original.labels.secondary} />
+    ),
+    []
+  );
 
   useEffect(() => {
     getAlerts();

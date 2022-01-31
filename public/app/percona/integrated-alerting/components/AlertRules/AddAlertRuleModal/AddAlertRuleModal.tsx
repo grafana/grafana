@@ -6,9 +6,9 @@ import {
   LoaderButton,
   TextInputField,
   NumberInputField,
-  TextareaInputField,
   logger,
   validators,
+  TextareaInputField,
 } from '@percona/platform-core';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { Label } from 'app/percona/shared/components/Form/Label';

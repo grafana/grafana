@@ -12,10 +12,15 @@ export interface AlertsListResponseLabel {
   [K: string]: string;
 }
 
+export interface AlertLabels {
+  primary: string[];
+  secondary: string[];
+}
+
 export interface Alert {
   alertId: string;
   activeSince: string;
-  labels: string[];
+  labels: AlertLabels;
   lastNotified: string;
   severity: AlertRuleSeverity;
   status: AlertStatus[keyof AlertStatus];

@@ -1,36 +1,32 @@
+import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
+import { Alert, AlertLabels } from './Alerts.types';
 import { formatAlert, formatAlerts, formatLabel, formatLabels } from './Alerts.utils';
 import { alertsStubs } from './__mocks__/alertsStubs';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');
 
-const expectedAlertResult1 = {
+const expectedAlertResult1: Alert = {
   alertId: '1',
   activeSince: '2020-11-25 16:53:39.366',
-  labels: [
-    'environment=prod',
-    'app=wordpress',
-    'node_name=pxc_instance1',
-    'cluster=PXCCluster1',
-    'service_name=my_db1',
-  ],
-  severity: 'Critical',
+  labels: {
+    primary: ['environment=prod', 'node_name=pxc_instance1', 'cluster=PXCCluster1', 'service_name=my_db1'],
+    secondary: ['app=wordpress'],
+  },
+  severity: AlertRuleSeverity.SEVERITY_CRITICAL,
   status: 'Firing',
   summary: 'PXC cluster on [HR prod] is down',
   lastNotified: '2020-11-25 16:53:39.366',
 };
 
-const expectedAlertResult2 = {
+const expectedAlertResult2: Alert = {
   alertId: '6',
   activeSince: '',
-  labels: [
-    'environment=dev',
-    'service_type=mongodb',
-    'node_name=mdb_prod_7',
-    'cluster=MDBReplicaSet2',
-    'service_name=mdb_replset1',
-  ],
-  severity: 'Warning',
+  labels: {
+    primary: ['environment=dev', 'node_name=mdb_prod_7', 'cluster=MDBReplicaSet2', 'service_name=mdb_replset1'],
+    secondary: ['service_type=mongodb'],
+  },
+  severity: AlertRuleSeverity.SEVERITY_WARNING,
   status: 'Silenced',
   summary: 'Memory consumption on [Mncfg Dev] instance 1 reached 80%',
   lastNotified: '',
@@ -42,20 +38,23 @@ describe('AlertRulesTable utils', () => {
   });
 
   test('formatLabels', () => {
-    expect(formatLabels({})).toEqual([]);
-    expect(formatLabels({ testKey: '1337', testKey2: 'testValue' })).toEqual(['testKey=1337', 'testKey2=testValue']);
+    expect(formatLabels({})).toEqual<AlertLabels>({ primary: [], secondary: [] });
+    expect(formatLabels({ testKey: '1337', testKey2: 'testValue' })).toEqual<AlertLabels>({
+      primary: [],
+      secondary: ['testKey=1337', 'testKey2=testValue'],
+    });
   });
 
   test('formatAlert', () => {
-    expect(formatAlert(alertsStubs.alerts[0])).toEqual(expectedAlertResult1);
+    expect(formatAlert(alertsStubs.alerts[0])).toEqual<Alert>(expectedAlertResult1);
 
-    expect(formatAlert(alertsStubs.alerts[5])).toEqual(expectedAlertResult2);
+    expect(formatAlert(alertsStubs.alerts[5])).toEqual<Alert>(expectedAlertResult2);
   });
 
   test('formatAlerts', () => {
-    expect(formatAlerts([])).toEqual([]);
+    expect(formatAlerts([])).toEqual<Alert[]>([]);
 
-    expect(formatAlerts([alertsStubs.alerts[0], alertsStubs.alerts[5]])).toEqual([
+    expect(formatAlerts([alertsStubs.alerts[0], alertsStubs.alerts[5]])).toEqual<Alert[]>([
       expectedAlertResult1,
       expectedAlertResult2,
     ]);
