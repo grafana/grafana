@@ -1,7 +1,6 @@
 // @ts-ignore
 import chalk from 'chalk';
 import { program } from 'commander';
-import { promises as fs } from 'fs';
 import { execTask } from './utils/execTask';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
@@ -13,7 +12,7 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
-import { githubPublishTask } from './tasks/plugin.utils';
+import { getToolkitVersion, githubPublishTask } from './tasks/plugin.utils';
 import { pluginUpdateTask } from './tasks/plugin.update';
 import { ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
@@ -132,8 +131,7 @@ export const run = (includeInternalScripts = false) => {
   }
 
   program.option('-v, --version', 'Toolkit version').action(async () => {
-    const pkg = await fs.readFile(`${__dirname}/../../package.json`, 'utf8');
-    const { version } = JSON.parse(pkg);
+    const version = getToolkitVersion();
     console.log(`v${version}`);
   });
 

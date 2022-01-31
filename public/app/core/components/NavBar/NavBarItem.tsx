@@ -10,6 +10,8 @@ import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarI
 import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
 import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from './utils';
+import { useLingui } from '@lingui/react';
+import menuItemTranslations from './navBarItem-translations';
 
 export interface Props {
   isActive?: boolean;
@@ -28,6 +30,7 @@ const NavBarItem = ({
   showMenu = true,
   link,
 }: Props) => {
+  const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
   const menuItemsSorted = reverseMenuDirection ? menuItems.reverse() : menuItems;
@@ -57,9 +60,12 @@ const NavBarItem = ({
     }
   };
 
+  const translationKey = link.id && menuItemTranslations[link.id];
+  const linkText = translationKey ? i18n._(translationKey) : link.text;
+
   return showMenu ? (
     <li className={cx(styles.container, className)}>
-      <NavBarItemMenuTrigger item={section} isActive={isActive} label={link.text}>
+      <NavBarItemMenuTrigger item={section} isActive={isActive} label={linkText}>
         <NavBarItemMenu
           items={items}
           reverseMenuDirection={reverseMenuDirection}
@@ -69,12 +75,15 @@ const NavBarItem = ({
           onNavigate={onNavigate}
         >
           {(item: NavModelItem) => {
+            const translationKey = item.id && menuItemTranslations[item.id];
+            const itemText = translationKey ? i18n._(translationKey) : item.text;
+
             if (item.menuItemType === NavMenuItemType.Section) {
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     target={item.target}
-                    text={item.text}
+                    text={itemText}
                     url={item.url}
                     onClick={item.onClick}
                     styleOverrides={styles.header}
@@ -90,7 +99,7 @@ const NavBarItem = ({
                   icon={item.icon as IconName}
                   onClick={item.onClick}
                   target={item.target}
-                  text={item.text}
+                  text={itemText}
                   url={item.url}
                   styleOverrides={styles.item}
                 />
