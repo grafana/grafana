@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -18,17 +19,19 @@ import (
 )
 
 func TestFoldersAPIEndpoint(t *testing.T) {
+	folderService := &dashboards.FakeFolderService{}
+	defer folderService.AssertExpectations(t)
+
 	t.Run("Given a correct request for creating a folder", func(t *testing.T) {
 		cmd := models.CreateFolderCommand{
 			Uid:   "uid",
 			Title: "Folder",
 		}
 
-		mock := &fakeFolderService{
-			CreateFolderResult: &models.Folder{Id: 1, Uid: "uid", Title: "Folder"},
-		}
+		folderResult := &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.On("CreateFolder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(folderResult, nil).Once()
 
-		createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", mock, cmd,
+		createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", folderService, cmd,
 			func(sc *scenarioContext) {
 				callCreateFolder(sc)
 
@@ -63,12 +66,10 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			mock := &fakeFolderService{
-				CreateFolderError: tc.Error,
-			}
+			folderService.On("CreateFolder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, tc.Error).Once()
 
 			createFolderScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.Error.Error()),
-				"/api/folders", "/api/folders", mock, cmd, func(sc *scenarioContext) {
+				"/api/folders", "/api/folders", folderService, cmd, func(sc *scenarioContext) {
 					callCreateFolder(sc)
 					assert.Equalf(t, tc.ExpectedStatusCode, sc.resp.Code, "Wrong status code for error %s", tc.Error)
 				})
@@ -80,11 +81,12 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Title: "Folder upd",
 		}
 
-		mock := &fakeFolderService{
-			UpdateFolderResult: &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"},
-		}
+		folderService.On("UpdateFolder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			cmd := args.Get(4).(*models.UpdateFolderCommand)
+			cmd.Result = &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"}
+		}).Return(nil).Once()
 
-		updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", mock, cmd,
+		updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", folderService, cmd,
 			func(sc *scenarioContext) {
 				callUpdateFolder(sc)
 
@@ -118,12 +120,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			mock := &fakeFolderService{
-				UpdateFolderError: tc.Error,
-			}
-
+			folderService.On("UpdateFolder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.Error).Once()
 			updateFolderScenario(t, fmt.Sprintf("Expect '%s' error when calling PUT on", tc.Error.Error()),
-				"/api/folders/uid", "/api/folders/:uid", mock, cmd, func(sc *scenarioContext) {
+				"/api/folders/uid", "/api/folders/:uid", folderService, cmd, func(sc *scenarioContext) {
 					callUpdateFolder(sc)
 					assert.Equalf(t, tc.ExpectedStatusCode, sc.resp.Code, "Wrong status code for %s", tc.Error)
 				})
@@ -135,14 +134,15 @@ func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func createFolderScenario(t *testing.T, desc string, url string, routePattern string, mock *fakeFolderService,
+func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := HTTPServer{
-			Bus: bus.GetBus(),
-			Cfg: setting.NewCfg(),
+			Bus:           bus.GetBus(),
+			Cfg:           setting.NewCfg(),
+			folderService: folderService,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -164,13 +164,14 @@ func callUpdateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 }
 
-func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, mock *fakeFolderService,
+func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.UpdateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg:           setting.NewCfg(),
+			folderService: folderService,
 		}
 
 		sc := setupScenarioContext(t, url)
