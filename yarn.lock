@@ -3744,7 +3744,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.1
-    sinon: 12.0.1
+    sinon: 13.0.0
     tinycolor2: 1.4.2
     tslib: 2.3.1
     typescript: 4.4.4
@@ -4296,7 +4296,7 @@ __metadata:
     react-icons: 2.2.7
     recompose: 0.30.0
     reselect: 4.1.5
-    sinon: 12.0.1
+    sinon: 13.0.0
     tinycolor2: 1.4.2
     tslib: 2.3.1
     tween-functions: ^1.2.0
@@ -7196,7 +7196,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/fake-timers@npm:^8.0.1, @sinonjs/fake-timers@npm:^8.1.0":
+"@sinonjs/fake-timers@npm:^8.0.1":
   version: 8.1.0
   resolution: "@sinonjs/fake-timers@npm:8.1.0"
   dependencies:
@@ -7205,14 +7205,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sinonjs/samsam@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@sinonjs/samsam@npm:6.0.2"
+"@sinonjs/fake-timers@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@sinonjs/fake-timers@npm:9.0.0"
+  dependencies:
+    "@sinonjs/commons": ^1.7.0
+  checksum: b410feff05afe879798056809dc61941fb2703af74cfeee19a46f10f3bebe8cb734b70cdc406c555d7bfc7cd6063fdcb3bd8a8097c55b4201624a201ae7f2035
+  languageName: node
+  linkType: hard
+
+"@sinonjs/samsam@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@sinonjs/samsam@npm:6.1.1"
   dependencies:
     "@sinonjs/commons": ^1.6.0
     lodash.get: ^4.4.2
     type-detect: ^4.0.8
-  checksum: bc1514edf15f4fa42a1bf27024b15f87654deb2999045c0e427659ff3c734eba44661fceae3624be23cc15ee9c6ddafe5209af2192845c6b267350b54eed1495
+  checksum: a09b0914bf573f0da82bd03c64ba413df81a7c173818dc3f0a90c2652240ac835ef583f4d52f0b215e626633c91a4095c255e0669f6ead97241319f34f05e7fc
   languageName: node
   linkType: hard
 
@@ -20018,7 +20027,7 @@ __metadata:
     search-query-parser: 1.6.0
     selecto: 1.13.2
     semver: ^7.1.3
-    sinon: 12.0.1
+    sinon: 13.0.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
     style-loader: 3.3.1
@@ -32143,17 +32152,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sinon@npm:12.0.1":
-  version: 12.0.1
-  resolution: "sinon@npm:12.0.1"
+"sinon@npm:13.0.0":
+  version: 13.0.0
+  resolution: "sinon@npm:13.0.0"
   dependencies:
     "@sinonjs/commons": ^1.8.3
-    "@sinonjs/fake-timers": ^8.1.0
-    "@sinonjs/samsam": ^6.0.2
+    "@sinonjs/fake-timers": ^9.0.0
+    "@sinonjs/samsam": ^6.1.1
     diff: ^5.0.0
     nise: ^5.1.0
     supports-color: ^7.2.0
-  checksum: a264310c28df43e923a6e223c719953b7bd829b8e2fee7fe8b40154647e350b6bb4c18009be6f193e50892687f8e8c5d987d666fc3f6e4e78a9f807211ea365f
+  checksum: bd55dc02f5f632d5b590cd0d35e7886087f25da67ef5e0b2b60d1fce3c2b7d585fff87350a6521b40141d254fa5f0e43606f486bb01bba7a8b1ae655ed5f5bf1
   languageName: node
   linkType: hard
 
