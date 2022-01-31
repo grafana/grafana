@@ -643,11 +643,6 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 	walker := startValue
 
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-		if drop > 0 && rand.Float64() < drop {
-			timeWalkerMs += query.Interval.Milliseconds()
-			continue
-		}
-
 		nextValue := walker + (rand.Float64() * noise)
 
 		if hasMin && nextValue < min {
@@ -660,9 +655,13 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 			walker = max
 		}
 
-		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-		timeVec = append(timeVec, &t)
-		floatVec = append(floatVec, &nextValue)
+		if drop > 0 && rand.Float64() < drop {
+			// skip value
+		} else {
+			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+			timeVec = append(timeVec, &t)
+			floatVec = append(floatVec, &nextValue)
+		}
 
 		walker += (rand.Float64() - 0.5) * spread
 		timeWalkerMs += query.Interval.Milliseconds()
