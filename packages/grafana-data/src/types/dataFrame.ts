@@ -123,11 +123,6 @@ export interface Field<T = any, V = Vector<T>> {
   state?: FieldState | null;
 
   /**
-   * Convert text to the field value
-   */
-  parse?: (value: any) => T;
-
-  /**
    * Convert a value for display
    */
   display?: DisplayProcessor;

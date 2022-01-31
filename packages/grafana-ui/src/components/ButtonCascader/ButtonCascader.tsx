@@ -1,18 +1,18 @@
 import React from 'react';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
-// @ts-ignore
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
+import { Button, ButtonProps } from '../Button';
+import { Icon } from '../Icon/Icon';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
-  children: string;
+  children?: string;
   icon?: IconName;
   disabled?: boolean;
   value?: string[];
@@ -21,6 +21,9 @@ export interface ButtonCascaderProps {
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;
   className?: string;
+  variant?: ButtonProps['variant'];
+  buttonProps?: ButtonProps;
+  hideDownIcon?: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -41,9 +44,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 });
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
-  const { onChange, className, loadData, icon, ...rest } = props;
+  const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  // Weird way to do this bit it goes around a styling issue in Button where even null/undefined child triggers
+  // styling change which messes up the look if there is only single icon content.
+  let content: any = props.children;
+  if (!hideDownIcon) {
+    content = [props.children, <Icon key={'down-icon'} name="angle-down" className={styles.icons.right} />];
+  }
 
   return (
     <RCCascader
@@ -53,11 +63,9 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
       {...rest}
       expandIcon={null}
     >
-      <button className={cx('gf-form-label', className)} disabled={props.disabled}>
-        {icon && <Icon name={icon} className={styles.icons.left} />}
-        {props.children}
-        <Icon name="angle-down" className={styles.icons.right} />
-      </button>
+      <Button icon={icon} disabled={disabled} variant={variant} {...(buttonProps ?? {})}>
+        {content}
+      </Button>
     </RCCascader>
   );
 };

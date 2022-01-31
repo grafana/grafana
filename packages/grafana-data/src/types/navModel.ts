@@ -1,3 +1,5 @@
+import { ComponentType } from 'react';
+
 export interface NavModelItem {
   text: string;
   url?: string;
@@ -17,6 +19,8 @@ export interface NavModelItem {
   showOrgSwitcher?: boolean;
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
+  highlightText?: string;
+  tabSuffix?: ComponentType<{ className?: string }>;
 }
 
 export enum NavSection {

@@ -74,7 +74,7 @@ export function preparePlotData(
     // array or stacking groups
     for (const [_, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-
+      const noValueStack = Array(dataLength).fill(true);
       const groupTotals = byPct ? Array(dataLength).fill(0) : null;
 
       if (byPct) {
@@ -99,10 +99,13 @@ export function preparePlotData(
 
         for (let k = 0; k < dataLength; k++) {
           const v = currentlyStacking[k];
+          if (v != null && noValueStack[k]) {
+            noValueStack[k] = false;
+          }
           acc[k] += v == null ? 0 : v / (byPct ? groupTotals![k] : 1);
         }
 
-        result[seriesIdx] = acc.slice();
+        result[seriesIdx] = acc.slice().map((v, i) => (noValueStack[i] ? null : v));
       }
     }
 

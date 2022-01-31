@@ -220,6 +220,7 @@ describe('DashboardPage', () => {
       get: jest.fn().mockResolvedValue({}),
       getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
       getList: jest.fn(),
+      reload: jest.fn(),
     });
 
     ctx.setup(() => {

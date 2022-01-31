@@ -128,6 +128,10 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addDashboardVersionQueryAndCommandHandlers()
 	ss.addAPIKeysQueryAndCommandHandlers()
 	ss.addPlaylistQueryAndCommandHandlers()
+	ss.addLoginAttemptQueryAndCommandHandlers()
+	ss.addTeamQueryAndCommandHandlers()
+	ss.addDashboardProvisioningQueryAndCommandHandlers()
+	ss.addOrgQueryAndCommandHandlers()
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -327,7 +331,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FLAG_database_metrics) {
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 

@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 )
 
-// FeatureToggleState indicates the quality level
-type FeatureToggleState int
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+// FeatureFlagState indicates the quality level
+type FeatureFlagState int
 
 const (
 	// FeatureStateUnknown indicates that no state is specified
-	FeatureStateUnknown FeatureToggleState = iota
+	FeatureStateUnknown FeatureFlagState = iota
 
 	// FeatureStateAlpha the feature is in active development and may change at any time
 	FeatureStateAlpha
@@ -25,7 +29,7 @@ const (
 	FeatureStateDeprecated
 )
 
-func (s FeatureToggleState) String() string {
+func (s FeatureFlagState) String() string {
 	switch s {
 	case FeatureStateAlpha:
 		return "alpha"
@@ -41,7 +45,7 @@ func (s FeatureToggleState) String() string {
 }
 
 // MarshalJSON marshals the enum as a quoted json string
-func (s FeatureToggleState) MarshalJSON() ([]byte, error) {
+func (s FeatureFlagState) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(s.String())
 	buffer.WriteString(`"`)
@@ -49,7 +53,7 @@ func (s FeatureToggleState) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON unmarshals a quoted json string to the enum value
-func (s *FeatureToggleState) UnmarshalJSON(b []byte) error {
+func (s *FeatureFlagState) UnmarshalJSON(b []byte) error {
 	var j string
 	err := json.Unmarshal(b, &j)
 	if err != nil {
@@ -76,10 +80,10 @@ func (s *FeatureToggleState) UnmarshalJSON(b []byte) error {
 }
 
 type FeatureFlag struct {
-	Name        string             `json:"name" yaml:"name"` // Unique name
-	Description string             `json:"description"`
-	State       FeatureToggleState `json:"state,omitempty"`
-	DocsURL     string             `json:"docsURL,omitempty"`
+	Name        string           `json:"name" yaml:"name"` // Unique name
+	Description string           `json:"description"`
+	State       FeatureFlagState `json:"state,omitempty"`
+	DocsURL     string           `json:"docsURL,omitempty"`
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`
@@ -89,7 +93,4 @@ type FeatureFlag struct {
 	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
 	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
-
-	// Internal properties
-	// expr string `json:-`
 }

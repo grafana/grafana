@@ -82,7 +82,7 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
 }
 
 /**
- * Convert a single field type to specifed field type.
+ * Convert a single field type to specified field type.
  * @param field - field to convert
  * @param opts - field conversion options
  * @returns converted field

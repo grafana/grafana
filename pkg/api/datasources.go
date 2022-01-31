@@ -87,6 +87,7 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)[key], nil
 }
 
+// GET /api/datasources/:id
 func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -123,6 +124,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	return response.JSON(200, &dto)
 }
 
+// DELETE /api/datasources/:id
 func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -220,6 +222,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 	})
 }
 
+// DELETE /api/datasources/name/:name
 func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	name := web.Params(c.Req)[":name"]
 
@@ -253,27 +256,27 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	})
 }
 
-func validateURL(tp string, u string) response.Response {
-	if u != "" {
-		if _, err := datasource.ValidateURL(tp, u); err != nil {
-			datasourcesLogger.Error("Received invalid data source URL as part of data source command",
-				"url", u)
-			return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
-		}
+func validateURL(cmdType string, url string) response.Response {
+	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
+		return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", url), err)
 	}
 
 	return nil
 }
 
+// POST /api/datasources/
 func AddDataSource(c *models.ReqContext) response.Response {
 	cmd := models.AddDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
-	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
-		return resp
+	if cmd.Url != "" {
+		if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
+			return resp
+		}
 	}
 
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
@@ -293,6 +296,7 @@ func AddDataSource(c *models.ReqContext) response.Response {
 	})
 }
 
+// PUT /api/datasources/:id
 func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	cmd := models.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -301,12 +305,23 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	var err error
-	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
+	if cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64); err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
+	}
+
+	ds, err := getRawDataSourceById(c.Req.Context(), cmd.Id, cmd.OrgId)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(500, "Failed to update datasource", err)
+	}
+
+	if ds.ReadOnly {
+		return response.Error(403, "Cannot update read-only data source", nil)
 	}
 
 	err = hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
@@ -507,19 +522,19 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			return response.Error(403, "Access denied to datasource", err)
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
 		}
-		return response.Error(500, "Unable to load datasource metadata", err)
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
 	}
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
 	if !exists {
-		return response.Error(500, "Unable to find datasource plugin", err)
+		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 	}
 
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
 	if err != nil {
-		return response.Error(500, "Unable to get datasource model", err)
+		return response.Error(http.StatusInternalServerError, "Unable to get datasource model", err)
 	}
 	req := &backend.CheckHealthRequest{
 		PluginContext: backend.PluginContext{
@@ -528,6 +543,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 			PluginID:                   plugin.ID,
 			DataSourceInstanceSettings: dsInstanceSettings,
 		},
+	}
+
+	var dsURL string
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
@@ -545,17 +570,17 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		var jsonDetails map[string]interface{}
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(400, payload)
+		return response.JSON(http.StatusBadRequest, payload)
 	}
 
-	return response.JSON(200, payload)
+	return response.JSON(http.StatusOK, payload)
 }
 
 func (hs *HTTPServer) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {

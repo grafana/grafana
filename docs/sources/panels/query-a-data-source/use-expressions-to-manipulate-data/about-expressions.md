@@ -128,6 +128,18 @@ Log returns the natural logarithm of of its argument which can be a number or a 
 
 The inf, infn, nan, and null functions all return a single value of the name. They primarily exist for testing. Example: `null()`.
 
+##### round
+
+Round returns a rounded integer value. For example, `round(3.123)` or `round($A)`. (This function should probably take an argument so it can add precision to the rounded value).
+
+##### ceil
+
+Ceil rounds the number up to the nearest integer value. For example, `ceil(3.123)` returns 4.
+
+##### floor
+
+Floor rounds the number down to the nearest integer value. For example, `floor(3.123)` returns 3.
+
 ### Reduce
 
 Reduce takes one or more time series returned from a query or an expression and turns each series into a single number. The labels of the time series are kept as labels on each outputted reduced number.
@@ -156,6 +168,10 @@ Min and Max return the smallest or largest value in the series respectively. If 
 ##### Sum
 
 Sum returns the total of all values in the series. If series is of zero length, the sum will be 0. If there are any NaN or Null values in the series, NaN is returned.
+
+#### Last
+
+Last returns the last number in the series. If the series has no values then returns NaN.
 
 ### Resample
 

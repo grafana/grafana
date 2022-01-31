@@ -7,6 +7,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
   getLegacyAngularInjector,
+  getBackendSrv,
 } from '@grafana/runtime';
 // Types
 import {
@@ -26,6 +27,7 @@ import {
 import { DataSourceVariableModel } from '../variables/types';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -323,6 +325,13 @@ export class DatasourceSrv implements DataSourceService {
         meta: x.meta,
       };
     });
+  }
+
+  async reload() {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    config.datasources = settings.datasources;
+    config.defaultDatasource = settings.defaultDatasource;
+    this.init(settings.datasources, settings.defaultDatasource);
   }
 }
 

@@ -13,12 +13,12 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
-	"github.com/go-kit/log/term"
 	"github.com/go-stack/stack"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -38,7 +38,10 @@ func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 	filters = map[string]level.Option{}
-	Root.AddLogger(gokitlog.NewLogfmtLogger(os.Stderr), "info", filters)
+
+	// Use console by default
+	format := getLogFormat("console")
+	Root.AddLogger(format(os.Stderr), "info", filters)
 }
 
 type LogWithFilters struct {
@@ -216,37 +219,12 @@ func Caller(depth int) gokitlog.Valuer {
 
 type Formatedlogger func(w io.Writer) gokitlog.Logger
 
-func terminalColorFn(keyvals ...interface{}) term.FgBgColor {
-	for i := 0; i < len(keyvals)-1; i += 2 {
-		if keyvals[i] != level.Key() {
-			continue
-		}
-		switch keyvals[i+1] {
-		case "trace":
-			return term.FgBgColor{Fg: term.Gray}
-		case level.DebugValue():
-			return term.FgBgColor{Fg: term.Gray}
-		case level.InfoValue():
-			return term.FgBgColor{Fg: term.Green}
-		case level.WarnValue():
-			return term.FgBgColor{Fg: term.Yellow}
-		case level.ErrorValue():
-			return term.FgBgColor{Fg: term.Red}
-		case "crit":
-			return term.FgBgColor{Fg: term.Gray, Bg: term.DarkRed}
-		default:
-			return term.FgBgColor{}
-		}
-	}
-	return term.FgBgColor{}
-}
-
 func getLogFormat(format string) Formatedlogger {
 	switch format {
 	case "console":
 		if isatty.IsTerminal(os.Stdout.Fd()) {
 			return func(w io.Writer) gokitlog.Logger {
-				return term.NewColorLogger(w, gokitlog.NewLogfmtLogger, terminalColorFn)
+				return term.NewTerminalLogger(w)
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {

@@ -47,6 +47,7 @@ function getTestContext(variables?: VariableModel[]) {
     get: jest.fn().mockResolvedValue({}),
     getList: jest.fn().mockReturnValue([]),
     getInstanceSettings: getInstanceSettingsMock,
+    reload: jest.fn(),
   });
   const variableQueryRunner: any = {
     cancelRequest: jest.fn(),
