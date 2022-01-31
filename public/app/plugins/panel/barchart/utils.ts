@@ -327,6 +327,7 @@ export function prepareBarChartDisplayValues(
 
   let xField: Field | undefined = undefined;
   if (options.xField) {
+    console.log(options.xField, frame);
     xField = findField(frame, options.xField);
     if (!xField) {
       return { warn: 'Configured x field not found' } as BarChartDisplayValues;

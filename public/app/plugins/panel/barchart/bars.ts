@@ -14,6 +14,8 @@ import {
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { BarTree } from './rtree';
+import RBush from 'rbush';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -74,6 +76,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
+  let rt: RBush<Rect>;
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -246,6 +249,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
+      rt.insert(barRect);
       qt.add(barRect);
       barRects.push(barRect);
     },
@@ -260,8 +264,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   // Build bars
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
+    rt = rt || new BarTree(6);
 
     qt.clear();
+    rt.clear();
 
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
@@ -365,12 +371,37 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           u.ctx.textBaseline = curBaseline = baseline;
         }
 
-        u.ctx.fillText(
-          text,
-          u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset),
+        // Calculate final co-ordinates for text position
+        const x =
+          u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset);
+        const y =
           u.bbox.top +
-            (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift)
-        );
+          (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift);
+
+        // const currentSeries = barRects.filter((rect) => )
+
+        let textMetrics = u.ctx.measureText(text);
+        let intersects = rt.search({
+          minX: x,
+          minY: y,
+          maxX: x + textMetrics.width,
+          maxY: y + textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+        });
+
+        console.log(intersects.length);
+
+        if (intersects.length <= 2) {
+          u.ctx.fillText(text, x, y);
+        }
+
+        console.log(intersects);
+
+        // See if the label exceeds the bounds of the bar segment
+        // If so, don't draw it. Otherwise draw the label
+        if (showValue === VisibilityMode.Auto) {
+        }
+
+        // console.log(res);
       }
     });
 
@@ -388,11 +419,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let cx = u.cursor.left! * devicePixelRatio;
     let cy = u.cursor.top! * devicePixelRatio;
 
-    qt.get(cx, cy, 1, 1, (o) => {
-      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        found = o;
-      }
+    console.log(cx, cy);
+    let res = rt.search({
+      minX: cx,
+      minY: cy,
+      maxX: cx,
+      maxY: cy,
     });
+    found = res[0];
+
+    // console.log(res.length);
+
+    // qt.get(cx, cy, 1, 1, (o) => {
+    //   if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+    //     found = o;
+    //   }
+    // });
 
     if (found) {
       // prettier-ignore

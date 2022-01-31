@@ -71,6 +71,12 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...this.props.config.getConfig(),
     };
 
+    //  console.log(config, this.props);
+
+    // config.series[4].show = false;
+
+    console.log(config.series);
+
     pluginLog('UPlot', false, 'Reinitializing plot', config);
     const plot = new uPlot(config, this.props.data as AlignedData, this.plotContainer!.current!);
 
