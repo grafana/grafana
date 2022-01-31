@@ -85,7 +85,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 				"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
 			},
 		}
-		// hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd)
+
 		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
 			if errors.Is(err, models.ErrSmtpNotEnabled) {
 				return response.Error(412, err.Error(), err)
