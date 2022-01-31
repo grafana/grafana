@@ -184,6 +184,11 @@ func TestMigratorLocking(t *testing.T) {
 
 func TestDatabaseLocking(t *testing.T) {
 	dbType := getDBType()
+	// skip for SQLite since there is no database locking (only migrator locking)
+	if dbType == SQLite {
+		t.Skip()
+	}
+
 	testDB := getTestDB(dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
@@ -210,6 +215,7 @@ func TestDatabaseLocking(t *testing.T) {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				mg, err := reg.get(i)
+				require.NoError(t, err)
 				t.Parallel()
 				err = mg.Start()
 				if err != nil {
