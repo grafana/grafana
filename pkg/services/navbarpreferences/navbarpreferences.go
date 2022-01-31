@@ -11,14 +11,15 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister) *NavbarPreferencesService {
-	l := &LibraryElementService{
+	n := &NavbarPreferencesService{
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
 		RouteRegister: routeRegister,
 		log:           log.New("navbarpreferences"),
 	}
-	l.registerAPIEndpoints()
-	return l
+	// TODO implement API
+	// n.registerAPIEndpoints()
+	return n
 }
 
 // Service is a service for operating on navbar preferences.
@@ -35,6 +36,6 @@ type NavbarPreferencesService struct {
 }
 
 // GetNavbarPreferences gets the navbar preferences for a user
-func (l *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
-	return l.GetNavbarPreferences(c, signedInUser)
+func (n *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
+	return n.GetNavbarPreferences(c, signedInUser)
 }
