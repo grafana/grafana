@@ -491,7 +491,12 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
     return emptyDataQueryResponse;
   }
 
-  parseJsonFields(frame);
+  try {
+    parseJsonFields(frame);
+  } catch (error) {
+    console.error(error);
+    return { error: { message: 'JSON is not valid OpenTelemetry format: ' + error }, data: [] };
+  }
 
   let data = [...response.data];
   if (nodeGraph) {
