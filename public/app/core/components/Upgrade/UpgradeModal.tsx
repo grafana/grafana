@@ -13,7 +13,7 @@ export const UpgradeModal = ({ text, isOpen, onDismiss }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Modal title="" isOpen={isOpen} onDismiss={onDismiss} hideTitle={true} contentClassName={styles.content}>
+    <Modal isOpen={isOpen} onDismiss={onDismiss} contentClassName={styles.content}>
       <UpgradeBox text={text} onDismiss={onDismiss} />
     </Modal>
   );
