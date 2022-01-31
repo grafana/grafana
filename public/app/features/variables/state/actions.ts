@@ -57,6 +57,7 @@ import {
   hasOptions,
   hasStandardVariableSupport,
   isAdHoc,
+  isConstant,
   isMulti,
   isQuery,
 } from '../guard';
@@ -675,6 +676,10 @@ export const templateVarsChangedInUrl = (
       const variableInModel = dashboard?.templating.list.find((v) => v.name === variable.name);
       if (variableInModel && hasCurrent(variableInModel)) {
         value = variableInModel.current.value; // revert value to the value stored in dashboard json
+      }
+
+      if (variableInModel && isConstant(variableInModel)) {
+        value = variableInModel.query; // revert value to the value stored in dashboard json, constants don't store current values in dashboard json
       }
     }
 
