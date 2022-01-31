@@ -6,16 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var shadowSearchCounter = prometheus.NewCounterVec(
@@ -620,131 +618,6 @@ func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDa
 		query.Result = us
 		return nil
 	})
-}
-
-func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashboard, overwrite bool) (bool, error) {
-	dashWithIdExists := false
-	isParentFolderChanged := false
-	var existingById models.Dashboard
-
-	if dash.Id > 0 {
-		var err error
-		dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existingById)
-		if err != nil {
-			return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by ID failed: %w", err)
-		}
-
-		if !dashWithIdExists {
-			return isParentFolderChanged, models.ErrDashboardNotFound
-		}
-
-		if dash.Uid == "" {
-			dash.SetUid(existingById.Uid)
-		}
-	}
-
-	dashWithUidExists := false
-	var existingByUid models.Dashboard
-
-	if dash.Uid != "" {
-		var err error
-		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&existingByUid)
-		if err != nil {
-			return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by UID failed: %w", err)
-		}
-	}
-
-	if dash.FolderId > 0 {
-		var existingFolder models.Dashboard
-		folderExists, err := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgId, dash.FolderId,
-			dialect.BooleanStr(true)).Get(&existingFolder)
-		if err != nil {
-			return isParentFolderChanged, fmt.Errorf("SQL query for folder failed: %w", err)
-		}
-
-		if !folderExists {
-			return isParentFolderChanged, models.ErrDashboardFolderNotFound
-		}
-	}
-
-	if !dashWithIdExists && !dashWithUidExists {
-		return isParentFolderChanged, nil
-	}
-
-	if dashWithIdExists && dashWithUidExists && existingById.Id != existingByUid.Id {
-		return isParentFolderChanged, models.ErrDashboardWithSameUIDExists
-	}
-
-	existing := existingById
-
-	if !dashWithIdExists && dashWithUidExists {
-		dash.SetId(existingByUid.Id)
-		dash.SetUid(existingByUid.Uid)
-		existing = existingByUid
-
-		if !dash.IsFolder {
-			isParentFolderChanged = true
-		}
-	}
-
-	if (existing.IsFolder && !dash.IsFolder) ||
-		(!existing.IsFolder && dash.IsFolder) {
-		return isParentFolderChanged, models.ErrDashboardTypeMismatch
-	}
-
-	if !dash.IsFolder && dash.FolderId != existing.FolderId {
-		isParentFolderChanged = true
-	}
-
-	// check for is someone else has written in between
-	if dash.Version != existing.Version {
-		if overwrite {
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, models.ErrDashboardVersionMismatch
-		}
-	}
-
-	// do not allow plugin dashboard updates without overwrite flag
-	if existing.PluginId != "" && !overwrite {
-		return isParentFolderChanged, models.UpdatePluginDashboardError{PluginId: existing.PluginId}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-func getExistingDashboardByTitleAndFolder(sess *DBSession, dash *models.Dashboard, overwrite,
-	isParentFolderChanged bool) (bool, error) {
-	var existing models.Dashboard
-	exists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgId, dash.Slug,
-		dialect.BooleanStr(true), dash.FolderId).Get(&existing)
-	if err != nil {
-		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
-	}
-
-	if exists && dash.Id != existing.Id {
-		if existing.IsFolder && !dash.IsFolder {
-			return isParentFolderChanged, models.ErrDashboardWithSameNameAsFolder
-		}
-
-		if !existing.IsFolder && dash.IsFolder {
-			return isParentFolderChanged, models.ErrDashboardFolderWithSameNameAsDashboard
-		}
-
-		if !dash.IsFolder && (dash.FolderId != existing.FolderId || dash.Id == 0) {
-			isParentFolderChanged = true
-		}
-
-		if overwrite {
-			dash.SetId(existing.Id)
-			dash.SetUid(existing.Uid)
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, models.ErrDashboardWithSameNameInFolderExists
-		}
-	}
-
-	return isParentFolderChanged, nil
 }
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder

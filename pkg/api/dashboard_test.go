@@ -778,7 +778,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
-
 				mock := &dashboards.FakeDashboardService{
 					SaveDashboardError: tc.SaveError,
 				}
