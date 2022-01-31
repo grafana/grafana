@@ -37,5 +37,5 @@ type NavbarPreferencesService struct {
 
 // GetNavbarPreferences gets the navbar preferences for a user
 func (n *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
-	return n.GetNavbarPreferences(c, signedInUser)
+	return n.getNavbarPreferences(c, signedInUser)
 }
