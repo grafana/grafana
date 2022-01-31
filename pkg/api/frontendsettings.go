@@ -239,8 +239,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.updateChecker.LatestGrafanaVersion(),
-			"hasUpdate":     hs.updateChecker.GrafanaUpdateAvailable(),
+			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
+			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
 			"env":           setting.Env,
 		},
 		"licenseInfo": map[string]interface{}{
