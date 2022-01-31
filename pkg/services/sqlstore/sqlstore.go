@@ -133,10 +133,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addDashboardProvisioningQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation) {
-		ss.addNavbarPreferencesQueryAndCommandHandlers()
-	}
-
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
 	// }
