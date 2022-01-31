@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
-func validateContactPoint(e *EmbeddedContactPoint) (bool, error) {
+func validateContactPointReceiver(e *EmbeddedContactPoint) (bool, error) {
 	if e.Type == "" {
 		return false, ErrContactPointNoTypeSet
 	}

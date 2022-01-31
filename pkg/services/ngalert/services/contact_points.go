@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -26,13 +25,10 @@ type EmbeddedContactPoint struct {
 	Type                  string           `json:"type"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
 	Settings              *simplejson.Json `json:"settings"`
-	//  Removing the secureSettings from the JSON object as this can
-	//  be a confusing implementation detail to the user. Settings that
-	//  should be encrpted will still be encrypted but injected back to the
-	//  main settings
-	//	SecureSettings        map[string]string `json:"secureSettings"`
-	Provenance string `json:"provanance"`
+	Provenance            string           `json:"provanance"`
 }
+
+const RedactedValue = "[REDACTED]"
 
 var (
 	ErrContactPointNoTypeSet           = errors.New("contact point 'type' field should not be empty")
@@ -41,26 +37,69 @@ var (
 )
 
 func (e *EmbeddedContactPoint) IsValid() (bool, error) {
-	return validateContactPoint(e)
+	return validateContactPointReceiver(e)
+}
+
+func (e *EmbeddedContactPoint) secretKeys() ([]string, error) {
+	switch e.Type {
+	case "alertmanager":
+		return []string{"basicAuthPassword"}, nil
+	case "dingding":
+		return []string{}, nil
+	case "discord":
+		return []string{}, nil
+	case "email":
+		return []string{}, nil
+	case "googlechat":
+		return []string{}, nil
+	case "kafka":
+		return []string{}, nil
+	case "line":
+		return []string{"token"}, nil
+	case "opsgenie":
+		return []string{"apiKey"}, nil
+	case "pagerduty":
+		return []string{"integrationKey"}, nil
+	case "pushover":
+		return []string{"userKey", "apiToken"}, nil
+	case "sensugo":
+		return []string{"apiKey"}, nil
+	case "slack":
+		return []string{"url", "token"}, nil
+	case "teams":
+		return []string{}, nil
+	case "telegram":
+		return []string{"bottoken"}, nil
+	case "threema":
+		return []string{"api_secret"}, nil
+	case "victorops":
+		return []string{}, nil
+	case "webhook":
+		return []string{}, nil
+	case "wecom":
+		return []string{"url"}, nil
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s'", e.Type)
 }
 
 func (e *EmbeddedContactPoint) extractSecrtes() (map[string]string, error) {
-	switch strings.ToLower(e.Type) {
-	case "pagerduty":
-		integrationKey := e.Settings.Get("integrationKey").MustString("")
-		if integrationKey != "" || integrationKey == "[REDACTED]" {
-			e.Settings.Del("integrationKey")
-			return map[string]string{"integrationKey": integrationKey}, nil
-		}
-		return map[string]string{}, nil
+	secrets := map[string]string{}
+	secretKeys, err := e.secretKeys()
+	if err != nil {
+		return nil, err
 	}
-	return map[string]string{}, nil
+	for _, secretKey := range secretKeys {
+		secretValue := e.Settings.Get(secretKey).MustString()
+		e.Settings.Del(secretKey)
+		secrets[secretKey] = secretValue
+	}
+	return secrets, nil
 }
 
 type ContactPointService interface {
 	GetContactPoints(orgID int64) ([]EmbeddedContactPoint, error)
 	CreateContactPoint(orgID int64, contactPoint EmbeddedContactPoint) (EmbeddedContactPoint, error)
-	UpdateContactPoint(orgID int64, contactPoint EmbeddedContactPoint) (EmbeddedContactPoint, error)
+	UpdateContactPoint(orgID int64, contactPoint EmbeddedContactPoint) error
 	DeleteContactPoint(orgID int64, uid string) error
 }
 
@@ -99,12 +138,45 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]Embedde
 			if decryptedValue == "" {
 				continue
 			}
-			fmt.Printf("decrypted value: %s %s\n", k, decryptedValue)
-			embeddedContactPoint.Settings.Set(k, "[REDACTED]")
+			embeddedContactPoint.Settings.Set(k, RedactedValue)
 		}
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	return contactPoints, nil
+}
+
+// internal only
+func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, uid string) (EmbeddedContactPoint, error) {
+	cfg, _, err := ecp.getCurrentConfig(orgID)
+	if err != nil {
+		return EmbeddedContactPoint{}, err
+	}
+	for _, receiver := range cfg.GetGrafanaReceiverMap() {
+		if receiver.UID != uid {
+			continue
+		}
+		embeddedContactPoint := EmbeddedContactPoint{
+			UID:                   receiver.UID,
+			Type:                  receiver.Type,
+			Name:                  receiver.Name,
+			DisableResolveMessage: receiver.DisableResolveMessage,
+			Settings:              receiver.Settings,
+		}
+		for k, v := range receiver.SecureSettings {
+			decryptedValue, err := ecp.decrypteValue(v)
+			if err != nil {
+				// TODO(JP): log a warning
+				continue
+			}
+			if decryptedValue == "" {
+				continue
+			}
+			embeddedContactPoint.Settings.Set(k, decryptedValue)
+
+		}
+		return embeddedContactPoint, nil
+	}
+	return EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
 }
 
 func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactPoint EmbeddedContactPoint) (EmbeddedContactPoint, error) {
@@ -166,30 +238,40 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactP
 	})
 }
 
-func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactPoint EmbeddedContactPoint) (EmbeddedContactPoint, error) {
-	if isValid, err := contactPoint.IsValid(); !isValid {
-		return EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
-	}
-	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
+func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactPoint EmbeddedContactPoint) error {
+	// set all redacted values with the latest known value from the store
+	rawContactPoint, err := ecp.getContactPointUncrypted(orgID, contactPoint.UID)
 	if err != nil {
-		return EmbeddedContactPoint{}, err
+		return err
 	}
+	secretKeys, err := contactPoint.secretKeys()
+	if err != nil {
+		return err
+	}
+	for _, secretKey := range secretKeys {
+		secretValue := contactPoint.Settings.Get(secretKey).MustString()
+		if secretValue == RedactedValue {
+			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
+		}
+	}
+	// validate merged values
+	if isValid, err := contactPoint.IsValid(); !isValid {
+		return fmt.Errorf("contact point is not valid: %w", err)
+	}
+	fmt.Printf("%+v\n", *contactPoint.Settings)
+	// transform to internal model
 	extracedSecrets, err := contactPoint.extractSecrtes()
 	if err != nil {
-		return EmbeddedContactPoint{}, err
+		return err
 	}
 	for k, v := range extracedSecrets {
-		if v == "[REDACTED]" {
-			delete(extracedSecrets, k)
-			continue
-		}
 		encryptedValue, err := ecp.encryptValue(v)
 		if err != nil {
-			return EmbeddedContactPoint{}, err
+			return err
 		}
 		extracedSecrets[k] = encryptedValue
 	}
-	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
+	mergedReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
@@ -197,34 +279,31 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 		Settings:              contactPoint.Settings,
 		SecureSettings:        extracedSecrets,
 	}
-	receiverFound := false
+	// save to store
+	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
+	if err != nil {
+		return err
+	}
 	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
 		if receiver.Name == contactPoint.Name {
-			for i, cp := range receiver.GrafanaManagedReceivers {
-				if cp.UID == contactPoint.UID {
-					for k, v := range cp.SecureSettings {
-						if _, exists := extracedSecrets[k]; exists {
-							continue
-						}
-						extracedSecrets[k] = v
-					}
-					grafanaReceiver.SecureSettings = extracedSecrets
-					receiver.GrafanaManagedReceivers[i] = grafanaReceiver
-					receiverFound = true
+			receiverNotFound := true
+			for i, grafanaReceiver := range receiver.GrafanaManagedReceivers {
+				if grafanaReceiver.UID == mergedReceiver.UID {
+					receiverNotFound = false
+					receiver.GrafanaManagedReceivers[i] = mergedReceiver
 					break
 				}
 			}
-			break
+			if receiverNotFound {
+				return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
+			}
 		}
-	}
-	if !receiverFound {
-		return EmbeddedContactPoint{}, fmt.Errorf("contact point with name '%s' and uid '%s' not found", grafanaReceiver.Name, grafanaReceiver.UID)
 	}
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return EmbeddedContactPoint{}, err
+		return err
 	}
-	return contactPoint, ecp.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
+	return ecp.amStore.UpdateAlertManagerConfiguration(&models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration:     string(data),
 		AlertmanagerConfigurationHash: fmt.Sprintf("%x", md5.Sum(data)),
 		ConfigurationVersion:          "v1",

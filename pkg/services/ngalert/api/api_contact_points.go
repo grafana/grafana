@@ -48,11 +48,11 @@ func (s *ContactPointServer) RouteUpdateContactPoint(c *api.ReqContext) response
 	if err := web.Bind(c.Req, &contactPoint); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	contactPoint, err := s.service.UpdateContactPoint(c.OrgId, contactPoint)
+	err := s.service.UpdateContactPoint(c.OrgId, contactPoint)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, contactPoint)
+	return response.JSON(http.StatusOK, "")
 }
 
 func (s *ContactPointServer) RouteDeleteContactPoint(c *api.ReqContext) response.Response {
