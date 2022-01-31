@@ -54,7 +54,8 @@ export const AllChecksTab: FC = () => {
       logger.error(e);
     }
     setFetchChecksPending(false);
-  }, [generateToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchChecks();

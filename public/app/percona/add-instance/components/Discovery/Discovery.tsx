@@ -46,7 +46,8 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
         startLoading(false);
       }
     },
-    [setCredentials, setInstances, generateToken]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setCredentials, setInstances]
   );
 
   useEffect(() => {

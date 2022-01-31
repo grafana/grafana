@@ -70,7 +70,8 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
       }
       setLoading(false);
     },
-    [type, discoverName, generateToken]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [type, discoverName]
   );
 
   const ConnectionDetails = useCallback(

@@ -46,7 +46,8 @@ export const NodesTab = () => {
       logger.error(e);
     }
     setLoading(false);
-  }, [generateToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadData();
