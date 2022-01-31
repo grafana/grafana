@@ -403,7 +403,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux || (config.featureToggles.influxBackendMigration && this.access === 'proxy')) {
+    if (this.isFlux || (config.featureToggles.influxdbBackendMigration && this.access === 'proxy')) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
