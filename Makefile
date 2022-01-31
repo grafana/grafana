@@ -12,6 +12,8 @@ include .bingo/Variables.mk
 GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
+API_DEFINITION_FILES = $(shell find ./pkg/api/docs/definitions -name '*.go' -print)
+SWAGGER_TAG ?= latest
 
 all: deps build
 
@@ -28,13 +30,52 @@ node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
 	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
+##@ Swagger
+
+swagger-ui/spec.json: $(API_DEFINITION_FILES) ## Generate API spec
+	docker run --rm -it \
+	-e GOPATH=${HOME}/go:/go \
+	-e SWAGGER_GENERATE_EXTENSION=false \
+	-v ${HOME}/go:/go \
+	-v $$(pwd):/grafana \
+	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
+	generate spec -m -o /grafana/swagger-ui/spec.json \
+	-w /grafana/pkg/server \
+	-x "grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i /grafana/pkg/api/docs/tags.json
+
+ensure_go-swagger_mac:
+	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
+
+swagger-ui/spec.json-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
+	swagger generate spec -m -w pkg/server -o swagger-ui/spec.json \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i pkg/api/docs.tags.json
+
+swagger-ui/merged.json: swagger-ui/spec.json ## Generate OSS and ngalert API specs
+	go run pkg/api/docs/merge/merge_specs.go -o=swagger-ui/merged.json $(<) pkg/services/ngalert/api/tooling/post.json
+
+validate-api-spec: swagger-ui/merged.json ## Validate API spec
+	docker run --rm -it \
+	-e GOPATH=${HOME}/go:/go \
+	-e SWAGGER_GENERATE_EXTENSION=false \
+	-v ${HOME}/go:/go \
+	-v $$(pwd):/grafana \
+	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
+	validate /grafana/$(<)
+
+clean-api-spec:
+	rm swagger-ui/*.json
+
 ##@ Building
 
 gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
-build-go: gen-go ## Build all Go binaries.
+build-go: swagger-ui/merged.json gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build
 
