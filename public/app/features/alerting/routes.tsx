@@ -224,7 +224,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     return legacyRoutes;
   }
 
-  const uniquePaths = uniq([...legacyRoutes, ...commonRoutes].map((route) => route.path));
+  const uniquePaths = uniq([...legacyRoutes, ...unifiedRoutes].map((route) => route.path));
   return uniquePaths.map((path) => ({
     path,
     component: SafeDynamicImport(
