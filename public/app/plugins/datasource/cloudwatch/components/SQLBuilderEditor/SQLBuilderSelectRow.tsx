@@ -53,19 +53,19 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
     [unusedDimensionKeys, schemaLabels]
   );
 
-  const onNamespaceChange = async (query: CloudWatchMetricsQuery, namespace: string) => {
-    const validatedQuery = await validateMetricName(setNamespace(query, namespace), namespace);
+  const onNamespaceChange = async (query: CloudWatchMetricsQuery) => {
+    const validatedQuery = await validateMetricName(query);
     onQueryChange(validatedQuery);
   };
 
-  const validateMetricName = async (query: CloudWatchMetricsQuery, namespace: string) => {
+  const validateMetricName = async (query: CloudWatchMetricsQuery) => {
     let { region, sql } = query;
-    await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+    await datasource.getMetrics(query.namespace, region).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         sql = removeMetricName(query).sql;
       }
     });
-    return { ...query, namespace, sql };
+    return { ...query, sql };
   };
 
   return (
@@ -78,7 +78,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
             inputId={`${query.refId}-cloudwatch-sql-namespace`}
             options={namespaceOptions}
             allowCustomValue
-            onChange={({ value }) => value && onNamespaceChange(query, value)}
+            onChange={({ value }) => value && onNamespaceChange(setNamespace(query, value))}
             menuShouldPortal
           />
         </EditorField>

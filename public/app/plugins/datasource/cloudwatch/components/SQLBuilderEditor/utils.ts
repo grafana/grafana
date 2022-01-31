@@ -146,6 +146,8 @@ export function setSql(query: CloudWatchMetricsQuery, sql: SQLExpression): Cloud
 
 export function setNamespace(query: CloudWatchMetricsQuery, namespace: string | undefined): CloudWatchMetricsQuery {
   const sql = query.sql ?? {};
+  //updating `namespace` props for CloudWatchMetricsQuery
+  query.namespace = namespace ? namespace : '';
 
   if (namespace === undefined) {
     return setSql(query, {
