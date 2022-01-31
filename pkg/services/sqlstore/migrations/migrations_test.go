@@ -1,9 +1,11 @@
 package migrations
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -70,16 +72,21 @@ func TestMigrationLock(t *testing.T) {
 
 	dialect := NewDialect(x)
 
+	sess := x.NewSession()
+	t.Cleanup(func() {
+		sess.Close()
+	})
+
 	t.Run("obtaining lock should succeed", func(t *testing.T) {
-		err := dialect.Lock()
+		err := dialect.Lock(sess)
 		require.NoError(t, err)
 
 		t.Run("releasing previously obtained lock should succeed", func(t *testing.T) {
-			err := dialect.Unlock()
+			err := dialect.Unlock(sess)
 			require.NoError(t, err)
 
 			t.Run("releasing already released lock should fail", func(t *testing.T) {
-				err := dialect.Unlock()
+				err := dialect.Unlock(sess)
 				require.Error(t, err)
 				assert.ErrorIs(t, err, ErrReleaseLockDB)
 			})
@@ -87,17 +94,17 @@ func TestMigrationLock(t *testing.T) {
 	})
 
 	t.Run("obtaining lock twice should succeed", func(t *testing.T) {
-		err = dialect.Lock()
+		err = dialect.Lock(sess)
 		require.NoError(t, err)
 
-		err = dialect.Lock()
+		err = dialect.Lock(sess)
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := dialect.Unlock()
+			err := dialect.Unlock(sess)
 			require.NoError(t, err)
 
-			err = dialect.Unlock()
+			err = dialect.Unlock(sess)
 			require.NoError(t, err)
 		})
 	})
@@ -105,44 +112,45 @@ func TestMigrationLock(t *testing.T) {
 	t.Run("obtaining same lock from another session should fail", func(t *testing.T) {
 		x2, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 		require.NoError(t, err)
+		sess2 := x2.NewSession()
 
 		d2 := NewDialect(x2)
 
-		err = dialect.Lock()
+		err = dialect.Lock(sess)
 		require.NoError(t, err)
 
-		err = d2.Lock()
+		err = d2.Lock(sess2)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrLockDB)
 
 		t.Cleanup(func() {
-			err := dialect.Unlock()
+			err := dialect.Unlock(sess)
 			require.NoError(t, err)
 		})
 	})
 
 	t.Run("obtaining lock for a another database should succeed", func(t *testing.T) {
-		err := dialect.Lock()
+		err := dialect.Lock(sess)
 		require.NoError(t, err)
 
 		x, err := xorm.NewEngine(testDB.DriverName, replaceDBName(t, testDB.ConnStr, dbType))
 		require.NoError(t, err)
 
 		d := NewDialect(x)
-		err = d.Lock()
+		err = d.Lock(sess)
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := dialect.Unlock()
+			err := dialect.Unlock(sess)
 			require.NoError(t, err)
 
-			err = d.Unlock()
+			err = d.Unlock(sess)
 			require.NoError(t, err)
 		})
 	})
 }
 
-func TestConcurrentMigrate(t *testing.T) {
+func TestMigratorLocking(t *testing.T) {
 	dbType := getDBType()
 	testDB := getTestDB(dbType)
 
@@ -157,15 +165,58 @@ func TestConcurrentMigrate(t *testing.T) {
 	migrations.AddMigration(mg)
 
 	var errorNum int64
-	t.Run("when concurrent migrations occur, the second one should fail", func(t *testing.T) {
+	t.Run("when concurrent migrations for the same migrator occur, the second one should fail", func(t *testing.T) {
 		for i := 0; i < 2; i++ {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
-				err := mg.Start()
+				err = mg.Start()
 				if err != nil {
-					assert.ErrorIs(t, err, ErrDatabaseIsLocked)
-					atomic.AddInt64(&errorNum, 1)
+					if errors.Is(err, ErrMigratorIsLocked) {
+						atomic.AddInt64(&errorNum, 1)
+					}
+				}
+			})
+		}
+	})
+	assert.Equal(t, int64(1), errorNum)
+}
+
+func TestDatabaseLocking(t *testing.T) {
+	dbType := getDBType()
+	testDB := getTestDB(dbType)
+
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+
+	err = NewDialect(x).CleanDB()
+	require.NoError(t, err)
+
+	mg1 := NewMigrator(x, &setting.Cfg{})
+	migrations := &OSSMigrations{}
+	migrations.AddMigration(mg1)
+	reg := registry{
+		migrators: make(map[int]*Migrator, 2),
+	}
+	reg.set(0, mg1)
+
+	mg2 := NewMigrator(x, &setting.Cfg{})
+	migrations.AddMigration(mg2)
+	reg.set(1, mg2)
+
+	var errorNum int64
+	t.Run("when concurrent migrations occur for different migrators occur, the second one should fail", func(t *testing.T) {
+		for i := 0; i < 2; i++ {
+			i := i // capture i variable
+			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
+				mg, err := reg.get(i)
+				t.Parallel()
+				err = mg.Start()
+				if err != nil {
+					assert.ErrorIs(t, err, ErrLockDB)
+					if errors.Is(err, ErrLockDB) {
+						atomic.AddInt64(&errorNum, 1)
+					}
 				}
 			})
 		}
@@ -245,4 +296,27 @@ func replaceDBName(t *testing.T, connStr, dbType string) string {
 	default:
 		return connStr
 	}
+}
+
+type registry struct {
+	mu        sync.Mutex
+	migrators map[int]*Migrator
+}
+
+func (r *registry) get(i int) (*Migrator, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	m, ok := r.migrators[i]
+	if !ok {
+		return nil, fmt.Errorf("invalid index: %d", i)
+	}
+	return m, nil
+}
+
+func (r *registry) set(i int, mg *Migrator) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.migrators[i] = mg
 }

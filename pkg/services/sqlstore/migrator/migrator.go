@@ -5,7 +5,6 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
@@ -17,8 +16,8 @@ import (
 )
 
 var (
-	ErrDatabaseIsLocked   = fmt.Errorf("database is locked")
-	ErrDatabaseIsUnlocked = fmt.Errorf("database is unlocked")
+	ErrMigratorIsLocked   = fmt.Errorf("migrator is locked")
+	ErrMigratorIsUnlocked = fmt.Errorf("migrator is unlocked")
 )
 
 type Migrator struct {
@@ -96,20 +95,28 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 func (mg *Migrator) Start() (err error) {
-	mg.Logger.Info("Locking database")
-	if err := database.CasRestoreOnErr(&mg.isLocked, false, true, ErrDatabaseIsLocked, mg.Dialect.Lock); err != nil {
-		mg.Logger.Error("Failed to lock database", "error", err)
-		return err
-	}
-
-	defer func() {
-		mg.Logger.Info("Unlocking database")
-		err = database.CasRestoreOnErr(&mg.isLocked, true, false, ErrDatabaseIsUnlocked, mg.Dialect.Unlock)
-		if err != nil {
-			mg.Logger.Error("Failed to unlock database", "error", err)
+	return mg.InTransaction(func(sess *xorm.Session) error {
+		mg.Logger.Info("Locking database")
+		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, sess); err != nil {
+			mg.Logger.Error("Failed to lock database", "error", err)
+			return err
 		}
-	}()
 
+		defer func() {
+			mg.Logger.Info("Unlocking database")
+			unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, sess)
+			if unlockErr != nil {
+				mg.Logger.Error("Failed to unlock database", "error", unlockErr)
+			}
+			sess.Close()
+		}()
+
+		// migration will run inside a nested transaction
+		return mg.run()
+	})
+}
+
+func (mg *Migrator) run() (err error) {
 	mg.Logger.Info("Starting DB migrations")
 
 	logMap, err := mg.GetMigrationLog()
@@ -231,5 +238,17 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 		return err
 	}
 
+	return nil
+}
+
+func casRestoreOnErr(lock *atomic.Bool, o, n bool, casErr error, f func(*xorm.Session) error, session *xorm.Session) error {
+	if !lock.CAS(o, n) {
+		return casErr
+	}
+	if err := f(session); err != nil {
+		// Automatically unlock/lock on error
+		lock.Store(o)
+		return err
+	}
 	return nil
 }

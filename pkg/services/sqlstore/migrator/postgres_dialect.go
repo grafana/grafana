@@ -260,10 +260,7 @@ func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []str
 	return s
 }
 
-func (db *PostgresDialect) Lock() error {
-	sess := db.engine.NewSession()
-	defer sess.Close()
-
+func (db *PostgresDialect) Lock(sess *xorm.Session) error {
 	// trying to obtain the lock for a resource identified by a 64-bit or 32-bit key value
 	// the lock is exclusive: multiple lock requests stack, so that if the same resource is locked three times
 	// it must then be unlocked three times to be released for other sessions' use.
@@ -287,10 +284,7 @@ func (db *PostgresDialect) Lock() error {
 	return nil
 }
 
-func (db *PostgresDialect) Unlock() error {
-	sess := db.engine.NewSession()
-	defer sess.Close()
-
+func (db *PostgresDialect) Unlock(sess *xorm.Session) error {
 	// trying to release a previously-acquired exclusive session level advisory lock.
 	// it will either return true if the lock is successfully released or
 	// false if the lock was not held (in addition an SQL warning will be reported by the server)

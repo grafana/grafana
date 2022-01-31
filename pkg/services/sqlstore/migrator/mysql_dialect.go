@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
@@ -230,12 +231,9 @@ func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string
 	return s
 }
 
-func (db *MySQLDialect) Lock() error {
-	sess := db.engine.NewSession()
-	defer sess.Close()
-
+func (db *MySQLDialect) Lock(sess *xorm.Session) error {
 	query := "SELECT GET_LOCK(?, ?)"
-	var success bool
+	var success sql.NullBool
 
 	lockName, err := db.getLockName()
 	if err != nil {
@@ -253,18 +251,15 @@ func (db *MySQLDialect) Lock() error {
 	if err != nil {
 		return err
 	}
-	if !success {
+	if !success.Valid || !success.Bool {
 		return ErrLockDB
 	}
 	return nil
 }
 
-func (db *MySQLDialect) Unlock() error {
-	sess := db.engine.NewSession()
-	defer sess.Close()
-
+func (db *MySQLDialect) Unlock(sess *xorm.Session) error {
 	query := "SELECT RELEASE_LOCK(?)"
-	var success bool
+	var success sql.NullBool
 
 	lockName, err := db.getLockName()
 	if err != nil {
@@ -279,7 +274,7 @@ func (db *MySQLDialect) Unlock() error {
 	if err != nil {
 		return err
 	}
-	if !success {
+	if !success.Valid || !success.Bool {
 		return ErrReleaseLockDB
 	}
 	return nil
