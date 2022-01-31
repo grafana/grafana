@@ -69,7 +69,6 @@ func (st DBstore) SetProvenanceTransactional(o models.Provisionable, p models.Pr
 	orgID := o.ResourceOrgID()
 
 	uow = uow.Do(func(sess *sqlstore.DBSession) error {
-		// TODO: Add a unit-of-work pattern, so updating objects + provenance will happen consistently with rollbacks across stores.
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
 		filter := "record_key = ? AND record_type = ? AND org_id = ?"
