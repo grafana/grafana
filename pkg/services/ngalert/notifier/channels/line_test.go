@@ -10,9 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
@@ -92,23 +90,16 @@ func TestLineNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewLineNotifier(m, tmpl, decryptFn)
+			pn, err := NewLineNotifier(m, webhookSender, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			body := ""
-			var headers map[string]string
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				headers = webhook.HttpHeader
-				return nil
-			})
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -122,8 +113,8 @@ func TestLineNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expHeaders, headers)
-			require.Equal(t, c.expMsg, body)
+			require.Equal(t, c.expHeaders, webhookSender.Webhook.HttpHeader)
+			require.Equal(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}
 }

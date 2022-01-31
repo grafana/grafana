@@ -13,10 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/thumbs"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -32,29 +28,37 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
+	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -76,6 +80,7 @@ type HTTPServer struct {
 	Bus                       bus.Bus
 	RenderService             rendering.Service
 	Cfg                       *setting.Cfg
+	Features                  *featuremgmt.FeatureManager
 	SettingsProvider          setting.Provider
 	HooksService              *hooks.HooksService
 	CacheService              *localcache.CacheService
@@ -96,6 +101,7 @@ type HTTPServer struct {
 	pluginErrorResolver       plugins.ErrorResolver
 	SearchService             *search.SearchService
 	ShortURLService           shorturls.Service
+	QueryHistoryService       queryhistory.Service
 	Live                      *live.GrafanaLive
 	LivePushGateway           *pushhttp.Gateway
 	ThumbService              thumbs.Service
@@ -118,6 +124,8 @@ type HTTPServer struct {
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
+	authInfoService           authinfoservice.Service
+	TeamPermissionsService    *resourcepermissions.Service
 }
 
 type ServerOptions struct {
@@ -131,18 +139,19 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, thumbService thumbs.Service,
-	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler,
+	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service) (*HTTPServer, error) {
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -168,6 +177,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AuthTokenService:          userTokenService,
 		cleanUpService:            cleanUpService,
 		ShortURLService:           shortURLService,
+		QueryHistoryService:       queryHistoryService,
+		Features:                  features,
 		ThumbService:              thumbService,
 		RemoteCacheService:        remoteCache,
 		ProvisioningService:       provisioningService,
@@ -196,6 +207,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
 		serviceAccountsService:    serviceaccountsService,
+		authInfoService:           authInfoService,
+		TeamPermissionsService:    resourcePermissionServices.GetTeamService(),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

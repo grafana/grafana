@@ -25,7 +25,7 @@ func GetSignUpOptions(c *models.ReqContext) response.Response {
 }
 
 // POST /api/user/signup
-func SignUp(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	form := dtos.SignUpForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -35,7 +35,7 @@ func SignUp(c *models.ReqContext) response.Response {
 	}
 
 	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(c.Req.Context(), &existing); err == nil {
+	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &existing); err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
@@ -51,7 +51,7 @@ func SignUp(c *models.ReqContext) response.Response {
 	}
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
@@ -86,7 +86,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	// verify email
 	if setting.VerifyEmailEnabled {
-		if ok, rsp := verifyUserSignUpEmail(c.Req.Context(), form.Email, form.Code); !ok {
+		if ok, rsp := hs.verifyUserSignUpEmail(c.Req.Context(), form.Email, form.Code); !ok {
 			return rsp
 		}
 		createUserCmd.EmailVerified = true
@@ -116,7 +116,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	// check for pending invites
 	invitesQuery := models.GetTempUsersQuery{Email: form.Email, Status: models.TmpUserInvitePending}
-	if err := bus.Dispatch(c.Req.Context(), &invitesQuery); err != nil {
+	if err := hs.SQLStore.GetTempUsersQuery(c.Req.Context(), &invitesQuery); err != nil {
 		return response.Error(500, "Failed to query database for invites", err)
 	}
 
@@ -138,10 +138,10 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	return response.JSON(200, apiResponse)
 }
 
-func verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {
+func (hs *HTTPServer) verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {
 	query := models.GetTempUserByCodeQuery{Code: code}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := hs.SQLStore.GetTempUserByCode(ctx, &query); err != nil {
 		if errors.Is(err, models.ErrTempUserNotFound) {
 			return false, response.Error(404, "Invalid email verification code", nil)
 		}

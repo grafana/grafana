@@ -214,6 +214,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
+		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
@@ -249,7 +250,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"edition":         hs.License.Edition(),
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
@@ -269,7 +270,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
 		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
+			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 		"featureHighlights": map[string]bool{

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -50,11 +51,13 @@ func TestPluginManager_int_init(t *testing.T) {
 	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
 	require.NoError(t, err)
 
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:                ini.Empty(),
-		Env:                setting.Prod,
-		StaticRootPath:     staticRootPath,
-		BundledPluginsPath: bundledPluginsPath,
+		Raw:                    ini.Empty(),
+		Env:                    setting.Prod,
+		StaticRootPath:         staticRootPath,
+		BundledPluginsPath:     bundledPluginsPath,
+		IsFeatureToggleEnabled: features.IsEnabled,
 		PluginSettings: map[string]map[string]string{
 			"plugin.datasource-id": {
 				"path": "testdata/test-app",
@@ -79,7 +82,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp, tracer)
 	tmpo := tempo.ProvideService(hcp)
-	td := testdatasource.ProvideService(cfg)
+	td := testdatasource.ProvideService(cfg, features)
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
@@ -88,8 +91,8 @@ func TestPluginManager_int_init(t *testing.T) {
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, nil, loader.New(pmCfg, license,
-		&signature.UnsignedPluginAuthorizer{Cfg: pmCfg}, provider.ProvideService(coreRegistry)), nil)
+	pm, err := ProvideService(cfg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 
 	verifyCorePluginCatalogue(t, pm)

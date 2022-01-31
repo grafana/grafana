@@ -3565,14 +3565,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@es-joy/jsdoccomment@npm:~0.17.0":
-  version: 0.17.0
-  resolution: "@es-joy/jsdoccomment@npm:0.17.0"
+"@es-joy/jsdoccomment@npm:~0.18.0":
+  version: 0.18.0
+  resolution: "@es-joy/jsdoccomment@npm:0.18.0"
   dependencies:
     comment-parser: 1.3.0
     esquery: ^1.4.0
-    jsdoc-type-pratt-parser: ~2.2.1
-  checksum: 8fc1fc2d01fdf18c033a70939ce61c4fa5cb648bd42987ffe6025b78e1ebbceda6f44f9868d26d51112fc9f743d1e66d0830436697fd60de327fcc9d7ae8c2e9
+    jsdoc-type-pratt-parser: ~2.2.2
+  checksum: 823a078e345258980fbb82709c4616e84aee826c266c8bf9d128e2c6a2e9fea2ef0d1dba5fe5822762c666e946f952cf6d9b7244d0e8cf8226ab6ce804c62eb7
   languageName: node
   linkType: hard
 
@@ -4029,6 +4029,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/tsconfig@npm:^1.1.0-rc1":
+  version: 1.1.0-rc1
+  resolution: "@grafana/tsconfig@npm:1.1.0-rc1"
+  checksum: cc66393faffe4574d63c35a8516b53bab0025c320d89d3acd559647cf2ce81384bbcfb250837e588e39b1abefda7b279e2877cf18bae8ddb0dd6254d5e9688f2
+  languageName: node
+  linkType: hard
+
 "@grafana/ui@8.4.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
@@ -4087,7 +4094,7 @@ __metadata:
     "@types/lodash": 4.14.149
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.19
-    "@types/prismjs": 1.16.6
+    "@types/prismjs": 1.26.0
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-calendar": 3.4.4
@@ -6243,10 +6250,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.0.4":
-  version: 1.0.4
-  resolution: "@opentelemetry/api@npm:1.0.4"
-  checksum: 793e9b5c21666b647a60c58c46c3e00ad1dac38505102b026ad0ef617571d637aca54a18533a73c1e288c95b5ac77e2db17f96467f11833ac1165338e1184260
+"@opentelemetry/api@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@opentelemetry/api@npm:1.1.0"
+  checksum: 8be8e8dd20a473639a9bb9b4185b8984f537f86e49829ba1d4c4e909f4480309cb22696b7eb7122882878dac0b5f4ce799d66ed72248568bafed085d6269e1bc
   languageName: node
   linkType: hard
 
@@ -9957,10 +9964,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.16.6":
-  version: 1.16.6
-  resolution: "@types/prismjs@npm:1.16.6"
-  checksum: fcb489d19d21292ceffc661fd9c9aa8ba36bcd2835388fa85812aa60cdf14d4720ceb22be7a088aa753c48462e75bcd8191d178a085e4a8b0d3f34471d30d86a
+"@types/prismjs@npm:1.26.0":
+  version: 1.26.0
+  resolution: "@types/prismjs@npm:1.26.0"
+  checksum: cd5e7a6214c1f4213ec512a5fcf6d8fe37a56b813fc57ac95b5ff5ee074742bfdbd2f2730d9fd985205bf4586728e09baa97023f739e5aa1c9735a7c1ecbd11a
   languageName: node
   linkType: hard
 
@@ -10955,9 +10962,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:2.2.2":
-  version: 2.2.2
-  resolution: "@visx/tooltip@npm:2.2.2"
+"@visx/tooltip@npm:2.8.0":
+  version: 2.8.0
+  resolution: "@visx/tooltip@npm:2.8.0"
   dependencies:
     "@types/react": "*"
     "@visx/bounds": 2.1.2
@@ -10967,7 +10974,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0-0 || ^17.0.0-0
     react-dom: ^16.8.0-0 || ^17.0.0-0
-  checksum: 5287f58f78c88df3745c4ea5dfb58e918e716df5429825eacd401e0385767a6226dd2105dd4f5b472bb15df9b9f30da0fc67263f512d3f372a172d2c9a8c3e16
+  checksum: 0c55f1b6b1fae4a6631d1f0eb3f6340754ef839e17d64fd41259aed75634f954b2e7df67040a3103eb7fd088e481d4f38b76d7e231eaddb6e7d63a7639e0bf3a
   languageName: node
   linkType: hard
 
@@ -17618,11 +17625,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:37.6.1":
-  version: 37.6.1
-  resolution: "eslint-plugin-jsdoc@npm:37.6.1"
+"eslint-plugin-jsdoc@npm:37.7.0":
+  version: 37.7.0
+  resolution: "eslint-plugin-jsdoc@npm:37.7.0"
   dependencies:
-    "@es-joy/jsdoccomment": ~0.17.0
+    "@es-joy/jsdoccomment": ~0.18.0
     comment-parser: 1.3.0
     debug: ^4.3.3
     escape-string-regexp: ^4.0.0
@@ -17632,7 +17639,7 @@ __metadata:
     spdx-expression-parse: ^3.0.1
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0
-  checksum: 646bb7cd52221cd4764bdcfe545fbcbf0087e18a3c85ea62e7009a2bba66dcc605f6eb9a3c15dc1be56674465d7883fdc234c70f34b769b4afd5dc5ec205136b
+  checksum: e11f11abc8e5e19bb3a357186dbfc5640c2f891be81b95e654d063b49e4ad4fccaed71cda18e35ab37062a0705fd156be6e00be53f2fbb2e1552e6f5e118bf55
   languageName: node
   linkType: hard
 
@@ -19773,7 +19780,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/toolkit": "workspace:*"
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.1.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 4.1.2
@@ -19782,7 +19789,7 @@ __metadata:
     "@lingui/macro": 3.13.0
     "@lingui/react": 3.13.0
     "@microsoft/api-extractor": 7.19.4
-    "@opentelemetry/api": 1.0.4
+    "@opentelemetry/api": 1.1.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.0.1
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.4
@@ -19838,7 +19845,7 @@ __metadata:
     "@types/node": 16.11.19
     "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
-    "@types/prismjs": 1.16.6
+    "@types/prismjs": 1.26.0
     "@types/rc-time-picker": ^3
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
@@ -19869,7 +19876,7 @@ __metadata:
     "@visx/group": 2.1.0
     "@visx/scale": 2.2.2
     "@visx/shape": 2.4.0
-    "@visx/tooltip": 2.2.2
+    "@visx/tooltip": 2.8.0
     "@welldone-software/why-did-you-render": 6.2.3
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.6
     angular: 1.8.2
@@ -19906,7 +19913,7 @@ __metadata:
     enzyme-to-json: 3.6.2
     eslint: 7.28.0
     eslint-config-prettier: 8.3.0
-    eslint-plugin-jsdoc: 37.6.1
+    eslint-plugin-jsdoc: 37.7.0
     eslint-plugin-lodash: ^7.2.0
     eslint-plugin-no-only-tests: 2.6.0
     eslint-plugin-prettier: 4.0.0
@@ -23449,10 +23456,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsdoc-type-pratt-parser@npm:~2.2.1":
-  version: 2.2.1
-  resolution: "jsdoc-type-pratt-parser@npm:2.2.1"
-  checksum: 1cb5c9b49009e7cf4f1d126cbc6b2cc90279fb78275bef6705dd319f86f2ccb60be7600190dcf6fb8ad041f40ed206a619b90291e65f1ddb12397a8294fe11b7
+"jsdoc-type-pratt-parser@npm:~2.2.2":
+  version: 2.2.2
+  resolution: "jsdoc-type-pratt-parser@npm:2.2.2"
+  checksum: 719ed04ab39f05849e293ae30253166a555c477e99f79025df1686d664764a9e1e8c679bdeba0f60381c4539dbce27687417d5f810ffedbc2adbede0bedec107
   languageName: node
   linkType: hard
 

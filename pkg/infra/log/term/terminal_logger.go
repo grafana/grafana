@@ -47,9 +47,9 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	b := &bytes.Buffer{}
 	lvl := strings.ToUpper(r.level.String())
 	if r.color > 0 {
-		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg)
+		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	} else {
-		fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.time.Format(termTimeFormat), r.msg)
+		fmt.Fprintf(b, "[%s] [%s] %s ", lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	}
 
 	// try to justify the log output for short messages
@@ -91,12 +91,24 @@ func getRecord(keyvals ...interface{}) *record {
 		k, v := keyvals[i], keyvals[i+1]
 
 		if k == "t" {
-			t := v.(fmt.Stringer)
-			time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
-			if err == nil {
-				r.time = time
+			t, ok := v.(fmt.Stringer)
+			if ok {
+				time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
+				if err == nil {
+					r.time = time
+					continue
+				}
 			}
-			continue
+
+			t3, ok := v.(string)
+			if ok {
+				// from alerting:        2022-01-26T12:03:41.655107858-08:00
+				time, err := time.Parse("2006-01-02T15:04:05.999999999-07:00", t3)
+				if err == nil {
+					r.time = time
+					continue
+				}
+			}
 		}
 
 		if keyvals[i] == "msg" {
@@ -148,7 +160,7 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
 
 		// XXX: we should probably check that all of your key bytes aren't invalid
 		if color > 0 {
-			fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v)
+			fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v) // lgtm[go/log-injection]
 		} else {
 			buf.WriteString(k)
 			buf.WriteByte('=')
