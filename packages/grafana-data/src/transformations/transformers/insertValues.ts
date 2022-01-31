@@ -75,7 +75,7 @@ export function insertValuesInterval(
   value: any = null,
   guessFromValues = false,
   isRefField = IS_TIME_FIELD
-) {
+): DataFrame {
   if (frame.length <= 1) {
     return frame;
   }
