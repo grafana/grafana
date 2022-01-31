@@ -22,6 +22,7 @@ export interface Props {
   closeOnEscape?: boolean;
   closeOnBackdropClick?: boolean;
   trapFocus?: boolean;
+  hideTitle?: boolean;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -42,6 +43,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onDismiss: propsOnDismiss,
     onClickBackdrop,
     trapFocus = true,
+    hideTitle = false,
   } = props;
   const theme = useTheme2();
   const styles = getModalStyles(theme);
@@ -81,13 +83,15 @@ export function Modal(props: PropsWithChildren<Props>) {
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
         <div className={cx(styles.modal, className)}>
-          <div className={headerClass}>
-            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
-            {typeof title !== 'string' && title}
-            <div className={styles.modalHeaderClose}>
-              <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
+          {!hideTitle && (
+            <div className={headerClass}>
+              {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
+              {typeof title !== 'string' && title}
+              <div className={styles.modalHeaderClose}>
+                <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
+              </div>
             </div>
-          </div>
+          )}
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
       </FocusScope>
