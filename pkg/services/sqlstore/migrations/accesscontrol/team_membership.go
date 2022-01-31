@@ -14,10 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const batchSize = 500
+const (
+	TeamsMigrationID = "teams permissions migration"
+	batchSize        = 500
+)
 
 func AddTeamMembershipMigrations(mg *migrator.Migrator) {
-	mg.AddMigration("teams permissions migration", &teamPermissionMigrator{editorsCanAdmin: mg.Cfg.EditorsCanAdmin})
+	mg.AddMigration(TeamsMigrationID, &teamPermissionMigrator{editorsCanAdmin: mg.Cfg.EditorsCanAdmin})
 }
 
 var _ migrator.CodeMigration = new(teamPermissionMigrator)
@@ -58,28 +61,25 @@ func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 	return "", fmt.Errorf("failed to generate uid")
 }
 
-func (p *teamPermissionMigrator) findRole(orgID int64, name string) (*accesscontrol.Role, error) {
+func (p *teamPermissionMigrator) findRole(orgID int64, name string) (accesscontrol.Role, error) {
 	// check if role exists
 	var role accesscontrol.Role
-	_, err := p.sess.Table("role").Select("id").Where("org_id = ? AND name = ?", orgID, name).Get(&role)
-	if err != nil {
-		return nil, err
-	}
-	return &role, nil
+	_, err := p.sess.Table("role").Where("org_id = ? AND name = ?", orgID, name).Get(&role)
+	return role, err
 }
 
 func batch(count, batchSize int, eachFn func(start, end int) error) error {
 	for i := 0; i < count; {
-		end := i + batchSize - 1
-		if end > count-1 {
-			end = count - 1
+		end := i + batchSize
+		if end > count {
+			end = count
 		}
 
 		if err := eachFn(i, end); err != nil {
 			return err
 		}
 
-		i = end + 1
+		i = end
 	}
 
 	return nil
@@ -87,12 +87,12 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 
 func (p *teamPermissionMigrator) bulkCreateRoles(allRoles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
 	ts := time.Now()
-	allCreatedRoles := make([]*accesscontrol.Role, len(allRoles))
+	allCreatedRoles := make([]*accesscontrol.Role, 0, len(allRoles))
 
 	// bulk role creations
 	err := batch(len(allRoles), batchSize, func(start, end int) error {
 		roles := allRoles[start:end]
-		createdRoles := make([]*accesscontrol.Role, len(roles))
+		createdRoles := make([]*accesscontrol.Role, 0, len(roles))
 		valueStrings := make([]string, len(roles))
 		args := make([]interface{}, 0, len(roles)*5)
 
@@ -124,9 +124,13 @@ func (p *teamPermissionMigrator) bulkCreateRoles(allRoles []*accesscontrol.Role)
 }
 
 func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscontrol.Role, assignments map[int64]map[string]struct{}) error {
+	if len(assignments) == 0 {
+		return nil
+	}
+
 	ts := time.Now()
 
-	roleAssignments := make([]accesscontrol.UserRole, len(assignments))
+	roleAssignments := make([]accesscontrol.UserRole, 0, len(assignments))
 	for userID, rolesByRoleKey := range assignments {
 		for key := range rolesByRoleKey {
 			role, ok := rolesMap[key]
@@ -143,10 +147,6 @@ func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscont
 		}
 	}
 
-	if len(roleAssignments) == 0 {
-		return nil
-	}
-
 	return batch(len(roleAssignments), batchSize, func(start, end int) error {
 		roleAssignmentsChunk := roleAssignments[start:end]
 		_, err := p.sess.Table("user_role").InsertMulti(roleAssignmentsChunk)
@@ -157,7 +157,7 @@ func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscont
 // setRolePermissions sets the role permissions deleting any team related ones before inserting any.
 func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []accesscontrol.Permission) error {
 	// First drop existing permissions
-	if _, errDeletingPerms := p.sess.SQL("DELETE FROM permission WHERE role_id = ? AND (action LIKE ? OR action LIKE ?)", roleID, "teams:%", "teams.permissions:%").Exec(); errDeletingPerms != nil {
+	if _, errDeletingPerms := p.sess.Exec("DELETE FROM permission WHERE role_id = ? AND (action LIKE ? OR action LIKE ?)", roleID, "teams:%", "teams.permissions:%"); errDeletingPerms != nil {
 		return errDeletingPerms
 	}
 
@@ -227,15 +227,14 @@ func (p *teamPermissionMigrator) migrateMemberships() error {
 		return err
 	}
 
-	var teamMemberships []models.TeamMember
-	if err := p.sess.SQL(`SELECT * FROM team_member`).Find(&teamMemberships); err != nil {
+	teamMemberships := []*models.TeamMember{}
+	if err := p.sess.SQL("SELECT * FROM team_member").Find(&teamMemberships); err != nil {
 		return err
 	}
 
 	// Loop through memberships and generate associated permissions
 	// Downgrade team permissions if needed - only organisation admins or organisation editors (when editorsCanAdmin feature is enabled)
 	// can access team administration endpoints
-	// log?
 	userPermissionsByOrg, errGen := p.generateAssociatedPermissions(teamMemberships, userRolesByOrg)
 	if errGen != nil {
 		return errGen
@@ -304,8 +303,8 @@ func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int6
 
 			roleKey := p.getAssignmentKey(orgID, roleName)
 
-			if role != nil {
-				rolesByOrg[roleKey] = role
+			if role.ID != 0 {
+				rolesByOrg[roleKey] = &role
 			} else {
 				roleToCreate := &accesscontrol.Role{
 					Name:  roleName,
@@ -327,7 +326,7 @@ func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int6
 	return rolesToCreate, assignments, rolesByOrg, nil
 }
 
-func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships []models.TeamMember,
+func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships []*models.TeamMember,
 	userRolesByOrg map[int64]map[int64]string) (map[int64]map[int64][]accesscontrol.Permission, error) {
 	userPermissionsByOrg := map[int64]map[int64][]accesscontrol.Permission{}
 
