@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	nbp "github.com/grafana/grafana/pkg/services/navbarpreferences"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -386,10 +387,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		// query navbar_preferences table for any preferences
-		navbarPrefsQuery := models.GetNavbarPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
-		if err := hs.SQLStore.GetNavbarPreferences(c.Req.Context(), &navbarPrefsQuery); err != nil {
-			return nil, err
-		}
+		navbarPrefsQuery := nbp.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
 
 		for _, navItem := range navTree {
 			// show everything by default

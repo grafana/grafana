@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/navbarpreferences"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -192,6 +193,8 @@ var wireBasicSet = wire.NewSet(
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboards.ProvideService,
+	navbarpreferences.ProvideService,
+	wire.Bind(new(navbarpreferences.Service), new(*navbarpreferences.NavbarPreferencesService)),
 )
 
 var wireSet = wire.NewSet(
