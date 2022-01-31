@@ -109,7 +109,7 @@ func testScenario(t *testing.T, name string) {
 	api, err := makeMockedApi(responseBytes)
 	require.NoError(t, err)
 
-	result, err := runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	result, err := runQueries(context.Background(), api, []*PrometheusQuery{&query}, true)
 	require.NoError(t, err)
 	require.Len(t, result.Responses, 1)
 
