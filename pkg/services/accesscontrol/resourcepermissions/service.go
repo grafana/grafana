@@ -17,7 +17,7 @@ type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(
 		ctx context.Context, orgID int64,
-		user User,
+		user types.User,
 		cmd accesscontrol.SetResourcePermissionCommand,
 		hook types.UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
@@ -92,11 +92,6 @@ type Service struct {
 	sqlStore    *sqlstore.SQLStore
 }
 
-type User struct {
-	ID         int64
-	IsExternal bool
-}
-
 func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return s.store.GetResourcesPermissions(ctx, orgID, accesscontrol.GetResourcesPermissionsQuery{
 		Actions:     s.actions,
@@ -106,7 +101,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 	})
 }
 
-func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user types.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.Users {
 		return nil, ErrInvalidAssignment
 	}

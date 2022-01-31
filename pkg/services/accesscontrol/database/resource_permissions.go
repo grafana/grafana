@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -35,7 +34,7 @@ func (p *flatResourcePermission) Managed() bool {
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
-	ctx context.Context, orgID int64, user resourcepermissions.User,
+	ctx context.Context, orgID int64, user types.User,
 	cmd accesscontrol.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
