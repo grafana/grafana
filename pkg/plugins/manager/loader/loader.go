@@ -62,7 +62,7 @@ func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLo
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
-		l.log.Error("plugin finder encountered an error", "err", err)
+		return nil, err
 	}
 
 	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
