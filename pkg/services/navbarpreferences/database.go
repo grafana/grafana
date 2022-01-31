@@ -9,19 +9,26 @@ import (
 
 func (n *NavbarPreferencesService) getNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
 	err := n.SQLStore.WithDbSession(c, func(sess *sqlstore.DBSession) error {
-		var prefs []models.NavbarPreferences
-		exists, err := sess.Where("org_id=? AND user_id=?", query.OrgId, query.UserId).Get(&prefs)
+    // builder
 
-		if err != nil {
+		builder := sqlstore.SQLBuilder{}
+		builder.Write("SELECT * from nav_preferences")
+		builder.Write("SELECT * from nav_preferences")
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
 		}
 
-		if exists {
-			query.Result = &prefs
-		} else {
-			query.Result = new([]models.NavbarPreferences)
+	  sess := session.SQL(sql, uid, orgID)
+	  err := sess.Find(&elements)
+		if len(libraryElements) == 0 {
+			return ErrLibraryElementNotFound
 		}
 
 		return nil
-	})
+  })
+
+  if err != nil {
+		return []NavbarPreference{}, err
+	}
+
 }
