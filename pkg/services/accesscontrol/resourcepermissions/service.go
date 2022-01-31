@@ -80,6 +80,14 @@ func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessC
 	return s, nil
 }
 
+// PermissionService interface allows mocking Service that is defined below
+type PermissionService interface {
+	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user types.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error)
+	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error)
+	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error)
+}
+
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
 	ac    accesscontrol.AccessControl
