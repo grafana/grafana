@@ -3,7 +3,7 @@ import { Alert, CodeEditor } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
 import { isArray } from 'lodash';
 import { toDataQueryResponse } from '@grafana/runtime';
-import { dataFrameToJSON } from '@grafana/data';
+import { dataFrameToJSON, toDataFrame, toDataFrameDTO } from '@grafana/data';
 
 export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
   const [error, setError] = useState<string>();
@@ -19,12 +19,22 @@ export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
         return;
       }
 
-      // Chek if it is a copy of the raw resuls
-      const v = toDataQueryResponse({ data: json });
-      if (v.data?.length && !v.error) {
-        const data = v.data.map((f) => dataFrameToJSON(f));
-        console.log('SOURCE', json);
-        console.log('SAVE', data);
+      let data: any = undefined;
+
+      // Copy paste from panel json
+      if (isArray(json.series) && json.state) {
+        data = json.series.map((v: any) => toDataFrameDTO(toDataFrame(v)));
+      } else {
+        // Chek if it is a copy of the raw resuls
+        const v = toDataQueryResponse({ data: json });
+        if (v.data?.length && !v.error) {
+          data = v.data.map((f) => dataFrameToJSON(f));
+        }
+      }
+
+      if (data) {
+        console.log('Original', json);
+        console.log('Save', data);
         setError(undefined);
         setWarning('Converted to direct frame result');
         onChange({ ...query, rawFrameContent: JSON.stringify(data, null, 2) });
@@ -33,6 +43,7 @@ export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
 
       setError('Unable to read dataframes in text');
     } catch (e) {
+      console.log('Error parsing json', e);
       setError('Enter JSON array of data frames (or raw query results body)');
       setWarning(undefined);
     }
@@ -48,7 +59,7 @@ export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
         value={query.rawFrameContent ?? '[]'}
         onBlur={onSaveFrames}
         onSave={onSaveFrames}
-        showMiniMap={false}
+        showMiniMap={true}
         showLineNumbers={true}
       />
     </>
