@@ -93,16 +93,16 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/unknwon/com v1.0.1
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/vectordotdev/go-datemath v0.1.1-0.20211214152759-c03a58217724
+	github.com/vectordotdev/go-datemath v0.1.1-0.20220110192739-f9ce83ec349f
 	github.com/weaveworks/common v0.0.0-20210913144402-035033b78a78
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
 	go.opentelemetry.io/collector v0.31.0
 	go.opentelemetry.io/collector/model v0.31.0
-	go.opentelemetry.io/otel v1.2.0
+	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
 	go.opentelemetry.io/otel/sdk v1.0.0
-	go.opentelemetry.io/otel/trace v1.2.0
+	go.opentelemetry.io/otel/trace v1.3.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
@@ -257,6 +257,8 @@ require cloud.google.com/go/kms v1.1.0
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
 	github.com/containerd/containerd v1.5.9 // indirect
+	github.com/go-logr/logr v1.2.1 // indirect
+	github.com/go-logr/stdr v1.2.0 // indirect
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
