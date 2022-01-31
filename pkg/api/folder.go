@@ -130,6 +130,7 @@ func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *mode
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
+	canDelete, _ := g.CanDelete()
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
@@ -149,6 +150,7 @@ func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *mode
 		CanSave:   canSave,
 		CanEdit:   canEdit,
 		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
 		CreatedBy: creator,
 		Created:   folder.Created,
 		UpdatedBy: updater,
