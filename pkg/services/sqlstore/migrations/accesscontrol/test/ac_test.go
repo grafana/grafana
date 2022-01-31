@@ -75,22 +75,6 @@ var (
 			Updated: now,
 		},
 	}
-	expectedRolePerms = map[string][]rawPermission{
-		"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
-		"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
-		"managed:users:3:permissions": {{Action: "teams:read", Scope: team1Scope}},
-		"managed:users:4:permissions": {
-			{Action: "teams:read", Scope: team1Scope},
-			{Action: "teams:delete", Scope: team1Scope},
-			{Action: "teams:write", Scope: team1Scope},
-			{Action: "teams.permissions:read", Scope: team1Scope},
-			{Action: "teams.permissions:write", Scope: team1Scope},
-		},
-		"managed:users:5:permissions": {
-			{Action: "teams:read", Scope: team2Scope},
-			{Action: "users:read", Scope: "users:*"},
-		},
-	}
 )
 
 func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermission {
@@ -130,45 +114,106 @@ func TestMigrations(t *testing.T) {
 	// Create managed user roles with teams permissions (ex: teams:read and teams.permissions:read)
 	setupUnecessaryFGACPermissions(t, x)
 
-	// Remove migration
-	_, err = x.Exec("DELETE FROM migration_log WHERE migration_id = ?", acmig.TeamsMigrationID)
-	require.NoError(t, err)
+	type teamMigrationTestCase struct {
+		desc              string
+		config            *setting.Cfg
+		expectedRolePerms map[string][]rawPermission
+	}
+	testCases := []teamMigrationTestCase{
+		{
+			desc: "with editors can admin",
+			config: &setting.Cfg{
+				EditorsCanAdmin: true,
+				FeatureToggles:  map[string]bool{"accesscontrol": true},
+			},
+			expectedRolePerms: map[string][]rawPermission{
+				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				"managed:users:3:permissions": {
+					{Action: "teams:read", Scope: team1Scope},
+					{Action: "teams:delete", Scope: team1Scope},
+					{Action: "teams:write", Scope: team1Scope},
+					{Action: "teams.permissions:read", Scope: team1Scope},
+					{Action: "teams.permissions:write", Scope: team1Scope},
+				},
+				"managed:users:4:permissions": {
+					{Action: "teams:read", Scope: team1Scope},
+					{Action: "teams:delete", Scope: team1Scope},
+					{Action: "teams:write", Scope: team1Scope},
+					{Action: "teams.permissions:read", Scope: team1Scope},
+					{Action: "teams.permissions:write", Scope: team1Scope},
+				},
+				"managed:users:5:permissions": {
+					{Action: "teams:read", Scope: team2Scope},
+					{Action: "users:read", Scope: "users:*"},
+				},
+			},
+		},
+		{
+			desc: "without editors can admin",
+			config: &setting.Cfg{
+				FeatureToggles: map[string]bool{"accesscontrol": true},
+			},
+			expectedRolePerms: map[string][]rawPermission{
+				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				"managed:users:3:permissions": {{Action: "teams:read", Scope: team1Scope}},
+				"managed:users:4:permissions": {
+					{Action: "teams:read", Scope: team1Scope},
+					{Action: "teams:delete", Scope: team1Scope},
+					{Action: "teams:write", Scope: team1Scope},
+					{Action: "teams.permissions:read", Scope: team1Scope},
+					{Action: "teams.permissions:write", Scope: team1Scope},
+				},
+				"managed:users:5:permissions": {
+					{Action: "teams:read", Scope: team2Scope},
+					{Action: "users:read", Scope: "users:*"},
+				},
+			},
+		},
+	}
 
-	// Run accesscontrol migration (permissions insertion should not have conflicted)
-	acmigrator := migrator.NewMigrator(x, &setting.Cfg{
-		FeatureToggles: map[string]bool{"accesscontrol": true},
-	})
-	acmig.AddTeamMembershipMigrations(acmigrator)
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Remove migration
+			_, err = x.Exec("DELETE FROM migration_log WHERE migration_id = ?", acmig.TeamsMigrationID)
+			require.NoError(t, err)
 
-	err = acmigrator.Start()
-	require.NoError(t, err)
+			// Run accesscontrol migration (permissions insertion should not have conflicted)
+			acmigrator := migrator.NewMigrator(x, tc.config)
+			acmig.AddTeamMembershipMigrations(acmigrator)
 
-	for _, user := range users {
-		// Check managed roles exist
-		roleName := fmt.Sprintf("managed:users:%d:permissions", user.Id)
-		role := accesscontrol.Role{}
-		hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, roleName).Get(&role)
+			err = acmigrator.Start()
+			require.NoError(t, err)
 
-		require.NoError(t, errManagedRoleSearch)
-		assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
+			for _, user := range users {
+				// Check managed roles exist
+				roleName := fmt.Sprintf("managed:users:%d:permissions", user.Id)
+				role := accesscontrol.Role{}
+				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, roleName).Get(&role)
 
-		// Check permissions associated with each role
-		perms := []accesscontrol.Permission{}
-		countUserPermissions, errManagedPermsSearch := x.Table("permission").Where("role_id = ?", role.ID).FindAndCount(&perms)
+				require.NoError(t, errManagedRoleSearch)
+				assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
 
-		require.NoError(t, errManagedPermsSearch)
-		assert.Equal(t, int64(len(expectedRolePerms[roleName])), countUserPermissions, "expected role to be tied to permissions", user, role)
+				// Check permissions associated with each role
+				perms := []accesscontrol.Permission{}
+				countUserPermissions, errManagedPermsSearch := x.Table("permission").Where("role_id = ?", role.ID).FindAndCount(&perms)
 
-		rawPerms := convertToRawPermissions(perms)
-		for _, perm := range rawPerms {
-			assert.Contains(t, expectedRolePerms[roleName], perm)
-		}
+				require.NoError(t, errManagedPermsSearch)
+				assert.Equal(t, int64(len(tc.expectedRolePerms[roleName])), countUserPermissions, "expected role to be tied to permissions", user, role)
 
-		// Check assignment of the roles
-		assign := accesscontrol.UserRole{}
-		has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.Id).Get(&assign)
-		require.NoError(t, errAssignmentSearch)
-		assert.True(t, has, "expected assignment of role to user", role, user)
+				rawPerms := convertToRawPermissions(perms)
+				for _, perm := range rawPerms {
+					assert.Contains(t, tc.expectedRolePerms[roleName], perm)
+				}
+
+				// Check assignment of the roles
+				assign := accesscontrol.UserRole{}
+				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.Id).Get(&assign)
+				require.NoError(t, errAssignmentSearch)
+				assert.True(t, has, "expected assignment of role to user", role, user)
+			}
+		})
 	}
 }
 
