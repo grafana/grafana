@@ -234,7 +234,7 @@ describe('calculateField transformer w/ timeseries', () => {
         },
         replaceFields: true,
       },
-      replace: (target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+      replace: (target: string, scopedVars?: ScopedVars, format?: string | Function): string => {
         const variables: ScopedVars = {
           var1: {
             value: 'Test',
