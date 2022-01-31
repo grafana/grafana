@@ -375,15 +375,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
 
         // Calculate final co-ordinates for text position
+        // And retrieve metrics for rendered text
         const x =
           u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset);
         const y =
           u.bbox.top +
           (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift);
+        const textMetrics = u.ctx.measureText(text);
 
-        // const currentSeries = barRects.filter((rect) => )
-
-        let textMetrics = u.ctx.measureText(text);
+        // Insert label into r-tree for intersection calculations
         labelRt.insert({
           x: x,
           y: y,
@@ -391,45 +391,27 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
         });
 
-        // Cache label placement information
+        // Cache label placement information for render
         labels.push({
           x: x,
           y: y,
           textMetrics: textMetrics,
           text: text,
         });
-
-        // console.log(intersects.length);
-
-        // if (intersects.length <= 2) {
-        //   u.ctx.fillText(text, x, y);
-        // }
-
-        // console.log(intersects);
-
-        // See if the label exceeds the bounds of the bar segment
-        // If so, don't draw it. Otherwise draw the label
-        if (showValue === VisibilityMode.Auto) {
-        }
-
-        // console.log(res);
       }
     });
 
     labels.forEach(({ x, y, text, textMetrics }, i) => {
+      // Retrieve any intersecting objects
       const searchObj = {
         minX: x,
         minY: y,
         maxX: x + textMetrics.width,
         maxY: y + textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
       };
-
-      let intersectsBoxes = rt.search(searchObj);
       let intersectsLabels = labelRt.search(searchObj);
 
-      console.log(intersectsLabels);
-
-      if (intersectsLabels.length <= 1) {
+      if (showValue === VisibilityMode.Always || (showValue === VisibilityMode.Auto && intersectsLabels.length <= 1)) {
         u.ctx.fillText(text, x, y);
       }
     });
