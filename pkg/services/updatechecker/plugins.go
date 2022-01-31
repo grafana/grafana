@@ -66,7 +66,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 
 func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string, bool) {
 	s.mutex.RLock()
-	update, updateAvailable := s.availableUpdates[pluginID]
+	updateVers, updateAvailable := s.availableUpdates[pluginID]
 	s.mutex.RUnlock()
 	if updateAvailable {
 		// check if plugin has already been updated since the last invocation of `checkForUpdates`
@@ -75,7 +75,9 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 			return "", false
 		}
 
-		return update, canUpgrade(plugin.Info.Version, update)
+		if canUpdate(plugin.Info.Version, updateVers) {
+			return updateVers, true
+		}
 	}
 
 	return "", false
@@ -117,7 +119,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	availableUpdates := map[string]string{}
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
-			if canUpgrade(localP.Info.Version, gcomP.Version) {
+			if canUpdate(localP.Info.Version, gcomP.Version) {
 				availableUpdates[localP.ID] = gcomP.Version
 			}
 		}
@@ -130,7 +132,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	}
 }
 
-func canUpgrade(v1, v2 string) bool {
+func canUpdate(v1, v2 string) bool {
 	ver1, err1 := version.NewVersion(v1)
 	if err1 != nil {
 		return false

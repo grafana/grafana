@@ -106,13 +106,11 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 		jsonResp := `[
 		  {
 			"slug": "test-ds",
-			"version": "1.0.12",
-			"grafanaDependency": ">=7.1.0"
+			"version": "1.0.12"
 		  },
 		  {
 			"slug": "test-panel",
-			"version": "2.5.7",
-			"grafanaDependency": ">=8.0.0"
+			"version": "2.5.7"
 		  },
 		  {
 			"slug": "test-core-panel",
@@ -124,7 +122,6 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-app": "1.0.0",
 			},
-			grafanaVersion: "8.0.0",
 			pluginStore: fakePluginStore{
 				plugins: map[string]plugins.PluginDTO{
 					"test-ds": {
@@ -162,17 +159,17 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 
 		svc.checkForUpdates(context.Background())
 
-		require.Equal(t, 2, len(svc.availableUpdates))
+		require.Equal(t, 1, len(svc.availableUpdates))
 
 		require.Equal(t, "1.0.12", svc.availableUpdates["test-ds"])
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
 		require.True(t, exists)
 		require.Equal(t, "1.0.12", update)
 
-		require.Equal(t, "1.0.0", svc.availableUpdates["test-app"])
+		require.Empty(t, svc.availableUpdates["test-app"])
 		update, exists = svc.HasUpdate(context.Background(), "test-app")
-		require.True(t, exists)
-		require.Equal(t, "1.0.0", update)
+		require.False(t, exists)
+		require.Empty(t, update)
 
 		require.Empty(t, svc.availableUpdates["test-panel"])
 		update, exists = svc.HasUpdate(context.Background(), "test-panel")
@@ -223,10 +220,6 @@ type fakeLogger struct {
 	log.Logger
 }
 
-func (l *fakeLogger) Debug(msg string, ctx ...interface{}) {
+func (l *fakeLogger) Debug(_ string, _ ...interface{}) {}
 
-}
-
-func (l *fakeLogger) Warn(msg string, ctx ...interface{}) {
-
-}
+func (l *fakeLogger) Warn(_ string, _ ...interface{}) {}
