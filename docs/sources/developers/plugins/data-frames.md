@@ -163,7 +163,7 @@ Dimensions: 5 fields by 2 rows
 +---------------------+------------------+------------------+------------------+------------------+
 ```
 
-> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. Read more about how to use it here: [Prepare time series-transformation]({{< relref "../../panels/transformations/types-options.md#prepare-time-series" >}}).
+> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. Read more about how to use it here: [Prepare time series-transformation]({{< relref "../../panels/reference-transformation-functions.md#prepare-time-series" >}}).
 
 ## Technical references
 

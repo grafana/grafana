@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
 
@@ -43,7 +45,7 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
+	enabled := settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption)
 	currentProviderID := readCurrentProviderID(settings)
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
@@ -87,7 +89,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+		if s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -130,11 +132,11 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
 	keyName := s.keyName(scope)
 
@@ -172,12 +174,12 @@ func (s *SecretsService) keyName(scope string) string {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if secrets.EnvelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
+	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
@@ -358,6 +360,15 @@ var (
 
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(gcInterval)
+	grp, gCtx := errgroup.WithContext(ctx)
+
+	for _, p := range s.providers {
+		if svc, ok := p.(secrets.BackgroundProvider); ok {
+			grp.Go(func() error {
+				return svc.Run(gCtx)
+			})
+		}
+	}
 
 	for {
 		select {
@@ -365,9 +376,14 @@ func (s *SecretsService) Run(ctx context.Context) error {
 			s.log.Debug("removing expired data encryption keys from cache...")
 			s.removeExpiredItems()
 			s.log.Debug("done removing expired data encryption keys from cache")
-		case <-ctx.Done():
+		case <-gCtx.Done():
 			s.log.Debug("grafana is shutting down; stopping...")
 			gc.Stop()
+
+			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+
 			return nil
 		}
 	}

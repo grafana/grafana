@@ -139,9 +139,15 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme rend
 
 	r.mode = mode
 	r.opts = rendering.Opts{
-		OrgID:           c.OrgId,
-		UserID:          c.UserId,
-		OrgRole:         c.OrgRole,
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   c.OrgId,
+			UserID:  c.UserId,
+			OrgRole: c.OrgRole,
+		},
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout:                  10 * time.Second,
+			RequestTimeoutMultiplier: 3,
+		},
 		Theme:           theme,
 		ConcurrentLimit: 10,
 	}
@@ -204,14 +210,11 @@ func (r *simpleCrawler) walk() {
 			Width:             320,
 			Height:            240,
 			Path:              panelURL,
-			OrgID:             r.opts.OrgID,
-			UserID:            r.opts.UserID,
-			ConcurrentLimit:   r.opts.ConcurrentLimit,
-			OrgRole:           r.opts.OrgRole,
+			AuthOpts:          r.opts.AuthOpts,
+			TimeoutOpts:       r.opts.TimeoutOpts,
 			Theme:             r.opts.Theme,
-			Timeout:           10 * time.Second,
 			DeviceScaleFactor: -5, // negative numbers will render larger then scale down
-		})
+		}, nil)
 		if err != nil {
 			tlog.Warn("error getting image", "err", err)
 			r.status.Errors++

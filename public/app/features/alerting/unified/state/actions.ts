@@ -343,60 +343,72 @@ async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation
 async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> {
   const { folder, evaluateEvery } = values;
   const formRule = formValuesToRulerGrafanaRuleDTO(values);
-  if (folder) {
-    // updating an existing rule...
-    if (existing) {
-      // refetch it to be sure we have the latest
-      const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
-      if (!freshExisting) {
-        throw new Error('Rule not found.');
-      }
 
-      // if folder has changed, delete the old one
-      if (freshExisting.namespace !== folder.title) {
-        await deleteRule(freshExisting);
-        // if same folder, repost the group with updated rule
-      } else {
-        const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid!;
-        formRule.grafana_alert.uid = uid;
-        await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
-          name: freshExisting.group.name,
-          interval: evaluateEvery,
-          rules: [formRule],
-        });
-        return { uid };
-      }
-    }
-
-    // if creating new rule or folder was changed, create rule in a new group
-
-    const existingNamespace = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
-
-    // set group name to rule name, but be super paranoid and check that this group does not already exist
-    let group = values.name;
-    let idx = 1;
-    while (!!existingNamespace.find((g) => g.name === group)) {
-      group = `${values.name}-${++idx}`;
-    }
-
-    const payload: PostableRulerRuleGroupDTO = {
-      name: group,
-      interval: evaluateEvery,
-      rules: [formRule],
-    };
-    await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, payload);
-
-    // now refetch this group to get the uid, hah
-    const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, group);
-    const newUid = (result?.rules[0] as RulerGrafanaRuleDTO)?.grafana_alert?.uid;
-    if (newUid) {
-      return { uid: newUid };
-    } else {
-      throw new Error('Failed to fetch created rule.');
-    }
-  } else {
+  if (!folder) {
     throw new Error('Folder must be specified');
   }
+
+  // updating an existing rule...
+  if (existing) {
+    // refetch it to be sure we have the latest
+    const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
+    if (!freshExisting) {
+      throw new Error('Rule not found.');
+    }
+
+    // if same folder, repost the group with updated rule
+    if (freshExisting.namespace === folder.title) {
+      const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid!;
+      formRule.grafana_alert.uid = uid;
+      await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
+        name: freshExisting.group.name,
+        interval: evaluateEvery,
+        rules: [formRule],
+      });
+      return { uid };
+    }
+  }
+
+  // if creating new rule or folder was changed, create rule in a new group
+  const targetFolderGroups = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
+
+  // set group name to rule name, but be super paranoid and check that this group does not already exist
+  const groupName = getUniqueGroupName(values.name, targetFolderGroups);
+  formRule.grafana_alert.title = groupName;
+
+  const payload: PostableRulerRuleGroupDTO = {
+    name: groupName,
+    interval: evaluateEvery,
+    rules: [formRule],
+  };
+  await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, payload);
+
+  // now refetch this group to get the uid, hah
+  const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, groupName);
+  const newUid = (result?.rules[0] as RulerGrafanaRuleDTO)?.grafana_alert?.uid;
+  if (newUid) {
+    // if folder has changed, delete the old one
+    if (existing) {
+      const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
+      if (freshExisting && freshExisting.namespace !== folder.title) {
+        await deleteRule(freshExisting);
+      }
+    }
+
+    return { uid: newUid };
+  } else {
+    throw new Error('Failed to fetch created rule.');
+  }
+}
+
+export function getUniqueGroupName(currentGroupName: string, existingGroups: RulerRuleGroupDTO[]) {
+  let newGroupName = currentGroupName;
+  let idx = 1;
+  while (!!existingGroups.find((g) => g.name === newGroupName)) {
+    newGroupName = `${currentGroupName}-${++idx}`;
+  }
+
+  return newGroupName;
 }
 
 export const saveRuleFormAction = createAsyncThunk(
