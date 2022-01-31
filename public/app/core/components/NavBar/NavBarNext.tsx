@@ -13,7 +13,7 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { Branding } from '../Branding/Branding';
-import { connect, ConnectedProps } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -26,17 +26,9 @@ const searchItem: NavModelItem = {
   icon: 'search',
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navBarTree: state.navBarTree,
-});
+export const NavBarNext = React.memo(() => {
+  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
 
-const mapDispatchToProps = {};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export interface Props extends ConnectedProps<typeof connector> {}
-
-export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -128,9 +120,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   );
 });
 
-NavBarNextUnconnected.displayName = 'NavBarNext';
-
-export const NavBarNext = connector(NavBarNextUnconnected);
+NavBarNext.displayName = 'NavBarNext';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`

@@ -1,10 +1,12 @@
 import React, { useRef } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CustomScrollbar, Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
+import { Checkbox, CustomScrollbar, Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { css } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
+import { useDispatch } from 'react-redux';
+import { togglePin } from 'app/core/reducers/navBarTree';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -13,6 +15,11 @@ export interface Props {
 }
 
 export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
+  const dispatch = useDispatch();
+  const toggleItemPin = (id: string) => {
+    dispatch(togglePin({ id }));
+  };
+
   const theme = useTheme2();
   const styles = getStyles(theme);
   const ref = useRef(null);
@@ -49,6 +56,9 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                     url={link.url}
                     isMobile={true}
                   />
+                  {link.id !== 'search' && (
+                    <Checkbox value={link.pinned} onClick={() => link.id && toggleItemPin(link.id)} />
+                  )}
                   {link.children?.map(
                     (childLink, childIndex) =>
                       !childLink.divider && (
