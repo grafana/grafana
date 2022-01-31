@@ -21,6 +21,7 @@ type DashboardGuardian interface {
 	CanEdit() (bool, error)
 	CanView() (bool, error)
 	CanAdmin() (bool, error)
+	CanDelete() (bool, error)
 	HasPermission(permission models.PermissionType) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 
@@ -73,6 +74,11 @@ func (g *dashboardGuardianImpl) CanView() (bool, error) {
 
 func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
 	return g.HasPermission(models.PERMISSION_ADMIN)
+}
+
+func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
+	// when using dashboard guardian without access control a user can delete a dashboard if they can save it
+	return g.CanSave()
 }
 
 func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) (bool, error) {
@@ -323,6 +329,10 @@ func (g *FakeDashboardGuardian) CanView() (bool, error) {
 
 func (g *FakeDashboardGuardian) CanAdmin() (bool, error) {
 	return g.CanAdminValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanDelete() (bool, error) {
+	return g.CanSaveValue, nil
 }
 
 func (g *FakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {

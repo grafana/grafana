@@ -201,7 +201,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 	}
 
 	guardian := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	if canSave, err := guardian.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
