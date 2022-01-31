@@ -4,7 +4,6 @@ set -eo pipefail
 . scripts/grafana-server/variables
 
 PORT=${PORT:-$DEFAULT_PORT}
-PACKAGE_FILE=${PACKAGE_FILE:-$DEFAULT_PACKAGE_FILE}
 
 ./scripts/grafana-server/kill-server
 
@@ -12,9 +11,9 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
-
-if [[ ! -f bin/grafana-server ]]; then
+if [[ ! -f bin/linux-amd64/grafana-server ]]; then
+  echo "bin/linux-amd64/grafana-server missing, trying local grafana-server binary"
+elif [[ ! -f bin/grafana-server ]] ; then
   echo bin/grafana-server missing
   exit 1
 fi
