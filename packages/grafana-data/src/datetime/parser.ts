@@ -3,7 +3,6 @@ import moment, { MomentInput } from 'moment-timezone';
 import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
-import { lowerCase } from 'lodash';
 import { systemDateFormats } from './formats';
 
 /**
@@ -69,12 +68,7 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     return moment.tz(value, format, zone.name) as DateTime;
   }
 
-  switch (lowerCase(timeZone)) {
-    case 'utc':
-      return moment.utc(value, format) as DateTime;
-    default:
-      return moment(value, format) as DateTime;
-  }
+  return moment.utc(value, format) as DateTime;
 };
 
 const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing): DateTime => {
@@ -86,10 +80,5 @@ const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing)
     return moment.tz(date, zone.name) as DateTime;
   }
 
-  switch (lowerCase(timeZone)) {
-    case 'utc':
-      return moment.utc(date) as DateTime;
-    default:
-      return moment(date) as DateTime;
-  }
+  return moment.utc(date) as DateTime;
 };
