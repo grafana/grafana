@@ -42,13 +42,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
-// WOOPS! you wrote all these tests to query a datasource. You still need to do
-// that, but you should be querying a dashboard not a datasource. Try again!
-// logic should still be about the same though. :p, from Jeff to Jeff.
-// 1. query the dashboard with GetDashboardsQuery
-// 2. stub respond for GetDashBoardsQuery
-// 2. figure out how to get the dashboard panels
-// 3. figure out how to query the panelId from the dashboard json
 func dashboardAndPanelExist(c *models.ReqContext, dashboardId, panelId string) bool {
 	id, err := strconv.ParseInt(dashboardId, 10, 64)
 	if err != nil {
@@ -107,7 +100,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	panelId := params[":panelId"]
 
 	if dashboardId == "" || panelId == "" {
-		// TODO: Is this an appropriate status code?
+		// NOTE: Is this an appropriate status code?
 		return response.Error(http.StatusForbidden, "missing dashboard or panel ID", nil)
 	}
 

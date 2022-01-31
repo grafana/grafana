@@ -133,20 +133,19 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
 
-	dashboardJson, _ := simplejson.NewFromReader(strings.NewReader(getDashboardByIdOutput))
+	dashboardJson, err := simplejson.NewFromReader(strings.NewReader(getDashboardByIdOutput))
+	if err != nil {
+		t.Fatalf("Failed to unmarshal dashboard json: %v", err)
+	}
 
 	t.Run("Can query a valid dashboard", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardsQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 			query.Result = &models.Dashboard{
-				Id:       1,
-				OrgId:    testOrgID,
-				Name:     "test",
-				Url:      "http://localhost:5432",
-				Type:     "postgresql",
-				Access:   "Proxy",
-				JsonData: dashboardJson,
+				Id:    1,
+				OrgId: testOrgID,
+				Data:  dashboardJson,
 			}
 			return nil
 		})
@@ -216,15 +215,11 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	t.Run("Get 404 when panelId does not exist", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-			query.Result = &models.DataSource{
-				Id:       1,
-				OrgId:    testOrgID,
-				Name:     "test",
-				Url:      "http://localhost:5432",
-				Type:     "postgresql",
-				Access:   "Proxy",
-				JsonData: dashboardJson,
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+			query.Result = &models.Dashboard{
+				Id:    1,
+				OrgId: testOrgID,
+				Data:  dashboardJson,
 			}
 			return nil
 		})
