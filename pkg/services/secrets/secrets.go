@@ -8,10 +8,6 @@ import (
 	"xorm.io/xorm"
 )
 
-const (
-	EnvelopeEncryptionFeatureToggle = "envelopeEncryption"
-)
-
 // Service is an envelope encryption service in charge of encrypting/decrypting secrets.
 // It is a replacement for encryption.Service
 type Service interface {
@@ -56,4 +52,9 @@ func (id ProviderID) Kind() (string, error) {
 	}
 
 	return parts[0], nil
+}
+
+// BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
+type BackgroundProvider interface {
+	Run(ctx context.Context) error
 }

@@ -1,10 +1,11 @@
 import React from 'react';
-import { NavBar } from './NavBar';
-import { render, screen } from '@testing-library/react';
+import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { render, screen } from '@testing-library/react';
 import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
-import { Provider } from 'react-redux';
+import TestProvider from '../../../../test/helpers/TestProvider';
+import { NavBar } from './NavBar';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -22,9 +23,11 @@ const setup = () => {
 
   return render(
     <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <NavBar />
-      </Router>
+      <TestProvider>
+        <Router history={locationService.getHistory()}>
+          <NavBar />
+        </Router>
+      </TestProvider>
     </Provider>
   );
 };

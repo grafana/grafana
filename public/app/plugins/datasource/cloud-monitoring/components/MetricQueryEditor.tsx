@@ -67,7 +67,7 @@ function Editor({
   useEffect(() => {
     if (projectName && metricType) {
       datasource
-        .getLabels(metricType, refId, projectName, { groupBys, crossSeriesReducer })
+        .getLabels(metricType, refId, projectName)
         .then((labels) => setState((prevState) => ({ ...prevState, labels })));
     }
   }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer]);
