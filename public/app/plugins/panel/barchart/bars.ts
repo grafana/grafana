@@ -16,6 +16,7 @@ import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { BarTree } from './rtree';
 import RBush from 'rbush';
+import { intersects } from 'semver';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -77,6 +78,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let qt: Quadtree;
   let rt: RBush<Rect>;
+  let labelRt: RBush<Rect>;
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -265,6 +267,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
     rt = rt || new BarTree(6);
+    labelRt = labelRt || new BarTree(6);
 
     qt.clear();
     rt.clear();
@@ -352,8 +355,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
 
     let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
-
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
+    let labels = [];
 
     barRects.forEach((r, i) => {
       let value = rawValue(r.sidx, r.didx);
@@ -381,20 +384,28 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         // const currentSeries = barRects.filter((rect) => )
 
         let textMetrics = u.ctx.measureText(text);
-        let intersects = rt.search({
-          minX: x,
-          minY: y,
-          maxX: x + textMetrics.width,
-          maxY: y + textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+        labelRt.insert({
+          x: x,
+          y: y,
+          w: textMetrics.width,
+          h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
         });
 
-        console.log(intersects.length);
+        // Cache label placement information
+        labels.push({
+          x: x,
+          y: y,
+          textMetrics: textMetrics,
+          text: text,
+        });
 
-        if (intersects.length <= 2) {
-          u.ctx.fillText(text, x, y);
-        }
+        // console.log(intersects.length);
 
-        console.log(intersects);
+        // if (intersects.length <= 2) {
+        //   u.ctx.fillText(text, x, y);
+        // }
+
+        // console.log(intersects);
 
         // See if the label exceeds the bounds of the bar segment
         // If so, don't draw it. Otherwise draw the label
@@ -402,6 +413,24 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
 
         // console.log(res);
+      }
+    });
+
+    labels.forEach(({ x, y, text, textMetrics }, i) => {
+      const searchObj = {
+        minX: x,
+        minY: y,
+        maxX: x + textMetrics.width,
+        maxY: y + textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+      };
+
+      let intersectsBoxes = rt.search(searchObj);
+      let intersectsLabels = labelRt.search(searchObj);
+
+      console.log(intersectsLabels);
+
+      if (intersectsLabels.length <= 1) {
+        u.ctx.fillText(text, x, y);
       }
     });
 
@@ -419,7 +448,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let cx = u.cursor.left! * devicePixelRatio;
     let cy = u.cursor.top! * devicePixelRatio;
 
-    console.log(cx, cy);
+    // console.log(cx, cy);
     let res = rt.search({
       minX: cx,
       minY: cy,
