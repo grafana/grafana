@@ -53,22 +53,26 @@ const ResourcePicker = ({
           }
 
           const parsedURI = parseResourceURI(internalSelected ?? '');
-          const resourceGroupURI = `/subscriptions/${parsedURI?.subscriptionID}/resourceGroups/${parsedURI?.resourceGroup}`;
+          if (parsedURI) {
+            const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
 
-          // if a resource group was previously selected, but the resource groups under the parent subscription have not been loaded yet
-          if (parsedURI?.resourceGroup && !findRow(resources, resourceGroupURI)) {
-            const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(parsedURI.subscriptionID);
-            resources = addResources(resources, parsedURI.subscriptionID, resourceGroups);
+            // if a resource group was previously selected, but the resource groups under the parent subscription have not been loaded yet
+            if (parsedURI.resourceGroup && !findRow(resources, resourceGroupURI)) {
+              const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(
+                parsedURI.subscriptionID
+              );
+              resources = addResources(resources, parsedURI.subscriptionID, resourceGroups);
+            }
+
+            // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
+            if (parsedURI.resource && !findRow(azureRows, parsedURI.resource ?? '')) {
+              const resourcesForResourceGroup = await resourcePickerData.getResourcesForResourceGroup(resourceGroupURI);
+              resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+            }
+
+            setAzureRows(resources);
+            setLoadingStatus('Done');
           }
-
-          // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
-          if (parsedURI?.resource && !findRow(azureRows, parsedURI.resource ?? '')) {
-            const resourcesForResourceGroup = await resourcePickerData.getResourcesForResourceGroup(resourceGroupURI);
-            resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-          }
-
-          setAzureRows(resources);
-          setLoadingStatus('Done');
         } catch (error) {
           setLoadingStatus('Done');
           setErrorMessage(messageFromError(error));
