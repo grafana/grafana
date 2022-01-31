@@ -107,7 +107,7 @@ describe('MetricsQueryHeader', () => {
     });
   });
 
-  it('run button should be displayed in code editor in metric query mode', async () => {
+  it('should call run query when run button is clicked when in metric query mode', async () => {
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
     query.metricEditorMode = MetricEditorMode.Code;
