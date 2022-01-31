@@ -42,6 +42,8 @@ type ResourcePermissionsService interface {
 	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*ResourcePermission, error)
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
+	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
+	MapActions(permission ResourcePermission) string
 }
 
 // Metadata contains user accesses for a given resource
