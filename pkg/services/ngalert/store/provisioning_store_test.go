@@ -37,5 +37,3 @@ func TestProvisioningStore(t *testing.T) {
 		require.Equal(t, models.ProvenanceFile, p)
 	})
 }
-
-type randomStruct struct{}
