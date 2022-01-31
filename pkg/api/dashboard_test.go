@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -967,11 +967,16 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/abcdefghi", "/api/dashboards/db/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
+			dashboardStore := &database.FakeDashboardStore{}
+			defer dashboardStore.AssertExpectations(t)
+
+			dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{}, nil).Once()
+
 			callDeleteDashboardBySlug(sc, &HTTPServer{
 				Cfg:                   setting.NewCfg(),
 				LibraryPanelService:   &mockLibraryPanelService{},
 				LibraryElementService: &mockLibraryElementService{},
-				dashboardService:      &dashboards.FakeDashboardService{},
+				dashboardService:      service.ProvideDashboardService(dashboardStore),
 			})
 
 			assert.Equal(t, 400, sc.resp.Code)
@@ -982,32 +987,38 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock(context.Background())
-			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
+			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
+			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
 
-			dash := getDashboardShouldReturn200WithConfig(t, sc, mock)
+			dashboardStore := &database.FakeDashboardStore{}
+			defer dashboardStore.AssertExpectations(t)
 
-			assert.Equal(t, filepath.Join("test", "dashboard1.json"), dash.Meta.ProvisionedExternalId)
+			dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
+
+			dash := getDashboardShouldReturn200WithConfig(t, sc, fakeProvisioningService, dashboardStore)
+
+			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId)
 		})
 
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			mock := provisioning.NewProvisioningServiceMock(context.Background())
-			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
+			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
+			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
 			}
-			mock.GetAllowUIUpdatesFromConfigFunc = func(name string) bool {
+			fakeProvisioningService.GetAllowUIUpdatesFromConfigFunc = func(name string) bool {
 				return true
 			}
 
 			hs := &HTTPServer{
-				Cfg:                   setting.NewCfg(),
-				ProvisioningService:   mock,
-				LibraryPanelService:   &mockLibraryPanelService{},
-				LibraryElementService: &mockLibraryElementService{},
+				Cfg:                          setting.NewCfg(),
+				ProvisioningService:          fakeProvisioningService,
+				LibraryPanelService:          &mockLibraryPanelService{},
+				LibraryElementService:        &mockLibraryElementService{},
+				dashboardProvisioningService: mockDashboardProvisioningService{},
 			}
 			callGetDashboard(sc, hs)
 
@@ -1022,17 +1033,21 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 }
 
-func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, provisioningService provisioning.ProvisioningService) dtos.
+func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, provisioningService provisioning.ProvisioningService, dashboardStore dashboards.Store) dtos.
 	DashboardFullWithMeta {
 	t.Helper()
+
 	if provisioningService == nil {
 		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
+	if dashboardStore == nil {
+		sql := sqlstore.InitTestDB(t)
+		dashboardStore = database.ProvideDashboardStore(sql)
+	}
+
 	libraryPanelsService := mockLibraryPanelService{}
 	libraryElementsService := mockLibraryElementService{}
-	sql := sqlstore.InitTestDB(t)
-	dashboardStore := database.ProvideDashboardStore(sql)
 
 	hs := &HTTPServer{
 		Cfg:                          setting.NewCfg(),
@@ -1054,7 +1069,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 }
 
 func getDashboardShouldReturn200(t *testing.T, sc *scenarioContext) dtos.DashboardFullWithMeta {
-	return getDashboardShouldReturn200WithConfig(t, sc, nil)
+	return getDashboardShouldReturn200WithConfig(t, sc, nil, nil)
 }
 
 func callGetDashboard(sc *scenarioContext, hs *HTTPServer) {
