@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { locationUtil } from '@grafana/data';
 import { config, setLocationService } from '@grafana/runtime';
+import TestProvider from '../../../../test/helpers/TestProvider';
 
 import NavBarItem, { Props } from './NavBarItem';
 
@@ -30,9 +31,11 @@ function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
   const props = { ...defaults, ...overrides };
 
   const { rerender } = render(
-    <BrowserRouter>
-      <NavBarItem {...props}>{props.children}</NavBarItem>
-    </BrowserRouter>
+    <TestProvider>
+      <BrowserRouter>
+        <NavBarItem {...props}>{props.children}</NavBarItem>
+      </BrowserRouter>
+    </TestProvider>
   );
 
   return { rerender, pushMock };
