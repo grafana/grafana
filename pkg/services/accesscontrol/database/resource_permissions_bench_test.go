@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -93,7 +94,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 			_, err := ac.SetUserResourcePermission(
 				context.Background(),
 				accesscontrol.GlobalOrgID,
-				userIds[i],
+				types.User{ID: userIds[i]},
 				accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{dsAction},
 					Resource:   dsResource,

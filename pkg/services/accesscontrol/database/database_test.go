@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -60,7 +60,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, user.Id, accesscontrol.SetResourcePermissionCommand{
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, types.User{ID: user.Id}, accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
