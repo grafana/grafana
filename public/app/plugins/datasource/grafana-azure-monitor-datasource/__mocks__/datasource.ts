@@ -1,5 +1,4 @@
 import Datasource from '../datasource';
-import { mocked } from 'ts-jest/utils';
 
 type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
@@ -47,5 +46,5 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
 
   const mockDatasource = _mockDatasource as Datasource;
 
-  return mocked(mockDatasource, true);
+  return jest.mocked(mockDatasource, true);
 }
