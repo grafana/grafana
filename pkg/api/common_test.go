@@ -334,7 +334,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	var acmock *accesscontrolmock.Mock
-	var ac *ossaccesscontrol.OSSAccessControlService
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)
@@ -369,7 +368,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		require.NoError(t, err)
 		hs.TeamPermissionsService = teamPermissionService
 	} else {
-		ac = ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t})
+		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t}, database.ProvideService(db))
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()

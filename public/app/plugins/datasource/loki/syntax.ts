@@ -162,15 +162,14 @@ export const RANGE_VEC_FUNCTIONS = [
     insertText: 'rate',
     label: 'rate',
     detail: 'rate(v range-vector)',
-    documentation:
-      "Calculates the per-second average rate of increase of the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. Also, the calculation extrapolates to the ends of the time range, allowing for missed scrapes or imperfect alignment of scrape cycles with the range's time period.",
+    documentation: 'Calculates the number of entries per second.',
   },
 ];
 
 export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS];
 export const LOKI_KEYWORDS = [...FUNCTIONS, ...PIPE_OPERATORS, ...PIPE_PARSERS].map((keyword) => keyword.label);
 
-const tokenizer: Grammar = {
+export const lokiGrammar: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -245,4 +244,4 @@ const tokenizer: Grammar = {
   punctuation: /[{}()`,.]/,
 };
 
-export default tokenizer;
+export default lokiGrammar;
