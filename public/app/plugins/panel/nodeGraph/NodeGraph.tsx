@@ -180,8 +180,6 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   const highlightId = useHighlight(focusedNodeId);
 
-  console.log(JSON.stringify(nodes, null, 2));
-
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
