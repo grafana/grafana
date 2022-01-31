@@ -22,7 +22,7 @@ func (pr provenanceRecord) TableName() string {
 
 type ProvisioningStore interface {
 	GetProvenance(o interface{}) (models.Provenance, error)
-	// TODO: API to query all provenances for a specific type
+	// TODO: API to query all provenances for a specific type?
 	SetProvenance(o interface{}, p models.Provenance) error
 }
 
@@ -30,7 +30,7 @@ func (st DBstore) GetProvenance(o models.ProvisionedObject) (models.Provenance, 
 	recordType := o.GetResourceTypeIdentifier()
 	recordKey := o.GetResourceUniqueIdentifier()
 
-	provenance := models.None
+	provenance := models.ProvenanceNone
 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		result := make([]*provenanceRecord, 0)
 		q := "SELECT * FROM provenance_type WHERE record_key = ? AND record_type = ? ORDER BY id ASC LIMIT 1"
@@ -47,7 +47,7 @@ func (st DBstore) GetProvenance(o models.ProvisionedObject) (models.Provenance, 
 		return nil
 	})
 	if err != nil {
-		return models.None, err
+		return models.ProvenanceNone, err
 	}
 	return provenance, nil
 }

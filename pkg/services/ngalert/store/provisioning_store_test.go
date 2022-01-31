@@ -21,20 +21,20 @@ func TestProvisioningStore(t *testing.T) {
 		provenance, err := dbstore.GetProvenance(&rule)
 
 		require.NoError(t, err)
-		require.Equal(t, models.None, provenance)
+		require.Equal(t, models.ProvenanceNone, provenance)
 	})
 
 	t.Run("Store returns saved provenance type", func(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "123",
 		}
-		err := dbstore.SetProvenance(&rule, models.File)
+		err := dbstore.SetProvenance(&rule, models.ProvenanceFile)
 		require.NoError(t, err)
 
 		p, err := dbstore.GetProvenance(&rule)
 
 		require.NoError(t, err)
-		require.Equal(t, models.File, p)
+		require.Equal(t, models.ProvenanceFile, p)
 	})
 }
 
