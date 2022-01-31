@@ -41,40 +41,7 @@ var (
 )
 
 func (e *EmbeddedContactPoint) IsValid() (bool, error) {
-	fmt.Printf("%+v\n", *e)
-	if e.Type == "" {
-		return false, ErrContactPointNoTypeSet
-	}
-	if e.Settings == nil {
-		return false, ErrContactPointNoSettingsSet
-	}
-	return e.hasValidSettings()
-}
-
-func (e *EmbeddedContactPoint) hasValidSettings() (bool, error) {
-	switch strings.ToLower(e.Type) {
-	//TODO(JP): add all validators
-	case "slack":
-		mentionChannel := e.Settings.Get("mentionChannel").MustString()
-		if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-			return false, fmt.Errorf("invalid value for mentionChannel: %q", mentionChannel)
-		}
-		return true, nil
-	case "kafka":
-		endpoint := e.Settings.Get("kafkaRestProxy").MustString()
-		if endpoint == "" {
-			return false, errors.New("could not find kafka rest proxy endpoint property in settings")
-		}
-		topic := e.Settings.Get("kafkaTopic").MustString()
-		if topic == "" {
-			return false, errors.New("could not find kafka topic property in settings")
-		}
-		return true, nil
-	case "pagerduty":
-		return true, nil
-	default:
-		return false, fmt.Errorf("contact point has an unknown type '%s'", e.Type)
-	}
+	return validateContactPoint(e)
 }
 
 func (e *EmbeddedContactPoint) extractSecrtes() (map[string]string, error) {
