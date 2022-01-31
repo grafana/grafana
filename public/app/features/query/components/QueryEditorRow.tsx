@@ -476,7 +476,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   }
 
   // Only say this is an error if the error links to the query
-  let state = LoadingState.Done;
+  let state = data.state;
   const error = data.error && data.error.refId === refId ? data.error : undefined;
   if (error) {
     state = LoadingState.Error;
