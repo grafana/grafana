@@ -23,6 +23,7 @@ var _ migrator.CodeMigration = new(teamPermissionMigrator)
 type teamPermissionMigrator struct {
 	migrator.MigrationBase
 	editorsCanAdmin bool
+	sess            *xorm.Session
 }
 
 func (p *teamPermissionMigrator) getAssignmentKey(orgID int64, name string) string {
@@ -34,7 +35,8 @@ func (p *teamPermissionMigrator) SQL(dialect migrator.Dialect) string {
 }
 
 func (p *teamPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-	return p.migrateMemberships(sess)
+	p.sess = sess
+	return p.migrateMemberships()
 }
 
 func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
@@ -54,10 +56,10 @@ func generateNewRoleUID(sess *xorm.Session, orgID int64) (string, error) {
 	return "", fmt.Errorf("failed to generate uid")
 }
 
-func (p *teamPermissionMigrator) findRole(sess *xorm.Session, orgID int64, name string) (*accesscontrol.Role, error) {
+func (p *teamPermissionMigrator) findRole(orgID int64, name string) (*accesscontrol.Role, error) {
 	// check if role exists
 	var role accesscontrol.Role
-	_, err := sess.Table("role").Select("id").Where("org_id = ? AND name = ?", orgID, name).Get(&role)
+	_, err := p.sess.Table("role").Select("id").Where("org_id = ? AND name = ?", orgID, name).Get(&role)
 	if err != nil {
 		return nil, err
 	}
@@ -65,14 +67,14 @@ func (p *teamPermissionMigrator) findRole(sess *xorm.Session, orgID int64, name 
 }
 
 // TODO cut into chunks
-func (p *teamPermissionMigrator) bulkCreateRoles(sess *xorm.Session, roles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
+func (p *teamPermissionMigrator) bulkCreateRoles(roles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
 	ts := time.Now()
 	// bulk role creations
 	valueStrings := make([]string, len(roles))
 	args := make([]interface{}, 0, len(roles)*5)
 
 	for i, r := range roles {
-		uid, err := generateNewRoleUID(sess, r.OrgID)
+		uid, err := generateNewRoleUID(p.sess, r.OrgID)
 		if err != nil {
 			return nil, err
 		}
@@ -84,13 +86,13 @@ func (p *teamPermissionMigrator) bulkCreateRoles(sess *xorm.Session, roles []*ac
 	sql := fmt.Sprintf("INSERT INTO role (org_id, uid, name, created, updated) VALUES %s RETURNING id, org_id, name", valueString)
 
 	createdRoles := make([]*accesscontrol.Role, len(roles))
-	err := sess.SQL(sql, args...).Find(&createdRoles)
+	err := p.sess.SQL(sql, args...).Find(&createdRoles)
 
 	return createdRoles, err
 }
 
 // TODO cut into chunks
-func (p *teamPermissionMigrator) bulkAssignRoles(sess *xorm.Session, rolesMap map[string]*accesscontrol.Role, assignments map[int64]map[string]struct{}) error {
+func (p *teamPermissionMigrator) bulkAssignRoles(rolesMap map[string]*accesscontrol.Role, assignments map[int64]map[string]struct{}) error {
 	ts := time.Now()
 
 	roleAssignments := make([]accesscontrol.UserRole, len(assignments))
@@ -98,7 +100,7 @@ func (p *teamPermissionMigrator) bulkAssignRoles(sess *xorm.Session, rolesMap ma
 		for key := range rolesByRoleKey {
 			role, ok := rolesMap[key]
 			if !ok {
-				return fmt.Errorf("sorry")
+				return &ErrUnknownRole{key}
 			}
 
 			roleAssignments = append(roleAssignments, accesscontrol.UserRole{
@@ -110,14 +112,14 @@ func (p *teamPermissionMigrator) bulkAssignRoles(sess *xorm.Session, rolesMap ma
 		}
 	}
 
-	_, err := sess.Table("user_role").InsertMulti(roleAssignments)
+	_, err := p.sess.Table("user_role").InsertMulti(roleAssignments)
 	return err
 }
 
 // setRolePermissions sets the role permissions deleting any team related ones before inserting any.
-func (p *teamPermissionMigrator) setRolePermissions(sess *xorm.Session, roleID int64, permissions []accesscontrol.Permission) error {
+func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []accesscontrol.Permission) error {
 	// First drop existing permissions
-	if _, errDeletingPerms := sess.SQL("DELETE FROM permission WHERE role_id = ? AND action LIKE ?", roleID, "teams:%").Exec(); errDeletingPerms != nil {
+	if _, errDeletingPerms := p.sess.SQL("DELETE FROM permission WHERE role_id = ? AND action LIKE ?", roleID, "teams:%").Exec(); errDeletingPerms != nil {
 		return errDeletingPerms
 	}
 
@@ -131,7 +133,7 @@ func (p *teamPermissionMigrator) setRolePermissions(sess *xorm.Session, roleID i
 		newPermissions = append(newPermissions, permission)
 	}
 
-	if _, errInsertPerms := sess.InsertMulti(&newPermissions); errInsertPerms != nil {
+	if _, errInsertPerms := p.sess.InsertMulti(&newPermissions); errInsertPerms != nil {
 		return errInsertPerms
 	}
 
@@ -157,9 +159,9 @@ func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.Permissio
 	}
 }
 
-func (p *teamPermissionMigrator) getUserRoleByOrgMapping(sess *xorm.Session) (map[int64]map[int64]string, error) {
+func (p *teamPermissionMigrator) getUserRoleByOrgMapping() (map[int64]map[int64]string, error) {
 	var orgUsers []*models.OrgUserDTO
-	if err := sess.SQL(`SELECT * FROM org_user`).Cols("org_user.org_id", "org_user.user_id", "org_user.role").Find(&orgUsers); err != nil {
+	if err := p.sess.SQL(`SELECT * FROM org_user`).Cols("org_user.org_id", "org_user.user_id", "org_user.role").Find(&orgUsers); err != nil {
 		return nil, err
 	}
 
@@ -179,57 +181,87 @@ func (p *teamPermissionMigrator) getUserRoleByOrgMapping(sess *xorm.Session) (ma
 	return userRolesByOrg, nil
 }
 
+// TODO SPLIT
 // migrateMemberships generate managed permissions for users based on their memberships to teams
-func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
-	userRolesByOrg, err := p.getUserRoleByOrgMapping(sess)
+func (p *teamPermissionMigrator) migrateMemberships() error {
+	userRolesByOrg, err := p.getUserRoleByOrgMapping()
 	if err != nil {
 		return err
 	}
 
 	var teamMemberships []models.TeamMember
-	if err := sess.SQL(`SELECT * FROM team_member`).Find(&teamMemberships); err != nil {
+	if err := p.sess.SQL(`SELECT * FROM team_member`).Find(&teamMemberships); err != nil {
 		return err
 	}
 
-	userPermissionsByOrg := map[int64]map[int64][]accesscontrol.Permission{}
-
 	// Loop through memberships and generate associated permissions
-	for _, m := range teamMemberships {
-		// Downgrade team permissions if needed - only organisation admins or organisation editors (when editorsCanAdmin feature is enabled)
-		// can access team administration endpoints
-		if m.Permission == models.PERMISSION_ADMIN {
-			if userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_VIEWER) || (userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_EDITOR) && !p.editorsCanAdmin) {
-				m.Permission = 0
-				// log?
-				_, err := sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", m.OrgId, m.TeamId, m.UserId).Update(m)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		userPermissions, initialized := userPermissionsByOrg[m.OrgId]
-		if !initialized {
-			userPermissions = map[int64][]accesscontrol.Permission{}
-		}
-		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
-		userPermissionsByOrg[m.OrgId] = userPermissions
+	// Downgrade team permissions if needed - only organisation admins or organisation editors (when editorsCanAdmin feature is enabled)
+	// can access team administration endpoints
+	// log?
+	userPermissionsByOrg, errGen := p.generateAssociatedPermissions(teamMemberships, userRolesByOrg)
+	if errGen != nil {
+		return errGen
 	}
 
 	// Create a map of roles to create
+	// userID orgID-RoleName -> Role
+	// orgID-RoleName -> Role
+	rolesToCreate, assignments, rolesByOrg, errOrganizeRoles := p.sortRolesToAssign(userPermissionsByOrg)
+	if errOrganizeRoles != nil {
+		return errOrganizeRoles
+	}
+
+	// Create missing roles
+	createdRoles, errCreate := p.bulkCreateRoles(rolesToCreate)
+	if errCreate != nil {
+		return errCreate
+	}
+
+	// Populate rolesMap with the newly created roles
+	for i := range createdRoles {
+		roleKey := p.getAssignmentKey(createdRoles[i].OrgID, createdRoles[i].Name)
+		rolesByOrg[roleKey] = createdRoles[i]
+	}
+
+	// Assign missing roles
+	if errAssign := p.bulkAssignRoles(rolesByOrg, assignments); errAssign != nil {
+		return errAssign
+	}
+
+	// Set roles permissions
+	return p.setRolePermissionsForOrgs(userPermissionsByOrg, rolesByOrg)
+}
+
+func (p *teamPermissionMigrator) setRolePermissionsForOrgs(userPermissionsByOrg map[int64]map[int64][]accesscontrol.Permission, rolesByOrg map[string]*accesscontrol.Role) error {
+	for orgID, userPermissions := range userPermissionsByOrg {
+		for userID, permissions := range userPermissions {
+			key := p.getAssignmentKey(orgID, fmt.Sprintf("managed:users:%d:permissions", userID))
+
+			role, ok := rolesByOrg[key]
+			if !ok {
+				return &ErrUnknownRole{key}
+			}
+
+			if errSettingPerms := p.setRolePermissions(role.ID, permissions); errSettingPerms != nil {
+				return errSettingPerms
+			}
+		}
+	}
+	return nil
+}
+
+func (p *teamPermissionMigrator) sortRolesToAssign(userPermissionsByOrg map[int64]map[int64][]accesscontrol.Permission) ([]*accesscontrol.Role, map[int64]map[string]struct{}, map[string]*accesscontrol.Role, error) {
 	var rolesToCreate []*accesscontrol.Role
 
-	// userID orgID-RoleName -> Role
 	assignments := map[int64]map[string]struct{}{}
 
-	// orgID-RoleName -> Role
 	rolesByOrg := map[string]*accesscontrol.Role{}
 	for orgID, userPermissions := range userPermissionsByOrg {
 		for userID := range userPermissions {
 			roleName := fmt.Sprintf("managed:users:%d:permissions", userID)
-			role, errFindingRoles := p.findRole(sess, orgID, roleName)
+			role, errFindingRoles := p.findRole(orgID, roleName)
 			if errFindingRoles != nil {
-				return errFindingRoles
+				return nil, nil, nil, errFindingRoles
 			}
 
 			roleKey := p.getAssignmentKey(orgID, roleName)
@@ -253,39 +285,31 @@ func (p *teamPermissionMigrator) migrateMemberships(sess *xorm.Session) error {
 			}
 		}
 	}
+	return rolesToCreate, assignments, rolesByOrg, nil
+}
 
-	// Create missing roles
-	createdRoles, errCreate := p.bulkCreateRoles(sess, rolesToCreate)
-	if errCreate != nil {
-		return errCreate
-	}
+func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships []models.TeamMember,
+	userRolesByOrg map[int64]map[int64]string) (map[int64]map[int64][]accesscontrol.Permission, error) {
+	userPermissionsByOrg := map[int64]map[int64][]accesscontrol.Permission{}
 
-	// Populate rolesMap with the newly created roles
-	for i := range createdRoles {
-		roleKey := p.getAssignmentKey(createdRoles[i].OrgID, createdRoles[i].Name)
-		rolesByOrg[roleKey] = createdRoles[i]
-	}
+	for _, m := range teamMemberships {
+		if m.Permission == models.PERMISSION_ADMIN {
+			if userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_VIEWER) || (userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_EDITOR) && !p.editorsCanAdmin) {
+				m.Permission = 0
 
-	// Assign missing roles
-	if errAssign := p.bulkAssignRoles(sess, rolesByOrg, assignments); errAssign != nil {
-		return errAssign
-	}
-
-	// Set roles permissions
-	for orgID, userPermissions := range userPermissionsByOrg {
-		for userID, permissions := range userPermissions {
-			key := p.getAssignmentKey(orgID, fmt.Sprintf("managed:users:%d:permissions", userID))
-
-			role, ok := rolesByOrg[key]
-			if !ok {
-				return fmt.Errorf("Sorry")
-			}
-
-			if errSettingPerms := p.setRolePermissions(sess, role.ID, permissions); errSettingPerms != nil {
-				return errSettingPerms
+				if _, err := p.sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", m.OrgId, m.TeamId, m.UserId).Update(m); err != nil {
+					return nil, err
+				}
 			}
 		}
+
+		userPermissions, initialized := userPermissionsByOrg[m.OrgId]
+		if !initialized {
+			userPermissions = map[int64][]accesscontrol.Permission{}
+		}
+		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
+		userPermissionsByOrg[m.OrgId] = userPermissions
 	}
 
-	return nil
+	return userPermissionsByOrg, nil
 }
