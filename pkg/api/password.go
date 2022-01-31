@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -46,7 +47,13 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 	}
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
-	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query); err != nil {
+	getUserByLogin := func(ctx context.Context, login string) (*models.User, error) {
+		userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
+		err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
+		return userQuery.Result, err
+	}
+
+	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
 		if errors.Is(err, models.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}

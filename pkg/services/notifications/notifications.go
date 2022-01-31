@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,12 +29,16 @@ type Service interface {
 	EmailSender
 }
 
+type Store interface {
+	GetUserByLogin(context.Context, *models.GetUserByLoginQuery) error
+}
+
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, sqlStore *sqlstore.SQLStore) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
@@ -43,7 +46,6 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, sqlStore *sqls
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
 		mailer:       mailer,
-		sqlStore:     sqlStore,
 	}
 
 	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
@@ -87,7 +89,6 @@ type NotificationService struct {
 	webhookQueue chan *Webhook
 	mailer       Mailer
 	log          log.Logger
-	sqlStore     *sqlstore.SQLStore
 }
 
 func (ns *NotificationService) Run(ctx context.Context) error {
@@ -181,18 +182,20 @@ func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery) error {
+type GetUserByLoginFunc = func(c context.Context, login string) (*models.User, error)
+
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
 		return models.ErrInvalidEmailCode
 	}
 
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := ns.sqlStore.GetUserByLogin(ctx, &userQuery); err != nil {
+	user, err := userByLogin(ctx, login)
+	if err != nil {
 		return err
 	}
 
-	validEmailCode, err := validateUserEmailCode(ns.Cfg, userQuery.Result, query.Code)
+	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
 	if err != nil {
 		return err
 	}
@@ -200,7 +203,7 @@ func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, qu
 		return models.ErrInvalidEmailCode
 	}
 
-	query.Result = userQuery.Result
+	query.Result = user
 	return nil
 }
 
