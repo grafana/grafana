@@ -320,10 +320,6 @@ const (
 	ActionTeamsPermissionsRead  = "teams.permissions:read"
 	ActionTeamsPermissionsWrite = "teams.permissions:write"
 
-	ActionTeamGroupsRead   = "team.groups:read"
-	ActionTeamGroupsUpdate = "team.groups:write"
-	ActionTeamGroupsDelete = "team.groups:delete"
-
 	// Team related scopes
 	ScopeTeamsAll = "teams:*"
 )

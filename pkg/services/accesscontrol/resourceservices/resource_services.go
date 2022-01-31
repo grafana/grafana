@@ -43,9 +43,6 @@ var (
 		accesscontrol.ActionTeamsWrite,
 		accesscontrol.ActionTeamsPermissionsRead,
 		accesscontrol.ActionTeamsPermissionsWrite,
-		accesscontrol.ActionTeamGroupsRead,
-		accesscontrol.ActionTeamGroupsUpdate,
-		accesscontrol.ActionTeamGroupsDelete,
 	}
 )
 
