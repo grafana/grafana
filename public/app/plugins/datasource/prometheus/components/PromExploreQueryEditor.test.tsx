@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import PromExploreQueryEditor, { testIds } from './PromExploreQueryEditor';
+import { PromExploreQueryEditor, testIds } from './PromExploreQueryEditor';
 import { testIds as extraFieldTestIds } from './PromExploreExtraField';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
