@@ -45,7 +45,7 @@ For Grafana alerting, we do support are the following syntaxes at this time.
 
 The dashboard and panel time controls have a common user interface (UI).
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/change-common-time-controls-8-2.png" max-width="700px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
 
 The options are defined below.
 
