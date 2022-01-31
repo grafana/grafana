@@ -1,9 +1,6 @@
 import { ComponentType } from 'react';
 
 export interface NavModelItem {
-  /** @deprecated NavModelItems are translated, so use the messages from navBarItem-translations.ts
-   *  instead and use item.text as a fallback only
-   */
   text: string;
   url?: string;
   subTitle?: string;
