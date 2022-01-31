@@ -1,8 +1,9 @@
 package schedule
 
 import (
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func (sch *schedule) getAlertRules(disabledOrgs []int64) []*models.AlertRule {
