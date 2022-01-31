@@ -37,6 +37,8 @@ export function insertValues(frame: DataFrame, opts?: InsertValuesTransformerOpt
     return frame;
   }
 
+  const isTime = refField.type === FieldType.time;
+
   if (threshold == null) {
     threshold = refField.config.interval ?? 0;
   }
@@ -55,8 +57,9 @@ export function insertValues(frame: DataFrame, opts?: InsertValuesTransformerOpt
     let curValue = refValues[i];
 
     if (curValue - prevValue > threshold) {
-      // insert new value at midpoint
-      refValuesNew.push((prevValue + curValue) / 2);
+      // insert new value at previous time + 1ms or at midpoint if numeric
+      // this is done to prevent StateTimeline from forward-interpolating prior state
+      refValuesNew.push(isTime ? prevValue + 1 : (prevValue + curValue) / 2);
     }
 
     refValuesNew.push(curValue);

@@ -58,7 +58,7 @@ describe('insertValues Transformer', () => {
 
     const result = insertValues(df, { threshold: 1 });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 6.5, 10]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
   });
@@ -75,7 +75,7 @@ describe('insertValues Transformer', () => {
 
     const result = insertValues(df, { threshold: 2 });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
   });
@@ -92,7 +92,7 @@ describe('insertValues Transformer', () => {
 
     const result = insertValues(df);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 6.5, 10]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
   });
@@ -109,7 +109,7 @@ describe('insertValues Transformer', () => {
 
     const result = insertValues(df, { threshold: 2 });
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
   });
