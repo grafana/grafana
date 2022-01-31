@@ -20,7 +20,6 @@
     "@types/react-icons": "2.2.7",
     "@types/recompose": "0.30.10",
     "@types/reselect": "2.2.0",
-    "@types/slate-react": "0.22.5",
     "@types/tinycolor2": "1.4.3",
     "enzyme": "3.11.0",
     "sinon": "12.0.1",
