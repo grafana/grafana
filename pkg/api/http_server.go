@@ -114,7 +114,8 @@ type HTTPServer struct {
 	cleanUpService            *cleanup.CleanUpService
 	tracingService            *tracing.TracingService
 	internalMetricsSvc        *metrics.InternalMetricsService
-	updateChecker             *updatechecker.Service
+	grafanaUpdateChecker      *updatechecker.GrafanaService
+	pluginsUpdateChecker      *updatechecker.PluginsService
 	searchUsersService        searchusers.Service
 	expressionService         *expr.Service
 }
@@ -142,7 +143,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
+	grafanaUpdateChecker *updatechecker.GrafanaService, pluginsUpdateChecker *updatechecker.PluginsService,
+	encryptionService encryption.Internal, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, expressionService *expr.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -164,7 +166,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStaticRouteResolver: pluginStaticRouteResolver,
 		pluginDashboardManager:    pluginDashboardManager,
 		pluginErrorResolver:       pluginErrorResolver,
-		updateChecker:             updateChecker,
+		grafanaUpdateChecker:      grafanaUpdateChecker,
+		pluginsUpdateChecker:      pluginsUpdateChecker,
 		SettingsProvider:          settingsProvider,
 		DataSourceCache:           dataSourceCache,
 		AuthTokenService:          userTokenService,

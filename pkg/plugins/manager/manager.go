@@ -118,24 +118,6 @@ func (m *PluginManager) init() error {
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
-	if m.cfg.CheckForUpdates {
-		go func() {
-			m.checkForUpdates()
-
-			ticker := time.NewTicker(time.Minute * 10)
-			run := true
-
-			for run {
-				select {
-				case <-ticker.C:
-					m.checkForUpdates()
-				case <-ctx.Done():
-					run = false
-				}
-			}
-		}()
-	}
-
 	<-ctx.Done()
 	m.shutdown(ctx)
 	return ctx.Err()
