@@ -75,13 +75,13 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as could not read its plugin.json", "path", pluginJSONPath)
+			l.log.Warn("Skipping plugin loading as could not read its plugin.json", "path", pluginJSONPath, "err", err)
 			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as full plugin.json path could not be calculated", "pluginID", plugin.ID)
+			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
 			continue
 		}
 
