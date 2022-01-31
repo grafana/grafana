@@ -14,8 +14,8 @@ func (n *NavbarPreferencesService) getNavbarPreferences(c context.Context, signe
 		// builder
 
 		builder := sqlstore.SQLBuilder{}
-		builder.Write("SELECT * from nav_preferences")
-		builder.Write("WHERE org_id = ? AND user_id = ?", signedInUser.OrgId, signedInUser.UserId)
+		builder.Write("SELECT * from navbar_preferences")
+		builder.Write(` WHERE org_id=? AND user_id=?`, signedInUser.OrgId, signedInUser.UserId)
 		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&navbarPreferences); err != nil {
 			return err
 		}

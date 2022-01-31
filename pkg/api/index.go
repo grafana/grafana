@@ -386,12 +386,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		// query navbar_preferences table for any preferences
-		fmt.Println("WOW", c.SignedInUser)
-    NavbarPreferencesService := hs.NavbarPreferencesService
-    GetNavbarPreferences := NavbarPreferencesService.GetNavbarPreferences;
-    context := c.Req.Context()
-    signedUser := c.SignedInUser
-		navbarPref, err := GetNavbarPreferences(context, signedUser)
+		navbarPref, err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
 
 		if err != nil {
 			return nil, err

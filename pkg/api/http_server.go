@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/navbarpreferences"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -64,7 +65,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/grafana/grafana/pkg/services/navbarpreferences"
 )
 
 type HTTPServer struct {
@@ -146,7 +146,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
-	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
+	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service, navbarPreferencesService navbarpreferences.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
@@ -193,6 +193,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AlertNG:                   alertNG,
 		LibraryPanelService:       libraryPanelService,
 		LibraryElementService:     libraryElementService,
+		NavbarPreferencesService:  navbarPreferencesService,
 		QuotaService:              quotaService,
 		tracer:                    tracer,
 		log:                       log.New("http.server"),
