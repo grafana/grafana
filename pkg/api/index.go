@@ -387,16 +387,20 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		// query navbar_preferences table for any preferences
-		navbarPrefsQuery := nbp.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
+		navbarPref,err := nbp.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
+    
+	  if err != nil {
+		  return nil, err
+	  }
 
 		for _, navItem := range navTree {
 			// show everything by default
 			navItem.ShowInNavBar = true
 
 			// override with preference if exists
-			for _, navbarPref := range *navbarPrefsQuery.Result {
-				if navItem.Id == navbarPref.NavItemId {
-					navItem.ShowInNavBar = navbarPref.ShowInNavbar
+			for _, pref := range *navbarPref {
+				if navItem.Id == pref.NavItemId {
+					navItem.ShowInNavBar = pref.ShowInNavbar
 				}
 			}
 		}
