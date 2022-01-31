@@ -192,7 +192,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
 
   rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
     try {
-      const data = JSON.parse(target.rawFrameContent || '[]').map((v: any) => {
+      const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: any) => {
         const f = toDataFrame(v);
         f.refId = target.refId;
         return f;
