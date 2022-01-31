@@ -30,7 +30,6 @@ dashboards, creating users, and updating data sources.
 - [Other API]({{< relref "other.md" >}})
 - [Playlists API]({{< relref "playlist.md" >}})
 - [Preferences API]({{< relref "preferences.md" >}})
-- [Service account API]({{< relref "serviceaccount.md" >}})
 - [Short URL API]({{< relref "short_url.md" >}})
 - [Snapshot API]({{< relref "snapshot.md" >}})
 - [Team API]({{< relref "team.md" >}})
