@@ -113,7 +113,7 @@
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/file-saver": "2.0.4",
     "@types/google.analytics": "^0.0.42",
-    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
+    "@types/grafana__slate-react": "npm:@types/slate-react@0.50.0",
     "@types/history": "^4.7.8",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/jest": "27.4.0",
