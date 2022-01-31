@@ -23,7 +23,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 
 // Service is a service for operating on navbar preferences.
 type Service interface {
-	GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) (LibraryElementDTO, error)
+	GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error)
 }
 
 // NavbarPreferencesService is the service for the navbar preferences.
@@ -35,6 +35,6 @@ type NavbarPreferencesService struct {
 }
 
 // GetNavbarPreferences gets the navbar preferences for a user
-func (l *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) (LibraryElementDTO, error) {
-	return l.getLibraryElementByUid(c, signedInUser, UID)
+func (l *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
+	return l.GetNavbarPreferences(c, signedInUser)
 }
