@@ -12,27 +12,34 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
+// PluginBackendProvider is a function type for initializing a Plugin backend.
+type PluginBackendProvider func(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc
+
 type Service struct {
-	coreRegistry *coreplugin.Registry
+	providerChain []PluginBackendProvider
 }
 
-func ProvideService(coreRegistry *coreplugin.Registry) *Service {
+func New(providers ...PluginBackendProvider) *Service {
+	if len(providers) == 0 {
+		return New(RendererProvider, DefaultProvider)
+	}
 	return &Service{
-		coreRegistry: coreRegistry,
+		providerChain: providers,
 	}
 }
 
+func ProvideService(coreRegistry *coreplugin.Registry) *Service {
+	return New(coreRegistry.BackendFactoryProvider(), RendererProvider, DefaultProvider)
+}
+
 func (s *Service) BackendFactory(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	for _, provider := range []PluginBackendProvider{CorePluginProvider(ctx, s.coreRegistry), RendererProvider, DefaultProvider} {
+	for _, provider := range s.providerChain {
 		if factory := provider(ctx, p); factory != nil {
 			return factory
 		}
 	}
 	return nil
 }
-
-// PluginBackendProvider is a function type for initializing a Plugin backend.
-type PluginBackendProvider func(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc
 
 var RendererProvider PluginBackendProvider = func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 	if !p.IsRenderer() {
@@ -51,14 +58,4 @@ var DefaultProvider PluginBackendProvider = func(_ context.Context, p *plugins.P
 	// TODO check for executable
 	cmd := plugins.ComposePluginStartCommand(p.Executable)
 	return grpcplugin.NewBackendPlugin(p.ID, filepath.Join(p.PluginDir, cmd))
-}
-
-var CorePluginProvider = func(ctx context.Context, registry *coreplugin.Registry) PluginBackendProvider {
-	return func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-		if !p.IsCorePlugin() {
-			return nil
-		}
-
-		return registry.Get(p.ID)
-	}
 }

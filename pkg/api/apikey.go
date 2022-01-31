@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -83,7 +84,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 	cmd.OrgId = c.OrgId
 	var err error
-	if hs.Cfg.FeatureToggles["service-accounts"] {
+	if hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		// Api keys should now be created with addadditionalapikey endpoint
 		return response.Error(400, "API keys should now be added via the AdditionalAPIKey endpoint.", err)
 	}
@@ -120,7 +121,7 @@ func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !hs.Cfg.FeatureToggles["service-accounts"] {
+	if !hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
 	}
 
