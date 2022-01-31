@@ -32,10 +32,6 @@ type Plugin struct {
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
-
 	// SystemJS fields
 	Module  string
 	BaseURL string
@@ -62,10 +58,6 @@ type PluginDTO struct {
 	SignatureOrg   string
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
-
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
 
 	// SystemJS fields
 	Module  string
@@ -326,22 +318,20 @@ func (p *Plugin) ToDTO() PluginDTO {
 	c, _ := p.Client()
 
 	return PluginDTO{
-		JSONData:            p.JSONData,
-		PluginDir:           p.PluginDir,
-		Class:               p.Class,
-		IncludedInAppID:     p.IncludedInAppID,
-		DefaultNavURL:       p.DefaultNavURL,
-		Pinned:              p.Pinned,
-		Signature:           p.Signature,
-		SignatureType:       p.SignatureType,
-		SignatureOrg:        p.SignatureOrg,
-		SignedFiles:         p.SignedFiles,
-		SignatureError:      p.SignatureError,
-		GrafanaComVersion:   p.GrafanaComVersion,
-		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
-		Module:              p.Module,
-		BaseURL:             p.BaseURL,
-		StreamHandler:       c,
+		JSONData:        p.JSONData,
+		PluginDir:       p.PluginDir,
+		Class:           p.Class,
+		IncludedInAppID: p.IncludedInAppID,
+		DefaultNavURL:   p.DefaultNavURL,
+		Pinned:          p.Pinned,
+		Signature:       p.Signature,
+		SignatureType:   p.SignatureType,
+		SignatureOrg:    p.SignatureOrg,
+		SignedFiles:     p.SignedFiles,
+		SignatureError:  p.SignatureError,
+		Module:          p.Module,
+		BaseURL:         p.BaseURL,
+		StreamHandler:   c,
 	}
 }
 

@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // API related actions
@@ -59,6 +60,26 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{accesscontrol.RoleGrafanaAdmin},
+	}
+
+	datasourcesExplorerRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     4,
+			Name:        "fixed:datasources:explorer",
+			DisplayName: "Data source explorer",
+			Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
+			Group:       "Data sources",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionDatasourcesExplore,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_EDITOR)},
+	}
+
+	if setting.ViewersCanEdit {
+		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(models.ROLE_VIEWER))
 	}
 
 	datasourcesReaderRole := accesscontrol.RoleRegistration{
@@ -226,7 +247,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 	)
 }
 

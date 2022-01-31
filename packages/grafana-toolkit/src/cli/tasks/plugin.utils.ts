@@ -4,6 +4,8 @@ import { GitHubRelease } from '../utils/githubRelease';
 import { getPluginId } from '../../config/utils/getPluginId';
 import { getCiFolder } from '../../plugins/env';
 import { useSpinner } from '../utils/useSpinner';
+import { readFileSync } from 'fs';
+
 import path = require('path');
 import execa = require('execa');
 
@@ -140,6 +142,14 @@ const prepareRelease = ({ dryrun, verbose }: any) =>
     }
   });
 
+export const getToolkitVersion = () => {
+  const pkg = readFileSync(`${__dirname}/../../../package.json`, 'utf8');
+  const { version } = JSON.parse(pkg);
+  if (!version) {
+    throw `Could not find the toolkit version`;
+  }
+  return version;
+};
 interface GithubPublishReleaseOptions {
   commitHash?: string;
   githubToken: string;
