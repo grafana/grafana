@@ -65,7 +65,7 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
     onQueryChange.mockReset();
   });
 
-  it('Selecting a namespace should not reset metricName if it exist in new namespace', async () => {
+  it('Should not reset metricName when selecting a namespace if metric exist in new namespace', async () => {
     datasource.getMetrics = jest.fn().mockResolvedValue(metrics);
 
     await act(async () => {
@@ -100,7 +100,7 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
     expect(onQueryChange.mock.calls).toEqual([[{ ...expectedQuery, namespace: 'n2' }]]);
   });
 
-  it('Selecting a namespace should reset metricName if it does not exist in new namespace', async () => {
+  it('Should reset metricName when selecting a namespace if metric does not exist in new namespace', async () => {
     datasource.getMetrics = jest.fn().mockImplementation((namespace: string, region: string) => {
       let mockMetrics =
         namespace === 'n1' && region === baseProps.query.region

@@ -61,7 +61,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
   const validateMetricName = async (query: CloudWatchMetricsQuery) => {
     let { region, sql } = query;
     await datasource.getMetrics(query.namespace, region).then((result: Array<SelectableValue<string>>) => {
-      if (!result.find((metric) => metric.value === metricName)) {
+      if (!result.some((metric) => metric.value === metricName)) {
         sql = removeMetricName(query).sql;
       }
     });
