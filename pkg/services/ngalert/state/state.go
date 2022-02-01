@@ -152,7 +152,7 @@ func (a *State) Equals(b *State) bool {
 }
 
 func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
-	numBuckets := 2 * (int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds)
+	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
 	if numBuckets == 0 {
 		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
 	}

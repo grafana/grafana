@@ -438,16 +438,6 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.Pending,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]*float64),
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(20 * time.Second),
-							EvaluationState: eval.NoData,
-							Values:          make(map[string]*float64),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
 							Values:          make(map[string]*float64),
@@ -528,16 +518,6 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					State: eval.NoData,
 					Results: []state.Evaluation{
-						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]*float64),
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]*float64),
-						},
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
 							EvaluationState: eval.Alerting,
@@ -1337,11 +1317,6 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.Alerting,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-							Values:          make(map[string]*float64),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
 							Values:          make(map[string]*float64),
@@ -1428,11 +1403,6 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					State: eval.NoData,
 					Results: []state.Evaluation{
-						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-							Values:          make(map[string]*float64),
-						},
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
