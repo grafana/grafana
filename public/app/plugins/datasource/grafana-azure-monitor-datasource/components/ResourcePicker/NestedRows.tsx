@@ -46,8 +46,7 @@ interface NestedRowProps {
 
 const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, requestNestedRows, onRowSelectedChange }) => {
   const styles = useStyles2(getStyles);
-  const initialOpenStatus = row.type === ResourceRowType.Subscription ? 'open' : 'closed';
-  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
+  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
   const isSelected = !!selectedRows.find((v) => v.id === row.id);
   const isDisabled = selectedRows.length > 0 && !isSelected;
@@ -59,8 +58,9 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
       return;
     }
     setRowStatus('loading');
-    await requestNestedRows(row);
-    setRowStatus('open');
+    requestNestedRows(row)
+      .then(() => setRowStatus('open'))
+      .catch(() => setRowStatus('closed'));
   };
 
   // opens the resource group on load of component if there was a previously saved selection
