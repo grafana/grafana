@@ -328,3 +328,40 @@ const mockInvalidJson = {
     },
   ],
 };
+
+const serviceGraphLinks = [
+  {
+    url: '',
+    title: 'Request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Request histogram',
+    internal: {
+      query: {
+        expr:
+          'histogram_quantile(0.9, rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__interval]))',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Failed request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+];
