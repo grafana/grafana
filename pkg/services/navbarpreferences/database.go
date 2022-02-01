@@ -39,7 +39,9 @@ func (n *NavbarPreferencesService) createNavbarPreference(c context.Context, sig
 		OrgID:          signedInUser.OrgId,
 		UserID:         signedInUser.UserId,
 		NavItemID:      cmd.NavItemID,
-		HideFromNavbar: n.sqlstore.Dialect.BooleanStr(cmd.HideFromNavbar),
+		HideFromNavbar: cmd.HideFromNavbar,
+		// TODO probably need to use this dialect object
+		// HideFromNavbar: n.SQLStore.Dialect.BooleanStr(cmd.HideFromNavbar),
 	}
 
 	err := n.SQLStore.WithDbSession(c, func(sess *sqlstore.DBSession) error {
