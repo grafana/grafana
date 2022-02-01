@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { createShortLink } from 'app/core/utils/shortLinks';
-import { dateTime, PanelModel, TimeRange, urlUtil } from '@grafana/data';
+import { dateTime, locationUtil, PanelModel, TimeRange, urlUtil } from '@grafana/data';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
@@ -74,9 +74,15 @@ export function buildSoloUrl(
   selectedTheme?: string,
   panel?: PanelModel
 ) {
+  const baseUrl = buildBaseUrl();
   const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
 
-  const soloUrl = `${config.appUrl}d-solo/${dashboardUid}`;
+  let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+  soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
+
+  if (locationUtil.stripBaseFromUrl(baseUrl) === '/') {
+    soloUrl = `${config.appUrl}d-solo/${dashboardUid}`;
+  }
 
   const panelId = params.get('editPanel') ?? params.get('viewPanel') ?? '';
   params.set('panelId', panelId);
