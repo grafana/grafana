@@ -61,7 +61,7 @@ describe('CloudWatchLogsQueryField', () => {
     // We clear the select
     expect(getLogGroupSelect().props.value.length).toBe(0);
     // Make sure we correctly updated the upstream state
-    expect(onChange.mock.calls[onChange.mock.calls.length - 1][0]).toEqual({ logGroupNames: [] });
+    expect(onChange).toHaveBeenLastCalledWith({ logGroupNames: [] });
   });
 
   it('should merge results of remote log groups search with existing results', async () => {
