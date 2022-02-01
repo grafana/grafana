@@ -1,6 +1,7 @@
 import { XYFieldMatchers } from './types';
 import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
+import { nullInsertThreshold } from './nullInsertThreshold';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 import { FIXED_UNIT } from './GraphNG';
 
@@ -38,7 +39,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
     keepOriginIndices: true,
   });
 
-  return alignedFrame && applySpanNullsThresholds(alignedFrame);
+  return alignedFrame && applySpanNullsThresholds(nullInsertThreshold(alignedFrame));
 }
 
 export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {

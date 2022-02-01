@@ -1,28 +1,7 @@
-import { DataFrame, FieldType, ArrayVector } from '../..';
+import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 
-import { map } from 'rxjs/operators';
-
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
-
-export interface InsertValuesTransformerOptions {
-  // value to insert
-  value?: any;
-  // field to use for interval or threshold checking
-  field?: string;
-  // minimum threshold required between adjacent non-null/non-undefined values
-  threshold?: number;
-}
-
-export const insertValuesTransformer: DataTransformerInfo<InsertValuesTransformerOptions> = {
-  id: DataTransformerID.insertValues,
-  name: 'Insert Values',
-  description: 'Can be used to insert null values between adjacent points spanning a minimum time threshold',
-  operator: (options) => (source) => source.pipe(map((dataFrames) => dataFrames.map((f) => insertValues(f, options)))),
-};
-
-export function insertValues(frame: DataFrame, opts?: InsertValuesTransformerOptions): DataFrame {
-  let { field: refFieldName, threshold, value = null } = opts ?? {};
+export function nullInsertThreshold(frame: DataFrame, threshold?: number, refFieldName?: string): DataFrame {
+  const value = null;
 
   if (frame.length < 2) {
     return frame;

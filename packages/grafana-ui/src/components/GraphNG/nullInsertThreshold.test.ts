@@ -1,5 +1,5 @@
 import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
-import { insertValues } from './insertValues';
+import { nullInsertThreshold } from './nullInsertThreshold';
 
 function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -45,7 +45,7 @@ function genFrame() {
   };
 }
 
-describe('insertValues Transformer', () => {
+describe('nullInsertThreshold Transformer', () => {
   test('should insert nulls at midpoints between adjacent > threshold: 1', () => {
     const df = new MutableDataFrame({
       refId: 'A',
@@ -56,7 +56,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df, { threshold: 1 });
+    const result = nullInsertThreshold(df, 1);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
@@ -73,7 +73,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df, { threshold: 2 });
+    const result = nullInsertThreshold(df, 2);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
@@ -90,7 +90,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df);
+    const result = nullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
@@ -107,7 +107,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df, { threshold: 2 });
+    const result = nullInsertThreshold(df, 2);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
@@ -123,7 +123,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df);
+    const result = nullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1]);
     expect(result.fields[1].values.toArray()).toStrictEqual([1]);
@@ -138,7 +138,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df, { threshold: -1 });
+    const result = nullInsertThreshold(df, -1);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 4]);
     expect(result.fields[1].values.toArray()).toStrictEqual([1, 1, 1]);
@@ -153,7 +153,7 @@ describe('insertValues Transformer', () => {
       ],
     });
 
-    const result = insertValues(df);
+    const result = nullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 4]);
     expect(result.fields[1].values.toArray()).toStrictEqual([1, 1, 1]);
@@ -165,7 +165,7 @@ describe('insertValues Transformer', () => {
 
     // eslint-disable-next-line no-console
     console.time('insertValues-10x3k');
-    insertValues(bigFrameA);
+    nullInsertThreshold(bigFrameA);
     // eslint-disable-next-line no-console
     console.timeEnd('insertValues-10x3k');
   });
