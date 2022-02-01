@@ -1,4 +1,4 @@
-import React, { memo, FC, useEffect } from 'react';
+import React, { memo, useEffect } from 'react';
 import { QueryEditorProps, CoreApp } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -7,7 +7,7 @@ import { PromExploreExtraField } from './PromExploreExtraField';
 
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
-export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
+export const PromExploreQueryEditor = memo((props: Props) => {
   const { range, query, data, datasource, history, onChange, onRunQuery } = props;
 
   // Setting default values
@@ -42,9 +42,9 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       }
     />
   );
-};
+});
 
-export default memo(PromExploreQueryEditor);
+PromExploreQueryEditor.displayName = 'PromExploreQueryEditor';
 
 export const testIds = {
   editor: 'prom-editor-explore',
