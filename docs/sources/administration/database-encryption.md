@@ -12,7 +12,7 @@ Grafana’s database contains secrets, which are used to query data sources, sen
 
 Grafana encrypts these secrets before they are written to the database, by using a symmetric-key encryption algorithm called Advanced Encryption Standard (AES), and using a [secret key]({{< relref "../administration/configuration/#secret_key" >}}) that you can change when you configure a new Grafana instance.
 
-You can choose to use [envelope encryption](#envelope-encryption), which complements a [KMS integration](#kms-integration) in Grafana Enterprise by adding a layer of indirection to the encryption process.
+You can choose to use [envelope encryption](#envelope-encryption), which adds a layer of indirection to the encryption process.
 
 > **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "../administration/database-encryption.md" >}}) instead of AES-CFB.
 
@@ -32,4 +32,4 @@ To turn on envelope encryption, add the term `envelopeEncryption` to the list of
 
 With KMS integrations, you can choose to encrypt secrets stored in the Grafana database using a key from a KMS, which is a secure central storage location that is designed to help you to create and manage cryptographic keys and control their use across many services.
 
-> **Note:** KMS integration is available in Grafana Enterprise. For more information, refer to [KMS integration]({{< relref "../enterprise/kms-integration/_index.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> **Note:** KMS integration is available in Grafana Enterprise. For more information, refer to [Enterprise Encryption]({{< relref "../enterprise/enterprise-encryption/_index.md" >}}) in Grafana Enterprise.
