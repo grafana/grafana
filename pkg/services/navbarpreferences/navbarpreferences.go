@@ -25,7 +25,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 // Service is a service for operating on navbar preferences.
 type Service interface {
 	GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error)
+	CreateNavbarPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (NavbarPreference, error)
 }
+
 
 // NavbarPreferencesService is the service for the navbar preferences.
 type NavbarPreferencesService struct {
@@ -38,4 +40,10 @@ type NavbarPreferencesService struct {
 // GetNavbarPreferences gets the navbar preferences for a user
 func (n *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
 	return n.getNavbarPreferences(c, signedInUser)
+}
+
+
+// CreateNavbarPreference create the navbar preference for a user 
+func (n *NavbarPreferencesService) CreateNavbarPreference(c context.Context, signedInUser *models.SignedInUser,cmd CreateNavbarPreferenceCommand) (NavbarPreference, error) {
+	return n.createNavbarPreference(c, signedInUser, cmd)
 }

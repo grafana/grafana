@@ -386,6 +386,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
 		// query navbar_preferences table for any preferences
+
 		navbarPref, err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
 
 		if err != nil {
