@@ -310,18 +310,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			folderRoute.Get("/", routing.Wrap(hs.GetFolders))
-			folderRoute.Get("/id/:id", routing.Wrap(hs.GetFolderByID))
-			folderRoute.Post("/", routing.Wrap(hs.CreateFolder))
+			folderRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+			folderRoute.Get("/id/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead, ac.ScopeFolderID)), routing.Wrap(hs.GetFolderByID))
+			folderRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", routing.Wrap(hs.GetFolderByUID))
-				folderUidRoute.Put("/", routing.Wrap(hs.UpdateFolder))
-				folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
+				folderUidRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersRead)), routing.Wrap(hs.GetFolderByUID))
+				folderUidRoute.Put("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersWrite)), routing.Wrap(hs.UpdateFolder))
+				folderUidRoute.Delete("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersDelete)), routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", routing.Wrap(hs.UpdateFolderPermissions))
+					folderPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionFoldersPermissionsRead)), routing.Wrap(hs.GetFolderPermissionList))
+					folderPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateFolderPermissions))
 				})
 			})
 		})

@@ -352,6 +352,9 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	// Folder scopes
+	ScopeFolderID = Scope("folders", "id", Parameter(":id"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
