@@ -161,13 +161,13 @@ const TooltipContent = () => {
       </div>
       <div>Example: to select a time range from 10 minutes ago to now</div>
       <code className={styles.tooltip}>From: now-10m To: now</code>
-      <p className={styles.link}>
+      <div className={styles.link}>
         For more information see{' '}
         <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
           docs <Icon name="external-link-alt" />
         </a>
         .
-      </p>
+      </div>
     </>
   );
 };
