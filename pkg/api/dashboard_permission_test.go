@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,7 +23,7 @@ import (
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		hs := &HTTPServer{Cfg: settings}
+		hs := &HTTPServer{Cfg: settings, Features: featuremgmt.WithFeatures()}
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
 			setUp := func() {

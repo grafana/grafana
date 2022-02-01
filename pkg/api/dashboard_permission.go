@@ -136,7 +136,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	return response.Success("Dashboard permissions updated")
 }
 
-// updateDashboardAccessControl is used for api backward compatability
+// updateDashboardAccessControl is used for api backward compatibility
 func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, dashID int64, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
 	svc := hs.dashboardPermissionsService
 	if isFolder {

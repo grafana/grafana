@@ -16,13 +16,14 @@ import (
 	dashboardifaces "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	settings := setting.NewCfg()
-	hs := &HTTPServer{Cfg: settings}
+	hs := &HTTPServer{Cfg: settings, Features: featuremgmt.WithFeatures()}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
 		mock := &fakeFolderService{
