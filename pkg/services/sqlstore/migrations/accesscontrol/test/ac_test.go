@@ -24,9 +24,7 @@ type rawPermission struct {
 
 // Setup users
 var (
-	now        = time.Now()
-	team1Scope = accesscontrol.Scope("teams", "id", "1")
-	team2Scope = accesscontrol.Scope("teams", "id", "2")
+	now = time.Now()
 
 	users = []models.User{
 		{
@@ -86,33 +84,17 @@ func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermis
 }
 
 func TestMigrations(t *testing.T) {
-	testDB := sqlutil.SQLite3TestDB()
+	// Run initial migration to have a working DB
+	x := setupTestDB(t)
 
-	const query = `select count(*) as count from migration_log`
-	result := struct{ Count int }{}
-
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-
-	err = migrator.NewDialect(x).CleanDB()
-	require.NoError(t, err)
-
-	_, err = x.SQL(query).Get(&result)
-	require.Error(t, err)
-
-	mg := migrator.NewMigrator(x, &setting.Cfg{
-		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-	})
-	migrations := &migrations.OSSMigrations{}
-	migrations.AddMigration(mg)
-
-	err = mg.Start()
-	require.NoError(t, err)
-
+	// Populate users and teams
 	setupTeams(t, x)
 
 	// Create managed user roles with teams permissions (ex: teams:read and teams.permissions:read)
 	setupUnecessaryFGACPermissions(t, x)
+
+	team1Scope := accesscontrol.Scope("teams", "id", "1")
+	team2Scope := accesscontrol.Scope("teams", "id", "2")
 
 	type teamMigrationTestCase struct {
 		desc              string
@@ -176,15 +158,15 @@ func TestMigrations(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Remove migration
-			_, err = x.Exec("DELETE FROM migration_log WHERE migration_id = ?", acmig.TeamsMigrationID)
-			require.NoError(t, err)
+			_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", acmig.TeamsMigrationID)
+			require.NoError(t, errDeleteMig)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
 			acmigrator := migrator.NewMigrator(x, tc.config)
 			acmig.AddTeamMembershipMigrations(acmigrator)
 
-			err = acmigrator.Start()
-			require.NoError(t, err)
+			errRunningMig := acmigrator.Start()
+			require.NoError(t, errRunningMig)
 
 			for _, user := range users {
 				// Check managed roles exist
@@ -215,6 +197,34 @@ func TestMigrations(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setupTestDB(t *testing.T) *xorm.Engine {
+	t.Helper()
+	testDB := sqlutil.SQLite3TestDB()
+
+	const query = `select count(*) as count from migration_log`
+	result := struct{ Count int }{}
+
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+
+	err = migrator.NewDialect(x).CleanDB()
+	require.NoError(t, err)
+
+	_, err = x.SQL(query).Get(&result)
+	require.Error(t, err)
+
+	mg := migrator.NewMigrator(x, &setting.Cfg{
+		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
+	})
+	migrations := &migrations.OSSMigrations{}
+	migrations.AddMigration(mg)
+
+	err = mg.Start()
+	require.NoError(t, err)
+
+	return x
 }
 
 func setupTeams(t *testing.T, x *xorm.Engine) {
@@ -349,7 +359,7 @@ func setupUnecessaryFGACPermissions(t *testing.T, x *xorm.Engine) {
 	now := time.Now()
 
 	role := accesscontrol.Role{
-		ID:      1,
+		// ID:      1, Not specifying this for pgsql to correctly increment sequence
 		OrgID:   2,
 		Version: 1,
 		UID:     "user5managedpermissions",
@@ -381,7 +391,7 @@ func setupUnecessaryFGACPermissions(t *testing.T, x *xorm.Engine) {
 			Created: now,
 		},
 		{
-			// Permission that should be removed
+			// Permission that should be recreated
 			RoleID:  1,
 			Action:  "teams:read",
 			Scope:   "teams:*",
