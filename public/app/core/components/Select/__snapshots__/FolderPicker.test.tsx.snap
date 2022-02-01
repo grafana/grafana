@@ -5,16 +5,34 @@ exports[`FolderPicker should render 1`] = `
   data-testid="data-testid Folder picker select container"
 >
   <AsyncSelect
-    allowCustomValue={false}
     aria-label="Select a folder"
+    components={false}
     defaultOptions={true}
     defaultValue={null}
     loadOptions={[Function]}
     loadingMessage="Loading folders..."
     menuShouldPortal={true}
     onChange={[Function]}
-    onCreateOption={[Function]}
+    onInputChange={[Function]}
+    tabSelectsValue={false}
     value={null}
   />
+  <Modal
+    isOpen={false}
+    onClickBackdrop={[Function]}
+    onDismiss={[Function]}
+    title="New dashboard folder"
+  >
+    <Form
+      defaultValues={
+        Object {
+          "folderName": "",
+        }
+      }
+      onSubmit={[Function]}
+    >
+      <Component />
+    </Form>
+  </Modal>
 </div>
 `;
