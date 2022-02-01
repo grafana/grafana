@@ -20,12 +20,12 @@ var (
 
 type ServiceAccountsService struct {
 	store    serviceaccounts.Store
-	features *featuremgmt.FeatureToggles
+	features featuremgmt.FeatureToggles
 	log      log.Logger
 }
 
 func ProvideServiceAccountsService(
-	features *featuremgmt.FeatureToggles,
+	features featuremgmt.FeatureToggles,
 	store *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
@@ -47,7 +47,7 @@ func ProvideServiceAccountsService(
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
-	if !sa.features.IsServiceAccountsEnabled() {
+	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil
 	}
@@ -55,7 +55,7 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saFo
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	if !sa.features.IsServiceAccountsEnabled() {
+	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil
 	}

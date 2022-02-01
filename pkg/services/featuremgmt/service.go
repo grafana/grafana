@@ -51,23 +51,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 		flag.Expression = fmt.Sprintf("%t", val) // true | false
 	}
 
-	// Make sure enterprise features are registered
-	for key, val := range licensing.EnabledFeatures() {
-		f, ok := mgmt.flags[key]
-		if ok {
-			f.RequiresLicense = true
-			if f.Expression == "" {
-				f.Expression = "true"
-			}
-		} else if val {
-			mgmt.registerFlags(FeatureFlag{
-				Name:            key,
-				RequiresLicense: true,
-				Expression:      "true",
-			})
-		}
-	}
-
 	// Load config settings
 	configfile := filepath.Join(cfg.HomePath, "conf", "features.yaml")
 	if _, err := os.Stat(configfile); err == nil {
@@ -88,8 +71,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 }
 
 // ProvideToggles allows read-only access to the feature state
-func ProvideToggles(mgmt *FeatureManager) *FeatureToggles {
-	return &FeatureToggles{
-		manager: mgmt,
-	}
+func ProvideToggles(mgmt *FeatureManager) FeatureToggles {
+	return mgmt
 }

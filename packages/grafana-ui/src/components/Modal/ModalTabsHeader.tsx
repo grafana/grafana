@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavModelItem } from '@grafana/data';
 import { IconName } from '../../types';
 import { TabsBar } from '../Tabs/TabsBar';
 import { Tab } from '../Tabs/Tab';
@@ -8,7 +9,7 @@ interface ModalTab {
   value: string;
   label: string;
   icon?: IconName;
-  labelSuffix?: () => JSX.Element;
+  tabSuffix?: NavModelItem['tabSuffix'];
 }
 
 interface Props {
@@ -29,7 +30,7 @@ export const ModalTabsHeader: React.FC<Props> = ({ icon, title, tabs, activeTab,
               key={`${t.value}-${index}`}
               label={t.label}
               icon={t.icon}
-              suffix={t.labelSuffix}
+              suffix={t.tabSuffix}
               active={t.value === activeTab}
               onChangeTab={() => onChangeTab(t)}
             />

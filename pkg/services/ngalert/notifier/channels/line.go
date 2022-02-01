@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -18,7 +18,7 @@ var (
 )
 
 // NewLineNotifier is the constructor for the LINE notifier
-func NewLineNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*LineNotifier, error) {
+func NewLineNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*LineNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -41,6 +41,7 @@ func NewLineNotifier(model *NotificationChannelConfig, t *template.Template, fn 
 		}),
 		Token: token,
 		log:   log.New("alerting.notifier.line"),
+		ns:    ns,
 		tmpl:  t,
 	}, nil
 }
@@ -51,6 +52,7 @@ type LineNotifier struct {
 	*Base
 	Token string
 	log   log.Logger
+	ns    notifications.WebhookSender
 	tmpl  *template.Template
 }
 
@@ -86,7 +88,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: form.Encode(),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
 		ln.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return false, err
 	}

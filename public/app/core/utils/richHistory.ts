@@ -214,7 +214,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
     context: 'explore',
   };
 
-  const serializedState = serializeStateToUrlParam(exploreState, true);
+  const serializedState = serializeStateToUrlParam(exploreState);
   const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
   const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;

@@ -51,7 +51,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	}
 }
 
-func getDSPermissions(b *testing.B, store accesscontrol.ResourcePermissionsStore, dataSources []int64) {
+func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int64) {
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, accesscontrol.GetResourcesPermissionsQuery{
@@ -99,6 +99,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 					Resource:   dsResource,
 					ResourceID: strconv.Itoa(int(dsID)),
 				},
+				nil,
 			)
 			require.NoError(b, err)
 		}
@@ -115,6 +116,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 					Resource:   "datasources",
 					ResourceID: strconv.Itoa(int(dsID)),
 				},
+				nil,
 			)
 			require.NoError(b, err)
 		}

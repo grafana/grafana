@@ -131,19 +131,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
 		defer span.End()
 
-		// `limit` only applies to log-producing queries, and we
-		// currently only support metric queries, so this can be set to any value.
-		limit := 1
-
-		// we do not use `interval`, so we set it to zero
-		interval := time.Duration(0)
-
-		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
-		if err != nil {
-			return result, err
-		}
-
-		frames, err := parseResponse(value, query)
+		frames, err := runQuery(client, query)
 		if err != nil {
 			return result, err
 		}
@@ -202,6 +190,23 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 	}
 
 	return frames, nil
+}
+
+// we extracted this part of the functionality to make it easy to unit-test it
+func runQuery(client *client.DefaultClient, query *lokiQuery) (data.Frames, error) {
+	// `limit` only applies to log-producing queries, and we
+	// currently only support metric queries, so this can be set to any value.
+	limit := 1
+
+	// we do not use `interval`, so we set it to zero
+	interval := time.Duration(0)
+
+	value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
+	if err != nil {
+		return data.Frames{}, err
+	}
+
+	return parseResponse(value, query)
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {

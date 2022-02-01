@@ -9,16 +9,17 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
 	*Base
 	log                log.Logger
+	ns                 notifications.WebhookSender
 	tmpl               *template.Template
 	Content            string
 	AvatarURL          string
@@ -26,7 +27,7 @@ type DiscordNotifier struct {
 	UseDiscordUsername bool
 }
 
-func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
+func NewDiscordNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*DiscordNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -55,6 +56,7 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 		AvatarURL:          avatarURL,
 		WebhookURL:         discordURL,
 		log:                log.New("alerting.notifier.discord"),
+		ns:                 ns,
 		tmpl:               t,
 		UseDiscordUsername: useDiscordUsername,
 	}, nil
@@ -114,7 +116,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		Body:        string(body),
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
 		d.log.Error("Failed to send notification to Discord", "error", err)
 		return false, err
 	}

@@ -570,3 +570,63 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
 
   return end;
 }
+
+/**
+ * Returns the precise duration of a time range passed in milliseconds.
+ * This function calculates with 30 days month and 365 days year.
+ * adapted from https://gist.github.com/remino/1563878
+ * @param milliSeconds The duration in milliseconds
+ * @returns A formated string of the duration
+ */
+export function fmtDuration(milliSeconds: number): string {
+  if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {
+    return '';
+  }
+
+  let yr: number, mo: number, wk: number, d: number, h: number, m: number, s: number, ms: number;
+
+  s = Math.floor(milliSeconds / 1000);
+  m = Math.floor(s / 60);
+  s = s % 60;
+  h = Math.floor(m / 60);
+  m = m % 60;
+  d = Math.floor(h / 24);
+  h = h % 24;
+
+  yr = Math.floor(d / 365);
+  if (yr > 0) {
+    d = d % 365;
+  }
+
+  mo = Math.floor(d / 30);
+  if (mo > 0) {
+    d = d % 30;
+  }
+
+  wk = Math.floor(d / 7);
+
+  if (wk > 0) {
+    d = d % 7;
+  }
+
+  ms = Math.round((milliSeconds % 1000) * 1000) / 1000;
+
+  return (yr > 0
+    ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+    : mo > 0
+    ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+    : wk > 0
+    ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+    : d > 0
+    ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+    : h > 0
+    ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+    : m > 0
+    ? m + 'm ' + (s > 0 ? s + 's ' : '')
+    : s > 0
+    ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+    : ms > 0
+    ? ms + 'ms '
+    : '0'
+  ).trim();
+}

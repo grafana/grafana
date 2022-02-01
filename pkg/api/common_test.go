@@ -11,8 +11,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -23,12 +21,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/require"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
@@ -214,7 +216,7 @@ func (s *fakeRenderService) Init() error {
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	features := featuremgmt.WithFeatures("accesscontrol")
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
@@ -228,6 +230,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
+		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
 	sc := setupScenarioContext(t, url)
@@ -328,7 +331,6 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	var acmock *accesscontrolmock.Mock
-	var ac *ossaccesscontrol.OSSAccessControlService
 
 	// Use a test DB
 	db := sqlstore.InitTestDB(t)
@@ -336,6 +338,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 
 	bus := bus.GetBus()
 
+	routeRegister := routing.NewRouteRegister()
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                cfg,
@@ -343,7 +346,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		Bus:                bus,
 		Live:               newTestLive(t),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
-		RouteRegister:      routing.NewRouteRegister(),
+		RouteRegister:      routeRegister,
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
 	}
@@ -355,14 +358,20 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 			acmock = acmock.WithDisabled()
 		}
 		hs.AccessControl = acmock
+		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
+		require.NoError(t, err)
+		hs.TeamPermissionsService = teamPermissionService
 	} else {
-		ac = ossaccesscontrol.ProvideService(hs.Features.Toggles(), &usagestats.UsageStatsMock{T: t})
+		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t}, database.ProvideService(db))
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
 		err = ac.RegisterFixedRoles()
 		require.NoError(t, err)
+		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
+		require.NoError(t, err)
+		hs.TeamPermissionsService = teamPermissionService
 	}
 
 	// Instantiate a new Server
