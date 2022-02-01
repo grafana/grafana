@@ -327,7 +327,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 2. decrypt data key
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.providers[normalizeProviderID(dataKey.Provider)]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
