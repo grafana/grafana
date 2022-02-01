@@ -227,7 +227,6 @@ type Cfg struct {
 	LogsPath           string
 	PluginsPath        string
 	BundledPluginsPath string
-	SwaggerPath        string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -878,8 +877,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
-	swaggerPath := valueAsString(iniFile.Section("paths"), "swagger_ui_path", "swagger_ui")
-	cfg.SwaggerPath = makeAbsolute(swaggerPath, HomePath)
 
 	if err := cfg.readServerSettings(iniFile); err != nil {
 		return err
