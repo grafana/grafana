@@ -26,10 +26,7 @@ func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 		return nil, nil
 	}
 
-	grafanaProvider := grafana.New(s.settings, s.enc)
-
 	return map[secrets.ProviderID]secrets.Provider{
-		kmsproviders.Legacy:  grafanaProvider,
-		kmsproviders.Default: grafanaProvider,
+		kmsproviders.Default: grafana.New(s.settings, s.enc),
 	}, nil
 }

@@ -199,7 +199,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, providerID, svcEncrypt.currentProviderID)
-		assert.Equal(t, 3, len(svcEncrypt.GetProviders()))
+		assert.Equal(t, 2, len(svcEncrypt.GetProviders()))
 
 		encrypted, _ := svcEncrypt.Encrypt(context.Background(), []byte{}, secrets.WithoutScope())
 		assert.True(t, kms.fake.encryptCalled)
