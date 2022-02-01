@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
-import { getDashboardVariables, getLastKey } from '../../../variables/state/selectors';
+import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 import { StoreState } from '../../../../types';
 
 export interface Props {
@@ -14,7 +14,7 @@ export interface Props {
 
 export const RepeatRowSelect: FC<Props> = ({ repeat, onChange, id }) => {
   const variables = useSelector((state: StoreState) => {
-    return getDashboardVariables(getLastKey(state), state);
+    return getVariablesByKey(getLastKey(state), state);
   });
 
   const variableOptions = useMemo(() => {

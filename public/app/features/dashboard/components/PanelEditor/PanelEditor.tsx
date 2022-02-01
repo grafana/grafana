@@ -54,7 +54,7 @@ import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
-import { getDashboardVariables } from '../../../variables/state/selectors';
+import { getVariablesByKey } from '../../../variables/state/selectors';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -73,7 +73,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
-    variables: getDashboardVariables(ownProps.dashboard.uid, state),
+    variables: getVariablesByKey(ownProps.dashboard.uid, state),
   };
 };
 

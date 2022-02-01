@@ -1,9 +1,9 @@
 import { ThunkResult } from '../../../types';
 import {
   getDashboardEditorVariables,
-  getDashboardVariables,
   getNewDashboardVariableIndex,
   getVariable,
+  getVariablesByKey,
 } from '../state/selectors';
 import {
   changeVariableNameFailed,
@@ -58,7 +58,7 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
       errorText = 'Only word and digit characters are allowed in variable names';
     }
 
-    const variables = getDashboardVariables(uid, getState());
+    const variables = getVariablesByKey(uid, getState());
     const foundVariables = variables.filter((v) => v.name === newName && v.id !== id);
 
     if (foundVariables.length) {
@@ -99,7 +99,7 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
   dispatch,
   getState
 ) => {
-  const id = getNextAvailableId(type, getDashboardVariables(key, getState()));
+  const id = getNextAvailableId(type, getVariablesByKey(key, getState()));
   const identifier = { type, id, stateKey: key };
   const global = false;
   const index = getNewDashboardVariableIndex(key, getState());

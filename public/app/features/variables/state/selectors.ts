@@ -37,7 +37,7 @@ export function getVariablesState(key: string, state: StoreState = getState()): 
   return state.templating.keys[toStateKey(key)] ?? getInitialTemplatingState();
 }
 
-export function getDashboardVariables(key: string, state: StoreState = getState()): VariableModel[] {
+export function getVariablesByKey(key: string, state: StoreState = getState()): VariableModel[] {
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
@@ -47,15 +47,15 @@ export function defaultVariablesFilter(variable: VariableModel): boolean {
 
 export const getDashboardSubMenuVariables = memoizeOne(
   (key: string, variables: Record<string, VariableModel>): VariableModel[] => {
-    return getDashboardVariables(key, getState());
+    return getVariablesByKey(key, getState());
   }
 );
 
 export const getDashboardEditorVariables = (key: string, state: StoreState): VariableModel[] => {
-  return getDashboardVariables(key, state);
+  return getVariablesByKey(key, state);
 };
 
-export type GetVariables = typeof getDashboardVariables;
+export type GetVariables = typeof getVariablesByKey;
 
 export function getNewDashboardVariableIndex(key: string, state: StoreState = getState()): number {
   return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
@@ -96,7 +96,7 @@ export function getVariables(state: StoreState = getState()) {
   if (!lastKey) {
     return [];
   }
-  return getDashboardVariables(lastKey, state);
+  return getVariablesByKey(lastKey, state);
 }
 
 export function getVariableWithName(name: string, state: StoreState = getState()) {

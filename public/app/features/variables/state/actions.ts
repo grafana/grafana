@@ -29,7 +29,7 @@ import {
   VariableWithOptions,
 } from '../types';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
-import { getDashboardVariables, getIfExistsLastKey, getVariable, getVariablesState } from './selectors';
+import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { notifyApp } from 'app/core/actions';
@@ -134,7 +134,7 @@ export const initDashboardTemplating = (key: string, dashboard: DashboardModel):
 
     getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
-    const variables = getDashboardVariables(key, getState());
+    const variables = getVariablesByKey(key, getState());
     for (const variable of variables) {
       dispatch(toKeyedAction(key, variableStateNotStarted(toVariablePayload(variable))));
     }
@@ -274,7 +274,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
 
   const dependencies: VariableModel[] = [];
 
-  for (const otherVariable of getDashboardVariables(variable.stateKey, state)) {
+  for (const otherVariable of getVariablesByKey(variable.stateKey, state)) {
     if (variable === otherVariable) {
       continue;
     }
@@ -309,7 +309,7 @@ const isWaitingForDependencies = (key: string, dependencies: VariableModel[], st
     return false;
   }
 
-  const variables = getDashboardVariables(key, state);
+  const variables = getVariablesByKey(key, state);
   const notCompletedDependencies = dependencies.filter((d) =>
     variables.some((v) => v.id === d.id && (v.state === LoadingState.NotStarted || v.state === LoadingState.Loading))
   );
@@ -351,7 +351,7 @@ export const processVariable = (
 export const processVariables = (key: string): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const queryParams = locationService.getSearchObject();
-    const promises = getDashboardVariables(key, getState()).map(
+    const promises = getVariablesByKey(key, getState()).map(
       async (variable: VariableModel) =>
         await dispatch(processVariable(toKeyedVariableIdentifier(variable), queryParams))
     );
@@ -560,7 +560,7 @@ export const variableUpdated = (
       return Promise.resolve();
     }
 
-    const variables = getDashboardVariables(uid, state);
+    const variables = getVariablesByKey(uid, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
     const event: VariablesChangedEvent = isAdHoc(variableInState)
@@ -600,7 +600,7 @@ export const onTimeRangeUpdated = (
   dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv(), events: appEvents }
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
-  const variablesThatNeedRefresh = getDashboardVariables(key, getState()).filter((variable) => {
+  const variablesThatNeedRefresh = getVariablesByKey(key, getState()).filter((variable) => {
     if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
       const variableWithRefresh = (variable as unknown) as QueryVariableModel;
       return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
@@ -648,7 +648,7 @@ export const templateVarsChangedInUrl = (
 ): ThunkResult<void> => async (dispatch, getState) => {
   const update: Array<Promise<any>> = [];
   const dashboard = getState().dashboard.getModel();
-  for (const variable of getDashboardVariables(key, getState())) {
+  for (const variable of getVariablesByKey(key, getState())) {
     const key = `var-${variable.name}`;
     if (!vars.hasOwnProperty(key)) {
       // key not found quick exit
@@ -704,7 +704,7 @@ const getQueryWithVariables = (uid: string, getState: () => StoreState): UrlQuer
       return obj;
     }, {} as UrlQueryMap);
 
-  for (const variable of getDashboardVariables(uid, getState())) {
+  for (const variable of getVariablesByKey(uid, getState())) {
     if (variable.skipUrlSync) {
       continue;
     }
@@ -755,7 +755,7 @@ export function migrateVariablesDatasourceNameToRef(
   getDatasourceSrvFunc = getDatasourceSrv
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const variables = getDashboardVariables(key, getState());
+    const variables = getVariablesByKey(key, getState());
     for (const variable of variables) {
       if (!isAdHoc(variable) && !isQuery(variable)) {
         continue;
