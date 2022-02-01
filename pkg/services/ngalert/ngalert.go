@@ -2,17 +2,15 @@ package ngalert
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
@@ -27,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
