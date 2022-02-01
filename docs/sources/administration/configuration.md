@@ -172,6 +172,10 @@ Directory where Grafana automatically scans and looks for plugins. For informati
 
 Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
 
+### swagger_ui_path
+
+Folder that contains the page for rendering the SwaggerUI. It has no effect If the `swagger-ui` feature toggle is not enabled.
+
 <hr />
 
 ## [server]
