@@ -5,22 +5,22 @@ import { variablesInitTransaction } from './transactionReducer';
 import { toStateKey } from '../utils';
 
 export interface DashboardVariablesState {
-  lastUid?: string;
-  slices: Record<string, TemplatingState>;
+  lastKey?: string;
+  keys: Record<string, TemplatingState>;
 }
 
-export const initialDashboardVariablesState: DashboardVariablesState = { slices: {} };
+export const initialDashboardVariablesState: DashboardVariablesState = { keys: {} };
 
 export interface UidAction {
-  uid: string;
+  key: string;
   action: PayloadAction<any>;
 }
 
 const uidAction = createAction<UidAction>('templating/uidAction');
 
-export function toUidAction(uid: string, action: PayloadAction<any>): PayloadAction<UidAction> {
-  const stringUid = toStateKey(uid);
-  return uidAction({ uid: stringUid, action });
+export function toUidAction(key: string, action: PayloadAction<any>): PayloadAction<UidAction> {
+  const stringUid = toStateKey(key);
+  return uidAction({ key: stringUid, action });
 }
 
 export function dashboardVariablesReducer(
@@ -28,19 +28,19 @@ export function dashboardVariablesReducer(
   outerAction: AnyAction
 ): DashboardVariablesState {
   if (uidAction.match(outerAction)) {
-    const { uid, action } = outerAction.payload;
-    const stringUid = toStateKey(uid);
-    const lastUid = variablesInitTransaction.match(action) ? stringUid : state.lastUid;
+    const { key, action } = outerAction.payload;
+    const stringKey = toStateKey(key);
+    const lastKey = variablesInitTransaction.match(action) ? stringKey : state.lastKey;
     const templatingReducers = getTemplatingReducers();
-    const prevSliceState = state.slices[stringUid];
+    const prevSliceState = state.keys[stringKey];
     const nextSliceState = templatingReducers(prevSliceState, action);
 
     return {
       ...state,
-      lastUid,
-      slices: {
-        ...state.slices,
-        [stringUid]: nextSliceState,
+      lastKey,
+      keys: {
+        ...state.keys,
+        [stringKey]: nextSliceState,
       },
     };
   }

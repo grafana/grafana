@@ -12,31 +12,31 @@ import { getInitialTemplatingState } from './reducers';
 describe('dashboardVariablesReducer', () => {
   describe('when an toUidAction is dispatched', () => {
     it('then state should be correct', () => {
-      const uid = 'uid';
+      const key = 'key';
       reducerTester<DashboardVariablesState>()
         .givenReducer(dashboardVariablesReducer, {
           ...initialDashboardVariablesState,
-          lastUid: uid,
-          slices: {
-            [uid]: {
+          lastKey: key,
+          keys: {
+            [key]: {
               ...getInitialTemplatingState(),
               transaction: {
                 ...initialTransactionState,
-                uid,
+                uid: key,
               },
             },
           },
         })
-        .whenActionIsDispatched(toUidAction(uid, variablesCompleteTransaction({ uid })))
+        .whenActionIsDispatched(toUidAction(key, variablesCompleteTransaction({ uid: key })))
         .thenStateShouldEqual({
           ...initialDashboardVariablesState,
-          lastUid: uid,
-          slices: {
-            [uid]: {
+          lastKey: key,
+          keys: {
+            [key]: {
               ...getInitialTemplatingState(),
               transaction: {
                 ...initialTransactionState,
-                uid,
+                uid: key,
                 status: TransactionStatus.Completed,
               },
             },
@@ -48,12 +48,12 @@ describe('dashboardVariablesReducer', () => {
   describe('when an toUidAction with variablesInitTransaction is dispatched', () => {
     it('then lastUid property should be correct', () => {
       const lastUid = 'lastUid';
-      const uid = 'uid';
+      const key = 'key';
       reducerTester<DashboardVariablesState>()
         .givenReducer(dashboardVariablesReducer, {
           ...initialDashboardVariablesState,
-          lastUid,
-          slices: {
+          lastKey: lastUid,
+          keys: {
             [lastUid]: {
               ...getInitialTemplatingState(),
               transaction: {
@@ -64,16 +64,16 @@ describe('dashboardVariablesReducer', () => {
             },
           },
         })
-        .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+        .whenActionIsDispatched(toUidAction(key, variablesInitTransaction({ uid: key })))
         .thenStateShouldEqual({
           ...initialDashboardVariablesState,
-          lastUid: uid,
-          slices: {
-            [uid]: {
+          lastKey: key,
+          keys: {
+            [key]: {
               ...getInitialTemplatingState(),
               transaction: {
                 ...initialTransactionState,
-                uid,
+                uid: key,
                 status: TransactionStatus.Fetching,
               },
             },
@@ -92,17 +92,17 @@ describe('dashboardVariablesReducer', () => {
 
   describe('when action other than toUidAction is dispatched', () => {
     it('then state should not be affected', () => {
-      const uid = 'uid';
+      const key = 'key';
       reducerTester<DashboardVariablesState>()
         .givenReducer(dashboardVariablesReducer, {
           ...initialDashboardVariablesState,
-          lastUid: uid,
-          slices: {
-            [uid]: {
+          lastKey: key,
+          keys: {
+            [key]: {
               ...getInitialTemplatingState(),
               transaction: {
                 ...initialTransactionState,
-                uid,
+                uid: key,
                 status: TransactionStatus.Completed,
               },
             },
@@ -111,13 +111,13 @@ describe('dashboardVariablesReducer', () => {
         .whenActionIsDispatched(variablesInitTransaction({ uid: 'newUid' }))
         .thenStateShouldEqual({
           ...initialDashboardVariablesState,
-          lastUid: uid,
-          slices: {
-            [uid]: {
+          lastKey: key,
+          keys: {
+            [key]: {
               ...getInitialTemplatingState(),
               transaction: {
                 ...initialTransactionState,
-                uid,
+                uid: key,
                 status: TransactionStatus.Completed,
               },
             },

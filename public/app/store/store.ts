@@ -11,7 +11,7 @@ export function setStore(newStore: Store<StoreState>) {
 
 export function getState(): StoreState {
   if (!store || !store.getState) {
-    return { dashboardVariables: { ...initialDashboardVariablesState, lastUid: 'uid' } } as StoreState; // used by tests
+    return { dashboardVariables: { ...initialDashboardVariablesState, lastKey: 'key' } } as StoreState; // used by tests
   }
 
   return store.getState();

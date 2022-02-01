@@ -156,14 +156,14 @@ export const getTemplatingRootReducer = () =>
 export type TemplatingReducerType = { dashboardVariables: DashboardVariablesState };
 
 export function getPreloadedState(
-  uid: string,
+  key: string,
   templatingState: Partial<TemplatingState>
 ): Pick<StoreState, 'dashboardVariables'> {
   return {
     dashboardVariables: {
-      lastUid: uid,
-      slices: {
-        [uid]: {
+      lastKey: key,
+      keys: {
+        [key]: {
           ...getInitialTemplatingState(),
           ...templatingState,
         },

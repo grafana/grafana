@@ -25,20 +25,20 @@ export const getDashboardVariable = <T extends VariableModel = VariableModel>(
 
 function getFilteredDashboardVariables(
   filter: (model: VariableModel) => boolean,
-  uid: string,
+  key: string,
   state: StoreState = getState()
 ) {
-  return Object.values(getDashboardVariablesState(uid, state).variables)
+  return Object.values(getDashboardVariablesState(key, state).variables)
     .filter(filter)
     .sort((s1, s2) => s1.index - s2.index);
 }
 
-export function getDashboardVariablesState(uid: string, state: StoreState = getState()): TemplatingState {
-  return state.dashboardVariables.slices[toStateKey(uid)] ?? getInitialTemplatingState();
+export function getDashboardVariablesState(key: string, state: StoreState = getState()): TemplatingState {
+  return state.dashboardVariables.keys[toStateKey(key)] ?? getInitialTemplatingState();
 }
 
-export function getDashboardVariables(uid: string, state: StoreState = getState()): VariableModel[] {
-  return getFilteredDashboardVariables(defaultVariablesFilter, uid, state);
+export function getDashboardVariables(key: string, state: StoreState = getState()): VariableModel[] {
+  return getFilteredDashboardVariables(defaultVariablesFilter, key, state);
 }
 
 export function defaultVariablesFilter(variable: VariableModel): boolean {
@@ -46,19 +46,19 @@ export function defaultVariablesFilter(variable: VariableModel): boolean {
 }
 
 export const getDashboardSubMenuVariables = memoizeOne(
-  (uid: string, variables: Record<string, VariableModel>): VariableModel[] => {
-    return getDashboardVariables(uid, getState());
+  (key: string, variables: Record<string, VariableModel>): VariableModel[] => {
+    return getDashboardVariables(key, getState());
   }
 );
 
-export const getDashboardEditorVariables = (uid: string, state: StoreState): VariableModel[] => {
-  return getDashboardVariables(uid, state);
+export const getDashboardEditorVariables = (key: string, state: StoreState): VariableModel[] => {
+  return getDashboardVariables(key, state);
 };
 
 export type GetVariables = typeof getDashboardVariables;
 
-export function getNewDashboardVariableIndex(uid: string, state: StoreState = getState()): number {
-  return getNextVariableIndex(Object.values(getDashboardVariablesState(uid, state).variables));
+export function getNewDashboardVariableIndex(key: string, state: StoreState = getState()): number {
+  return getNextVariableIndex(Object.values(getDashboardVariablesState(key, state).variables));
 }
 
 export function getNextVariableIndex(variables: VariableModel[]): number {
@@ -66,45 +66,45 @@ export function getNextVariableIndex(variables: VariableModel[]): number {
   return sorted.length > 0 ? sorted[sorted.length - 1].index + 1 : 0;
 }
 
-export function getDashboardVariablesIsDirty(uid: string, state: StoreState = getState()): boolean {
-  return getDashboardVariablesState(uid, state).transaction.isDirty;
+export function getDashboardVariablesIsDirty(key: string, state: StoreState = getState()): boolean {
+  return getDashboardVariablesState(key, state).transaction.isDirty;
 }
 
-export function getIfExistsLastUid(state: StoreState = getState()): string | undefined {
-  return state.dashboardVariables?.lastUid;
+export function getIfExistsLastKey(state: StoreState = getState()): string | undefined {
+  return state.dashboardVariables?.lastKey;
 }
 
-export function getLastUid(state: StoreState = getState()): string {
-  if (!state.dashboardVariables?.lastUid) {
-    throw new Error('Accessing lastUid without initializing it variables');
+export function getLastKey(state: StoreState = getState()): string {
+  if (!state.dashboardVariables?.lastKey) {
+    throw new Error('Accessing lastKey without initializing it variables');
   }
 
-  return state.dashboardVariables.lastUid;
+  return state.dashboardVariables.lastKey;
 }
 
-// selectors used by template srv, assumes that lastUid is in state. Needs to change when/if dashboard redux state becomes keyed too.
+// selectors used by template srv, assumes that lastKey is in state. Needs to change when/if dashboard redux state becomes keyed too.
 export function getFilteredVariables(filter: (model: VariableModel) => boolean, state: StoreState = getState()) {
-  const lastUid = getIfExistsLastUid(state);
-  if (!lastUid) {
+  const lastKey = getIfExistsLastKey(state);
+  if (!lastKey) {
     return [];
   }
-  return getFilteredDashboardVariables(filter, lastUid, state);
+  return getFilteredDashboardVariables(filter, lastKey, state);
 }
 
 export function getVariables(state: StoreState = getState()) {
-  const lastUid = getIfExistsLastUid(state);
-  if (!lastUid) {
+  const lastKey = getIfExistsLastKey(state);
+  if (!lastKey) {
     return [];
   }
-  return getDashboardVariables(lastUid, state);
+  return getDashboardVariables(lastKey, state);
 }
 
 export function getVariableWithName(name: string, state: StoreState = getState()) {
-  const lastUid = getIfExistsLastUid(state);
-  if (!lastUid) {
+  const lastKey = getIfExistsLastKey(state);
+  if (!lastKey) {
     return;
   }
-  return getDashboardVariable({ id: name, dashboardUid: lastUid, type: 'query' }, state, false);
+  return getDashboardVariable({ id: name, dashboardUid: lastKey, type: 'query' }, state, false);
 }
 
 export function getInstanceState<Model extends VariableModel = VariableModel>(state: VariablesState, id: string) {

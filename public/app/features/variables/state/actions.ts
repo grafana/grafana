@@ -33,7 +33,7 @@ import {
   getDashboardVariable,
   getDashboardVariables,
   getDashboardVariablesState,
-  getIfExistsLastUid,
+  getIfExistsLastKey,
 } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
@@ -732,7 +732,7 @@ export const initVariablesTransaction = (urlUid: string, dashboard: DashboardMod
   try {
     const uid = toStateKey(urlUid);
     const state = getState();
-    const lastUid = getIfExistsLastUid(state);
+    const lastUid = getIfExistsLastKey(state);
     if (lastUid) {
       const transactionState = getDashboardVariablesState(lastUid, state).transaction;
       if (transactionState.status === TransactionStatus.Fetching) {

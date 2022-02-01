@@ -6,7 +6,7 @@ import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import {
   getDashboardVariable,
   getDashboardVariablesState,
-  getLastUid,
+  getLastKey,
   getNewDashboardVariableIndex,
 } from '../state/selectors';
 import { AddVariable, DashboardVariableIdentifier } from '../state/types';
@@ -168,7 +168,7 @@ export const initAdHocVariableEditor = (uid: string): ThunkResult<void> => (disp
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const uid = getLastUid(getState());
+    const uid = getLastKey(getState());
 
     const model = {
       ...cloneDeep(initialAdHocVariableModelState),
@@ -194,7 +194,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 };
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel | undefined => {
-  const uid = getLastUid(state);
+  const uid = getLastKey(state);
   const templatingState = getDashboardVariablesState(uid, state);
   return Object.values(templatingState.variables).find(
     (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid

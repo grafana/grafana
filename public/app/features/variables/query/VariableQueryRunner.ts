@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 
 import { DashboardVariableIdentifier } from '../state/types';
-import { getDashboardVariable, getLastUid } from '../state/selectors';
+import { getDashboardVariable, getLastKey } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
@@ -99,7 +99,7 @@ export class VariableQueryRunner {
         getState,
       } = this.dependencies;
 
-      const beforeUid = getLastUid(getState());
+      const beforeUid = getLastKey(getState());
 
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
@@ -115,7 +115,7 @@ export class VariableQueryRunner {
         .pipe(
           filter(() => {
             // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
-            const afterUid = getLastUid(getState());
+            const afterUid = getLastKey(getState());
 
             return beforeUid === afterUid;
           }),
