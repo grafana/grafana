@@ -14,7 +14,7 @@ Grafana encrypts these secrets before they are written to the database, by using
 
 You can choose to use [envelope encryption](#envelope-encryption), which complements a [KMS integration](#kms-integration) in Grafana Enterprise by adding a layer of indirection to the encryption process.
 
-> **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "../administration/database-encryption-enterprise.md" >}}) instead of AES-CFB.
+> **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "../administration/database-encryption.md" >}}) instead of AES-CFB.
 
 # Envelope encryption
 
