@@ -103,9 +103,17 @@ func (s *SecretsService) registerUsageMetrics() {
 		// Count by kind
 		countByKind := make(map[string]int)
 		for id := range s.providers {
+			// Skip default providers from stats.
+			// As they are configured by default,
+			// it does not make sense to count how
+			// many are there configured.
+			if id == kmsproviders.Legacy || id == kmsproviders.Default {
+				continue
+			}
+
 			kind, err := id.Kind()
 			if err != nil {
-				return nil, err
+				s.log.Warn("Encryption provider not accounted for usage stats", "id", id, "err", err)
 			}
 
 			countByKind[kind]++
