@@ -1,7 +1,10 @@
+import { DataSourceApi } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { VariablePayload } from '../state/types';
+import { VariableQueryEditorType } from '../types';
 
 type VariableEditorExtension<ExtendedProps extends {} = {}> = { [P in keyof ExtendedProps]: ExtendedProps[P] };
+
 export interface VariableEditorState<ExtendedProps extends {} = {}> {
   id: string;
   name: string;
@@ -10,7 +13,12 @@ export interface VariableEditorState<ExtendedProps extends {} = {}> {
   extended: VariableEditorExtension<ExtendedProps> | null;
 }
 
-export const initialVariableEditorState: VariableEditorState = {
+interface VariableEditorExtendedProps {
+  dataSource?: DataSourceApi;
+  VariableQueryEditor?: VariableQueryEditorType;
+}
+
+export const initialVariableEditorState: VariableEditorState<VariableEditorExtendedProps> = {
   id: '',
   isValid: true,
   errors: {},
@@ -22,20 +30,26 @@ const variableEditorReducerSlice = createSlice({
   name: 'templating/editor',
   initialState: initialVariableEditorState,
   reducers: {
-    setIdInEditor: (state: VariableEditorState, action: PayloadAction<{ id: string }>) => {
+    setIdInEditor: (state: VariableEditorState<VariableEditorExtendedProps>, action: PayloadAction<{ id: string }>) => {
       state.id = action.payload.id;
     },
-    clearIdInEditor: (state: VariableEditorState, action: PayloadAction<undefined>) => {
+    clearIdInEditor: (state: VariableEditorState<VariableEditorExtendedProps>, action: PayloadAction<undefined>) => {
       state.id = '';
     },
-    variableEditorMounted: (state: VariableEditorState, action: PayloadAction<{ name: string }>) => {
+    variableEditorMounted: (
+      state: VariableEditorState<VariableEditorExtendedProps>,
+      action: PayloadAction<{ name: string }>
+    ) => {
       state.name = action.payload.name;
     },
-    variableEditorUnMounted: (state: VariableEditorState, action: PayloadAction<VariablePayload>) => {
+    variableEditorUnMounted: (
+      state: VariableEditorState<VariableEditorExtendedProps>,
+      action: PayloadAction<VariablePayload>
+    ) => {
       return initialVariableEditorState;
     },
     changeVariableNameSucceeded: (
-      state: VariableEditorState,
+      state: VariableEditorState<VariableEditorExtendedProps>,
       action: PayloadAction<VariablePayload<{ newName: string }>>
     ) => {
       state.name = action.payload.data.newName;
@@ -43,7 +57,7 @@ const variableEditorReducerSlice = createSlice({
       state.isValid = Object.keys(state.errors).length === 0;
     },
     changeVariableNameFailed: (
-      state: VariableEditorState,
+      state: VariableEditorState<VariableEditorExtendedProps>,
       action: PayloadAction<{ newName: string; errorText: string }>
     ) => {
       state.name = action.payload.newName;
@@ -51,24 +65,38 @@ const variableEditorReducerSlice = createSlice({
       state.isValid = Object.keys(state.errors).length === 0;
     },
     addVariableEditorError: (
-      state: VariableEditorState,
+      state: VariableEditorState<VariableEditorExtendedProps>,
       action: PayloadAction<{ errorProp: string; errorText: any }>
     ) => {
       state.errors[action.payload.errorProp] = action.payload.errorText;
       state.isValid = Object.keys(state.errors).length === 0;
     },
-    removeVariableEditorError: (state: VariableEditorState, action: PayloadAction<{ errorProp: string }>) => {
+    removeVariableEditorError: (
+      state: VariableEditorState<VariableEditorExtendedProps>,
+      action: PayloadAction<{ errorProp: string }>
+    ) => {
       delete state.errors[action.payload.errorProp];
       state.isValid = Object.keys(state.errors).length === 0;
     },
     changeVariableEditorExtended: (
-      state: VariableEditorState,
+      state: VariableEditorState<VariableEditorExtendedProps>,
       action: PayloadAction<{ propName: string; propValue: any }>
     ) => {
       state.extended = {
         ...state.extended,
         [action.payload.propName]: action.payload.propValue,
       };
+    },
+    updateQueryVariableDatasource: (
+      state: VariableEditorState<VariableEditorExtendedProps>,
+      action: PayloadAction<{ datasource: DataSourceApi; queryEditor: VariableQueryEditorType; variable: unknown }>
+    ) => {
+      if (!state.extended) {
+        state.extended = {};
+      }
+
+      state.extended.dataSource = action.payload.datasource;
+      state.extended.VariableQueryEditor = action.payload.queryEditor;
     },
     cleanEditorState: () => initialVariableEditorState,
   },
@@ -87,4 +115,5 @@ export const {
   addVariableEditorError,
   removeVariableEditorError,
   cleanEditorState,
+  updateQueryVariableDatasource,
 } = variableEditorReducerSlice.actions;
