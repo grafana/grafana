@@ -60,7 +60,24 @@ describe('ShareEmbed', () => {
     config.bootData = originalBootData;
   });
 
-  it('generates the correct embed url for the homepage', () => {
+  it('generates the correct embed url for a dashboard', () => {
+    const mockDashboard = new DashboardModel({
+      uid: 'mockDashboardUid',
+    });
+    const mockPanel = new PanelModel({
+      id: 'mockPanelId',
+    });
+    mockLocationHref(`http://dashboards.grafana.com/d/${mockDashboard.uid}?orgId=1`);
+    render(<ShareEmbed dashboard={mockDashboard} panel={mockPanel} />);
+
+    const embedUrl = screen.getByTestId('share-embed-html');
+    expect(embedUrl).toBeInTheDocument();
+    expect(embedUrl).toHaveTextContent(
+      `http://dashboards.grafana.com/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}`
+    );
+  });
+
+  it('generates the correct embed url for a dashboard set to the homepage in the grafana config', () => {
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
     const mockDashboard = new DashboardModel({
       uid: 'mockDashboardUid',
