@@ -136,8 +136,8 @@ func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 }
 
 func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
-	// not used with access control
-	return false, nil
+	// always true for access control
+	return true, nil
 }
 
 func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
@@ -158,6 +158,10 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 
 	acl := make([]*models.DashboardAclInfoDTO, 0, len(permissions))
 	for _, p := range permissions {
+		if !p.IsManaged() {
+			continue
+		}
+
 		var role *models.RoleType
 		if p.BuiltInRole != "" {
 			tmp := models.RoleType(p.BuiltInRole)
