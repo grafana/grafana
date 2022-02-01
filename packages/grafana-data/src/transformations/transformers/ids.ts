@@ -30,5 +30,4 @@ export enum DataTransformerID {
   fieldLookup = 'fieldLookup',
   spatial = 'spatial',
   extractFields = 'extractFields',
-  insertValues = 'insertValues',
 }
