@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { FeatureLike } from 'ol/Feature';
 
 import { GeomapLayerHover } from '../event';
 import { DataHoverRow } from './DataHoverRow';
+import { isString } from 'lodash';
 
 type Props = {
   layers?: GeomapLayerHover[];
@@ -35,7 +36,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                     <Collapse
                       key={key}
                       collapsible
-                      label={generateLabel(feature)}
+                      label={generateLabel(feature, idx)}
                       isOpen={rowMap.get(key)}
                       onToggle={() => {
                         updateRowMap(key, !rowMap.get(key));
@@ -57,16 +58,43 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   return <TabContent>{rows}</TabContent>;
 };
 
-export const generateLabel = (feature: FeatureLike): string => {
-  let label: string;
-
-  label = feature.get('name') ?? feature.get('title') ?? feature.getId();
-
-  if (!label) {
-    label = 'Data';
+export const generateLabel = (feature: FeatureLike, idx: number): string => {
+  const names = ['Name', 'name', 'Title', 'ID', 'id'];
+  let props = feature.getProperties();
+  let first = '';
+  const frame = feature.get('frame') as DataFrame;
+  if (frame) {
+    const rowIndex = feature.get('rowIndex');
+    for (const f of frame.fields) {
+      if (f.type === FieldType.string) {
+        const k = getFieldDisplayName(f, frame);
+        if (!first) {
+          first = k;
+        }
+        props[k] = f.values.get(rowIndex);
+      }
+    }
   }
 
-  return label;
+  for (let k of names) {
+    const v = props[k];
+    if (v) {
+      return v;
+    }
+  }
+
+  if (first) {
+    return `${first}: ${props[first]}`;
+  }
+
+  for (let k of Object.keys(props)) {
+    const v = props[k];
+    if (isString(v)) {
+      return `${k}: ${v}`;
+    }
+  }
+
+  return `Match: ${idx + 1}`;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
