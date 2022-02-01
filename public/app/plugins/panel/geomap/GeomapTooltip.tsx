@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useState } from 'react';
+import React, { createRef } from 'react';
 import { VizTooltipContainer } from '@grafana/ui';
 import { useOverlay } from '@react-aria/overlays';
 
@@ -7,41 +7,22 @@ import { GeomapHoverPayload } from './event';
 
 interface Props {
   ttip?: GeomapHoverPayload;
-  clicked?: number;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export const GeomapTooltip = (props: Props) => {
-  let { ttip } = props;
-
-  const [selectedTTip, setSelectedTTip] = useState<GeomapHoverPayload>();
-
-  useEffect(() => {
-    setSelectedTTip(ttip ? { ...ttip } : undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.clicked]);
-
-  const onClose = () => {
-    setSelectedTTip(undefined);
-    props.onClose();
-  };
-
+export const GeomapTooltip = ({ ttip, onClose, isOpen }: Props) => {
   const ref = createRef<HTMLElement>();
-  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: !!selectedTTip }, ref);
-
-  // pin the selected one
-  if (selectedTTip) {
-    ttip = selectedTTip;
-  }
+  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen }, ref);
 
   return (
     <>
       {ttip && ttip.layers && (
-        <section ref={ref} {...overlayProps}>
-          <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
-            <ComplexDataHoverView {...ttip} onClose={onClose} />
-          </VizTooltipContainer>
-        </section>
+        <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
+          <section ref={ref} {...overlayProps}>
+            <ComplexDataHoverView {...ttip} isOpen={isOpen} onClose={onClose} />
+          </section>
+        </VizTooltipContainer>
       )}
     </>
   );

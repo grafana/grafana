@@ -41,7 +41,7 @@ let sharedView: View | undefined = undefined;
 type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
-  clicked?: number;
+  ttipOpen: boolean;
 }
 
 export interface GeomapLayerActions {
@@ -68,7 +68,6 @@ export class GeomapPanel extends Component<Props, State> {
 
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
-  ttipOpen?: boolean;
   hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
   readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
 
@@ -79,7 +78,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = { ttipOpen: false };
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
@@ -308,27 +307,25 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   clearTooltip = () => {
-    if (this.state.ttip) {
-      this.setState({ ttip: undefined });
+    if (this.state.ttip && !this.state.ttipOpen) {
+      this.tooltipPopupClosed();
     }
   };
 
   tooltipPopupClosed = () => {
-    this.ttipOpen = false;
+    this.setState({ ttipOpen: false, ttip: undefined });
   };
 
   pointerClickListener = (evt: MapBrowserEvent<UIEvent>) => {
     if (this.pointerMoveListener(evt)) {
       evt.preventDefault();
       evt.stopPropagation();
-      this.ttipOpen = true;
-      this.setState({ clicked: Date.now() });
+      this.setState({ ttipOpen: true });
     }
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
-    if (!this.map || this.ttipOpen) {
-      console.log('skip map move callback');
+    if (!this.map || this.state.ttipOpen) {
       return false;
     }
     const mouse = evt.originalEvent as any;
@@ -580,7 +577,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    const { ttip, clicked, topRight, bottomLeft } = this.state;
+    const { ttip, ttipOpen, topRight, bottomLeft } = this.state;
 
     return (
       <>
@@ -589,7 +586,7 @@ export class GeomapPanel extends Component<Props, State> {
           <div className={this.style.map} ref={this.initMapRef}></div>
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
-        <GeomapTooltip ttip={ttip} clicked={clicked} onClose={this.tooltipPopupClosed} />
+        <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>
     );
   }
