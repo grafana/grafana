@@ -125,8 +125,7 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = nullInsertThreshold(df);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([1]);
+    expect(result).toBe(df);
   });
 
   test('should noop on invalid threshold', () => {
@@ -140,8 +139,7 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = nullInsertThreshold(df, -1);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 4]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([1, 1, 1]);
+    expect(result).toBe(df);
   });
 
   test('should noop on invalid interval', () => {
@@ -155,8 +153,35 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = nullInsertThreshold(df);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 4]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([1, 1, 1]);
+    expect(result).toBe(df);
+  });
+
+  test('should noop when no missing steps', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 2, 3] },
+        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+      ],
+    });
+
+    const result = nullInsertThreshold(df);
+
+    expect(result).toBe(df);
+  });
+
+  test('should noop when refFieldName not found', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 2, 5] },
+        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+      ],
+    });
+
+    const result = nullInsertThreshold(df, null, 'Time2');
+
+    expect(result).toBe(df);
   });
 
   test('perf stress test should be <= 10ms', () => {

@@ -11,15 +11,15 @@ type InsertMode = keyof typeof INSERT_MODES;
 
 export function nullInsertThreshold(
   frame: DataFrame,
-  threshold?: number,
-  refFieldName?: string,
+  threshold?: number | null,
+  refFieldName?: string | null,
   insertMode: InsertMode = 'threshold'
 ): DataFrame {
   if (frame.length < 2) {
     return frame;
   }
 
-  let refField = frame.fields.find((field) => {
+  const refField = frame.fields.find((field) => {
     // note: getFieldDisplayName() would require full DF[]
     return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
   });
@@ -38,14 +38,14 @@ export function nullInsertThreshold(
     return frame;
   }
 
-  let refValues = refField.values.toArray();
-  let len = refValues.length;
+  const refValues = refField.values.toArray();
+  const len = refValues.length;
 
   let prevValue: number = refValues[0];
-  let refValuesNew: number[] = [prevValue];
+  const refValuesNew: number[] = [prevValue];
 
   for (let i = 1; i < len; i++) {
-    let curValue = refValues[i];
+    const curValue = refValues[i];
 
     if (curValue - prevValue > threshold) {
       refValuesNew.push(getInsertValue(prevValue, curValue, threshold));
@@ -56,9 +56,13 @@ export function nullInsertThreshold(
     prevValue = curValue;
   }
 
-  let filledLen = refValuesNew.length;
+  const filledLen = refValuesNew.length;
 
-  let filledFieldValues: any[][] = [];
+  if (filledLen === len) {
+    return frame;
+  }
+
+  const filledFieldValues: any[][] = [];
 
   for (let field of frame.fields) {
     let filledValues;
@@ -66,7 +70,7 @@ export function nullInsertThreshold(
     if (field !== refField) {
       filledValues = Array(filledLen);
 
-      let fieldValues = field.values.toArray();
+      const fieldValues = field.values.toArray();
 
       for (let i = 0, j = 0; i < filledLen; i++) {
         filledValues[i] = refValues[j] === refValuesNew[i] ? fieldValues[j++] : null;
@@ -78,7 +82,7 @@ export function nullInsertThreshold(
     filledFieldValues.push(filledValues);
   }
 
-  let outFrame: DataFrame = {
+  const outFrame: DataFrame = {
     ...frame,
     length: filledLen,
     fields: frame.fields.map((field, i) => ({
