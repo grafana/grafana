@@ -140,6 +140,10 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
+		r.Get("/swagger-ui", swaggerUI)
+	}
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -522,4 +526,8 @@ func (hs *HTTPServer) registerRoutes() {
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)
 	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now),
 		routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
+}
+
+func swaggerUI(c *models.ReqContext) {
+	c.HTML(200, "swagger", nil)
 }

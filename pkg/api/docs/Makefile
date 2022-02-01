@@ -10,7 +10,7 @@ client-go: create-client-dir
 	-v ${HOME}/go:/go \
 	-v $$(pwd)/../../..:/grafana \
 	swaggerapi/swagger-codegen-cli:$(SWAGGER_CODEGEN_TAG) generate \
-	-i /grafana/swagger-ui/merged.json \
+	-i /grafana/public/api-merged.json \
 	-l go \
 	--additional-properties packageName=go_client \
 	-DdebugOperations \
@@ -25,7 +25,7 @@ client-python: create-client-dir
 	-v ${HOME}/go:/go \
 	-v $$(pwd)/../../..:/grafana \
 	swaggerapi/swagger-codegen-cli generate \
-	-i /grafana/swagger-ui/merged.json \
+	-i /grafana/public/api-merged.json \
 	-l python \
 	-o /grafana/pkg/api/clients/python
 

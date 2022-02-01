@@ -175,12 +175,10 @@ func staticHandler(ctx *web.Context, log log.Logger, opt StaticOptions) bool {
 			}
 		}()
 
-		fi, err = indexFile.Stat()
+		fi, err = f.Stat()
 		if err != nil || fi.IsDir() {
 			return true
 		}
-
-		f = indexFile
 	}
 
 	if !opt.SkipLogging {
