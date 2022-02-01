@@ -80,6 +80,7 @@ export function buildSoloUrl(
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
 
+  // For handling the case when default_home_dashboard_path is set in the grafana config
   if (locationUtil.stripBaseFromUrl(baseUrl) === '/') {
     soloUrl = `${config.appUrl}d-solo/${dashboardUid}`;
   }
