@@ -92,6 +92,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
                 the user viewing that page need to be signed into Grafana for the graph to load."
         >
           <TextArea
+            data-testid="share-embed-html"
             id="share-panel-embed-embed-html-textarea"
             rows={5}
             value={iframeHtml}
