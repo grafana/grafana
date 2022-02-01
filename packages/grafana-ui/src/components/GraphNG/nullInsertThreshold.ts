@@ -1,8 +1,20 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 
-export function nullInsertThreshold(frame: DataFrame, threshold?: number, refFieldName?: string): DataFrame {
-  const value = null;
+const INSERT_MODES = {
+  threshold: (prev: number, next: number, threshold: number) => prev + threshold,
+  midpoint: (prev: number, next: number, threshold: number) => (prev + next) / 2,
+  // previous time + 1ms to prevent StateTimeline from forward-interpolating prior state
+  plusone: (prev: number, next: number, threshold: number) => prev + 1,
+};
 
+type InsertMode = keyof typeof INSERT_MODES;
+
+export function nullInsertThreshold(
+  frame: DataFrame,
+  threshold?: number,
+  refFieldName?: string,
+  insertMode: InsertMode = 'threshold'
+): DataFrame {
   if (frame.length < 2) {
     return frame;
   }
@@ -16,7 +28,7 @@ export function nullInsertThreshold(frame: DataFrame, threshold?: number, refFie
     return frame;
   }
 
-  const isTime = refField.type === FieldType.time;
+  const getInsertValue = INSERT_MODES[insertMode];
 
   if (threshold == null) {
     threshold = refField.config.interval ?? 0;
@@ -36,9 +48,7 @@ export function nullInsertThreshold(frame: DataFrame, threshold?: number, refFie
     let curValue = refValues[i];
 
     if (curValue - prevValue > threshold) {
-      // insert new value at previous time + 1ms or at midpoint if numeric
-      // this is done to prevent StateTimeline from forward-interpolating prior state
-      refValuesNew.push(isTime ? prevValue + 1 : (prevValue + curValue) / 2);
+      refValuesNew.push(getInsertValue(prevValue, curValue, threshold));
     }
 
     refValuesNew.push(curValue);
@@ -59,7 +69,7 @@ export function nullInsertThreshold(frame: DataFrame, threshold?: number, refFie
       let fieldValues = field.values.toArray();
 
       for (let i = 0, j = 0; i < filledLen; i++) {
-        filledValues[i] = refValues[j] === refValuesNew[i] ? fieldValues[j++] : value;
+        filledValues[i] = refValues[j] === refValuesNew[i] ? fieldValues[j++] : null;
       }
     } else {
       filledValues = refValuesNew;

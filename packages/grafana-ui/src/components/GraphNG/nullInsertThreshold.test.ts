@@ -75,7 +75,7 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = nullInsertThreshold(df, 2);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 8, 11]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
   });
@@ -109,7 +109,7 @@ describe('nullInsertThreshold Transformer', () => {
 
     const result = nullInsertThreshold(df, 2);
 
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 8, 11]);
+    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
   });
