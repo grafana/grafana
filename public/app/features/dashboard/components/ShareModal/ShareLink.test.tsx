@@ -192,6 +192,22 @@ describe('ShareModal', () => {
 });
 
 describe('when default_home_dashboard_path is set in the grafana config', () => {
+   let originalBootData;
+   beforeAll(() => {
+    originalBootData = config.bootData;
+    config.appUrl = 'http://dashboards.grafana.com/';
+
+    config.bootData = {
+      user: {
+        orgId: 1,
+      },
+    };
+  });
+
+  afterAll(() => {
+    config.bootData = originalBootData;
+  });
+
   it('should render the correct link', async () => {
     const mockDashboard = new DashboardModel({
       uid: 'foo',
@@ -199,6 +215,6 @@ describe('when default_home_dashboard_path is set in the grafana config', () => 
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
     const test: ShallowWrapper<Props, State, ShareLink> = shallow(<ShareLink dashboard={mockDashboard} />);
     await test.instance().buildUrl();
-    expect(test.state().imageUrl).toBe('foo');
+    expect(test.state().imageUrl).toBe('http://dashboards.grafana.com/render/d-solo/foo?orgId=1&from=1000&to=2000&panelId=&width=1000&height=500&tz=UTC');
   });
 });
