@@ -38,8 +38,8 @@ func TestUnitOfWorkIntegration(t *testing.T) {
 	setupTestRecordTable(t, dbstore)
 	xact := store.NewTransaction(dbstore.SQLStore)
 
-	xact = xact.Do(insertTestRecord)
-	xact = xact.Do(insertTestRecord)
+	xact = xact.Do(insertTestRecord(0))
+	xact = xact.Do(insertTestRecord(1))
 	require.Equal(t, int64(0), countRecords(t, dbstore))
 
 	err := xact.Execute(context.Background())
@@ -48,9 +48,25 @@ func TestUnitOfWorkIntegration(t *testing.T) {
 	require.Equal(t, int64(2), countRecords(t, dbstore))
 }
 
+func TestUnitOfWorkRollbacks(t *testing.T) {
+	_, dbstore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+	setupTestRecordTable(t, dbstore)
+	xact := store.NewTransaction(dbstore.SQLStore)
+
+	xact = xact.Do(insertTestRecord(0))
+	xact = xact.Do(insertTestRecord(0))
+	require.Equal(t, int64(0), countRecords(t, dbstore))
+
+	err := xact.Execute(context.Background())
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "UNIQUE constraint failed: test_record.value")
+	require.Equal(t, int64(0), countRecords(t, dbstore))
+}
+
 type testRecord struct {
 	Id    int `xorm:"pk autoincr 'id'"`
-	Value int
+	Value int `xorm:"unique"`
 }
 
 func setupTestRecordTable(t *testing.T, dbstore *store.DBstore) {
@@ -63,14 +79,22 @@ func setupTestRecordTable(t *testing.T, dbstore *store.DBstore) {
 		if err != nil {
 			return err
 		}
+		err = sess.CreateUniques(testRecord{})
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	require.NoError(t, err)
 }
 
-func insertTestRecord(sess *sqlstore.DBSession) error {
-	_, err := sess.Insert(testRecord{})
-	return err
+func insertTestRecord(value int) func(*sqlstore.DBSession) error {
+	return func(s *sqlstore.DBSession) error {
+		_, err := s.Insert(testRecord{
+			Value: value,
+		})
+		return err
+	}
 }
 
 func countRecords(t *testing.T, dbstore *store.DBstore) int64 {
