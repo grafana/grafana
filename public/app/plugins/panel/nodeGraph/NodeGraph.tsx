@@ -189,7 +189,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
         </div>
       ) : null}
 
-      {dataFrames.length ? (
+      {dataFrames.length && processed.nodes.length ? (
         <svg
           ref={panRef}
           viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
