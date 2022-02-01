@@ -33,6 +33,7 @@ import {
   setEchoSrv,
   setLocationSrv,
   setQueryRunnerFactory,
+  setTestService,
 } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
@@ -128,7 +129,11 @@ export class GrafanaApp {
 
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
-
+      setTestService({
+        log: () => {
+          console.log('TestService');
+        },
+      });
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,

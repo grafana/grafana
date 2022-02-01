@@ -1,6 +1,6 @@
 import React, { ComponentType } from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import { config, locationService, navigationLogger } from '@grafana/runtime';
+import { config, locationService, navigationLogger, testService } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@grafana/ui';
@@ -50,6 +50,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   componentDidMount() {
+    testService.log();
     if (this.container) {
       this.bootstrapNgApp();
     } else {
