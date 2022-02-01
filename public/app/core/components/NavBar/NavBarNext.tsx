@@ -40,6 +40,7 @@ export const NavBarNext = React.memo(() => {
   };
   const navTree = cloneDeep(navBarTree);
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
+  const pinnedItems = navTree.filter((item) => item.showInNavBar);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
@@ -69,7 +70,7 @@ export const NavBarNext = React.memo(() => {
       </NavBarSection>
 
       <NavBarSection>
-        {coreItems.map((link, index) => (
+        {pinnedItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Checkbox, CustomScrollbar, Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { css } from '@emotion/css';
@@ -43,7 +43,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
           <CustomScrollbar>
             <ul>
               {navItems.map((link, index) => (
-                <div className={styles.section} key={index}>
+                <div className={styles.section} key={`${link.id}-${index}`}>
                   <NavBarMenuItem
                     isActive={activeItem === link}
                     onClick={() => {
@@ -55,10 +55,10 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                     text={link.text}
                     url={link.url}
                     isMobile={true}
+                    pinned={link.showInNavBar}
+                    canPin={link.id !== 'search'}
+                    onClickPin={() => link.id && toggleItemPin(link.id)}
                   />
-                  {link.id !== 'search' && (
-                    <Checkbox value={link.pinned} onClick={() => link.id && toggleItemPin(link.id)} />
-                  )}
                   {link.children?.map(
                     (childLink, childIndex) =>
                       !childLink.divider && (

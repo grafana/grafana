@@ -21,7 +21,7 @@ export interface NavModelItem {
   menuItemType?: NavMenuItemType;
   highlightText?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
-  pinned?: boolean;
+  showInNavBar?: boolean;
 }
 
 export enum NavSection {
