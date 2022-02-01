@@ -1,7 +1,7 @@
-import { Portal, VizTooltipContainer } from '@grafana/ui';
-import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
 import React, { createRef, useEffect, useState } from 'react';
+import { VizTooltipContainer } from '@grafana/ui';
+import { useOverlay } from '@react-aria/overlays';
+
 import { ComplexDataHoverView } from './components/ComplexDataHoverView';
 import { GeomapHoverPayload } from './event';
 
@@ -17,7 +17,6 @@ export const GeomapTooltip = (props: Props) => {
   const [selectedTTip, setSelectedTTip] = useState<GeomapHoverPayload>();
 
   useEffect(() => {
-    console.log('CLICKED changed!!!', props);
     setSelectedTTip(ttip ? { ...ttip } : undefined);
     // Goal is a copy when clicked changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -28,7 +27,7 @@ export const GeomapTooltip = (props: Props) => {
   };
 
   const ref = createRef<HTMLElement>();
-  const { overlayProps } = useOverlay({ onClose, isDismissable: false, isOpen: !!selectedTTip }, ref);
+  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: !!selectedTTip }, ref);
 
   // pin the selected one
   if (selectedTTip) {
@@ -36,16 +35,14 @@ export const GeomapTooltip = (props: Props) => {
   }
 
   return (
-    <Portal>
+    <>
       {ttip && ttip.layers && (
-        <FocusScope contain autoFocus restoreFocus>
-          <section ref={ref} {...overlayProps}>
-            <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
-              <ComplexDataHoverView {...ttip} />
-            </VizTooltipContainer>
-          </section>
-        </FocusScope>
+        <section ref={ref} {...overlayProps}>
+          <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
+            <ComplexDataHoverView {...ttip} />
+          </VizTooltipContainer>
+        </section>
       )}
-    </Portal>
+    </>
   );
 };

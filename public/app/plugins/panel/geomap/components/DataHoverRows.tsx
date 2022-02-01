@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Collapse, TabContent } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';
@@ -10,7 +10,11 @@ type Props = {
 };
 
 export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
-  const rowMap = new Map<number, boolean>();
+  const [rowMap, setRowMap] = useState(new Map<number, boolean>());
+
+  const updateRowMap = (key: number, value: boolean) => {
+    setRowMap(new Map(rowMap.set(key, value)));
+  };
 
   const rows =
     (layers &&
@@ -20,7 +24,6 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
             <div key={g.layer.getName()}>
               <div>
                 {g.features.map((f, idx) => {
-                  rowMap.set(idx, true);
                   return (
                     <Collapse
                       key={idx}
@@ -28,8 +31,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                       label={f.get('name')}
                       isOpen={rowMap.get(idx)}
                       onToggle={() => {
-                        console.log('ontoggle reachable??');
-                        rowMap.set(idx, !rowMap.get(idx));
+                        updateRowMap(idx, !rowMap.get(idx));
                       }}
                     >
                       <DataHoverRow feature={f} />
@@ -41,8 +43,6 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
           )
       )) ??
     null;
-
-  console.log(rowMap, 'hm');
 
   return <TabContent>{rows}</TabContent>;
 };
