@@ -16,7 +16,7 @@ export const UpgradeBox = ({ text, className, size = 'md', ...htmlProps }: Props
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>
       <Icon name={'arrow-up'} className={styles.icon} />
-      <div className={styles.content}>
+      <div>
         <h6>You’ve found a Pro feature!</h6>
         <p className={styles.text}>{text}</p>
         <LinkButton
@@ -67,9 +67,6 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
       border: 1px solid ${theme.colors.primary.shade};
       border-radius: 50%;
       margin: ${theme.spacing(0.5, 1, 0.5, 0.5)};
-    `,
-    content: css`
-      flex: 1;
     `,
   };
 };

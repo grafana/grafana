@@ -81,15 +81,13 @@ export function Modal(props: PropsWithChildren<Props>) {
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
         <div className={cx(styles.modal, className)}>
-          {title && (
-            <div className={headerClass}>
-              {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
-              {typeof title !== 'string' && title}
-              <div className={styles.modalHeaderClose}>
-                <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
-              </div>
+          <div className={headerClass}>
+            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
+            {typeof title !== 'string' && title}
+            <div className={styles.modalHeaderClose}>
+              <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
             </div>
-          )}
+          </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
       </FocusScope>
