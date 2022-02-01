@@ -19,8 +19,8 @@ export class VariableBuilder<T extends VariableModel> {
     return this;
   }
 
-  withDashboardUid(uid: string) {
-    this.variable.dashboardUid = uid;
+  withStateKey(key: string) {
+    this.variable.stateKey = key;
     return this;
   }
 

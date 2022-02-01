@@ -138,7 +138,7 @@ export const changeVariableDatasource = (
   };
 };
 
-export const initAdHocVariableEditor = (uid: string): ThunkResult<void> => (dispatch) => {
+export const initAdHocVariableEditor = (key: string): ThunkResult<void> => (dispatch) => {
   const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
   const selectable = dataSources.reduce(
     (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
@@ -157,7 +157,7 @@ export const initAdHocVariableEditor = (uid: string): ThunkResult<void> => (disp
 
   dispatch(
     toKeyedAction(
-      uid,
+      key,
       changeVariableEditorExtended({
         propName: 'dataSources',
         propValue: selectable,
@@ -168,23 +168,23 @@ export const initAdHocVariableEditor = (uid: string): ThunkResult<void> => (disp
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const uid = getLastKey(getState());
+    const key = getLastKey(getState());
 
     const model = {
       ...cloneDeep(initialAdHocVariableModelState),
       datasource: options.datasource,
       name: filterTableName,
       id: filterTableName,
-      dashboardUid: uid,
+      stateKey: key,
     };
 
     const global = false;
-    const index = getNewDashboardVariableIndex(uid, getState());
-    const identifier: DashboardVariableIdentifier = { type: 'adhoc', id: model.id, dashboardUid: uid };
+    const index = getNewDashboardVariableIndex(key, getState());
+    const identifier: DashboardVariableIdentifier = { type: 'adhoc', id: model.id, dashboardUid: key };
 
     dispatch(
       toKeyedAction(
-        uid,
+        key,
         addVariable(
           toVariablePayload<AddVariable>(identifier, { global, model, index })
         )
@@ -194,8 +194,8 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 };
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel | undefined => {
-  const uid = getLastKey(state);
-  const templatingState = getDashboardVariablesState(uid, state);
+  const key = getLastKey(state);
+  const templatingState = getDashboardVariablesState(key, state);
   return Object.values(templatingState.variables).find(
     (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
   ) as AdHocVariableModel;

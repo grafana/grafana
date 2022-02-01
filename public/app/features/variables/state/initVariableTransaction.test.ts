@@ -41,7 +41,7 @@ variableAdapters.setInit(() => [
 ]);
 
 function getTestContext(variables?: VariableModel[]) {
-  const uid = 'uid';
+  const key = 'key';
   const constant = constantBuilder().withId('constant').withName('constant').build();
   const templating = { list: variables ?? [constant] };
   const getInstanceSettingsMock = jest.fn().mockReturnValue(undefined);
@@ -59,21 +59,21 @@ function getTestContext(variables?: VariableModel[]) {
   };
   setVariableQueryRunner(variableQueryRunner);
 
-  const dashboard: any = { title: 'Some dash', uid, templating };
+  const dashboard: any = { title: 'Some dash', uid: key, templating };
 
-  return { constant, getInstanceSettingsMock, templating, uid, dashboard };
+  return { constant, getInstanceSettingsMock, templating, key, dashboard };
 }
 
 describe('initVariablesTransaction', () => {
   describe('when called and the previous dashboard has completed', () => {
     it('then correct actions are dispatched', async () => {
-      const { constant, uid, dashboard } = getTestContext();
+      const { constant, key, dashboard } = getTestContext();
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+        .whenAsyncActionIsDispatched(initVariablesTransaction(key, dashboard));
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        expect(dispatchedActions[0]).toEqual(toKeyedAction(uid, variablesInitTransaction({ uid })));
+        expect(dispatchedActions[0]).toEqual(toKeyedAction(key, variablesInitTransaction({ uid: key })));
         expect(dispatchedActions[1].payload.action.type).toEqual(addVariable.type);
         expect(dispatchedActions[1].payload.action.payload.id).toEqual('__dashboard');
         expect(dispatchedActions[2].payload.action.type).toEqual(addVariable.type);
@@ -81,12 +81,12 @@ describe('initVariablesTransaction', () => {
         expect(dispatchedActions[3].payload.action.type).toEqual(addVariable.type);
         expect(dispatchedActions[3].payload.action.payload.id).toEqual('__user');
         expect(dispatchedActions[4]).toEqual(
-          toKeyedAction(uid, addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })))
+          toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })))
         );
-        expect(dispatchedActions[5]).toEqual(toKeyedAction(uid, variableStateNotStarted(toVariablePayload(constant))));
-        expect(dispatchedActions[6]).toEqual(toKeyedAction(uid, variableStateCompleted(toVariablePayload(constant))));
+        expect(dispatchedActions[5]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(constant))));
+        expect(dispatchedActions[6]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(constant))));
 
-        expect(dispatchedActions[7]).toEqual(toKeyedAction(uid, variablesCompleteTransaction({ uid })));
+        expect(dispatchedActions[7]).toEqual(toKeyedAction(key, variablesCompleteTransaction({ uid: key })));
         return dispatchedActions.length === 8;
       });
     });
@@ -94,26 +94,26 @@ describe('initVariablesTransaction', () => {
     describe('and there are variables that have data source that need to be migrated', () => {
       it('then correct actions are dispatched', async () => {
         const legacyDs = ('${ds}' as unknown) as DataSourceRef;
-        const ds = datasourceBuilder().withId('ds').withDashboardUid('uid').withName('ds').withQuery('prom').build();
+        const ds = datasourceBuilder().withId('ds').withStateKey('key').withName('ds').withQuery('prom').build();
         const query = queryBuilder()
           .withId('query')
-          .withDashboardUid('uid')
+          .withStateKey('key')
           .withName('query')
           .withDatasource(legacyDs)
           .build();
         const adhoc = adHocBuilder()
           .withId('adhoc')
-          .withDashboardUid('uid')
+          .withStateKey('key')
           .withName('adhoc')
           .withDatasource(legacyDs)
           .build();
-        const { uid, dashboard } = getTestContext([ds, query, adhoc]);
+        const { key, dashboard } = getTestContext([ds, query, adhoc]);
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+          .whenAsyncActionIsDispatched(initVariablesTransaction(key, dashboard));
 
         tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-          expect(dispatchedActions[0]).toEqual(toKeyedAction(uid, variablesInitTransaction({ uid })));
+          expect(dispatchedActions[0]).toEqual(toKeyedAction(key, variablesInitTransaction({ uid: key })));
           expect(dispatchedActions[1].payload.action.type).toEqual(addVariable.type);
           expect(dispatchedActions[1].payload.action.payload.id).toEqual('__dashboard');
           expect(dispatchedActions[2].payload.action.type).toEqual(addVariable.type);
@@ -121,46 +121,46 @@ describe('initVariablesTransaction', () => {
           expect(dispatchedActions[3].payload.action.type).toEqual(addVariable.type);
           expect(dispatchedActions[3].payload.action.payload.id).toEqual('__user');
           expect(dispatchedActions[4]).toEqual(
-            toKeyedAction(uid, addVariable(toVariablePayload(ds, { global: false, index: 0, model: ds })))
+            toKeyedAction(key, addVariable(toVariablePayload(ds, { global: false, index: 0, model: ds })))
           );
           expect(dispatchedActions[5]).toEqual(
-            toKeyedAction(uid, addVariable(toVariablePayload(query, { global: false, index: 1, model: query })))
+            toKeyedAction(key, addVariable(toVariablePayload(query, { global: false, index: 1, model: query })))
           );
           expect(dispatchedActions[6]).toEqual(
-            toKeyedAction(uid, addVariable(toVariablePayload(adhoc, { global: false, index: 2, model: adhoc })))
+            toKeyedAction(key, addVariable(toVariablePayload(adhoc, { global: false, index: 2, model: adhoc })))
           );
-          expect(dispatchedActions[7]).toEqual(toKeyedAction(uid, variableStateNotStarted(toVariablePayload(ds))));
-          expect(dispatchedActions[8]).toEqual(toKeyedAction(uid, variableStateNotStarted(toVariablePayload(query))));
-          expect(dispatchedActions[9]).toEqual(toKeyedAction(uid, variableStateNotStarted(toVariablePayload(adhoc))));
+          expect(dispatchedActions[7]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(ds))));
+          expect(dispatchedActions[8]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(query))));
+          expect(dispatchedActions[9]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(adhoc))));
           expect(dispatchedActions[10]).toEqual(
             toKeyedAction(
-              uid,
+              key,
               changeVariableProp(toVariablePayload(query, { propName: 'datasource', propValue: { uid: '${ds}' } }))
             )
           );
           expect(dispatchedActions[11]).toEqual(
             toKeyedAction(
-              uid,
+              key,
               changeVariableProp(toVariablePayload(adhoc, { propName: 'datasource', propValue: { uid: '${ds}' } }))
             )
           );
-          expect(dispatchedActions[12]).toEqual(toKeyedAction(uid, variableStateFetching(toVariablePayload(ds))));
-          expect(dispatchedActions[13]).toEqual(toKeyedAction(uid, variableStateCompleted(toVariablePayload(adhoc))));
+          expect(dispatchedActions[12]).toEqual(toKeyedAction(key, variableStateFetching(toVariablePayload(ds))));
+          expect(dispatchedActions[13]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(adhoc))));
           expect(dispatchedActions[14]).toEqual(
-            toKeyedAction(uid, createDataSourceOptions(toVariablePayload(ds, { sources: [], regex: undefined })))
+            toKeyedAction(key, createDataSourceOptions(toVariablePayload(ds, { sources: [], regex: undefined })))
           );
           expect(dispatchedActions[15]).toEqual(
             toKeyedAction(
-              uid,
+              key,
               setCurrentVariableValue(
                 toVariablePayload(ds, { option: { selected: false, text: 'No data sources found', value: '' } })
               )
             )
           );
-          expect(dispatchedActions[16]).toEqual(toKeyedAction(uid, variableStateCompleted(toVariablePayload(ds))));
-          expect(dispatchedActions[17]).toEqual(toKeyedAction(uid, variableStateFetching(toVariablePayload(query))));
-          expect(dispatchedActions[18]).toEqual(toKeyedAction(uid, variableStateCompleted(toVariablePayload(query))));
-          expect(dispatchedActions[19]).toEqual(toKeyedAction(uid, variablesCompleteTransaction({ uid })));
+          expect(dispatchedActions[16]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(ds))));
+          expect(dispatchedActions[17]).toEqual(toKeyedAction(key, variableStateFetching(toVariablePayload(query))));
+          expect(dispatchedActions[18]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(query))));
+          expect(dispatchedActions[19]).toEqual(toKeyedAction(key, variablesCompleteTransaction({ uid: key })));
 
           return dispatchedActions.length === 20;
         });
@@ -170,20 +170,20 @@ describe('initVariablesTransaction', () => {
 
   describe('when called and the previous dashboard is still processing variables', () => {
     it('then correct actions are dispatched', async () => {
-      const { constant, uid, dashboard } = getTestContext();
+      const { constant, key, dashboard } = getTestContext();
       const transactionState = { ...initialTransactionState, uid: 'previous-uid', status: TransactionStatus.Fetching };
-      const preloadedState = getPreloadedState(uid, { transaction: transactionState });
+      const preloadedState = getPreloadedState(key, { transaction: transactionState });
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
+        .whenAsyncActionIsDispatched(initVariablesTransaction(key, dashboard));
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        expect(dispatchedActions[0]).toEqual(toKeyedAction(uid, cleanVariables()));
-        expect(dispatchedActions[1]).toEqual(toKeyedAction(uid, cleanEditorState()));
-        expect(dispatchedActions[2]).toEqual(toKeyedAction(uid, cleanPickerState()));
-        expect(dispatchedActions[3]).toEqual(toKeyedAction(uid, variablesClearTransaction()));
-        expect(dispatchedActions[4]).toEqual(toKeyedAction(uid, variablesInitTransaction({ uid })));
+        expect(dispatchedActions[0]).toEqual(toKeyedAction(key, cleanVariables()));
+        expect(dispatchedActions[1]).toEqual(toKeyedAction(key, cleanEditorState()));
+        expect(dispatchedActions[2]).toEqual(toKeyedAction(key, cleanPickerState()));
+        expect(dispatchedActions[3]).toEqual(toKeyedAction(key, variablesClearTransaction()));
+        expect(dispatchedActions[4]).toEqual(toKeyedAction(key, variablesInitTransaction({ uid: key })));
         expect(dispatchedActions[5].payload.action.type).toEqual(addVariable.type);
         expect(dispatchedActions[5].payload.action.payload.id).toEqual('__dashboard');
         expect(dispatchedActions[6].payload.action.type).toEqual(addVariable.type);
@@ -191,11 +191,11 @@ describe('initVariablesTransaction', () => {
         expect(dispatchedActions[7].payload.action.type).toEqual(addVariable.type);
         expect(dispatchedActions[7].payload.action.payload.id).toEqual('__user');
         expect(dispatchedActions[8]).toEqual(
-          toKeyedAction(uid, addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })))
+          toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })))
         );
-        expect(dispatchedActions[9]).toEqual(toKeyedAction(uid, variableStateNotStarted(toVariablePayload(constant))));
-        expect(dispatchedActions[10]).toEqual(toKeyedAction(uid, variableStateCompleted(toVariablePayload(constant))));
-        expect(dispatchedActions[11]).toEqual(toKeyedAction(uid, variablesCompleteTransaction({ uid })));
+        expect(dispatchedActions[9]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(constant))));
+        expect(dispatchedActions[10]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(constant))));
+        expect(dispatchedActions[11]).toEqual(toKeyedAction(key, variablesCompleteTransaction({ uid: key })));
         return dispatchedActions.length === 12;
       });
     });

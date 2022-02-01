@@ -8,11 +8,11 @@ import { toVariablePayload } from '../utils';
 
 function getTestContext(ds: DataSourceRef, dsInstance?: { uid: string; type: string }) {
   jest.clearAllMocks();
-  const uid = 'uid';
-  const query = queryBuilder().withId('query').withDashboardUid(uid).withName('query').withDatasource(ds).build();
-  const adhoc = adHocBuilder().withId('adhoc').withDashboardUid(uid).withName('adhoc').withDatasource(ds).build();
+  const key = 'key';
+  const query = queryBuilder().withId('query').withStateKey(key).withName('query').withDatasource(ds).build();
+  const adhoc = adHocBuilder().withId('adhoc').withStateKey(key).withName('adhoc').withDatasource(ds).build();
   const templatingState = { variables: { query, adhoc } };
-  const state = getPreloadedState(uid, templatingState);
+  const state = getPreloadedState(key, templatingState);
   const dispatch = jest.fn();
   const getState = jest.fn().mockReturnValue(state);
   const getInstanceSettingsMock = jest.fn().mockReturnValue(dsInstance);
@@ -22,7 +22,7 @@ function getTestContext(ds: DataSourceRef, dsInstance?: { uid: string; type: str
     getInstanceSettings: getInstanceSettingsMock,
   });
 
-  return { uid, query, adhoc, dispatch, getState, getDatasourceSrvFunc };
+  return { key, query, adhoc, dispatch, getState, getDatasourceSrvFunc };
 }
 
 describe('migrateVariablesDatasourceNameToRef', () => {
@@ -30,17 +30,17 @@ describe('migrateVariablesDatasourceNameToRef', () => {
     describe('and data source exists', () => {
       it('then correct actions are dispatched', async () => {
         const legacyDs = ('${ds}' as unknown) as DataSourceRef;
-        const { query, adhoc, dispatch, getState, getDatasourceSrvFunc, uid } = getTestContext(legacyDs, {
+        const { query, adhoc, dispatch, getState, getDatasourceSrvFunc, key } = getTestContext(legacyDs, {
           uid: 'a random uid',
           type: 'prometheus',
         });
 
-        migrateVariablesDatasourceNameToRef(uid, getDatasourceSrvFunc)(dispatch, getState, undefined);
+        migrateVariablesDatasourceNameToRef(key, getDatasourceSrvFunc)(dispatch, getState, undefined);
 
         expect(dispatch).toHaveBeenCalledTimes(2);
         expect(dispatch.mock.calls[0][0]).toEqual(
           toKeyedAction(
-            uid,
+            key,
             changeVariableProp(
               toVariablePayload(query, {
                 propName: 'datasource',
@@ -51,7 +51,7 @@ describe('migrateVariablesDatasourceNameToRef', () => {
         );
         expect(dispatch.mock.calls[1][0]).toEqual(
           toKeyedAction(
-            uid,
+            key,
             changeVariableProp(
               toVariablePayload(adhoc, {
                 propName: 'datasource',
@@ -66,20 +66,20 @@ describe('migrateVariablesDatasourceNameToRef', () => {
     describe('and data source does not exist', () => {
       it('then correct actions are dispatched', async () => {
         const legacyDs = ('${ds}' as unknown) as DataSourceRef;
-        const { query, adhoc, dispatch, getState, getDatasourceSrvFunc, uid } = getTestContext(legacyDs, undefined);
+        const { query, adhoc, dispatch, getState, getDatasourceSrvFunc, key } = getTestContext(legacyDs, undefined);
 
-        migrateVariablesDatasourceNameToRef(uid, getDatasourceSrvFunc)(dispatch, getState, undefined);
+        migrateVariablesDatasourceNameToRef(key, getDatasourceSrvFunc)(dispatch, getState, undefined);
 
         expect(dispatch).toHaveBeenCalledTimes(2);
         expect(dispatch.mock.calls[0][0]).toEqual(
           toKeyedAction(
-            uid,
+            key,
             changeVariableProp(toVariablePayload(query, { propName: 'datasource', propValue: { uid: '${ds}' } }))
           )
         );
         expect(dispatch.mock.calls[1][0]).toEqual(
           toKeyedAction(
-            uid,
+            key,
             changeVariableProp(toVariablePayload(adhoc, { propName: 'datasource', propValue: { uid: '${ds}' } }))
           )
         );
@@ -90,9 +90,9 @@ describe('migrateVariablesDatasourceNameToRef', () => {
   describe('when called and variables have dataSourceRef', () => {
     it('then no actions are dispatched', async () => {
       const legacyDs = { uid: '${ds}', type: 'prometheus' };
-      const { dispatch, getState, getDatasourceSrvFunc, uid } = getTestContext(legacyDs, undefined);
+      const { dispatch, getState, getDatasourceSrvFunc, key } = getTestContext(legacyDs, undefined);
 
-      migrateVariablesDatasourceNameToRef(uid, getDatasourceSrvFunc)(dispatch, getState, undefined);
+      migrateVariablesDatasourceNameToRef(key, getDatasourceSrvFunc)(dispatch, getState, undefined);
 
       expect(dispatch).toHaveBeenCalledTimes(0);
     });

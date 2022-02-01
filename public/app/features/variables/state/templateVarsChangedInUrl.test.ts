@@ -18,11 +18,11 @@ variableAdapters.setInit(() => [createCustomVariableAdapter(), createConstantVar
 async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: VariableModel | undefined = undefined) {
   jest.clearAllMocks();
 
-  const uid = 'uid';
+  const key = 'key';
   if (!variable) {
     variable = customBuilder()
       .withId('variable')
-      .withDashboardUid(uid)
+      .withStateKey(key)
       .withName('variable')
       .withCurrent(['A', 'C'])
       .withOptions('A', 'B', 'C')
@@ -47,12 +47,12 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
   const variables: VariablesState = { variable };
   const state: Partial<StoreState> = {
     dashboard,
-    ...getPreloadedState(uid, { variables }),
+    ...getPreloadedState(key, { variables }),
   };
   const getState = () => (state as unknown) as StoreState;
 
   const dispatch = jest.fn();
-  const thunk = templateVarsChangedInUrl(uid, urlQueryMap);
+  const thunk = templateVarsChangedInUrl(key, urlQueryMap);
 
   await thunk(dispatch, getState, undefined);
 
@@ -134,6 +134,7 @@ describe('templateVarsChangedInUrl', () => {
         it('then the value should change to the value in dashboard json and dashboard should be refreshed', async () => {
           const constant = constantBuilder()
             .withId('variable')
+            .withStateKey('key')
             .withName('variable')
             .withQuery('default value in dash.json')
             .build();

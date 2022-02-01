@@ -103,7 +103,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -117,7 +117,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -143,7 +143,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -157,7 +157,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -184,7 +184,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': {
             id: '0',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -198,7 +198,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -212,7 +212,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -227,7 +227,7 @@ describe('sharedReducer', () => {
           '11': {
             ...initialQueryVariableModelState,
             id: '11',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             name: 'copy_of_Name-1',
             index: 3,
             label: 'Label-1',
@@ -246,7 +246,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -260,7 +260,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -274,7 +274,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -298,7 +298,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -312,7 +312,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -326,7 +326,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            dashboardUid: 'uid',
+            stateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -563,7 +563,7 @@ describe('sharedReducer', () => {
       const constantAdapter = createConstantVariableAdapter();
       const { initialState: constantAdapterState } = getVariableTestContext(constantAdapter);
       const newType = 'constant' as VariableType;
-      const identifier: DashboardVariableIdentifier = { id: '0', type: 'query', dashboardUid: 'uid' };
+      const identifier: DashboardVariableIdentifier = { id: '0', type: 'query', dashboardUid: 'key' };
       const payload = toVariablePayload(identifier, { newType });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(queryAdapterState))
@@ -579,7 +579,7 @@ describe('sharedReducer', () => {
           ...constantAdapterState,
           '0': {
             ...constantAdapterState[0],
-            dashboardUid: 'uid',
+            stateKey: 'key',
             name: 'test',
             description: 'new description',
             label: 'new label',

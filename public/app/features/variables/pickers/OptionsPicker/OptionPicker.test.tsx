@@ -19,7 +19,7 @@ interface Args {
 
 const defaultVariable = queryBuilder()
   .withId('query0')
-  .withDashboardUid('uid')
+  .withStateKey('key')
   .withName('query0')
   .withMulti()
   .withCurrent(['A', 'C'])
@@ -46,7 +46,7 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
     },
     optionsPicker,
   };
-  const getState = jest.fn().mockReturnValue(getPreloadedState('uid', templatingState));
+  const getState = jest.fn().mockReturnValue(getPreloadedState('key', templatingState));
   const store: any = { getState, dispatch, subscribe };
   const { rerender } = render(
     <Provider store={store}>

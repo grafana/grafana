@@ -47,20 +47,20 @@ function getTestContext(variable?: QueryVariableModel) {
   const getTimeSrv = jest.fn().mockReturnValue({
     timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
   });
-  const uid = '0123456789';
-  variable = variable ?? queryBuilder().withId('query').withDashboardUid(uid).withName('query').build();
+  const key = '0123456789';
+  variable = variable ?? queryBuilder().withId('query').withStateKey(key).withName('query').build();
   const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
   const identifier = toDashboardVariableIdentifier(variable);
   const searchFilter = undefined;
   const getTemplatedRegex = jest.fn().mockReturnValue('getTemplatedRegex result');
   const dispatch = jest.fn().mockResolvedValue({});
   const templatingState = {
-    transaction: { ...initialTransactionState, uid },
+    transaction: { ...initialTransactionState, uid: key },
     variables: {
       [variable.id]: variable,
     },
   };
-  const getState = jest.fn().mockReturnValue(getPreloadedState(uid, templatingState));
+  const getState = jest.fn().mockReturnValue(getPreloadedState(key, templatingState));
   const queryRunner: QueryRunner = {
     type: VariableSupportType.Standard,
     canRun: jest.fn().mockReturnValue(true),
@@ -83,7 +83,7 @@ function getTestContext(variable?: QueryVariableModel) {
   });
 
   return {
-    uid,
+    key,
     identifier,
     datasource,
     runner,
@@ -104,7 +104,7 @@ describe('VariableQueryRunner', () => {
   describe('happy case', () => {
     it('then it should work as expected', (done) => {
       const {
-        uid,
+        key,
         identifier,
         runner,
         datasource,
@@ -137,7 +137,7 @@ describe('VariableQueryRunner', () => {
           expect(dispatch).toHaveBeenCalledTimes(2);
           expect(dispatch.mock.calls[0][0]).toEqual(
             toKeyedAction(
-              uid,
+              key,
               updateVariableOptions({
                 id: 'query',
                 type: 'query',

@@ -28,7 +28,7 @@ function getTestContext({ sources = [], query, regex }: Args = {}) {
   const getListMock = jest.fn().mockReturnValue(sources);
   const getDatasourceSrvMock = jest.fn().mockReturnValue({ getList: getListMock });
   const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-  const datasource = datasourceBuilder().withId('0').withDashboardUid('uid').withQuery(query).withRegEx(regex).build();
+  const datasource = datasourceBuilder().withId('0').withStateKey('key').withQuery(query).withRegEx(regex).build();
 
   return { getListMock, getDatasourceSrvMock, dependencies, datasource };
 }
@@ -53,7 +53,7 @@ describe('data source actions', () => {
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             toKeyedAction(
-              'uid',
+              'key',
               addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
             )
           )
@@ -64,7 +64,7 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(
-            'uid',
+            'key',
             createDataSourceOptions(
               toVariablePayload(
                 { type: 'datasource', id: '0' },
@@ -76,7 +76,7 @@ describe('data source actions', () => {
             )
           ),
           toKeyedAction(
-            'uid',
+            'key',
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'datasource', id: '0' },
@@ -110,7 +110,7 @@ describe('data source actions', () => {
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             toKeyedAction(
-              'uid',
+              'key',
               addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
             )
           )
@@ -121,7 +121,7 @@ describe('data source actions', () => {
 
         await tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(
-            'uid',
+            'key',
             createDataSourceOptions(
               toVariablePayload(
                 { type: 'datasource', id: '0' },
@@ -133,7 +133,7 @@ describe('data source actions', () => {
             )
           ),
           toKeyedAction(
-            'uid',
+            'key',
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'datasource', id: '0' },
@@ -162,10 +162,10 @@ describe('data source actions', () => {
 
       await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(initDataSourceVariableEditor('uid', dependencies))
+        .whenActionIsDispatched(initDataSourceVariableEditor('key', dependencies))
         .thenDispatchedActionsShouldEqual(
           toKeyedAction(
-            'uid',
+            'key',
             changeVariableEditorExtended({
               propName: 'dataSourceTypes',
               propValue: [

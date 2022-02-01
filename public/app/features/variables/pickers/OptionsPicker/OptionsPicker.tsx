@@ -41,16 +41,16 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   };
 
   const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
-    const { dashboardUid: uid } = ownProps.variable;
-    if (!uid) {
-      console.error('OptionPickerFactory: variable has no dashboardUid');
+    const { stateKey } = ownProps.variable;
+    if (!stateKey) {
+      console.error('OptionPickerFactory: variable has no stateKey');
       return {
         picker: initialOptionPickerState,
       };
     }
 
     return {
-      picker: getDashboardVariablesState(uid, state).optionsPicker,
+      picker: getDashboardVariablesState(stateKey, state).optionsPicker,
     };
   };
 
@@ -64,12 +64,12 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     onShowOptions = () =>
       this.props.openOptions(toDashboardVariableIdentifier(this.props.variable), this.props.onVariableChange);
     onHideOptions = () => {
-      if (!this.props.variable.dashboardUid) {
-        console.error('Variable has no dashboardUid');
+      if (!this.props.variable.stateKey) {
+        console.error('Variable has no stateKey');
         return;
       }
 
-      this.props.commitChangesToVariable(this.props.variable.dashboardUid, this.props.onVariableChange);
+      this.props.commitChangesToVariable(this.props.variable.stateKey, this.props.onVariableChange);
     };
 
     onToggleOption = (option: VariableOption, clearOthers: boolean) => {
@@ -98,12 +98,12 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     onNavigate = (key: NavigationKey, clearOthers: boolean) => {
-      if (!this.props.variable.dashboardUid) {
-        console.error('Variable has no dashboardUid');
+      if (!this.props.variable.stateKey) {
+        console.error('Variable has no stateKey');
         return;
       }
 
-      this.props.navigateOptions(this.props.variable.dashboardUid, key, clearOthers);
+      this.props.navigateOptions(this.props.variable.stateKey, key, clearOthers);
     };
 
     render() {

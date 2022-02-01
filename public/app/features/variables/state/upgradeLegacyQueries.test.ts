@@ -20,23 +20,23 @@ function getTestContext({
   datasource,
   transactionStatus = TransactionStatus.Fetching,
 }: Args = {}) {
-  const uid = 'uid';
+  const key = 'key';
   variable =
     variable ??
     queryBuilder()
       .withId('query')
-      .withDashboardUid(uid)
+      .withStateKey(key)
       .withName('query')
       .withQuery(query)
       .withDatasource({ uid: 'test-data', type: 'test-data' })
       .build();
   const templatingState = {
-    transaction: { status: transactionStatus, uid, isDirty: false },
+    transaction: { status: transactionStatus, uid: key, isDirty: false },
     variables: {
       [variable.id]: variable,
     },
   };
-  const state = getPreloadedState(uid, templatingState);
+  const state = getPreloadedState(key, templatingState);
   datasource = datasource ?? {
     name: 'TestData',
     metricFindQuery: () => undefined,
@@ -46,13 +46,13 @@ function getTestContext({
   const getDatasourceSrv = jest.fn().mockReturnValue({ get });
   const identifier = toDashboardVariableIdentifier(variable);
 
-  return { uid, state, get, getDatasourceSrv, identifier };
+  return { key, state, get, getDatasourceSrv, identifier };
 }
 
 describe('upgradeLegacyQueries', () => {
   describe('when called with a query variable for a standard variable supported data source that has not been upgraded', () => {
     it('then it should dispatch changeVariableProp', async () => {
-      const { uid, state, identifier, get, getDatasourceSrv } = getTestContext({ query: '*' });
+      const { key, state, identifier, get, getDatasourceSrv } = getTestContext({ query: '*' });
 
       const dispatchedActions = await thunkTester(state)
         .givenThunk(upgradeLegacyQueries)
@@ -60,7 +60,7 @@ describe('upgradeLegacyQueries', () => {
 
       expect(dispatchedActions).toEqual([
         toKeyedAction(
-          uid,
+          key,
           changeVariableProp({
             type: 'query',
             id: 'query',
@@ -167,7 +167,7 @@ describe('upgradeLegacyQueries', () => {
 
   describe('when called with a custom variable', () => {
     it('then it should not dispatch any actions', async () => {
-      const variable = customBuilder().withId('custom').withDashboardUid('uid').withName('custom').build();
+      const variable = customBuilder().withId('custom').withStateKey('key').withName('custom').build();
       const { state, identifier, get, getDatasourceSrv } = getTestContext({ variable });
 
       const dispatchedActions = await thunkTester(state)

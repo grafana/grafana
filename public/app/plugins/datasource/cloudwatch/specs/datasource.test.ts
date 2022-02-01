@@ -693,11 +693,11 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let templateSrv: TemplateSrv;
     beforeEach(() => {
-      const uid = 'uid';
+      const key = 'key';
       const var1: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var1',
-        dashboardUid: uid,
+        stateKey: key,
         name: 'var1',
         index: 0,
         current: { value: 'var1-foo', text: 'var1-foo', selected: true },
@@ -711,7 +711,7 @@ describe('CloudWatchDatasource', () => {
       const var2: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var2',
-        dashboardUid: uid,
+        stateKey: key,
         name: 'var2',
         index: 1,
         current: { value: 'var2-foo', text: 'var2-foo', selected: true },
@@ -725,7 +725,7 @@ describe('CloudWatchDatasource', () => {
       const var3: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var3',
-        dashboardUid: uid,
+        stateKey: key,
         name: 'var3',
         index: 2,
         current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
@@ -743,7 +743,7 @@ describe('CloudWatchDatasource', () => {
       const var4: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var4',
-        dashboardUid: uid,
+        stateKey: key,
         name: 'var4',
         index: 3,
         options: [
@@ -759,7 +759,7 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
       };
       const variables = [var1, var2, var3, var4];
-      const state = convertToStoreState(uid, variables);
+      const state = convertToStoreState(key, variables);
       templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
       templateSrv.init(variables);
     });

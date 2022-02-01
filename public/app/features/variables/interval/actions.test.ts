@@ -28,7 +28,7 @@ describe('interval actions', () => {
     it('then correct actions are dispatched', async () => {
       const interval = intervalBuilder()
         .withId('0')
-        .withDashboardUid('uid')
+        .withStateKey('key')
         .withQuery('1s,1m,1h,1d')
         .withAuto(false)
         .build();
@@ -36,14 +36,14 @@ describe('interval actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+          toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toDashboardVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('uid', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
+        toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
         toKeyedAction(
-          'uid',
+          'key',
           setCurrentVariableValue({
             type: 'interval',
             id: '0',
@@ -78,7 +78,7 @@ describe('interval actions', () => {
     it('then an notifyApp action should be dispatched', async () => {
       const interval = intervalBuilder()
         .withId('0')
-        .withDashboardUid('uid')
+        .withStateKey('key')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
         .withAutoMin('1xyz') // illegal interval string
@@ -87,18 +87,18 @@ describe('interval actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+          toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
-        .whenActionIsDispatched(toKeyedAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
-        expect(dispatchedActions[0]).toEqual(toKeyedAction('uid', variableStateFetching(toVariablePayload(interval))));
-        expect(dispatchedActions[1]).toEqual(toKeyedAction('uid', createIntervalOptions(toVariablePayload(interval))));
+        expect(dispatchedActions[0]).toEqual(toKeyedAction('key', variableStateFetching(toVariablePayload(interval))));
+        expect(dispatchedActions[1]).toEqual(toKeyedAction('key', createIntervalOptions(toVariablePayload(interval))));
         expect(dispatchedActions[2]).toEqual(
           toKeyedAction(
-            'uid',
+            'key',
             variableStateFailed(
               toVariablePayload(interval, {
                 error: new Error(
@@ -124,7 +124,7 @@ describe('interval actions', () => {
       it('then no actions are dispatched', async () => {
         const interval = intervalBuilder()
           .withId('0')
-          .withDashboardUid('uid')
+          .withStateKey('key')
           .withQuery('1s,1m,1h,1d')
           .withAuto(true)
           .withAutoMin('1xyz') // illegal interval string
@@ -133,7 +133,7 @@ describe('interval actions', () => {
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+            toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
           .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(interval)), true);
 
@@ -145,7 +145,7 @@ describe('interval actions', () => {
   describe('when updateAutoValue is dispatched', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
-        const interval = intervalBuilder().withId('0').withDashboardUid('uid').withAuto(false).build();
+        const interval = intervalBuilder().withId('0').withStateKey('key').withAuto(false).build();
 
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),
@@ -169,7 +169,7 @@ describe('interval actions', () => {
         await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+            toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toDashboardVariableIdentifier(interval), dependencies), true);
 
@@ -183,7 +183,7 @@ describe('interval actions', () => {
       it('then correct dependencies are called', async () => {
         const interval = intervalBuilder()
           .withId('0')
-          .withDashboardUid('uid')
+          .withStateKey('key')
           .withName('intervalName')
           .withAuto(true)
           .withAutoCount(33)
@@ -214,7 +214,7 @@ describe('interval actions', () => {
         await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+            toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toDashboardVariableIdentifier(interval), dependencies), true);
 

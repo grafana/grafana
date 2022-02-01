@@ -14,7 +14,7 @@ import { NEW_VARIABLE_ID } from '../constants';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    variable: { ...initialQueryVariableModelState, dashboardUid: 'uid' },
+    variable: { ...initialQueryVariableModelState, stateKey: 'key' },
     initQueryVariableEditor: jest.fn(),
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),
@@ -59,7 +59,7 @@ describe('QueryVariableEditor', () => {
       expect(props.initQueryVariableEditor).toHaveBeenCalledWith({
         type: 'query',
         id: NEW_VARIABLE_ID,
-        dashboardUid: 'uid',
+        dashboardUid: 'key',
       });
     });
   });
@@ -67,7 +67,7 @@ describe('QueryVariableEditor', () => {
   describe('when the user changes', () => {
     it.each`
       fieldName  | propName                      | expectedArgs
-      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID, dashboardUid: 'uid' }, 't', 't']}
+      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID, dashboardUid: 'key' }, 't', 't']}
       ${'regex'} | ${'onPropChange'}             | ${[{ propName: 'regex', propValue: 't', updateOptions: true }]}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',

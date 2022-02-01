@@ -33,10 +33,10 @@ describe('textbox actions', () => {
         selected: false,
       };
 
-      const uid = 'uid';
+      const key = 'key';
       const variable = textboxBuilder()
         .withId('textbox')
-        .withDashboardUid(uid)
+        .withStateKey(key)
         .withName('textbox')
         .withCurrent('A')
         .withQuery('A')
@@ -45,13 +45,13 @@ describe('textbox actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toKeyedAction(uid, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction(key, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(uid, createTextBoxOptions(toVariablePayload(variable))),
-        toKeyedAction(uid, setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction(key, createTextBoxOptions(toVariablePayload(variable))),
+        toKeyedAction(key, setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-textbox': 'A' });
     });
@@ -60,10 +60,10 @@ describe('textbox actions', () => {
   describe('when setTextBoxVariableOptionsFromUrl is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const urlValue = 'bB';
-      const uid = 'uid';
+      const key = 'key';
       const variable = textboxBuilder()
         .withId('textbox')
-        .withDashboardUid(uid)
+        .withStateKey(key)
         .withName('textbox')
         .withCurrent('A')
         .withQuery('A')
@@ -72,7 +72,7 @@ describe('textbox actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toKeyedAction(uid, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction(key, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(
           setTextBoxVariableOptionsFromUrl(toDashboardVariableIdentifier(variable), urlValue),
@@ -80,9 +80,9 @@ describe('textbox actions', () => {
         );
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(uid, changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: 'bB' }))),
+        toKeyedAction(key, changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: 'bB' }))),
         toKeyedAction(
-          uid,
+          key,
           setCurrentVariableValue(toVariablePayload(variable, { option: { text: 'bB', value: 'bB', selected: false } }))
         )
       );

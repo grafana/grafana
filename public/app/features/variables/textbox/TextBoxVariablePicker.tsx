@@ -19,7 +19,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
   }, [variable]);
 
   const updateVariable = useCallback(() => {
-    if (!variable.dashboardUid) {
+    if (!variable.stateKey) {
       console.error('Cannot update variable without dashboardUid');
       return;
     }
@@ -30,7 +30,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
 
     dispatch(
       toKeyedAction(
-        variable.dashboardUid,
+        variable.stateKey,
         changeVariableProp(
           toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
         )

@@ -23,7 +23,7 @@ describe('constant actions', () => {
       const variable: ConstantVariableModel = {
         ...initialVariableModelState,
         id: '0',
-        dashboardUid: 'uid',
+        stateKey: 'key',
         index: 0,
         type: 'constant',
         name: 'Constant',
@@ -39,13 +39,13 @@ describe('constant actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(updateConstantVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('uid', createConstantOptionsFromQuery(toVariablePayload(variable))),
-        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('key', createConstantOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });

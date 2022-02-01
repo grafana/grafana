@@ -13,7 +13,7 @@ describe('operators', () => {
   describe('validateVariableSelection', () => {
     describe('when called', () => {
       it('then the correct observable should be created', async () => {
-        const variable = queryBuilder().withId('query').withDashboardUid('uid').build();
+        const variable = queryBuilder().withId('query').withStateKey('key').build();
         const dispatch = jest.fn().mockResolvedValue({});
         const observable = of(undefined).pipe(validateVariableSelection({ variable, dispatch }));
 
@@ -28,7 +28,7 @@ describe('operators', () => {
   describe('updateOptionsState', () => {
     describe('when called', () => {
       it('then the correct observable should be created', async () => {
-        const variable = queryBuilder().withId('query').withDashboardUid('uid').build();
+        const variable = queryBuilder().withId('query').withStateKey('key').build();
         const dispatch = jest.fn();
         const getTemplatedRegexFunc = jest.fn().mockReturnValue('getTemplatedRegexFunc result');
 
@@ -41,7 +41,7 @@ describe('operators', () => {
           expect(dispatch).toHaveBeenCalledTimes(1);
           expect(dispatch).toHaveBeenCalledWith(
             toKeyedAction(
-              'uid',
+              'key',
               updateVariableOptions({
                 id: 'query',
                 type: 'query',

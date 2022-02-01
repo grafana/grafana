@@ -100,12 +100,12 @@ const sharedReducerSlice = createSlice({
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
-      const { label, name, index, description, dashboardUid } = state[id];
+      const { label, name, index, description, stateKey } = state[id];
 
       state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.data.newType).initialState),
-        id: id,
-        dashboardUid,
+        id,
+        stateKey,
         label,
         name,
         index,

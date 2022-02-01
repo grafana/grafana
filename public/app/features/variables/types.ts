@@ -131,7 +131,7 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
 
 export interface VariableModel extends BaseVariableModel {
   id: string;
-  dashboardUid: string | null;
+  stateKey: string | null;
   global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
@@ -143,7 +143,7 @@ export interface VariableModel extends BaseVariableModel {
 
 export const initialVariableModelState: VariableModel = {
   id: NEW_VARIABLE_ID,
-  dashboardUid: null,
+  stateKey: null,
   name: '',
   label: null,
   type: ('' as unknown) as VariableType,

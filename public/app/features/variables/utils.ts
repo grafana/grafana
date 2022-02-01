@@ -271,11 +271,11 @@ export const toVariableIdentifier = (variable: VariableModel): VariableIdentifie
 };
 
 export const toDashboardVariableIdentifier = (variable: VariableModel): DashboardVariableIdentifier => {
-  if (!variable.dashboardUid) {
-    throw new Error(`Dashboard uid not found for variable with id:${variable.id}`);
+  if (!variable.stateKey) {
+    throw new Error(`stateKey not found for variable with id:${variable.id}`);
   }
 
-  return { type: variable.type, id: variable.id, dashboardUid: variable.dashboardUid };
+  return { type: variable.type, id: variable.id, dashboardUid: variable.stateKey };
 };
 
 export function toVariablePayload<T extends any = undefined>(

@@ -87,7 +87,7 @@ export const getVariableState = (
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
       id: index.toString(),
-      dashboardUid: 'uid',
+      stateKey: 'key',
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -104,7 +104,7 @@ export const getVariableState = (
   if (includeEmpty) {
     variables[NEW_VARIABLE_ID] = {
       id: NEW_VARIABLE_ID,
-      dashboardUid: 'uid',
+      stateKey: 'key',
       type: 'query',
       name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
@@ -128,7 +128,7 @@ export const getVariableTestContext = <Model extends VariableModel>(
   const defaultVariable = {
     ...adapter.initialState,
     id: '0',
-    dashboardUid: 'uid',
+    stateKey: 'key',
     index: 0,
     name: '0',
   };

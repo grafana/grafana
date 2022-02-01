@@ -23,7 +23,7 @@ describe('custom actions', () => {
       const variable: CustomVariableModel = {
         ...initialVariableModelState,
         id: '0',
-        dashboardUid: 'uid',
+        stateKey: 'key',
         index: 0,
         type: 'custom',
         name: 'Custom',
@@ -52,13 +52,13 @@ describe('custom actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(updateCustomVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('uid', createCustomOptionsFromQuery(toVariablePayload(variable))),
-        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('key', createCustomOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });

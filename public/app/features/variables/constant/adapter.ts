@@ -31,7 +31,7 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
       await dispatch(updateConstantVariableOptions(toDashboardVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
-      const { index, id, state, global, current, options, dashboardUid, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, current, options, stateKey, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: (variable) => {

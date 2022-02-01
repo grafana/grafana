@@ -24,16 +24,16 @@ import { getDashboardVariablesState } from '../state/selectors';
 import { toDashboardVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
-  const { dashboardUid: uid } = ownProps.variable;
-  if (!uid) {
-    console.error('QueryVariableEditor: variable has no dashboardUid');
+  const { stateKey } = ownProps.variable;
+  if (!stateKey) {
+    console.error('QueryVariableEditor: variable has no stateKey');
     return {
       editor: initialVariableEditorState as VariableEditorState<QueryVariableEditorState>,
     };
   }
 
   return {
-    editor: getDashboardVariablesState(uid, state).editor as VariableEditorState<QueryVariableEditorState>,
+    editor: getDashboardVariablesState(stateKey, state).editor as VariableEditorState<QueryVariableEditorState>,
   };
 };
 

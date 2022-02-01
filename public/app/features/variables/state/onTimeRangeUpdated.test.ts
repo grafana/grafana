@@ -31,10 +31,10 @@ variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantV
 const getTestContext = (dashboard: DashboardModel) => {
   jest.clearAllMocks();
 
-  const uid = 'uid';
+  const key = 'key';
   const interval = intervalBuilder()
     .withId('interval-0')
-    .withDashboardUid(uid)
+    .withStateKey(key)
     .withName('interval-0')
     .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
     .withCurrent('1m')
@@ -43,7 +43,7 @@ const getTestContext = (dashboard: DashboardModel) => {
 
   const constant = constantBuilder()
     .withId('constant-1')
-    .withDashboardUid(uid)
+    .withStateKey(key)
     .withName('constant-1')
     .withOptions('a constant')
     .withCurrent('a constant')
@@ -76,11 +76,11 @@ const getTestContext = (dashboard: DashboardModel) => {
   };
   const preloadedState = ({
     dashboard: dashboardState,
-    ...getPreloadedState(uid, templatingState),
+    ...getPreloadedState(key, templatingState),
   } as unknown) as RootReducerType;
 
   return {
-    uid,
+    key,
     interval,
     range,
     dependencies,
@@ -96,7 +96,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
   describe('and options are changed by update', () => {
     it('then correct actions are dispatched and correct dependencies are called', async () => {
       const {
-        uid,
+        key,
         preloadedState,
         range,
         dependencies,
@@ -107,15 +107,15 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
-        .whenAsyncActionIsDispatched(onTimeRangeUpdated(uid, range, dependencies));
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies));
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(uid, variablesInitTransaction({ uid })),
-        toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
-        toKeyedAction(uid, createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(key, variablesInitTransaction({ uid: key })),
+        toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(key, createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
         toKeyedAction(
-          uid,
+          key,
           setCurrentVariableValue(
             toVariablePayload(
               { type: 'interval', id: 'interval-0' },
@@ -123,7 +123,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
             )
           )
         ),
-        toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' })))
+        toKeyedAction(key, variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' })))
       );
 
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
@@ -136,7 +136,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
   describe('and options are not changed by update', () => {
     it('then correct actions are dispatched and correct dependencies are called', async () => {
       const {
-        uid,
+        key,
         interval,
         preloadedState,
         range,
@@ -148,18 +148,18 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       const base = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
         .whenAsyncActionIsDispatched(
           setOptionAsCurrent(toDashboardVariableIdentifier(interval), interval.options[0], false)
         );
 
-      const tester = await base.whenAsyncActionIsDispatched(onTimeRangeUpdated(uid, range, dependencies), true);
+      const tester = await base.whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
-        toKeyedAction(uid, createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
+        toKeyedAction(key, createIntervalOptions(toVariablePayload({ type: 'interval', id: 'interval-0' }))),
         toKeyedAction(
-          uid,
+          key,
           setCurrentVariableValue(
             toVariablePayload(
               { type: 'interval', id: 'interval-0' },
@@ -167,7 +167,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
             )
           )
         ),
-        toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' })))
+        toKeyedAction(key, variableStateCompleted(toVariablePayload({ type: 'interval', id: 'interval-0' })))
       );
 
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
@@ -181,7 +181,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
     silenceConsoleOutput();
     it('then correct actions are dispatched and correct dependencies are called', async () => {
       const {
-        uid,
+        key,
         adapter,
         preloadedState,
         range,
@@ -195,16 +195,16 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       const tester = await reduxTester<RootReducerType>({ preloadedState, debug: true })
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
-        .whenAsyncActionIsDispatched(onTimeRangeUpdated(uid, range, dependencies), true);
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         expect(dispatchedActions[0]).toEqual(
-          toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' })))
+          toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' })))
         );
         expect(dispatchedActions[1]).toEqual(
           toKeyedAction(
-            uid,
+            key,
             variableStateFailed(
               toVariablePayload({ type: 'interval', id: 'interval-0' }, { error: new Error('Something broke') })
             )

@@ -33,7 +33,7 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
       await dispatch(updateIntervalVariableOptions(toDashboardVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
-      const { index, id, state, global, dashboardUid, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, stateKey, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: (variable) => {

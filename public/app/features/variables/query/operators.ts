@@ -102,13 +102,13 @@ export function updateOptionsState(args: {
     source.pipe(
       map((results) => {
         const { variable, dispatch, getTemplatedRegexFunc } = args;
-        if (!variable.dashboardUid) {
-          console.error('updateOptionsState: variable.dashboardUid is not defined');
+        if (!variable.stateKey) {
+          console.error('updateOptionsState: variable.stateKey is not defined');
           return;
         }
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
-        dispatch(toKeyedAction(variable.dashboardUid, updateVariableOptions(payload)));
+        dispatch(toKeyedAction(variable.stateKey, updateVariableOptions(payload)));
       })
     );
 }

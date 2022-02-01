@@ -32,13 +32,13 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    const { dashboardUid: uid } = this.props.variable;
-    if (!uid) {
-      console.error('DataSourceVariableEditor: variable has no dashboardUid');
+    const { stateKey } = this.props.variable;
+    if (!stateKey) {
+      console.error('DataSourceVariableEditor: variable has no stateKey');
       return;
     }
 
-    this.props.initDataSourceVariableEditor(uid);
+    this.props.initDataSourceVariableEditor(stateKey);
   }
 
   onRegExChange = (event: FormEvent<HTMLInputElement>) => {
@@ -126,16 +126,16 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
-  const { dashboardUid: uid } = ownProps.variable;
-  if (!uid) {
-    console.error('DataSourceVariableEditor: variable has no dashboardUid');
+  const { stateKey } = ownProps.variable;
+  if (!stateKey) {
+    console.error('DataSourceVariableEditor: variable has no stateKey');
     return {
       editor: initialVariableEditorState as VariableEditorState<DataSourceVariableEditorState>,
     };
   }
 
   return {
-    editor: getDashboardVariablesState(uid, state).editor as VariableEditorState<DataSourceVariableEditorState>,
+    editor: getDashboardVariablesState(stateKey, state).editor as VariableEditorState<DataSourceVariableEditorState>,
   };
 };
 

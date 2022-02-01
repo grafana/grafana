@@ -32,7 +32,7 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
       await dispatch(updateTextBoxVariableOptions(toDashboardVariableIdentifier(variable)));
     },
     getSaveModel: (variable, saveCurrentAsDefault) => {
-      const { index, id, state, global, originalQuery, dashboardUid, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, originalQuery, stateKey, ...rest } = cloneDeep(variable);
 
       if (variable.query !== originalQuery && !saveCurrentAsDefault) {
         const origQuery = originalQuery ?? '';
