@@ -265,7 +265,6 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			assert.Equal(t, tt.expected, can)
 		})
 	}
-
 }
 
 func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
@@ -366,7 +365,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			guardian := setupAccessControlGuardianTest(t, tt.dashboardID, tt.permissions)
 
-			can, err := guardian.CanView()
+			can, err := guardian.CanAdmin()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
 		})
