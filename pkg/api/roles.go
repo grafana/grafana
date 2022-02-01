@@ -223,10 +223,76 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	dashboardsReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:reader",
+			DisplayName: "Dashboard reader",
+			Description: "Read dashboards",
+			Group:       "Dashboards",
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionDashboardsRead, Scope: accesscontrol.ScopeDashboardsAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	dashboardsWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:writer",
+			DisplayName: "Dashboard writer",
+			Group:       "Dashboards",
+			Description: "Update dashboards",
+			Permissions: accesscontrol.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionDashboardsCreate, Scope: accesscontrol.ScopeFoldersAll},
+				{Action: accesscontrol.ActionDashboardsEdit, Scope: accesscontrol.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionDashboardsWrite, Scope: accesscontrol.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionDashboardsDelete, Scope: accesscontrol.ScopeDashboardsAll},
+			}),
+		},
+		Grants: []string{"Admin"},
+	}
+
+	foldersReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:reader",
+			DisplayName: "Folder reader",
+			Group:       "Dashboards",
+			Description: "Read folders",
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionFoldersRead, Scope: accesscontrol.ScopeFoldersAll},
+				{Action: accesscontrol.ActionDashboardsRead, Scope: accesscontrol.ScopeFoldersAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	foldersReaderWriter := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:writer",
+			DisplayName: "Folder writer",
+			Description: "",
+			Group:       "Dashboards",
+			Permissions: accesscontrol.ConcatPermissions(
+				foldersReaderRole.Role.Permissions,
+				[]accesscontrol.Permission{
+					{Action: accesscontrol.ActionFoldersCreate},
+					{Action: accesscontrol.ActionFoldersEdit, Scope: accesscontrol.ScopeFoldersAll},
+					{Action: accesscontrol.ActionFoldersWrite, Scope: accesscontrol.ScopeFoldersAll},
+					{Action: accesscontrol.ActionFoldersDelete, Scope: accesscontrol.ScopeFoldersAll},
+				}),
+		},
+		Grants: []string{"Admin"},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, dashboardsReaderRole, dashboardsWriterRole,
+		foldersReaderRole, foldersReaderWriter,
 	)
 }
 
