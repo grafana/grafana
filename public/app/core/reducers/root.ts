@@ -17,7 +17,7 @@ import importDashboardReducers from 'app/features/manage-dashboards/state/reduce
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
-import dashboardVariablesReducer from 'app/features/variables/state/keyedVariablesReducer';
+import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
 const rootReducers = {
   ...sharedReducers,
@@ -36,7 +36,7 @@ const rootReducers = {
   ...importDashboardReducers,
   ...panelEditorReducers,
   ...panelsReducers,
-  ...dashboardVariablesReducer,
+  ...templatingReducers,
   plugins: pluginsReducer,
 };
 

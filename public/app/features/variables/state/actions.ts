@@ -547,11 +547,11 @@ export const variableUpdated = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const state = getState();
-    const { stateKey: uid } = identifier;
+    const { stateKey } = identifier;
     const variableInState = getVariable(identifier, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
-    if (getVariablesState(uid, state).transaction.status === TransactionStatus.Fetching) {
+    if (getVariablesState(stateKey, state).transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
         await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
@@ -560,7 +560,7 @@ export const variableUpdated = (
       return Promise.resolve();
     }
 
-    const variables = getVariablesByKey(uid, state);
+    const variables = getVariablesByKey(stateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
     const event: VariablesChangedEvent = isAdHoc(variableInState)
@@ -583,7 +583,7 @@ export const variableUpdated = (
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         events.publish(new VariablesChanged(event));
-        locationService.partial(getQueryWithVariables(uid, getState));
+        locationService.partial(getQueryWithVariables(stateKey, getState));
       }
     });
   };
@@ -694,7 +694,7 @@ export function isVariableUrlValueDifferentFromCurrent(variable: VariableModel, 
   return !isEqual(variableValue, stringUrlValue);
 }
 
-const getQueryWithVariables = (uid: string, getState: () => StoreState): UrlQueryMap => {
+const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQueryMap => {
   const queryParams = locationService.getSearchObject();
 
   const queryParamsNew = Object.keys(queryParams)
@@ -704,7 +704,7 @@ const getQueryWithVariables = (uid: string, getState: () => StoreState): UrlQuer
       return obj;
     }, {} as UrlQueryMap);
 
-  for (const variable of getVariablesByKey(uid, getState())) {
+  for (const variable of getVariablesByKey(key, getState())) {
     if (variable.skipUrlSync) {
       continue;
     }
@@ -781,11 +781,11 @@ export function migrateVariablesDatasourceNameToRef(
   };
 }
 
-export const cleanUpVariables = (uid: string): ThunkResult<void> => (dispatch) => {
-  dispatch(toKeyedAction(uid, cleanVariables()));
-  dispatch(toKeyedAction(uid, cleanEditorState()));
-  dispatch(toKeyedAction(uid, cleanPickerState()));
-  dispatch(toKeyedAction(uid, variablesClearTransaction()));
+export const cleanUpVariables = (key: string): ThunkResult<void> => (dispatch) => {
+  dispatch(toKeyedAction(key, cleanVariables()));
+  dispatch(toKeyedAction(key, cleanEditorState()));
+  dispatch(toKeyedAction(key, cleanPickerState()));
+  dispatch(toKeyedAction(key, variablesClearTransaction()));
 };
 
 type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
@@ -801,20 +801,20 @@ export const updateOptions = (
   identifier: KeyedVariableIdentifier,
   rethrow = false
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
-  const { stateKey: uid } = identifier;
+  const { stateKey } = identifier;
   try {
-    if (!hasOngoingTransaction(uid, getState())) {
+    if (!hasOngoingTransaction(stateKey, getState())) {
       // we might have cancelled a batch so then variable state is removed
       return;
     }
 
     const variableInState = getVariable(identifier, getState());
-    dispatch(toKeyedAction(uid, variableStateFetching(toVariablePayload(variableInState))));
+    dispatch(toKeyedAction(stateKey, variableStateFetching(toVariablePayload(variableInState))));
     await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(completeVariableLoading(identifier));
   } catch (error) {
-    dispatch(toKeyedAction(uid, variableStateFailed(toVariablePayload(identifier, { error }))));
+    dispatch(toKeyedAction(stateKey, variableStateFailed(toVariablePayload(identifier, { error }))));
 
     if (!rethrow) {
       console.error(error);
@@ -841,8 +841,8 @@ export const completeVariableLoading = (identifier: KeyedVariableIdentifier): Th
   dispatch,
   getState
 ) => {
-  const { stateKey: uid } = identifier;
-  if (!hasOngoingTransaction(uid, getState())) {
+  const { stateKey } = identifier;
+  if (!hasOngoingTransaction(stateKey, getState())) {
     // we might have cancelled a batch so then variable state is removed
     return;
   }
@@ -859,8 +859,8 @@ export function upgradeLegacyQueries(
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
 ): ThunkResult<void> {
   return async function (dispatch, getState) {
-    const { id, stateKey: uid } = identifier;
-    if (!hasOngoingTransaction(uid, getState())) {
+    const { id, stateKey } = identifier;
+    if (!hasOngoingTransaction(stateKey, getState())) {
       // we might have cancelled a batch so then variable state is removed
       return;
     }
@@ -892,7 +892,10 @@ export function upgradeLegacyQueries(
       };
 
       dispatch(
-        toKeyedAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })))
+        toKeyedAction(
+          stateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query }))
+        )
       );
     } catch (err) {
       dispatch(notifyApp(createVariableErrorNotification('Failed to upgrade legacy queries', err)));

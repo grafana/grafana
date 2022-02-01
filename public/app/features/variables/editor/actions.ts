@@ -22,15 +22,15 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    const { stateKey: uid } = identifier;
-    dispatch(toKeyedAction(uid, variableEditorMounted({ name: getVariable(identifier).name })));
+    const { stateKey } = identifier;
+    dispatch(toKeyedAction(stateKey, variableEditorMounted({ name: getVariable(identifier).name })));
   };
 };
 
 export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { stateKey: uid } = identifier;
-    dispatch(toKeyedAction(uid, variableEditorUnMounted(toVariablePayload(identifier))));
+    const { stateKey } = identifier;
+    dispatch(toKeyedAction(stateKey, variableEditorUnMounted(toVariablePayload(identifier))));
   };
 };
 
@@ -73,10 +73,10 @@ export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, 
   dispatch,
   getState
 ) => {
-  const { stateKey: uid } = identifier;
+  const { stateKey } = identifier;
   const originalVariable = getVariable(identifier, getState());
   if (originalVariable.name === newName) {
-    dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
+    dispatch(toKeyedAction(stateKey, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
     return;
   }
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
@@ -84,10 +84,10 @@ export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, 
   const index = originalVariable.index;
   const renamedIdentifier = toKeyedVariableIdentifier(model);
 
-  dispatch(toKeyedAction(uid, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
-  dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
+  dispatch(toKeyedAction(stateKey, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
+  dispatch(toKeyedAction(stateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
   dispatch(switchToEditMode(renamedIdentifier));
-  dispatch(toKeyedAction(uid, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
+  dispatch(toKeyedAction(stateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
 };
 
 export const switchToNewMode = (key: string, type: VariableType = 'query'): ThunkResult<void> => (
@@ -98,7 +98,7 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
   const identifier = { type, id, stateKey: key };
   const global = false;
   const index = getNewVariableIndex(key, getState());
-  const model = cloneDeep(variableAdapters.get(type).initialState);
+  const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
   model.id = id;
   model.name = id;
   model.stateKey = key;
@@ -114,19 +114,19 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
 };
 
 export const switchToEditMode = (identifier: KeyedVariableIdentifier): ThunkResult<void> => (dispatch) => {
-  const { stateKey: uid } = identifier;
-  dispatch(toKeyedAction(uid, setIdInEditor({ id: identifier.id })));
+  const { stateKey } = identifier;
+  dispatch(toKeyedAction(stateKey, setIdInEditor({ id: identifier.id })));
 };
 
-export const switchToListMode = (uid: string): ThunkResult<void> => (dispatch, getState) => {
-  dispatch(toKeyedAction(uid, clearIdInEditor()));
+export const switchToListMode = (key: string): ThunkResult<void> => (dispatch, getState) => {
+  dispatch(toKeyedAction(key, clearIdInEditor()));
   const state = getState();
-  const variables = getEditorVariables(uid, state);
+  const variables = getEditorVariables(key, state);
   const dashboard = state.dashboard.getModel();
   const { usages } = createUsagesNetwork(variables, dashboard);
   const usagesNetwork = transformUsagesToNetwork(usages);
 
-  dispatch(toKeyedAction(uid, initInspect({ usages, usagesNetwork })));
+  dispatch(toKeyedAction(key, initInspect({ usages, usagesNetwork })));
 };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {

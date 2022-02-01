@@ -1,12 +1,12 @@
 import React, { MouseEvent, PureComponent } from 'react';
 import { bindActionCreators } from 'redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Icon, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { KeyedVariableIdentifier } from '../state/types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableEditorEditor } from './VariableEditorEditor';
-import { connect, ConnectedProps } from 'react-redux';
 import { getEditorVariables, getVariablesState } from '../state/selectors';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';

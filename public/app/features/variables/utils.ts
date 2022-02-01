@@ -258,12 +258,12 @@ export function ensureStringValues(value: any | any[]): string | string[] {
   return '';
 }
 
-export function hasOngoingTransaction(uid: string, state: StoreState = getState()): boolean {
-  return getVariablesState(uid, state).transaction.status !== TransactionStatus.NotStarted;
+export function hasOngoingTransaction(key: string, state: StoreState = getState()): boolean {
+  return getVariablesState(key, state).transaction.status !== TransactionStatus.NotStarted;
 }
 
-export function toStateKey(uid: string | null | undefined): string {
-  return String(uid);
+export function toStateKey(key: string | null | undefined): string {
+  return String(key);
 }
 
 export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {

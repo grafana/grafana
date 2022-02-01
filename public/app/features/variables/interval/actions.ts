@@ -14,8 +14,8 @@ import { toVariablePayload } from '../utils';
 export const updateIntervalVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => async (
   dispatch
 ) => {
-  const { stateKey: uid } = identifier;
-  await dispatch(toKeyedAction(uid, createIntervalOptions(toVariablePayload(identifier))));
+  const { stateKey } = identifier;
+  await dispatch(toKeyedAction(stateKey, createIntervalOptions(toVariablePayload(identifier))));
   await dispatch(updateAutoValue(identifier));
   await dispatch(validateVariableSelectionState(identifier));
 };

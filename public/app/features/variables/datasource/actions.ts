@@ -21,7 +21,7 @@ export const updateDataSourceVariableOptions = (
   identifier: KeyedVariableIdentifier,
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const { stateKey: uid } = identifier;
+  const { stateKey } = identifier;
   const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
   const variableInState = getVariable<DataSourceVariableModel>(identifier, getState());
   let regex;
@@ -31,12 +31,12 @@ export const updateDataSourceVariableOptions = (
     regex = stringToJsRegex(regex);
   }
 
-  dispatch(toKeyedAction(uid, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
+  dispatch(toKeyedAction(stateKey, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
   await dispatch(validateVariableSelectionState(identifier));
 };
 
 export const initDataSourceVariableEditor = (
-  uid: string,
+  key: string,
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => (dispatch) => {
   const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
@@ -51,7 +51,7 @@ export const initDataSourceVariableEditor = (
 
   dispatch(
     toKeyedAction(
-      uid,
+      key,
       changeVariableEditorExtended({
         propName: 'dataSourceTypes',
         propValue: dataSourceTypes,

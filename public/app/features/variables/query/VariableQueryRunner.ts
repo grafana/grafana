@@ -39,7 +39,7 @@ export interface UpdateOptionsResults {
 interface VariableQueryRunnerArgs {
   dispatch: ThunkDispatch;
   getState: () => StoreState;
-  getDashboardVariable: typeof getVariable;
+  getVariable: typeof getVariable;
   getTemplatedRegex: typeof getTemplatedRegex;
   getTimeSrv: typeof getTimeSrv;
   queryRunners: QueryRunners;
@@ -56,7 +56,7 @@ export class VariableQueryRunner {
     private dependencies: VariableQueryRunnerArgs = {
       dispatch,
       getState,
-      getDashboardVariable: getVariable,
+      getVariable,
       getTemplatedRegex,
       getTimeSrv,
       queryRunners: new QueryRunners(),
@@ -93,17 +93,17 @@ export class VariableQueryRunner {
         dispatch,
         runRequest,
         getTemplatedRegex: getTemplatedRegexFunc,
-        getDashboardVariable,
+        getVariable,
         queryRunners,
         getTimeSrv,
         getState,
       } = this.dependencies;
 
-      const beforeUid = getLastKey(getState());
+      const beforeKey = getLastKey(getState());
 
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
-      const variable = getDashboardVariable<QueryVariableModel>(identifier, getState());
+      const variable = getVariable<QueryVariableModel>(identifier, getState());
       const timeSrv = getTimeSrv();
       const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
       const runner = queryRunners.getRunnerForDatasource(datasource);
@@ -115,9 +115,9 @@ export class VariableQueryRunner {
         .pipe(
           filter(() => {
             // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
-            const afterUid = getLastKey(getState());
+            const afterKey = getLastKey(getState());
 
-            return beforeUid === afterUid;
+            return beforeKey === afterKey;
           }),
           filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
           take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet

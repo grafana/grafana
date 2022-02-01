@@ -1,5 +1,6 @@
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { cloneDeep } from 'lodash';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';
 import { VariablesState } from '../state/types';
 import { constantVariableReducer, createConstantOptionsFromQuery } from './reducer';

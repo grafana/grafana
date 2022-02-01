@@ -19,27 +19,27 @@ import { KeyedVariableIdentifier } from '../../state/types';
 import { containsSearchFilter, getCurrentText, toVariablePayload } from '../../utils';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 
-export const navigateOptions = (uid: string, key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
+export const navigateOptions = (stateKey: string, key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
     if (key === NavigationKey.cancel) {
-      return await dispatch(commitChangesToVariable(uid));
+      return await dispatch(commitChangesToVariable(stateKey));
     }
 
     if (key === NavigationKey.select) {
-      return dispatch(toggleOptionByHighlight(uid, clearOthers));
+      return dispatch(toggleOptionByHighlight(stateKey, clearOthers));
     }
 
     if (key === NavigationKey.selectAndClose) {
-      dispatch(toggleOptionByHighlight(uid, clearOthers, true));
-      return await dispatch(commitChangesToVariable(uid));
+      dispatch(toggleOptionByHighlight(stateKey, clearOthers, true));
+      return await dispatch(commitChangesToVariable(stateKey));
     }
 
     if (key === NavigationKey.moveDown) {
-      return dispatch(toKeyedAction(uid, moveOptionsHighlight(1)));
+      return dispatch(toKeyedAction(stateKey, moveOptionsHighlight(1)));
     }
 
     if (key === NavigationKey.moveUp) {
-      return dispatch(toKeyedAction(uid, moveOptionsHighlight(-1)));
+      return dispatch(toKeyedAction(stateKey, moveOptionsHighlight(-1)));
     }
 
     return undefined;
@@ -51,20 +51,20 @@ export const filterOrSearchOptions = (
   searchQuery = ''
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { stateKey: uid } = passedIdentifier;
-    const { id, queryValue } = getVariablesState(uid, getState()).optionsPicker;
-    const identifier: KeyedVariableIdentifier = { id, stateKey: uid, type: 'query' };
+    const { stateKey } = passedIdentifier;
+    const { id, queryValue } = getVariablesState(stateKey, getState()).optionsPicker;
+    const identifier: KeyedVariableIdentifier = { id, stateKey, type: 'query' };
     const { query, options } = getVariable<VariableWithOptions>(identifier, getState());
-    dispatch(toKeyedAction(uid, updateSearchQuery(searchQuery)));
+    dispatch(toKeyedAction(stateKey, updateSearchQuery(searchQuery)));
 
     if (trim(queryValue) === trim(searchQuery)) {
       return;
     }
 
     if (containsSearchFilter(query)) {
-      return searchForOptionsWithDebounce(dispatch, getState, searchQuery, uid);
+      return searchForOptionsWithDebounce(dispatch, getState, searchQuery, stateKey);
     }
-    return dispatch(toKeyedAction(uid, updateOptionsAndFilter(options)));
+    return dispatch(toKeyedAction(stateKey, updateOptionsAndFilter(options)));
   };
 };
 
@@ -74,18 +74,18 @@ const setVariable = async (updated: VariableWithMultiSupport) => {
   return;
 };
 
-export const commitChangesToVariable = (uid: string, callback?: (updated: any) => void): ThunkResult<void> => {
+export const commitChangesToVariable = (key: string, callback?: (updated: any) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const picker = getVariablesState(uid, getState()).optionsPicker;
-    const identifier: KeyedVariableIdentifier = { id: picker.id, stateKey: uid, type: 'query' };
+    const picker = getVariablesState(key, getState()).optionsPicker;
+    const identifier: KeyedVariableIdentifier = { id: picker.id, stateKey: key, type: 'query' };
     const existing = getVariable<VariableWithMultiSupport>(identifier, getState());
     const currentPayload = { option: mapToCurrent(picker) };
     const searchQueryPayload = { propName: 'queryValue', propValue: picker.queryValue };
 
-    dispatch(toKeyedAction(uid, setCurrentVariableValue(toVariablePayload(existing, currentPayload))));
-    dispatch(toKeyedAction(uid, changeVariableProp(toVariablePayload(existing, searchQueryPayload))));
+    dispatch(toKeyedAction(key, setCurrentVariableValue(toVariablePayload(existing, currentPayload))));
+    dispatch(toKeyedAction(key, changeVariableProp(toVariablePayload(existing, searchQueryPayload))));
     const updated = getVariable<VariableWithMultiSupport>(identifier, getState());
-    dispatch(toKeyedAction(uid, hideOptions()));
+    dispatch(toKeyedAction(key, hideOptions()));
 
     if (getCurrentText(existing) === getCurrentText(updated)) {
       return;
@@ -114,11 +114,11 @@ export const openOptions = (
   dispatch(toKeyedAction(uid, showOptions(variable)));
 };
 
-export const toggleOptionByHighlight = (uid: string, clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
+export const toggleOptionByHighlight = (key: string, clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { highlightIndex, options } = getVariablesState(uid, getState()).optionsPicker;
+    const { highlightIndex, options } = getVariablesState(key, getState()).optionsPicker;
     const option = options[highlightIndex];
-    dispatch(toKeyedAction(uid, toggleOption({ option, forceSelect, clearOthers })));
+    dispatch(toKeyedAction(key, toggleOption({ option, forceSelect, clearOthers })));
   };
 };
 
@@ -126,18 +126,18 @@ const searchForOptions = async (
   dispatch: ThunkDispatch,
   getState: () => StoreState,
   searchQuery: string,
-  uid: string
+  key: string
 ) => {
   try {
-    const { id } = getVariablesState(uid, getState()).optionsPicker;
-    const identifier: KeyedVariableIdentifier = { id, stateKey: uid, type: 'query' };
+    const { id } = getVariablesState(key, getState()).optionsPicker;
+    const identifier: KeyedVariableIdentifier = { id, stateKey: key, type: 'query' };
     const existing = getVariable<VariableWithOptions>(identifier, getState());
 
     const adapter = variableAdapters.get(existing.type);
     await adapter.updateOptions(existing, searchQuery);
 
     const updated = getVariable<VariableWithOptions>(identifier, getState());
-    dispatch(toKeyedAction(uid, updateOptionsFromSearch(updated.options)));
+    dispatch(toKeyedAction(key, updateOptionsFromSearch(updated.options)));
   } catch (error) {
     console.error(error);
   }
