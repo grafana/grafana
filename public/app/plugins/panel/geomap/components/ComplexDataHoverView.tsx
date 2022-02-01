@@ -10,7 +10,6 @@ export interface Props {
 
 export const ComplexDataHoverView = (props: Props) => {
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
-  console.log(activeTabIndex, 'what is this?');
 
   const { layers } = props;
   if (layers) {

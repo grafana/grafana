@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Collapse, TabContent } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';
@@ -10,31 +10,45 @@ type Props = {
 };
 
 export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
-  const [rowMap, setRowMap] = useState(new Map<number, boolean>());
+  const [rowMap, setRowMap] = useState(new Map<string | number, boolean>());
 
-  const updateRowMap = (key: number, value: boolean) => {
+  const updateRowMap = (key: string | number, value: boolean) => {
     setRowMap(new Map(rowMap.set(key, value)));
   };
+
+  useEffect(() => {
+    if (layers) {
+      layers.map((layer, index) => {
+        layer.features.map((feature, idx) => {
+          const key = feature.getId() ?? idx;
+
+          updateRowMap(key, true);
+        });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const rows =
     (layers &&
       layers.map(
-        (g, index) =>
+        (geomapLayer, index) =>
           index === activeTabIndex && (
-            <div key={g.layer.getName()}>
+            <div key={geomapLayer.layer.getName()}>
               <div>
-                {g.features.map((f, idx) => {
+                {geomapLayer.features.map((feature, idx) => {
+                  const key = feature.getId() ?? idx;
                   return (
                     <Collapse
-                      key={idx}
+                      key={key}
                       collapsible
-                      label={f.get('name')}
-                      isOpen={rowMap.get(idx)}
+                      label={feature.get('name')}
+                      isOpen={rowMap.get(key)}
                       onToggle={() => {
-                        updateRowMap(idx, !rowMap.get(idx));
+                        updateRowMap(key, !rowMap.get(key));
                       }}
                     >
-                      <DataHoverRow feature={f} />
+                      <DataHoverRow feature={feature} />
                     </Collapse>
                   );
                 })}
