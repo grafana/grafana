@@ -3,6 +3,7 @@ import { Collapse, TabContent } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';
 import { DataHoverRow } from './DataHoverRow';
+import { FeatureLike } from 'ol/Feature';
 
 type Props = {
   layers?: GeomapLayerHover[];
@@ -38,11 +39,12 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
               <div>
                 {geomapLayer.features.map((feature, idx) => {
                   const key = feature.getId() ?? idx;
+
                   return (
                     <Collapse
                       key={key}
                       collapsible
-                      label={feature.get('name')}
+                      label={generateLabel(feature)}
                       isOpen={rowMap.get(key)}
                       onToggle={() => {
                         updateRowMap(key, !rowMap.get(key));
@@ -59,4 +61,16 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
     null;
 
   return <TabContent>{rows}</TabContent>;
+};
+
+export const generateLabel = (feature: FeatureLike): string => {
+  let label: string;
+
+  label = feature.get('name') ?? feature.get('title') ?? feature.getId();
+
+  if (!label) {
+    label = 'Data';
+  }
+
+  return label;
 };
