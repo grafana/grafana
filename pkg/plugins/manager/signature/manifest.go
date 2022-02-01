@@ -100,6 +100,7 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 }
 
 func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {
+	mlog.Warn("Checking Plugin", "pluginID", plugin.ID)
 	if plugin.IsCorePlugin() {
 		return plugins.Signature{
 			Status: plugins.SignatureInternal,
@@ -120,13 +121,14 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	manifest, err := readPluginManifest(byteValue)
+
 	if err != nil {
-		mlog.Debug("Plugin signature invalid", "id", plugin.ID)
+		mlog.Warn("Plugin signature invalid", "id", plugin.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
 	}
-
+	mlog.Warn("VALID SIGNATURE")
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.ID || manifest.Version != plugin.Info.Version {
 		return plugins.Signature{
@@ -167,10 +169,12 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	}
 
 	manifestFiles := make(map[string]struct{}, len(manifest.Files))
+	mlog.Warn("GOT MANIFEST FILES")
 
 	// Verify the manifest contents
 	for p, hash := range manifest.Files {
 		err = verifyHash(mlog, plugin.ID, filepath.Join(plugin.PluginDir, p), hash)
+		mlog.Warn("Verification done")
 		if err != nil {
 			return plugins.Signature{
 				Status: plugins.SignatureModified,
@@ -217,6 +221,8 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.
+	mlog.Warn("File", "file", path)
+	mlog.Warn("File Hash", "hash", hash)
 	f, err := os.Open(path)
 	if err != nil {
 		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
@@ -233,6 +239,7 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 		return fmt.Errorf("could not calculate plugin file checksum")
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
+	mlog.Warn("File Hash sum", "sum", sum)
 	if sum != hash {
 		mlog.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
 		return fmt.Errorf("plugin file checksum does not match signature checksum")
