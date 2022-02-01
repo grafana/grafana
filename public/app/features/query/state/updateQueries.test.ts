@@ -99,4 +99,42 @@ describe('updateQueries', () => {
     expect(updated[0].datasource).toEqual({ type: 'old-type', uid: 'old-uid' });
     expect(updated[1].datasource).toEqual({ type: 'other-type', uid: 'other-uid' });
   });
+
+  it('should change nothing mixed updated to mixed', () => {
+    const updated = updateQueries(
+      {
+        uid: 'mixed',
+        type: 'mixed',
+        meta: {
+          mixed: true,
+        },
+      } as any,
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      {
+        uid: 'mixed',
+        type: 'mixed',
+        meta: {
+          mixed: true,
+        },
+      } as any
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'old-type', uid: 'old-uid' });
+    expect(updated[1].datasource).toEqual({ type: 'other-type', uid: 'other-uid' });
+  });
 });

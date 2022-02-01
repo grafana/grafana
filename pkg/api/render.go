@@ -53,12 +53,16 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 	}
 
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout: time.Duration(timeout) * time.Second,
+		},
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   c.OrgId,
+			UserID:  c.UserId,
+			OrgRole: c.OrgRole,
+		},
 		Width:             width,
 		Height:            height,
-		Timeout:           time.Duration(timeout) * time.Second,
-		OrgID:             c.OrgId,
-		UserID:            c.UserId,
-		OrgRole:           c.OrgRole,
 		Path:              web.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
@@ -66,7 +70,7 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		DeviceScaleFactor: scale,
 		Headers:           headers,
 		Theme:             rendering.ThemeDark,
-	})
+	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {
 			c.Handle(hs.Cfg, 500, err.Error(), err)

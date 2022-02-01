@@ -936,8 +936,6 @@ export class ElasticDatasource
  * Exported for tests.
  */
 export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
-  const dataSourceSrv = getDataSourceSrv();
-
   if (limit) {
     dataFrame.meta = {
       ...dataFrame.meta,
@@ -950,35 +948,37 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
   }
 
   for (const field of dataFrame.fields) {
-    const dataLinkConfig = dataLinks.find((dataLink) => field.name && field.name.match(dataLink.field));
+    const linksToApply = dataLinks.filter((dataLink) => new RegExp(dataLink.field).test(field.name));
 
-    if (!dataLinkConfig) {
+    if (linksToApply.length === 0) {
       continue;
     }
 
-    let link: DataLink;
-
-    if (dataLinkConfig.datasourceUid) {
-      const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
-
-      link = {
-        title: dataLinkConfig.urlDisplayLabel || '',
-        url: '',
-        internal: {
-          query: { query: dataLinkConfig.url },
-          datasourceUid: dataLinkConfig.datasourceUid,
-          datasourceName: dsSettings?.name ?? 'Data source not found',
-        },
-      };
-    } else {
-      link = {
-        title: dataLinkConfig.urlDisplayLabel || '',
-        url: dataLinkConfig.url,
-      };
-    }
-
     field.config = field.config || {};
-    field.config.links = [...(field.config.links || []), link];
+    field.config.links = [...(field.config.links || [], linksToApply.map(generateDataLink))];
+  }
+}
+
+function generateDataLink(linkConfig: DataLinkConfig): DataLink {
+  const dataSourceSrv = getDataSourceSrv();
+
+  if (linkConfig.datasourceUid) {
+    const dsSettings = dataSourceSrv.getInstanceSettings(linkConfig.datasourceUid);
+
+    return {
+      title: linkConfig.urlDisplayLabel || '',
+      url: '',
+      internal: {
+        query: { query: linkConfig.url },
+        datasourceUid: linkConfig.datasourceUid,
+        datasourceName: dsSettings?.name ?? 'Data source not found',
+      },
+    };
+  } else {
+    return {
+      title: linkConfig.urlDisplayLabel || '',
+      url: linkConfig.url,
+    };
   }
 }
 

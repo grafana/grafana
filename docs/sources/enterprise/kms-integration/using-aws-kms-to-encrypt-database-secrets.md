@@ -39,7 +39,6 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
 
    - `access_key_id`: The AWS Access Key ID that you previously generated.
    - `secret_access_key`: The AWS Secret Access Key you previously generated.
-   - `token`: (Optional) An AWS Session Token, which you must provide if you created temporary credentials.
    - `region`: The AWS region where you created the KMS key. The region is contained in the key’s ARN. For example: `arn:aws:kms:*us-east-2*:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab`
 
    An example of an AWS KMS provider section in the `grafana.ini` file is as follows:
@@ -53,8 +52,6 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
    ;access_key_id = AKIAIOSFODNN7EXAMPLE
    # AWS secret access key
    ;secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-   # AWS session token, optional
-   ;token = AQoDYXdzEJr...<REMAINDER OF SECURITY TOKEN>
    # AWS region, for example eu-north-1
    ;region = eu-north-1
    ```

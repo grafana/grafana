@@ -424,13 +424,35 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "5m",
 			"refId": "A"
 		}`, timeRange)
 
 		dsInfo := &DatasourceInfo{}
 		models, err := service.parseTimeSeriesQuery(query, dsInfo)
 		require.NoError(t, err)
-		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", models[0].Expr)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [5m15s]})", models[0].Expr)
+	})
+
+	t.Run("parsing query model with $__rate_interval variable in expr and interval", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(5 * time.Minute),
+		}
+
+		query := queryContext(`{
+			"expr": "rate(ALERTS{job=\"test\" [$__rate_interval]})",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"interval": "$__rate_interval",
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseTimeSeriesQuery(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [1m0s]})", models[0].Expr)
+		require.Equal(t, 1*time.Minute, models[0].Step)
 	})
 
 	t.Run("parsing query model of range query", func(t *testing.T) {
@@ -534,7 +556,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		// Test fields
@@ -572,7 +594,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(5, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -609,7 +631,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query, true)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -619,6 +641,39 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, res[0].Fields[1].Len(), 4)
 		require.Nil(t, res[0].Fields[1].At(1))
 		require.Nil(t, res[0].Fields[1].At(2))
+	})
+
+	t.Run("matrix response with from alerting missed data points should be parsed correctly", func(t *testing.T) {
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+			{Value: 4, Timestamp: 4000},
+		}
+		value := make(map[TimeSeriesQueryType]interface{})
+		value[RangeQueryType] = p.Matrix{
+			&p.SampleStream{
+				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+				Values: values,
+			},
+		}
+		query := &PrometheusQuery{
+			LegendFormat: "",
+			Step:         1 * time.Second,
+			Start:        time.Unix(1, 0).UTC(),
+			End:          time.Unix(4, 0).UTC(),
+			UtcOffsetSec: 0,
+		}
+		res, err := parseTimeSeriesResponse(value, query, false)
+
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.Equal(t, res[0].Name, "{app=\"Application\", tag2=\"tag2\"}")
+		require.Len(t, res[0].Fields, 2)
+		require.Len(t, res[0].Fields[0].Labels, 0)
+		require.Equal(t, res[0].Fields[0].Name, "Time")
+		require.Len(t, res[0].Fields[1].Labels, 2)
+		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
+		require.Equal(t, res[0].Fields[1].Name, "Value")
+		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "{app=\"Application\", tag2=\"tag2\"}")
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {
@@ -638,7 +693,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		var nilPointer *float64
@@ -658,7 +713,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -685,7 +740,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		query := &PrometheusQuery{}
-		res, err := parseTimeSeriesResponse(value, query)
+		res, err := parseTimeSeriesResponse(value, query, true)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)

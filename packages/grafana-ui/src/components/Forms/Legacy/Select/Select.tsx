@@ -23,7 +23,7 @@ import { ThemeContext } from '../../../../themes';
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'>;
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
@@ -237,6 +237,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
+              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}

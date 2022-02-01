@@ -30,9 +30,9 @@ Enables permissions for the data source with the given `id`. No one except Org A
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                         | Scope                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| datasources.permissions:toggle | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                        | Scope                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
 
 ### Examples
 
@@ -75,9 +75,9 @@ Disables permissions for the data source with the given `id`. All existing permi
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                         | Scope                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| datasources.permissions:toggle | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                        | Scope                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
 
 ### Examples
 
@@ -191,9 +191,9 @@ Adds a user permission for the data source with the given `id`.
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                         | Scope                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| datasources.permissions:create | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                        | Scope                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
 
 ### Examples
 
@@ -265,9 +265,9 @@ Removes the permission with the given `permissionId` for the data source with th
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                         | Scope                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| datasources.permissions:delete | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                        | Scope                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
 
 ### Examples
 

@@ -26,7 +26,7 @@ interface TooltipPluginProps {
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
-  sync?: DashboardCursorSync;
+  sync?: () => DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
@@ -66,7 +66,15 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   useLayoutEffect(() => {
     let bbox: DOMRect | undefined = undefined;
 
-    const plotMouseLeave = () => {
+    const plotEnter = () => {
+      if (!isMounted()) {
+        return;
+      }
+      setIsActive(true);
+      plotInstance.current?.root.classList.add('plot-active');
+    };
+
+    const plotLeave = () => {
       if (!isMounted()) {
         return;
       }
@@ -75,24 +83,19 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       plotInstance.current?.root.classList.remove('plot-active');
     };
 
-    const plotMouseEnter = () => {
-      if (!isMounted()) {
-        return;
-      }
-      setIsActive(true);
-      plotInstance.current?.root.classList.add('plot-active');
-    };
-
     // cache uPlot plotting area bounding box
     config.addHook('syncRect', (u, rect) => (bbox = rect));
 
     config.addHook('init', (u) => {
       plotInstance.current = u;
 
-      u.over.addEventListener('mouseleave', plotMouseLeave);
-      u.over.addEventListener('mouseenter', plotMouseEnter);
+      u.root.parentElement?.addEventListener('focus', plotEnter);
+      u.over.addEventListener('mouseenter', plotEnter);
 
-      if (sync === DashboardCursorSync.Crosshair) {
+      u.root.parentElement?.addEventListener('blur', plotLeave);
+      u.over.addEventListener('mouseleave', plotLeave);
+
+      if (sync && sync() === DashboardCursorSync.Crosshair) {
         u.root.classList.add('shared-crosshair');
       }
     });
@@ -157,13 +160,15 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     return () => {
       setCoords(null);
       if (plotInstance.current) {
-        plotInstance.current.over.removeEventListener('mouseleave', plotMouseLeave);
-        plotInstance.current.over.removeEventListener('mouseenter', plotMouseEnter);
+        plotInstance.current.over.removeEventListener('mouseleave', plotLeave);
+        plotInstance.current.over.removeEventListener('mouseenter', plotEnter);
+        plotInstance.current.root.parentElement?.removeEventListener('focus', plotEnter);
+        plotInstance.current.root.parentElement?.removeEventListener('blur', plotLeave);
       }
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
 
-  if (focusedPointIdx === null || (!isActive && sync === DashboardCursorSync.Crosshair)) {
+  if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
     return null;
   }
 

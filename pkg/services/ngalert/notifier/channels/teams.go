@@ -8,9 +8,9 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // TeamsNotifier is responsible for sending
@@ -21,10 +21,11 @@ type TeamsNotifier struct {
 	Message string
 	tmpl    *template.Template
 	log     log.Logger
+	ns      notifications.WebhookSender
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*TeamsNotifier, error) {
+func NewTeamsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*TeamsNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -45,6 +46,7 @@ func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*
 		URL:     u,
 		Message: model.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
 		log:     log.New("alerting.notifier.teams"),
+		ns:      ns,
 		tmpl:    t,
 	}, nil
 }
@@ -97,7 +99,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}
 

@@ -4,11 +4,12 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
-import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
+import { toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
 import { containsVariable, isAllVariable } from '../utils';
 import { optionPickerFactory } from '../pickers';
+import { ALL_VARIABLE_TEXT } from '../constants';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {

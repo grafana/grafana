@@ -37,8 +37,8 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 
 	ms := e.client.MultiSearch()
 
-	from := fmt.Sprintf("%d", e.dataQueries[0].TimeRange.From.UnixNano()/int64(time.Millisecond))
-	to := fmt.Sprintf("%d", e.dataQueries[0].TimeRange.To.UnixNano()/int64(time.Millisecond))
+	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -62,7 +62,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return rp.getTimeSeries()
 }
 
-func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
+func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
 	result backend.QueryDataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)
 	if err != nil {
@@ -243,7 +243,7 @@ func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
 	return bucketAgg.Settings.MustMap()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {
+func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
 	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)

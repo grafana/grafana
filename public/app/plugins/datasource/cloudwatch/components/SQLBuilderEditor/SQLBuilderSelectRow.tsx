@@ -96,6 +96,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
       <EditorFieldGroup>
         <EditorField label="Metric name" width={16}>
           <Select
+            aria-label="Metric name"
             value={metricName ? toOption(metricName) : null}
             options={metricOptions}
             allowCustomValue
@@ -106,6 +107,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
 
         <EditorField label="Aggregation" width={16}>
           <Select
+            aria-label="Aggregation"
             value={aggregation ? toOption(aggregation) : null}
             options={appendTemplateVariables(datasource, AGGREGATIONS)}
             onChange={({ value }) => value && onQueryChange(setAggregation(query, value))}

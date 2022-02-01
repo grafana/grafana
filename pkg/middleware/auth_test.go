@@ -17,7 +17,6 @@ func TestMiddlewareAuth(t *testing.T) {
 
 	middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
-
 		sc.fakeReq("GET", "/secure").exec()
 
 		assert.Equal(t, 302, sc.resp.Code)

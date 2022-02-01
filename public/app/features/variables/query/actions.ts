@@ -18,14 +18,20 @@ import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
+import { hasOngoingTransaction } from '../utils';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
+      if (!hasOngoingTransaction(getState())) {
+        // we might have cancelled a batch so then variable state is removed
+        return;
+      }
+
+      const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
@@ -43,7 +49,7 @@ export const updateQueryVariableOptions = (
       });
     } catch (err) {
       const error = toDataQueryError(err);
-      if (getState().templating.editor.id === variableInState.id) {
+      if (getState().templating.editor.id === identifier.id) {
         dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
       }
 

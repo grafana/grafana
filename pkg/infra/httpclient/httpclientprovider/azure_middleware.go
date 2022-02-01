@@ -16,17 +16,11 @@ const azureMiddlewareName = "AzureAuthentication.Provider"
 
 func AzureMiddleware(cfg *setting.Cfg) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(azureMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
-		if enabled, err := isAzureAuthenticationEnabled(opts.CustomOptions); err != nil {
-			return errorResponse(err)
-		} else if !enabled {
-			return next
-		}
-
 		credentials, err := getAzureCredentials(opts.CustomOptions)
 		if err != nil {
 			return errorResponse(err)
 		} else if credentials == nil {
-			credentials = getDefaultAzureCredentials(cfg)
+			return next
 		}
 
 		tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg, credentials)
@@ -49,17 +43,6 @@ func errorResponse(err error) http.RoundTripper {
 	})
 }
 
-func isAzureAuthenticationEnabled(customOptions map[string]interface{}) (bool, error) {
-	if untypedValue, ok := customOptions["_azureAuth"]; !ok {
-		return false, nil
-	} else if value, ok := untypedValue.(bool); !ok {
-		err := fmt.Errorf("the field 'azureAuth' should be a bool")
-		return false, err
-	} else {
-		return value, nil
-	}
-}
-
 func getAzureCredentials(customOptions map[string]interface{}) (azcredentials.AzureCredentials, error) {
 	if untypedValue, ok := customOptions["_azureCredentials"]; !ok {
 		return nil, nil
@@ -68,16 +51,6 @@ func getAzureCredentials(customOptions map[string]interface{}) (azcredentials.Az
 		return nil, err
 	} else {
 		return value, nil
-	}
-}
-
-func getDefaultAzureCredentials(cfg *setting.Cfg) azcredentials.AzureCredentials {
-	if cfg.Azure.ManagedIdentityEnabled {
-		return &azcredentials.AzureManagedIdentityCredentials{}
-	} else {
-		return &azcredentials.AzureClientSecretCredentials{
-			AzureCloud: cfg.Azure.Cloud,
-		}
 	}
 }
 

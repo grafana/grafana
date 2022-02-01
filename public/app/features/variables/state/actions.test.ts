@@ -27,13 +27,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-  NEW_VARIABLE_ID,
-  toVariableIdentifier,
-  toVariablePayload,
-} from './types';
+import { toVariableIdentifier, toVariablePayload } from './types';
 import {
   constantBuilder,
   customBuilder,
@@ -57,6 +51,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQu
 import * as runtime from '@grafana/runtime';
 import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),

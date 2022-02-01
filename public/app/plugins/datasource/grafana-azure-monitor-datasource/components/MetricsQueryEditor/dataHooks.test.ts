@@ -1,5 +1,8 @@
 import { renderHook } from '@testing-library/react-hooks';
 
+import createMockDatasource from '../../__mocks__/datasource';
+import Datasource from '../../datasource';
+import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import {
   DataHook,
   updateSubscriptions,
@@ -11,10 +14,6 @@ import {
   useResourceTypes,
   useSubscriptions,
 } from './dataHooks';
-import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
-import createMockDatasource from '../../__mocks__/datasource';
-import { MockedObjectDeep } from 'ts-jest/dist/utils/testing';
-import Datasource from '../../datasource';
 
 interface WaitableMock extends jest.Mock<any, any> {
   waitToBeCalled(): Promise<unknown>;
@@ -282,7 +281,7 @@ describe('AzureMonitor: metrics dataHooks', () => {
     },
   ];
 
-  let datasource: MockedObjectDeep<Datasource>;
+  let datasource: Datasource;
   let onChange: jest.Mock<any, any>;
   let setError: jest.Mock<any, any>;
 
@@ -362,6 +361,11 @@ describe('AzureMonitor: updateSubscriptions', () => {
       description: 'should not update with the subscription as an option',
       query: { ...bareQuery, subscription: 'foo' },
       subscriptionOptions: [{ label: 'foo', value: 'foo' }],
+    },
+    {
+      description: 'should not update with a template variable',
+      query: { ...bareQuery, subscription: '$foo' },
+      subscriptionOptions: [],
     },
     {
       description: 'should update with the first subscription',

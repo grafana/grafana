@@ -1,13 +1,23 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { createMockResourcePickerRows } from '../../__mocks__/resourcePickerRows';
 
+import { createMockResourcePickerRows } from '../../__mocks__/resourcePickerRows';
 import NestedResourceTable from './NestedResourceTable';
 import { findRow } from './utils';
 
 describe('AzureMonitor NestedResourceTable', () => {
   const noop: any = () => {};
+
+  const getElementById = document.getElementById;
+  beforeEach(() => {
+    document.getElementById = jest.fn().mockReturnValue({
+      scrollIntoView: jest.fn(),
+    });
+  });
+  afterEach(() => {
+    document.getElementById = getElementById;
+  });
 
   it('renders subscriptions', () => {
     const rows = createMockResourcePickerRows();

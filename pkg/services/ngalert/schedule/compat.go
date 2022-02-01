@@ -6,6 +6,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -123,5 +124,21 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 		sentAlerts = append(sentAlerts, alertState)
 	}
 	stateManager.Put(sentAlerts)
+	return alerts
+}
+
+// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
+// Returns a list of alert instances that have expiration time.Now
+func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
+	ts := clock.Now()
+	for _, alertState := range firingStates {
+		if alertState.State == eval.Normal || alertState.State == eval.Pending {
+			continue
+		}
+		postableAlert := stateToPostableAlert(alertState, appURL)
+		postableAlert.EndsAt = strfmt.DateTime(ts)
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
+	}
 	return alerts
 }

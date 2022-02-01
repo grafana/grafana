@@ -31,7 +31,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = createLink!(createTraceSpan());
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
         )}`
       );
     });
@@ -54,7 +54,7 @@ describe('createSpanLinkFactory', () => {
       );
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
         )}`
       );
     });
@@ -77,7 +77,7 @@ describe('createSpanLinkFactory', () => {
       );
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}],"panelsState":{}}'
         )}`
       );
     });
@@ -101,7 +101,7 @@ describe('createSpanLinkFactory', () => {
       );
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:01:00.000Z","to":"2020-10-14T01:01:01.000Z"},"datasource":"loki1","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:01:00.000Z","to":"2020-10-14T01:01:01.000Z"},"datasource":"loki1","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
         )}`
       );
     });
@@ -116,7 +116,7 @@ describe('createSpanLinkFactory', () => {
 
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"} |=\\"7946b05c2e2e4e5a\\" |=\\"6605c7b08e715d6c\\"","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"} |=\\"7946b05c2e2e4e5a\\" |=\\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
         )}`
       );
     });

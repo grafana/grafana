@@ -1,12 +1,16 @@
 package httpclientprovider
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -14,32 +18,26 @@ const (
 	httpContentLengthTagKey = "http.content_length"
 )
 
-func TracingMiddleware(logger log.Logger) httpclient.Middleware {
+func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(TracingMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			span, ctx := opentracing.StartSpanFromContext(req.Context(), "HTTP Outgoing Request")
-			defer span.Finish()
+			ctx, span := tracer.Start(req.Context(), "HTTP Outgoing Request", trace.WithSpanKind(trace.SpanKindClient))
+			defer span.End()
 
 			req = req.WithContext(ctx)
 			for k, v := range opts.Labels {
-				span.SetTag(k, v)
+				span.SetAttributes(k, v, attribute.Key(k).String(v))
 			}
 
-			if err := opentracing.GlobalTracer().Inject(
-				span.Context(),
-				opentracing.HTTPHeaders,
-				opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-				logger.Error("Failed to inject span context instance", "err", err)
-			}
-
+			tracer.Inject(ctx, req.Header, span)
 			res, err := next.RoundTrip(req)
 
-			ext.HTTPUrl.Set(span, req.URL.String())
-			ext.HTTPMethod.Set(span, req.Method)
-			ext.SpanKind.Set(span, ext.SpanKindRPCClientEnum)
+			span.SetAttributes("http.url", req.URL.String(), attribute.String("http.url", req.URL.String()))
+			span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
+			// ext.SpanKind.Set(span, ext.SpanKindRPCClientEnum)
 
 			if err != nil {
-				ext.Error.Set(span, true)
+				span.RecordError(err)
 				return res, err
 			}
 
@@ -47,12 +45,12 @@ func TracingMiddleware(logger log.Logger) httpclient.Middleware {
 				// we avoid measuring contentlength less than zero because it indicates
 				// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
 				if res.ContentLength > 0 {
-					span.SetTag(httpContentLengthTagKey, res.ContentLength)
+					span.SetAttributes(httpContentLengthTagKey, res.ContentLength, attribute.Key(httpContentLengthTagKey).Int64(res.ContentLength))
 				}
 
-				ext.HTTPStatusCode.Set(span, uint16(res.StatusCode))
+				span.SetAttributes("http.status_code", res.StatusCode, attribute.Int("http.status_code", res.StatusCode))
 				if res.StatusCode >= 400 {
-					ext.Error.Set(span, true)
+					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(res.StatusCode)))
 				}
 			}
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
@@ -191,6 +192,37 @@ func Test_stateToPostableAlert(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
+	appURL := &url.URL{
+		Scheme: "http:",
+		Host:   fmt.Sprintf("host-%d", rand.Int()),
+		Path:   fmt.Sprintf("path-%d", rand.Int()),
+	}
+
+	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
+	states := make([]*state.State, 0, len(evalStates))
+	for _, s := range evalStates {
+		states = append(states, randomState(s))
+	}
+
+	clk := clock.NewMock()
+	clk.Set(time.Now())
+
+	expected := make([]models.PostableAlert, 0, len(states))
+	for _, s := range states {
+		if !(s.State == eval.Alerting || s.State == eval.Error || s.State == eval.NoData) {
+			continue
+		}
+		alert := stateToPostableAlert(s, appURL)
+		alert.EndsAt = strfmt.DateTime(clk.Now())
+		expected = append(expected, *alert)
+	}
+
+	result := FromAlertsStateToStoppedAlert(states, appURL, clk)
+
+	require.Equal(t, expected, result.PostableAlerts)
 }
 
 func randomMapOfStrings() map[string]string {

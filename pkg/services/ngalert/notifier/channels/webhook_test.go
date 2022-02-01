@@ -6,9 +6,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -192,21 +190,16 @@ func TestWebhookNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
+			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 			decryptFn := secretsService.GetDecryptedValue
-			pn, err := NewWebHookNotifier(m, tmpl, decryptFn)
+			pn, err := NewWebHookNotifier(m, webhookSender, tmpl, decryptFn)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			var payload *models.SendWebhookSync
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				payload = webhook
-				return nil
-			})
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -224,11 +217,11 @@ func TestWebhookNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), payload.Body)
-			require.Equal(t, c.expUrl, payload.Url)
-			require.Equal(t, c.expUsername, payload.User)
-			require.Equal(t, c.expPassword, payload.Password)
-			require.Equal(t, c.expHttpMethod, payload.HttpMethod)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
+			require.Equal(t, c.expUrl, webhookSender.Webhook.Url)
+			require.Equal(t, c.expUsername, webhookSender.Webhook.User)
+			require.Equal(t, c.expPassword, webhookSender.Webhook.Password)
+			require.Equal(t, c.expHttpMethod, webhookSender.Webhook.HttpMethod)
 		})
 	}
 }

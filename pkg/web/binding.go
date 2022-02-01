@@ -26,14 +26,27 @@ type Validator interface {
 }
 
 func validate(obj interface{}) error {
+	// First check if obj is nil, because we cannot validate those.
+	if obj == nil {
+		return nil
+	}
+
+	// Second, check if obj has a nil interface value.
+	// This is to prevent panics when obj is an instance of uninitialised struct pointer / interface.
+	t := reflect.TypeOf(obj)
+	v := reflect.ValueOf(obj)
+
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		return nil
+	}
+
 	// If type has a Validate() method - use that
 	if validator, ok := obj.(Validator); ok {
 		return validator.Validate()
 	}
+
 	// Otherwise, use reflection to match `binding:"Required"` struct field tags.
 	// Resolve all pointers and interfaces, until we get a concrete type.
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
 	for v.Kind() == reflect.Interface || v.Kind() == reflect.Ptr {
 		t = t.Elem()
 		v = v.Elem()

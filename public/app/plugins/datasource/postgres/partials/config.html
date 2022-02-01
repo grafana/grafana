@@ -25,14 +25,15 @@
         on-reset="ctrl.onPasswordReset"
         on-change="ctrl.onPasswordChange"
         inputWidth="9"
+        aria-label="'Password'"
       />
     </div>
   </div>
 
   <div class="gf-form">
-    <label class="gf-form-label width-10">TLS/SSL Mode</label>
+    <label class="gf-form-label width-10" for="tls-mode-select">TLS/SSL Mode</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-      <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode"
+      <select id="tls-mode-select" class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode"
         ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']"
         ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.tlsModeMapping()"></select>
       <info-popover mode="right-absolute">
@@ -133,7 +134,7 @@
 
 <div class="gf-form-group">
   <div class="gf-form">
-    <span class="gf-form-label width-9">
+    <span class="gf-form-label width-9" id="version-label">
       Version
       <info-popover mode="right-normal" position="top center">
         This option controls what functions are available in the PostgreSQL query builder.
@@ -141,7 +142,7 @@
     </span>
     <span class="gf-form-select-wrapper">
       <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.postgresVersion"
-        ng-options="f.value as f.name for f in ctrl.postgresVersions"></select>
+        ng-options="f.value as f.name for f in ctrl.postgresVersions" aria-labelledby="version-label"></select>
     </span>
   </div>
   <div class="gf-form">

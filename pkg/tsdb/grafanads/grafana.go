@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -32,8 +30,6 @@ const DatasourceID = -1
 // Grafana DS command.
 const DatasourceUID = "grafana"
 
-const pluginID = "grafana"
-
 // Make sure Service implements required interfaces.
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin at runtime.
@@ -43,11 +39,11 @@ var (
 	logger                            = log.New("tsdb.grafana")
 )
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) *Service {
-	return newService(cfg, pluginStore)
+func ProvideService(cfg *setting.Cfg) *Service {
+	return newService(cfg)
 }
 
-func newService(cfg *setting.Cfg, pluginStore plugins.Store) *Service {
+func newService(cfg *setting.Cfg) *Service {
 	s := &Service{
 		staticRootPath: cfg.StaticRootPath,
 		roots: []string{
@@ -59,14 +55,6 @@ func newService(cfg *setting.Cfg, pluginStore plugins.Store) *Service {
 		},
 	}
 
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, coreplugin.New(backend.ServeOpts{
-		CheckHealthHandler: s,
-		QueryDataHandler:   s,
-	}), resolver); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-		return nil
-	}
 	return s
 }
 

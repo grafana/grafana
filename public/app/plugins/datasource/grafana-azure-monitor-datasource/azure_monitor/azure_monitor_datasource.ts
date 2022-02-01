@@ -194,18 +194,35 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
-    return this.getResource(
-      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=${this.listByResourceGroupApiVersion}`
-    ).then((result: any) => {
-      if (!startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
-        return ResponseParser.parseResourceNames(result, metricDefinition);
+  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, skipToken?: string) {
+    let url =
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?` +
+      `$filter=resourceType eq '${metricDefinition}'&` +
+      `api-version=${this.listByResourceGroupApiVersion}`;
+    if (skipToken) {
+      url += `&$skiptoken=${skipToken}`;
+    }
+    return this.getResource(url).then(async (result: any) => {
+      let list: Array<{ text: string; value: string }> = [];
+      if (startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
+        list = ResponseParser.parseResourceNames(result, 'Microsoft.Storage/storageAccounts');
+        for (let i = 0; i < list.length; i++) {
+          list[i].text += '/default';
+          list[i].value += '/default';
+        }
+      } else {
+        list = ResponseParser.parseResourceNames(result, metricDefinition);
       }
 
-      const list = ResponseParser.parseResourceNames(result, 'Microsoft.Storage/storageAccounts');
-      for (let i = 0; i < list.length; i++) {
-        list[i].text += '/default';
-        list[i].value += '/default';
+      if (result.nextLink) {
+        // If there is a nextLink, we should request more pages
+        const nextURL = new URL(result.nextLink);
+        const nextToken = nextURL.searchParams.get('$skiptoken');
+        if (!nextToken) {
+          throw Error('unable to request the next page of resources');
+        }
+        const nextPage = await this.getResourceNames(subscriptionId, resourceGroup, metricDefinition, nextToken);
+        list = list.concat(nextPage);
       }
 
       return list;

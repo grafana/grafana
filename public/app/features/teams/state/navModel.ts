@@ -1,9 +1,11 @@
 import { Team, TeamPermissionLevel } from 'app/types';
 import { featureEnabled } from '@grafana/runtime';
 import { NavModelItem, NavModel } from '@grafana/data';
+import config from 'app/core/config';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 
 export function buildNavModel(team: Team): NavModelItem {
-  const navModel = {
+  const navModel: NavModelItem = {
     img: team.avatarUrl,
     id: 'team-' + team.id,
     subTitle: 'Manage members and settings',
@@ -28,14 +30,18 @@ export function buildNavModel(team: Team): NavModelItem {
     ],
   };
 
+  const teamGroupSync = {
+    active: false,
+    icon: 'sync',
+    id: `team-groupsync-${team.id}`,
+    text: 'External group sync',
+    url: `org/teams/edit/${team.id}/groupsync`,
+  };
+
   if (featureEnabled('teamsync')) {
-    navModel.children.push({
-      active: false,
-      icon: 'sync',
-      id: `team-groupsync-${team.id}`,
-      text: 'External group sync',
-      url: `org/teams/edit/${team.id}/groupsync`,
-    });
+    navModel.children!.push(teamGroupSync);
+  } else if (config.featureHighlights.enabled) {
+    navModel.children!.push({ ...teamGroupSync, tabSuffix: ProBadge });
   }
 
   return navModel;

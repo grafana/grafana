@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -38,10 +38,11 @@ type OpsgenieNotifier struct {
 	SendTagsAs       string
 	tmpl             *template.Template
 	log              log.Logger
+	ns               notifications.WebhookSender
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*OpsgenieNotifier, error) {
+func NewOpsgenieNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*OpsgenieNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -81,6 +82,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template,
 		SendTagsAs:       sendTagsAs,
 		tmpl:             t,
 		log:              log.New("alerting.notifier." + model.Name),
+		ns:               ns,
 	}, nil
 }
 
@@ -120,7 +122,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := on.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 

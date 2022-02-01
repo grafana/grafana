@@ -145,6 +145,39 @@ describe('Format value', () => {
     expect(result.text).toEqual('10.0');
   });
 
+  it('should return icon value if there are matching value mappings', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '11': { text: 'elva', icon: 'windmill.svg' } } },
+    ];
+
+    const display = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = display('11');
+
+    expect(result.icon).toEqual('windmill.svg');
+  });
+
+  it('should return icon value if there are matching value mappings in a range', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.RangeToText, options: { from: 1, to: 9, result: { text: '1-9', icon: 'drone.svg' } } },
+    ];
+
+    const display = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = display('8');
+
+    expect(result.icon).toEqual('drone.svg');
+  });
+
+  it('should return undefined icon value if there are no matching value mappings in a range', () => {
+    const valueMappings: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '11': { text: 'elva', icon: 'windmill.svg' } } },
+    ];
+
+    const display = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = display('10');
+
+    expect(result.icon).toEqual(undefined);
+  });
+
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
       { type: MappingType.ValueToText, options: { '11': { text: 'elva' } } },

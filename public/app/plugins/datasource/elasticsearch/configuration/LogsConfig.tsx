@@ -1,6 +1,5 @@
 import React from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
+import { Input, InlineField, FieldSet } from '@grafana/ui';
 import { ElasticsearchOptions } from '../types';
 
 type Props = {
@@ -19,28 +18,25 @@ export const LogsConfig = (props: Props) => {
   };
 
   return (
-    <>
-      <h3 className="page-heading">Logs</h3>
+    <FieldSet label="Logs">
+      <InlineField label="Message field name" labelWidth={22}>
+        <Input
+          id="es_logs-config_logMessageField"
+          value={value.logMessageField}
+          onChange={changeHandler('logMessageField')}
+          placeholder="_source"
+          width={24}
+        />
+      </InlineField>
 
-      <div className="gf-form-group">
-        <div className="gf-form max-width-30">
-          <FormField
-            labelWidth={11}
-            label="Message field name"
-            value={value.logMessageField}
-            onChange={changeHandler('logMessageField')}
-            placeholder="_source"
-          />
-        </div>
-        <div className="gf-form max-width-30">
-          <FormField
-            labelWidth={11}
-            label="Level field name"
-            value={value.logLevelField}
-            onChange={changeHandler('logLevelField')}
-          />
-        </div>
-      </div>
-    </>
+      <InlineField label="Level field name" labelWidth={22}>
+        <Input
+          id="es_logs-config_logLevelField"
+          value={value.logLevelField}
+          onChange={changeHandler('logLevelField')}
+          width={24}
+        />
+      </InlineField>
+    </FieldSet>
   );
 };
