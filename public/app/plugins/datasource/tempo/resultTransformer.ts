@@ -495,7 +495,7 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
     parseJsonFields(frame);
   } catch (error) {
     console.error(error);
-    return { error: { message: 'JSON is not valid OpenTelemetry format: ' + error }, data: [] };
+    return { error: { message: 'Unable to parse trace response: ' + error }, data: [] };
   }
 
   let data = [...response.data];

@@ -129,7 +129,7 @@ describe('transformFromOTLP()', () => {
     );
 
     expect(res.data[0]).toBeFalsy();
-    expect(res?.error?.message).toContain('JSON is not valid OpenTelemetry format');
+    expect(res.error?.message).toBeTruthy();
     // if it does have resources, no error will be thrown
     expect({
       ...res.data[0],
@@ -175,9 +175,13 @@ describe('transformTrace()', () => {
   test('if passed bad data, will surface an error', () => {
     const response = transformTrace({ data: [badFrame] }, false);
     expect(response.data[0]).toBeFalsy();
-    expect(response?.error?.message).toContain('JSON is not valid OpenTelemetry format');
+    expect(response.error?.message).toBeTruthy();
+  });
 
+  test('if passed good data, will parse successfully', () => {
     const response2 = transformTrace({ data: [goodFrame] }, false);
-    expect(response2.data[0]).not.toBeFalsy();
+    expect(response2.data[0]).toBeTruthy();
+    expect(response2.data[0]).toMatchObject(goodFrame);
+    expect(response2.error).toBeFalsy();
   });
 });
