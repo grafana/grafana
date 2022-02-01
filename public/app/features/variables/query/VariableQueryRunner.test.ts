@@ -5,13 +5,13 @@ import { delay } from 'rxjs/operators';
 import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
 import { queryBuilder } from '../shared/testing/builders';
 import { QueryRunner, QueryRunners } from './queryRunners';
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { QueryVariableModel } from '../types';
 import { updateVariableOptions } from './reducer';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
 import { getPreloadedState } from '../state/helpers';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 type DoneCallback = {
   (...args: any[]): any;
@@ -20,7 +20,7 @@ type DoneCallback = {
 
 function expectOnResults(args: {
   runner: VariableQueryRunner;
-  identifier: DashboardVariableIdentifier;
+  identifier: KeyedVariableIdentifier;
   done: DoneCallback;
   expect: (results: UpdateOptionsResults[]) => void;
 }) {
@@ -50,7 +50,7 @@ function getTestContext(variable?: QueryVariableModel) {
   const key = '0123456789';
   variable = variable ?? queryBuilder().withId('query').withStateKey(key).withName('query').build();
   const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
-  const identifier = toDashboardVariableIdentifier(variable);
+  const identifier = toKeyedVariableIdentifier(variable);
   const searchFilter = undefined;
   const getTemplatedRegex = jest.fn().mockReturnValue('getTemplatedRegex result');
   const dispatch = jest.fn().mockResolvedValue({});

@@ -7,7 +7,7 @@ import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableHide } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -23,10 +23,10 @@ import { VariableHideSelect } from './VariableHideSelect';
 import { getDashboardVariable, getDashboardVariablesState } from '../state/selectors';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { StoreState, ThunkDispatch } from '../../../types';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
-  editor: getDashboardVariablesState(ownProps.identifier.dashboardUid, state).editor,
+  editor: getDashboardVariablesState(ownProps.identifier.stateKey, state).editor,
   variable: getDashboardVariable(ownProps.identifier, state, false), // we could be renaming a variable and we don't want this to throw
 });
 
@@ -36,22 +36,19 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
       { variableEditorMount, variableEditorUnMount, changeVariableName, onEditorUpdate, updateOptions },
       dispatch
     ),
-    changeVariableProp: (identifier: DashboardVariableIdentifier, propName: string, propValue: any) =>
+    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: any) =>
       dispatch(
-        toKeyedAction(
-          identifier.dashboardUid,
-          changeVariableProp(toVariablePayload(identifier, { propName, propValue }))
-        )
+        toKeyedAction(identifier.stateKey, changeVariableProp(toVariablePayload(identifier, { propName, propValue })))
       ),
-    changeVariableType: (identifier: DashboardVariableIdentifier, newType: VariableType) =>
-      dispatch(toKeyedAction(identifier.dashboardUid, changeVariableType(toVariablePayload(identifier, { newType })))),
+    changeVariableType: (identifier: KeyedVariableIdentifier, newType: VariableType) =>
+      dispatch(toKeyedAction(identifier.stateKey, changeVariableType(toVariablePayload(identifier, { newType })))),
   };
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export interface OwnProps {
-  identifier: DashboardVariableIdentifier;
+  identifier: KeyedVariableIdentifier;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -101,7 +98,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   onPropChanged = async ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
     this.props.changeVariableProp(this.props.identifier, propName, propValue);
     if (updateOptions) {
-      await this.props.updateOptions(toDashboardVariableIdentifier(this.props.variable));
+      await this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
     }
   };
 

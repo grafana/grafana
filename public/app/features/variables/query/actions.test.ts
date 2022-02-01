@@ -40,7 +40,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -94,7 +94,7 @@ describe('query actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenNoActionsWhereDispatched();
     });
@@ -113,7 +113,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -138,7 +138,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -164,7 +164,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -191,10 +191,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(
-          updateQueryVariableOptions(toDashboardVariableIdentifier(variable), 'search'),
-          true
-        );
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), 'search'), true);
 
       const update = { results: optionsMetrics, templatedRegex: '' };
 
@@ -220,7 +217,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 5;
@@ -263,7 +260,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
@@ -289,7 +286,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
@@ -314,7 +311,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
@@ -333,7 +330,7 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: undefined }))
@@ -357,7 +354,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), { uid: 'datasource' }),
+          changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), { uid: 'datasource' }),
           true
         );
 
@@ -387,7 +384,7 @@ describe('query actions', () => {
           )
           .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
           .whenAsyncActionIsDispatched(
-            changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), { uid: 'datasource' }),
+            changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), { uid: 'datasource' }),
             true
           );
 
@@ -416,7 +413,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), { uid: 'datasource' }),
+          changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), { uid: 'datasource' }),
           true
         );
 
@@ -444,7 +441,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          changeQueryVariableQuery(toKeyedVariableIdentifier(variable), query, definition),
           true
         );
 
@@ -483,7 +480,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          changeQueryVariableQuery(toKeyedVariableIdentifier(variable), query, definition),
           true
         );
 
@@ -521,7 +518,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          changeQueryVariableQuery(toKeyedVariableIdentifier(variable), query, definition),
           true
         );
 
@@ -556,7 +553,7 @@ describe('query actions', () => {
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
         .whenAsyncActionIsDispatched(
-          changeQueryVariableQuery(toDashboardVariableIdentifier(variable), query, definition),
+          changeQueryVariableQuery(toKeyedVariableIdentifier(variable), query, definition),
           true
         );
 

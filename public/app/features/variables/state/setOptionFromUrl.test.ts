@@ -7,7 +7,7 @@ import { addVariable, setCurrentVariableValue } from './sharedReducer';
 import { setOptionFromUrl } from './actions';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { toKeyedAction } from './keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createCustomVariableAdapter()]);
 
@@ -42,7 +42,7 @@ describe('when setOptionFromUrl is dispatched with a custom variable (no refresh
       .whenActionIsDispatched(
         toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
-      .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
+      .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
@@ -78,7 +78,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       .whenActionIsDispatched(
         toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
-      .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
+      .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
@@ -112,7 +112,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       .whenActionIsDispatched(
         toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
-      .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
+      .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
@@ -143,7 +143,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       .whenActionIsDispatched(
         toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
-      .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
+      .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
@@ -176,7 +176,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       .whenActionIsDispatched(
         toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
-      .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
+      .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(

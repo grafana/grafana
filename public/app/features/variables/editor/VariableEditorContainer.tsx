@@ -3,7 +3,7 @@ import { bindActionCreators } from 'redux';
 import { Icon, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { connect, ConnectedProps } from 'react-redux';
@@ -15,7 +15,7 @@ import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { uid } = ownProps.dashboard;
@@ -31,24 +31,19 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
     ...bindActionCreators({ switchToNewMode, switchToEditMode, switchToListMode }, dispatch),
-    changeVariableOrder: (identifier: DashboardVariableIdentifier, fromIndex: number, toIndex: number) =>
+    changeVariableOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) =>
       dispatch(
-        toKeyedAction(
-          identifier.dashboardUid,
-          changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex }))
-        )
+        toKeyedAction(identifier.stateKey, changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex })))
       ),
-    duplicateVariable: (identifier: DashboardVariableIdentifier) =>
+    duplicateVariable: (identifier: KeyedVariableIdentifier) =>
       dispatch(
         toKeyedAction(
-          identifier.dashboardUid,
+          identifier.stateKey,
           duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }))
         )
       ),
-    removeVariable: (identifier: DashboardVariableIdentifier) => {
-      dispatch(
-        toKeyedAction(identifier.dashboardUid, removeVariable(toVariablePayload(identifier, { reIndex: true })))
-      );
+    removeVariable: (identifier: KeyedVariableIdentifier) => {
+      dispatch(toKeyedAction(identifier.stateKey, removeVariable(toVariablePayload(identifier, { reIndex: true }))));
     },
   };
 };
@@ -71,7 +66,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
     this.props.switchToListMode(this.props.dashboard.uid);
   };
 
-  onEditVariable = (identifier: DashboardVariableIdentifier) => {
+  onEditVariable = (identifier: KeyedVariableIdentifier) => {
     this.props.switchToEditMode(identifier);
   };
 
@@ -79,15 +74,15 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
     this.props.switchToNewMode(this.props.dashboard.uid);
   };
 
-  onChangeVariableOrder = (identifier: DashboardVariableIdentifier, fromIndex: number, toIndex: number) => {
+  onChangeVariableOrder = (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => {
     this.props.changeVariableOrder(identifier, fromIndex, toIndex);
   };
 
-  onDuplicateVariable = (identifier: DashboardVariableIdentifier) => {
+  onDuplicateVariable = (identifier: KeyedVariableIdentifier) => {
     this.props.duplicateVariable(identifier);
   };
 
-  onRemoveVariable = (identifier: DashboardVariableIdentifier) => {
+  onRemoveVariable = (identifier: KeyedVariableIdentifier) => {
     this.props.removeVariable(identifier);
   };
 
@@ -142,7 +137,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
         {!variableToEdit && this.props.variables.length > 0 && (
           <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
         )}
-        {variableToEdit && <VariableEditorEditor identifier={toDashboardVariableIdentifier(variableToEdit)} />}
+        {variableToEdit && <VariableEditorEditor identifier={toKeyedVariableIdentifier(variableToEdit)} />}
       </div>
     );
   }

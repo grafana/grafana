@@ -6,7 +6,7 @@ import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
 import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
 import { updateVariableOptions } from './reducer';
-import { getTemplatedRegex, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 
@@ -128,7 +128,7 @@ export function validateVariableSelection(args: {
         // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
-          return from(dispatch(validateVariableSelectionState(toDashboardVariableIdentifier(variable))));
+          return from(dispatch(validateVariableSelectionState(toKeyedVariableIdentifier(variable))));
         }
 
         return of<void>();

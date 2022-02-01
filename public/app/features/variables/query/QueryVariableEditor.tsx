@@ -21,7 +21,7 @@ import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 import { getDashboardVariablesState } from '../state/selectors';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { stateKey } = ownProps.variable;
@@ -64,13 +64,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   async componentDidMount() {
-    await this.props.initQueryVariableEditor(toDashboardVariableIdentifier(this.props.variable));
+    await this.props.initQueryVariableEditor(toKeyedVariableIdentifier(this.props.variable));
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.variable.datasource !== this.props.variable.datasource) {
       this.props.changeQueryVariableDataSource(
-        toDashboardVariableIdentifier(this.props.variable),
+        toKeyedVariableIdentifier(this.props.variable),
         this.props.variable.datasource
       );
     }
@@ -85,7 +85,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onLegacyQueryChange = async (query: any, definition: string) => {
     if (this.props.variable.query !== query) {
-      this.props.changeQueryVariableQuery(toDashboardVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toKeyedVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
@@ -97,7 +97,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         definition = query.query;
       }
 
-      this.props.changeQueryVariableQuery(toDashboardVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toKeyedVariableIdentifier(this.props.variable), query, definition);
     }
   };
 

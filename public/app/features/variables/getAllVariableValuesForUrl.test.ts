@@ -4,7 +4,7 @@ import { createQueryVariableAdapter } from './query/adapter';
 import { getVariablesUrlParams } from './getAllVariableValuesForUrl';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 
-const uid = 'uid';
+const key = 'key';
 
 describe('getAllVariableValuesForUrl', () => {
   beforeAll(() => {
@@ -14,11 +14,11 @@ describe('getAllVariableValuesForUrl', () => {
   describe('with multi value', () => {
     beforeEach(() => {
       setTemplateSrv(
-        initTemplateSrv(uid, [
+        initTemplateSrv(key, [
           {
             type: 'query',
             name: 'test',
-            dashboardUid: uid,
+            stateKey: key,
             current: { value: ['val1', 'val2'] },
             getValueForUrl: function () {
               return this.current.value;
@@ -37,10 +37,10 @@ describe('getAllVariableValuesForUrl', () => {
   describe('skip url sync', () => {
     beforeEach(() => {
       setTemplateSrv(
-        initTemplateSrv(uid, [
+        initTemplateSrv(key, [
           {
             name: 'test',
-            dashboardUid: uid,
+            stateKey: key,
             skipUrlSync: true,
             current: { value: 'value' },
             getValueForUrl: function () {
@@ -60,11 +60,11 @@ describe('getAllVariableValuesForUrl', () => {
   describe('with multi value with skip url sync', () => {
     beforeEach(() => {
       setTemplateSrv(
-        initTemplateSrv(uid, [
+        initTemplateSrv(key, [
           {
             type: 'query',
             name: 'test',
-            dashboardUid: uid,
+            stateKey: key,
             skipUrlSync: true,
             current: { value: ['val1', 'val2'] },
             getValueForUrl: function () {
@@ -84,7 +84,7 @@ describe('getAllVariableValuesForUrl', () => {
   describe('fillVariableValuesForUrl with multi value and scopedVars', () => {
     beforeEach(() => {
       setTemplateSrv(
-        initTemplateSrv(uid, [{ type: 'query', name: 'test', dashboardUid: uid, current: { value: ['val1', 'val2'] } }])
+        initTemplateSrv(key, [{ type: 'query', name: 'test', stateKey: key, current: { value: ['val1', 'val2'] } }])
       );
     });
 
@@ -99,7 +99,7 @@ describe('getAllVariableValuesForUrl', () => {
   describe('fillVariableValuesForUrl with multi value, scopedVars and skip url sync', () => {
     beforeEach(() => {
       setTemplateSrv(
-        initTemplateSrv(uid, [{ type: 'query', name: 'test', dashboardUid: uid, current: { value: ['val1', 'val2'] } }])
+        initTemplateSrv(key, [{ type: 'query', name: 'test', stateKey: key, current: { value: ['val1', 'val2'] } }])
       );
     });
 

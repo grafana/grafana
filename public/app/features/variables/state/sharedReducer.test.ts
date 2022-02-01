@@ -17,7 +17,7 @@ import {
   variableStateNotStarted,
 } from './sharedReducer';
 import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
-import { DashboardVariableIdentifier, initialVariablesState, VariablesState } from './types';
+import { KeyedVariableIdentifier, initialVariablesState, VariablesState } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
@@ -563,7 +563,7 @@ describe('sharedReducer', () => {
       const constantAdapter = createConstantVariableAdapter();
       const { initialState: constantAdapterState } = getVariableTestContext(constantAdapter);
       const newType = 'constant' as VariableType;
-      const identifier: DashboardVariableIdentifier = { id: '0', type: 'query', dashboardUid: 'key' };
+      const identifier: KeyedVariableIdentifier = { id: '0', type: 'query', stateKey: 'key' };
       const payload = toVariablePayload(identifier, { newType });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(queryAdapterState))

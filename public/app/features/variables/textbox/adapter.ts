@@ -8,7 +8,7 @@ import { VariableAdapter } from '../adapters';
 import { TextBoxVariablePicker } from './TextBoxVariablePicker';
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
 import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableModel> => {
   return {
@@ -23,13 +23,13 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toDashboardVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setTextBoxVariableOptionsFromUrl(toDashboardVariableIdentifier(variable), urlValue));
+      await dispatch(setTextBoxVariableOptionsFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateTextBoxVariableOptions(toDashboardVariableIdentifier(variable)));
+      await dispatch(updateTextBoxVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable, saveCurrentAsDefault) => {
       const { index, id, state, global, originalQuery, stateKey, ...rest } = cloneDeep(variable);

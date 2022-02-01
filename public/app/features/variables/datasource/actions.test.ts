@@ -16,7 +16,7 @@ import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];
@@ -58,7 +58,7 @@ describe('data source actions', () => {
             )
           )
           .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toDashboardVariableIdentifier(datasource), dependencies),
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
             true
           );
 
@@ -115,7 +115,7 @@ describe('data source actions', () => {
             )
           )
           .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toDashboardVariableIdentifier(datasource), dependencies),
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
             true
           );
 

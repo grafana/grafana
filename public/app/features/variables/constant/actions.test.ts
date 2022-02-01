@@ -7,7 +7,7 @@ import { ConstantVariableModel, initialVariableModelState, VariableOption } from
 import { createConstantOptionsFromQuery } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);
@@ -41,7 +41,7 @@ describe('constant actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', createConstantOptionsFromQuery(toVariablePayload(variable))),

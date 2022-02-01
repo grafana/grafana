@@ -7,7 +7,7 @@ import { constantVariableReducer, initialConstantVariableModelState } from './re
 import { ConstantVariableEditor } from './ConstantVariableEditor';
 import { updateConstantVariableOptions } from './actions';
 import { optionPickerFactory } from '../pickers';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
@@ -22,13 +22,13 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toDashboardVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(toDashboardVariableIdentifier(variable), urlValue));
+      await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateConstantVariableOptions(toDashboardVariableIdentifier(variable)));
+      await dispatch(updateConstantVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, current, options, stateKey, ...rest } = cloneDeep(variable);

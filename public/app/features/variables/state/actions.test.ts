@@ -51,7 +51,7 @@ import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
 import { toKeyedAction } from './keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -164,8 +164,7 @@ describe('shared actions', () => {
       const variableQueryRunner: any = {
         cancelRequest: jest.fn(),
         queueRequest: jest.fn(),
-        getResponse: () =>
-          toAsyncOfResult({ state: LoadingState.Done, identifier: toDashboardVariableIdentifier(query) }),
+        getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: toKeyedVariableIdentifier(query) }),
         destroy: jest.fn(),
       };
       setVariableQueryRunner(variableQueryRunner);
@@ -342,7 +341,7 @@ describe('shared actions', () => {
             toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
           )
           .whenAsyncActionIsDispatched(
-            validateVariableSelectionState(toDashboardVariableIdentifier(custom), defaultValue),
+            validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
             true
           );
 
@@ -404,7 +403,7 @@ describe('shared actions', () => {
               toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
             )
             .whenAsyncActionIsDispatched(
-              validateVariableSelectionState(toDashboardVariableIdentifier(custom), defaultValue),
+              validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
               true
             );
 
@@ -445,7 +444,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           )
-          .whenActionIsDispatched(changeVariableName(toDashboardVariableIdentifier(constant), constant.name), true)
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), constant.name), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -468,7 +467,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           )
-          .whenActionIsDispatched(changeVariableName(toDashboardVariableIdentifier(constant), 'constant1'), true)
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -514,7 +513,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           )
-          .whenActionIsDispatched(changeVariableName(toDashboardVariableIdentifier(constant), 'constant1'), true)
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -560,7 +559,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           )
-          .whenActionIsDispatched(changeVariableName(toDashboardVariableIdentifier(constant), '__newName'), true)
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), '__newName'), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -587,7 +586,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           )
-          .whenActionIsDispatched(changeVariableName(toDashboardVariableIdentifier(constant), '#constant!'), true)
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), '#constant!'), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -614,7 +613,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           )
-          .whenActionIsDispatched(changeVariableName(toDashboardVariableIdentifier(constant), 'textbox'), true)
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), 'textbox'), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -644,7 +643,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
           )
-          .whenActionIsDispatched(changeVariableMultiValue(toDashboardVariableIdentifier(custom), false), true)
+          .whenActionIsDispatched(changeVariableMultiValue(toKeyedVariableIdentifier(custom), false), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
@@ -687,7 +686,7 @@ describe('shared actions', () => {
           .whenActionIsDispatched(
             toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
           )
-          .whenActionIsDispatched(changeVariableMultiValue(toDashboardVariableIdentifier(custom), true), true)
+          .whenActionIsDispatched(changeVariableMultiValue(toKeyedVariableIdentifier(custom), true), true)
           .thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,

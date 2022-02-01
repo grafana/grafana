@@ -2,7 +2,7 @@ import { chain } from 'lodash';
 import { getTemplateSrv } from '@grafana/runtime';
 import { stringToJsRegex } from '@grafana/data';
 
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createDataSourceOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
@@ -18,10 +18,10 @@ export interface DataSourceVariableActionDependencies {
 }
 
 export const updateDataSourceVariableOptions = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const { dashboardUid: uid } = identifier;
+  const { stateKey: uid } = identifier;
   const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
   const variableInState = getDashboardVariable<DataSourceVariableModel>(identifier, getState());
   let regex;

@@ -59,7 +59,7 @@ describe('QueryVariableEditor', () => {
       expect(props.initQueryVariableEditor).toHaveBeenCalledWith({
         type: 'query',
         id: NEW_VARIABLE_ID,
-        dashboardUid: 'key',
+        stateKey: 'key',
       });
     });
   });
@@ -67,7 +67,7 @@ describe('QueryVariableEditor', () => {
   describe('when the user changes', () => {
     it.each`
       fieldName  | propName                      | expectedArgs
-      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID, dashboardUid: 'key' }, 't', 't']}
+      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID, stateKey: 'key' }, 't', 't']}
       ${'regex'} | ${'onPropChange'}             | ${[{ propName: 'regex', propValue: 't', updateOptions: true }]}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',

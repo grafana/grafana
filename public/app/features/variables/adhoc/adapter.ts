@@ -8,7 +8,7 @@ import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer'
 import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
 import * as urlParser from './urlParser';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 const noop = async () => {};
 
@@ -25,7 +25,7 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     setValue: noop,
     setValueFromUrl: async (variable, urlValue) => {
       const filters = urlParser.toFilters(urlValue);
-      await dispatch(setFiltersFromUrl(toDashboardVariableIdentifier(variable), filters));
+      await dispatch(setFiltersFromUrl(toKeyedVariableIdentifier(variable), filters));
     },
     updateOptions: noop,
     getSaveModel: (variable) => {

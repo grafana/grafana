@@ -15,7 +15,7 @@ import {
   updateSearchQuery,
 } from './reducer';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
-import { DashboardVariableIdentifier } from '../../state/types';
+import { KeyedVariableIdentifier } from '../../state/types';
 import { containsSearchFilter, getCurrentText, toVariablePayload } from '../../utils';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 
@@ -47,13 +47,13 @@ export const navigateOptions = (uid: string, key: NavigationKey, clearOthers: bo
 };
 
 export const filterOrSearchOptions = (
-  passedIdentifier: DashboardVariableIdentifier,
+  passedIdentifier: KeyedVariableIdentifier,
   searchQuery = ''
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { dashboardUid: uid } = passedIdentifier;
+    const { stateKey: uid } = passedIdentifier;
     const { id, queryValue } = getDashboardVariablesState(uid, getState()).optionsPicker;
-    const identifier: DashboardVariableIdentifier = { id, dashboardUid: uid, type: 'query' };
+    const identifier: KeyedVariableIdentifier = { id, stateKey: uid, type: 'query' };
     const { query, options } = getDashboardVariable<VariableWithOptions>(identifier, getState());
     dispatch(toKeyedAction(uid, updateSearchQuery(searchQuery)));
 
@@ -77,7 +77,7 @@ const setVariable = async (updated: VariableWithMultiSupport) => {
 export const commitChangesToVariable = (uid: string, callback?: (updated: any) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getDashboardVariablesState(uid, getState()).optionsPicker;
-    const identifier: DashboardVariableIdentifier = { id: picker.id, dashboardUid: uid, type: 'query' };
+    const identifier: KeyedVariableIdentifier = { id: picker.id, stateKey: uid, type: 'query' };
     const existing = getDashboardVariable<VariableWithMultiSupport>(identifier, getState());
     const currentPayload = { option: mapToCurrent(picker) };
     const searchQueryPayload = { propName: 'queryValue', propValue: picker.queryValue };
@@ -100,10 +100,10 @@ export const commitChangesToVariable = (uid: string, callback?: (updated: any) =
 };
 
 export const openOptions = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   callback?: (updated: any) => void
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const { id, dashboardUid: uid } = identifier;
+  const { id, stateKey: uid } = identifier;
   const picker = getDashboardVariablesState(uid, getState()).optionsPicker;
 
   if (picker.id && picker.id !== id) {
@@ -130,7 +130,7 @@ const searchForOptions = async (
 ) => {
   try {
     const { id } = getDashboardVariablesState(uid, getState()).optionsPicker;
-    const identifier: DashboardVariableIdentifier = { id, dashboardUid: uid, type: 'query' };
+    const identifier: KeyedVariableIdentifier = { id, stateKey: uid, type: 'query' };
     const existing = getDashboardVariable<VariableWithOptions>(identifier, getState());
 
     const adapter = variableAdapters.get(existing.type);

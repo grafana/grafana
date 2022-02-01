@@ -13,12 +13,12 @@ import { VariableOptions } from '../shared/VariableOptions';
 import { isMulti } from '../../guard';
 import { NavigationKey, VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
-import { DashboardVariableIdentifier } from '../../state/types';
+import { KeyedVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { VariableLink } from '../shared/VariableLink';
 import { getDashboardVariablesState } from '../../state/selectors';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier } from '../../utils';
+import { toKeyedVariableIdentifier } from '../../utils';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
   VariablePickerProps<Model>
@@ -26,17 +26,17 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   const mapDispatchToProps = (dispatch: ThunkDispatch) => {
     return {
       ...bindActionCreators({ openOptions, commitChangesToVariable, navigateOptions }, dispatch),
-      filterOrSearchOptions: (identifier: DashboardVariableIdentifier, filter = '') => {
+      filterOrSearchOptions: (identifier: KeyedVariableIdentifier, filter = '') => {
         dispatch(filterOrSearchOptions(identifier, filter));
       },
-      toggleAllOptions: (identifier: DashboardVariableIdentifier) =>
-        dispatch(toKeyedAction(identifier.dashboardUid, toggleAllOptions())),
+      toggleAllOptions: (identifier: KeyedVariableIdentifier) =>
+        dispatch(toKeyedAction(identifier.stateKey, toggleAllOptions())),
       toggleOption: (
-        identifier: DashboardVariableIdentifier,
+        identifier: KeyedVariableIdentifier,
         option: VariableOption,
         clearOthers: boolean,
         forceSelect: boolean
-      ) => dispatch(toKeyedAction(identifier.dashboardUid, toggleOption({ option, clearOthers, forceSelect }))),
+      ) => dispatch(toKeyedAction(identifier.stateKey, toggleOption({ option, clearOthers, forceSelect }))),
     };
   };
 
@@ -62,7 +62,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
   class OptionsPickerUnconnected extends PureComponent<Props> {
     onShowOptions = () =>
-      this.props.openOptions(toDashboardVariableIdentifier(this.props.variable), this.props.onVariableChange);
+      this.props.openOptions(toKeyedVariableIdentifier(this.props.variable), this.props.onVariableChange);
     onHideOptions = () => {
       if (!this.props.variable.stateKey) {
         console.error('Variable has no stateKey');
@@ -81,20 +81,20 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     onToggleSingleValueVariable = (option: VariableOption, clearOthers: boolean) => {
-      this.props.toggleOption(toDashboardVariableIdentifier(this.props.variable), option, clearOthers, false);
+      this.props.toggleOption(toKeyedVariableIdentifier(this.props.variable), option, clearOthers, false);
       this.onHideOptions();
     };
 
     onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
-      this.props.toggleOption(toDashboardVariableIdentifier(this.props.variable), option, clearOthers, false);
+      this.props.toggleOption(toKeyedVariableIdentifier(this.props.variable), option, clearOthers, false);
     };
 
     onToggleAllOptions = () => {
-      this.props.toggleAllOptions(toDashboardVariableIdentifier(this.props.variable));
+      this.props.toggleAllOptions(toKeyedVariableIdentifier(this.props.variable));
     };
 
     onFilterOrSearchOptions = (filter: string) => {
-      this.props.filterOrSearchOptions(toDashboardVariableIdentifier(this.props.variable), filter);
+      this.props.filterOrSearchOptions(toKeyedVariableIdentifier(this.props.variable), filter);
     };
 
     onNavigate = (key: NavigationKey, clearOthers: boolean) => {
@@ -133,7 +133,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     }
 
     onCancel = () => {
-      getVariableQueryRunner().cancelRequest(toDashboardVariableIdentifier(this.props.variable));
+      getVariableQueryRunner().cancelRequest(toKeyedVariableIdentifier(this.props.variable));
     };
 
     renderOptions(picker: OptionsPickerState) {

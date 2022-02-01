@@ -12,12 +12,12 @@ import { StoreState } from 'app/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { getDashboardVariablesState } from '../state/selectors';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { stateKey } = ownProps.variable;
   if (!stateKey) {
-    console.error('AdHocVariableEditor: variable has no dashboardUid');
+    console.error('AdHocVariableEditor: variable has no stateKey');
     return {
       editor: initialVariableEditorState as VariableEditorState<AdHocVariableEditorState>,
     };
@@ -51,7 +51,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   }
 
   onDatasourceChanged = (option: SelectableValue<DataSourceRef>) => {
-    this.props.changeVariableDatasource(toDashboardVariableIdentifier(this.props.variable), option.value);
+    this.props.changeVariableDatasource(toKeyedVariableIdentifier(this.props.variable), option.value);
   };
 
   render() {

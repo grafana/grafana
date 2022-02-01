@@ -20,7 +20,7 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { afterEach, beforeEach } from '../../../../test/lib/common';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
@@ -38,7 +38,7 @@ describe('interval actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
-        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toDashboardVariableIdentifier(interval)), true);
+        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toKeyedVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
@@ -90,7 +90,7 @@ describe('interval actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(interval)), true);
+        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
@@ -135,7 +135,7 @@ describe('interval actions', () => {
           .whenActionIsDispatched(
             toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
-          .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(interval)), true);
+          .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(interval)), true);
 
         tester.thenNoActionsWhereDispatched();
       });
@@ -171,7 +171,7 @@ describe('interval actions', () => {
           .whenActionIsDispatched(
             toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
-          .whenAsyncActionIsDispatched(updateAutoValue(toDashboardVariableIdentifier(interval), dependencies), true);
+          .whenAsyncActionIsDispatched(updateAutoValue(toKeyedVariableIdentifier(interval), dependencies), true);
 
         expect(dependencies.calculateInterval).toHaveBeenCalledTimes(0);
         expect(dependencies.getTimeSrv().timeRange).toHaveBeenCalledTimes(0);
@@ -216,7 +216,7 @@ describe('interval actions', () => {
           .whenActionIsDispatched(
             toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
-          .whenAsyncActionIsDispatched(updateAutoValue(toDashboardVariableIdentifier(interval), dependencies), true);
+          .whenAsyncActionIsDispatched(updateAutoValue(toKeyedVariableIdentifier(interval), dependencies), true);
 
         expect(dependencies.calculateInterval).toHaveBeenCalledTimes(1);
         expect(dependencies.calculateInterval).toHaveBeenCalledWith(

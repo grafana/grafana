@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 
 import { VariableModel } from '../types';
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { VariableEditorListRow } from './VariableEditorListRow';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -14,10 +14,10 @@ export interface Props {
   usages: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
   onAdd: () => void;
-  onEdit: (identifier: DashboardVariableIdentifier) => void;
-  onChangeOrder: (identifier: DashboardVariableIdentifier, fromIndex: number, toIndex: number) => void;
-  onDuplicate: (identifier: DashboardVariableIdentifier) => void;
-  onDelete: (identifier: DashboardVariableIdentifier) => void;
+  onEdit: (identifier: KeyedVariableIdentifier) => void;
+  onChangeOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) => void;
+  onDuplicate: (identifier: KeyedVariableIdentifier) => void;
+  onDelete: (identifier: KeyedVariableIdentifier) => void;
 }
 
 export function VariableEditorList({

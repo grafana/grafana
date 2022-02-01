@@ -20,7 +20,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
 
   const updateVariable = useCallback(() => {
     if (!variable.stateKey) {
-      console.error('Cannot update variable without dashboardUid');
+      console.error('Cannot update variable without stateKey');
       return;
     }
 

@@ -1,6 +1,6 @@
 import { rangeUtil } from '@grafana/data';
 
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
@@ -11,10 +11,10 @@ import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toVariablePayload } from '../utils';
 
-export const updateIntervalVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => async (
+export const updateIntervalVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => async (
   dispatch
 ) => {
-  const { dashboardUid: uid } = identifier;
+  const { stateKey: uid } = identifier;
   await dispatch(toKeyedAction(uid, createIntervalOptions(toVariablePayload(identifier))));
   await dispatch(updateAutoValue(identifier));
   await dispatch(validateVariableSelectionState(identifier));
@@ -27,7 +27,7 @@ export interface UpdateAutoValueDependencies {
 }
 
 export const updateAutoValue = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   dependencies: UpdateAutoValueDependencies = {
     calculateInterval: rangeUtil.calculateInterval,
     getTimeSrv: getTimeSrv,

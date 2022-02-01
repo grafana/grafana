@@ -6,7 +6,7 @@ import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { TransactionStatus, VariableModel } from '../types';
 import { toKeyedAction } from './keyedVariablesReducer';
 import { getPreloadedState } from './helpers';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 interface Args {
   query?: any;
@@ -44,7 +44,7 @@ function getTestContext({
   };
   const get = jest.fn().mockResolvedValue(datasource);
   const getDatasourceSrv = jest.fn().mockReturnValue({ get });
-  const identifier = toDashboardVariableIdentifier(variable);
+  const identifier = toKeyedVariableIdentifier(variable);
 
   return { key, state, get, getDatasourceSrv, identifier };
 }

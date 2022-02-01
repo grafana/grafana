@@ -14,7 +14,7 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import { AddVariable, DashboardVariableIdentifier } from '../state/types';
+import { AddVariable, KeyedVariableIdentifier } from '../state/types';
 import { cloneDeep } from 'lodash';
 import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable } from '../state/sharedReducer';
@@ -23,32 +23,32 @@ import { VariableModel } from '../types';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-export const variableEditorMount = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
+export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    const { dashboardUid: uid } = identifier;
+    const { stateKey: uid } = identifier;
     dispatch(toKeyedAction(uid, variableEditorMounted({ name: getDashboardVariable(identifier).name })));
   };
 };
 
-export const variableEditorUnMount = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
+export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { dashboardUid: uid } = identifier;
+    const { stateKey: uid } = identifier;
     dispatch(toKeyedAction(uid, variableEditorUnMounted(toVariablePayload(identifier))));
   };
 };
 
-export const onEditorUpdate = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
+export const onEditorUpdate = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     await dispatch(updateOptions(identifier));
-    dispatch(switchToListMode(identifier.dashboardUid));
+    dispatch(switchToListMode(identifier.stateKey));
   };
 };
 
-export const changeVariableName = (identifier: DashboardVariableIdentifier, newName: string): ThunkResult<void> => {
+export const changeVariableName = (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { id, dashboardUid: uid } = identifier;
+    const { id, stateKey: uid } = identifier;
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -74,11 +74,11 @@ export const changeVariableName = (identifier: DashboardVariableIdentifier, newN
   };
 };
 
-export const completeChangeVariableName = (
-  identifier: DashboardVariableIdentifier,
-  newName: string
-): ThunkResult<void> => (dispatch, getState) => {
-  const { dashboardUid: uid } = identifier;
+export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> => (
+  dispatch,
+  getState
+) => {
+  const { stateKey: uid } = identifier;
   const originalVariable = getDashboardVariable(identifier, getState());
   if (originalVariable.name === newName) {
     dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
@@ -87,7 +87,7 @@ export const completeChangeVariableName = (
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
   const global = originalVariable.global;
   const index = originalVariable.index;
-  const renamedIdentifier = toDashboardVariableIdentifier(model);
+  const renamedIdentifier = toKeyedVariableIdentifier(model);
 
   dispatch(toKeyedAction(uid, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
   dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
@@ -95,31 +95,31 @@ export const completeChangeVariableName = (
   dispatch(toKeyedAction(uid, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
 };
 
-export const switchToNewMode = (uid: string, type: VariableType = 'query'): ThunkResult<void> => (
+export const switchToNewMode = (key: string, type: VariableType = 'query'): ThunkResult<void> => (
   dispatch,
   getState
 ) => {
-  const id = getNextAvailableId(type, getDashboardVariables(uid, getState()));
-  const identifier = { type, id, dashboardUid: uid };
+  const id = getNextAvailableId(type, getDashboardVariables(key, getState()));
+  const identifier = { type, id, stateKey: key };
   const global = false;
-  const index = getNewDashboardVariableIndex(uid, getState());
+  const index = getNewDashboardVariableIndex(key, getState());
   const model = cloneDeep(variableAdapters.get(type).initialState);
   model.id = id;
   model.name = id;
-  model.dashboardUid = uid;
+  model.stateKey = key;
   dispatch(
     toKeyedAction(
-      uid,
+      key,
       addVariable(
         toVariablePayload<AddVariable>(identifier, { global, model, index })
       )
     )
   );
-  dispatch(toKeyedAction(uid, setIdInEditor({ id: identifier.id })));
+  dispatch(toKeyedAction(key, setIdInEditor({ id: identifier.id })));
 };
 
-export const switchToEditMode = (identifier: DashboardVariableIdentifier): ThunkResult<void> => (dispatch) => {
-  const { dashboardUid: uid } = identifier;
+export const switchToEditMode = (identifier: KeyedVariableIdentifier): ThunkResult<void> => (dispatch) => {
+  const { stateKey: uid } = identifier;
   dispatch(toKeyedAction(uid, setIdInEditor({ id: identifier.id })));
 };
 

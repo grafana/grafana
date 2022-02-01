@@ -7,7 +7,7 @@ import { initialIntervalVariableModelState, intervalVariableReducer } from './re
 import { IntervalVariableEditor } from './IntervalVariableEditor';
 import { updateAutoValue, updateIntervalVariableOptions } from './actions';
 import { optionPickerFactory } from '../pickers';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariableModel> => {
   return {
@@ -22,15 +22,15 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(updateAutoValue(toDashboardVariableIdentifier(variable)));
-      await dispatch(setOptionAsCurrent(toDashboardVariableIdentifier(variable), option, emitChanges));
+      await dispatch(updateAutoValue(toKeyedVariableIdentifier(variable)));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(updateAutoValue(toDashboardVariableIdentifier(variable)));
-      await dispatch(setOptionFromUrl(toDashboardVariableIdentifier(variable), urlValue));
+      await dispatch(updateAutoValue(toKeyedVariableIdentifier(variable)));
+      await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateIntervalVariableOptions(toDashboardVariableIdentifier(variable)));
+      await dispatch(updateIntervalVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
       const { index, id, state, global, stateKey, ...rest } = cloneDeep(variable);

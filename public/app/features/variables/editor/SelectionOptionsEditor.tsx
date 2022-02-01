@@ -4,15 +4,15 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableWithMultiSupport } from '../types';
 import { VariableEditorProps } from './types';
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableSectionHeader } from './VariableSectionHeader';
 import { VariableSwitchField } from './VariableSwitchField';
 import { VariableTextField } from './VariableTextField';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {
-  onMultiChanged: (identifier: DashboardVariableIdentifier, value: boolean) => void;
+  onMultiChanged: (identifier: KeyedVariableIdentifier, value: boolean) => void;
 }
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = ({
@@ -22,7 +22,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
 }) => {
   const onMultiChanged = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      onMultiChangedProps(toDashboardVariableIdentifier(variable), event.target.checked);
+      onMultiChangedProps(toKeyedVariableIdentifier(variable), event.target.checked);
     },
     [onMultiChangedProps, variable]
   );

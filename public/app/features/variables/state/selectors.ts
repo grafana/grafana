@@ -4,14 +4,14 @@ import { getState } from '../../../store/store';
 import memoizeOne from 'memoize-one';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { toStateKey } from '../utils';
-import { DashboardVariableIdentifier, VariablesState } from './types';
+import { KeyedVariableIdentifier, VariablesState } from './types';
 
 export const getDashboardVariable = <T extends VariableModel = VariableModel>(
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   state: StoreState = getState(),
   throwWhenMissing = true
 ): T => {
-  const { id, dashboardUid: uid } = identifier;
+  const { id, stateKey: uid } = identifier;
   const variablesState = getDashboardVariablesState(uid, state);
   if (!variablesState.variables[id]) {
     if (throwWhenMissing) {
@@ -104,7 +104,7 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   if (!lastKey) {
     return;
   }
-  return getDashboardVariable({ id: name, dashboardUid: lastKey, type: 'query' }, state, false);
+  return getDashboardVariable({ id: name, stateKey: lastKey, type: 'query' }, state, false);
 }
 
 export function getInstanceState<Model extends VariableModel = VariableModel>(state: VariablesState, id: string) {

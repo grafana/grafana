@@ -24,7 +24,7 @@ import { createQueryVariableAdapter } from '../../query/adapter';
 import { locationService } from '@grafana/runtime';
 import { queryBuilder } from '../../shared/testing/builders';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../../utils';
 
 const datasource = {
   metricFindQuery: jest.fn(() => Promise.resolve([])),
@@ -240,7 +240,7 @@ describe('options picker actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', showOptions(variable)))
-        .whenAsyncActionIsDispatched(filterOrSearchOptions(toDashboardVariableIdentifier(variable), filter), true);
+        .whenAsyncActionIsDispatched(filterOrSearchOptions(toKeyedVariableIdentifier(variable), filter), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', updateSearchQuery(filter)),
@@ -269,7 +269,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(openOptions(toDashboardVariableIdentifier(variable), undefined));
+        .whenAsyncActionIsDispatched(openOptions(toKeyedVariableIdentifier(variable), undefined));
 
       tester.thenDispatchedActionsShouldEqual(toKeyedAction('key', showOptions(variable)));
     });
@@ -295,7 +295,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(openOptions(toDashboardVariableIdentifier(variable), undefined));
+        .whenAsyncActionIsDispatched(openOptions(toKeyedVariableIdentifier(variable), undefined));
 
       tester.thenDispatchedActionsShouldEqual(toKeyedAction('key', showOptions(variable)));
     });
@@ -331,7 +331,7 @@ describe('options picker actions', () => {
 
       const tester = await reduxTester<RootReducerType>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenAsyncActionIsDispatched(openOptions(toDashboardVariableIdentifier(variable), undefined));
+        .whenAsyncActionIsDispatched(openOptions(toKeyedVariableIdentifier(variable), undefined));
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', setCurrentVariableValue({ type: 'query', id: 'query1', data: { option: undefined } })),
@@ -424,7 +424,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(toKeyedAction('key', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('key', clearOthers))
-        .whenActionIsDispatched(filterOrSearchOptions(toDashboardVariableIdentifier(variable), 'C'))
+        .whenActionIsDispatched(filterOrSearchOptions(toKeyedVariableIdentifier(variable), 'C'))
         .whenAsyncActionIsDispatched(commitChangesToVariable('key'), true);
 
       const option = {
@@ -483,7 +483,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(toKeyedAction('key', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('key', clearOthers), true)
-        .whenActionIsDispatched(filterOrSearchOptions(toDashboardVariableIdentifier(variable), 'B'))
+        .whenActionIsDispatched(filterOrSearchOptions(toKeyedVariableIdentifier(variable), 'B'))
         .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('key', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('key', clearOthers));

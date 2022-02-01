@@ -7,7 +7,7 @@ import { CustomVariableModel, initialVariableModelState, VariableOption } from '
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { createCustomOptionsFromQuery } from './reducer';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('custom actions', () => {
   variableAdapters.setInit(() => [createCustomVariableAdapter()]);
@@ -54,7 +54,7 @@ describe('custom actions', () => {
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', createCustomOptionsFromQuery(toVariablePayload(variable))),

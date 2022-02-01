@@ -14,7 +14,7 @@ import { variablesInitTransaction } from './transactionReducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { toKeyedAction } from './keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -120,7 +120,7 @@ describe('processVariable', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams), true);
+          .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateCompleted(toVariablePayload(custom)))
@@ -136,7 +136,7 @@ describe('processVariable', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams), true);
+          .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(
@@ -168,10 +168,7 @@ describe('processVariable', () => {
             .givenRootReducer(getTemplatingRootReducer())
             .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
             .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-            .whenAsyncActionIsDispatched(
-              processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
-              true
-            );
+            .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
             toKeyedAction(key, variableStateCompleted(toVariablePayload(queryNoDepends)))
@@ -190,10 +187,7 @@ describe('processVariable', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(
-            processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
-            true
-          );
+          .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
@@ -239,10 +233,7 @@ describe('processVariable', () => {
             .givenRootReducer(getTemplatingRootReducer())
             .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
             .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-            .whenAsyncActionIsDispatched(
-              processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
-              true
-            );
+            .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
             toKeyedAction(
@@ -270,10 +261,7 @@ describe('processVariable', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(
-            processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
-            true
-          );
+          .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
@@ -331,10 +319,10 @@ describe('processVariable', () => {
             .givenRootReducer(getTemplatingRootReducer())
             .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
             .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-            .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+            .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
           const tester = await customProcessed.whenAsyncActionIsDispatched(
-            processVariable(toDashboardVariableIdentifier(queryDependsOnCustom), queryParams),
+            processVariable(toKeyedVariableIdentifier(queryDependsOnCustom), queryParams),
             true
           );
 
@@ -355,10 +343,10 @@ describe('processVariable', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+          .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
         const tester = await customProcessed.whenAsyncActionIsDispatched(
-          processVariable(toDashboardVariableIdentifier(queryDependsOnCustom), queryParams),
+          processVariable(toKeyedVariableIdentifier(queryDependsOnCustom), queryParams),
           true
         );
 
@@ -406,10 +394,10 @@ describe('processVariable', () => {
             .givenRootReducer(getTemplatingRootReducer())
             .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
             .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-            .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+            .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
           const tester = await customProcessed.whenAsyncActionIsDispatched(
-            processVariable(toDashboardVariableIdentifier(queryDependsOnCustom), queryParams),
+            processVariable(toKeyedVariableIdentifier(queryDependsOnCustom), queryParams),
             true
           );
 
@@ -439,10 +427,10 @@ describe('processVariable', () => {
           .givenRootReducer(getTemplatingRootReducer())
           .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
-          .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
+          .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
         const tester = await customProcessed.whenAsyncActionIsDispatched(
-          processVariable(toDashboardVariableIdentifier(queryDependsOnCustom), queryParams),
+          processVariable(toKeyedVariableIdentifier(queryDependsOnCustom), queryParams),
           true
         );
 

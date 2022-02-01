@@ -13,21 +13,21 @@ import {
   VariableEditorState,
 } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
-import { hasOngoingTransaction, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 
 export const updateQueryVariableOptions = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const { dashboardUid: uid } = identifier;
+      const { stateKey: uid } = identifier;
       if (!hasOngoingTransaction(uid, getState())) {
         // we might have cancelled a batch so then variable state is removed
         return;
@@ -51,7 +51,7 @@ export const updateQueryVariableOptions = (
       });
     } catch (err) {
       const error = toDataQueryError(err);
-      const { dashboardUid: uid } = identifier;
+      const { stateKey: uid } = identifier;
       if (getDashboardVariablesState(uid, getState()).editor.id === identifier.id) {
         dispatch(toKeyedAction(uid, addVariableEditorError({ errorProp: 'update', errorText: error.message })));
       }
@@ -61,21 +61,21 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export const initQueryVariableEditor = (identifier: DashboardVariableIdentifier): ThunkResult<void> => async (
+export const initQueryVariableEditor = (identifier: KeyedVariableIdentifier): ThunkResult<void> => async (
   dispatch,
   getState
 ) => {
   const variable = getDashboardVariable<QueryVariableModel>(identifier, getState());
-  await dispatch(changeQueryVariableDataSource(toDashboardVariableIdentifier(variable), variable.datasource));
+  await dispatch(changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), variable.datasource));
 };
 
 export const changeQueryVariableDataSource = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   name: DataSourceRef | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const { dashboardUid: uid } = identifier;
+      const { stateKey: uid } = identifier;
       const state = getDashboardVariablesState(uid, getState()).editor as VariableEditorState<QueryVariableEditorState>;
       const previousDatasource = state.extended?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
@@ -100,11 +100,11 @@ export const changeQueryVariableDataSource = (
 };
 
 export const changeQueryVariableQuery = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   query: any,
   definition?: string
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const { dashboardUid: uid } = identifier;
+  const { stateKey: uid } = identifier;
   const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
   if (hasSelfReferencingQuery(variableInState.name, query)) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;

@@ -9,7 +9,7 @@ import { addVariable, changeVariableProp, setCurrentVariableValue } from '../sta
 import { textboxBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -47,7 +47,7 @@ describe('textbox actions', () => {
         .whenActionIsDispatched(
           toKeyedAction(key, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toDashboardVariableIdentifier(variable)), true);
+        .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, createTextBoxOptions(toVariablePayload(variable))),
@@ -75,7 +75,7 @@ describe('textbox actions', () => {
           toKeyedAction(key, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(
-          setTextBoxVariableOptionsFromUrl(toDashboardVariableIdentifier(variable), urlValue),
+          setTextBoxVariableOptionsFromUrl(toKeyedVariableIdentifier(variable), urlValue),
           true
         );
 

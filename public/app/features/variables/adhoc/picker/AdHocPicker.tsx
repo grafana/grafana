@@ -4,7 +4,7 @@ import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/
 import { VariablePickerProps } from '../../pickers/types';
 import { addFilter, changeFilter, removeFilter } from '../actions';
 import { AdHocFilter } from './AdHocFilter';
-import { toDashboardVariableIdentifier } from '../../utils';
+import { toKeyedVariableIdentifier } from '../../utils';
 
 const mapDispatchToProps = {
   addFilter,
@@ -24,15 +24,15 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
  */
 export class AdHocPickerUnconnected extends PureComponent<Props> {
   addFilter = (filter: AdHocVariableFilter) => {
-    this.props.addFilter(toDashboardVariableIdentifier(this.props.variable), filter);
+    this.props.addFilter(toKeyedVariableIdentifier(this.props.variable), filter);
   };
 
   removeFilter = (index: number) => {
-    this.props.removeFilter(toDashboardVariableIdentifier(this.props.variable), index);
+    this.props.removeFilter(toKeyedVariableIdentifier(this.props.variable), index);
   };
 
   changeFilter = (index: number, filter: AdHocVariableFilter) => {
-    this.props.changeFilter(toDashboardVariableIdentifier(this.props.variable), {
+    this.props.changeFilter(toKeyedVariableIdentifier(this.props.variable), {
       index,
       filter,
     });

@@ -8,19 +8,19 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { hasOptions, isAdHoc, isQuery } from '../guard';
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 import { VariableModel } from '../types';
-import { toDashboardVariableIdentifier } from '../utils';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export interface VariableEditorListRowProps {
   index: number;
   variable: VariableModel;
   usageTree: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
-  onEdit: (identifier: DashboardVariableIdentifier) => void;
-  onDuplicate: (identifier: DashboardVariableIdentifier) => void;
-  onDelete: (identifier: DashboardVariableIdentifier) => void;
+  onEdit: (identifier: KeyedVariableIdentifier) => void;
+  onDuplicate: (identifier: KeyedVariableIdentifier) => void;
+  onDelete: (identifier: KeyedVariableIdentifier) => void;
 }
 
 export function VariableEditorListRow({
@@ -37,7 +37,7 @@ export function VariableEditorListRow({
   const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
   const passed = usages > 0 || isAdHoc(variable);
-  const identifier = toDashboardVariableIdentifier(variable);
+  const identifier = toKeyedVariableIdentifier(variable);
 
   return (
     <Draggable draggableId={JSON.stringify(identifier)} index={index}>

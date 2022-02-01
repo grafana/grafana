@@ -10,7 +10,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import { StoreState } from '../../types';
 import { getState } from '../../store/store';
 import { getDashboardVariablesState } from './state/selectors';
-import { DashboardVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
+import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -270,12 +270,12 @@ export const toVariableIdentifier = (variable: VariableModel): VariableIdentifie
   return { type: variable.type, id: variable.id };
 };
 
-export const toDashboardVariableIdentifier = (variable: VariableModel): DashboardVariableIdentifier => {
+export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariableIdentifier => {
   if (!variable.stateKey) {
     throw new Error(`stateKey not found for variable with id:${variable.id}`);
   }
 
-  return { type: variable.type, id: variable.id, dashboardUid: variable.stateKey };
+  return { type: variable.type, id: variable.id, stateKey: variable.stateKey };
 };
 
 export function toVariablePayload<T extends any = undefined>(

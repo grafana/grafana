@@ -21,7 +21,7 @@ import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const getList = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
@@ -213,7 +213,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(changeFilter(toDashboardVariableIdentifier(variable), update), true);
+        .whenAsyncActionIsDispatched(changeFilter(toKeyedVariableIdentifier(variable), update), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|!=|value'] };
       const expectedUpdate = { index: 0, filter: updated };
@@ -252,7 +252,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(addFilter(toDashboardVariableIdentifier(variable), adding), true);
+        .whenAsyncActionIsDispatched(addFilter(toKeyedVariableIdentifier(variable), adding), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|!=|value'] };
       const expectedFilter = { key: 'key', value: 'value', operator: '!=', condition: '' };
@@ -285,7 +285,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(addFilter(toDashboardVariableIdentifier(variable), adding), true);
+        .whenAsyncActionIsDispatched(addFilter(toKeyedVariableIdentifier(variable), adding), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
 
@@ -308,7 +308,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(removeFilter(toDashboardVariableIdentifier(variable), 0), true);
+        .whenAsyncActionIsDispatched(removeFilter(toKeyedVariableIdentifier(variable), 0), true);
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
@@ -338,7 +338,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(removeFilter(toDashboardVariableIdentifier(variable), 0), true);
+        .whenAsyncActionIsDispatched(removeFilter(toKeyedVariableIdentifier(variable), 0), true);
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
@@ -373,7 +373,7 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenAsyncActionIsDispatched(setFiltersFromUrl(toDashboardVariableIdentifier(variable), fromUrl), true);
+        .whenAsyncActionIsDispatched(setFiltersFromUrl(toKeyedVariableIdentifier(variable), fromUrl), true);
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|=|value'] };
       const expectedFilters = [
@@ -440,10 +440,7 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(
-          changeVariableDatasource(toDashboardVariableIdentifier(variable), datasource),
-          true
-        );
+        .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })),
@@ -483,10 +480,7 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
-        .whenAsyncActionIsDispatched(
-          changeVariableDatasource(toDashboardVariableIdentifier(variable), datasource),
-          true
-        );
+        .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })),
@@ -500,7 +494,7 @@ describe('adhoc actions', () => {
 });
 
 function createAddVariableAction(variable: VariableModel, index = 0) {
-  const identifier = toDashboardVariableIdentifier(variable);
+  const identifier = toKeyedVariableIdentifier(variable);
   const global = false;
   const data = { global, index, model: { ...variable, index: -1, global } };
   return toKeyedAction(variable.stateKey!, addVariable(toVariablePayload(identifier, data)));

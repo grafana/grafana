@@ -11,17 +11,13 @@ export interface VariableIdentifier {
   id: string;
 }
 
-export interface DashboardVariableIdentifier {
+export interface KeyedVariableIdentifier {
   type: VariableType;
   id: string;
-  dashboardUid: string;
+  stateKey: string;
 }
 
 export interface VariablePayload<T extends any = undefined> extends VariableIdentifier {
-  data: T;
-}
-
-export interface DashboardVariablePayload<T extends any = undefined> extends DashboardVariableIdentifier {
   data: T;
 }
 

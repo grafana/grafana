@@ -11,7 +11,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { DashboardVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { getDashboardVariable, getLastKey } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { StoreState, ThunkDispatch } from '../../../types';
@@ -24,14 +24,14 @@ import { runRequest } from '../../query/state/runRequest';
 import { toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
 
 interface UpdateOptionsArgs {
-  identifier: DashboardVariableIdentifier;
+  identifier: KeyedVariableIdentifier;
   datasource: DataSourceApi;
   searchFilter?: string;
 }
 
 export interface UpdateOptionsResults {
   state: LoadingState;
-  identifier: DashboardVariableIdentifier;
+  identifier: KeyedVariableIdentifier;
   error?: any;
   cancelled?: boolean;
 }
@@ -49,7 +49,7 @@ interface VariableQueryRunnerArgs {
 export class VariableQueryRunner {
   private readonly updateOptionsRequests: Subject<UpdateOptionsArgs>;
   private readonly updateOptionsResults: Subject<UpdateOptionsResults>;
-  private readonly cancelRequests: Subject<{ identifier: DashboardVariableIdentifier }>;
+  private readonly cancelRequests: Subject<{ identifier: KeyedVariableIdentifier }>;
   private readonly subscription: Unsubscribable;
 
   constructor(
@@ -65,7 +65,7 @@ export class VariableQueryRunner {
   ) {
     this.updateOptionsRequests = new Subject<UpdateOptionsArgs>();
     this.updateOptionsResults = new Subject<UpdateOptionsResults>();
-    this.cancelRequests = new Subject<{ identifier: DashboardVariableIdentifier }>();
+    this.cancelRequests = new Subject<{ identifier: KeyedVariableIdentifier }>();
     this.onNewRequest = this.onNewRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
   }
@@ -74,11 +74,11 @@ export class VariableQueryRunner {
     this.updateOptionsRequests.next(args);
   }
 
-  getResponse(identifier: DashboardVariableIdentifier): Observable<UpdateOptionsResults> {
+  getResponse(identifier: KeyedVariableIdentifier): Observable<UpdateOptionsResults> {
     return this.updateOptionsResults.asObservable().pipe(filter((result) => result.identifier === identifier));
   }
 
-  cancelRequest(identifier: DashboardVariableIdentifier): void {
+  cancelRequest(identifier: KeyedVariableIdentifier): void {
     this.cancelRequests.next({ identifier });
   }
 

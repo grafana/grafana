@@ -9,7 +9,7 @@ import {
   getLastKey,
   getNewDashboardVariableIndex,
 } from '../state/selectors';
-import { AddVariable, DashboardVariableIdentifier } from '../state/types';
+import { AddVariable, KeyedVariableIdentifier } from '../state/types';
 import {
   AdHocVariabelFilterUpdate,
   filterAdded,
@@ -23,7 +23,7 @@ import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 import { DataSourceRef, getDataSourceRef } from '@grafana/data';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 export interface AdHocTableOptions {
   datasource: DataSourceRef;
@@ -51,54 +51,54 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     if (index === -1) {
       const { value, key, operator } = options;
       const filter = { value, key, operator, condition: '' };
-      return await dispatch(addFilter(toDashboardVariableIdentifier(variable), filter));
+      return await dispatch(addFilter(toKeyedVariableIdentifier(variable), filter));
     }
 
     const filter = { ...variable.filters[index], operator: options.operator };
-    return await dispatch(changeFilter(toDashboardVariableIdentifier(variable), { index, filter }));
+    return await dispatch(changeFilter(toKeyedVariableIdentifier(variable), { index, filter }));
   };
 };
 
 export const changeFilter = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   update: AdHocVariabelFilterUpdate
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.dashboardUid, filterUpdated(toVariablePayload(variable, update))));
-    await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
+    dispatch(toKeyedAction(identifier.stateKey, filterUpdated(toVariablePayload(variable, update))));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
 
-export const removeFilter = (identifier: DashboardVariableIdentifier, index: number): ThunkResult<void> => {
+export const removeFilter = (identifier: KeyedVariableIdentifier, index: number): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.dashboardUid, filterRemoved(toVariablePayload(variable, index))));
-    await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
+    dispatch(toKeyedAction(identifier.stateKey, filterRemoved(toVariablePayload(variable, index))));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
 
-export const addFilter = (identifier: DashboardVariableIdentifier, filter: AdHocVariableFilter): ThunkResult<void> => {
+export const addFilter = (identifier: KeyedVariableIdentifier, filter: AdHocVariableFilter): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.dashboardUid, filterAdded(toVariablePayload(variable, filter))));
-    await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
+    dispatch(toKeyedAction(identifier.stateKey, filterAdded(toVariablePayload(variable, filter))));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
 
 export const setFiltersFromUrl = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   filters: AdHocVariableFilter[]
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.dashboardUid, filtersRestored(toVariablePayload(variable, filters))));
-    await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
+    dispatch(toKeyedAction(identifier.stateKey, filtersRestored(toVariablePayload(variable, filters))));
+    await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
 
 export const changeVariableDatasource = (
-  identifier: DashboardVariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   datasource?: DataSourceRef
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -108,7 +108,7 @@ export const changeVariableDatasource = (
 
     dispatch(
       toKeyedAction(
-        identifier.dashboardUid,
+        identifier.stateKey,
         changeVariableEditorExtended({
           propName: 'infoText',
           propValue: loadingText,
@@ -117,7 +117,7 @@ export const changeVariableDatasource = (
     );
     dispatch(
       toKeyedAction(
-        identifier.dashboardUid,
+        identifier.stateKey,
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
       )
     );
@@ -127,7 +127,7 @@ export const changeVariableDatasource = (
     if (!ds || !ds.getTagKeys) {
       dispatch(
         toKeyedAction(
-          identifier.dashboardUid,
+          identifier.stateKey,
           changeVariableEditorExtended({
             propName: 'infoText',
             propValue: 'This data source does not support ad hoc filters yet.',
@@ -180,7 +180,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
     const global = false;
     const index = getNewDashboardVariableIndex(key, getState());
-    const identifier: DashboardVariableIdentifier = { type: 'adhoc', id: model.id, dashboardUid: key };
+    const identifier: KeyedVariableIdentifier = { type: 'adhoc', id: model.id, stateKey: key };
 
     dispatch(
       toKeyedAction(
