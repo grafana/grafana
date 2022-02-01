@@ -27,12 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -49,8 +50,10 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
@@ -106,7 +109,8 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
-	updatechecker.ProvideService,
+	updatechecker.ProvideGrafanaService,
+	updatechecker.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	manager.ProvideService,
@@ -131,6 +135,8 @@ var wireBasicSet = wire.NewSet(
 	cleanup.ProvideService,
 	shorturls.ProvideService,
 	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
+	queryhistory.ProvideService,
+	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
 	quota.ProvideService,
 	remotecache.ProvideService,
 	loginservice.ProvideService,
@@ -145,7 +151,6 @@ var wireBasicSet = wire.NewSet(
 	contexthandler.ProvideService,
 	jwt.ProvideService,
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
-	plugindashboards.ProvideService,
 	schemaloader.ProvideService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
@@ -188,6 +193,9 @@ var wireBasicSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	resourceservices.ProvideResourceServices,
+	dashboardimportservice.ProvideService,
+	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
+	plugindashboards.ProvideService,
 )
 
 var wireSet = wire.NewSet(

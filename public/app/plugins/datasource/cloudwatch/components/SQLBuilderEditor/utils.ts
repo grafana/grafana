@@ -146,6 +146,8 @@ export function setSql(query: CloudWatchMetricsQuery, sql: SQLExpression): Cloud
 
 export function setNamespace(query: CloudWatchMetricsQuery, namespace: string | undefined): CloudWatchMetricsQuery {
   const sql = query.sql ?? {};
+  //updating `namespace` props for CloudWatchMetricsQuery
+  query.namespace = namespace ? namespace : '';
 
   if (namespace === undefined) {
     return setSql(query, {
@@ -228,6 +230,13 @@ export function setMetricName(query: CloudWatchMetricsQuery, metricName: string)
       parameters: [param],
     },
   });
+}
+
+export function removeMetricName(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
+  const queryWithNoParams = { ...query };
+  delete queryWithNoParams.sql?.select?.parameters;
+
+  return queryWithNoParams;
 }
 
 export function setAggregation(query: CloudWatchMetricsQuery, aggregation: string): CloudWatchMetricsQuery {

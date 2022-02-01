@@ -16,7 +16,8 @@ type Evaluator interface {
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(context.Context, ...ScopeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
-	String() string
+	fmt.Stringer
+	fmt.GoStringer
 }
 
 var _ Evaluator = new(permissionEvaluator)
@@ -109,6 +110,10 @@ func (p permissionEvaluator) MutateScopes(ctx context.Context, modifiers ...Scop
 }
 
 func (p permissionEvaluator) String() string {
+	return p.Action
+}
+
+func (p permissionEvaluator) GoString() string {
 	return fmt.Sprintf("action:%s scopes:%s", p.Action, strings.Join(p.Scopes, ", "))
 }
 
@@ -149,6 +154,16 @@ func (a allEvaluator) String() string {
 	for _, e := range a.allOf {
 		permissions = append(permissions, e.String())
 	}
+
+	return fmt.Sprintf("all of %s", strings.Join(permissions, ", "))
+}
+
+func (a allEvaluator) GoString() string {
+	permissions := make([]string, 0, len(a.allOf))
+	for _, e := range a.allOf {
+		permissions = append(permissions, e.GoString())
+	}
+
 	return fmt.Sprintf("all(%s)", strings.Join(permissions, " "))
 }
 
@@ -193,5 +208,15 @@ func (a anyEvaluator) String() string {
 	for _, e := range a.anyOf {
 		permissions = append(permissions, e.String())
 	}
+
+	return fmt.Sprintf("any of %s", strings.Join(permissions, ", "))
+}
+
+func (a anyEvaluator) GoString() string {
+	permissions := make([]string, 0, len(a.anyOf))
+	for _, e := range a.anyOf {
+		permissions = append(permissions, e.String())
+	}
+
 	return fmt.Sprintf("any(%s)", strings.Join(permissions, " "))
 }

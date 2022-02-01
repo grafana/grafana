@@ -82,10 +82,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "accesscontrol",
-			Description:     "Support robust access control",
-			State:           FeatureStateBeta,
-			RequiresLicense: true,
+			Name:        "accesscontrol",
+			Description: "Support robust access control",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "prometheus_azure_auth",
