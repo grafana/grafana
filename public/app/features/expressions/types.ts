@@ -34,13 +34,13 @@ export const reducerMode: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
     label: 'Strict',
-    description: 'Use all values of the series to calculate the result',
+    description: 'Result can be NaN if series contains non-numeric data',
   },
-  { value: ReducerMode.DropNonNumbers, label: 'Drop Non Numbers', description: 'Ignore NaN, +/-Inf and null' },
+  { value: ReducerMode.DropNonNumbers, label: 'Drop Non-numeric Values', description: 'Drop NaN, +/-Inf and null from input series before reducing' },
   {
     value: ReducerMode.ReplaceNonNumbers,
-    label: 'Replace Non Numbers',
-    description: 'Replace NaN, +/-Inf and null with a constant value',
+    label: 'Replace Non-numeric Values',
+    description: 'Replace NaN, +/-Inf and null with a constant value before reducing',
   },
 ];
 
