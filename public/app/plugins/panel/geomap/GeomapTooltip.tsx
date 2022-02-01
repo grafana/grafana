@@ -8,6 +8,7 @@ import { GeomapHoverPayload } from './event';
 interface Props {
   ttip?: GeomapHoverPayload;
   clicked?: number;
+  onClose: () => void;
 }
 
 export const GeomapTooltip = (props: Props) => {
@@ -15,13 +16,17 @@ export const GeomapTooltip = (props: Props) => {
 
   const [selectedTTip, setSelectedTTip] = useState<GeomapHoverPayload>();
 
+  console.log('GeomapTooltip', props);
+
   useEffect(() => {
     setSelectedTTip(ttip ? { ...ttip } : undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.clicked]);
 
   const onClose = () => {
+    console.log('closing geomap tooltip');
     setSelectedTTip(undefined);
+    props.onClose();
   };
 
   const ref = createRef<HTMLElement>();

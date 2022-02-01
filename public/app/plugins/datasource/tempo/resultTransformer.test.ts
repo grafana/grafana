@@ -1,6 +1,12 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
-import { createTableFrame, transformToOTLP, transformFromOTLP } from './resultTransformer';
-import { otlpDataFrameToResponse, otlpDataFrameFromResponse, otlpResponse } from './testResponse';
+import { FieldType, MutableDataFrame, PluginType, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import {
+  SearchResponse,
+  createTableFrame,
+  transformToOTLP,
+  transformFromOTLP,
+  createTableFrameFromSearch,
+} from './resultTransformer';
+import { otlpDataFrameToResponse, otlpDataFrameFromResponse, otlpResponse, tempoSearchResponse } from './testResponse';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 
 describe('transformTraceList()', () => {
@@ -54,3 +60,43 @@ describe('transformFromOTLP()', () => {
     expect(res.data[0]).toMatchObject(otlpDataFrameFromResponse);
   });
 });
+
+describe('createTableFrameFromSearch()', () => {
+  const mockTimeUnix = dateTime(1643357709095).valueOf();
+  global.Date.now = jest.fn(() => mockTimeUnix);
+  test('transforms search response to dataFrame', () => {
+    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as SearchResponse[], defaultSettings);
+    expect(frame.fields[0].name).toBe('traceID');
+    expect(frame.fields[0].values.get(0)).toBe('e641dcac1c3a0565');
+
+    expect(frame.fields[1].name).toBe('traceName');
+    expect(frame.fields[1].values.get(0)).toBe('c10d7ca4e3a00354 ');
+
+    // expect time in ago format if startTime less than 1 hour
+    expect(frame.fields[2].name).toBe('startTime');
+    expect(frame.fields[2].values.get(0)).toBe('15 minutes ago');
+
+    // expect time in format if startTime greater than 1 hour
+    expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
+
+    expect(frame.fields[3].name).toBe('duration');
+    expect(frame.fields[3].values.get(0)).toBe(65);
+  });
+});
+
+const defaultSettings: DataSourceInstanceSettings = {
+  id: 0,
+  uid: '0',
+  type: 'tracing',
+  name: 'tempo',
+  access: 'proxy',
+  meta: {
+    id: 'tempo',
+    name: 'tempo',
+    type: PluginType.datasource,
+    info: {} as any,
+    module: '',
+    baseUrl: '',
+  },
+  jsonData: {},
+};

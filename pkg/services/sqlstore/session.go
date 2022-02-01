@@ -12,7 +12,7 @@ type DBSession struct {
 	events []interface{}
 }
 
-type dbTransactionFunc func(sess *DBSession) error
+type DBTransactionFunc func(sess *DBSession) error
 
 func (sess *DBSession) publishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
@@ -55,11 +55,11 @@ func startSession(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DB
 }
 
 // WithDbSession calls the callback with a session.
-func (ss *SQLStore) WithDbSession(ctx context.Context, callback dbTransactionFunc) error {
+func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return withDbSession(ctx, ss.engine, callback)
 }
 
-func withDbSession(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc) error {
+func withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
 	sess := &DBSession{Session: engine.NewSession()}
 	sess.Session = sess.Session.Context(ctx)
 	defer sess.Close()

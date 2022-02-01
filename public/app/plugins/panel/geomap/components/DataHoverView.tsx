@@ -1,5 +1,5 @@
 import React from 'react';
-import { useStyles2 } from '@grafana/ui';
+import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import {
   arrayUtils,
   DataFrame,
@@ -7,6 +7,7 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
+  LinkModel,
 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { SortOrder } from '@grafana/schema';
@@ -28,18 +29,30 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
     return null;
   }
 
-  const displayValues: Array<[string, any, string]> = [];
   const visibleFields = data.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
 
   if (visibleFields.length === 0) {
     return null;
   }
-  for (let i = 0; i < visibleFields.length; i++) {
-    displayValues.push([
-      getFieldDisplayName(visibleFields[i], data),
-      visibleFields[i].values.get(rowIndex!),
-      fmt(visibleFields[i], rowIndex),
-    ]);
+
+  const displayValues: Array<[string, any, string]> = [];
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
+
+  for (const f of visibleFields) {
+    const v = f.values.get(rowIndex);
+    const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
+    if (f.getLinks) {
+      f.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).forEach((link) => {
+        const key = `${link.title}/${link.href}`;
+        if (!linkLookup.has(key)) {
+          links.push(link);
+          linkLookup.add(key);
+        }
+      });
+    }
+
+    displayValues.push([getFieldDisplayName(f, data), v, formattedValueToString(disp)]);
   }
 
   if (sortOrder && sortOrder !== SortOrder.None) {
@@ -55,18 +68,31 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
             <td>{v[2]}</td>
           </tr>
         ))}
+        {links.length > 0 && (
+          <tr>
+            <td colSpan={2}>
+              <VerticalGroup>
+                {links.map((link, i) => (
+                  <LinkButton
+                    key={i}
+                    icon={'external-link-alt'}
+                    target={link.target}
+                    href={link.href}
+                    onClick={link.onClick}
+                    fill="text"
+                    style={{ width: '100%' }}
+                  >
+                    {link.title}
+                  </LinkButton>
+                ))}
+              </VerticalGroup>
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
   );
 };
-
-function fmt(field: Field, row: number): string {
-  const v = field.values.get(row);
-  if (field.display) {
-    return formattedValueToString(field.display(v));
-  }
-  return `${v}`;
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoWrap: css`
