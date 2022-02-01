@@ -1,4 +1,4 @@
-import React, { HTMLAttributes } from 'react';
+import React, { ReactNode, HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -6,11 +6,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 type ComponentSize = 'sm' | 'md';
 
 export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
-  text: string;
+  text?: string;
   size?: ComponentSize;
+  children?: ReactNode;
 }
 
-export const UpgradeBox = ({ text, className, size = 'md', ...htmlProps }: Props) => {
+export const UpgradeBox = ({ text, className, children, size = 'md', ...htmlProps }: Props) => {
   const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
 
   return (
@@ -19,6 +20,7 @@ export const UpgradeBox = ({ text, className, size = 'md', ...htmlProps }: Props
       <div>
         <h6>You’ve found a Pro feature!</h6>
         <p className={styles.text}>{text}</p>
+        {children}
         <LinkButton
           variant="primary"
           size={size}
