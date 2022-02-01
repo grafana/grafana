@@ -31,6 +31,7 @@ function mockLocationHref(href: string) {
   (window as any).location = {
     ...location,
     href,
+    origin: new URL(href).origin,
     search,
   };
 }
@@ -195,9 +196,9 @@ describe('when default_home_dashboard_path is set in the grafana config', () => 
     const mockDashboard = new DashboardModel({
       uid: 'foo',
     });
-    mockLocationHref('http://dashboards.grafana.com/');
+    mockLocationHref('http://dashboards.grafana.com/?orgId=1');
     const test: ShallowWrapper<Props, State, ShareLink> = shallow(<ShareLink dashboard={mockDashboard} />);
     await test.instance().buildUrl();
-    expect(test.state().shareUrl).toBe('foo');
+    expect(test.state().imageUrl).toBe('foo');
   });
 });

@@ -75,13 +75,15 @@ export function buildSoloUrl(
   panel?: PanelModel
 ) {
   const baseUrl = buildBaseUrl();
+  console.log(`Base URL: ${baseUrl}`);
   const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
 
   // For handling the case when default_home_dashboard_path is set in the grafana config
-  if (locationUtil.stripBaseFromUrl(baseUrl) === '/') {
+  const strippedUrl = locationUtil.stripBaseFromUrl(baseUrl);
+  if (strippedUrl === '/') {
     soloUrl = `${config.appUrl}d-solo/${dashboardUid}`;
   }
 
