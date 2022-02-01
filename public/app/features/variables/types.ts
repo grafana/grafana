@@ -9,9 +9,15 @@ import {
   VariableModel as BaseVariableModel,
   VariableType,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import { NEW_VARIABLE_ID } from './state/types';
-import { VariableQueryProps } from '../../types';
+import { NEW_VARIABLE_ID } from './constants';
+
+export enum TransactionStatus {
+  NotStarted = 'Not started',
+  Fetching = 'Fetching',
+  Completed = 'Completed',
+}
 
 export enum VariableRefresh {
   never, // removed from the UI
@@ -148,10 +154,17 @@ export const initialVariableModelState: VariableModel = {
   description: null,
 };
 
+export interface VariableQueryEditorProps {
+  query: any;
+  onChange: (query: any, definition: string) => void;
+  datasource: any;
+  templateSrv: TemplateSrv;
+}
+
 export type VariableQueryEditorType<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
-> = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
+> = ComponentType<VariableQueryEditorProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
 
 export interface VariablesChangedEvent {
   refreshAll: boolean;

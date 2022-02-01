@@ -13,13 +13,14 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
-	"github.com/go-kit/log/term"
 	"github.com/go-stack/stack"
-	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/grafana/grafana/pkg/infra/log/term"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var loggersToClose []DisposableHandler
@@ -27,11 +28,20 @@ var loggersToReload []ReloadableHandler
 var filters map[string]level.Option
 var Root MultiLoggers
 
+const (
+	// top 7 calls in the stack are within logger
+	DefaultCallerDepth = 7
+	CallerContextKey   = "caller"
+)
+
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 	filters = map[string]level.Option{}
-	Root.AddLogger(gokitlog.NewLogfmtLogger(os.Stderr), "info", filters)
+
+	// Use console by default
+	format := getLogFormat("console")
+	Root.AddLogger(format(os.Stderr), "info", filters)
 }
 
 type LogWithFilters struct {
@@ -99,24 +109,13 @@ func (ml MultiLoggers) Log(keyvals ...interface{}) error {
 	return nil
 }
 
-// we need to implement new function for multiloggers
+// New creates a new logger from the existing one with additional context
 func (ml MultiLoggers) New(ctx ...interface{}) MultiLoggers {
-	var newloger MultiLoggers
-	for _, logWithFilter := range ml.loggers {
-		logWithFilter.val = gokitlog.With(logWithFilter.val, ctx)
-		if len(ctx) > 0 {
-			v, ok := logWithFilter.filters[ctx[0].(string)]
-			if ok {
-				logWithFilter.val = level.NewFilter(logWithFilter.val, v)
-			} else {
-				logWithFilter.val = level.NewFilter(logWithFilter.val, logWithFilter.maxLevel)
-			}
-		}
-		newloger.loggers = append(newloger.loggers, logWithFilter)
-	}
-	return newloger
+	return with(ml, gokitlog.With, ctx)
 }
 
+// New creates MultiLoggers with the provided context and caller that is added as a suffix.
+// The first element of the context must be the logger name
 func New(ctx ...interface{}) MultiLoggers {
 	if len(ctx) == 0 {
 		return Root
@@ -134,6 +133,28 @@ func New(ctx ...interface{}) MultiLoggers {
 		newloger.loggers = append(newloger.loggers, logWithFilter)
 	}
 	return newloger
+}
+
+func with(loggers MultiLoggers, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) MultiLoggers {
+	if len(ctx) == 0 {
+		return loggers
+	}
+	var newloger MultiLoggers
+	for _, l := range loggers.loggers {
+		l.val = withFunc(l.val, ctx...)
+		newloger.loggers = append(newloger.loggers, l)
+	}
+	return newloger
+}
+
+// WithPrefix adds context that will be added to the log message
+func WithPrefix(loggers MultiLoggers, ctx ...interface{}) MultiLoggers {
+	return with(loggers, gokitlog.WithPrefix, ctx)
+}
+
+// WithSuffix adds context that will be appended at the end of the log message
+func WithSuffix(loggers MultiLoggers, ctx ...interface{}) MultiLoggers {
+	return with(loggers, gokitlog.WithSuffix, ctx)
 }
 
 var logLevels = map[string]level.Option{
@@ -183,39 +204,27 @@ func Stack(skip int) string {
 	return s.String()
 }
 
-type Formatedlogger func(w io.Writer) gokitlog.Logger
-
-func terminalColorFn(keyvals ...interface{}) term.FgBgColor {
-	for i := 0; i < len(keyvals)-1; i += 2 {
-		if keyvals[i] != level.Key() {
-			continue
-		}
-		switch keyvals[i+1] {
-		case "trace":
-			return term.FgBgColor{Fg: term.Gray}
-		case level.DebugValue():
-			return term.FgBgColor{Fg: term.Gray}
-		case level.InfoValue():
-			return term.FgBgColor{Fg: term.Green}
-		case level.WarnValue():
-			return term.FgBgColor{Fg: term.Yellow}
-		case level.ErrorValue():
-			return term.FgBgColor{Fg: term.Red}
-		case "crit":
-			return term.FgBgColor{Fg: term.Gray, Bg: term.DarkRed}
-		default:
-			return term.FgBgColor{}
-		}
+// StackCaller returns a go-kit Valuer function that returns the stack trace from the place it is called. Argument `skip` allows skipping top n lines from the stack.
+func StackCaller(skip int) gokitlog.Valuer {
+	return func() interface{} {
+		return Stack(skip + 1)
 	}
-	return term.FgBgColor{}
 }
+
+// Caller proxies go-kit/log Caller and returns a Valuer function that returns a file and line from a specified depth
+// in the callstack
+func Caller(depth int) gokitlog.Valuer {
+	return gokitlog.Caller(depth)
+}
+
+type Formatedlogger func(w io.Writer) gokitlog.Logger
 
 func getLogFormat(format string) Formatedlogger {
 	switch format {
 	case "console":
 		if isatty.IsTerminal(os.Stdout.Fd()) {
 			return func(w io.Writer) gokitlog.Logger {
-				return term.NewColorLogger(w, gokitlog.NewLogfmtLogger, terminalColorFn)
+				return term.NewTerminalLogger(w)
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {

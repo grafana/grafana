@@ -11,11 +11,10 @@ import (
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
-	"github.com/opentracing/opentracing-go"
-	ol "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
 	cw "github.com/weaveworks/common/tracing"
 	"xorm.io/core"
@@ -39,7 +38,7 @@ func init() {
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-func WrapDatabaseDriverWithHooks(dbType string) string {
+func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
@@ -52,7 +51,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 	}
 
 	driverWithHooks := dbType + "WithHooks"
-	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics")}))
+	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
@@ -60,7 +59,8 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
 type databaseQueryWrapper struct {
-	log log.Logger
+	log    log.Logger
+	tracer tracing.Tracer
 }
 
 // databaseQueryWrapperKey is used as key to save values in `context.Context`
@@ -94,15 +94,13 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "database query")
-	defer span.Finish()
+	_, span := h.tracer.Start(ctx, "database query")
+	defer span.End()
 
-	span.LogFields(
-		ol.String("query", query),
-		ol.String("status", status))
+	span.AddEvents([]string{"query", "status"}, []tracing.EventValue{{Str: query}, {Str: status}})
 
 	if err != nil {
-		span.LogFields(ol.String("error", err.Error()))
+		span.AddEvents([]string{"error"}, []tracing.EventValue{{Str: err.Error()}})
 	}
 
 	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)

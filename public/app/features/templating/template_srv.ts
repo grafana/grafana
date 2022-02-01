@@ -6,8 +6,8 @@ import { isAdHoc } from '../variables/guard';
 import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../variables/types';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/state/types';
 import { variableAdapters } from '../variables/adapters';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;

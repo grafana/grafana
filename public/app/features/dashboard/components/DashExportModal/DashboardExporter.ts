@@ -116,7 +116,7 @@ export class DashboardExporter {
               pluginName: ds.meta?.name,
             };
 
-            if (obj.datasource === null || typeof obj.datasource === 'string') {
+            if (!obj.datasource || typeof obj.datasource === 'string') {
               obj.datasource = '${' + refName + '}';
             } else {
               obj.datasource.uid = '${' + refName + '}';

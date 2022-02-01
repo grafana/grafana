@@ -181,7 +181,7 @@ def publish_image_pipelines(mode):
 def get_steps(edition, ver_mode):
     package_steps = []
     publish_steps = []
-    should_publish = ver_mode in ('release', 'test-release',)
+    should_publish = ver_mode == 'release'
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
     edition2 = 'enterprise2'
@@ -417,7 +417,7 @@ def publish_packages_pipeline():
     ]
 
     return [pipeline(
-        name='publish-packages', trigger=trigger, steps=steps, edition="all"
+        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=['publish-artifacts-public']
     )]
 
 def publish_npm_pipelines(mode):
@@ -451,7 +451,7 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
             },
         }
 
-    should_publish = ver_mode in ('release', 'test-release',)
+    should_publish = ver_mode == 'release'
 
     # The release pipelines include also enterprise ones, so both editions are built for a release.
     # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
@@ -467,39 +467,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
     #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
     #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
     #))
-
-    return pipelines
-
-def test_release_pipelines():
-    ver_mode = 'test-release'
-
-    services = integration_test_services(edition='enterprise')
-    trigger = {
-        'event': ['custom',],
-    }
-
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
-
-    publish_cmd = './bin/grabpl store-packages --edition {{}} --dry-run {}'.format(test_release_ver)
-
-    steps = [
-        store_packages_step(edition='oss', ver_mode=ver_mode),
-        store_packages_step(edition='enterprise', ver_mode=ver_mode),
-    ]
-
-    publish_pipeline = pipeline(
-        name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss',
-        steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
-        depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
-    )
-
-    pipelines = oss_pipelines + enterprise_pipelines + [publish_pipeline,]
-
-    pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-        depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
-    ))
 
     return pipelines
 

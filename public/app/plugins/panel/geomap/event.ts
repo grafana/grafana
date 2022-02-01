@@ -1,12 +1,11 @@
 import { FeatureLike } from 'ol/Feature';
 import { SimpleGeometry } from 'ol/geom';
-import { Layer } from 'ol/layer';
 import { DataHoverPayload } from '@grafana/data';
-import { Source } from 'ol/source';
+import BaseLayer from 'ol/layer/Base';
 
 export interface GeomapHoverFeature {
   feature: FeatureLike;
-  layer: Layer<Source>;
+  layer: BaseLayer;
   geo: SimpleGeometry;
 }
 

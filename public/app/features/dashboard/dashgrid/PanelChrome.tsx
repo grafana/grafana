@@ -80,8 +80,8 @@ export class PanelChrome extends PureComponent<Props, State> {
       refreshWhenInView: false,
       context: {
         eventBus,
-        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         app: this.getPanelContextApp(),
+        sync: this.getSync,
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
         onAnnotationCreate: this.onAnnotationCreate,
@@ -94,6 +94,9 @@ export class PanelChrome extends PureComponent<Props, State> {
       data: this.getInitialPanelDataState(),
     };
   }
+
+  // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
+  getSync = () => (this.props.isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip);
 
   onInstanceStateChange = (value: any) => {
     this.props.onInstanceStateChange(value);
@@ -218,17 +221,15 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, isEditing, width } = this.props;
+    const { isInView, width } = this.props;
     const { context } = this.state;
 
     const app = this.getPanelContextApp();
-    const sync = isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip;
 
-    if (context.sync !== sync || context.app !== app) {
+    if (context.app !== app) {
       this.setState({
         context: {
           ...context,
-          sync,
           app,
         },
       });

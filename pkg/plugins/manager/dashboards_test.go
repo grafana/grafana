@@ -7,24 +7,25 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
 	cfg := &setting.Cfg{
-		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
 			"test-app": map[string]string{
 				"path": "testdata/test-app",
 			},
 		},
 	}
-	pm := newManager(cfg, nil, loader.New(nil, cfg, &signature.UnsignedPluginAuthorizer{Cfg: cfg}), &sqlstore.SQLStore{})
-	err := pm.init()
+	pmCfg := plugins.FromGrafanaCfg(cfg)
+	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
+		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}))
 	require.NoError(t, err)
 
 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

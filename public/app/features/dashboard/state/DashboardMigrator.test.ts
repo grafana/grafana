@@ -179,7 +179,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(34);
+      expect(model.schemaVersion).toBe(35);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1837,6 +1837,43 @@ describe('DashboardModel', () => {
 
     it('should update datasources in panels collapsed rows', () => {
       expect(model.panels[3].panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+  });
+
+  describe('when migrating time series axis visibility', () => {
+    test('preserves x axis visibility', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                custom: {
+                  axisPlacement: 'hidden',
+                },
+              },
+              overrides: [],
+            },
+          },
+        ],
+      });
+
+      expect(model.panels[0].fieldConfig.overrides).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "matcher": Object {
+              "id": "byType",
+              "options": "time",
+            },
+            "properties": Array [
+              Object {
+                "id": "custom.axisPlacement",
+                "value": "auto",
+              },
+            ],
+          },
+        ]
+      `);
     });
   });
 });

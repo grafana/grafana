@@ -15,18 +15,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const pluginID = "influxdb"
-
 type Service struct {
-	QueryParser    *InfluxdbQueryParser
-	ResponseParser *ResponseParser
+	queryParser    *InfluxdbQueryParser
+	responseParser *ResponseParser
 	glog           log.Logger
 
 	im instancemgmt.InstanceManager
@@ -34,26 +30,13 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(cfg *setting.Cfg, httpClient httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
-	s := &Service{
-		QueryParser:    &InfluxdbQueryParser{},
-		ResponseParser: &ResponseParser{},
+func ProvideService(httpClient httpclient.Provider) *Service {
+	return &Service{
+		queryParser:    &InfluxdbQueryParser{},
+		responseParser: &ResponseParser{},
 		glog:           log.New("tsdb.influxdb"),
-		im:             im,
+		im:             datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		s.glog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
-
-	return s, nil
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -146,7 +129,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", res.Status)
 	}
 
-	resp := s.ResponseParser.Parse(res.Body, query)
+	resp := s.responseParser.Parse(res.Body, query)
 
 	return resp, nil
 }
@@ -162,7 +145,7 @@ func (s *Service) getQuery(dsInfo *models.DatasourceInfo, query *backend.QueryDa
 
 	q := query.Queries[0]
 
-	return s.QueryParser.Parse(q)
+	return s.queryParser.Parse(q)
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {

@@ -2,6 +2,7 @@ import { LoadingState } from '@grafana/data';
 import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
+import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
 import { MixedDatasource } from './module';
 
 const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
@@ -124,6 +125,19 @@ describe('MixedDatasource', () => {
       expect(results[0].key).toBe('mixed-0-');
       expect(results[1].key).toBe('mixed-1-');
       expect(results[1].state).toBe(LoadingState.Done);
+    });
+  });
+
+  it('should filter out MixedDataSource queries', async () => {
+    const ds = new MixedDatasource({} as any);
+
+    await expect(
+      ds.query({
+        targets: [{ refId: 'A', datasource: { uid: MIXED_DATASOURCE_NAME, id: 'datasource' } }],
+      } as any)
+    ).toEmitValuesWith((results) => {
+      expect(results).toHaveLength(1);
+      expect(results[0].data).toHaveLength(0);
     });
   });
 });

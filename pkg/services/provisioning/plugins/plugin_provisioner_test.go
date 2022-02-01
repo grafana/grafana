@@ -59,6 +59,7 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
+
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
 		require.Len(t, sentCommands, 4)

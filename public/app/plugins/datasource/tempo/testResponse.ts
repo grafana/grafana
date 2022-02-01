@@ -2202,3 +2202,24 @@ export const otlpResponse = {
     },
   ],
 };
+
+export const tempoSearchResponse = {
+  traces: [
+    {
+      traceID: 'e641dcac1c3a0565',
+      rootServiceName: 'c10d7ca4e3a00354',
+      startTimeUnixNano: '1643356828724000000',
+      durationMs: 65,
+    },
+    {
+      traceID: 'c2983496a2b12544',
+      rootServiceName: '<root span not yet received>',
+      startTimeUnixNano: '1643342166678000000',
+      durationMs: 93,
+    },
+  ],
+  metrics: {
+    inspectedTraces: 2,
+    inspectedBytes: '83720',
+  },
+};

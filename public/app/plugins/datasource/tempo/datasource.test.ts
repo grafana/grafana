@@ -106,7 +106,10 @@ describe('Tempo data source', () => {
     expect(response.data).toHaveLength(2);
     expect(response.data[0].name).toBe('Nodes');
     expect(response.data[0].fields[0].values.length).toBe(3);
+
+    // Test Links
     expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
+    expect(response.data[0].fields[0].config.links).toEqual(serviceGraphLinks);
 
     expect(response.data[1].name).toBe('Edges');
     expect(response.data[1].fields[0].values.length).toBe(2);
@@ -337,3 +340,28 @@ const mockInvalidJson = {
     },
   ],
 };
+
+const serviceGraphLinks = [
+  {
+    url: '',
+    title: 'Request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Failed request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+];

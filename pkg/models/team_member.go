@@ -35,18 +35,16 @@ type AddTeamMemberCommand struct {
 }
 
 type UpdateTeamMemberCommand struct {
-	UserId           int64          `json:"-"`
-	OrgId            int64          `json:"-"`
-	TeamId           int64          `json:"-"`
-	Permission       PermissionType `json:"permission"`
-	ProtectLastAdmin bool           `json:"-"`
+	UserId     int64          `json:"-"`
+	OrgId      int64          `json:"-"`
+	TeamId     int64          `json:"-"`
+	Permission PermissionType `json:"permission"`
 }
 
 type RemoveTeamMemberCommand struct {
-	OrgId            int64 `json:"-"`
-	UserId           int64
-	TeamId           int64
-	ProtectLastAdmin bool `json:"-"`
+	OrgId  int64 `json:"-"`
+	UserId int64
+	TeamId int64
 }
 
 // ----------------------

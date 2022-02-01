@@ -92,6 +92,9 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       }
     `,
     headerCellLabel: css`
+      border: none;
+      padding: 0;
+      background: inherit;
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
@@ -130,6 +133,10 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       &:hover {
         background-color: ${rowHoverBg};
+      }
+
+      &:last-child {
+        border-bottom: 0;
       }
     `,
     imageCell: css`

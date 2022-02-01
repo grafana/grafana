@@ -7,10 +7,10 @@ import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
 import { initialVariableEditorState } from '../editor/reducer';
 import { describe, expect } from '../../../../test/lib/common';
-import { NEW_VARIABLE_ID } from '../state/types';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { NEW_VARIABLE_ID } from '../constants';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {

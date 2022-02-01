@@ -168,9 +168,9 @@ function getPropExpression(prop: any) {
  * @param attrs All attributes of the component.
  * @param propName Name of the prop that react component expects.
  */
-function findAttribute(attrs: string, propName: string): string {
-  const index = Object.keys(attrs).find((attr) => {
-    return attr.toLowerCase() === propName.toLowerCase() || attr.toLowerCase() === kebabCase(propName);
+function findAttribute(attrs: object, propName: string): string {
+  const index = Object.keys(attrs).find((attr: any) => {
+    return attr.toLowerCase() === propName.toLowerCase() || kebabCase(attr) === kebabCase(propName);
   });
   // @ts-ignore
   return attrs[index];

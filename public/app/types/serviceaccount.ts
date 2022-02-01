@@ -1,4 +1,5 @@
-import { OrgRole, Unit } from '.';
+import { WithAccessControlMetadata } from '@grafana/data';
+import { OrgRole } from '.';
 
 export interface OrgServiceAccount {
   serviceAccountId: number;
@@ -23,26 +24,25 @@ export interface ServiceAccount {
   orgId?: number;
 }
 
-export interface ServiceAccountDTO {
-  id: number;
-  login: string;
+export interface ServiceAccountDTO extends WithAccessControlMetadata {
+  orgId: number;
+  userId: number;
   email: string;
   name: string;
-  isGrafanaAdmin: boolean;
-  isDisabled: boolean;
-  isAdmin?: boolean;
-  updatedAt?: string;
-  authLabels?: string[];
   avatarUrl?: string;
-  orgId?: number;
-  licensedRole?: string;
-  permissions?: string[];
-  teams?: Unit[];
-  orgs?: Unit[];
+  login: string;
+  role: string;
+  lastSeenAt: string;
+  lastSeenAtAge: string;
+}
+
+export interface ServiceAccountProfileState {
+  serviceAccount: ServiceAccountDTO;
+  isLoading: boolean;
 }
 
 export interface ServiceAccountsState {
-  serviceAccounts: OrgServiceAccount[];
+  serviceAccounts: ServiceAccountDTO[];
   searchQuery: string;
   searchPage: number;
   isLoading: boolean;

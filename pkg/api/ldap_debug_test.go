@@ -62,7 +62,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	setting.LDAPEnabled = true
 	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
 
-	hs := &HTTPServer{Cfg: setting.NewCfg()}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService()}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
@@ -274,11 +274,6 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		return nil
 	})
 
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.GetTeamsForLDAPGroupCommand) error {
-		cmd.Result = []models.TeamOrgGroupDTO{}
-		return nil
-	})
-
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
@@ -310,7 +305,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 			"roles": [
 				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
 			],
-			"teams": []
+			"teams": null
 		}
 	`
 
@@ -639,7 +634,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			url:          "/api/admin/ldap/sync/test",
+			url:          "/api/admin/ldap/sync/1",
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusOK,
@@ -648,7 +643,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			url:          "/api/admin/ldap/sync/test",
+			url:          "/api/admin/ldap/sync/1",
 			method:       http.MethodPost,
 			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,

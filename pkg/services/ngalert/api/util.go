@@ -105,7 +105,13 @@ func (p *AlertingProxy) withReq(
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64(":Recipient"))
+
+	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "Recipient is invalid")
+	}
+
+	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
 
 	status := resp.Status()
 	if status >= 400 {
@@ -259,7 +265,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 	if msg != "" {
 		err = errors.WithMessagef(err, msg, args...)
 	}
-	return response.Error(status, "API error", err)
+	return response.Error(status, err.Error(), err)
 }
 
 // accessForbiddenResp creates a response of forbidden access.

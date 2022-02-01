@@ -4,7 +4,8 @@ import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 
 export interface Props {
   users: OrgUser[];
@@ -22,10 +23,19 @@ const UsersTable: FC<Props> = (props) => {
   useEffect(() => {
     async function fetchOptions() {
       try {
-        let options = await fetchRoleOptions(orgId);
-        setRoleOptions(options);
-        const builtInRoles = await fetchBuiltinRoles(orgId);
-        setBuiltinRoles(builtInRoles);
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+          let options = await fetchRoleOptions(orgId);
+          setRoleOptions(options);
+        } else {
+          setRoleOptions([]);
+        }
+
+        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+          const builtInRoles = await fetchBuiltinRoles(orgId);
+          setBuiltinRoles(builtInRoles);
+        } else {
+          setBuiltinRoles({});
+        }
       } catch (e) {
         console.error('Error loading options');
       }

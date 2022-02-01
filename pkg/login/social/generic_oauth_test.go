@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 )
 
 func newLogger(name string, lev string) log.Logger {
-	logger := log.Root.New("logger", name)
+	logger := log.New(name)
 	logger.AddLogger(logger, lev, map[string]level.Option{})
 	return logger
 }
@@ -723,6 +724,14 @@ func TestPayloadCompression(t *testing.T) {
 			OAuth2Extra: map[string]interface{}{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
+			},
+			ExpectedEmail: "john.doe@example.com",
+		},
+		{
+			Name: "Given a valid DEFLATE compressed id_token with numeric header, return userInfo",
+			OAuth2Extra: map[string]interface{}{
+				// Generated from https://token.dev/
+				"id_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsInZlciI6NH0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTY0MjUxNjYwNSwiZXhwIjoxNjQyNTIwMjA1LCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.ANndoPWIHNjKPG8na7UUq7nan1RgF8-ze8STU31RXcA",
 			},
 			ExpectedEmail: "john.doe@example.com",
 		},

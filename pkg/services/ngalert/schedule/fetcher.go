@@ -1,10 +1,17 @@
 package schedule
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func (sch *schedule) fetchAllDetails(disabledOrgs []int64) []*models.AlertRule {
+func (sch *schedule) getAlertRules(disabledOrgs []int64) []*models.AlertRule {
+	start := time.Now()
+	defer func() {
+		sch.metrics.GetAlertRulesDuration.Observe(time.Since(start).Seconds())
+	}()
+
 	q := models.ListAlertRulesQuery{
 		ExcludeOrgs: disabledOrgs,
 	}

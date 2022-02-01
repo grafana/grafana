@@ -176,7 +176,6 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 			},
 			verifier: verifier,
 		}
-
 		_, err = condition.Eval(ctx.result, reqHandler)
 
 		require.Nil(t, err)

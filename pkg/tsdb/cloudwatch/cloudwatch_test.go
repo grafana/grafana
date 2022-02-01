@@ -6,6 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,7 +51,7 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewInstanceSettings()
+			f := NewInstanceSettings(httpclient.NewProvider())
 			model, err := f(tt.settings)
 			tt.Err(t, err)
 			datasourceComparer := cmp.Comparer(func(d1 datasourceInfo, d2 datasourceInfo) bool {

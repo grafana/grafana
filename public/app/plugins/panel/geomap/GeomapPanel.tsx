@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
-import { Map as OpenLayersMap, MapBrowserEvent, View } from 'ol';
+import { Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
@@ -429,7 +429,7 @@ export class GeomapPanel extends Component<Props, State> {
     return true;
   };
 
-  async initLayer(map: OpenLayersMap, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
+  async initLayer(map: PluggableMap, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
     if (isBasemap && (!options?.type || config.geomapDisableCustomBaseLayer)) {
       options = DEFAULT_BASEMAP_CONFIG;
     }
@@ -459,8 +459,8 @@ export class GeomapPanel extends Component<Props, State> {
       options.name = this.getNextLayerName();
     }
     const UID = options.name;
-    const state = {
-      UID, // unique name when added to the map (it may change and will need special handling)
+    const state: MapLayerState<any> = {
+      // UID, // unique name when added to the map (it may change and will need special handling)
       isBasemap,
       options,
       layer,
