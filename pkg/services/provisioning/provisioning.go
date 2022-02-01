@@ -2,13 +2,13 @@ package provisioning
 
 import (
 	"context"
-	dashboards2 "github.com/grafana/grafana/pkg/services/dashboards"
 	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -20,7 +20,7 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, pluginStore plugifaces.Store,
-	encryptionService encryption.Internal, dashboardsStore dashboards2.Store) (*ProvisioningServiceImpl, error) {
+	encryptionService encryption.Internal, dashboardsStore dashboardservice.Store) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		pluginStore:             pluginStore,
@@ -86,7 +86,7 @@ type ProvisioningServiceImpl struct {
 	provisionDatasources    func(context.Context, string) error
 	provisionPlugins        func(context.Context, string, plugifaces.Store) error
 	mutex                   sync.Mutex
-	dashboardsStore         dashboards2.Store
+	dashboardsStore         dashboardservice.Store
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
