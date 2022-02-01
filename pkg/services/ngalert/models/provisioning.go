@@ -13,10 +13,10 @@ type ProvisionedObject interface {
 	GetResourceUniqueIdentifier() string
 }
 
-func (ar *AlertRule) GetResourceTypeIdentifier() string {
+func (alertRule *AlertRule) GetResourceTypeIdentifier() string {
 	return "alertRule"
 }
 
-func (ar *AlertRule) GetResourceUniqueIdentifier() string {
-	return ar.UID
+func (alertRule *AlertRule) GetResourceUniqueIdentifier() string {
+	return alertRule.UID
 }
