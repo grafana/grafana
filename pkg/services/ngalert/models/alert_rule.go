@@ -105,6 +105,14 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 	return nil
 }
 
+func (alertRule *AlertRule) GetResourceTypeIdentifier() string {
+	return "alertRule"
+}
+
+func (alertRule *AlertRule) GetResourceUniqueIdentifier() string {
+	return alertRule.UID
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
