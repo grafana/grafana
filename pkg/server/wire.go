@@ -188,6 +188,7 @@ var wireBasicSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	resourceservices.ProvideResourceServices,
+	//sqlstore.SchemaStoreProvidersSet,
 )
 
 var wireSet = wire.NewSet(
