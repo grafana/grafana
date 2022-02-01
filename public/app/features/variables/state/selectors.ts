@@ -12,7 +12,7 @@ export const getVariable = <T extends VariableModel = VariableModel>(
   throwWhenMissing = true
 ): T => {
   const { id, stateKey } = identifier;
-  const variablesState = getDashboardVariablesState(stateKey, state);
+  const variablesState = getVariablesState(stateKey, state);
   if (!variablesState.variables[id]) {
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
@@ -23,22 +23,22 @@ export const getVariable = <T extends VariableModel = VariableModel>(
   return variablesState.variables[id] as T;
 };
 
-function getFilteredDashboardVariables(
+function getFilteredVariablesByKey(
   filter: (model: VariableModel) => boolean,
   key: string,
   state: StoreState = getState()
 ) {
-  return Object.values(getDashboardVariablesState(key, state).variables)
+  return Object.values(getVariablesState(key, state).variables)
     .filter(filter)
     .sort((s1, s2) => s1.index - s2.index);
 }
 
-export function getDashboardVariablesState(key: string, state: StoreState = getState()): TemplatingState {
+export function getVariablesState(key: string, state: StoreState = getState()): TemplatingState {
   return state.templating.keys[toStateKey(key)] ?? getInitialTemplatingState();
 }
 
 export function getDashboardVariables(key: string, state: StoreState = getState()): VariableModel[] {
-  return getFilteredDashboardVariables(defaultVariablesFilter, key, state);
+  return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
 export function defaultVariablesFilter(variable: VariableModel): boolean {
@@ -58,7 +58,7 @@ export const getDashboardEditorVariables = (key: string, state: StoreState): Var
 export type GetVariables = typeof getDashboardVariables;
 
 export function getNewDashboardVariableIndex(key: string, state: StoreState = getState()): number {
-  return getNextVariableIndex(Object.values(getDashboardVariablesState(key, state).variables));
+  return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
 }
 
 export function getNextVariableIndex(variables: VariableModel[]): number {
@@ -67,7 +67,7 @@ export function getNextVariableIndex(variables: VariableModel[]): number {
 }
 
 export function getDashboardVariablesIsDirty(key: string, state: StoreState = getState()): boolean {
-  return getDashboardVariablesState(key, state).transaction.isDirty;
+  return getVariablesState(key, state).transaction.isDirty;
 }
 
 export function getIfExistsLastKey(state: StoreState = getState()): string | undefined {
@@ -88,7 +88,7 @@ export function getFilteredVariables(filter: (model: VariableModel) => boolean, 
   if (!lastKey) {
     return [];
   }
-  return getFilteredDashboardVariables(filter, lastKey, state);
+  return getFilteredVariablesByKey(filter, lastKey, state);
 }
 
 export function getVariables(state: StoreState = getState()) {

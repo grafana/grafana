@@ -7,7 +7,7 @@ import { KeyedVariableIdentifier } from '../state/types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { connect, ConnectedProps } from 'react-redux';
-import { getDashboardEditorVariables, getDashboardVariablesState } from '../state/selectors';
+import { getDashboardEditorVariables, getVariablesState } from '../state/selectors';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 import { VariableEditorList } from './VariableEditorList';
@@ -19,7 +19,7 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { uid } = ownProps.dashboard;
-  const templatingState = getDashboardVariablesState(uid, state);
+  const templatingState = getVariablesState(uid, state);
   return {
     variables: getDashboardEditorVariables(uid, state),
     idInEditor: templatingState.editor.id,

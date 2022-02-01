@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { getDashboardSubMenuVariables, getDashboardVariablesState } from '../../../variables/state/selectors';
+import { getDashboardSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
@@ -66,7 +66,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
   const { uid } = ownProps.dashboard;
-  const templatingState = getDashboardVariablesState(uid, state);
+  const templatingState = getVariablesState(uid, state);
   return {
     variables: getDashboardSubMenuVariables(uid, templatingState.variables),
   };

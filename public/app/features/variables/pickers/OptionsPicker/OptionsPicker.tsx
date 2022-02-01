@@ -16,7 +16,7 @@ import { formatVariableLabel } from '../../shared/formatVariable';
 import { KeyedVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { VariableLink } from '../shared/VariableLink';
-import { getDashboardVariablesState } from '../../state/selectors';
+import { getVariablesState } from '../../state/selectors';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { toKeyedVariableIdentifier } from '../../utils';
 
@@ -50,7 +50,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     }
 
     return {
-      picker: getDashboardVariablesState(stateKey, state).optionsPicker,
+      picker: getVariablesState(stateKey, state).optionsPicker,
     };
   };
 

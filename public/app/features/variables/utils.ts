@@ -9,7 +9,7 @@ import { variableAdapters } from './adapters';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { StoreState } from '../../types';
 import { getState } from '../../store/store';
-import { getDashboardVariablesState } from './state/selectors';
+import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 
 /*
@@ -259,7 +259,7 @@ export function ensureStringValues(value: any | any[]): string | string[] {
 }
 
 export function hasOngoingTransaction(uid: string, state: StoreState = getState()): boolean {
-  return getDashboardVariablesState(uid, state).transaction.status !== TransactionStatus.NotStarted;
+  return getVariablesState(uid, state).transaction.status !== TransactionStatus.NotStarted;
 }
 
 export function toStateKey(uid: string | null | undefined): string {

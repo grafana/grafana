@@ -5,7 +5,7 @@ import { DataSourceRef } from '@grafana/data';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDashboardVariablesState, getVariable } from '../state/selectors';
+import { getVariable, getVariablesState } from '../state/selectors';
 import {
   addVariableEditorError,
   changeVariableEditorExtended,
@@ -34,7 +34,7 @@ export const updateQueryVariableOptions = (
       }
 
       const variableInState = getVariable<QueryVariableModel>(identifier, getState());
-      if (getDashboardVariablesState(uid, getState()).editor.id === variableInState.id) {
+      if (getVariablesState(uid, getState()).editor.id === variableInState.id) {
         dispatch(toKeyedAction(uid, removeVariableEditorError({ errorProp: 'update' })));
       }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
@@ -52,7 +52,7 @@ export const updateQueryVariableOptions = (
     } catch (err) {
       const error = toDataQueryError(err);
       const { stateKey: uid } = identifier;
-      if (getDashboardVariablesState(uid, getState()).editor.id === identifier.id) {
+      if (getVariablesState(uid, getState()).editor.id === identifier.id) {
         dispatch(toKeyedAction(uid, addVariableEditorError({ errorProp: 'update', errorText: error.message })));
       }
 
@@ -76,7 +76,7 @@ export const changeQueryVariableDataSource = (
   return async (dispatch, getState) => {
     try {
       const { stateKey: uid } = identifier;
-      const state = getDashboardVariablesState(uid, getState()).editor as VariableEditorState<QueryVariableEditorState>;
+      const state = getVariablesState(uid, getState()).editor as VariableEditorState<QueryVariableEditorState>;
       const previousDatasource = state.extended?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {

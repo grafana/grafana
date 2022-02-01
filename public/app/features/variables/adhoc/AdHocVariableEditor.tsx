@@ -11,7 +11,7 @@ import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { StoreState } from 'app/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
-import { getDashboardVariablesState } from '../state/selectors';
+import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
@@ -24,7 +24,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   }
 
   return {
-    editor: getDashboardVariablesState(stateKey, state).editor as VariableEditorState<AdHocVariableEditorState>,
+    editor: getVariablesState(stateKey, state).editor as VariableEditorState<AdHocVariableEditorState>,
   };
 };
 

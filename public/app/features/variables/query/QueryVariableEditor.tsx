@@ -20,7 +20,7 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
-import { getDashboardVariablesState } from '../state/selectors';
+import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
@@ -33,7 +33,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   }
 
   return {
-    editor: getDashboardVariablesState(stateKey, state).editor as VariableEditorState<QueryVariableEditorState>,
+    editor: getVariablesState(stateKey, state).editor as VariableEditorState<QueryVariableEditorState>,
   };
 };
 

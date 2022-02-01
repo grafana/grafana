@@ -29,7 +29,7 @@ import {
   VariableWithOptions,
 } from '../types';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
-import { getDashboardVariables, getDashboardVariablesState, getIfExistsLastKey, getVariable } from './selectors';
+import { getDashboardVariables, getIfExistsLastKey, getVariable, getVariablesState } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { notifyApp } from 'app/core/actions';
@@ -551,7 +551,7 @@ export const variableUpdated = (
     const variableInState = getVariable(identifier, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
-    if (getDashboardVariablesState(uid, state).transaction.status === TransactionStatus.Fetching) {
+    if (getVariablesState(uid, state).transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
         await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
@@ -725,7 +725,7 @@ export const initVariablesTransaction = (urlUid: string, dashboard: DashboardMod
     const state = getState();
     const lastKey = getIfExistsLastKey(state);
     if (lastKey) {
-      const transactionState = getDashboardVariablesState(lastKey, state).transaction;
+      const transactionState = getVariablesState(lastKey, state).transaction;
       if (transactionState.status === TransactionStatus.Fetching) {
         // previous dashboard is still fetching variables, cancel all requests
         dispatch(cancelVariables(lastKey));

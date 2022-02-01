@@ -15,7 +15,7 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
 import { VariableTextField } from '../editor/VariableTextField';
-import { getDashboardVariablesState } from '../state/selectors';
+import { getVariablesState } from '../state/selectors';
 
 export interface OwnProps extends VariableEditorProps<DataSourceVariableModel> {}
 
@@ -135,7 +135,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   }
 
   return {
-    editor: getDashboardVariablesState(stateKey, state).editor as VariableEditorState<DataSourceVariableEditorState>,
+    editor: getVariablesState(stateKey, state).editor as VariableEditorState<DataSourceVariableEditorState>,
   };
 };
 

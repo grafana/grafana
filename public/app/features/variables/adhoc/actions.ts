@@ -3,7 +3,7 @@ import { StoreState, ThunkResult } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
-import { getDashboardVariablesState, getLastKey, getNewDashboardVariableIndex, getVariable } from '../state/selectors';
+import { getLastKey, getNewDashboardVariableIndex, getVariable, getVariablesState } from '../state/selectors';
 import { AddVariable, KeyedVariableIdentifier } from '../state/types';
 import {
   AdHocVariabelFilterUpdate,
@@ -190,7 +190,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel | undefined => {
   const key = getLastKey(state);
-  const templatingState = getDashboardVariablesState(key, state);
+  const templatingState = getVariablesState(key, state);
   return Object.values(templatingState.variables).find(
     (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
   ) as AdHocVariableModel;

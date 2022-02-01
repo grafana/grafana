@@ -20,13 +20,13 @@ import { VariableSectionHeader } from './VariableSectionHeader';
 import { hasOptions } from '../guard';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableHideSelect } from './VariableHideSelect';
-import { getDashboardVariablesState, getVariable } from '../state/selectors';
+import { getVariable, getVariablesState } from '../state/selectors';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
-  editor: getDashboardVariablesState(ownProps.identifier.stateKey, state).editor,
+  editor: getVariablesState(ownProps.identifier.stateKey, state).editor,
   variable: getVariable(ownProps.identifier, state, false), // we could be renaming a variable and we don't want this to throw
 });
 
