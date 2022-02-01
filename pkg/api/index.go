@@ -474,19 +474,26 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 }
 
 func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink {
-	children := []*dtos.NavLink{
-		{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new"},
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	var children []*dtos.NavLink
+
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
+		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new"})
 	}
-	if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
+
+	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(ac.ActionFoldersCreate)) {
 		children = append(children, &dtos.NavLink{
 			Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder",
 			Icon: "folder-plus", Url: hs.Cfg.AppSubURL + "/dashboards/folder/new",
 		})
 	}
-	children = append(children, &dtos.NavLink{
-		Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
-		Url: hs.Cfg.AppSubURL + "/dashboard/import",
-	})
+
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
+		children = append(children, &dtos.NavLink{
+			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
+			Url: hs.Cfg.AppSubURL + "/dashboard/import",
+		})
+	}
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
@@ -540,11 +547,14 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 }
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
-	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
-		return nil, err
-	}
-	hasEditPerm := hasEditPermissionInFoldersQuery.Result
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	hasEditPerm := hasAccess(func(context *models.ReqContext) bool {
+		hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+		if err := bus.Dispatch(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
+			return false
+		}
+		return hasEditPermissionInFoldersQuery.Result
+	}, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(ac.ActionFoldersCreate)))
 
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {

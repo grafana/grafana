@@ -87,12 +87,20 @@ func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*model
 	}
 }
 
+var ReqSignedIn = func(c *models.ReqContext) bool {
+	return c.IsSignedIn
+}
+
 var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN
+}
+
+var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
+	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR
 }
 
 func BuildPermissionsMap(permissions []*Permission) map[string]bool {
