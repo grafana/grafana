@@ -15,7 +15,7 @@ import (
 var tsclogger = log.New("sqlstore.transactions")
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
-func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
+func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
 }
 
@@ -30,11 +30,11 @@ func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx cont
 	}, retry)
 }
 
-func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
+func inTransactionWithRetry(callback DBTransactionFunc, retry int) error {
 	return inTransactionWithRetryCtx(context.Background(), x, callback, retry)
 }
 
-func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc, retry int) error {
+func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc, retry int) error {
 	sess, err := startSession(ctx, engine, true)
 	if err != nil {
 		return err
@@ -77,10 +77,10 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	return nil
 }
 
-func inTransaction(callback dbTransactionFunc) error {
+func inTransaction(callback DBTransactionFunc) error {
 	return inTransactionWithRetry(callback, 0)
 }
 
-func inTransactionCtx(ctx context.Context, callback dbTransactionFunc) error {
+func inTransactionCtx(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, x, callback, 0)
 }
