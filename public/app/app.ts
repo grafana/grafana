@@ -26,11 +26,11 @@ import {
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import {
-  locationService,
   registerEchoBackend,
   setBackendSrv,
   setDataSourceSrv,
   setEchoSrv,
+  setLocationService,
   setLocationSrv,
   setQueryRunnerFactory,
 } from '@grafana/runtime';
@@ -73,6 +73,7 @@ import { createDataSourceVariableAdapter } from './features/variables/datasource
 import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
+import { HistoryWrapper } from './core/navigation/locationService';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -104,7 +105,11 @@ export class GrafanaApp {
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPanelDataErrorView(PanelDataErrorView);
+
+      const locationService = new HistoryWrapper();
       setLocationSrv(locationService);
+      setLocationService(locationService);
+
       setTimeZoneResolver(() => config.bootData.user.timezone);
       // Important that extension reducers are initialized before store
       addExtensionReducers();

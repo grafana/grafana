@@ -5,6 +5,8 @@
  * @public
  */
 import { UrlQueryMap } from '@grafana/data';
+import { isUndefined } from 'lodash';
+import { isTest } from '../utils/environment';
 
 /**
  * @public
@@ -50,6 +52,10 @@ export interface LocationUpdate {
  */
 export interface LocationSrv {
   update(options: LocationUpdate): void;
+  partial(query: Record<string, any>, replace?: boolean): void;
+  push(location: string): void;
+  replace(location: string): void;
+  reload(): void;
 }
 
 let singletonInstance: LocationSrv;
@@ -61,7 +67,17 @@ let singletonInstance: LocationSrv;
  * @internal
  */
 export function setLocationSrv(instance: LocationSrv) {
-  singletonInstance = instance;
+  if (isUndefined(singletonInstance)) {
+    singletonInstance = instance;
+    return;
+  }
+
+  if (isTest()) {
+    singletonInstance = instance;
+    return;
+  }
+
+  throw new Error(`LocationSrv: should only be set once during Grafana application start.`);
 }
 
 /**
