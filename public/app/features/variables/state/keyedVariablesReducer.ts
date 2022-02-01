@@ -4,12 +4,12 @@ import { getTemplatingReducers, TemplatingState } from './reducers';
 import { variablesInitTransaction } from './transactionReducer';
 import { toStateKey } from '../utils';
 
-export interface DashboardVariablesState {
+export interface KeyedVariablesState {
   lastKey?: string;
   keys: Record<string, TemplatingState>;
 }
 
-export const initialDashboardVariablesState: DashboardVariablesState = { keys: {} };
+export const initialKeyedVariablesState: KeyedVariablesState = { keys: {} };
 
 export interface KeyedAction {
   key: string;
@@ -23,10 +23,7 @@ export function toKeyedAction(key: string, action: PayloadAction<any>): PayloadA
   return keyedAction({ key: keyAsString, action });
 }
 
-export function keyedVariablesReducer(
-  state = initialDashboardVariablesState,
-  outerAction: AnyAction
-): DashboardVariablesState {
+export function keyedVariablesReducer(state = initialKeyedVariablesState, outerAction: AnyAction): KeyedVariablesState {
   if (keyedAction.match(outerAction)) {
     const { key, action } = outerAction.payload;
     const stringKey = toStateKey(key);
@@ -49,5 +46,5 @@ export function keyedVariablesReducer(
 }
 
 export default {
-  dashboardVariables: keyedVariablesReducer,
+  templating: keyedVariablesReducer,
 };

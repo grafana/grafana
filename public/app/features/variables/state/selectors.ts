@@ -34,7 +34,7 @@ function getFilteredDashboardVariables(
 }
 
 export function getDashboardVariablesState(key: string, state: StoreState = getState()): TemplatingState {
-  return state.dashboardVariables.keys[toStateKey(key)] ?? getInitialTemplatingState();
+  return state.templating.keys[toStateKey(key)] ?? getInitialTemplatingState();
 }
 
 export function getDashboardVariables(key: string, state: StoreState = getState()): VariableModel[] {
@@ -71,15 +71,15 @@ export function getDashboardVariablesIsDirty(key: string, state: StoreState = ge
 }
 
 export function getIfExistsLastKey(state: StoreState = getState()): string | undefined {
-  return state.dashboardVariables?.lastKey;
+  return state.templating?.lastKey;
 }
 
 export function getLastKey(state: StoreState = getState()): string {
-  if (!state.dashboardVariables?.lastKey) {
+  if (!state.templating?.lastKey) {
     throw new Error('Accessing lastKey without initializing it variables');
   }
 
-  return state.dashboardVariables.lastKey;
+  return state.templating.lastKey;
 }
 
 // selectors used by template srv, assumes that lastKey is in state. Needs to change when/if dashboard redux state becomes keyed too.

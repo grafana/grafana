@@ -15,7 +15,7 @@ import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 import { DashboardState, StoreState } from '../../../types';
 import { NEW_VARIABLE_ID } from '../constants';
-import { keyedVariablesReducer, DashboardVariablesState } from './keyedVariablesReducer';
+import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 
 export const getVariableState = (
@@ -143,24 +143,24 @@ export const getVariableTestContext = <Model extends VariableModel>(
 export const getRootReducer = () =>
   combineReducers({
     dashboard: dashboardReducer,
-    dashboardVariables: keyedVariablesReducer,
+    templating: keyedVariablesReducer,
   });
 
-export type RootReducerType = { dashboard: DashboardState; dashboardVariables: DashboardVariablesState };
+export type RootReducerType = { dashboard: DashboardState; templating: KeyedVariablesState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
-    dashboardVariables: keyedVariablesReducer,
+    templating: keyedVariablesReducer,
   });
 
-export type TemplatingReducerType = { dashboardVariables: DashboardVariablesState };
+export type TemplatingReducerType = { templating: KeyedVariablesState };
 
 export function getPreloadedState(
   key: string,
   templatingState: Partial<TemplatingState>
-): Pick<StoreState, 'dashboardVariables'> {
+): Pick<StoreState, 'templating'> {
   return {
-    dashboardVariables: {
+    templating: {
       lastKey: key,
       keys: {
         [key]: {

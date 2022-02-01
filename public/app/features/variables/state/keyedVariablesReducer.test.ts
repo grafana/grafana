@@ -1,7 +1,7 @@
 import {
+  initialKeyedVariablesState,
   keyedVariablesReducer,
-  DashboardVariablesState,
-  initialDashboardVariablesState,
+  KeyedVariablesState,
   toKeyedAction,
 } from './keyedVariablesReducer';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -13,9 +13,9 @@ describe('dashboardVariablesReducer', () => {
   describe('when an toUidAction is dispatched', () => {
     it('then state should be correct', () => {
       const key = 'key';
-      reducerTester<DashboardVariablesState>()
+      reducerTester<KeyedVariablesState>()
         .givenReducer(keyedVariablesReducer, {
-          ...initialDashboardVariablesState,
+          ...initialKeyedVariablesState,
           lastKey: key,
           keys: {
             [key]: {
@@ -29,7 +29,7 @@ describe('dashboardVariablesReducer', () => {
         })
         .whenActionIsDispatched(toKeyedAction(key, variablesCompleteTransaction({ uid: key })))
         .thenStateShouldEqual({
-          ...initialDashboardVariablesState,
+          ...initialKeyedVariablesState,
           lastKey: key,
           keys: {
             [key]: {
@@ -49,9 +49,9 @@ describe('dashboardVariablesReducer', () => {
     it('then lastUid property should be correct', () => {
       const lastUid = 'lastUid';
       const key = 'key';
-      reducerTester<DashboardVariablesState>()
+      reducerTester<KeyedVariablesState>()
         .givenReducer(keyedVariablesReducer, {
-          ...initialDashboardVariablesState,
+          ...initialKeyedVariablesState,
           lastKey: lastUid,
           keys: {
             [lastUid]: {
@@ -66,7 +66,7 @@ describe('dashboardVariablesReducer', () => {
         })
         .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
         .thenStateShouldEqual({
-          ...initialDashboardVariablesState,
+          ...initialKeyedVariablesState,
           lastKey: key,
           keys: {
             [key]: {
@@ -93,9 +93,9 @@ describe('dashboardVariablesReducer', () => {
   describe('when action other than toUidAction is dispatched', () => {
     it('then state should not be affected', () => {
       const key = 'key';
-      reducerTester<DashboardVariablesState>()
+      reducerTester<KeyedVariablesState>()
         .givenReducer(keyedVariablesReducer, {
-          ...initialDashboardVariablesState,
+          ...initialKeyedVariablesState,
           lastKey: key,
           keys: {
             [key]: {
@@ -110,7 +110,7 @@ describe('dashboardVariablesReducer', () => {
         })
         .whenActionIsDispatched(variablesInitTransaction({ uid: 'newUid' }))
         .thenStateShouldEqual({
-          ...initialDashboardVariablesState,
+          ...initialKeyedVariablesState,
           lastKey: key,
           keys: {
             [key]: {
