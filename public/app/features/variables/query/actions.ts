@@ -11,13 +11,13 @@ import {
   removeVariableEditorError,
   VariableEditorState,
   updateQueryVariableDatasource,
+  QueryVariableEditorState,
 } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
-import { QueryVariableEditorState } from './reducer';
 import { hasOngoingTransaction } from '../utils';
 
 export const updateQueryVariableOptions = (

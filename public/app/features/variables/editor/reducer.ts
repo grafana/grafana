@@ -13,12 +13,12 @@ export interface VariableEditorState<ExtendedProps extends {} = {}> {
   extended: VariableEditorExtension<ExtendedProps> | null;
 }
 
-interface VariableEditorExtendedProps {
-  dataSource?: DataSourceApi;
+export interface QueryVariableEditorState {
+  dataSource?: DataSourceApi | null;
   VariableQueryEditor?: VariableQueryEditorType;
 }
 
-export const initialVariableEditorState: VariableEditorState<VariableEditorExtendedProps> = {
+export const initialVariableEditorState: VariableEditorState<QueryVariableEditorState> = {
   id: '',
   isValid: true,
   errors: {},
@@ -30,26 +30,26 @@ const variableEditorReducerSlice = createSlice({
   name: 'templating/editor',
   initialState: initialVariableEditorState,
   reducers: {
-    setIdInEditor: (state: VariableEditorState<VariableEditorExtendedProps>, action: PayloadAction<{ id: string }>) => {
+    setIdInEditor: (state: VariableEditorState<QueryVariableEditorState>, action: PayloadAction<{ id: string }>) => {
       state.id = action.payload.id;
     },
-    clearIdInEditor: (state: VariableEditorState<VariableEditorExtendedProps>, action: PayloadAction<undefined>) => {
+    clearIdInEditor: (state: VariableEditorState<QueryVariableEditorState>, action: PayloadAction<undefined>) => {
       state.id = '';
     },
     variableEditorMounted: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<{ name: string }>
     ) => {
       state.name = action.payload.name;
     },
     variableEditorUnMounted: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<VariablePayload>
     ) => {
       return initialVariableEditorState;
     },
     changeVariableNameSucceeded: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<VariablePayload<{ newName: string }>>
     ) => {
       state.name = action.payload.data.newName;
@@ -57,7 +57,7 @@ const variableEditorReducerSlice = createSlice({
       state.isValid = Object.keys(state.errors).length === 0;
     },
     changeVariableNameFailed: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<{ newName: string; errorText: string }>
     ) => {
       state.name = action.payload.newName;
@@ -65,21 +65,21 @@ const variableEditorReducerSlice = createSlice({
       state.isValid = Object.keys(state.errors).length === 0;
     },
     addVariableEditorError: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<{ errorProp: string; errorText: any }>
     ) => {
       state.errors[action.payload.errorProp] = action.payload.errorText;
       state.isValid = Object.keys(state.errors).length === 0;
     },
     removeVariableEditorError: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<{ errorProp: string }>
     ) => {
       delete state.errors[action.payload.errorProp];
       state.isValid = Object.keys(state.errors).length === 0;
     },
     changeVariableEditorExtended: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<{ propName: string; propValue: any }>
     ) => {
       state.extended = {
@@ -88,7 +88,7 @@ const variableEditorReducerSlice = createSlice({
       };
     },
     updateQueryVariableDatasource: (
-      state: VariableEditorState<VariableEditorExtendedProps>,
+      state: VariableEditorState<QueryVariableEditorState>,
       action: PayloadAction<{ datasource: DataSourceApi; queryEditor: VariableQueryEditorType; variable: unknown }>
     ) => {
       if (!state.extended) {
