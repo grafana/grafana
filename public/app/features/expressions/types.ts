@@ -25,18 +25,22 @@ export const reducerTypes: Array<SelectableValue<string>> = [
 ];
 
 export enum ReducerMode {
-  None = '', // backend API wants an empty string to support "none" mode
+  Strict = '', // backend API wants an empty string to support "strict" mode
   ReplaceNonNumbers = 'replaceNN',
   DropNonNumbers = 'dropNN',
 }
 
 export const reducerMode: Array<SelectableValue<ReducerMode>> = [
-  { value: ReducerMode.None, label: 'None', description: 'Do nothing' },
-  { value: ReducerMode.DropNonNumbers, label: 'Drop Non Numbers', description: 'Remove NaN, +/-Inf, null' },
+  {
+    value: ReducerMode.Strict,
+    label: 'Strict',
+    description: 'Use all values of the series to calculate the result',
+  },
+  { value: ReducerMode.DropNonNumbers, label: 'Drop Non Numbers', description: 'Ignore NaN, +/-Inf and null' },
   {
     value: ReducerMode.ReplaceNonNumbers,
-    label: 'Replace Non Numbers ',
-    description: 'Replace NaN, +/-Inf and null with constant value',
+    label: 'Replace Non Numbers',
+    description: 'Replace NaN, +/-Inf and null with a constant value',
   },
 ];
 

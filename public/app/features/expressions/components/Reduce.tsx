@@ -51,8 +51,7 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
     onSettingsChanged({ mode: ReducerMode.ReplaceNonNumbers, replaceWithValue: value ?? 0 });
   };
 
-  //TODO what if unknown mode?
-  const mode = query.settings?.mode ?? ReducerMode.None;
+  const mode = query.settings?.mode ?? ReducerMode.Strict;
 
   const replaceWithNumber = () => {
     if (mode !== ReducerMode.ReplaceNonNumbers) {
