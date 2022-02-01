@@ -38,7 +38,7 @@ export function addAxisConfig(
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
       // no matter what the field type is
-      shouldApply: () => true,
+      shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
     })
     .addNumberInput({
       path: 'axisWidth',
