@@ -168,7 +168,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           .addCustomEditor({
             id: 'config.style',
             path: 'config.style',
-            name: 'Default Style',
+            name: 'Default style',
             description: 'The style to apply when no rules above match',
             editor: StyleEditor,
             settings: {
@@ -180,7 +180,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           .addCustomEditor({
             id: 'config.rules',
             path: 'config.rules',
-            name: 'Style Rules',
+            name: 'Style rules',
             description: 'Apply styles based on feature properties',
             editor: GeomapStyleRulesEditor,
             settings: {
