@@ -158,8 +158,6 @@ const FolderPicker: FC<Props> = ({
         onInputChange={onInputChange}
         components={enableCreateNew && { MenuList: createSelectMenuWithCreateOption(openModal) }}
         menuShouldPortal
-        backspaceRemovesValue={false}
-        isClearable={false}
         tabSelectsValue={false}
       />
       {CreateFolderModal}
@@ -173,16 +171,14 @@ const createSelectMenuWithCreateOption = (onCreateFolder: () => void) => {
     const styles = getStyles(theme);
 
     return (
-      <>
-        <SelectMenu {...props}>
-          {props.children}
-          <div className={styles.menuFooter}>
-            <Button icon="folder-plus" type="button" size="sm" onClick={onCreateFolder} className={styles.createButton}>
-              New folder
-            </Button>
-          </div>
-        </SelectMenu>
-      </>
+      <SelectMenu {...props}>
+        {props.children}
+        <div className={styles.menuFooter}>
+          <Button icon="folder-plus" type="button" size="sm" onClick={onCreateFolder} className={styles.createButton}>
+            New folder
+          </Button>
+        </div>
+      </SelectMenu>
     );
   };
 };
