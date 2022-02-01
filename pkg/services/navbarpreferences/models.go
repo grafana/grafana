@@ -1,13 +1,11 @@
 package navbarpreferences
 
-import "encoding/json"
-
 type NavbarPreference struct {
 	ID             int64  `xorm:"pk autoincr 'id'"`
 	OrgID          int64  `xorm:"org_id"`
 	UserID         int64  `xorm:"user_id"`
 	NavItemID      string `xorm:"nav_item_id"`
-	HideFromNavBar bool   `xorm:"hide_from_navbar"`
+	HideFromNavbar bool   `xorm:"hide_from_navbar"`
 }
 
 type GetNavbarPreferencesQuery struct {
@@ -19,8 +17,15 @@ type GetNavbarPreferencesQuery struct {
 
 // Commands
 
-// CreateNavbarPreference is the command for adding a NavbarPreference 
+// CreateNavbarPreference is the command for adding a NavbarPreference
 type CreateNavbarPreferenceCommand struct {
 	NavItemID      string `json:"navItemId"`
-	HideFromNavBar bool   `json:"hideFromNavbar"`
+	HideFromNavbar bool   `json:"hideFromNavbar"`
+}
+
+// PatchNavbarPreference is the command for updating a NavbarPreference
+// e.g. when showing/hiding a navbar item
+type PatchNavbarPreferenceCommand struct {
+	NavItemID      string `json:"navItemId"`
+	HideFromNavbar bool   `json:"hideFromNavbar"`
 }
