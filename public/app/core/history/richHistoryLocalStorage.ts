@@ -40,7 +40,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 
     if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
       const error = new Error('Entry already exists');
-      error.name = 'DuplicatedEntry';
+      error.name = RichHistoryServiceError.DuplicatedEntry;
       throw error;
     }
 
