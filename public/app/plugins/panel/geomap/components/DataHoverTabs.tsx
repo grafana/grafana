@@ -18,7 +18,7 @@ export const DataHoverTabs = ({ layers, setActiveTabIndex, activeTabIndex }: Pro
             key={index}
             label={g.layer.getName()}
             active={index === activeTabIndex}
-            counter={g.features.length}
+            counter={g.features.length > 1 ? g.features.length : null}
             onChangeTab={() => {
               setActiveTabIndex(index);
             }}
