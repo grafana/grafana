@@ -174,10 +174,6 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 		if len(UID) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		name := libraryPanel.Get("name").MustString()
-		if len(name) == 0 {
-			return errLibraryPanelHeaderNameMissing
-		}
 
 		// keep only the necessary JSON properties, the rest of the properties should be safely stored in library_panels table
 		gridPos := panelAsJSON.Get("gridPos").MustMap()
@@ -186,8 +182,7 @@ func cleanLibraryPanelsRecursively(parent *simplejson.Json) error {
 			"id":      ID,
 			"gridPos": gridPos,
 			"libraryPanel": map[string]interface{}{
-				"uid":  UID,
-				"name": name,
+				"uid": UID,
 			},
 		})
 	}

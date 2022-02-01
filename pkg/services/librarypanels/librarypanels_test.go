@@ -394,8 +394,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 					},
 				},
