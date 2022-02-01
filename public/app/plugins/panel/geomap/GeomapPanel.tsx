@@ -68,6 +68,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
+  ttipOpen?: boolean;
   hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
   readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
 
@@ -312,16 +313,22 @@ export class GeomapPanel extends Component<Props, State> {
     }
   };
 
+  tooltipPopupClosed = () => {
+    this.ttipOpen = false;
+  };
+
   pointerClickListener = (evt: MapBrowserEvent<UIEvent>) => {
     if (this.pointerMoveListener(evt)) {
       evt.preventDefault();
       evt.stopPropagation();
+      this.ttipOpen = true;
       this.setState({ clicked: Date.now() });
     }
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
-    if (!this.map) {
+    if (!this.map || this.ttipOpen) {
+      console.log('skip map move callback');
       return false;
     }
     const mouse = evt.originalEvent as any;
@@ -582,7 +589,7 @@ export class GeomapPanel extends Component<Props, State> {
           <div className={this.style.map} ref={this.initMapRef}></div>
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
-        <GeomapTooltip ttip={ttip} clicked={clicked} />
+        <GeomapTooltip ttip={ttip} clicked={clicked} onClose={this.tooltipPopupClosed} />
       </>
     );
   }
