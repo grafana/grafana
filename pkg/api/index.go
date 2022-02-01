@@ -393,13 +393,10 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		}
 
 		for _, navItem := range navTree {
-			// show everything by default
-			navItem.ShowInNavBar = true
-
 			// override with preference if exists
 			for _, pref := range navbarPref {
 				if navItem.Id == pref.NavItemID {
-					navItem.ShowInNavBar = pref.ShowInNavbar
+					navItem.HideFromNavBar = pref.HideFromNavBar
 				}
 			}
 		}

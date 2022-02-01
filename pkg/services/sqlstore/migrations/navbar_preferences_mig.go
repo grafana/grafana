@@ -10,7 +10,7 @@ func addNavbarPreferencesMigrations(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "user_id", Type: DB_BigInt, Nullable: false},
 			{Name: "nav_item_id", Type: DB_NVarchar, Length: 50, Nullable: false},
-			{Name: "show_in_navbar", Type: DB_Bool, Nullable: false},
+			{Name: "hide_from_navbar", Type: DB_Bool, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id"}},
