@@ -219,7 +219,6 @@ func (p *teamPermissionMigrator) getUserRoleByOrgMapping() (map[int64]map[int64]
 	return userRolesByOrg, nil
 }
 
-// TODO SPLIT
 // migrateMemberships generate managed permissions for users based on their memberships to teams
 func (p *teamPermissionMigrator) migrateMemberships() error {
 	userRolesByOrg, err := p.getUserRoleByOrgMapping()
