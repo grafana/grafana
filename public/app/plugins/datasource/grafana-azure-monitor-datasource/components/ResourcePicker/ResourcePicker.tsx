@@ -69,10 +69,9 @@ const ResourcePicker = ({
               const resourcesForResourceGroup = await resourcePickerData.getResourcesForResourceGroup(resourceGroupURI);
               resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
             }
-
-            setAzureRows(resources);
-            setLoadingStatus('Done');
           }
+          setAzureRows(resources);
+          setLoadingStatus('Done');
         } catch (error) {
           setLoadingStatus('Done');
           setErrorMessage(messageFromError(error));
