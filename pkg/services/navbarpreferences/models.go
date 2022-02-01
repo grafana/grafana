@@ -19,11 +19,8 @@ type GetNavbarPreferencesQuery struct {
 
 // Commands
 
-// CreateLibraryElementCommand is the command for adding a LibraryElement
-type CreateLibraryElementCommand struct {
-	FolderID int64           `json:"folderId"`
-	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model"`
-	Kind     int64           `json:"kind" binding:"Required"`
-	UID      string          `json:"uid"`
+// CreateNavbarPreference is the command for adding a NavbarPreference 
+type CreateNavbarPreferenceCommand struct {
+	NavItemID      string `json:"navItemId"`
+	HideFromNavBar bool   `json:"hideFromNavbar"`
 }
