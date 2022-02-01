@@ -11,14 +11,12 @@ interface Props {
 }
 
 export const GeomapTooltip = (props: Props) => {
-  let { ttip } = props; // changes with each hover
+  let { ttip } = props;
 
-  // copy of the payload when hovering
   const [selectedTTip, setSelectedTTip] = useState<GeomapHoverPayload>();
 
   useEffect(() => {
     setSelectedTTip(ttip ? { ...ttip } : undefined);
-    // Goal is a copy when clicked changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.clicked]);
 

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Collapse, TabContent } from '@grafana/ui';
+import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
+import { FeatureLike } from 'ol/Feature';
 
 import { GeomapLayerHover } from '../event';
 import { DataHoverRow } from './DataHoverRow';
-import { FeatureLike } from 'ol/Feature';
 
 type Props = {
   layers?: GeomapLayerHover[];
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
+  const styles = useStyles2(getStyles);
   const [rowMap, setRowMap] = useState(new Map<string | number, boolean>());
 
   const updateRowMap = (key: string | number, value: boolean) => {
@@ -37,6 +40,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                       onToggle={() => {
                         updateRowMap(key, !rowMap.get(key));
                       }}
+                      className={styles.collapsibleRow}
                     >
                       <DataHoverRow feature={feature} />
                     </Collapse>
@@ -64,3 +68,9 @@ export const generateLabel = (feature: FeatureLike): string => {
 
   return label;
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  collapsibleRow: css`
+    margin-bottom: 0px;
+  `,
+});
