@@ -108,7 +108,6 @@ func (mg *Migrator) Start() (err error) {
 			if unlockErr != nil {
 				mg.Logger.Error("Failed to unlock database", "error", unlockErr)
 			}
-			sess.Close()
 		}()
 
 		// migration will run inside a nested transaction
