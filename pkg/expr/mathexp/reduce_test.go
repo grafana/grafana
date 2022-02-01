@@ -228,6 +228,19 @@ func TestSeriesReduce(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "last null series",
+			red:         "last",
+			varToReduce: "A",
+			vars:        seriesWithNil,
+			errIs:       require.NoError,
+			resultsIs:   require.Equal,
+			results: Results{
+				[]Value{
+					makeNumber("", nil, nil),
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

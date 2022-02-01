@@ -78,9 +78,7 @@ func Last(fv *Float64Field) *float64 {
 		f = math.NaN()
 		return &f
 	}
-	v := fv.GetValue(fv.Len() - 1)
-	f = *v
-	return &f
+	return fv.GetValue(fv.Len() - 1)
 }
 
 func GetReduceFunc(rFunc string) (ReducerFunc, error) {
