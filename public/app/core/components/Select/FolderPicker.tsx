@@ -1,19 +1,19 @@
 import React, { FC, useCallback, useState } from 'react';
-import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AsyncSelect, Button, InlineField, InlineFieldRow, Input, useTheme2 } from '@grafana/ui';
-import { useAsync, useAsyncFn } from 'react-use';
+import { AsyncSelect, Button, useTheme2 } from '@grafana/ui';
+import { useAsync } from 'react-use';
 import debounce from 'debounce-promise';
 
-import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
-import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+import { getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { PermissionLevelString } from '../../../types';
 import { MenuListProps } from 'react-select';
 import { SelectMenu } from '@grafana/ui/src/components/Select/SelectMenu';
 import { css } from '@emotion/css';
+import { useCreateFolderModal } from './FolderPickerCreateModal';
 
-type SelectedFolder = SelectableValue<number>;
+export type SelectedFolder = SelectableValue<number>;
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -52,6 +52,7 @@ const FolderPicker: FC<Props> = ({
   onChange,
 }) => {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
+  const [inputValue, setInputValue] = useState<string>('');
 
   const onFolderChange = useCallback(
     (newFolder: SelectedFolder) => {
@@ -60,6 +61,12 @@ const FolderPicker: FC<Props> = ({
     },
     [onChange, rootName]
   );
+
+  const { CreateFolderModal, openModal } = useCreateFolderModal({ onFolderChange, defaultFolderName: inputValue });
+
+  const onInputChange = useCallback((value: string) => {
+    setInputValue(value);
+  }, []);
 
   const getOptions = useCallback(
     async (query: string) => {
@@ -148,72 +155,36 @@ const FolderPicker: FC<Props> = ({
         value={folder}
         loadOptions={debouncedSearch}
         onChange={onFolderChange}
-        components={enableCreateNew && { MenuList: SelectMenuWithCreate }}
+        onInputChange={onInputChange}
+        components={enableCreateNew && { MenuList: createSelectMenuWithCreateOption(openModal) }}
         menuShouldPortal
         backspaceRemovesValue={false}
         isClearable={false}
         tabSelectsValue={false}
       />
+      {CreateFolderModal}
     </div>
   );
 };
 
-export { FolderPicker };
+const createSelectMenuWithCreateOption = (onCreateFolder: () => void) => {
+  return function SelectMenuWithCreate(props: MenuListProps<SelectedFolder, false>) {
+    const theme = useTheme2();
+    const styles = getStyles(theme);
 
-const SelectMenuWithCreate = (props: MenuListProps<SelectedFolder, false>) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-
-  const [editMode, setEditMode] = useState<boolean>(false);
-
-  const toggleEditMode = useCallback(() => {
-    setEditMode((mode) => !mode);
-  }, []);
-
-  const [{ loading }, handleCreateFolder] = useAsyncFn(
-    async (title: string) => {
-      const newFolder = await createFolder({ title });
-      let folder = { value: -1, label: 'Not created' };
-
-      if (newFolder.id > -1) {
-        appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
-        folder = { value: newFolder.id, label: newFolder.title };
-        onFolderChange(folder); // TODO hook up this function
-      } else {
-        appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
-      }
-
-      return folder;
-
-      toggleEditMode();
-    },
-    [toggleEditMode]
-  );
-
-  return (
-    <SelectMenu {...props}>
-      {props.children}
-      <div className={styles.menuFooter}>
-        {!editMode && (
-          <Button icon="folder-plus" type="button" size="sm" onClick={toggleEditMode} className={styles.createButton}>
-            New folder
-          </Button>
-        )}
-        {/* {editMode && (
-          <InlineFieldRow>
-            <InlineField>
-              <Input name="folder-name" placeholder="Folder name" />
-            </InlineField>
-            <InlineField>
-              <Button disabled={loading} size="sm" type="button" onClick={() => handleCreateFolder('test')}>
-                Create folder
-              </Button>
-            </InlineField>
-          </InlineFieldRow>
-        )} */}
-      </div>
-    </SelectMenu>
-  );
+    return (
+      <>
+        <SelectMenu {...props}>
+          {props.children}
+          <div className={styles.menuFooter}>
+            <Button icon="folder-plus" type="button" size="sm" onClick={onCreateFolder} className={styles.createButton}>
+              New folder
+            </Button>
+          </div>
+        </SelectMenu>
+      </>
+    );
+  };
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -247,3 +218,5 @@ export async function getInitialValues({ folderName, folderId, getFolder }: Args
   const folderDto = await getFolder(folderId);
   return { label: folderDto.title, value: folderId };
 }
+
+export { FolderPicker };
