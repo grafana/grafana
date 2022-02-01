@@ -95,16 +95,21 @@ func (p *Provider) configureAzureAuthentication(opts sdkhttpclient.Options) erro
 	if err != nil {
 		err = fmt.Errorf("invalid Azure credentials: %s", err)
 		return err
-	} else if credentials != nil {
+	}
+
+	if credentials != nil {
 		opts.CustomOptions["_azureCredentials"] = credentials
 
 		resourceId, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
 		if err != nil {
 			return err
-		} else if resourceId != "" {
+		}
+
+		if resourceId != "" {
 			opts.CustomOptions["azureEndpointResourceId"] = resourceId
 		}
 	}
+
 	return nil
 }
 
