@@ -35,6 +35,9 @@ export const Components = {
         startValue: 'TestData start value',
       },
     },
+    DataSourceHttpSettings: {
+      urlInput: 'Datasource HTTP settings url',
+    },
     Jaeger: {
       traceIDInput: 'Trace ID',
     },
