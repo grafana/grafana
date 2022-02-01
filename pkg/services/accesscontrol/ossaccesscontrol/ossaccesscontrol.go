@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -105,7 +106,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 		OrgID:   user.OrgId,
 		UserID:  user.UserId,
 		Roles:   ac.GetUserBuiltInRoles(user),
-		Actions: []string{},
+		Actions: resourceservices.TeamAdminActions,
 	})
 	if err != nil {
 		return nil, err
