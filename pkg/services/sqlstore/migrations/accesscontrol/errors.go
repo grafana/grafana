@@ -9,7 +9,7 @@ type ErrUnknownRole struct {
 }
 
 func (e *ErrUnknownRole) Error() string {
-	return fmt.Sprintf("%v:Unable to find role in map: %s", ErrAddTeamMembershipMigrations, e.key)
+	return fmt.Sprintf("%v: Unable to find role in map: %s", ErrAddTeamMembershipMigrations, e.key)
 }
 
 func (e *ErrUnknownRole) Unwrap() error {
