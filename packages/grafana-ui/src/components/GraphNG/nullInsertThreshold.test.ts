@@ -1,5 +1,5 @@
 import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
-import { nullInsertThreshold } from './nullInsertThreshold';
+import { applyNullInsertThreshold } from './nullInsertThreshold';
 
 function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -46,41 +46,41 @@ function genFrame() {
 }
 
 describe('nullInsertThreshold Transformer', () => {
-  test('should insert nulls at midpoints between adjacent > threshold: 1', () => {
+  test('should insert nulls at +threshold between adjacent > threshold: 1', () => {
     const df = new MutableDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1, 3, 10] },
-        { name: 'One', type: FieldType.number, values: [4, 6, 8] },
-        { name: 'Two', type: FieldType.string, values: ['a', 'b', 'c'] },
+        { name: 'One', type: FieldType.number, config: { custom: { insertNulls: 1 } }, values: [4, 6, 8] },
+        { name: 'Two', type: FieldType.string, config: { custom: { insertNulls: 1 } }, values: ['a', 'b', 'c'] },
       ],
     });
 
-    const result = nullInsertThreshold(df, 1);
+    const result = applyNullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
   });
 
-  test('should insert nulls at midpoints between adjacent > threshold: 2', () => {
+  test('should insert nulls at +threshold between adjacent > threshold: 2', () => {
     const df = new MutableDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [5, 7, 11] },
-        { name: 'One', type: FieldType.number, values: [4, 6, 8] },
-        { name: 'Two', type: FieldType.string, values: ['a', 'b', 'c'] },
+        { name: 'One', type: FieldType.number, config: { custom: { insertNulls: 2 } }, values: [4, 6, 8] },
+        { name: 'Two', type: FieldType.string, config: { custom: { insertNulls: 2 } }, values: ['a', 'b', 'c'] },
       ],
     });
 
-    const result = nullInsertThreshold(df, 2);
+    const result = applyNullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
   });
 
-  test('should insert nulls at midpoints between adjacent > interval', () => {
+  test('should insert nulls at +interval between adjacent > interval: 1', () => {
     const df = new MutableDataFrame({
       refId: 'A',
       fields: [
@@ -90,9 +90,27 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = nullInsertThreshold(df);
+    const result = applyNullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
+    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
+  });
+
+  // TODO: make this work
+  test.skip('should insert nulls at +threshold (when defined) instead of +interval', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 2 }, values: [5, 7, 11] },
+        { name: 'One', type: FieldType.number, config: { custom: { insertNulls: 1 } }, values: [4, 6, 8] },
+        { name: 'Two', type: FieldType.string, config: { custom: { insertNulls: 1 } }, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const result = applyNullInsertThreshold(df);
+
+    expect(result.fields[0].values.toArray()).toStrictEqual([5, 6, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
   });
@@ -107,7 +125,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = nullInsertThreshold(df, 2);
+    const result = applyNullInsertThreshold(df);
 
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
@@ -123,7 +141,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = nullInsertThreshold(df);
+    const result = applyNullInsertThreshold(df);
 
     expect(result).toBe(df);
   });
@@ -133,11 +151,11 @@ describe('nullInsertThreshold Transformer', () => {
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1, 2, 4] },
-        { name: 'Value', type: FieldType.number, values: [1, 1, 1] },
+        { name: 'Value', type: FieldType.number, config: { custom: { insertNulls: -1 } }, values: [1, 1, 1] },
       ],
     });
 
-    const result = nullInsertThreshold(df, -1);
+    const result = applyNullInsertThreshold(df);
 
     expect(result).toBe(df);
   });
@@ -151,7 +169,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = nullInsertThreshold(df);
+    const result = applyNullInsertThreshold(df);
 
     expect(result).toBe(df);
   });
@@ -165,7 +183,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = nullInsertThreshold(df);
+    const result = applyNullInsertThreshold(df);
 
     expect(result).toBe(df);
   });
@@ -179,7 +197,7 @@ describe('nullInsertThreshold Transformer', () => {
       ],
     });
 
-    const result = nullInsertThreshold(df, null, 'Time2');
+    const result = applyNullInsertThreshold(df, 'Time2');
 
     expect(result).toBe(df);
   });
@@ -190,7 +208,7 @@ describe('nullInsertThreshold Transformer', () => {
 
     // eslint-disable-next-line no-console
     console.time('insertValues-10x3k');
-    nullInsertThreshold(bigFrameA);
+    applyNullInsertThreshold(bigFrameA);
     // eslint-disable-next-line no-console
     console.timeEnd('insertValues-10x3k');
   });

@@ -9,9 +9,8 @@ const INSERT_MODES = {
 
 type InsertMode = keyof typeof INSERT_MODES;
 
-export function nullInsertThreshold(
+export function applyNullInsertThreshold(
   frame: DataFrame,
-  threshold?: number | null,
   refFieldName?: string | null,
   insertMode: InsertMode = 'threshold'
 ): DataFrame {
@@ -28,19 +27,58 @@ export function nullInsertThreshold(
     return frame;
   }
 
-  const getInsertValue = INSERT_MODES[insertMode];
+  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
 
-  if (threshold == null) {
-    threshold = refField.config.interval ?? 0;
-  }
+  const uniqueThresholds = new Set(thresholds);
 
-  if (threshold <= 0) {
+  uniqueThresholds.delete(null);
+
+  if (uniqueThresholds.size === 0) {
+    return frame;
+  } else if (uniqueThresholds.size === 1) {
+    const threshold = [...uniqueThresholds][0];
+
+    if (threshold <= 0) {
+      return frame;
+    }
+
+    const refValues = refField.values.toArray();
+
+    const frameValues = frame.fields.map((field) => field.values.toArray());
+
+    const filledFieldValues = nullInsertThreshold(refValues, frameValues, threshold, insertMode);
+
+    if (filledFieldValues === frameValues) {
+      return frame;
+    }
+
+    const outFrame: DataFrame = {
+      ...frame,
+      length: filledFieldValues[0].length,
+      fields: frame.fields.map((field, i) => ({
+        ...field,
+        values: new ArrayVector(filledFieldValues[i]),
+      })),
+    };
+
+    return outFrame;
+  } else {
+    // TODO: unique threshold-per-field (via overrides) is unimplemented
+    // should be done by processing each (refField + thresholdA-field1 + thresholdA-field2...)
+    // as a separate nullInsertThreshold() dataset, then re-join into single dataset via join()
     return frame;
   }
+}
 
-  const refValues = refField.values.toArray();
+export function nullInsertThreshold(
+  refValues: number[],
+  frameValues: any[][],
+  threshold: number,
+  insertMode: InsertMode
+) {
+  const getInsertValue = INSERT_MODES[insertMode];
+
   const len = refValues.length;
-
   let prevValue: number = refValues[0];
   const refValuesNew: number[] = [prevValue];
 
@@ -59,18 +97,16 @@ export function nullInsertThreshold(
   const filledLen = refValuesNew.length;
 
   if (filledLen === len) {
-    return frame;
+    return frameValues;
   }
 
   const filledFieldValues: any[][] = [];
 
-  for (let field of frame.fields) {
+  for (let fieldValues of frameValues) {
     let filledValues;
 
-    if (field !== refField) {
+    if (fieldValues !== refValues) {
       filledValues = Array(filledLen);
-
-      const fieldValues = field.values.toArray();
 
       for (let i = 0, j = 0; i < filledLen; i++) {
         filledValues[i] = refValues[j] === refValuesNew[i] ? fieldValues[j++] : null;
@@ -82,14 +118,5 @@ export function nullInsertThreshold(
     filledFieldValues.push(filledValues);
   }
 
-  const outFrame: DataFrame = {
-    ...frame,
-    length: filledLen,
-    fields: frame.fields.map((field, i) => ({
-      ...field,
-      values: new ArrayVector(filledFieldValues[i]),
-    })),
-  };
-
-  return outFrame;
+  return filledFieldValues;
 }
