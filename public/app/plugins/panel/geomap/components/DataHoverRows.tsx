@@ -45,7 +45,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                       <DataHoverRow feature={feature} />
                     </Collapse>
                   ) : (
-                    <DataHoverRow feature={feature} />
+                    <DataHoverRow key={key} feature={feature} />
                   );
                 })}
               </div>
