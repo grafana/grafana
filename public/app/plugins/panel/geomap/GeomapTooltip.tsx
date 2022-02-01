@@ -16,15 +16,12 @@ export const GeomapTooltip = (props: Props) => {
 
   const [selectedTTip, setSelectedTTip] = useState<GeomapHoverPayload>();
 
-  console.log('GeomapTooltip', props);
-
   useEffect(() => {
     setSelectedTTip(ttip ? { ...ttip } : undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.clicked]);
 
   const onClose = () => {
-    console.log('closing geomap tooltip');
     setSelectedTTip(undefined);
     props.onClose();
   };
@@ -42,7 +39,7 @@ export const GeomapTooltip = (props: Props) => {
       {ttip && ttip.layers && (
         <section ref={ref} {...overlayProps}>
           <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
-            <ComplexDataHoverView {...ttip} />
+            <ComplexDataHoverView {...ttip} onClose={onClose} />
           </VizTooltipContainer>
         </section>
       )}
