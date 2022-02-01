@@ -608,5 +608,5 @@ func filterDatasourcesByQueryPermission(ctx context.Context, user *models.Signed
 		return datasources, nil
 	}
 
-	return query.Datasources, nil
+	return query.Result, nil
 }
