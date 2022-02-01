@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -94,6 +93,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
@@ -103,6 +103,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
@@ -112,6 +113,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
@@ -121,6 +123,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Delete(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
@@ -130,6 +133,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
@@ -139,6 +143,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules",
@@ -148,6 +153,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
@@ -157,6 +163,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
@@ -166,6 +173,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
@@ -175,6 +183,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/{Recipient}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/{Recipient}/api/v1/rules",
@@ -184,6 +193,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
@@ -193,6 +203,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 		)
 		group.Post(
 			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
@@ -200,5 +211,5 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 				m,
 			),
 		)
-	}, middleware.ReqSignedIn)
+	})
 }

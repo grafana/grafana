@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -178,6 +177,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silences"),
+			api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/api/v2/silences",
@@ -187,6 +187,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
+			api.authorize(http.MethodPost, "/api/alertmanager/{Recipient}/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/silences",
@@ -196,6 +197,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
+			api.authorize(http.MethodDelete, "/api/alertmanager/{Recipient}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
@@ -205,6 +207,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			api.authorize(http.MethodDelete, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alertmanager/grafana/config/api/v1/alerts",
@@ -214,6 +217,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
+			api.authorize(http.MethodDelete, "/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alertmanager/grafana/api/v2/silence/{SilenceId}",
@@ -223,6 +227,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Delete(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"),
+			api.authorize(http.MethodDelete, "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}",
@@ -232,6 +237,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts/groups"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{Recipient}/api/v2/alerts/groups"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/alerts/groups",
@@ -241,6 +247,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{Recipient}/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
@@ -250,6 +257,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/status"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{Recipient}/api/v2/status"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/status",
@@ -259,6 +267,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{Recipient}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
@@ -268,6 +277,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts/groups"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/alerts/groups"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/grafana/api/v2/alerts/groups",
@@ -277,6 +287,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/grafana/api/v2/alerts",
@@ -286,6 +297,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/status"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/status"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/grafana/api/v2/status",
@@ -295,6 +307,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/grafana/config/api/v1/alerts",
@@ -304,6 +317,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/grafana/api/v2/silence/{SilenceId}",
@@ -313,6 +327,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/silences"),
+			api.authorize(http.MethodGet, "/api/alertmanager/grafana/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/grafana/api/v2/silences",
@@ -322,6 +337,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}",
@@ -331,6 +347,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Get(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"),
+			api.authorize(http.MethodGet, "/api/alertmanager/{Recipient}/api/v2/silences"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/silences",
@@ -340,6 +357,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"),
+			api.authorize(http.MethodPost, "/api/alertmanager/{Recipient}/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
@@ -349,6 +367,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"),
+			api.authorize(http.MethodPost, "/api/alertmanager/{Recipient}/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/alerts",
@@ -358,6 +377,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/api/v2/alerts"),
+			api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/api/v2/alerts",
@@ -367,6 +387,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/config/api/v1/alerts",
@@ -376,6 +397,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/grafana/config/api/v1/receivers/test"),
+			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/receivers/test"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/grafana/config/api/v1/receivers/test",
@@ -385,6 +407,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 		)
 		group.Post(
 			toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/receivers/test"),
+			api.authorize(http.MethodPost, "/api/alertmanager/{Recipient}/config/api/v1/receivers/test"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/alertmanager/{Recipient}/config/api/v1/receivers/test",
@@ -392,5 +415,5 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiForkingServi
 				m,
 			),
 		)
-	}, middleware.ReqSignedIn)
+	})
 }

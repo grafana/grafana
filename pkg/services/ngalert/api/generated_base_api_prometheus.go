@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
@@ -44,6 +43,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"),
+			api.authorize(http.MethodGet, "/api/prometheus/{Recipient}/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/{Recipient}/api/v1/alerts",
@@ -53,6 +53,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/grafana/api/v1/alerts"),
+			api.authorize(http.MethodGet, "/api/prometheus/grafana/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/grafana/api/v1/alerts",
@@ -62,6 +63,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/grafana/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/prometheus/grafana/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/grafana/api/v1/rules",
@@ -71,6 +73,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/prometheus/{Recipient}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/{Recipient}/api/v1/rules",
@@ -78,5 +81,5 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 				m,
 			),
 		)
-	}, middleware.ReqSignedIn)
+	})
 }
