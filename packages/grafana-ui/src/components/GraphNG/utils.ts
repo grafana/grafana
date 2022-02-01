@@ -33,13 +33,13 @@ function applySpanNullsThresholds(frame: DataFrame) {
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
   let alignedFrame = outerJoinDataFrames({
-    frames: frames,
+    frames: frames.map((frame) => nullInsertThreshold(frame)),
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,
   });
 
-  return alignedFrame && applySpanNullsThresholds(nullInsertThreshold(alignedFrame));
+  return alignedFrame && applySpanNullsThresholds(alignedFrame);
 }
 
 export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
