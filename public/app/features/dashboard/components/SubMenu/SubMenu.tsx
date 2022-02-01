@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { getDashboardSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
+import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
@@ -68,7 +68,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   const { uid } = ownProps.dashboard;
   const templatingState = getVariablesState(uid, state);
   return {
-    variables: getDashboardSubMenuVariables(uid, templatingState.variables),
+    variables: getSubMenuVariables(uid, templatingState.variables),
   };
 };
 

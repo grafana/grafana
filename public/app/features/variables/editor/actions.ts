@@ -1,10 +1,5 @@
 import { ThunkResult } from '../../../types';
-import {
-  getDashboardEditorVariables,
-  getNewDashboardVariableIndex,
-  getVariable,
-  getVariablesByKey,
-} from '../state/selectors';
+import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -102,7 +97,7 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
   const id = getNextAvailableId(type, getVariablesByKey(key, getState()));
   const identifier = { type, id, stateKey: key };
   const global = false;
-  const index = getNewDashboardVariableIndex(key, getState());
+  const index = getNewVariableIndex(key, getState());
   const model = cloneDeep(variableAdapters.get(type).initialState);
   model.id = id;
   model.name = id;
@@ -126,7 +121,7 @@ export const switchToEditMode = (identifier: KeyedVariableIdentifier): ThunkResu
 export const switchToListMode = (uid: string): ThunkResult<void> => (dispatch, getState) => {
   dispatch(toKeyedAction(uid, clearIdInEditor()));
   const state = getState();
-  const variables = getDashboardEditorVariables(uid, state);
+  const variables = getEditorVariables(uid, state);
   const dashboard = state.dashboard.getModel();
   const { usages } = createUsagesNetwork(variables, dashboard);
   const usagesNetwork = transformUsagesToNetwork(usages);

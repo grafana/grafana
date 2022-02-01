@@ -3,7 +3,7 @@ import { StoreState, ThunkResult } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
-import { getLastKey, getNewDashboardVariableIndex, getVariable, getVariablesState } from '../state/selectors';
+import { getLastKey, getNewVariableIndex, getVariable, getVariablesState } from '../state/selectors';
 import { AddVariable, KeyedVariableIdentifier } from '../state/types';
 import {
   AdHocVariabelFilterUpdate,
@@ -174,7 +174,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
     };
 
     const global = false;
-    const index = getNewDashboardVariableIndex(key, getState());
+    const index = getNewVariableIndex(key, getState());
     const identifier: KeyedVariableIdentifier = { type: 'adhoc', id: model.id, stateKey: key };
 
     dispatch(

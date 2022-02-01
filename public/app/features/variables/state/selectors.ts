@@ -41,23 +41,23 @@ export function getVariablesByKey(key: string, state: StoreState = getState()): 
   return getFilteredVariablesByKey(defaultVariablesFilter, key, state);
 }
 
-export function defaultVariablesFilter(variable: VariableModel): boolean {
+function defaultVariablesFilter(variable: VariableModel): boolean {
   return variable.type !== 'system';
 }
 
-export const getDashboardSubMenuVariables = memoizeOne(
+export const getSubMenuVariables = memoizeOne(
   (key: string, variables: Record<string, VariableModel>): VariableModel[] => {
     return getVariablesByKey(key, getState());
   }
 );
 
-export const getDashboardEditorVariables = (key: string, state: StoreState): VariableModel[] => {
+export const getEditorVariables = (key: string, state: StoreState): VariableModel[] => {
   return getVariablesByKey(key, state);
 };
 
 export type GetVariables = typeof getVariablesByKey;
 
-export function getNewDashboardVariableIndex(key: string, state: StoreState = getState()): number {
+export function getNewVariableIndex(key: string, state: StoreState = getState()): number {
   return getNextVariableIndex(Object.values(getVariablesState(key, state).variables));
 }
 
@@ -66,7 +66,7 @@ export function getNextVariableIndex(variables: VariableModel[]): number {
   return sorted.length > 0 ? sorted[sorted.length - 1].index + 1 : 0;
 }
 
-export function getDashboardVariablesIsDirty(key: string, state: StoreState = getState()): boolean {
+export function getVariablesIsDirty(key: string, state: StoreState = getState()): boolean {
   return getVariablesState(key, state).transaction.isDirty;
 }
 
