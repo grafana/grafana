@@ -16,7 +16,7 @@ export interface Props {
   /** @deprecated no longer used */
   iconTooltip?: string;
   /** Title for the modal or custom header element */
-  title?: string | JSX.Element;
+  title: string | JSX.Element;
   className?: string;
   contentClassName?: string;
   closeOnEscape?: boolean;

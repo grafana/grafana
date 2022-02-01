@@ -1,6 +1,6 @@
 import React, { HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, IconButton, LinkButton, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 type ComponentSize = 'sm' | 'md';
@@ -8,15 +8,14 @@ type ComponentSize = 'sm' | 'md';
 export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
   text: string;
   size?: ComponentSize;
-  onDismiss?: () => void;
 }
 
-export const UpgradeBox = ({ text, className, size = 'md', onDismiss, ...htmlProps }: Props) => {
+export const UpgradeBox = ({ text, className, size = 'md', ...htmlProps }: Props) => {
   const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
 
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>
-      <Icon name={'arrow-up'} className={styles.proIcon} />
+      <Icon name={'arrow-up'} className={styles.icon} />
       <div className={styles.content}>
         <h6>You’ve found a Pro feature!</h6>
         <p className={styles.text}>{text}</p>
@@ -31,16 +30,6 @@ export const UpgradeBox = ({ text, className, size = 'md', onDismiss, ...htmlPro
           Upgrade to Pro
         </LinkButton>
       </div>
-      {onDismiss && (
-        <IconButton
-          aria-label="Close highlight"
-          surface="header"
-          name="times"
-          size="xl"
-          onClick={onDismiss}
-          className={styles.closeIcon}
-        />
-      )}
     </div>
   );
 };
@@ -74,17 +63,13 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
         outline: 2px solid ${theme.colors.primary.main};
       }
     `,
-    proIcon: css`
+    icon: css`
       border: 1px solid ${theme.colors.primary.shade};
       border-radius: 50%;
       margin: ${theme.spacing(0.5, 1, 0.5, 0.5)};
     `,
     content: css`
       flex: 1;
-    `,
-    closeIcon: css`
-      color: ${theme.colors.primary.text};
-      margin: ${theme.spacing(0.5, 1, 0.5, 0.5)};
     `,
   };
 };

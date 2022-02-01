@@ -29,7 +29,7 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ToolbarButtonVariant;
   /** Hide any children and only show icon */
   iconOnly?: boolean;
-  /** Show highlight dit */
+  /** Show highlight dot */
   isHighlighted?: boolean;
 }
 
@@ -87,7 +87,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
         {isOpen === true && <Icon name="angle-up" />}
-        {isHighlighted === true && <div className={styles.highlight} />}
+        {isHighlighted && <div className={styles.highlight} />}
       </button>
     );
 
