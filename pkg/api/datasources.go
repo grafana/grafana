@@ -256,13 +256,9 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	})
 }
 
-func validateURL(tp string, u string) response.Response {
-	if u != "" {
-		if _, err := datasource.ValidateURL(tp, u); err != nil {
-			datasourcesLogger.Error("Received invalid data source URL as part of data source command",
-				"url", u)
-			return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
-		}
+func validateURL(cmdType string, url string) response.Response {
+	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
+		return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", url), err)
 	}
 
 	return nil
@@ -274,10 +270,13 @@ func AddDataSource(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
-	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
-		return resp
+	if cmd.Url != "" {
+		if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
+			return resp
+		}
 	}
 
 	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
@@ -306,8 +305,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	var err error
-	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
+	if cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64); err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {

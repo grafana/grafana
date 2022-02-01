@@ -330,7 +330,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, &dtos.NavLink{
 			Id:           "live",
 			Text:         "Live",
-			SubTitle:     "Event Streaming",
+			SubTitle:     "Event streaming",
 			Icon:         "exchange-alt",
 			Url:          hs.Cfg.AppSubURL + "/live",
 			Children:     liveNavLinks,
@@ -425,11 +425,11 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
 		})
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true,
+			Text: "New dashboard", Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "new-dashboard",
 		})
 		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
 			dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder",
+				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "new-folder",
 				Icon: "plus", Url: hs.Cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true,
 			})
 		}
@@ -478,7 +478,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	var children []*dtos.NavLink
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
-		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new"})
+		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new", Id: "create-dashboard"})
 	}
 
 	if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(ac.ActionFoldersCreate)) {
@@ -621,8 +621,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
 		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       hs.updateChecker.LatestGrafanaVersion(),
-		NewGrafanaVersionExists: hs.updateChecker.GrafanaUpdateAvailable(),
+		NewGrafanaVersion:       hs.grafanaUpdateChecker.LatestVersion(),
+		NewGrafanaVersionExists: hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        "app-grafana",
 		FavIcon:                 "public/img/fav32.png",
