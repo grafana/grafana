@@ -95,7 +95,7 @@ func (p *teamPermissionMigrator) bulkCreateRoles(allRoles []*accesscontrol.Role)
 	allCreatedRoles := make([]*accesscontrol.Role, 0, len(allRoles))
 
 	createRoles := p.createRoles
-	if p.dialect.DriverName() == "mysql" {
+	if p.dialect.DriverName() == migrator.MySQL {
 		createRoles = p.createRolesMySQL
 	}
 
