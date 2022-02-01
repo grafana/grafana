@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { stylesFactory } from '@grafana/ui';
+import React from 'react';
+import { useStyles2 } from '@grafana/ui';
 import {
   arrayUtils,
   DataFrame,
@@ -9,11 +9,9 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { config } from 'app/core/config';
 import { SortOrder } from '@grafana/schema';
+
 import { GeomapLayerHover } from '../event';
-import { DataHoverTabs } from './DataHoverTabs';
-import { DataHoverCollapsibleRows } from './DataHoverCollapsableRows';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -23,23 +21,8 @@ export interface Props {
   sortOrder?: SortOrder;
 }
 
-export const DataHoverView = (props: Props) => {
-  const style = getStyles(config.theme2);
-
-  const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
-  console.log(activeTabIndex, 'what is this?');
-
-  const { layers, columnIndex, sortOrder } = props;
-  if (layers) {
-    return (
-      <>
-        <DataHoverTabs layers={layers} setActiveTabIndex={setActiveTabIndex} activeTabIndex={activeTabIndex} />
-        <DataHoverCollapsibleRows layers={layers} activeTabIndex={activeTabIndex} />
-      </>
-    );
-  }
-
-  let { data, rowIndex } = props;
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props) => {
+  const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
     return null;
@@ -64,10 +47,10 @@ export const DataHoverView = (props: Props) => {
   }
 
   return (
-    <table className={style.infoWrap}>
+    <table className={styles.infoWrap}>
       <tbody>
         {displayValues.map((v, i) => (
-          <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? style.highlight : ''}>
+          <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
             <th>{v[0]}:</th>
             <td>{v[2]}</td>
           </tr>
@@ -85,7 +68,7 @@ function fmt(field: Field, row: number): string {
   return `${v}`;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   infoWrap: css`
     padding: 8px;
     th {
@@ -96,4 +79,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   highlight: css`
     background: ${theme.colors.action.hover};
   `,
-}));
+});

@@ -2,7 +2,7 @@ import { Portal, VizTooltipContainer } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { createRef, useEffect, useState } from 'react';
-import { DataHoverView } from './components/DataHoverView';
+import { ComplexDataHoverView } from './components/ComplexDataHoverView';
 import { GeomapHoverPayload } from './event';
 
 interface Props {
@@ -28,7 +28,7 @@ export const GeomapTooltip = (props: Props) => {
   };
 
   const ref = createRef<HTMLElement>();
-  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: !!selectedTTip }, ref);
+  const { overlayProps } = useOverlay({ onClose, isDismissable: false, isOpen: !!selectedTTip }, ref);
 
   // pin the selected one
   if (selectedTTip) {
@@ -41,7 +41,7 @@ export const GeomapTooltip = (props: Props) => {
         <FocusScope contain autoFocus restoreFocus>
           <section ref={ref} {...overlayProps}>
             <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
-              <DataHoverView {...ttip} />
+              <ComplexDataHoverView {...ttip} />
             </VizTooltipContainer>
           </section>
         </FocusScope>
