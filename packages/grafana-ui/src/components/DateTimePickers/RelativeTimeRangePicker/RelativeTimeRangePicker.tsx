@@ -156,16 +156,31 @@ const TooltipContent = () => {
   const styles = useStyles2(toolTipStyles);
   return (
     <>
-      <div>Supported formats</div>
-      <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code> <div>Example: now-3h</div>
-      <p>Using a relative time in the future is not supported, eg. now+1h</p>
+      <div className={styles.supported}>
+        Supported formats: <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
+      </div>
+      <div>Example: to select a time range from 10 minutes ago to now</div>
+      <code className={styles.tooltip}>From: now-10m To: now</code>
+      <p className={styles.link}>
+        For more information see{' '}
+        <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
+          docs <Icon name="external-link-alt" />
+        </a>
+        .
+      </p>
     </>
   );
 };
 
-const toolTipStyles = () => ({
+const toolTipStyles = (theme: GrafanaTheme2) => ({
+  supported: css`
+    margin-bottom: ${theme.spacing(1)};
+  `,
   tooltip: css`
     margin: 0;
+  `,
+  link: css`
+    margin-top: ${theme.spacing(1)};
   `,
 });
 
