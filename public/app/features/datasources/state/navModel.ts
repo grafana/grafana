@@ -39,7 +39,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     }
   }
 
-  if (pluginMeta.includes && hasDashboards(pluginMeta.includes)) {
+  if (pluginMeta.includes && hasDashboards(pluginMeta.includes) && contextSrv.hasRole('Admin')) {
     navModel.children!.push({
       active: false,
       icon: 'apps',
