@@ -52,12 +52,14 @@ const transactionSlice = createSlice({
 });
 
 function actionAffectsDirtyState(action: AnyAction): boolean {
-  return removeVariable.match(action) ||
-         addVariable.match(action) ||
-         changeVariableProp.match(action) ||
-         changeVariableOrder.match(action) ||
-         duplicateVariable.match(action) ||
-         changeVariableType.match(action);
+  return (
+    removeVariable.match(action) ||
+    addVariable.match(action) ||
+    changeVariableProp.match(action) ||
+    changeVariableOrder.match(action) ||
+    duplicateVariable.match(action) ||
+    changeVariableType.match(action)
+  );
 }
 
 export const {
