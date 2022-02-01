@@ -13,7 +13,7 @@ import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { variablesInitTransaction } from './transactionReducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { toUidAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -118,12 +118,12 @@ describe('processVariable', () => {
         const queryParams: UrlQueryMap = {};
         const tester = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+          .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
           .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(uid, variableStateCompleted(toVariablePayload(custom)))
+          toKeyedAction(uid, variableStateCompleted(toVariablePayload(custom)))
         );
       });
     });
@@ -134,12 +134,12 @@ describe('processVariable', () => {
         const queryParams: UrlQueryMap = { 'var-custom': 'B' };
         const tester = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+          .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
           .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(
@@ -148,7 +148,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(uid, variableStateCompleted(toVariablePayload(custom)))
+          toKeyedAction(uid, variableStateCompleted(toVariablePayload(custom)))
         );
       });
     });
@@ -166,7 +166,7 @@ describe('processVariable', () => {
           queryNoDepends.refresh = refresh;
           const tester = await reduxTester<TemplatingReducerType>()
             .givenRootReducer(getTemplatingRootReducer())
-            .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+            .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
             .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
             .whenAsyncActionIsDispatched(
               processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
@@ -174,7 +174,7 @@ describe('processVariable', () => {
             );
 
           await tester.thenDispatchedActionsShouldEqual(
-            toUidAction(uid, variableStateCompleted(toVariablePayload(queryNoDepends)))
+            toKeyedAction(uid, variableStateCompleted(toVariablePayload(queryNoDepends)))
           );
         });
       });
@@ -188,7 +188,7 @@ describe('processVariable', () => {
         queryNoDepends.refresh = refresh;
         const tester = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+          .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
           .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
           .whenAsyncActionIsDispatched(
             processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
@@ -196,8 +196,8 @@ describe('processVariable', () => {
           );
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
-          toUidAction(
+          toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
+          toKeyedAction(
             uid,
             updateVariableOptions(
               toVariablePayload(
@@ -213,7 +213,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(
@@ -222,7 +222,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })))
+          toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })))
         );
       });
     });
@@ -237,7 +237,7 @@ describe('processVariable', () => {
           queryNoDepends.refresh = refresh;
           const tester = await reduxTester<TemplatingReducerType>()
             .givenRootReducer(getTemplatingRootReducer())
-            .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+            .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
             .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
             .whenAsyncActionIsDispatched(
               processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
@@ -245,7 +245,7 @@ describe('processVariable', () => {
             );
 
           await tester.thenDispatchedActionsShouldEqual(
-            toUidAction(
+            toKeyedAction(
               uid,
               setCurrentVariableValue(
                 toVariablePayload(
@@ -254,7 +254,7 @@ describe('processVariable', () => {
                 )
               )
             ),
-            toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })))
+            toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })))
           );
         });
       });
@@ -268,7 +268,7 @@ describe('processVariable', () => {
         queryNoDepends.refresh = refresh;
         const tester = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+          .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
           .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
           .whenAsyncActionIsDispatched(
             processVariable(toDashboardVariableIdentifier(queryNoDepends), queryParams),
@@ -276,8 +276,8 @@ describe('processVariable', () => {
           );
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
-          toUidAction(
+          toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
+          toKeyedAction(
             uid,
             updateVariableOptions(
               toVariablePayload(
@@ -293,7 +293,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(
@@ -302,8 +302,8 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
-          toUidAction(
+          toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(
@@ -329,7 +329,7 @@ describe('processVariable', () => {
           queryDependsOnCustom.refresh = refresh;
           const customProcessed = await reduxTester<TemplatingReducerType>()
             .givenRootReducer(getTemplatingRootReducer())
-            .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+            .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
             .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
             .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
@@ -339,7 +339,7 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
+            toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
           );
         });
       });
@@ -353,7 +353,7 @@ describe('processVariable', () => {
         queryDependsOnCustom.refresh = refresh;
         const customProcessed = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+          .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
           .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
@@ -363,8 +363,8 @@ describe('processVariable', () => {
         );
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
-          toUidAction(
+          toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
+          toKeyedAction(
             uid,
             updateVariableOptions(
               toVariablePayload(
@@ -380,7 +380,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(
@@ -389,7 +389,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
+          toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
         );
       });
     });
@@ -404,7 +404,7 @@ describe('processVariable', () => {
           queryDependsOnCustom.refresh = refresh;
           const customProcessed = await reduxTester<TemplatingReducerType>()
             .givenRootReducer(getTemplatingRootReducer())
-            .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+            .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
             .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
             .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
@@ -414,7 +414,7 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            toUidAction(
+            toKeyedAction(
               uid,
               setCurrentVariableValue(
                 toVariablePayload(
@@ -423,7 +423,7 @@ describe('processVariable', () => {
                 )
               )
             ),
-            toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
+            toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
           );
         });
       });
@@ -437,7 +437,7 @@ describe('processVariable', () => {
         queryDependsOnCustom.refresh = refresh;
         const customProcessed = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(toUidAction(uid, variablesInitTransaction({ uid })))
+          .whenActionIsDispatched(toKeyedAction(uid, variablesInitTransaction({ uid })))
           .whenActionIsDispatched(initDashboardTemplating(uid, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toDashboardVariableIdentifier(custom), queryParams)); // Need to process this dependency otherwise we never complete the promise chain
 
@@ -447,8 +447,8 @@ describe('processVariable', () => {
         );
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
-          toUidAction(
+          toKeyedAction(uid, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
+          toKeyedAction(
             uid,
             updateVariableOptions(
               toVariablePayload(
@@ -464,7 +464,7 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(
@@ -473,8 +473,8 @@ describe('processVariable', () => {
               )
             )
           ),
-          toUidAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
-          toUidAction(
+          toKeyedAction(uid, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
+          toKeyedAction(
             uid,
             setCurrentVariableValue(
               toVariablePayload(

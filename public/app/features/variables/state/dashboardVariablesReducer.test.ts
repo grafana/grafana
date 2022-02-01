@@ -2,7 +2,7 @@ import {
   dashboardVariablesReducer,
   DashboardVariablesState,
   initialDashboardVariablesState,
-  toUidAction,
+  toKeyedAction,
 } from './dashboardVariablesReducer';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { initialTransactionState, variablesCompleteTransaction, variablesInitTransaction } from './transactionReducer';
@@ -27,7 +27,7 @@ describe('dashboardVariablesReducer', () => {
             },
           },
         })
-        .whenActionIsDispatched(toUidAction(key, variablesCompleteTransaction({ uid: key })))
+        .whenActionIsDispatched(toKeyedAction(key, variablesCompleteTransaction({ uid: key })))
         .thenStateShouldEqual({
           ...initialDashboardVariablesState,
           lastKey: key,
@@ -64,7 +64,7 @@ describe('dashboardVariablesReducer', () => {
             },
           },
         })
-        .whenActionIsDispatched(toUidAction(key, variablesInitTransaction({ uid: key })))
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
         .thenStateShouldEqual({
           ...initialDashboardVariablesState,
           lastKey: key,

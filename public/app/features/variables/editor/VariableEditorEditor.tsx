@@ -21,7 +21,7 @@ import { hasOptions } from '../guard';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableHideSelect } from './VariableHideSelect';
 import { getDashboardVariable, getDashboardVariablesState } from '../state/selectors';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
@@ -38,10 +38,13 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
     ),
     changeVariableProp: (identifier: DashboardVariableIdentifier, propName: string, propValue: any) =>
       dispatch(
-        toUidAction(identifier.dashboardUid, changeVariableProp(toVariablePayload(identifier, { propName, propValue })))
+        toKeyedAction(
+          identifier.dashboardUid,
+          changeVariableProp(toVariablePayload(identifier, { propName, propValue }))
+        )
       ),
     changeVariableType: (identifier: DashboardVariableIdentifier, newType: VariableType) =>
-      dispatch(toUidAction(identifier.dashboardUid, changeVariableType(toVariablePayload(identifier, { newType })))),
+      dispatch(toKeyedAction(identifier.dashboardUid, changeVariableType(toVariablePayload(identifier, { newType })))),
   };
 };
 

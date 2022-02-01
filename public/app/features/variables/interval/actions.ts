@@ -8,14 +8,14 @@ import { getDashboardVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 export const updateIntervalVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => async (
   dispatch
 ) => {
   const { dashboardUid: uid } = identifier;
-  await dispatch(toUidAction(uid, createIntervalOptions(toVariablePayload(identifier))));
+  await dispatch(toKeyedAction(uid, createIntervalOptions(toVariablePayload(identifier))));
   await dispatch(updateAutoValue(identifier));
   await dispatch(validateVariableSelectionState(identifier));
 };

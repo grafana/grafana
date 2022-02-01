@@ -11,23 +11,23 @@ export interface DashboardVariablesState {
 
 export const initialDashboardVariablesState: DashboardVariablesState = { keys: {} };
 
-export interface UidAction {
+export interface KeyedAction {
   key: string;
   action: PayloadAction<any>;
 }
 
-const uidAction = createAction<UidAction>('templating/uidAction');
+const keyedAction = createAction<KeyedAction>('templating/keyedAction');
 
-export function toUidAction(key: string, action: PayloadAction<any>): PayloadAction<UidAction> {
-  const stringUid = toStateKey(key);
-  return uidAction({ key: stringUid, action });
+export function toKeyedAction(key: string, action: PayloadAction<any>): PayloadAction<KeyedAction> {
+  const keyAsString = toStateKey(key);
+  return keyedAction({ key: keyAsString, action });
 }
 
 export function dashboardVariablesReducer(
   state = initialDashboardVariablesState,
   outerAction: AnyAction
 ): DashboardVariablesState {
-  if (uidAction.match(outerAction)) {
+  if (keyedAction.match(outerAction)) {
     const { key, action } = outerAction.payload;
     const stringKey = toStateKey(key);
     const lastKey = variablesInitTransaction.match(action) ? stringKey : state.lastKey;

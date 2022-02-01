@@ -14,7 +14,7 @@ import { VariableEditorList } from './VariableEditorList';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
@@ -33,17 +33,22 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
     ...bindActionCreators({ switchToNewMode, switchToEditMode, switchToListMode }, dispatch),
     changeVariableOrder: (identifier: DashboardVariableIdentifier, fromIndex: number, toIndex: number) =>
       dispatch(
-        toUidAction(identifier.dashboardUid, changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex })))
+        toKeyedAction(
+          identifier.dashboardUid,
+          changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex }))
+        )
       ),
     duplicateVariable: (identifier: DashboardVariableIdentifier) =>
       dispatch(
-        toUidAction(
+        toKeyedAction(
           identifier.dashboardUid,
           duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }))
         )
       ),
     removeVariable: (identifier: DashboardVariableIdentifier) => {
-      dispatch(toUidAction(identifier.dashboardUid, removeVariable(toVariablePayload(identifier, { reIndex: true }))));
+      dispatch(
+        toKeyedAction(identifier.dashboardUid, removeVariable(toVariablePayload(identifier, { reIndex: true })))
+      );
     },
   };
 };

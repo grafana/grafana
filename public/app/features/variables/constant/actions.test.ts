@@ -6,7 +6,7 @@ import { getRootReducer, RootReducerType } from '../state/helpers';
 import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { createConstantOptionsFromQuery } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('constant actions', () => {
@@ -39,13 +39,13 @@ describe('constant actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(updateConstantVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', createConstantOptionsFromQuery(toVariablePayload(variable))),
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('uid', createConstantOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });

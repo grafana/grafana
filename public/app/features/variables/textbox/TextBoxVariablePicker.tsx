@@ -6,7 +6,7 @@ import { VariablePickerProps } from '../pickers/types';
 import { Input } from '@grafana/ui';
 import { variableAdapters } from '../adapters';
 import { useDispatch } from 'react-redux';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
@@ -29,7 +29,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
     }
 
     dispatch(
-      toUidAction(
+      toKeyedAction(
         variable.dashboardUid,
         changeVariableProp(
           toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })

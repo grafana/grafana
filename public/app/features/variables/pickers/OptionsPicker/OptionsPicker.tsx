@@ -17,7 +17,7 @@ import { DashboardVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { VariableLink } from '../shared/VariableLink';
 import { getDashboardVariablesState } from '../../state/selectors';
-import { toUidAction } from '../../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier } from '../../utils';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
@@ -30,13 +30,13 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
         dispatch(filterOrSearchOptions(identifier, filter));
       },
       toggleAllOptions: (identifier: DashboardVariableIdentifier) =>
-        dispatch(toUidAction(identifier.dashboardUid, toggleAllOptions())),
+        dispatch(toKeyedAction(identifier.dashboardUid, toggleAllOptions())),
       toggleOption: (
         identifier: DashboardVariableIdentifier,
         option: VariableOption,
         clearOthers: boolean,
         forceSelect: boolean
-      ) => dispatch(toUidAction(identifier.dashboardUid, toggleOption({ option, clearOthers, forceSelect }))),
+      ) => dispatch(toKeyedAction(identifier.dashboardUid, toggleOption({ option, clearOthers, forceSelect }))),
     };
   };
 

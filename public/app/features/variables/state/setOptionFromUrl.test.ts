@@ -6,7 +6,7 @@ import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
 import { addVariable, setCurrentVariableValue } from './sharedReducer';
 import { setOptionFromUrl } from './actions';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toUidAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createCustomVariableAdapter()]);
@@ -40,12 +40,12 @@ describe('when setOptionFromUrl is dispatched with a custom variable (no refresh
     const tester = await reduxTester<TemplatingReducerType>()
       .givenRootReducer(getTemplatingRootReducer())
       .whenActionIsDispatched(
-        toUidAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+        toKeyedAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
-      toUidAction(
+      toKeyedAction(
         uid,
         setCurrentVariableValue(
           toVariablePayload(
@@ -76,12 +76,12 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const tester = await reduxTester<TemplatingReducerType>()
       .givenRootReducer(getTemplatingRootReducer())
       .whenActionIsDispatched(
-        toUidAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+        toKeyedAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
-      toUidAction(
+      toKeyedAction(
         uid,
         setCurrentVariableValue(
           toVariablePayload(
@@ -110,12 +110,12 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const tester = await reduxTester<TemplatingReducerType>()
       .givenRootReducer(getTemplatingRootReducer())
       .whenActionIsDispatched(
-        toUidAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+        toKeyedAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
-      toUidAction(
+      toKeyedAction(
         uid,
         setCurrentVariableValue(
           toVariablePayload({ type: 'custom', id: '0' }, { option: { text: 'X', value: 'X', selected: false } })
@@ -141,12 +141,12 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const tester = await reduxTester<TemplatingReducerType>()
       .givenRootReducer(getTemplatingRootReducer())
       .whenActionIsDispatched(
-        toUidAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+        toKeyedAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
-      toUidAction(
+      toKeyedAction(
         uid,
         setCurrentVariableValue(
           toVariablePayload({ type: 'custom', id: '0' }, { option: { text: 'B', value: 'B', selected: false } })
@@ -174,12 +174,12 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const tester = await reduxTester<TemplatingReducerType>()
       .givenRootReducer(getTemplatingRootReducer())
       .whenActionIsDispatched(
-        toUidAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+        toKeyedAction(uid, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toDashboardVariableIdentifier(custom), urlValue), true);
 
     await tester.thenDispatchedActionsShouldEqual(
-      toUidAction(
+      toKeyedAction(
         uid,
         setCurrentVariableValue(
           toVariablePayload(

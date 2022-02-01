@@ -89,7 +89,7 @@ import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toUidAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './dashboardVariablesReducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -132,14 +132,16 @@ export const initDashboardTemplating = (uid: string, dashboard: DashboardModel):
         continue;
       }
 
-      dispatch(toUidAction(uid, addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model }))));
+      dispatch(
+        toKeyedAction(uid, addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })))
+      );
     }
 
     getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
     const variables = getDashboardVariables(uid, getState());
     for (const variable of variables) {
-      dispatch(toUidAction(uid, variableStateNotStarted(toVariablePayload(variable))));
+      dispatch(toKeyedAction(uid, variableStateNotStarted(toVariablePayload(variable))));
     }
   };
 };
@@ -190,7 +192,7 @@ export const addSystemTemplateVariables = (uid: string, dashboard: DashboardMode
     };
 
     dispatch(
-      toUidAction(
+      toKeyedAction(
         uid,
         addVariable(
           toVariablePayload(dashboardModel, {
@@ -220,7 +222,7 @@ export const addSystemTemplateVariables = (uid: string, dashboard: DashboardMode
     };
 
     dispatch(
-      toUidAction(
+      toKeyedAction(
         uid,
         addVariable(toVariablePayload(orgModel, { global: orgModel.global, index: orgModel.index, model: orgModel }))
       )
@@ -245,7 +247,7 @@ export const addSystemTemplateVariables = (uid: string, dashboard: DashboardMode
     };
 
     dispatch(
-      toUidAction(
+      toKeyedAction(
         uid,
         addVariable(
           toVariablePayload(userModel, { global: userModel.global, index: userModel.index, model: userModel })
@@ -265,10 +267,10 @@ export const changeVariableMultiValue = (
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(
-      toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })))
+      toKeyedAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })))
     );
     dispatch(
-      toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'current', propValue: current })))
+      toKeyedAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'current', propValue: current })))
     );
   };
 };
@@ -522,7 +524,7 @@ export const setOptionAsCurrent = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     const { dashboardUid: uid } = identifier;
-    dispatch(toUidAction(uid, setCurrentVariableValue(toVariablePayload(identifier, { option: current }))));
+    dispatch(toKeyedAction(uid, setCurrentVariableValue(toVariablePayload(identifier, { option: current }))));
     return await dispatch(variableUpdated(identifier, emitChanges));
   };
 };
@@ -742,7 +744,7 @@ export const initVariablesTransaction = (urlUid: string, dashboard: DashboardMod
     }
 
     // Start init transaction
-    dispatch(toUidAction(uid, variablesInitTransaction({ uid })));
+    dispatch(toKeyedAction(uid, variablesInitTransaction({ uid })));
     // Add system variables like __dashboard and __user
     dispatch(addSystemTemplateVariables(uid, dashboard));
     // Load all variables into redux store
@@ -752,7 +754,7 @@ export const initVariablesTransaction = (urlUid: string, dashboard: DashboardMod
     // Process all variable updates
     await dispatch(processVariables(uid));
     // Set transaction as complete
-    dispatch(toUidAction(uid, variablesCompleteTransaction({ uid })));
+    dispatch(toKeyedAction(uid, variablesCompleteTransaction({ uid })));
   } catch (err) {
     dispatch(notifyApp(createVariableErrorNotification('Templating init failed', err)));
     console.error(err);
@@ -781,17 +783,20 @@ export function migrateVariablesDatasourceNameToRef(
       const ds = getDatasourceSrvFunc().getInstanceSettings(nameOrRef);
       const dsRef = ds ? getDataSourceRef(ds) : { uid: nameOrRef };
       dispatch(
-        toUidAction(uid, changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: dsRef })))
+        toKeyedAction(
+          uid,
+          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: dsRef }))
+        )
       );
     }
   };
 }
 
 export const cleanUpVariables = (uid: string): ThunkResult<void> => (dispatch) => {
-  dispatch(toUidAction(uid, cleanVariables()));
-  dispatch(toUidAction(uid, cleanEditorState()));
-  dispatch(toUidAction(uid, cleanPickerState()));
-  dispatch(toUidAction(uid, variablesClearTransaction()));
+  dispatch(toKeyedAction(uid, cleanVariables()));
+  dispatch(toKeyedAction(uid, cleanEditorState()));
+  dispatch(toKeyedAction(uid, cleanPickerState()));
+  dispatch(toKeyedAction(uid, variablesClearTransaction()));
 };
 
 type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
@@ -815,12 +820,12 @@ export const updateOptions = (
     }
 
     const variableInState = getDashboardVariable(identifier, getState());
-    dispatch(toUidAction(uid, variableStateFetching(toVariablePayload(variableInState))));
+    dispatch(toKeyedAction(uid, variableStateFetching(toVariablePayload(variableInState))));
     await dispatch(upgradeLegacyQueries(toDashboardVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(completeVariableLoading(identifier));
   } catch (error) {
-    dispatch(toUidAction(uid, variableStateFailed(toVariablePayload(identifier, { error }))));
+    dispatch(toKeyedAction(uid, variableStateFailed(toVariablePayload(identifier, { error }))));
 
     if (!rethrow) {
       console.error(error);
@@ -856,7 +861,7 @@ export const completeVariableLoading = (identifier: DashboardVariableIdentifier)
   const variableInState = getDashboardVariable(identifier, getState());
 
   if (variableInState.state !== LoadingState.Done) {
-    dispatch(toUidAction(identifier.dashboardUid, variableStateCompleted(toVariablePayload(variableInState))));
+    dispatch(toKeyedAction(identifier.dashboardUid, variableStateCompleted(toVariablePayload(variableInState))));
   }
 };
 
@@ -898,7 +903,7 @@ export function upgradeLegacyQueries(
       };
 
       dispatch(
-        toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })))
+        toKeyedAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })))
       );
     } catch (err) {
       dispatch(notifyApp(createVariableErrorNotification('Failed to upgrade legacy queries', err)));

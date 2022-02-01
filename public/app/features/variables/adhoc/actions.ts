@@ -22,7 +22,7 @@ import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 import { DataSourceRef, getDataSourceRef } from '@grafana/data';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 export interface AdHocTableOptions {
@@ -65,7 +65,7 @@ export const changeFilter = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toUidAction(identifier.dashboardUid, filterUpdated(toVariablePayload(variable, update))));
+    dispatch(toKeyedAction(identifier.dashboardUid, filterUpdated(toVariablePayload(variable, update))));
     await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
   };
 };
@@ -73,7 +73,7 @@ export const changeFilter = (
 export const removeFilter = (identifier: DashboardVariableIdentifier, index: number): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toUidAction(identifier.dashboardUid, filterRemoved(toVariablePayload(variable, index))));
+    dispatch(toKeyedAction(identifier.dashboardUid, filterRemoved(toVariablePayload(variable, index))));
     await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
   };
 };
@@ -81,7 +81,7 @@ export const removeFilter = (identifier: DashboardVariableIdentifier, index: num
 export const addFilter = (identifier: DashboardVariableIdentifier, filter: AdHocVariableFilter): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toUidAction(identifier.dashboardUid, filterAdded(toVariablePayload(variable, filter))));
+    dispatch(toKeyedAction(identifier.dashboardUid, filterAdded(toVariablePayload(variable, filter))));
     await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
   };
 };
@@ -92,7 +92,7 @@ export const setFiltersFromUrl = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getDashboardVariable(identifier, getState());
-    dispatch(toUidAction(identifier.dashboardUid, filtersRestored(toVariablePayload(variable, filters))));
+    dispatch(toKeyedAction(identifier.dashboardUid, filtersRestored(toVariablePayload(variable, filters))));
     await dispatch(variableUpdated(toDashboardVariableIdentifier(variable), true));
   };
 };
@@ -107,7 +107,7 @@ export const changeVariableDatasource = (
     const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
 
     dispatch(
-      toUidAction(
+      toKeyedAction(
         identifier.dashboardUid,
         changeVariableEditorExtended({
           propName: 'infoText',
@@ -116,7 +116,7 @@ export const changeVariableDatasource = (
       )
     );
     dispatch(
-      toUidAction(
+      toKeyedAction(
         identifier.dashboardUid,
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
       )
@@ -126,7 +126,7 @@ export const changeVariableDatasource = (
 
     if (!ds || !ds.getTagKeys) {
       dispatch(
-        toUidAction(
+        toKeyedAction(
           identifier.dashboardUid,
           changeVariableEditorExtended({
             propName: 'infoText',
@@ -156,7 +156,7 @@ export const initAdHocVariableEditor = (uid: string): ThunkResult<void> => (disp
   );
 
   dispatch(
-    toUidAction(
+    toKeyedAction(
       uid,
       changeVariableEditorExtended({
         propName: 'dataSources',
@@ -183,7 +183,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
     const identifier: DashboardVariableIdentifier = { type: 'adhoc', id: model.id, dashboardUid: uid };
 
     dispatch(
-      toUidAction(
+      toKeyedAction(
         uid,
         addVariable(
           toVariablePayload<AddVariable>(identifier, { global, model, index })

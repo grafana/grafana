@@ -8,7 +8,7 @@ import { createTextBoxOptions } from './reducer';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { textboxBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 jest.mock('@grafana/runtime', () => {
@@ -45,13 +45,13 @@ describe('textbox actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction(uid, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction(uid, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(updateTextBoxVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, createTextBoxOptions(toVariablePayload(variable))),
-        toUidAction(uid, setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction(uid, createTextBoxOptions(toVariablePayload(variable))),
+        toKeyedAction(uid, setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-textbox': 'A' });
     });
@@ -72,7 +72,7 @@ describe('textbox actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction(uid, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction(uid, addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(
           setTextBoxVariableOptionsFromUrl(toDashboardVariableIdentifier(variable), urlValue),
@@ -80,8 +80,8 @@ describe('textbox actions', () => {
         );
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: 'bB' }))),
-        toUidAction(
+        toKeyedAction(uid, changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: 'bB' }))),
+        toKeyedAction(
           uid,
           setCurrentVariableValue(toVariablePayload(variable, { option: { text: 'bB', value: 'bB', selected: false } }))
         )

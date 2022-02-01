@@ -23,7 +23,7 @@ import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 import { locationService } from '@grafana/runtime';
 import { queryBuilder } from '../../shared/testing/builders';
-import { toUidAction } from '../../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../../utils';
 
 const datasource = {
@@ -61,9 +61,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenAsyncActionIsDispatched(navigateOptions('uid', key, clearOthers), true);
 
       const option = {
@@ -73,9 +73,12 @@ describe('options picker actions', () => {
       };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
-        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))),
-        toUidAction('uid', hideOptions())
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
+        ),
+        toKeyedAction('uid', hideOptions())
       );
     });
   });
@@ -95,14 +98,14 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, false))
         .whenAsyncActionIsDispatched(navigateOptions('uid', key, clearOthers), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option, forceSelect: false, clearOthers }))
+        toKeyedAction('uid', toggleOption({ option, forceSelect: false, clearOthers }))
       );
     });
   });
@@ -122,14 +125,14 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions('uid', key, clearOthers), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option, forceSelect: false, clearOthers }))
+        toKeyedAction('uid', toggleOption({ option, forceSelect: false, clearOthers }))
       );
     });
   });
@@ -145,16 +148,16 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions('uid', key, clearOthers), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option: options[2], forceSelect: false, clearOthers }))
+        toKeyedAction('uid', toggleOption({ option: options[2], forceSelect: false, clearOthers }))
       );
     });
   });
@@ -170,9 +173,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
@@ -180,7 +183,7 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(navigateOptions('uid', key, clearOthers), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option: options[1], forceSelect: false, clearOthers }))
+        toKeyedAction('uid', toggleOption({ option: options[1], forceSelect: false, clearOthers }))
       );
     });
   });
@@ -196,9 +199,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
@@ -212,11 +215,14 @@ describe('options picker actions', () => {
       };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option: options[1], forceSelect: true, clearOthers })),
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
-        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))),
-        toUidAction('uid', hideOptions()),
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('uid', toggleOption({ option: options[1], forceSelect: true, clearOthers })),
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
+        ),
+        toKeyedAction('uid', hideOptions()),
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': ['B'] });
     });
@@ -231,14 +237,14 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenAsyncActionIsDispatched(filterOrSearchOptions(toDashboardVariableIdentifier(variable), filter), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', updateSearchQuery(filter)),
-        toUidAction('uid', updateOptionsAndFilter(variable.options))
+        toKeyedAction('uid', updateSearchQuery(filter)),
+        toKeyedAction('uid', updateOptionsAndFilter(variable.options))
       );
     });
   });
@@ -265,7 +271,7 @@ describe('options picker actions', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(openOptions(toDashboardVariableIdentifier(variable), undefined));
 
-      tester.thenDispatchedActionsShouldEqual(toUidAction('uid', showOptions(variable)));
+      tester.thenDispatchedActionsShouldEqual(toKeyedAction('uid', showOptions(variable)));
     });
   });
 
@@ -291,7 +297,7 @@ describe('options picker actions', () => {
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(openOptions(toDashboardVariableIdentifier(variable), undefined));
 
-      tester.thenDispatchedActionsShouldEqual(toUidAction('uid', showOptions(variable)));
+      tester.thenDispatchedActionsShouldEqual(toKeyedAction('uid', showOptions(variable)));
     });
   });
 
@@ -328,13 +334,13 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(openOptions(toDashboardVariableIdentifier(variable), undefined));
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', setCurrentVariableValue({ type: 'query', id: 'query1', data: { option: undefined } })),
-        toUidAction(
+        toKeyedAction('uid', setCurrentVariableValue({ type: 'query', id: 'query1', data: { option: undefined } })),
+        toKeyedAction(
           'uid',
           changeVariableProp({ type: 'query', id: 'query1', data: { propName: 'queryValue', propValue: '' } })
         ),
-        toUidAction('uid', hideOptions()),
-        toUidAction('uid', showOptions(variable))
+        toKeyedAction('uid', hideOptions()),
+        toKeyedAction('uid', showOptions(variable))
       );
     });
   });
@@ -347,9 +353,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenAsyncActionIsDispatched(commitChangesToVariable('uid'), true);
 
       const option = {
@@ -359,9 +365,12 @@ describe('options picker actions', () => {
       };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
-        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))),
-        toUidAction('uid', hideOptions())
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
+        ),
+        toKeyedAction('uid', hideOptions())
       );
     });
   });
@@ -375,9 +384,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('uid', clearOthers))
         .whenAsyncActionIsDispatched(commitChangesToVariable('uid'), true);
@@ -389,10 +398,13 @@ describe('options picker actions', () => {
       };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
-        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))),
-        toUidAction('uid', hideOptions()),
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
+        ),
+        toKeyedAction('uid', hideOptions()),
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': [] });
     });
@@ -407,9 +419,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('uid', clearOthers))
         .whenActionIsDispatched(filterOrSearchOptions(toDashboardVariableIdentifier(variable), 'C'))
@@ -422,10 +434,13 @@ describe('options picker actions', () => {
       };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
-        toUidAction('uid', changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' }))),
-        toUidAction('uid', hideOptions()),
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction(
+          'uid',
+          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' }))
+        ),
+        toKeyedAction('uid', hideOptions()),
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': [] });
     });
@@ -440,16 +455,16 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('uid', clearOthers), true);
 
       const option = createOption('A');
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option, forceSelect: false, clearOthers }))
+        toKeyedAction('uid', toggleOption({ option, forceSelect: false, clearOthers }))
       );
     });
   });
@@ -463,9 +478,9 @@ describe('options picker actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
-        .whenActionIsDispatched(toUidAction('uid', showOptions(variable)))
+        .whenActionIsDispatched(toKeyedAction('uid', showOptions(variable)))
         .whenActionIsDispatched(navigateOptions('uid', NavigationKey.moveDown, clearOthers))
         .whenActionIsDispatched(toggleOptionByHighlight('uid', clearOthers), true)
         .whenActionIsDispatched(filterOrSearchOptions(toDashboardVariableIdentifier(variable), 'B'))
@@ -477,12 +492,12 @@ describe('options picker actions', () => {
       const optionBC = createOption('BD');
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', toggleOption({ option: optionA, forceSelect: false, clearOthers })),
-        toUidAction('uid', updateSearchQuery('B')),
-        toUidAction('uid', updateOptionsAndFilter(variable.options)),
-        toUidAction('uid', moveOptionsHighlight(1)),
-        toUidAction('uid', moveOptionsHighlight(1)),
-        toUidAction('uid', toggleOption({ option: optionBC, forceSelect: false, clearOthers }))
+        toKeyedAction('uid', toggleOption({ option: optionA, forceSelect: false, clearOthers })),
+        toKeyedAction('uid', updateSearchQuery('B')),
+        toKeyedAction('uid', updateOptionsAndFilter(variable.options)),
+        toKeyedAction('uid', moveOptionsHighlight(1)),
+        toKeyedAction('uid', moveOptionsHighlight(1)),
+        toKeyedAction('uid', toggleOption({ option: optionBC, forceSelect: false, clearOthers }))
       );
     });
   });

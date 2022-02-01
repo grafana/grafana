@@ -22,20 +22,20 @@ import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 export const variableEditorMount = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     const { dashboardUid: uid } = identifier;
-    dispatch(toUidAction(uid, variableEditorMounted({ name: getDashboardVariable(identifier).name })));
+    dispatch(toKeyedAction(uid, variableEditorMounted({ name: getDashboardVariable(identifier).name })));
   };
 };
 
 export const variableEditorUnMount = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { dashboardUid: uid } = identifier;
-    dispatch(toUidAction(uid, variableEditorUnMounted(toVariablePayload(identifier))));
+    dispatch(toKeyedAction(uid, variableEditorUnMounted(toVariablePayload(identifier))));
   };
 };
 
@@ -66,7 +66,7 @@ export const changeVariableName = (identifier: DashboardVariableIdentifier, newN
     }
 
     if (errorText) {
-      dispatch(toUidAction(uid, changeVariableNameFailed({ newName, errorText })));
+      dispatch(toKeyedAction(uid, changeVariableNameFailed({ newName, errorText })));
       return;
     }
 
@@ -81,7 +81,7 @@ export const completeChangeVariableName = (
   const { dashboardUid: uid } = identifier;
   const originalVariable = getDashboardVariable(identifier, getState());
   if (originalVariable.name === newName) {
-    dispatch(toUidAction(uid, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
+    dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
     return;
   }
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
@@ -89,10 +89,10 @@ export const completeChangeVariableName = (
   const index = originalVariable.index;
   const renamedIdentifier = toDashboardVariableIdentifier(model);
 
-  dispatch(toUidAction(uid, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
-  dispatch(toUidAction(uid, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
+  dispatch(toKeyedAction(uid, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
+  dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
   dispatch(switchToEditMode(renamedIdentifier));
-  dispatch(toUidAction(uid, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
+  dispatch(toKeyedAction(uid, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
 };
 
 export const switchToNewMode = (uid: string, type: VariableType = 'query'): ThunkResult<void> => (
@@ -108,30 +108,30 @@ export const switchToNewMode = (uid: string, type: VariableType = 'query'): Thun
   model.name = id;
   model.dashboardUid = uid;
   dispatch(
-    toUidAction(
+    toKeyedAction(
       uid,
       addVariable(
         toVariablePayload<AddVariable>(identifier, { global, model, index })
       )
     )
   );
-  dispatch(toUidAction(uid, setIdInEditor({ id: identifier.id })));
+  dispatch(toKeyedAction(uid, setIdInEditor({ id: identifier.id })));
 };
 
 export const switchToEditMode = (identifier: DashboardVariableIdentifier): ThunkResult<void> => (dispatch) => {
   const { dashboardUid: uid } = identifier;
-  dispatch(toUidAction(uid, setIdInEditor({ id: identifier.id })));
+  dispatch(toKeyedAction(uid, setIdInEditor({ id: identifier.id })));
 };
 
 export const switchToListMode = (uid: string): ThunkResult<void> => (dispatch, getState) => {
-  dispatch(toUidAction(uid, clearIdInEditor()));
+  dispatch(toKeyedAction(uid, clearIdInEditor()));
   const state = getState();
   const variables = getDashboardEditorVariables(uid, state);
   const dashboard = state.dashboard.getModel();
   const { usages } = createUsagesNetwork(variables, dashboard);
   const usagesNetwork = transformUsagesToNetwork(usages);
 
-  dispatch(toUidAction(uid, initInspect({ usages, usagesNetwork })));
+  dispatch(toKeyedAction(uid, initInspect({ usages, usagesNetwork })));
 };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {

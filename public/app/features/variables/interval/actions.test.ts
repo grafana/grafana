@@ -19,7 +19,7 @@ import { notifyApp } from '../../../core/actions';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { afterEach, beforeEach } from '../../../../test/lib/common';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('interval actions', () => {
@@ -36,13 +36,13 @@ describe('interval actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+          toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toDashboardVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
-        toUidAction(
+        toKeyedAction('uid', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
+        toKeyedAction(
           'uid',
           setCurrentVariableValue({
             type: 'interval',
@@ -87,17 +87,17 @@ describe('interval actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+          toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
         )
-        .whenActionIsDispatched(toUidAction('uid', variablesInitTransaction({ uid: 'uid' })))
+        .whenActionIsDispatched(toKeyedAction('uid', variablesInitTransaction({ uid: 'uid' })))
         .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
-        expect(dispatchedActions[0]).toEqual(toUidAction('uid', variableStateFetching(toVariablePayload(interval))));
-        expect(dispatchedActions[1]).toEqual(toUidAction('uid', createIntervalOptions(toVariablePayload(interval))));
+        expect(dispatchedActions[0]).toEqual(toKeyedAction('uid', variableStateFetching(toVariablePayload(interval))));
+        expect(dispatchedActions[1]).toEqual(toKeyedAction('uid', createIntervalOptions(toVariablePayload(interval))));
         expect(dispatchedActions[2]).toEqual(
-          toUidAction(
+          toKeyedAction(
             'uid',
             variableStateFailed(
               toVariablePayload(interval, {
@@ -133,7 +133,7 @@ describe('interval actions', () => {
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toUidAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+            toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
           .whenAsyncActionIsDispatched(updateOptions(toDashboardVariableIdentifier(interval)), true);
 
@@ -169,7 +169,7 @@ describe('interval actions', () => {
         await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toUidAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+            toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toDashboardVariableIdentifier(interval), dependencies), true);
 
@@ -214,7 +214,7 @@ describe('interval actions', () => {
         await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toUidAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+            toKeyedAction('uid', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toDashboardVariableIdentifier(interval), dependencies), true);
 

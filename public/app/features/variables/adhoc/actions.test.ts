@@ -20,7 +20,7 @@ import { VariableModel } from 'app/features/variables/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 const getList = jest.fn().mockReturnValue([]);
@@ -71,7 +71,7 @@ describe('adhoc actions', () => {
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
+        toKeyedAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
       );
 
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
@@ -104,7 +104,7 @@ describe('adhoc actions', () => {
 
       tester.thenDispatchedActionsShouldEqual(
         createAddVariableAction(variable),
-        toUidAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
+        toKeyedAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
       );
 
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
@@ -138,7 +138,7 @@ describe('adhoc actions', () => {
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
+        toKeyedAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
@@ -178,7 +178,7 @@ describe('adhoc actions', () => {
 
       tester.thenDispatchedActionsShouldEqual(
         createAddVariableAction(variable, 1),
-        toUidAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
+        toKeyedAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
       );
 
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
@@ -219,7 +219,7 @@ describe('adhoc actions', () => {
       const expectedUpdate = { index: 0, filter: updated };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, filterUpdated(toVariablePayload(variable, expectedUpdate)))
+        toKeyedAction(uid, filterUpdated(toVariablePayload(variable, expectedUpdate)))
       );
 
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
@@ -258,7 +258,7 @@ describe('adhoc actions', () => {
       const expectedFilter = { key: 'key', value: 'value', operator: '!=', condition: '' };
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
+        toKeyedAction(uid, filterAdded(toVariablePayload(variable, expectedFilter)))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
@@ -289,7 +289,7 @@ describe('adhoc actions', () => {
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
 
-      tester.thenDispatchedActionsShouldEqual(toUidAction(uid, filterAdded(toVariablePayload(variable, adding))));
+      tester.thenDispatchedActionsShouldEqual(toKeyedAction(uid, filterAdded(toVariablePayload(variable, adding))));
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
@@ -312,7 +312,7 @@ describe('adhoc actions', () => {
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
-      tester.thenDispatchedActionsShouldEqual(toUidAction(uid, filterRemoved(toVariablePayload(variable, 0))));
+      tester.thenDispatchedActionsShouldEqual(toKeyedAction(uid, filterRemoved(toVariablePayload(variable, 0))));
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
@@ -342,7 +342,7 @@ describe('adhoc actions', () => {
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
-      tester.thenDispatchedActionsShouldEqual(toUidAction(uid, filterRemoved(toVariablePayload(variable, 0))));
+      tester.thenDispatchedActionsShouldEqual(toKeyedAction(uid, filterRemoved(toVariablePayload(variable, 0))));
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
@@ -382,7 +382,7 @@ describe('adhoc actions', () => {
       ];
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, filtersRestored(toVariablePayload(variable, expectedFilters)))
+        toKeyedAction(uid, filtersRestored(toVariablePayload(variable, expectedFilters)))
       );
       expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
@@ -416,7 +416,7 @@ describe('adhoc actions', () => {
       ];
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, changeVariableEditorExtended({ propName: 'dataSources', propValue: expectedDatasources }))
+        toKeyedAction(uid, changeVariableEditorExtended({ propName: 'dataSources', propValue: expectedDatasources }))
       );
     });
   });
@@ -439,19 +439,19 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toUidAction(uid, setIdInEditor({ id: variable.id })))
+        .whenActionIsDispatched(toKeyedAction(uid, setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(
           changeVariableDatasource(toDashboardVariableIdentifier(variable), datasource),
           true
         );
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })),
-        toUidAction(
+        toKeyedAction(uid, changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })),
+        toKeyedAction(
           uid,
           changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
         ),
-        toUidAction(
+        toKeyedAction(
           uid,
           changeVariableEditorExtended({
             propName: 'infoText',
@@ -482,15 +482,15 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toUidAction(uid, setIdInEditor({ id: variable.id })))
+        .whenActionIsDispatched(toKeyedAction(uid, setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(
           changeVariableDatasource(toDashboardVariableIdentifier(variable), datasource),
           true
         );
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction(uid, changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })),
-        toUidAction(
+        toKeyedAction(uid, changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText })),
+        toKeyedAction(
           uid,
           changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
         )
@@ -503,7 +503,7 @@ function createAddVariableAction(variable: VariableModel, index = 0) {
   const identifier = toDashboardVariableIdentifier(variable);
   const global = false;
   const data = { global, index, model: { ...variable, index: -1, global } };
-  return toUidAction(variable.dashboardUid!, addVariable(toVariablePayload(identifier, data)));
+  return toKeyedAction(variable.dashboardUid!, addVariable(toVariablePayload(identifier, data)));
 }
 
 function createDatasource(name: string, selectable = true, isDefault = false): DataSourceInstanceSettings {

@@ -4,7 +4,7 @@ import { upgradeLegacyQueries } from './actions';
 import { changeVariableProp } from './sharedReducer';
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { TransactionStatus, VariableModel } from '../types';
-import { toUidAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './dashboardVariablesReducer';
 import { getPreloadedState } from './helpers';
 import { toDashboardVariableIdentifier } from '../utils';
 
@@ -59,7 +59,7 @@ describe('upgradeLegacyQueries', () => {
         .whenThunkIsDispatched(identifier, getDatasourceSrv);
 
       expect(dispatchedActions).toEqual([
-        toUidAction(
+        toKeyedAction(
           uid,
           changeVariableProp({
             type: 'query',

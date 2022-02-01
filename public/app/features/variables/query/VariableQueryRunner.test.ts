@@ -8,7 +8,7 @@ import { QueryRunner, QueryRunners } from './queryRunners';
 import { DashboardVariableIdentifier } from '../state/types';
 import { QueryVariableModel } from '../types';
 import { updateVariableOptions } from './reducer';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
 import { getPreloadedState } from '../state/helpers';
 import { toDashboardVariableIdentifier } from '../utils';
@@ -136,7 +136,7 @@ describe('VariableQueryRunner', () => {
           // updateVariableOptions and validateVariableSelectionState
           expect(dispatch).toHaveBeenCalledTimes(2);
           expect(dispatch.mock.calls[0][0]).toEqual(
-            toUidAction(
+            toKeyedAction(
               uid,
               updateVariableOptions({
                 id: 'query',

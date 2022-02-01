@@ -3,7 +3,7 @@ import { queryBuilder } from '../shared/testing/builders';
 import { FieldType, toDataFrame } from '@grafana/data';
 import { updateVariableOptions } from './reducer';
 import { areMetricFindValues, toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 
 describe('operators', () => {
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe('operators', () => {
           expect(getTemplatedRegexFunc).toHaveBeenCalledTimes(1);
           expect(dispatch).toHaveBeenCalledTimes(1);
           expect(dispatch).toHaveBeenCalledWith(
-            toUidAction(
+            toKeyedAction(
               'uid',
               updateVariableOptions({
                 id: 'query',

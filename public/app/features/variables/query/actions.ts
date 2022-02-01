@@ -19,7 +19,7 @@ import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
 import { hasOngoingTransaction, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 
 export const updateQueryVariableOptions = (
   identifier: DashboardVariableIdentifier,
@@ -35,7 +35,7 @@ export const updateQueryVariableOptions = (
 
       const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
       if (getDashboardVariablesState(uid, getState()).editor.id === variableInState.id) {
-        dispatch(toUidAction(uid, removeVariableEditorError({ errorProp: 'update' })));
+        dispatch(toKeyedAction(uid, removeVariableEditorError({ errorProp: 'update' })));
       }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
@@ -53,7 +53,7 @@ export const updateQueryVariableOptions = (
       const error = toDataQueryError(err);
       const { dashboardUid: uid } = identifier;
       if (getDashboardVariablesState(uid, getState()).editor.id === identifier.id) {
-        dispatch(toUidAction(uid, addVariableEditorError({ errorProp: 'update', errorText: error.message })));
+        dispatch(toKeyedAction(uid, addVariableEditorError({ errorProp: 'update', errorText: error.message })));
       }
 
       throw error;
@@ -81,14 +81,14 @@ export const changeQueryVariableDataSource = (
       const dataSource = await getDataSourceSrv().get(name ?? '');
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {
         dispatch(
-          toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })))
+          toKeyedAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })))
         );
       }
-      dispatch(toUidAction(uid, changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource })));
+      dispatch(toKeyedAction(uid, changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource })));
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);
       dispatch(
-        toUidAction(
+        toKeyedAction(
           uid,
           changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor })
         )
@@ -108,25 +108,28 @@ export const changeQueryVariableQuery = (
   const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
   if (hasSelfReferencingQuery(variableInState.name, query)) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
-    dispatch(toUidAction(uid, addVariableEditorError({ errorProp: 'query', errorText })));
+    dispatch(toKeyedAction(uid, addVariableEditorError({ errorProp: 'query', errorText })));
     return;
   }
 
-  dispatch(toUidAction(uid, removeVariableEditorError({ errorProp: 'query' })));
+  dispatch(toKeyedAction(uid, removeVariableEditorError({ errorProp: 'query' })));
   dispatch(
-    toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })))
+    toKeyedAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })))
   );
 
   if (definition) {
     dispatch(
-      toUidAction(
+      toKeyedAction(
         uid,
         changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition }))
       )
     );
   } else if (typeof query === 'string') {
     dispatch(
-      toUidAction(uid, changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })))
+      toKeyedAction(
+        uid,
+        changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query }))
+      )
     );
   }
 

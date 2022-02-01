@@ -10,7 +10,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getDashboardVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
 import { changeVariableEditorExtended } from '../editor/reducer';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 export interface DataSourceVariableActionDependencies {
@@ -31,7 +31,7 @@ export const updateDataSourceVariableOptions = (
     regex = stringToJsRegex(regex);
   }
 
-  dispatch(toUidAction(uid, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
+  dispatch(toKeyedAction(uid, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
   await dispatch(validateVariableSelectionState(identifier));
 };
 
@@ -50,7 +50,7 @@ export const initDataSourceVariableEditor = (
   dataSourceTypes.unshift({ text: '', value: '' });
 
   dispatch(
-    toUidAction(
+    toKeyedAction(
       uid,
       changeVariableEditorExtended({
         propName: 'dataSourceTypes',

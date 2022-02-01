@@ -2,7 +2,7 @@ import { migrateVariablesDatasourceNameToRef } from './actions';
 import { adHocBuilder, queryBuilder } from '../shared/testing/builders';
 import { DataSourceRef } from '@grafana/data/src';
 import { changeVariableProp } from './sharedReducer';
-import { toUidAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './dashboardVariablesReducer';
 import { getPreloadedState } from './helpers';
 import { toVariablePayload } from '../utils';
 
@@ -39,7 +39,7 @@ describe('migrateVariablesDatasourceNameToRef', () => {
 
         expect(dispatch).toHaveBeenCalledTimes(2);
         expect(dispatch.mock.calls[0][0]).toEqual(
-          toUidAction(
+          toKeyedAction(
             uid,
             changeVariableProp(
               toVariablePayload(query, {
@@ -50,7 +50,7 @@ describe('migrateVariablesDatasourceNameToRef', () => {
           )
         );
         expect(dispatch.mock.calls[1][0]).toEqual(
-          toUidAction(
+          toKeyedAction(
             uid,
             changeVariableProp(
               toVariablePayload(adhoc, {
@@ -72,13 +72,13 @@ describe('migrateVariablesDatasourceNameToRef', () => {
 
         expect(dispatch).toHaveBeenCalledTimes(2);
         expect(dispatch.mock.calls[0][0]).toEqual(
-          toUidAction(
+          toKeyedAction(
             uid,
             changeVariableProp(toVariablePayload(query, { propName: 'datasource', propValue: { uid: '${ds}' } }))
           )
         );
         expect(dispatch.mock.calls[1][0]).toEqual(
-          toUidAction(
+          toKeyedAction(
             uid,
             changeVariableProp(toVariablePayload(adhoc, { propName: 'datasource', propValue: { uid: '${ds}' } }))
           )

@@ -8,7 +8,7 @@ import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData
 import { updateVariableOptions } from './reducer';
 import { getTemplatedRegex, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>
@@ -108,7 +108,7 @@ export function updateOptionsState(args: {
         }
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
-        dispatch(toUidAction(variable.dashboardUid, updateVariableOptions(payload)));
+        dispatch(toKeyedAction(variable.dashboardUid, updateVariableOptions(payload)));
       })
     );
 }

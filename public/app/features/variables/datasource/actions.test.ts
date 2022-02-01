@@ -15,7 +15,7 @@ import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 interface Args {
@@ -52,7 +52,7 @@ describe('data source actions', () => {
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toUidAction(
+            toKeyedAction(
               'uid',
               addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
             )
@@ -63,7 +63,7 @@ describe('data source actions', () => {
           );
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(
+          toKeyedAction(
             'uid',
             createDataSourceOptions(
               toVariablePayload(
@@ -75,7 +75,7 @@ describe('data source actions', () => {
               )
             )
           ),
-          toUidAction(
+          toKeyedAction(
             'uid',
             setCurrentVariableValue(
               toVariablePayload(
@@ -109,7 +109,7 @@ describe('data source actions', () => {
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            toUidAction(
+            toKeyedAction(
               'uid',
               addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
             )
@@ -120,7 +120,7 @@ describe('data source actions', () => {
           );
 
         await tester.thenDispatchedActionsShouldEqual(
-          toUidAction(
+          toKeyedAction(
             'uid',
             createDataSourceOptions(
               toVariablePayload(
@@ -132,7 +132,7 @@ describe('data source actions', () => {
               )
             )
           ),
-          toUidAction(
+          toKeyedAction(
             'uid',
             setCurrentVariableValue(
               toVariablePayload(
@@ -164,7 +164,7 @@ describe('data source actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(initDataSourceVariableEditor('uid', dependencies))
         .thenDispatchedActionsShouldEqual(
-          toUidAction(
+          toKeyedAction(
             'uid',
             changeVariableEditorExtended({
               propName: 'dataSourceTypes',

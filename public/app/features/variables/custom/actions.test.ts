@@ -6,7 +6,7 @@ import { getRootReducer, RootReducerType } from '../state/helpers';
 import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { createCustomOptionsFromQuery } from './reducer';
-import { toUidAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/dashboardVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('custom actions', () => {
@@ -52,13 +52,13 @@ describe('custom actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
-          toUidAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+          toKeyedAction('uid', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenAsyncActionIsDispatched(updateCustomVariableOptions(toDashboardVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toUidAction('uid', createCustomOptionsFromQuery(toVariablePayload(variable))),
-        toUidAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
+        toKeyedAction('uid', createCustomOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('uid', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });
