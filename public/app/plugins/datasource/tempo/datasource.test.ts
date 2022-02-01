@@ -97,7 +97,10 @@ describe('Tempo data source', () => {
     expect(response.data).toHaveLength(2);
     expect(response.data[0].name).toBe('Nodes');
     expect(response.data[0].fields[0].values.length).toBe(3);
+
+    // Test Links
     expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
+    expect(response.data[0].fields[0].config.links).toEqual(serviceGraphLinks);
 
     expect(response.data[1].name).toBe('Edges');
     expect(response.data[1].fields[0].values.length).toBe(2);
