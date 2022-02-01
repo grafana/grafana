@@ -19,7 +19,7 @@ export interface NavModelItem {
   showOrgSwitcher?: boolean;
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
-  highlightText?: string;
+  hasHighlight?: boolean;
   tabSuffix?: ComponentType<{ className?: string }>;
 }
 
