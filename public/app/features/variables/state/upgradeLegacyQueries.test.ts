@@ -4,7 +4,7 @@ import { upgradeLegacyQueries } from './actions';
 import { changeVariableProp } from './sharedReducer';
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
 import { TransactionStatus, VariableModel } from '../types';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { getPreloadedState } from './helpers';
 import { toDashboardVariableIdentifier } from '../utils';
 

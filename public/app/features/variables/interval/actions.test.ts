@@ -19,7 +19,7 @@ import { notifyApp } from '../../../core/actions';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { afterEach, beforeEach } from '../../../../test/lib/common';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('interval actions', () => {

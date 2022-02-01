@@ -89,7 +89,7 @@ import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 
 // process flow queryVariable
 // thunk => processVariables

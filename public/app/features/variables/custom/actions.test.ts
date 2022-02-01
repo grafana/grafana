@@ -6,7 +6,7 @@ import { getRootReducer, RootReducerType } from '../state/helpers';
 import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { createCustomOptionsFromQuery } from './reducer';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('custom actions', () => {

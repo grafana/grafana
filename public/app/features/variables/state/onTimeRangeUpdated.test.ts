@@ -23,7 +23,7 @@ import { notifyApp } from '../../../core/reducers/appNotification';
 import { expect } from '../../../../test/lib/common';
 import { appEvents } from '../../../core/core';
 import { variablesInitTransaction } from './transactionReducer';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);

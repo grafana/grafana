@@ -19,7 +19,7 @@ import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { QueryVariableEditorState } from './reducer';
 import { hasOngoingTransaction, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 
 export const updateQueryVariableOptions = (
   identifier: DashboardVariableIdentifier,

@@ -8,7 +8,7 @@ import { setOptionFromUrl } from '../state/actions';
 import { UrlQueryValue } from '@grafana/data';
 import { changeVariableProp } from '../state/sharedReducer';
 import { ensureStringValues, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 
 export const updateTextBoxVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {

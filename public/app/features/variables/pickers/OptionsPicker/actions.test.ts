@@ -23,7 +23,7 @@ import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 import { locationService } from '@grafana/runtime';
 import { queryBuilder } from '../../shared/testing/builders';
-import { toKeyedAction } from '../../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../../utils';
 
 const datasource = {

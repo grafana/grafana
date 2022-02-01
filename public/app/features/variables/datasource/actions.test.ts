@@ -15,7 +15,7 @@ import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 interface Args {

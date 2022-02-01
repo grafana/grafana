@@ -6,7 +6,7 @@ import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
 import { addVariable, setCurrentVariableValue } from './sharedReducer';
 import { setOptionFromUrl } from './actions';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [createCustomVariableAdapter()]);

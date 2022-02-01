@@ -22,7 +22,7 @@ import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 export const variableEditorMount = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {

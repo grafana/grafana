@@ -21,7 +21,7 @@ import { hasOptions } from '../guard';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableHideSelect } from './VariableHideSelect';
 import { getDashboardVariable, getDashboardVariablesState } from '../state/selectors';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 

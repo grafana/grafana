@@ -50,7 +50,7 @@ import * as runtime from '@grafana/runtime';
 import { LoadingState } from '@grafana/data';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [

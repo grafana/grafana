@@ -6,7 +6,7 @@ import { getRootReducer, RootReducerType } from '../state/helpers';
 import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { createConstantOptionsFromQuery } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('constant actions', () => {

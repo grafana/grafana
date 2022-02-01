@@ -6,7 +6,7 @@ import { VariablePickerProps } from '../pickers/types';
 import { Input } from '@grafana/ui';
 import { variableAdapters } from '../adapters';
 import { useDispatch } from 'react-redux';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}

@@ -30,7 +30,7 @@ import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelp
 import { setVariableQueryRunner } from '../query/VariableQueryRunner';
 import { createDataSourceOptions } from '../datasource/reducer';
 import { initVariablesTransaction } from './actions';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 variableAdapters.setInit(() => [

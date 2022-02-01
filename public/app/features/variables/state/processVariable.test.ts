@@ -13,7 +13,7 @@ import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { variablesInitTransaction } from './transactionReducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({

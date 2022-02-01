@@ -17,7 +17,7 @@ import { DashboardVariableIdentifier } from '../../state/types';
 import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { VariableLink } from '../shared/VariableLink';
 import { getDashboardVariablesState } from '../../state/selectors';
-import { toKeyedAction } from '../../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier } from '../../utils';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<

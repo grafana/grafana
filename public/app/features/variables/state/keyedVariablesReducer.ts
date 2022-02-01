@@ -23,7 +23,7 @@ export function toKeyedAction(key: string, action: PayloadAction<any>): PayloadA
   return keyedAction({ key: keyAsString, action });
 }
 
-export function dashboardVariablesReducer(
+export function keyedVariablesReducer(
   state = initialDashboardVariablesState,
   outerAction: AnyAction
 ): DashboardVariablesState {
@@ -49,5 +49,5 @@ export function dashboardVariablesReducer(
 }
 
 export default {
-  dashboardVariables: dashboardVariablesReducer,
+  dashboardVariables: keyedVariablesReducer,
 };

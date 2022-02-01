@@ -1,9 +1,9 @@
 import {
-  dashboardVariablesReducer,
+  keyedVariablesReducer,
   DashboardVariablesState,
   initialDashboardVariablesState,
   toKeyedAction,
-} from './dashboardVariablesReducer';
+} from './keyedVariablesReducer';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { initialTransactionState, variablesCompleteTransaction, variablesInitTransaction } from './transactionReducer';
 import { TransactionStatus } from '../types';
@@ -14,7 +14,7 @@ describe('dashboardVariablesReducer', () => {
     it('then state should be correct', () => {
       const key = 'key';
       reducerTester<DashboardVariablesState>()
-        .givenReducer(dashboardVariablesReducer, {
+        .givenReducer(keyedVariablesReducer, {
           ...initialDashboardVariablesState,
           lastKey: key,
           keys: {
@@ -50,7 +50,7 @@ describe('dashboardVariablesReducer', () => {
       const lastUid = 'lastUid';
       const key = 'key';
       reducerTester<DashboardVariablesState>()
-        .givenReducer(dashboardVariablesReducer, {
+        .givenReducer(keyedVariablesReducer, {
           ...initialDashboardVariablesState,
           lastKey: lastUid,
           keys: {
@@ -94,7 +94,7 @@ describe('dashboardVariablesReducer', () => {
     it('then state should not be affected', () => {
       const key = 'key';
       reducerTester<DashboardVariablesState>()
-        .givenReducer(dashboardVariablesReducer, {
+        .givenReducer(keyedVariablesReducer, {
           ...initialDashboardVariablesState,
           lastKey: key,
           keys: {

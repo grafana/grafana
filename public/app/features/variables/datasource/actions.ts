@@ -10,7 +10,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getDashboardVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
 import { changeVariableEditorExtended } from '../editor/reducer';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 export interface DataSourceVariableActionDependencies {

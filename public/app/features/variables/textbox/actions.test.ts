@@ -8,7 +8,7 @@ import { createTextBoxOptions } from './reducer';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { textboxBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 jest.mock('@grafana/runtime', () => {

@@ -14,7 +14,7 @@ import { VariableEditorList } from './VariableEditorList';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {

@@ -2,7 +2,7 @@ import { migrateVariablesDatasourceNameToRef } from './actions';
 import { adHocBuilder, queryBuilder } from '../shared/testing/builders';
 import { DataSourceRef } from '@grafana/data/src';
 import { changeVariableProp } from './sharedReducer';
-import { toKeyedAction } from './dashboardVariablesReducer';
+import { toKeyedAction } from './keyedVariablesReducer';
 import { getPreloadedState } from './helpers';
 import { toVariablePayload } from '../utils';
 

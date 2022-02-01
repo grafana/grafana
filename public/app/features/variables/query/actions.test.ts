@@ -39,7 +39,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunn
 import { setDataSourceSrv } from '@grafana/runtime';
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 const mocks: Record<string, any> = {

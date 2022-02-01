@@ -17,7 +17,7 @@ import {
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { DashboardVariableIdentifier } from '../../state/types';
 import { containsSearchFilter, getCurrentText, toVariablePayload } from '../../utils';
-import { toKeyedAction } from '../../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../../state/keyedVariablesReducer';
 
 export const navigateOptions = (uid: string, key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {

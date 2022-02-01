@@ -1,6 +1,6 @@
 import { Store } from 'redux';
 
-import { initialDashboardVariablesState } from 'app/features/variables/state/dashboardVariablesReducer';
+import { initialDashboardVariablesState } from 'app/features/variables/state/keyedVariablesReducer';
 import { StoreState } from 'app/types';
 
 export let store: Store<StoreState>;

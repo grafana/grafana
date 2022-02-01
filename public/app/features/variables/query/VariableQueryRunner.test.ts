@@ -8,7 +8,7 @@ import { QueryRunner, QueryRunners } from './queryRunners';
 import { DashboardVariableIdentifier } from '../state/types';
 import { QueryVariableModel } from '../types';
 import { updateVariableOptions } from './reducer';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
 import { getPreloadedState } from '../state/helpers';
 import { toDashboardVariableIdentifier } from '../utils';

@@ -2,7 +2,7 @@ import { validateVariableSelectionState } from '../state/actions';
 import { ThunkResult } from 'app/types';
 import { createCustomOptionsFromQuery } from './reducer';
 import { DashboardVariableIdentifier } from '../state/types';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toVariablePayload } from '../utils';
 
 export const updateCustomVariableOptions = (identifier: DashboardVariableIdentifier): ThunkResult<void> => {

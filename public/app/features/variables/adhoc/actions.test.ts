@@ -20,7 +20,7 @@ import { VariableModel } from 'app/features/variables/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 import { locationService } from '@grafana/runtime';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 const getList = jest.fn().mockReturnValue([]);

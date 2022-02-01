@@ -22,7 +22,7 @@ import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 import { DataSourceRef, getDataSourceRef } from '@grafana/data';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 
 export interface AdHocTableOptions {

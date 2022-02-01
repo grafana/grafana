@@ -15,7 +15,7 @@ import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 import { DashboardState, StoreState } from '../../../types';
 import { NEW_VARIABLE_ID } from '../constants';
-import { dashboardVariablesReducer, DashboardVariablesState } from './dashboardVariablesReducer';
+import { keyedVariablesReducer, DashboardVariablesState } from './keyedVariablesReducer';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 
 export const getVariableState = (
@@ -143,14 +143,14 @@ export const getVariableTestContext = <Model extends VariableModel>(
 export const getRootReducer = () =>
   combineReducers({
     dashboard: dashboardReducer,
-    dashboardVariables: dashboardVariablesReducer,
+    dashboardVariables: keyedVariablesReducer,
   });
 
 export type RootReducerType = { dashboard: DashboardState; dashboardVariables: DashboardVariablesState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
-    dashboardVariables: dashboardVariablesReducer,
+    dashboardVariables: keyedVariablesReducer,
   });
 
 export type TemplatingReducerType = { dashboardVariables: DashboardVariablesState };

@@ -8,7 +8,7 @@ import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData
 import { updateVariableOptions } from './reducer';
 import { getTemplatedRegex, toDashboardVariableIdentifier, toVariablePayload } from '../utils';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
-import { toKeyedAction } from '../state/dashboardVariablesReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>
