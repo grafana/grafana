@@ -6,10 +6,11 @@ import { css } from '@emotion/css';
 interface Props {
   className?: string;
   queryString?: string;
+  defaultQueryString?: string;
   onFilterChange: (filterString: string) => void;
 }
 
-export const MatcherFilter = ({ className, onFilterChange, queryString }: Props) => {
+export const MatcherFilter = ({ className, onFilterChange, defaultQueryString, queryString }: Props) => {
   const styles = useStyles2(getStyles);
   const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
@@ -33,7 +34,8 @@ export const MatcherFilter = ({ className, onFilterChange, queryString }: Props)
       </Label>
       <Input
         placeholder="Search"
-        defaultValue={queryString}
+        defaultValue={defaultQueryString}
+        value={queryString}
         onChange={handleSearchChange}
         data-testid="search-query-input"
         prefix={searchIcon}
