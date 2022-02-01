@@ -1,5 +1,5 @@
 +++
-title = "Database encryption (Enterprise)"
+title = "Database encryption"
 description = "Grafana Enterprise database encryption"
 keywords = ["grafana", "enterprise", "database", "encryption", "documentation"]
 aliases = [""]
