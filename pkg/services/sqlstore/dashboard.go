@@ -3,17 +3,14 @@ package sqlstore
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
+	"strings"
 )
 
 var shadowSearchCounter = prometheus.NewCounterVec(
@@ -45,138 +42,6 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 }
 
 var generateNewUid func() string = util.GenerateShortUID
-
-func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
-	dash := cmd.GetDashboardModel()
-
-	userId := cmd.UserId
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	if dash.Id > 0 {
-		var existing models.Dashboard
-		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
-		if err != nil {
-			return err
-		}
-		if !dashWithIdExists {
-			return models.ErrDashboardNotFound
-		}
-
-		// check for is someone else has written in between
-		if dash.Version != existing.Version {
-			if cmd.Overwrite {
-				dash.SetVersion(existing.Version)
-			} else {
-				return models.ErrDashboardVersionMismatch
-			}
-		}
-
-		// do not allow plugin dashboard updates without overwrite flag
-		if existing.PluginId != "" && !cmd.Overwrite {
-			return models.UpdatePluginDashboardError{PluginId: existing.PluginId}
-		}
-	}
-
-	if dash.Uid == "" {
-		uid, err := generateNewDashboardUid(sess, dash.OrgId)
-		if err != nil {
-			return err
-		}
-		dash.SetUid(uid)
-	}
-
-	parentVersion := dash.Version
-	var affectedRows int64
-	var err error
-
-	if dash.Id == 0 {
-		dash.SetVersion(1)
-		dash.Created = time.Now()
-		dash.CreatedBy = userId
-		dash.Updated = time.Now()
-		dash.UpdatedBy = userId
-		metrics.MApiDashboardInsert.Inc()
-		affectedRows, err = sess.Insert(dash)
-	} else {
-		dash.SetVersion(dash.Version + 1)
-
-		if !cmd.UpdatedAt.IsZero() {
-			dash.Updated = cmd.UpdatedAt
-		} else {
-			dash.Updated = time.Now()
-		}
-
-		dash.UpdatedBy = userId
-
-		affectedRows, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if affectedRows == 0 {
-		return models.ErrDashboardNotFound
-	}
-
-	dashVersion := &models.DashboardVersion{
-		DashboardId:   dash.Id,
-		ParentVersion: parentVersion,
-		RestoredFrom:  cmd.RestoredFrom,
-		Version:       dash.Version,
-		Created:       time.Now(),
-		CreatedBy:     dash.UpdatedBy,
-		Message:       cmd.Message,
-		Data:          dash.Data,
-	}
-
-	// insert version entry
-	if affectedRows, err = sess.Insert(dashVersion); err != nil {
-		return err
-	} else if affectedRows == 0 {
-		return models.ErrDashboardNotFound
-	}
-
-	// delete existing tags
-	_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
-	if err != nil {
-		return err
-	}
-
-	// insert new tags
-	tags := dash.GetTags()
-	if len(tags) > 0 {
-		for _, tag := range tags {
-			if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
-				return err
-			}
-		}
-	}
-
-	cmd.Result = dash
-
-	return nil
-}
-
-func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
-
-		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.Dashboard{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", models.ErrDashboardFailedGenerateUniqueUid
-}
 
 // GetDashboard gets a dashboard.
 func (ss *SQLStore) GetDashboard(id, orgID int64, uid, slug string) (*models.Dashboard, error) {
@@ -233,7 +98,7 @@ type DashboardSearchProjection struct {
 	SortMeta    int64
 }
 
-func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+func (ss *SQLStore) FindDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
@@ -305,7 +170,7 @@ func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersis
 }
 
 func (ss *SQLStore) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
-	res, err := ss.findDashboards(ctx, query)
+	res, err := ss.FindDashboards(ctx, query)
 	if err != nil {
 		return err
 	}
