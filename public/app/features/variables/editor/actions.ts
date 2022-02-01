@@ -1,9 +1,9 @@
 import { ThunkResult } from '../../../types';
 import {
   getDashboardEditorVariables,
-  getDashboardVariable,
   getDashboardVariables,
   getNewDashboardVariableIndex,
+  getVariable,
 } from '../state/selectors';
 import {
   changeVariableNameFailed,
@@ -28,7 +28,7 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     const { stateKey: uid } = identifier;
-    dispatch(toKeyedAction(uid, variableEditorMounted({ name: getDashboardVariable(identifier).name })));
+    dispatch(toKeyedAction(uid, variableEditorMounted({ name: getVariable(identifier).name })));
   };
 };
 
@@ -79,7 +79,7 @@ export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, 
   getState
 ) => {
   const { stateKey: uid } = identifier;
-  const originalVariable = getDashboardVariable(identifier, getState());
+  const originalVariable = getVariable(identifier, getState());
   if (originalVariable.name === newName) {
     dispatch(toKeyedAction(uid, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
     return;

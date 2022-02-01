@@ -29,12 +29,7 @@ import {
   VariableWithOptions,
 } from '../types';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
-import {
-  getDashboardVariable,
-  getDashboardVariables,
-  getDashboardVariablesState,
-  getIfExistsLastKey,
-} from './selectors';
+import { getDashboardVariables, getDashboardVariablesState, getIfExistsLastKey, getVariable } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { notifyApp } from 'app/core/actions';
@@ -260,7 +255,7 @@ export const addSystemTemplateVariables = (key: string, dashboard: DashboardMode
 export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { stateKey: key } = identifier;
-    const variable = getDashboardVariable<VariableWithMultiSupport>(identifier, getState());
+    const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(
@@ -327,7 +322,7 @@ export const processVariable = (
   queryParams: UrlQueryMap
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variable = getDashboardVariable(identifier, getState());
+    const variable = getVariable(identifier, getState());
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
@@ -371,17 +366,14 @@ export const setOptionFromUrl = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const stringUrlValue = ensureStringValues(urlValue);
-    const variable = getDashboardVariable(identifier, getState());
+    const variable = getVariable(identifier, getState());
     if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
       await dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
     }
 
     // get variable from state
-    const variableFromState = getDashboardVariable<VariableWithOptions>(
-      toKeyedVariableIdentifier(variable),
-      getState()
-    );
+    const variableFromState = getVariable<VariableWithOptions>(toKeyedVariableIdentifier(variable), getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -463,7 +455,7 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    const variableInState = getDashboardVariable<VariableWithOptions>(identifier, getState());
+    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
     const current = variableInState.current || (({} as unknown) as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -556,7 +548,7 @@ export const variableUpdated = (
   return async (dispatch, getState) => {
     const state = getState();
     const { stateKey: uid } = identifier;
-    const variableInState = getDashboardVariable(identifier, state);
+    const variableInState = getVariable(identifier, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
     if (getDashboardVariablesState(uid, state).transaction.status === TransactionStatus.Fetching) {
@@ -635,12 +627,12 @@ const timeRangeUpdated = (identifier: KeyedVariableIdentifier): ThunkResult<Prom
   dispatch,
   getState
 ) => {
-  const variableInState = getDashboardVariable<VariableWithOptions>(identifier, getState());
+  const variableInState = getVariable<VariableWithOptions>(identifier, getState());
   const previousOptions = variableInState.options.slice();
 
   await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), true));
 
-  const updatedVariable = getDashboardVariable<VariableWithOptions>(identifier, getState());
+  const updatedVariable = getVariable<VariableWithOptions>(identifier, getState());
   const updatedOptions = updatedVariable.options;
 
   if (angular.toJson(previousOptions) !== angular.toJson(updatedOptions)) {
@@ -816,7 +808,7 @@ export const updateOptions = (
       return;
     }
 
-    const variableInState = getDashboardVariable(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
     dispatch(toKeyedAction(uid, variableStateFetching(toVariablePayload(variableInState))));
     await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
@@ -855,7 +847,7 @@ export const completeVariableLoading = (identifier: KeyedVariableIdentifier): Th
     return;
   }
 
-  const variableInState = getDashboardVariable(identifier, getState());
+  const variableInState = getVariable(identifier, getState());
 
   if (variableInState.state !== LoadingState.Done) {
     dispatch(toKeyedAction(identifier.stateKey, variableStateCompleted(toVariablePayload(variableInState))));
@@ -873,7 +865,7 @@ export function upgradeLegacyQueries(
       return;
     }
 
-    const variable = getDashboardVariable<QueryVariableModel>(identifier, getState());
+    const variable = getVariable<QueryVariableModel>(identifier, getState());
 
     if (!isQuery(variable)) {
       return;

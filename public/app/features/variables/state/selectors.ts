@@ -6,13 +6,13 @@ import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { toStateKey } from '../utils';
 import { KeyedVariableIdentifier, VariablesState } from './types';
 
-export const getDashboardVariable = <T extends VariableModel = VariableModel>(
+export const getVariable = <T extends VariableModel = VariableModel>(
   identifier: KeyedVariableIdentifier,
   state: StoreState = getState(),
   throwWhenMissing = true
 ): T => {
-  const { id, stateKey: uid } = identifier;
-  const variablesState = getDashboardVariablesState(uid, state);
+  const { id, stateKey } = identifier;
+  const variablesState = getDashboardVariablesState(stateKey, state);
   if (!variablesState.variables[id]) {
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
@@ -104,7 +104,7 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   if (!lastKey) {
     return;
   }
-  return getDashboardVariable({ id: name, stateKey: lastKey, type: 'query' }, state, false);
+  return getVariable({ id: name, stateKey: lastKey, type: 'query' }, state, false);
 }
 
 export function getInstanceState<Model extends VariableModel = VariableModel>(state: VariablesState, id: string) {

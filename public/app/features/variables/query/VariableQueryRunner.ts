@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 
 import { KeyedVariableIdentifier } from '../state/types';
-import { getDashboardVariable, getLastKey } from '../state/selectors';
+import { getLastKey, getVariable } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
@@ -39,7 +39,7 @@ export interface UpdateOptionsResults {
 interface VariableQueryRunnerArgs {
   dispatch: ThunkDispatch;
   getState: () => StoreState;
-  getDashboardVariable: typeof getDashboardVariable;
+  getDashboardVariable: typeof getVariable;
   getTemplatedRegex: typeof getTemplatedRegex;
   getTimeSrv: typeof getTimeSrv;
   queryRunners: QueryRunners;
@@ -56,7 +56,7 @@ export class VariableQueryRunner {
     private dependencies: VariableQueryRunnerArgs = {
       dispatch,
       getState,
-      getDashboardVariable,
+      getDashboardVariable: getVariable,
       getTemplatedRegex,
       getTimeSrv,
       queryRunners: new QueryRunners(),

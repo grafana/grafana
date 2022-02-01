@@ -4,7 +4,7 @@ import { KeyedVariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
-import { getDashboardVariable } from '../state/selectors';
+import { getVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
@@ -34,7 +34,7 @@ export const updateAutoValue = (
     templateSrv: getTemplateSrv(),
   }
 ): ThunkResult<void> => (dispatch, getState) => {
-  const variableInState = getDashboardVariable<IntervalVariableModel>(identifier, getState());
+  const variableInState = getVariable<IntervalVariableModel>(identifier, getState());
   if (variableInState.auto) {
     const res = dependencies.calculateInterval(
       dependencies.getTimeSrv().timeRange(),

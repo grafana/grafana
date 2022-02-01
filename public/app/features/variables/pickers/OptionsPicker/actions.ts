@@ -2,7 +2,7 @@ import { debounce, trim } from 'lodash';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { variableAdapters } from '../../adapters';
-import { getDashboardVariable, getDashboardVariablesState } from '../../state/selectors';
+import { getDashboardVariablesState, getVariable } from '../../state/selectors';
 import { NavigationKey } from '../types';
 import {
   hideOptions,
@@ -54,7 +54,7 @@ export const filterOrSearchOptions = (
     const { stateKey: uid } = passedIdentifier;
     const { id, queryValue } = getDashboardVariablesState(uid, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id, stateKey: uid, type: 'query' };
-    const { query, options } = getDashboardVariable<VariableWithOptions>(identifier, getState());
+    const { query, options } = getVariable<VariableWithOptions>(identifier, getState());
     dispatch(toKeyedAction(uid, updateSearchQuery(searchQuery)));
 
     if (trim(queryValue) === trim(searchQuery)) {
@@ -78,13 +78,13 @@ export const commitChangesToVariable = (uid: string, callback?: (updated: any) =
   return async (dispatch, getState) => {
     const picker = getDashboardVariablesState(uid, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id: picker.id, stateKey: uid, type: 'query' };
-    const existing = getDashboardVariable<VariableWithMultiSupport>(identifier, getState());
+    const existing = getVariable<VariableWithMultiSupport>(identifier, getState());
     const currentPayload = { option: mapToCurrent(picker) };
     const searchQueryPayload = { propName: 'queryValue', propValue: picker.queryValue };
 
     dispatch(toKeyedAction(uid, setCurrentVariableValue(toVariablePayload(existing, currentPayload))));
     dispatch(toKeyedAction(uid, changeVariableProp(toVariablePayload(existing, searchQueryPayload))));
-    const updated = getDashboardVariable<VariableWithMultiSupport>(identifier, getState());
+    const updated = getVariable<VariableWithMultiSupport>(identifier, getState());
     dispatch(toKeyedAction(uid, hideOptions()));
 
     if (getCurrentText(existing) === getCurrentText(updated)) {
@@ -110,7 +110,7 @@ export const openOptions = (
     await dispatch(commitChangesToVariable(uid, callback));
   }
 
-  const variable = getDashboardVariable<VariableWithMultiSupport>(identifier, getState());
+  const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
   dispatch(toKeyedAction(uid, showOptions(variable)));
 };
 
@@ -131,12 +131,12 @@ const searchForOptions = async (
   try {
     const { id } = getDashboardVariablesState(uid, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id, stateKey: uid, type: 'query' };
-    const existing = getDashboardVariable<VariableWithOptions>(identifier, getState());
+    const existing = getVariable<VariableWithOptions>(identifier, getState());
 
     const adapter = variableAdapters.get(existing.type);
     await adapter.updateOptions(existing, searchQuery);
 
-    const updated = getDashboardVariable<VariableWithOptions>(identifier, getState());
+    const updated = getVariable<VariableWithOptions>(identifier, getState());
     dispatch(toKeyedAction(uid, updateOptionsFromSearch(updated.options)));
   } catch (error) {
     console.error(error);

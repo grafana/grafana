@@ -7,7 +7,7 @@ import { ThunkResult } from '../../../types';
 import { createDataSourceOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getDashboardVariable } from '../state/selectors';
+import { getVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
@@ -23,7 +23,7 @@ export const updateDataSourceVariableOptions = (
 ): ThunkResult<void> => async (dispatch, getState) => {
   const { stateKey: uid } = identifier;
   const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
-  const variableInState = getDashboardVariable<DataSourceVariableModel>(identifier, getState());
+  const variableInState = getVariable<DataSourceVariableModel>(identifier, getState());
   let regex;
 
   if (variableInState.regex) {

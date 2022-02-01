@@ -1,6 +1,6 @@
 import { TextBoxVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDashboardVariable } from '../state/selectors';
+import { getVariable } from '../state/selectors';
 import { variableAdapters } from '../adapters';
 import { createTextBoxOptions } from './reducer';
 import { KeyedVariableIdentifier } from '../state/types';
@@ -15,7 +15,7 @@ export const updateTextBoxVariableOptions = (identifier: KeyedVariableIdentifier
     const { stateKey: uid, type } = identifier;
     dispatch(toKeyedAction(uid, createTextBoxOptions(toVariablePayload(identifier))));
 
-    const variableInState = getDashboardVariable<TextBoxVariableModel>(identifier, getState());
+    const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
     await variableAdapters.get(type).setValue(variableInState, variableInState.options[0], true);
   };
 };
@@ -25,7 +25,7 @@ export const setTextBoxVariableOptionsFromUrl = (
   urlValue: UrlQueryValue
 ): ThunkResult<void> => async (dispatch, getState) => {
   const { stateKey: uid } = identifier;
-  const variableInState = getDashboardVariable<TextBoxVariableModel>(identifier, getState());
+  const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
 
   const stringUrlValue = ensureStringValues(urlValue);
   dispatch(

@@ -5,7 +5,7 @@ import { DataSourceRef } from '@grafana/data';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDashboardVariable, getDashboardVariablesState } from '../state/selectors';
+import { getDashboardVariablesState, getVariable } from '../state/selectors';
 import {
   addVariableEditorError,
   changeVariableEditorExtended,
@@ -33,7 +33,7 @@ export const updateQueryVariableOptions = (
         return;
       }
 
-      const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
+      const variableInState = getVariable<QueryVariableModel>(identifier, getState());
       if (getDashboardVariablesState(uid, getState()).editor.id === variableInState.id) {
         dispatch(toKeyedAction(uid, removeVariableEditorError({ errorProp: 'update' })));
       }
@@ -65,7 +65,7 @@ export const initQueryVariableEditor = (identifier: KeyedVariableIdentifier): Th
   dispatch,
   getState
 ) => {
-  const variable = getDashboardVariable<QueryVariableModel>(identifier, getState());
+  const variable = getVariable<QueryVariableModel>(identifier, getState());
   await dispatch(changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), variable.datasource));
 };
 
@@ -105,7 +105,7 @@ export const changeQueryVariableQuery = (
   definition?: string
 ): ThunkResult<void> => async (dispatch, getState) => {
   const { stateKey: uid } = identifier;
-  const variableInState = getDashboardVariable<QueryVariableModel>(identifier, getState());
+  const variableInState = getVariable<QueryVariableModel>(identifier, getState());
   if (hasSelfReferencingQuery(variableInState.name, query)) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
     dispatch(toKeyedAction(uid, addVariableEditorError({ errorProp: 'query', errorText })));
