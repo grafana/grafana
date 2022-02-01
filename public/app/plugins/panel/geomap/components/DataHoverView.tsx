@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react';
-import { Collapse, stylesFactory, Tab, TabsBar } from '@grafana/ui';
+import React, { useState } from 'react';
+import { stylesFactory } from '@grafana/ui';
 import {
   arrayUtils,
   DataFrame,
@@ -12,6 +12,8 @@ import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { SortOrder } from '@grafana/schema';
 import { GeomapLayerHover } from '../event';
+import { DataHoverTabs } from './DataHoverTabs';
+import { DataHoverCollapsibleRows } from './DataHoverCollapsableRows';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -21,73 +23,59 @@ export interface Props {
   sortOrder?: SortOrder;
 }
 
-export class DataHoverView extends PureComponent<Props> {
-  style = getStyles(config.theme2);
+export const DataHoverView = (props: Props) => {
+  const style = getStyles(config.theme2);
 
-  render() {
-    const { layers, columnIndex, sortOrder } = this.props;
-    if (layers) {
-      console.log('hover', layers);
-      return (
-        <div>
-          <TabsBar>
-            {layers.map((g, index) => (
-              <Tab key={index} label={g.layer.getName()} active={false} counter={g.features.length} />
-            ))}
-          </TabsBar>
-          {layers.map((g) => (
-            <div key={g.layer.getName()}>
-              <div>
-                {g.features.map((f, idx) => (
-                  <Collapse key={idx} collapsible label={f.get('name')} isOpen={false} onToggle={() => {}}>
-                    <div>FEATURE: {`${f}`}</div>
-                  </Collapse>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
+  console.log(activeTabIndex, 'what is this?');
 
-    let { data, rowIndex } = this.props;
-
-    if (!data || rowIndex == null) {
-      return null;
-    }
-
-    const displayValues: Array<[string, any, string]> = [];
-    const visibleFields = data.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-
-    if (visibleFields.length === 0) {
-      return null;
-    }
-    for (let i = 0; i < visibleFields.length; i++) {
-      displayValues.push([
-        getFieldDisplayName(visibleFields[i], data),
-        visibleFields[i].values.get(rowIndex!),
-        fmt(visibleFields[i], rowIndex),
-      ]);
-    }
-
-    if (sortOrder && sortOrder !== SortOrder.None) {
-      displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
-    }
-
+  const { layers, columnIndex, sortOrder } = props;
+  if (layers) {
     return (
-      <table className={this.style.infoWrap}>
-        <tbody>
-          {displayValues.map((v, i) => (
-            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
-              <th>{v[0]}:</th>
-              <td>{v[2]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <>
+        <DataHoverTabs layers={layers} setActiveTabIndex={setActiveTabIndex} activeTabIndex={activeTabIndex} />
+        <DataHoverCollapsibleRows layers={layers} activeTabIndex={activeTabIndex} />
+      </>
     );
   }
-}
+
+  let { data, rowIndex } = props;
+
+  if (!data || rowIndex == null) {
+    return null;
+  }
+
+  const displayValues: Array<[string, any, string]> = [];
+  const visibleFields = data.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
+
+  if (visibleFields.length === 0) {
+    return null;
+  }
+  for (let i = 0; i < visibleFields.length; i++) {
+    displayValues.push([
+      getFieldDisplayName(visibleFields[i], data),
+      visibleFields[i].values.get(rowIndex!),
+      fmt(visibleFields[i], rowIndex),
+    ]);
+  }
+
+  if (sortOrder && sortOrder !== SortOrder.None) {
+    displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
+  }
+
+  return (
+    <table className={style.infoWrap}>
+      <tbody>
+        {displayValues.map((v, i) => (
+          <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? style.highlight : ''}>
+            <th>{v[0]}:</th>
+            <td>{v[2]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 function fmt(field: Field, row: number): string {
   const v = field.values.get(row);
