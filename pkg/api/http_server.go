@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -123,6 +124,7 @@ type HTTPServer struct {
 	grafanaUpdateChecker         *updatechecker.GrafanaService
 	pluginsUpdateChecker         *updatechecker.PluginsService
 	searchUsersService           searchusers.Service
+	ldapGroups                   ldap.Groups
 	teamGuardian                 teamguardian.TeamGuardian
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
@@ -156,7 +158,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	dashboardService dashboards.DashboardService, dashboardProvisioningService dashboards.DashboardProvisioningService,
 	folderService dashboards.FolderService, authInfoService authinfoservice.Service,
 	resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
@@ -213,6 +215,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SecretsService:               secretsService,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
+		ldapGroups:                   ldapGroups,
 		teamGuardian:                 teamGuardian,
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
