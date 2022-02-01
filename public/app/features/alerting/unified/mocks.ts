@@ -16,7 +16,7 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
-import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace, CombinedRule } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
@@ -430,3 +430,22 @@ export const someRulerRules: RulerRulesConfigDTO = {
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };
+
+export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
+  name: 'mockRule',
+  query: 'expr',
+  group: {
+    name: 'mockCombinedRuleGroup',
+    rules: [],
+  },
+  namespace: {
+    name: 'mockCombinedNamespace',
+    groups: [{ name: 'mockCombinedRuleGroup', rules: [] }],
+    rulesSource: 'grafana',
+  },
+  labels: {},
+  annotations: {},
+  promRule: mockPromAlertingRule(),
+  rulerRule: mockRulerAlertingRule(),
+  ...partial,
+});

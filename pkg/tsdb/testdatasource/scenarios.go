@@ -195,7 +195,7 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 
 	s.registerScenario(&Scenario{
 		ID:   string(rawFrameQuery),
-		Name: "Raw Frame",
+		Name: "Raw Frames",
 	})
 
 	s.registerScenario(&Scenario{
