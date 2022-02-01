@@ -6,7 +6,7 @@ import { Props, ShareLink, State } from './ShareLink';
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
-import { PanelModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { getDefaultTimeRange } from '@grafana/data';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -190,8 +190,14 @@ describe('ShareModal', () => {
   });
 });
 
-describe ('Share Modal when homedashboard' , ()=> {
-  it('should render link', ()=>{
-
-    })
- })
+describe('when default_home_dashboard_path is set in the grafana config', () => {
+  it('should render the correct link', async () => {
+    const mockDashboard = new DashboardModel({
+      uid: 'foo',
+    });
+    mockLocationHref('http://dashboards.grafana.com/');
+    const test: ShallowWrapper<Props, State, ShareLink> = shallow(<ShareLink dashboard={mockDashboard} />);
+    await test.instance().buildUrl();
+    expect(test.state().shareUrl).toBe('foo');
+  });
+});
