@@ -84,6 +84,6 @@ const (
 	FlagValidatedQueries = "validatedQueries"
 
 	// FlagSwaggerUi
-	// Server swagger UI
+	// Serves swagger UI
 	FlagSwaggerUi = "swagger-ui"
 )
