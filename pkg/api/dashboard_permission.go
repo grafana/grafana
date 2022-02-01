@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -70,7 +72,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -112,6 +114,17 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		old, err := g.GetAcl()
+		if err != nil {
+			return response.Error(500, "Error while checking dashboard permissions", err)
+		}
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Id, false, items, old); err != nil {
+			return response.Error(500, "Failed to create permission", err)
+		}
+		return response.Success("Dashboard permissions updated")
+	}
+
 	if err := updateDashboardACL(c.Req.Context(), hs.SQLStore, dashID, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
@@ -121,6 +134,74 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	return response.Success("Dashboard permissions updated")
+}
+
+// updateDashboardAccessControl is used for api backward compatability
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, dashID int64, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
+	svc := hs.dashboardPermissionsService
+	if isFolder {
+		svc = hs.folderPermissionsService
+	}
+
+	for _, item := range items {
+		resourceID := strconv.FormatInt(dashID, 10)
+		permissions := item.Permission.String()
+		if item.UserID != 0 {
+			_, err := svc.SetUserPermission(ctx, orgID, item.UserID, resourceID, permissions)
+			if err != nil {
+				return err
+			}
+		} else if item.TeamID != 0 {
+			_, err := svc.SetTeamPermission(ctx, orgID, item.TeamID, resourceID, permissions)
+			if err != nil {
+				return err
+			}
+		} else if item.Role != nil {
+			_, err := svc.SetBuiltInRolePermission(ctx, orgID, string(*item.Role), resourceID, permissions)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, o := range old {
+		shouldRemove := true
+		for _, item := range items {
+			if item.UserID != 0 && item.UserID == o.UserId {
+				shouldRemove = false
+				break
+			}
+			if item.TeamID != 0 && item.TeamID == o.TeamId {
+				shouldRemove = false
+				break
+			}
+			if item.Role != nil && item.Role == o.Role {
+				shouldRemove = false
+				break
+			}
+		}
+		if shouldRemove {
+			resourceID := strconv.FormatInt(dashID, 10)
+			if o.UserId != 0 {
+				_, err := svc.SetUserPermission(ctx, orgID, o.UserId, resourceID, "")
+				if err != nil {
+					return err
+				}
+			} else if o.TeamId != 0 {
+				_, err := svc.SetTeamPermission(ctx, orgID, o.TeamId, resourceID, "")
+				if err != nil {
+					return err
+				}
+			} else if o.Role != nil {
+				_, err := svc.SetBuiltInRolePermission(ctx, orgID, string(*o.Role), resourceID, "")
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
