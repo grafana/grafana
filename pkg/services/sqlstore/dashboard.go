@@ -3,6 +3,8 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -10,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
-	"strings"
 )
 
 var shadowSearchCounter = prometheus.NewCounterVec(

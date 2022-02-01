@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/util"
 )
 
