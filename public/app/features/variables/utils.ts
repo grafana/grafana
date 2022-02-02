@@ -266,10 +266,6 @@ export function toStateKey(key: string | null | undefined): string {
   return String(key);
 }
 
-export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {
-  return { type: variable.type, id: variable.id };
-};
-
 export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariableIdentifier => {
   if (!variable.stateKey) {
     throw new Error(`stateKey not found for variable with id:${variable.id}`);
