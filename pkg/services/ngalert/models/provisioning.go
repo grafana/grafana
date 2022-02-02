@@ -8,7 +8,7 @@ const (
 	ProvenanceFile Provenance = "file"
 )
 
-type ProvisionedObject interface {
+type Provisionable interface {
 	GetResourceTypeIdentifier() string
 	GetResourceUniqueIdentifier() string
 }
