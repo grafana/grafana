@@ -12,7 +12,10 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 
 ## Table of contents
 
-- [From version 7.x.x to 8.0.0](#from-version-7xx-to-800)
+- [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
+  - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
+  - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
+- [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
     - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
@@ -32,6 +35,18 @@ This guide helps you identify the steps you need to take based on the Grafana ve
     - [Migrate a data source plugin](#migrate-a-data-source-plugin)
     - [Migrate to data frames](#migrate-to-data-frames)
   - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 8.3.x to 8.4.x
+
+This section explains how to migrate Grafana v8.3.x plugins to the updated plugin system available in Grafana v8.4.x. Depending on your plugin, you need to perform one or more of the following steps.
+
+### Value Mapping Editor has been removed from @grafana-ui library
+
+Removed due to being an internal component.
+
+### Thresholds Editor has been removed from @grafana-ui library
+
+Removed due to being an internal component.
 
 ## From version 7.x.x to 8.x.x
 
@@ -176,7 +191,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.]({{< relref "../../administration/#allow_loading_unsigned_plugins" >}})
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.](../../administration/configuration.md#allow_loading_unsigned_plugins)
 
 ### Update react-hook-form from v6 to v7
 
@@ -377,7 +392,7 @@ const themeColor = getColorForTheme(color, theme);
 
 ```
 
-## From version 6.x.x to 7.x.x
+## From version 6.x.x to 7.0.0
 
 ### What's new in Grafana 7.0?
 
@@ -387,7 +402,7 @@ Plugins built using Angular still work for the foreseeable future, but we encour
 
 #### New data format
 
-Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "data-frames.md" >}}).
+Along with the move to React, the new plugin platform introduced a new internal data format called [data frames](data-frames.md).
 
 Previously, data source plugins could send data either as time series or tables. With data frames, data sources can send any data in a table-like structure. This gives you more flexibility to visualize your data in Grafana.
 
@@ -411,9 +426,9 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
-Since Grafana 7.0 introduced [signing of backend plugins]({{< relref "../../plugins/plugin-signatures.md" >}}), community plugins won’t load by default if they’re unsigned.
+Since Grafana 7.0 introduced [signing of backend plugins](../../plugins/plugin-signatures.md), community plugins won’t load by default if they’re unsigned.
 
-To learn more, refer to [Backend plugins]({{< relref "backend" >}}).
+To learn more, refer to [Backend plugins](backend/_index.md).
 
 ### Migrate a plugin from Angular to React
 
@@ -501,8 +516,8 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
+For more information, refer to [Data frames](data-frames.md).
 
 ### Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins](../../plugins/plugin-signatures.md#allow-unsigned-plugins).

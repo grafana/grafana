@@ -1,8 +1,10 @@
-import React, { FC, ReactNode, useState } from 'react';
-import { css } from '@emotion/css';
+import React, { FC, ReactNode, useRef, useState } from 'react';
+import { uniqueId } from 'lodash';
+import { css, cx } from '@emotion/css';
 import { useStyles2 } from '../../themes';
-import { Icon } from '..';
+import { Icon, Spinner } from '..';
 import { GrafanaTheme2 } from '@grafana/data';
+import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
   label: ReactNode;
@@ -10,46 +12,102 @@ export interface Props {
   /** Callback for the toggle functionality */
   onToggle?: (isOpen: boolean) => void;
   children: ReactNode;
+  className?: string;
+  contentClassName?: string;
+  loading?: boolean;
+  labelId?: string;
 }
 
-export const CollapsableSection: FC<Props> = ({ label, isOpen, onToggle, children }) => {
+export const CollapsableSection: FC<Props> = ({
+  label,
+  isOpen,
+  onToggle,
+  className,
+  contentClassName,
+  children,
+  labelId,
+  loading = false,
+}) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
-  const headerStyle = open ? styles.header : styles.headerCollapsed;
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     onToggle?.(!open);
     toggleOpen(!open);
   };
+  const { current: id } = useRef(uniqueId());
+
+  const buttonLabelId = labelId ?? `collapse-label-${id}`;
 
   return (
-    <div>
-      <div onClick={onClick} className={headerStyle} title={tooltip}>
-        {label}
-        <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" className={styles.icon} />
+    <>
+      <div onClick={onClick} className={cx(styles.header, className)} title={tooltip}>
+        <button
+          id={`collapse-button-${id}`}
+          className={styles.button}
+          onClick={onClick}
+          aria-expanded={open && !loading}
+          aria-controls={`collapse-content-${id}`}
+          aria-labelledby={buttonLabelId}
+        >
+          {loading ? (
+            <Spinner className={styles.spinner} />
+          ) : (
+            <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.icon} />
+          )}
+        </button>
+        <div className={styles.label} id={`collapse-label-${id}`}>
+          {label}
+        </div>
       </div>
-      {open && <div className={styles.content}>{children}</div>}
-    </div>
+      {open && (
+        <div id={`collapse-content-${id}`} className={cx(styles.content, contentClassName)}>
+          {children}
+        </div>
+      )}
+    </>
   );
 };
 
-const collapsableSectionStyles = (theme: GrafanaTheme2) => {
-  const header = css({
+const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
+  header: css({
     display: 'flex',
+    cursor: 'pointer',
+    boxSizing: 'border-box',
+    flexDirection: 'row-reverse',
+    position: 'relative',
     justifyContent: 'space-between',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
-    cursor: 'pointer',
-  });
-  const headerCollapsed = css(header, {
+    '&:focus-within': getFocusStyles(theme),
+  }),
+  headerClosed: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
-  });
-  const icon = css({
+  }),
+  button: css({
+    all: 'unset',
+    '&:focus-visible': {
+      outline: 'none',
+      outlineOffset: 'unset',
+      transition: 'none',
+      boxShadow: 'none',
+    },
+  }),
+  icon: css({
     color: theme.colors.text.secondary,
-  });
-  const content = css({
+  }),
+  content: css({
     padding: `${theme.spacing(2)} 0`,
-  });
-
-  return { header, headerCollapsed, icon, content };
-};
+  }),
+  spinner: css({
+    display: 'flex',
+    alignItems: 'center',
+    width: theme.v1.spacing.md,
+  }),
+  label: css({
+    display: 'flex',
+  }),
+});

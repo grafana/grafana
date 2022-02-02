@@ -9,9 +9,12 @@ import {
   TraceKeyValuePair,
   TraceLog,
   TraceSpanRow,
+  dateTimeFormat,
 } from '@grafana/data';
 import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
+import formatDistance from 'date-fns/formatDistance';
+import differenceInHours from 'date-fns/differenceInHours';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
 
@@ -304,9 +307,9 @@ export function transformFromOTLP(
 /**
  * Transforms trace dataframes to the OpenTelemetry format
  */
-export function transformToOTLP(
-  data: MutableDataFrame
-): { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } {
+export function transformToOTLP(data: MutableDataFrame): {
+  batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[];
+} {
   let result: { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } = {
     batches: [],
   };
@@ -488,7 +491,12 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
     return emptyDataQueryResponse;
   }
 
-  parseJsonFields(frame);
+  try {
+    parseJsonFields(frame);
+  } catch (error) {
+    console.error(error);
+    return { error: { message: 'Unable to parse trace response: ' + error }, data: [] };
+  }
 
   let data = [...response.data];
   if (nodeGraph) {
@@ -525,7 +533,7 @@ function parseJsonFields(frame: DataFrame) {
   }
 }
 
-type SearchResponse = {
+export type SearchResponse = {
   traceID: string;
   rootServiceName: string;
   rootTraceName: string;
@@ -558,7 +566,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
         },
       },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
-      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
     ],
     meta: {
@@ -569,7 +577,9 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
     return frame;
   }
   // Show the most recent traces
-  const traceData = data.map(transformToTraceData).sort((a, b) => b?.startTime! - a?.startTime!);
+  const traceData = data
+    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
+    .map(transformToTraceData);
 
   for (const trace of traceData) {
     frame.add(trace);
@@ -586,9 +596,21 @@ function transformToTraceData(data: SearchResponse) {
   if (data.rootTraceName) {
     traceName += data.rootTraceName;
   }
+
+  const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
+
+  let startTime = dateTimeFormat(traceStartTime);
+
+  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
+      addSuffix: true,
+      includeSeconds: true,
+    });
+  }
+
   return {
     traceID: data.traceID,
-    startTime: parseInt(data.startTimeUnixNano, 10) / 1000 / 1000,
+    startTime: startTime,
     duration: data.durationMs,
     traceName,
   };

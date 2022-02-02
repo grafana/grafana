@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -177,15 +178,16 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
+		features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
 		providerID := secrets.ProviderID("fakeProvider.v1")
 		settings := &setting.OSSImpl{
 			Cfg: &setting.Cfg{
-				Raw:            raw,
-				FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true},
+				Raw:                    raw,
+				IsFeatureToggleEnabled: features.IsEnabled,
 			},
 		}
 		encr := ossencryption.ProvideService()
-		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings))
+		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 
 		svcEncrypt, err := ProvideSecretsService(
@@ -193,6 +195,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
@@ -210,6 +213,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)

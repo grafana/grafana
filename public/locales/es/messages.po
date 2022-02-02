@@ -18,6 +18,166 @@ msgstr ""
 msgid "common.save"
 msgstr ""
 
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-admin"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-am-routes"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-channels"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-groups"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-list"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-receivers"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.alerting-silences"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.api-keys"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.change-password"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.config"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.create"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.create-alert"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.create-dashboard"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.create-folder"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.create-import"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.dashboards"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.datasources"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.explore"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+#~ msgid "nav.folder"
+#~ msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.help"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.home"
+msgstr ""
+
+#: public/app/core/components/NavBar/NavBarItem.tsx
+#~ msgid "nav.import"
+#~ msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.library-panels"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.live"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.live-cloud"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.live-pipeline"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.live-status"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.manage-dashboards"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.new-dashboard"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.new-folder"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.org-settings"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.playlists"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.plugins"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.profile-settings"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.service-accounts"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.sign-out"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.snapshots"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.teams"
+msgstr ""
+
+#: public/app/core/components/NavBar/navBarItem-translations.ts
+msgid "nav.users"
+msgstr ""
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr ""

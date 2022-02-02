@@ -21,7 +21,7 @@ import { render, waitFor } from '@testing-library/react';
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {},
@@ -65,7 +65,7 @@ const defaultProps: PanelProps<AlertGroupPanelOptions> = {
     removeAllListeners: jest.fn(),
     newScopedBus: jest.fn(),
   },
-  fieldConfig: ({} as unknown) as FieldConfigSource,
+  fieldConfig: {} as unknown as FieldConfigSource,
   height: 400,
   onChangeTimeRange: jest.fn(),
   onFieldConfigChange: jest.fn(),

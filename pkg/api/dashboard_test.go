@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -88,8 +89,17 @@ type testState struct {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, sqlstore.InitTestDB(t), nil, &usagestats.UsageStatsMock{T: t}, nil)
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	gLive, err := live.ProvideService(nil, cfg,
+		routing.NewRouteRegister(),
+		nil, nil, nil,
+		sqlstore.InitTestDB(t),
+		nil,
+		&usagestats.UsageStatsMock{T: t},
+		nil,
+		features)
 	require.NoError(t, err)
 	return gLive
 }

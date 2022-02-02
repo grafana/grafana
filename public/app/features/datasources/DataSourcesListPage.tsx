@@ -61,15 +61,8 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      dataSources,
-      dataSourcesCount,
-      navModel,
-      layoutMode,
-      searchQuery,
-      setDataSourcesSearchQuery,
-      hasFetched,
-    } = this.props;
+    const { dataSources, dataSourcesCount, navModel, layoutMode, searchQuery, setDataSourcesSearchQuery, hasFetched } =
+      this.props;
 
     const canCreateDataSource =
       contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
