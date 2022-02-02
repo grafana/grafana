@@ -47,7 +47,7 @@ Set a Y-axis text label.
 
 ![Label example](/static/img/docs/time-series-panel/label-example-7-4.png)
 
-If you have more than one Y-axis, then you can give assign different labels in the Override tab.
+If you have more than one Y-axis, then you can give assign different labels in the Override tab. You can also set the X-axis label using an override.
 
 ## Width
 

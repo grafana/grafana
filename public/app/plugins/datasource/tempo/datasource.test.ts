@@ -358,8 +358,7 @@ const serviceGraphLinks = [
     title: 'Request histogram',
     internal: {
       query: {
-        expr:
-          'histogram_quantile(0.9, rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__interval]))',
+        expr: 'histogram_quantile(0.9, rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__interval]))',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
