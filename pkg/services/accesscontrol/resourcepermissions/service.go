@@ -35,6 +35,12 @@ type Store interface {
 		hook types.BuiltinResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
+	SetResourcePermissions(
+		ctx context.Context, orgID int64,
+		commands []types.SetResourcePermissionsCommand,
+		hooks types.ResourceHooks,
+	) ([]accesscontrol.ResourcePermission, error)
+
 	// GetResourcesPermissions will return all permission for all supplied resource ids
 	GetResourcesPermissions(ctx context.Context, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
@@ -101,10 +107,6 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
-	if !s.options.Assignments.Users {
-		return nil, ErrInvalidAssignment
-	}
-
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -127,10 +129,6 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
-	if !s.options.Assignments.Teams {
-		return nil, ErrInvalidAssignment
-	}
-
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -153,10 +151,6 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 }
 
 func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
-	if !s.options.Assignments.BuiltInRoles {
-		return nil, ErrInvalidAssignment
-	}
-
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -176,6 +170,53 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		ResourceID: resourceID,
 		Resource:   s.options.Resource,
 	}, s.options.OnSetBuiltInRole)
+}
+
+func (s *Service) SetPermissions(
+	ctx context.Context, orgID int64, resourceID string,
+	commands ...accesscontrol.SetResourcePermissionCommand,
+) ([]accesscontrol.ResourcePermission, error) {
+	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
+		return nil, err
+	}
+
+	dbCommands := make([]types.SetResourcePermissionsCommand, 0, len(commands))
+	for _, cmd := range commands {
+		if cmd.UserID != 0 {
+			if err := s.validateUser(ctx, orgID, cmd.UserID); err != nil {
+				return nil, err
+			}
+		} else if cmd.TeamID != 0 {
+			if err := s.validateTeam(ctx, orgID, cmd.TeamID); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := s.validateBuiltinRole(ctx, cmd.BuiltinRole); err != nil {
+				return nil, err
+			}
+		}
+
+		actions, err := s.mapPermission(cmd.Permission)
+		if err != nil {
+			return nil, err
+		}
+
+		dbCommands = append(dbCommands, types.SetResourcePermissionsCommand{
+			UserID:      cmd.UserID,
+			TeamID:      cmd.TeamID,
+			BuiltinRole: cmd.BuiltinRole,
+			Actions:     actions,
+			Resource:    s.options.Resource,
+			ResourceID:  resourceID,
+			Permission:  cmd.Permission,
+		})
+	}
+
+	return s.store.SetResourcePermissions(ctx, orgID, dbCommands, types.ResourceHooks{
+		User:        s.options.OnSetUser,
+		Team:        s.options.OnSetTeam,
+		BuiltInRole: s.options.OnSetBuiltInRole,
+	})
 }
 
 func (s *Service) mapActions(permission accesscontrol.ResourcePermission) string {
@@ -208,6 +249,10 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
+	if !s.options.Assignments.Users {
+		return ErrInvalidAssignment
+	}
+
 	if err := s.sqlStore.GetSignedInUser(ctx, &models.GetSignedInUserQuery{OrgId: orgID, UserId: userID}); err != nil {
 		return err
 	}
@@ -215,6 +260,10 @@ func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
+	if !s.options.Assignments.Teams {
+		return ErrInvalidAssignment
+	}
+
 	if err := s.sqlStore.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
 		return err
 	}
@@ -222,6 +271,10 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 }
 
 func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+	if !s.options.Assignments.BuiltInRoles {
+		return ErrInvalidAssignment
+	}
+
 	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {
 		return err
 	}

@@ -234,6 +234,13 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 	return true
 }
 
+type SetResourcePermissionCommand struct {
+	UserID      int64
+	TeamID      int64
+	BuiltinRole string
+	Permission  string
+}
+
 const (
 	GlobalOrgID = 0
 	// Permission actions

@@ -7,13 +7,6 @@ type SetResourcePermissionCommand struct {
 	Permission string
 }
 
-type GetResourcesPermissionsQuery struct {
-	Actions     []string
-	Resource    string
-	ResourceIDs []string
-	OnlyManaged bool
-}
-
 type SetResourcePermissionsCommand struct {
 	UserID      int64
 	TeamID      int64
@@ -23,4 +16,11 @@ type SetResourcePermissionsCommand struct {
 	Resource   string
 	ResourceID string
 	Permission string
+}
+
+type GetResourcesPermissionsQuery struct {
+	Actions     []string
+	Resource    string
+	ResourceIDs []string
+	OnlyManaged bool
 }
