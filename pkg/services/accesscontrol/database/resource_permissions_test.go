@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -242,6 +244,63 @@ func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 			} else {
 				assert.Len(t, added.Actions, len(test.actions))
 				assert.Equal(t, accesscontrol.GetResourceScope(test.resource, test.resourceID), added.Scope)
+			}
+		})
+	}
+}
+
+type setResourcePermissionsTest struct {
+	desc     string
+	orgID    int64
+	commands []types.SetResourcePermissionsCommand
+}
+
+func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
+	tests := []setResourcePermissionsTest{
+		{
+			desc:  "should set all permissions provided",
+			orgID: 1,
+			commands: []types.SetResourcePermissionsCommand{
+				{
+					UserID:     1,
+					Actions:    []string{"datasources:query"},
+					Resource:   "datasources",
+					ResourceID: "1",
+				},
+				{
+					TeamID:     3,
+					Actions:    []string{"datasources:query"},
+					Resource:   "datasources",
+					ResourceID: "1",
+				},
+				{
+					BuiltinRole: "Admin",
+					Actions:     []string{"datasources:query"},
+					Resource:    "datasources",
+					ResourceID:  "1",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, _ := setupTestEnv(t)
+
+			permissions, err := store.SetResourcePermissions(context.Background(), tt.orgID, tt.commands, types.ResourceHooks{})
+			require.NoError(t, err)
+
+			require.Len(t, permissions, len(tt.commands))
+			for i, c := range tt.commands {
+				if len(c.Actions) == 0 {
+					assert.Equal(t, accesscontrol.ResourcePermission{}, permissions[i])
+				} else {
+					assert.Len(t, permissions[i].Actions, len(c.Actions))
+					assert.Equal(t, c.TeamID, permissions[i].TeamId)
+					assert.Equal(t, c.UserID, permissions[i].UserId)
+					assert.Equal(t, c.BuiltinRole, permissions[i].BuiltInRole)
+					assert.Equal(t, accesscontrol.GetResourceScope(c.Resource, c.ResourceID), permissions[i].Scope)
+				}
 			}
 		})
 	}

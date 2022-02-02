@@ -152,6 +152,53 @@ func (s *AccessControlStore) setBuiltInResourcePermission(
 	return permission, nil
 }
 
+func (s *AccessControlStore) SetResourcePermissions(
+	ctx context.Context, orgID int64,
+	commands []types.SetResourcePermissionsCommand,
+	hooks types.ResourceHooks,
+) ([]accesscontrol.ResourcePermission, error) {
+	var err error
+	var permissions []accesscontrol.ResourcePermission
+
+	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, cmd := range commands {
+			var p *accesscontrol.ResourcePermission
+			if cmd.UserID != 0 {
+				p, err = s.setUserResourcePermission(sess, orgID, cmd.UserID, accesscontrol.SetResourcePermissionCommand{
+					Actions:    cmd.Actions,
+					Resource:   cmd.Resource,
+					ResourceID: cmd.ResourceID,
+					Permission: cmd.Permission,
+				}, hooks.User)
+			} else if cmd.TeamID != 0 {
+				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, accesscontrol.SetResourcePermissionCommand{
+					Actions:    cmd.Actions,
+					Resource:   cmd.Resource,
+					ResourceID: cmd.ResourceID,
+					Permission: cmd.Permission,
+				}, hooks.Team)
+			} else if models.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
+				p, err = s.setBuiltInResourcePermission(sess, orgID, cmd.BuiltinRole, accesscontrol.SetResourcePermissionCommand{
+					Actions:    cmd.Actions,
+					Resource:   cmd.Resource,
+					ResourceID: cmd.ResourceID,
+					Permission: cmd.Permission,
+				}, hooks.BuiltInRole)
+			}
+			if err != nil {
+				return err
+			}
+			if p != nil {
+				permissions = append(permissions, *p)
+			}
+		}
+
+		return nil
+	})
+
+	return permissions, err
+}
+
 type roleAdder func(roleID int64) error
 
 func (s *AccessControlStore) setResourcePermission(
@@ -251,13 +298,15 @@ func (s *AccessControlStore) createResourcePermission(sess *sqlstore.DBSession, 
 		tr.team_id AS team_id,
 		t.name AS team,
 		t.email AS team_email,
-		r.name as role_name
+		r.name as role_name,
+		br.role as built_in_role
 	FROM permission p
 		LEFT JOIN role r ON p.role_id = r.id
 		LEFT JOIN team_role tr ON r.id = tr.role_id
 		LEFT JOIN team t ON tr.team_id = t.id
 		LEFT JOIN user_role ur ON r.id = ur.role_id
 		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
+		LEFT JOIN builtin_role br ON r.id = br.role_id
 	WHERE p.id = ?
 	`
 
@@ -581,13 +630,15 @@ func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, re
 		tr.team_id AS team_id,
 		t.name AS team,
 		t.email AS team_email,
-		r.name as role_name
+		r.name as role_name,
+		br.role AS built_in_role
 	FROM permission p
 		INNER JOIN role r ON p.role_id = r.id
 		LEFT JOIN team_role tr ON r.id = tr.role_id
 		LEFT JOIN team t ON tr.team_id = t.id
 		LEFT JOIN user_role ur ON r.id = ur.role_id
 		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
+		LEFT JOIN builtin_role br ON r.id = br.role_id
 	WHERE p.id IN (?` + strings.Repeat(",?", len(ids)-1) + `)
 	`
 
