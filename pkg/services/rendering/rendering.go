@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,13 +27,6 @@ func init() {
 }
 
 const ServiceName = "RenderingService"
-const renderKeyPrefix = "render-%s"
-
-type RenderUser struct {
-	OrgID   int64
-	UserID  int64
-	OrgRole string
-}
 
 type RenderingService struct {
 	log             log.Logger
@@ -45,10 +37,12 @@ type RenderingService struct {
 	inProgressCount int32
 	version         string
 	versionMutex    sync.RWMutex
+	capabilities    []Capability
 
-	Cfg                   *setting.Cfg
-	RemoteCacheService    *remotecache.RemoteCache
-	RendererPluginManager plugins.RendererManager
+	perRequestRenderKeyProvider renderKeyProvider
+	Cfg                         *setting.Cfg
+	RemoteCacheService          *remotecache.RemoteCache
+	RendererPluginManager       plugins.RendererManager
 }
 
 func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
@@ -81,11 +75,27 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
+	logger := log.New("rendering")
 	s := &RenderingService{
+		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
+			cache:     remoteCache,
+			log:       logger,
+			keyExpiry: 5 * time.Minute,
+		},
+		capabilities: []Capability{
+			{
+				name:             FullHeightImages,
+				semverConstraint: ">= 3.4.0",
+			},
+			{
+				name:             ScalingDownImages,
+				semverConstraint: ">= 3.4.0",
+			},
+		},
 		Cfg:                   cfg,
 		RemoteCacheService:    remoteCache,
 		RendererPluginManager: rm,
-		log:                   log.New("rendering"),
+		log:                   logger,
 		domain:                domain,
 	}
 	return s, nil
@@ -195,9 +205,14 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	}
 }
 
-func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error) {
 	startTime := time.Now()
-	result, err := rs.render(ctx, opts)
+
+	renderKeyProvider := rs.perRequestRenderKeyProvider
+	if session != nil {
+		renderKeyProvider = session
+	}
+	result, err := rs.render(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
 	saveMetrics(elapsedTime, err, RenderPNG)
@@ -205,7 +220,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	return result, err
 }
 
-func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 
@@ -230,12 +245,12 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
-	renderKey, err := rs.generateAndStoreRenderKey(ctx, opts.OrgID, opts.UserID, opts.OrgRole)
+	renderKey, err := renderKeyProvider.get(ctx, opts.AuthOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rs.deleteRenderKey(ctx, renderKey)
+	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
 	defer func() {
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
@@ -245,9 +260,14 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
-func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
 	startTime := time.Now()
-	result, err := rs.renderCSV(ctx, opts)
+
+	renderKeyProvider := rs.perRequestRenderKeyProvider
+	if session != nil {
+		renderKeyProvider = session
+	}
+	result, err := rs.renderCSV(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
 	saveMetrics(elapsedTime, err, RenderCSV)
@@ -255,7 +275,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	return result, err
 }
 
-func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
@@ -265,12 +285,12 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	}
 
 	rs.log.Info("Rendering", "path", opts.Path)
-	renderKey, err := rs.generateAndStoreRenderKey(ctx, opts.OrgID, opts.UserID, opts.OrgRole)
+	renderKey, err := renderKeyProvider.get(ctx, opts.AuthOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rs.deleteRenderKey(ctx, renderKey)
+	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
 	defer func() {
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
@@ -278,21 +298,6 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 
 	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 	return rs.renderCSVAction(ctx, renderKey, opts)
-}
-
-func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
-	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
-	if err != nil {
-		rs.log.Error("Failed to get render key from cache", "error", err)
-	}
-
-	if val != nil {
-		if user, ok := val.(*RenderUser); ok {
-			return user, true
-		}
-	}
-
-	return nil, false
 }
 
 func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
@@ -338,31 +343,6 @@ func (rs *RenderingService) getURL(path string) string {
 
 	// &render=1 signals to the legacy redirect layer to
 	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
-}
-
-func (rs *RenderingService) generateAndStoreRenderKey(ctx context.Context, orgId, userId int64, orgRole models.RoleType) (string, error) {
-	key, err := util.GetRandomString(32)
-	if err != nil {
-		return "", err
-	}
-
-	err = rs.RemoteCacheService.Set(ctx, fmt.Sprintf(renderKeyPrefix, key), &RenderUser{
-		OrgID:   orgId,
-		UserID:  userId,
-		OrgRole: string(orgRole),
-	}, 5*time.Minute)
-	if err != nil {
-		return "", err
-	}
-
-	return key, nil
-}
-
-func (rs *RenderingService) deleteRenderKey(ctx context.Context, key string) {
-	err := rs.RemoteCacheService.Delete(ctx, fmt.Sprintf(renderKeyPrefix, key))
-	if err != nil {
-		rs.log.Error("Failed to delete render key", "error", err)
-	}
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {

@@ -128,17 +128,16 @@ describe('LiveDataStream', () => {
     expect(valuesCollection.complete).toEqual(state.complete);
   };
 
-  const expectResponse = <T extends StreamingResponseDataType>(state: LoadingState) => (
-    res: DataQueryResponse,
-    streamingDataType: T
-  ) => {
-    expect(res.state).toEqual(state);
+  const expectResponse =
+    <T extends StreamingResponseDataType>(state: LoadingState) =>
+    (res: DataQueryResponse, streamingDataType: T) => {
+      expect(res.state).toEqual(state);
 
-    expect(res.data).toHaveLength(1);
+      expect(res.data).toHaveLength(1);
 
-    const firstData = res.data[0];
-    expect(isStreamingResponseData(firstData, streamingDataType)).toEqual(true);
-  };
+      const firstData = res.data[0];
+      expect(isStreamingResponseData(firstData, streamingDataType)).toEqual(true);
+    };
 
   const expectStreamingResponse = expectResponse(LoadingState.Streaming);
   const expectErrorResponse = expectResponse(LoadingState.Error);

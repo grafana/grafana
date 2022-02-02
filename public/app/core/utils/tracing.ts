@@ -36,9 +36,9 @@ export function getNonOverlappingDuration(ranges: Array<[number, number]>): numb
  * span is missing but other spans are it's children. This is more generic because it needs to allow iterating over
  * both arrays and dataframe views.
  */
-export function makeSpanMap<T>(
-  getSpan: (index: number) => { span: T; id: string; parentIds: string[] } | undefined
-): { [id: string]: { span: T; children: string[] } } {
+export function makeSpanMap<T>(getSpan: (index: number) => { span: T; id: string; parentIds: string[] } | undefined): {
+  [id: string]: { span: T; children: string[] };
+} {
   const spanMap: { [id: string]: { span?: T; children: string[] } } = {};
 
   let span;

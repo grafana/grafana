@@ -88,7 +88,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission := a.service.MapActions(p); permission != "" {
+		if permission := a.service.mapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
@@ -131,7 +131,7 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
@@ -151,7 +151,7 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
@@ -168,7 +168,7 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, a.service.MapPermission(cmd.Permission))
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}
