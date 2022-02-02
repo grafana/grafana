@@ -8,6 +8,7 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { FocusScope } from '@react-aria/focus';
+import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 
 export interface Props {
@@ -105,6 +106,7 @@ export const Drawer: FC<Props> = ({
   const [isOpen, setIsOpen] = useState(false);
   const currentWidth = isExpanded ? '100%' : width;
   const overlayRef = React.useRef(null);
+  const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -136,11 +138,7 @@ export const Drawer: FC<Props> = ({
       }
     >
       <FocusScope restoreFocus contain autoFocus>
-        {/*
-          tabIndex=-1 is needed here to support highlighting text within the drawer when using FocusScope
-          useOverlay may set this on overlayProps in future: see https://github.com/adobe/react-spectrum/issues/2798
-        */}
-        <div className={drawerStyles.container} tabIndex={-1} {...overlayProps} ref={overlayRef}>
+        <div className={drawerStyles.container} {...overlayProps} {...dialogProps} ref={overlayRef}>
           {typeof title === 'string' && (
             <div className={drawerStyles.header}>
               <div className={drawerStyles.actions}>
@@ -171,7 +169,7 @@ export const Drawer: FC<Props> = ({
                 />
               </div>
               <div className={drawerStyles.titleWrapper}>
-                <h3>{title}</h3>
+                <h3 {...titleProps}>{title}</h3>
                 {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
                 {typeof subtitle !== 'string' && subtitle}
               </div>

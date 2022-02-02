@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
+import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { css } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
@@ -16,6 +17,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const ref = useRef(null);
+  const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -27,11 +29,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
 
   return (
     <FocusScope contain restoreFocus autoFocus>
-      {/*
-        tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
-        useOverlay may set this on overlayProps in future: see https://github.com/adobe/react-spectrum/issues/2798
-      */}
-      <div tabIndex={-1} data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps}>
+      <div data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps} {...dialogProps}>
         <div className={styles.header}>
           <Icon name="bars" size="xl" />
           <IconButton aria-label="Close navigation menu" name="times" onClick={onClose} size="xl" variant="secondary" />
