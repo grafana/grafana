@@ -62,7 +62,7 @@ export function VizLegend<T>({
       }
       if (onToggleSeriesVisibility) {
         onToggleSeriesVisibility(
-          item.label,
+          item.name,
           seriesVisibilityChangeBehavior === SeriesVisibilityChangeBehavior.Hide
             ? SeriesVisibilityChangeMode.AppendToSelection
             : mapMouseEventToMode(event)

@@ -202,6 +202,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           ],
           isClearable: true,
         },
+        hideFromDefaults: true,
       });
 
       commonOptionsBuilder.addAxisConfig(builder, cfg);

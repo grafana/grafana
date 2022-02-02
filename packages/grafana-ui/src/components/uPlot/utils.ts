@@ -1,5 +1,5 @@
 import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
-import { StackingMode, VizLegendOptions } from '@grafana/schema';
+import { GraphFieldConfig, GraphTransform, StackingMode, VizLegendOptions } from '@grafana/schema';
 import { orderBy } from 'lodash';
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
@@ -60,7 +60,16 @@ export function preparePlotData(
     }
 
     collectStackingGroups(f, stackingGroups, seriesIndex);
-    result.push(f.values.toArray());
+    const customConfig: GraphFieldConfig = f.config.custom || {};
+
+    const values = f.values.toArray();
+    if (customConfig.transform === GraphTransform.NegativeY) {
+      result.push(values.map((v) => v * -1));
+    } else if (customConfig.transform === GraphTransform.Constant) {
+      result.push(new Array(values.length).fill(values[0]));
+    } else {
+      result.push(values);
+    }
     seriesIndex++;
   }
 

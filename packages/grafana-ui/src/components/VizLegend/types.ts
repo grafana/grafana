@@ -32,7 +32,8 @@ export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTa
 
 export interface VizLegendItem<T = any> {
   getItemKey?: () => string;
-  label: string;
+  name: string;
+  label: React.ReactNode;
   color?: string;
   gradient?: string;
   yAxis: number;

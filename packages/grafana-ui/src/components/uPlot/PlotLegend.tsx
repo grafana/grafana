@@ -13,6 +13,7 @@ import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { useTheme2 } from '../../themes';
+import { SeriesLabel } from './plugins/SeriesLabel';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -47,14 +48,17 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
         return undefined;
       }
 
-      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+      const fieldDisplayName = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+      const transformMode = field.config?.custom?.transform;
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
+      const label = <SeriesLabel name={fieldDisplayName} transformMode={transformMode} />;
 
       return {
         disabled: !(seriesConfig.show ?? true),
         fieldIndex,
         color: seriesColor,
+        name: fieldDisplayName,
         label,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => {
