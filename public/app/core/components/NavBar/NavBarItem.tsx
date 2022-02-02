@@ -117,7 +117,7 @@ const NavBarItem = ({
       url={link.url}
       onClick={link.onClick}
       target={link.target}
-      hasHighlight={link.hasHighlight}
+      highlightText={link.highlightText}
     >
       {children}
     </NavBarItemWithoutMenu>

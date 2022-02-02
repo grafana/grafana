@@ -72,7 +72,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   // Get props for the button based on the trigger props from useMenuTrigger
   const { buttonProps } = useButton(menuTriggerProps, ref);
-  const Wrapper = item.hasHighlight ? NavFeatureHighlight : React.Fragment;
+  const Wrapper = item.highlightText ? NavFeatureHighlight : React.Fragment;
   const itemContent = (
     <Wrapper>
       <span className={styles.icon}>

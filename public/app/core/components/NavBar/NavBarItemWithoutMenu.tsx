@@ -12,7 +12,7 @@ export interface NavBarItemWithoutMenuProps {
   target?: string;
   isActive?: boolean;
   onClick?: () => void;
-  hasHighlight?: boolean;
+  highlightText?: string;
 }
 
 export function NavBarItemWithoutMenu({
@@ -23,12 +23,12 @@ export function NavBarItemWithoutMenu({
   target,
   isActive = false,
   onClick,
-  hasHighlight,
+  highlightText,
 }: NavBarItemWithoutMenuProps) {
   const theme = useTheme2();
   const styles = getNavBarItemWithoutMenuStyles(theme, isActive);
 
-  const content = hasHighlight ? (
+  const content = highlightText ? (
     <NavFeatureHighlight>
       <span className={styles.icon}>{children}</span>
     </NavFeatureHighlight>
