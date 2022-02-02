@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -34,6 +35,7 @@ type RulerSrv struct {
 	scheduleService schedule.ScheduleService
 	log             log.Logger
 	cfg             *setting.UnifiedAlertingSettings
+	ac              accesscontrol.AccessControl
 }
 
 var (
