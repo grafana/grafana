@@ -18,8 +18,8 @@ export const UpgradeBox = ({ text, className, children, size = 'md', ...htmlProp
     <div className={cx(styles.box, className)} {...htmlProps}>
       <Icon name={'rocket'} className={styles.icon} />
       <div>
-        <h6>You’ve found a Pro feature!</h6>
-        <p className={styles.text}>{text}</p>
+        <h4>You’ve found a Pro feature!</h4>
+        {text && <p className={styles.text}>{text}</p>}
         {children}
         <LinkButton
           variant="primary"
@@ -30,6 +30,17 @@ export const UpgradeBox = ({ text, className, children, size = 'md', ...htmlProp
           rel="noopener noreferrer"
         >
           Upgrade to Pro
+        </LinkButton>
+
+        <LinkButton
+          variant="link"
+          size={size}
+          className={cx(styles.button, styles.buttonSecondary)}
+          href="https://grafana.com/profile/org/subscription"
+          target="__blank"
+          rel="noopener noreferrer"
+        >
+          Learn more about Grafana Pro
         </LinkButton>
       </div>
     </div>
@@ -55,15 +66,23 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
     `,
     text: css`
       margin-bottom: 0;
+      padding: ${theme.spacing(2, 0)};
     `,
     button: css`
       margin-top: ${theme.spacing(2)};
+
+      &:first-of-type {
+        margin-right: ${theme.spacing(1)};
+      }
 
       &:focus-visible {
         box-shadow: none;
         color: ${theme.colors.text.primary};
         outline: 2px solid ${theme.colors.primary.main};
       }
+    `,
+    buttonSecondary: css`
+      color: ${theme.colors.text.secondary};
     `,
     icon: css`
       margin: ${theme.spacing(0.5, 1, 0.5, 0.5)};
