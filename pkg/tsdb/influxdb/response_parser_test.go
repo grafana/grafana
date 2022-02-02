@@ -42,12 +42,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					"series": [
 						{
 							"name": "cpu",
-							"columns": ["time","mean","sum"],
+							"columns": ["time","mean","path","isActive"],
 							"tags": {"datacenter": "America"},
 							"values": [
-								[111,222,333],
-								[111,222,333],
-								[111,null,333]
+								[111,222,"path val",true],
+								[111,222,"path val",false],
+								[111,null,"path val",true]
 							]
 						}
 					]
