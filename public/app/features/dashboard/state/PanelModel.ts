@@ -568,7 +568,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
 
     const allVariablesParams = getVariablesUrlParams(vars);
-    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
+    const variablesQuery = vars?.__all_variables
+      ? vars?.__all_variables.value
+      : urlUtil.toUrlParams(allVariablesParams);
     const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
 
     vars[DataLinkBuiltInVars.keepTime] = {
