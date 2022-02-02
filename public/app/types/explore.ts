@@ -4,15 +4,16 @@ import {
   DataFrame,
   DataQuery,
   DataQueryRequest,
-  DataQueryResponse,
   DataSourceApi,
-  EventBusExtended,
   HistoryItem,
   LogsModel,
   PanelData,
   QueryHint,
   RawTimeRange,
   TimeRange,
+  EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -173,6 +174,7 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {

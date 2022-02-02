@@ -1,4 +1,5 @@
 const path = require('path');
+const { ProvidePlugin } = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const FilterWarningsPlugin = require('webpack-filter-warnings-plugin');
@@ -47,11 +48,6 @@ module.exports = {
   },
   webpackFinal: async (config: any, { configType }: any) => {
     const isProductionBuild = configType === 'PRODUCTION';
-
-    config.resolve.fallback = {
-      ...(config.resolve.fallback || {}),
-      process: false,
-    };
 
     // remove svg from default storybook webpack 5 config so we can use `raw-loader`
     config.module.rules = config.module.rules.map((rule: any) => {
@@ -170,6 +166,34 @@ module.exports = {
       })
     );
 
+    config.plugins = fixProcessResolution(config.plugins);
+
+    return config;
+  },
+  // This webpack config only affects the manager (storybook UI) and generally shouldn't need to be changed.
+  // If stories are failing to build check `webpackFinal` property above.
+  managerWebpack: async (config: any) => {
+    config.plugins = fixProcessResolution(config.plugins);
+
     return config;
   },
 };
+
+// Storybook 6.4.13 introduced https://github.com/storybookjs/storybook/pull/17213
+// which appears to prevent resolving correctly with yarn pnp.
+// We can probably remove this in the next patch release.
+function fixProcessResolution(plugins: any[]) {
+  plugins.forEach((p: any, i: number) => {
+    if (p.constructor.name === 'ProvidePlugin') {
+      plugins.splice(
+        i,
+        1,
+        new ProvidePlugin({
+          process: require.resolve('process/browser.js'),
+        })
+      );
+    }
+  });
+
+  return plugins;
+}

@@ -1,6 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Icon } from '../Icon/Icon';
@@ -18,11 +18,12 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
-  suffix?: () => JSX.Element;
+  /** Extra content, displayed after the tab label and counter */
+  suffix?: NavModelItem['tabSuffix'];
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix, className, href, ...otherProps }, ref) => {
+  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
     const content = () => (
@@ -30,7 +31,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
-        {suffix && suffix()}
+        {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );
 
@@ -115,6 +116,9 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
         bottom: 0px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
+    `,
+    suffix: css`
+      margin-left: ${theme.spacing(1)};
     `,
   };
 });

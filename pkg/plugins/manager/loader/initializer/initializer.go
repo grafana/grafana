@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 type Initializer struct {
@@ -43,21 +42,6 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 			p.RegisterClient(backendClient)
 		}
 	}
-
-	return nil
-}
-
-func (i *Initializer) InitializeWithFactory(p *plugins.Plugin, factory backendplugin.PluginFactoryFunc) error {
-	if factory == nil {
-		return fmt.Errorf("could not initialize plugin %s", p.ID)
-	}
-
-	f, err := factory(p.ID, log.New("pluginID", p.ID), []string{})
-	if err != nil {
-		return err
-	}
-
-	p.RegisterClient(f)
 
 	return nil
 }

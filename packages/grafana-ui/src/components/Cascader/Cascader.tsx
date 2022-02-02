@@ -184,7 +184,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { allowCustomValue, placeholder, width, changeOnSelect, options } = this.props;
+    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options } = this.props;
     const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
@@ -201,21 +201,17 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             onBlur={this.onBlur}
             options={searchableOptions}
             onCreateOption={this.onCreateOption}
-            formatCreateLabel={this.props.formatCreateLabel}
+            formatCreateLabel={formatCreateLabel}
             width={width}
           />
         ) : (
           <RCCascader
             onChange={onChangeCascader(this.onChange)}
-            options={this.props.options}
+            options={options}
             changeOnSelect={changeOnSelect}
             value={rcValue.value}
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
-            // Required, otherwise the portal that the popup is shown in will render under other components
-            popupClassName={css`
-              z-index: 9999;
-            `}
           >
             <div className={disableDivFocus}>
               <Input

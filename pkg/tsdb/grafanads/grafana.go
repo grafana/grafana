@@ -51,6 +51,7 @@ func newService(cfg *setting.Cfg) *Service {
 			"img/icons",
 			"img/bg",
 			"gazetteer",
+			"maps",
 			"upload", // does not exist yet
 		},
 	}

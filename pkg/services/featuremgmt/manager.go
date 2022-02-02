@@ -12,26 +12,30 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+var (
+	_ FeatureToggles = (*FeatureManager)(nil)
+)
+
 type FeatureManager struct {
 	isDevMod  bool
 	licensing models.Licensing
 	flags     map[string]*FeatureFlag
 	enabled   map[string]bool // only the "on" values
-	toggles   *FeatureToggles
-	config    string // path to config file
+	config    string          // path to config file
 	vars      map[string]interface{}
 	log       log.Logger
 }
 
 // This will merge the flags with the current configuration
 func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
-	for idx, add := range flags {
+	for _, add := range flags {
 		if add.Name == "" {
 			continue // skip it with warning?
 		}
 		flag, ok := fm.flags[add.Name]
 		if !ok {
-			fm.flags[add.Name] = &flags[idx]
+			f := add // make a copy
+			fm.flags[add.Name] = &f
 			continue
 		}
 
@@ -174,14 +178,6 @@ func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 	return enabled
 }
 
-// Toggles returns FeatureToggles.
-func (fm *FeatureManager) Toggles() *FeatureToggles {
-	if fm.toggles == nil {
-		fm.toggles = &FeatureToggles{manager: fm}
-	}
-	return fm.toggles
-}
-
 // GetFlags returns all flag definitions
 func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	v := make([]FeatureFlag, 0, len(fm.flags))
@@ -227,10 +223,4 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 	}
 
 	return &FeatureManager{enabled: enabled}
-}
-
-func WithToggles(spec ...interface{}) *FeatureToggles {
-	return &FeatureToggles{
-		manager: WithFeatures(spec...),
-	}
 }

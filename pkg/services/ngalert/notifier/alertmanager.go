@@ -40,6 +40,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -86,10 +87,11 @@ type ClusterPeer interface {
 type Alertmanager struct {
 	logger log.Logger
 
-	Settings  *setting.Cfg
-	Store     store.AlertingStore
-	fileStore *FileStore
-	Metrics   *metrics.Alertmanager
+	Settings            *setting.Cfg
+	Store               store.AlertingStore
+	fileStore           *FileStore
+	Metrics             *metrics.Alertmanager
+	NotificationService notifications.Service
 
 	notificationLog *nflog.Log
 	marker          types.Marker
@@ -125,20 +127,21 @@ type Alertmanager struct {
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
-	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, m *metrics.Alertmanager) (*Alertmanager, error) {
+	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
-		Settings:          cfg,
-		stopc:             make(chan struct{}),
-		logger:            log.New("alertmanager", "org", orgID),
-		marker:            types.NewMarker(m.Registerer),
-		stageMetrics:      notify.NewMetrics(m.Registerer),
-		dispatcherMetrics: dispatch.NewDispatcherMetrics(false, m.Registerer),
-		Store:             store,
-		peer:              peer,
-		peerTimeout:       cfg.UnifiedAlerting.HAPeerTimeout,
-		Metrics:           m,
-		orgID:             orgID,
-		decryptFn:         decryptFn,
+		Settings:            cfg,
+		stopc:               make(chan struct{}),
+		logger:              log.New("alertmanager", "org", orgID),
+		marker:              types.NewMarker(m.Registerer),
+		stageMetrics:        notify.NewMetrics(m.Registerer),
+		dispatcherMetrics:   dispatch.NewDispatcherMetrics(false, m.Registerer),
+		Store:               store,
+		peer:                peer,
+		peerTimeout:         cfg.UnifiedAlerting.HAPeerTimeout,
+		Metrics:             m,
+		NotificationService: ns,
+		orgID:               orgID,
+		decryptFn:           decryptFn,
 	}
 
 	am.fileStore = NewFileStore(am.orgID, kvStore, am.WorkingDirPath())
@@ -496,39 +499,39 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	)
 	switch r.Type {
 	case "email":
-		n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
+		n, err = channels.NewEmailNotifier(cfg, am.NotificationService, tmpl) // Email notifier already has a default template.
 	case "pagerduty":
-		n, err = channels.NewPagerdutyNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewPagerdutyNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "pushover":
-		n, err = channels.NewPushoverNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewPushoverNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "slack":
 		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
 	case "telegram":
-		n, err = channels.NewTelegramNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewTelegramNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "victorops":
-		n, err = channels.NewVictoropsNotifier(cfg, tmpl)
+		n, err = channels.NewVictoropsNotifier(cfg, am.NotificationService, tmpl)
 	case "teams":
-		n, err = channels.NewTeamsNotifier(cfg, tmpl)
+		n, err = channels.NewTeamsNotifier(cfg, am.NotificationService, tmpl)
 	case "dingding":
-		n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		n, err = channels.NewDingDingNotifier(cfg, am.NotificationService, tmpl)
 	case "kafka":
-		n, err = channels.NewKafkaNotifier(cfg, tmpl)
+		n, err = channels.NewKafkaNotifier(cfg, am.NotificationService, tmpl)
 	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewWebHookNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "wecom":
-		n, err = channels.NewWeComNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewWeComNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "sensugo":
-		n, err = channels.NewSensuGoNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewSensuGoNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "discord":
-		n, err = channels.NewDiscordNotifier(cfg, tmpl)
+		n, err = channels.NewDiscordNotifier(cfg, am.NotificationService, tmpl)
 	case "googlechat":
-		n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
+		n, err = channels.NewGoogleChatNotifier(cfg, am.NotificationService, tmpl)
 	case "LINE":
-		n, err = channels.NewLineNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewLineNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "threema":
-		n, err = channels.NewThreemaNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewThreemaNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "opsgenie":
-		n, err = channels.NewOpsgenieNotifier(cfg, tmpl, am.decryptFn)
+		n, err = channels.NewOpsgenieNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
 	case "prometheus-alertmanager":
 		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
 	default:

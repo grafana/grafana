@@ -1,13 +1,13 @@
-import React, { FunctionComponent, useCallback, useMemo } from 'react';
-import { flatten } from 'lodash';
-
 import { SelectableValue, toOption } from '@grafana/data';
-import { CustomControlProps } from '@grafana/ui/src/components/Select/types';
 import { Button, HorizontalGroup, Select, VerticalGroup } from '@grafana/ui';
+import { CustomControlProps } from '@grafana/ui/src/components/Select/types';
+import { flatten } from 'lodash';
+import React, { FunctionComponent, useCallback, useMemo } from 'react';
+
+import { QueryEditorRow } from '.';
+import { SELECT_WIDTH } from '../constants';
 import { labelsToGroupedOptions, stringArrayToFilters } from '../functions';
 import { Filter } from '../types';
-import { SELECT_WIDTH } from '../constants';
-import { QueryEditorRow } from '.';
 
 export interface Props {
   labels: { [key: string]: string[] };
@@ -20,7 +20,7 @@ const operators = ['=', '!=', '=~', '!=~'];
 
 const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
   ({ value, isOpen, invalid, ...rest }, ref) => {
-    return <Button {...rest} ref={ref} variant="secondary" icon="plus"></Button>;
+    return <Button {...rest} ref={ref} variant="secondary" icon="plus" aria-label="Add filter"></Button>;
   }
 );
 FilterButton.displayName = 'FilterButton';
@@ -101,6 +101,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
             <HorizontalGroup key={index} spacing="xs" width="auto">
               <Select
                 menuShouldPortal
+                aria-label="Filter label key"
                 width={SELECT_WIDTH}
                 allowCustomValue
                 formatCreateLabel={(v) => `Use label key: ${v}`}
@@ -126,6 +127,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
               />
               <Select
                 menuShouldPortal
+                aria-label="Filter label value"
                 width={SELECT_WIDTH}
                 formatCreateLabel={(v) => `Use label value: ${v}`}
                 allowCustomValue
