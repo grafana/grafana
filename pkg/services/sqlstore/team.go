@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
@@ -473,6 +474,17 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	query.Result = make([]*models.TeamMemberDTO, 0)
 	sess := x.Table("team_member")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+
+	// With accesscontrol we filter out users based on the SignedInUser's permissions
+	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
+	// If the signed in user is not set no member will be returned
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		acWhere, acArgs, err := ac.Filter(ctx, "user.id", "users", ac.ActionOrgUsersRead, query.SignedInUser)
+		if err != nil {
+			return err
+		}
+		sess.Where(acWhere, acArgs...)
+	}
 
 	// Join with only most recent auth module
 	authJoinCondition := `(
