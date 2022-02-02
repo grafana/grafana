@@ -12,7 +12,6 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
