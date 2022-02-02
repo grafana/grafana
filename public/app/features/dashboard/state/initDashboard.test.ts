@@ -87,7 +87,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       })),
     };
 
-    setDashboardLoaderSrv((loaderSrv as unknown) as DashboardLoaderSrv);
+    setDashboardLoaderSrv(loaderSrv as unknown as DashboardLoaderSrv);
     setDashboardQueryRunnerFactory(() => ({
       getResult: emptyResult,
       run: jest.fn(),

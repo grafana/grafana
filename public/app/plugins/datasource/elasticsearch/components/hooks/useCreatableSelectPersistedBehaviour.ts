@@ -1,7 +1,10 @@
 import { SelectableValue } from '@grafana/data';
 import { useState } from 'react';
 
-const hasValue = <T extends SelectableValue>(searchValue: T['value']) => ({ value }: T) => value === searchValue;
+const hasValue =
+  <T extends SelectableValue>(searchValue: T['value']) =>
+  ({ value }: T) =>
+    value === searchValue;
 
 const getInitialState = (initialOptions: SelectableValue[], initialValue?: string): SelectableValue[] => {
   if (initialValue === undefined || initialOptions.some(hasValue(initialValue))) {

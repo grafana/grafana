@@ -83,8 +83,7 @@ describe('fixSummariesMetadata', () => {
   const synthetics = {
     ALERTS: {
       type: 'counter',
-      help:
-        'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+      help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
     },
   };
   it('returns only synthetics on empty metadata', () => {
