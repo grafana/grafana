@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -139,6 +139,11 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	docker build --tag grafana/grafana:dev .
+
+build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
+	@echo "build docker container"
+	docker build --tag grafana/grafana:dev-ubuntu -f ./Dockerfile.ubuntu .
+
 
 ##@ Services
 
