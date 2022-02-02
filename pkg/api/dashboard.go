@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -387,10 +389,8 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := dashSvc.MakeUserAdmin(ctx, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
+	if newDashboard {
+		if err := hs.setDashboardPermissions(c, cmd, dash, dashSvc); err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
@@ -410,6 +410,33 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		"uid":     dashboard.Uid,
 		"url":     dashboard.GetUrl(),
 	})
+}
+
+func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.SaveDashboardCommand, dash *models.Dashboard, dashSvc dashboards.DashboardService) error {
+	inFolder := dash.FolderId > 0
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		resourceID := strconv.FormatInt(dash.Id, 10)
+		svc := hs.permissionServices.GetDashboardService()
+
+		_, err := svc.SetBuiltInRolePermission(c.Req.Context(), cmd.OrgId, string(models.ROLE_ADMIN), resourceID, models.PERMISSION_ADMIN.String())
+		if err != nil {
+			return err
+		}
+		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), cmd.OrgId, string(models.ROLE_EDITOR), resourceID, models.PERMISSION_EDIT.String())
+		if err != nil {
+			return err
+		}
+		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), cmd.OrgId, string(models.ROLE_VIEWER), resourceID, models.PERMISSION_VIEW.String())
+		if err != nil {
+			return err
+		}
+	} else if hs.Cfg.EditorsCanAdmin {
+		if err := dashSvc.MakeUserAdmin(c.Req.Context(), cmd.OrgId, cmd.UserId, dash.Id, !inFolder); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // GetHomeDashboard returns the home dashboard.
