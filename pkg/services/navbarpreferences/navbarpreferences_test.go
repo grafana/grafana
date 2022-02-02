@@ -92,3 +92,12 @@ func mockRequestBody(v interface{}) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }
+
+
+func getCompareOptions() []cmp.Option {
+	return []cmp.Option{
+		cmp.Transformer("Time", func(in time.Time) int64 {
+			return in.UTC().Unix()
+		}),
+	}
+}
