@@ -59,24 +59,24 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := &Query{}
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
-		newField := data.NewField("value", labels, []*float64{
+		floatField := data.NewField("value", labels, []*float64{
 			pointer.Float64(222), pointer.Float64(222), nil,
 		})
-		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
-		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
+		floatField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
+		floatFrame := data.NewFrame("cpu.mean { datacenter: America }",
 			data.NewField("time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
 					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
 					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
 				}),
-			newField,
+			floatField,
 		)
 
 		result := parser.Parse(prepare(response), query)
 
 		frame := result.Responses["A"]
-		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		if diff := cmp.Diff(floatFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
