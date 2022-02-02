@@ -8,5 +8,5 @@ export interface PromQueryBuilderContextType {
 }
 
 export const PromQueryBuilderContext = React.createContext<PromQueryBuilderContextType>(
-  ({} as any) as PromQueryBuilderContextType
+  {} as any as PromQueryBuilderContextType
 );

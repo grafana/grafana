@@ -8,7 +8,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 jest.mock('app/core/config', () => ({
-  ...((jest.requireActual('app/core/config') as unknown) as object),
+  ...(jest.requireActual('app/core/config') as unknown as object),
   panels: {
     timeseries: {
       info: {

@@ -48,7 +48,9 @@ func ProvideSecretsService(
 
 	logger := log.New("secrets")
 	enabled := features.IsEnabled(featuremgmt.FlagEnvelopeEncryption)
-	currentProviderID := readCurrentProviderID(settings)
+	currentProviderID := normalizeProviderID(secrets.ProviderID(
+		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
+	))
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
@@ -77,13 +79,12 @@ func ProvideSecretsService(
 	return s, nil
 }
 
-func readCurrentProviderID(settings setting.Provider) secrets.ProviderID {
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
-	if currentProvider == kmsproviders.Legacy {
-		currentProvider = kmsproviders.Default
+func normalizeProviderID(id secrets.ProviderID) secrets.ProviderID {
+	if id == kmsproviders.Legacy {
+		return kmsproviders.Default
 	}
 
-	return secrets.ProviderID(currentProvider)
+	return id
 }
 
 func (s *SecretsService) registerUsageMetrics() {
@@ -329,7 +330,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 2. decrypt data key
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.providers[normalizeProviderID(dataKey.Provider)]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}

@@ -611,22 +611,23 @@ export function fmtDuration(milliSeconds: number): string {
 
   ms = Math.round((milliSeconds % 1000) * 1000) / 1000;
 
-  return (yr > 0
-    ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
-    : mo > 0
-    ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
-    : wk > 0
-    ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
-    : d > 0
-    ? d + 'd ' + (h > 0 ? h + 'h ' : '')
-    : h > 0
-    ? h + 'h ' + (m > 0 ? m + 'm ' : '')
-    : m > 0
-    ? m + 'm ' + (s > 0 ? s + 's ' : '')
-    : s > 0
-    ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
-    : ms > 0
-    ? ms + 'ms '
-    : '0'
+  return (
+    yr > 0
+      ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+      : mo > 0
+      ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+      : wk > 0
+      ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+      : d > 0
+      ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+      : h > 0
+      ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+      : m > 0
+      ? m + 'm ' + (s > 0 ? s + 's ' : '')
+      : s > 0
+      ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+      : ms > 0
+      ? ms + 'ms '
+      : '0'
   ).trim();
 }
