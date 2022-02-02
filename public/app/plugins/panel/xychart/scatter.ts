@@ -153,6 +153,7 @@ function getScatterSeries(
       return [
         {
           label: name,
+          name,
           color: seriesColor, // single color for series?
           getItemKey: () => name,
           yAxis: yIndex, // << but not used

@@ -325,8 +325,8 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
   const thresholdToText = new Map<Threshold, string>();
   const textToColor = new Map<string, string>();
   for (let i = 0; i < items.length; i++) {
-    thresholdToText.set(thresholds.steps[i], items[i].label);
-    textToColor.set(items[i].label, items[i].color!);
+    thresholdToText.set(thresholds.steps[i], items[i].name);
+    textToColor.set(items[i].name, items[i].color!);
   }
 
   let prev: Threshold | undefined = undefined;
@@ -471,6 +471,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
     const step = steps[i - 1];
     items.push({
       label: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
+      name: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -526,6 +527,7 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
     if (label.length > 0) {
       items.push({
         label: label!,
+        name: label!,
         color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
         yAxis: 1,
       });

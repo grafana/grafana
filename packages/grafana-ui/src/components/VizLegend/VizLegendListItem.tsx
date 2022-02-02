@@ -59,9 +59,9 @@ export const VizLegendListItem = <T extends unknown = any>({
   return (
     <div
       className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
-      aria-label={selectors.components.VizLegend.seriesName(item.label)}
+      aria-label={selectors.components.VizLegend.seriesName(item.name)}
     >
-      <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
+      <VizLegendSeriesIcon seriesName={item.name} color={item.color} gradient={item.gradient} readonly={readonly} />
       <div
         onMouseEnter={onMouseEnter}
         onMouseOut={onMouseOut}

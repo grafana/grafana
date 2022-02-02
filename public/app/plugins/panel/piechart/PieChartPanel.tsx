@@ -101,6 +101,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       const display = value.display;
       return {
         label: display.title ?? '',
+        name: display.title ?? '',
         color: display.color ?? FALLBACK_COLOR,
         yAxis: 1,
         disabled: hidden,

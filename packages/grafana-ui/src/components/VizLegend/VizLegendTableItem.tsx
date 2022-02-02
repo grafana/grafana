@@ -60,7 +60,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
+          <VizLegendSeriesIcon color={item.color} seriesName={item.name} readonly={readonly} />
           <div
             onMouseEnter={onMouseEnter}
             onMouseOut={onMouseOut}

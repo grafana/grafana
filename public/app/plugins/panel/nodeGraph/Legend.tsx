@@ -91,6 +91,7 @@ function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<Viz
   return fields.map((f) => {
     const item: VizLegendItem = {
       label: f.config.displayName || f.name,
+      name: f.config.displayName || f.name,
       yAxis: 0,
       data: { field: f },
     };
