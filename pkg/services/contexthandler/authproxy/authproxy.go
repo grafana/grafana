@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"net"
 	"net/mail"
+	"net/url"
 	"path"
 	"reflect"
 	"strings"
@@ -84,7 +85,7 @@ type Options struct {
 
 // New instance of the AuthProxy.
 func New(cfg *setting.Cfg, options *Options) *AuthProxy {
-	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
+	header := decodeHeader(options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName))
 	return &AuthProxy{
 		remoteCache: options.RemoteCache,
 		cfg:         cfg,
@@ -322,7 +323,7 @@ func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 		}
 
 		if value := auth.ctx.Req.Header.Get(h); value != "" {
-			fn(field, strings.TrimSpace(value))
+			fn(field, decodeHeader(value))
 		}
 	}
 }
@@ -375,4 +376,15 @@ func coerceProxyAddress(proxyAddr string) (*net.IPNet, error) {
 		return nil, fmt.Errorf("could not parse the network: %w", err)
 	}
 	return network, nil
+}
+
+// decodeHeader decodes non-ASCII header value
+func decodeHeader(headerValue string) string {
+	decodedValue, err := url.QueryUnescape(headerValue)
+	if err != nil {
+		// Fallback to original header value if it cannot be decoded
+		return strings.TrimSpace(headerValue)
+	}
+
+	return decodedValue
 }
