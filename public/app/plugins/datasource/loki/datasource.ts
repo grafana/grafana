@@ -753,6 +753,14 @@ export class LokiDatasource
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
   }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, {});
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
 }
 
 export function lokiRegularEscape(value: any) {
