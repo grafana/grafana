@@ -1063,8 +1063,8 @@ func callGetDashboardVersion(sc *scenarioContext) {
 		query.Result = &models.DashboardVersion{}
 		return nil
 	})
-
-	sc.handlerFunc = GetDashboardVersion
+	hs := setupSimpleHTTPServer(nil)
+	sc.handlerFunc = hs.GetDashboardVersion
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 

@@ -72,14 +72,14 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "Should not be able to delete snapshot when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
-
+				hs := setupSimpleHTTPServer(nil)
 				var externalRequest *http.Request
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					externalRequest = req
 				})
 
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
-				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 403, sc.resp.Code)
@@ -91,7 +91,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		anonymousUserScenario(t, "Should be able to delete a snapshot when calling GET on", "GET",
 			"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
-
+				hs := setupSimpleHTTPServer(nil)
 				var externalRequest *http.Request
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(200)
@@ -99,7 +99,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
-				sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
+				sc.handlerFunc = hs.DeleteDashboardSnapshotByDeleteKey
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -124,7 +124,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on", "DELETE",
 			"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
-
+				hs := setupSimpleHTTPServer(nil)
 				var externalRequest *http.Request
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(200)
@@ -132,7 +132,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
-				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 200, sc.resp.Code)
@@ -151,11 +151,11 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
-
+				hs := setupSimpleHTTPServer(nil)
 				mockSnapshotResult.UserId = testUserID
 				mockSnapshotResult.External = false
 
-				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 200, sc.resp.Code)
@@ -174,7 +174,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
 				mockSnapshotResult.UserId = testUserID
-
+				hs := setupSimpleHTTPServer(nil)
 				var writeErr error
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(500)
@@ -182,7 +182,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				})
 
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
-				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				require.NoError(t, writeErr)
@@ -199,7 +199,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 			"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
 				mockSnapshotResult.UserId = testUserID
-
+				hs := setupSimpleHTTPServer(nil)
 				var writeErr error
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(500)
@@ -208,7 +208,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				t.Log("Setting external delete URL", "url", ts.URL)
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
-				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				require.NoError(t, writeErr)
@@ -220,13 +220,13 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
 				mockSnapshotResult.UserId = testUserID
-
+				hs := setupSimpleHTTPServer(nil)
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 					rw.WriteHeader(404)
 				})
 
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
-				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 500, sc.resp.Code)
@@ -235,8 +235,8 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "Should be able to read a snapshot's unencrypted data when calling GET on",
 			"GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				setUpSnapshotTest(t)
-
-				sc.handlerFunc = GetDashboardSnapshot
+				hs := setupSimpleHTTPServer(nil)
+				sc.handlerFunc = hs.GetDashboardSnapshot
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
 
 				assert.Equal(t, 200, sc.resp.Code)
