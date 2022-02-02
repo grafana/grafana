@@ -107,7 +107,7 @@ type HTTPServer struct {
 	LivePushGateway           *pushhttp.Gateway
 	ThumbService              thumbs.Service
 	ContextHandler            *contexthandler.ContextHandler
-	SQLStore                  *sqlstore.SQLStore
+	SQLStore                  sqlstore.Store
 	AlertEngine               *alerting.AlertEngine
 	LoadSchemaService         *schemaloader.SchemaLoaderService
 	AlertNG                   *ngalert.AlertNG
