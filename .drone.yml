@@ -194,6 +194,7 @@ steps:
   - build-frontend
   detach: true
   environment:
+    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -626,6 +627,7 @@ steps:
   - build-frontend
   detach: true
   environment:
+    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -1235,6 +1237,7 @@ steps:
   - build-frontend
   detach: true
   environment:
+    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -1839,7 +1842,7 @@ steps:
   - build-frontend
   detach: true
   environment:
-    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.4.9
@@ -2995,6 +2998,7 @@ steps:
   - build-frontend
   detach: true
   environment:
+    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -3527,7 +3531,7 @@ steps:
   - build-frontend
   detach: true
   environment:
-    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.4.9
@@ -4187,6 +4191,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1bec42327418f8b41fb63e12c7fbad397dc37418ee07fcbd0751cbc45a3122a3
+hmac: 4d1a5696bf1e510fb51a021c07e240c50cb913724ce08ed52cce037ff02dd8de
 
 ...

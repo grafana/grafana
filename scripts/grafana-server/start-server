@@ -4,6 +4,11 @@ set -eo pipefail
 . scripts/grafana-server/variables
 
 PORT=${PORT:-$DEFAULT_PORT}
+ARCH=${ARCH:-$DEFAULT_ARCH}
+
+if [ "$ARCH" ]; then
+    ARCH+="/"
+fi
 
 ./scripts/grafana-server/kill-server
 
@@ -11,12 +16,11 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-if [[ ! -f bin/linux-amd64/grafana-server ]]; then
+if [[ ! -f bin/"$ARCH"grafana-server ]]; then
   echo "bin/linux-amd64/grafana-server missing, trying local grafana-server binary"
-elif [[ ! -f bin/grafana-server ]] ; then
-  echo bin/grafana-server missing
-  exit 1
 fi
+
+echo starting server
 
 cp -r ./bin $RUNDIR
 cp -r ./public $RUNDIR
@@ -39,7 +43,7 @@ cp -r devenv $RUNDIR
 
 echo -e "Starting Grafana Server port $PORT"
 
-$RUNDIR/bin/grafana-server \
+$RUNDIR/bin/"$ARCH"grafana-server \
   --homepath=$HOME_PATH \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \

@@ -659,9 +659,9 @@ def grafana_server_step(edition, port=3001):
 
     environment = {
         'PORT': port,
+        'ARCH': 'linux-amd64'
     }
     if package_file_pfx:
-        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
         environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
 
     return {
