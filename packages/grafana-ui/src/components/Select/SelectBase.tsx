@@ -290,7 +290,12 @@ export function SelectBase<T>({
               );
             }
 
-            if (allowCustomValue && (creatableProps.allowCreateWhileLoading || !isLoading)) {
+            if (
+              allowCustomValue &&
+              // Currently cannot enter new values if this `isSearchable` false!
+              isSearchable &&
+              (creatableProps.allowCreateWhileLoading || !isLoading)
+            ) {
               additionalIndicators.push(<Icon name="keyboard" />);
             }
 
