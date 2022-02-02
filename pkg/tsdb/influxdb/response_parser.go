@@ -70,6 +70,7 @@ func transformRows(rows []Row, query *Query) data.Frames {
 			var valType = typeof(row.Values[0][columnIndex])
 			var floatArray []*float64
 			var stringArray []string
+			var boolArray []bool
 
 			for _, valuePair := range row.Values {
 				timestamp, timestampErr := parseTimestamp(valuePair[0])
@@ -82,6 +83,9 @@ func transformRows(rows []Row, query *Query) data.Frames {
 					} else if valType == "json.Number" {
 						value := parseNumber(valuePair[columnIndex])
 						floatArray = append(floatArray, value)
+					} else if valType == "bool" {
+						value := valuePair[columnIndex].(bool)
+						boolArray = append(boolArray, value)
 					}
 				}
 			}
@@ -95,6 +99,10 @@ func transformRows(rows []Row, query *Query) data.Frames {
 				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 			} else if valType == "json.Number" {
 				valueField := data.NewField("value", row.Tags, floatArray)
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+			} else if valType == "bool" {
+				valueField := data.NewField("value", row.Tags, boolArray)
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 			}
