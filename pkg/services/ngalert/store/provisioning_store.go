@@ -21,12 +21,12 @@ func (pr provenanceRecord) TableName() string {
 }
 
 type ProvisioningStore interface {
-	GetProvenance(o models.ProvisionedObject) (models.Provenance, error)
+	GetProvenance(o models.Provisionable) (models.Provenance, error)
 	// TODO: API to query all provenances for a specific type?
-	SetProvenance(o models.ProvisionedObject, p models.Provenance) error
+	SetProvenance(o models.Provisionable, p models.Provenance) error
 }
 
-func (st DBstore) GetProvenance(o models.ProvisionedObject) (models.Provenance, error) {
+func (st DBstore) GetProvenance(o models.Provisionable) (models.Provenance, error) {
 	recordType := o.GetResourceTypeIdentifier()
 	recordKey := o.GetResourceUniqueIdentifier()
 
@@ -52,7 +52,7 @@ func (st DBstore) GetProvenance(o models.ProvisionedObject) (models.Provenance, 
 	return provenance, nil
 }
 
-func (st DBstore) SetProvenance(o models.ProvisionedObject, p models.Provenance) error {
+func (st DBstore) SetProvenance(o models.Provisionable, p models.Provenance) error {
 	recordType := o.GetResourceTypeIdentifier()
 	recordKey := o.GetResourceUniqueIdentifier()
 
