@@ -14,11 +14,11 @@ export interface PanelOptions {
 
 export const defaultPanelOptions: PanelOptions = {
   inlineEditing: true,
-  root: ({
+  root: {
     elements: [
       {
         ...DEFAULT_CANVAS_ELEMENT_CONFIG,
       },
     ],
-  } as unknown) as CanvasGroupOptions,
+  } as unknown as CanvasGroupOptions,
 };
