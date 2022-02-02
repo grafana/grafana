@@ -55,11 +55,11 @@ describe('prepare timeline graph', () => {
     expect(field?.values.toArray()).toMatchInlineSnapshot(`
       Array [
         1,
+        1,
         undefined,
-        undefined,
-        undefined,
+        1,
         2,
-        undefined,
+        2,
         null,
         2,
         3,
