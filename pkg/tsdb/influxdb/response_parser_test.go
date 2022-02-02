@@ -88,6 +88,20 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			stringField,
 		)
 
+		boolField := data.NewField("value", labels, []bool{
+			true, false, true,
+		})
+		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive { datacenter: America }"}
+		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+					time.Date(1970, 1, 1, 0, 1, 51, 0, time.UTC),
+				}),
+			boolField,
+		)
+
 		result := parser.Parse(prepare(response), query)
 
 		frame := result.Responses["A"]
@@ -95,6 +109,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 		if diff := cmp.Diff(stringFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+		if diff := cmp.Diff(boolFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
