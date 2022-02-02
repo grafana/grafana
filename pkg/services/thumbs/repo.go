@@ -1,12 +1,12 @@
 package thumbs
 
 import (
-	"bufio"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"io/ioutil"
-	"os"
-	"strings"
 )
 
 func newThumbnailRepo(store *sqlstore.SQLStore) thumbnailRepo {
@@ -21,14 +21,7 @@ type sqlThumbnailRepository struct {
 }
 
 func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		tlog.Error("error opening file", "dashboardUID", meta.DashboardUID, "err", err)
-		return 0, err
-	}
-
-	reader := bufio.NewReader(file)
-	content, err := ioutil.ReadAll(reader)
+	content, err := os.ReadFile(filepath.Clean(filePath))
 
 	if err != nil {
 		tlog.Error("error reading file", "dashboardUID", meta.DashboardUID, "err", err)

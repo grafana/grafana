@@ -322,6 +322,11 @@ func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
+// GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
+func GetKioskModeDashboardUrl(uid string, slug string) string {
+	return fmt.Sprintf("%s?kiosk", GetDashboardUrl(uid, slug))
+}
+
 // GetFullDashboardUrl returns the full URL for a dashboard.
 func GetFullDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)

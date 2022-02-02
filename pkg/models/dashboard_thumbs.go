@@ -19,9 +19,15 @@ const (
 )
 
 const (
+	// ThumbnailStateDefault is the initial state for all thumbnails. Thumbnails in the "default" state will be considered stale,
+	// and thus refreshed by the crawler, if the dashboard version from the time of taking the thumbnail is different from the current dashboard version
 	ThumbnailStateDefault ThumbnailState = "default"
-	ThumbnailStateStale   ThumbnailState = "stale"
-	ThumbnailStateLocked  ThumbnailState = "locked"
+
+	// ThumbnailStateStale is a manually assigned state. Thumbnails in the "stale" state will be refreshed on the next crawler run
+	ThumbnailStateStale ThumbnailState = "stale"
+
+	// ThumbnailStateLocked is a manually assigned state. Thumbnails in the "locked" state will not be refreshed by the crawler as long as they remain in the "locked" state.
+	ThumbnailStateLocked ThumbnailState = "locked"
 )
 
 func ParseThumbnailState(str string) (ThumbnailState, error) {
@@ -62,7 +68,7 @@ type DashboardThumbnail struct {
 	State            ThumbnailState `json:"state"`
 	PanelId          int64          `json:"panelId,omitempty"`
 	Kind             ThumbnailKind  `json:"kind"`
-	Theme            string         `json:"theme"` // TODO: changing it from `string` to `rendering.Theme` causes gen-go to fail with undescriptive error
+	Theme            Theme          `json:"theme"`
 	Image            []byte         `json:"image"`
 	MimeType         string         `json:"mimeType"`
 	Updated          time.Time      `json:"updated"`
@@ -77,7 +83,7 @@ type DashboardThumbnailMeta struct {
 	DashboardUID string
 	PanelID      int64
 	Kind         ThumbnailKind
-	Theme        string // TODO: same as above
+	Theme        Theme
 }
 
 type GetDashboardThumbnailCommand struct {
