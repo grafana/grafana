@@ -33,17 +33,22 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
     ...bindActionCreators({ switchToNewMode, switchToEditMode, switchToListMode }, dispatch),
     changeVariableOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) =>
       dispatch(
-        toKeyedAction(identifier.stateKey, changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex })))
+        toKeyedAction(
+          identifier.rootStateKey,
+          changeVariableOrder(toVariablePayload(identifier, { fromIndex, toIndex }))
+        )
       ),
     duplicateVariable: (identifier: KeyedVariableIdentifier) =>
       dispatch(
         toKeyedAction(
-          identifier.stateKey,
+          identifier.rootStateKey,
           duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }))
         )
       ),
     removeVariable: (identifier: KeyedVariableIdentifier) => {
-      dispatch(toKeyedAction(identifier.stateKey, removeVariable(toVariablePayload(identifier, { reIndex: true }))));
+      dispatch(
+        toKeyedAction(identifier.rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: true })))
+      );
     },
   };
 };

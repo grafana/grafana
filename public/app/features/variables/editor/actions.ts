@@ -9,7 +9,7 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import { AddVariable, KeyedVariableIdentifier } from '../state/types';
+import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
 import { cloneDeep } from 'lodash';
 import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable } from '../state/sharedReducer';
@@ -22,28 +22,28 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    const { stateKey } = identifier;
-    dispatch(toKeyedAction(stateKey, variableEditorMounted({ name: getVariable(identifier).name })));
+    const { rootStateKey } = identifier;
+    dispatch(toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name })));
   };
 };
 
 export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { stateKey } = identifier;
-    dispatch(toKeyedAction(stateKey, variableEditorUnMounted(toVariablePayload(identifier))));
+    const { rootStateKey } = identifier;
+    dispatch(toKeyedAction(rootStateKey, variableEditorUnMounted(toVariablePayload(identifier))));
   };
 };
 
 export const onEditorUpdate = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     await dispatch(updateOptions(identifier));
-    dispatch(switchToListMode(identifier.stateKey));
+    dispatch(switchToListMode(identifier.rootStateKey));
   };
 };
 
 export const changeVariableName = (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { id, stateKey: uid } = identifier;
+    const { id, rootStateKey: uid } = identifier;
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -73,10 +73,10 @@ export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, 
   dispatch,
   getState
 ) => {
-  const { stateKey } = identifier;
+  const { rootStateKey } = identifier;
   const originalVariable = getVariable(identifier, getState());
   if (originalVariable.name === newName) {
-    dispatch(toKeyedAction(stateKey, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
+    dispatch(toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
     return;
   }
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
@@ -84,10 +84,10 @@ export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, 
   const index = originalVariable.index;
   const renamedIdentifier = toKeyedVariableIdentifier(model);
 
-  dispatch(toKeyedAction(stateKey, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
-  dispatch(toKeyedAction(stateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
+  dispatch(toKeyedAction(rootStateKey, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
+  dispatch(toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
   dispatch(switchToEditMode(renamedIdentifier));
-  dispatch(toKeyedAction(stateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
+  dispatch(toKeyedAction(rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
 };
 
 export const switchToNewMode = (key: string, type: VariableType = 'query'): ThunkResult<void> => (
@@ -95,7 +95,7 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
   getState
 ) => {
   const id = getNextAvailableId(type, getVariablesByKey(key, getState()));
-  const identifier = { type, id, stateKey: key };
+  const identifier: VariableIdentifier = { type, id };
   const global = false;
   const index = getNewVariableIndex(key, getState());
   const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
@@ -114,8 +114,8 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
 };
 
 export const switchToEditMode = (identifier: KeyedVariableIdentifier): ThunkResult<void> => (dispatch) => {
-  const { stateKey } = identifier;
-  dispatch(toKeyedAction(stateKey, setIdInEditor({ id: identifier.id })));
+  const { rootStateKey } = identifier;
+  dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
 };
 
 export const switchToListMode = (key: string): ThunkResult<void> => (dispatch, getState) => {

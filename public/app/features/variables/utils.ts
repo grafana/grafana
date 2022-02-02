@@ -271,7 +271,7 @@ export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariabl
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
 
-  return { type: variable.type, id: variable.id, stateKey: variable.rootStateKey };
+  return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
 };
 
 export function toVariablePayload<T extends any = undefined>(

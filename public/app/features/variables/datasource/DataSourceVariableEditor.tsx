@@ -128,7 +128,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
   const { rootStateKey } = ownProps.variable;
   if (!rootStateKey) {
-    console.error('DataSourceVariableEditor: variable has no stateKey');
+    console.error('DataSourceVariableEditor: variable has no rootStateKey');
     return {
       editor: initialVariableEditorState as VariableEditorState<DataSourceVariableEditorState>,
     };

@@ -60,7 +60,7 @@ export const changeFilter = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.stateKey, filterUpdated(toVariablePayload(variable, update))));
+    dispatch(toKeyedAction(identifier.rootStateKey, filterUpdated(toVariablePayload(variable, update))));
     await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
@@ -68,7 +68,7 @@ export const changeFilter = (
 export const removeFilter = (identifier: KeyedVariableIdentifier, index: number): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.stateKey, filterRemoved(toVariablePayload(variable, index))));
+    dispatch(toKeyedAction(identifier.rootStateKey, filterRemoved(toVariablePayload(variable, index))));
     await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
@@ -76,7 +76,7 @@ export const removeFilter = (identifier: KeyedVariableIdentifier, index: number)
 export const addFilter = (identifier: KeyedVariableIdentifier, filter: AdHocVariableFilter): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.stateKey, filterAdded(toVariablePayload(variable, filter))));
+    dispatch(toKeyedAction(identifier.rootStateKey, filterAdded(toVariablePayload(variable, filter))));
     await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
@@ -87,7 +87,7 @@ export const setFiltersFromUrl = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
-    dispatch(toKeyedAction(identifier.stateKey, filtersRestored(toVariablePayload(variable, filters))));
+    dispatch(toKeyedAction(identifier.rootStateKey, filtersRestored(toVariablePayload(variable, filters))));
     await dispatch(variableUpdated(toKeyedVariableIdentifier(variable), true));
   };
 };
@@ -103,7 +103,7 @@ export const changeVariableDatasource = (
 
     dispatch(
       toKeyedAction(
-        identifier.stateKey,
+        identifier.rootStateKey,
         changeVariableEditorExtended({
           propName: 'infoText',
           propValue: loadingText,
@@ -112,7 +112,7 @@ export const changeVariableDatasource = (
     );
     dispatch(
       toKeyedAction(
-        identifier.stateKey,
+        identifier.rootStateKey,
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
       )
     );
@@ -122,7 +122,7 @@ export const changeVariableDatasource = (
     if (!ds || !ds.getTagKeys) {
       dispatch(
         toKeyedAction(
-          identifier.stateKey,
+          identifier.rootStateKey,
           changeVariableEditorExtended({
             propName: 'infoText',
             propValue: 'This data source does not support ad hoc filters yet.',
@@ -175,7 +175,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
     const global = false;
     const index = getNewVariableIndex(key, getState());
-    const identifier: KeyedVariableIdentifier = { type: 'adhoc', id: model.id, stateKey: key };
+    const identifier: KeyedVariableIdentifier = { type: 'adhoc', id: model.id, rootStateKey: key };
 
     dispatch(
       toKeyedAction(

@@ -7,8 +7,8 @@ import { toVariablePayload } from '../utils';
 
 export const updateConstantVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    const { stateKey } = identifier;
-    await dispatch(toKeyedAction(stateKey, createConstantOptionsFromQuery(toVariablePayload(identifier))));
+    const { rootStateKey } = identifier;
+    await dispatch(toKeyedAction(rootStateKey, createConstantOptionsFromQuery(toVariablePayload(identifier))));
     await dispatch(validateVariableSelectionState(identifier));
   };
 };

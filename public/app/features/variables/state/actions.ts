@@ -254,7 +254,7 @@ export const addSystemTemplateVariables = (key: string, dashboard: DashboardMode
 
 export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const { stateKey: key } = identifier;
+    const { rootStateKey: key } = identifier;
     const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
     const current = alignCurrentWithMulti(variable.current, multi);
 
@@ -269,7 +269,7 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
 
 export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
   if (!variable.rootStateKey) {
-    throw new Error(`stateKey not found for variable with id:${variable.id}`);
+    throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
 
   const dependencies: VariableModel[] = [];
@@ -293,7 +293,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
   await new Promise<void>((resolve) => {
     const unsubscribe = store.subscribe(() => {
       if (!variable.rootStateKey) {
-        throw new Error(`stateKey not found for variable with id:${variable.id}`);
+        throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
       }
 
       if (!isWaitingForDependencies(variable.rootStateKey, dependencies, store.getState())) {
@@ -512,7 +512,7 @@ export const setOptionAsCurrent = (
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
-    const { stateKey: key } = identifier;
+    const { rootStateKey: key } = identifier;
     dispatch(toKeyedAction(key, setCurrentVariableValue(toVariablePayload(identifier, { option: current }))));
     return await dispatch(variableUpdated(identifier, emitChanges));
   };
@@ -547,11 +547,11 @@ export const variableUpdated = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const state = getState();
-    const { stateKey } = identifier;
+    const { rootStateKey } = identifier;
     const variableInState = getVariable(identifier, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
-    if (getVariablesState(stateKey, state).transaction.status === TransactionStatus.Fetching) {
+    if (getVariablesState(rootStateKey, state).transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
         await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
@@ -560,7 +560,7 @@ export const variableUpdated = (
       return Promise.resolve();
     }
 
-    const variables = getVariablesByKey(stateKey, state);
+    const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
     const event: VariablesChangedEvent = isAdHoc(variableInState)
@@ -583,7 +583,7 @@ export const variableUpdated = (
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         events.publish(new VariablesChanged(event));
-        locationService.partial(getQueryWithVariables(stateKey, getState));
+        locationService.partial(getQueryWithVariables(rootStateKey, getState));
       }
     });
   };
@@ -801,20 +801,20 @@ export const updateOptions = (
   identifier: KeyedVariableIdentifier,
   rethrow = false
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
-  const { stateKey } = identifier;
+  const { rootStateKey } = identifier;
   try {
-    if (!hasOngoingTransaction(stateKey, getState())) {
+    if (!hasOngoingTransaction(rootStateKey, getState())) {
       // we might have cancelled a batch so then variable state is removed
       return;
     }
 
     const variableInState = getVariable(identifier, getState());
-    dispatch(toKeyedAction(stateKey, variableStateFetching(toVariablePayload(variableInState))));
+    dispatch(toKeyedAction(rootStateKey, variableStateFetching(toVariablePayload(variableInState))));
     await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(completeVariableLoading(identifier));
   } catch (error) {
-    dispatch(toKeyedAction(stateKey, variableStateFailed(toVariablePayload(identifier, { error }))));
+    dispatch(toKeyedAction(rootStateKey, variableStateFailed(toVariablePayload(identifier, { error }))));
 
     if (!rethrow) {
       console.error(error);
@@ -841,8 +841,8 @@ export const completeVariableLoading = (identifier: KeyedVariableIdentifier): Th
   dispatch,
   getState
 ) => {
-  const { stateKey } = identifier;
-  if (!hasOngoingTransaction(stateKey, getState())) {
+  const { rootStateKey } = identifier;
+  if (!hasOngoingTransaction(rootStateKey, getState())) {
     // we might have cancelled a batch so then variable state is removed
     return;
   }
@@ -850,7 +850,7 @@ export const completeVariableLoading = (identifier: KeyedVariableIdentifier): Th
   const variableInState = getVariable(identifier, getState());
 
   if (variableInState.state !== LoadingState.Done) {
-    dispatch(toKeyedAction(identifier.stateKey, variableStateCompleted(toVariablePayload(variableInState))));
+    dispatch(toKeyedAction(identifier.rootStateKey, variableStateCompleted(toVariablePayload(variableInState))));
   }
 };
 
@@ -859,8 +859,8 @@ export function upgradeLegacyQueries(
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
 ): ThunkResult<void> {
   return async function (dispatch, getState) {
-    const { id, stateKey } = identifier;
-    if (!hasOngoingTransaction(stateKey, getState())) {
+    const { id, rootStateKey } = identifier;
+    if (!hasOngoingTransaction(rootStateKey, getState())) {
       // we might have cancelled a batch so then variable state is removed
       return;
     }
@@ -893,7 +893,7 @@ export function upgradeLegacyQueries(
 
       dispatch(
         toKeyedAction(
-          stateKey,
+          rootStateKey,
           changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query }))
         )
       );

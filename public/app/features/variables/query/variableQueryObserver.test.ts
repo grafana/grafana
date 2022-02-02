@@ -27,7 +27,7 @@ function getTestContext(args: { next?: UpdateOptionsResults; error?: any; comple
   return { resolve, reject, subscription, observer };
 }
 
-const identifier: KeyedVariableIdentifier = { id: 'id', type: 'query', stateKey: 'uid' };
+const identifier: KeyedVariableIdentifier = { id: 'id', type: 'query', rootStateKey: 'uid' };
 
 describe('variableQueryObserver', () => {
   describe('when receiving a Done state', () => {

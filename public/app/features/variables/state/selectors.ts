@@ -11,8 +11,8 @@ export const getVariable = <T extends VariableModel = VariableModel>(
   state: StoreState = getState(),
   throwWhenMissing = true
 ): T => {
-  const { id, stateKey } = identifier;
-  const variablesState = getVariablesState(stateKey, state);
+  const { id, rootStateKey } = identifier;
+  const variablesState = getVariablesState(rootStateKey, state);
   if (!variablesState.variables[id]) {
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
@@ -104,7 +104,7 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   if (!lastKey) {
     return;
   }
-  return getVariable({ id: name, stateKey: lastKey, type: 'query' }, state, false);
+  return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
 }
 
 export function getInstanceState<Model extends VariableModel = VariableModel>(state: VariablesState, id: string) {

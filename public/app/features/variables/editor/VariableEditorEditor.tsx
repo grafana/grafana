@@ -26,7 +26,7 @@ import { StoreState, ThunkDispatch } from '../../../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
-  editor: getVariablesState(ownProps.identifier.stateKey, state).editor,
+  editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
   variable: getVariable(ownProps.identifier, state, false), // we could be renaming a variable and we don't want this to throw
 });
 
@@ -38,10 +38,13 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
     ),
     changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: any) =>
       dispatch(
-        toKeyedAction(identifier.stateKey, changeVariableProp(toVariablePayload(identifier, { propName, propValue })))
+        toKeyedAction(
+          identifier.rootStateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName, propValue }))
+        )
       ),
     changeVariableType: (identifier: KeyedVariableIdentifier, newType: VariableType) =>
-      dispatch(toKeyedAction(identifier.stateKey, changeVariableType(toVariablePayload(identifier, { newType })))),
+      dispatch(toKeyedAction(identifier.rootStateKey, changeVariableType(toVariablePayload(identifier, { newType })))),
   };
 };
 

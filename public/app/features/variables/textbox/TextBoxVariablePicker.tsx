@@ -20,7 +20,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
 
   const updateVariable = useCallback(() => {
     if (!variable.rootStateKey) {
-      console.error('Cannot update variable without stateKey');
+      console.error('Cannot update variable without rootStateKey');
       return;
     }
 

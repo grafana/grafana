@@ -12,8 +12,8 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 
 export const updateTextBoxVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { stateKey, type } = identifier;
-    dispatch(toKeyedAction(stateKey, createTextBoxOptions(toVariablePayload(identifier))));
+    const { rootStateKey, type } = identifier;
+    dispatch(toKeyedAction(rootStateKey, createTextBoxOptions(toVariablePayload(identifier))));
 
     const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
     await variableAdapters.get(type).setValue(variableInState, variableInState.options[0], true);
@@ -24,13 +24,13 @@ export const setTextBoxVariableOptionsFromUrl = (
   identifier: KeyedVariableIdentifier,
   urlValue: UrlQueryValue
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const { stateKey } = identifier;
+  const { rootStateKey } = identifier;
   const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
 
   const stringUrlValue = ensureStringValues(urlValue);
   dispatch(
     toKeyedAction(
-      stateKey,
+      rootStateKey,
       changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue }))
     )
   );

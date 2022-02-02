@@ -30,13 +30,13 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
         dispatch(filterOrSearchOptions(identifier, filter));
       },
       toggleAllOptions: (identifier: KeyedVariableIdentifier) =>
-        dispatch(toKeyedAction(identifier.stateKey, toggleAllOptions())),
+        dispatch(toKeyedAction(identifier.rootStateKey, toggleAllOptions())),
       toggleOption: (
         identifier: KeyedVariableIdentifier,
         option: VariableOption,
         clearOthers: boolean,
         forceSelect: boolean
-      ) => dispatch(toKeyedAction(identifier.stateKey, toggleOption({ option, clearOthers, forceSelect }))),
+      ) => dispatch(toKeyedAction(identifier.rootStateKey, toggleOption({ option, clearOthers, forceSelect }))),
     };
   };
 
@@ -99,7 +99,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
     onNavigate = (key: NavigationKey, clearOthers: boolean) => {
       if (!this.props.variable.rootStateKey) {
-        console.error('Variable has no stateKey');
+        console.error('Variable has no rootStateKey');
         return;
       }
 

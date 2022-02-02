@@ -12,6 +12,7 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { NEW_VARIABLE_ID } from '../constants';
 import { VariableModel } from '../types';
+import { KeyedVariableIdentifier } from '../state/types';
 
 const setupTestContext = (options: Partial<Props>) => {
   const variableDefaults: Partial<VariableModel> = { rootStateKey: 'key' };
@@ -52,24 +53,22 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   };
 });
 
+const defaultIdentifier: KeyedVariableIdentifier = { type: 'query', rootStateKey: 'key', id: NEW_VARIABLE_ID };
+
 describe('QueryVariableEditor', () => {
   describe('when the component is mounted', () => {
     it('then it should call initQueryVariableEditor', () => {
       const { props } = setupTestContext({});
 
       expect(props.initQueryVariableEditor).toHaveBeenCalledTimes(1);
-      expect(props.initQueryVariableEditor).toHaveBeenCalledWith({
-        type: 'query',
-        id: NEW_VARIABLE_ID,
-        stateKey: 'key',
-      });
+      expect(props.initQueryVariableEditor).toHaveBeenCalledWith(defaultIdentifier);
     });
   });
 
   describe('when the user changes', () => {
     it.each`
       fieldName  | propName                      | expectedArgs
-      ${'query'} | ${'changeQueryVariableQuery'} | ${[{ type: 'query', id: NEW_VARIABLE_ID, stateKey: 'key' }, 't', 't']}
+      ${'query'} | ${'changeQueryVariableQuery'} | ${[defaultIdentifier, 't', 't']}
       ${'regex'} | ${'onPropChange'}             | ${[{ propName: 'regex', propValue: 't', updateOptions: true }]}
     `(
       '$fieldName field and tabs away then $propName should be called with correct args',

@@ -19,27 +19,27 @@ import { KeyedVariableIdentifier } from '../../state/types';
 import { containsSearchFilter, getCurrentText, toVariablePayload } from '../../utils';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 
-export const navigateOptions = (stateKey: string, key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
+export const navigateOptions = (rootStateKey: string, key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
     if (key === NavigationKey.cancel) {
-      return await dispatch(commitChangesToVariable(stateKey));
+      return await dispatch(commitChangesToVariable(rootStateKey));
     }
 
     if (key === NavigationKey.select) {
-      return dispatch(toggleOptionByHighlight(stateKey, clearOthers));
+      return dispatch(toggleOptionByHighlight(rootStateKey, clearOthers));
     }
 
     if (key === NavigationKey.selectAndClose) {
-      dispatch(toggleOptionByHighlight(stateKey, clearOthers, true));
-      return await dispatch(commitChangesToVariable(stateKey));
+      dispatch(toggleOptionByHighlight(rootStateKey, clearOthers, true));
+      return await dispatch(commitChangesToVariable(rootStateKey));
     }
 
     if (key === NavigationKey.moveDown) {
-      return dispatch(toKeyedAction(stateKey, moveOptionsHighlight(1)));
+      return dispatch(toKeyedAction(rootStateKey, moveOptionsHighlight(1)));
     }
 
     if (key === NavigationKey.moveUp) {
-      return dispatch(toKeyedAction(stateKey, moveOptionsHighlight(-1)));
+      return dispatch(toKeyedAction(rootStateKey, moveOptionsHighlight(-1)));
     }
 
     return undefined;
@@ -51,20 +51,20 @@ export const filterOrSearchOptions = (
   searchQuery = ''
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { stateKey } = passedIdentifier;
-    const { id, queryValue } = getVariablesState(stateKey, getState()).optionsPicker;
-    const identifier: KeyedVariableIdentifier = { id, stateKey, type: 'query' };
+    const { rootStateKey } = passedIdentifier;
+    const { id, queryValue } = getVariablesState(rootStateKey, getState()).optionsPicker;
+    const identifier: KeyedVariableIdentifier = { id, rootStateKey: rootStateKey, type: 'query' };
     const { query, options } = getVariable<VariableWithOptions>(identifier, getState());
-    dispatch(toKeyedAction(stateKey, updateSearchQuery(searchQuery)));
+    dispatch(toKeyedAction(rootStateKey, updateSearchQuery(searchQuery)));
 
     if (trim(queryValue) === trim(searchQuery)) {
       return;
     }
 
     if (containsSearchFilter(query)) {
-      return searchForOptionsWithDebounce(dispatch, getState, searchQuery, stateKey);
+      return searchForOptionsWithDebounce(dispatch, getState, searchQuery, rootStateKey);
     }
-    return dispatch(toKeyedAction(stateKey, updateOptionsAndFilter(options)));
+    return dispatch(toKeyedAction(rootStateKey, updateOptionsAndFilter(options)));
   };
 };
 
@@ -77,7 +77,7 @@ const setVariable = async (updated: VariableWithMultiSupport) => {
 export const commitChangesToVariable = (key: string, callback?: (updated: any) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getVariablesState(key, getState()).optionsPicker;
-    const identifier: KeyedVariableIdentifier = { id: picker.id, stateKey: key, type: 'query' };
+    const identifier: KeyedVariableIdentifier = { id: picker.id, rootStateKey: key, type: 'query' };
     const existing = getVariable<VariableWithMultiSupport>(identifier, getState());
     const currentPayload = { option: mapToCurrent(picker) };
     const searchQueryPayload = { propName: 'queryValue', propValue: picker.queryValue };
@@ -103,7 +103,7 @@ export const openOptions = (
   identifier: KeyedVariableIdentifier,
   callback?: (updated: any) => void
 ): ThunkResult<void> => async (dispatch, getState) => {
-  const { id, stateKey: uid } = identifier;
+  const { id, rootStateKey: uid } = identifier;
   const picker = getVariablesState(uid, getState()).optionsPicker;
 
   if (picker.id && picker.id !== id) {
@@ -130,7 +130,7 @@ const searchForOptions = async (
 ) => {
   try {
     const { id } = getVariablesState(key, getState()).optionsPicker;
-    const identifier: KeyedVariableIdentifier = { id, stateKey: key, type: 'query' };
+    const identifier: KeyedVariableIdentifier = { id, rootStateKey: key, type: 'query' };
     const existing = getVariable<VariableWithOptions>(identifier, getState());
 
     const adapter = variableAdapters.get(existing.type);
