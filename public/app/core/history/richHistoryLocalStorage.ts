@@ -46,7 +46,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 
     const { queriesToKeep, limitExceeded } = checkLimits(richHistory);
 
-    let updatedHistory: RichHistoryQuery[] = [richHistoryQuery, ...queriesToKeep];
+    const updatedHistory: RichHistoryQuery[] = [richHistoryQuery, ...queriesToKeep];
 
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
