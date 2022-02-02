@@ -69,13 +69,17 @@ func transformRows(rows []Row, query *Query) data.Frames {
 			var timeArray []time.Time
 			var valType = typeof(row.Values[0][columnIndex])
 			var floatArray []*float64
+			var stringArray []string
 
 			for _, valuePair := range row.Values {
 				timestamp, timestampErr := parseTimestamp(valuePair[0])
 				// we only add this row if the timestamp is valid
 				if timestampErr == nil {
 					timeArray = append(timeArray, timestamp)
-					if valType == "json.Number" {
+					if valType == "string" {
+						value := fmt.Sprint(valuePair[columnIndex])
+						stringArray = append(stringArray, value)
+					} else if valType == "json.Number" {
 						value := parseNumber(valuePair[columnIndex])
 						floatArray = append(floatArray, value)
 					}
@@ -85,7 +89,11 @@ func transformRows(rows []Row, query *Query) data.Frames {
 
 			timeField := data.NewField("time", nil, timeArray)
 
-			if valType == "json.Number" {
+			if valType == "string" {
+				valueField := data.NewField("value", row.Tags, stringArray)
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+			} else if valType == "json.Number" {
 				valueField := data.NewField("value", row.Tags, floatArray)
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
