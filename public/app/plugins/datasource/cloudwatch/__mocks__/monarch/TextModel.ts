@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-// Stub for monacoTypes.editor.ITextModel. Only implements the parts that are used in cloudwatch sql
+// Stub for monacoTypes.editor.ITextModel
 function TextModel(value: string) {
   return {
     getValue: function (eol?: monacoTypes.editor.EndOfLinePreference, preserveBOM?: boolean): string {
@@ -13,7 +13,7 @@ function TextModel(value: string) {
     },
     getLineLength: function (lineNumber: number): number {
       const lines = value.split('\n');
-      return lines[lineNumber - 1].trim().length;
+      return lines[lineNumber - 1].length;
     },
   };
 }

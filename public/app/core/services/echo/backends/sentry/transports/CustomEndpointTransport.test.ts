@@ -1,5 +1,4 @@
 import { Event, Severity } from '@sentry/browser';
-import { Status } from '@sentry/types';
 import { CustomEndpointTransport } from './CustomEndpointTransport';
 
 describe('CustomEndpointTransport', () => {
@@ -54,7 +53,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // second immediate call - shot circuited because retry-after time has not expired, backend not called
-    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', Status.Skipped);
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', 'skipped');
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // wait out the retry-after and call again - great success
@@ -79,7 +78,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // second immediate call - shot circuited because retry-after time has not expired, backend not called
-    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', Status.Skipped);
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', 'skipped');
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // wait out the retry-after and call again - great success

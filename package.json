@@ -221,7 +221,7 @@
     "ts-node": "10.4.0",
     "typescript": "4.4.4",
     "wait-on": "6.0.0",
-    "webpack": "5.67.0",
+    "webpack": "5.68.0",
     "webpack-bundle-analyzer": "4.5.0",
     "webpack-cli": "4.9.1",
     "webpack-dev-server": "4.7.2",
@@ -257,9 +257,9 @@
     "@react-stately/menu": "3.2.3",
     "@react-stately/tree": "3.2.0",
     "@reduxjs/toolkit": "1.7.1",
-    "@sentry/browser": "6.16.1",
-    "@sentry/types": "6.16.1",
-    "@sentry/utils": "6.16.1",
+    "@sentry/browser": "6.17.2",
+    "@sentry/types": "6.17.2",
+    "@sentry/utils": "6.17.2",
     "@visx/event": "2.6.0",
     "@visx/gradient": "2.1.0",
     "@visx/group": "2.1.0",
@@ -374,7 +374,7 @@
     "@rushstack/node-core-library": "3.45.0",
     "@rushstack/rig-package": "0.3.7",
     "@rushstack/ts-command-line": "4.10.6",
-    "@storybook/react/webpack": "5.67.0"
+    "@storybook/react/webpack": "5.68.0"
   },
   "workspaces": {
     "packages": [
