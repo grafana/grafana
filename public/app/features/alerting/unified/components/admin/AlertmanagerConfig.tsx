@@ -29,8 +29,11 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
-  const { result: config, loading: isLoadingConfig, error: loadingError } =
-    (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
+  const {
+    result: config,
+    loading: isLoadingConfig,
+    error: loadingError,
+  } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
 
   useEffect(() => {
     if (alertManagerSourceName) {
