@@ -16,8 +16,8 @@ type DatasourceReconciler struct {
 }
 
 type Store interface {
-	Get(string) (DataSource, error)
-	Upsert(string, DataSource) error
+	Get(string) (DataSourceSpec, error)
+	Upsert(string, DataSourceSpec) error
 	Delete(string) error
 }
 
@@ -57,7 +57,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}, err
 	}
 
-	if err := d.sto.Upsert(req.Name, ds); err != nil {
+	if err := d.sto.Upsert(req.Name, ds.Spec); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,

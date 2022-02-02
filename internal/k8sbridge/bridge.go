@@ -5,6 +5,7 @@ package k8sbridge
 
 import (
 	"github.com/grafana/grafana/pkg/schema"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -26,8 +27,10 @@ func ProvideBridgeService(cfg *rest.Config, list schema.CoreSchemaList) (*Bridge
 		return nil, err
 	}
 
+	utilruntime.Must(schema.GetAddToScheme()(schema.GetScheme()))
+	
 	mgropts := ctrl.Options{
-		Scheme: nil, // TODO fill me in by populating from reg
+		Scheme: schema.GetScheme(),
 	}
 
 	mgr, err := ctrl.NewManager(cfg, mgropts)
