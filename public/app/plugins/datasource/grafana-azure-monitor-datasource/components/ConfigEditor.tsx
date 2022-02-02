@@ -91,18 +91,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   // TODO: Used only by InsightsConfig
-  private onUpdateJsonDataOption = (key: keyof AzureDataSourceJsonData) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    updateDatasourcePluginJsonDataOption(this.props, key, event.currentTarget.value);
-  };
+  private onUpdateJsonDataOption =
+    (key: keyof AzureDataSourceJsonData) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+      updateDatasourcePluginJsonDataOption(this.props, key, event.currentTarget.value);
+    };
 
   // TODO: Used only by InsightsConfig
-  private onUpdateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    updateDatasourcePluginSecureJsonDataOption(this.props, key, event.currentTarget.value);
-  };
+  private onUpdateSecureJsonDataOption =
+    (key: keyof AzureDataSourceSecureJsonData) =>
+    (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+      updateDatasourcePluginSecureJsonDataOption(this.props, key, event.currentTarget.value);
+    };
 
   // TODO: Used only by InsightsConfig
   private resetSecureKey = (key: keyof AzureDataSourceSecureJsonData) => {

@@ -61,7 +61,8 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
-  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery> {
+  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
+{
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
@@ -190,9 +191,7 @@ export class PrometheusDatasource
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
-        return await lastValueFrom(
-          this._request<T>(url, params, { method: this.httpMethod, hideFromInspector: true })
-        );
+        return await lastValueFrom(this._request<T>(url, params, { method: this.httpMethod, hideFromInspector: true }));
       } catch (err) {
         // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
         if (this.httpMethod === 'POST' && err.status === 405) {
@@ -203,9 +202,7 @@ export class PrometheusDatasource
       }
     }
 
-    return await lastValueFrom(
-      this._request<T>(url, params, { method: 'GET', hideFromInspector: true })
-    ); // toPromise until we change getTagValues, getTagKeys to Observable
+    return await lastValueFrom(this._request<T>(url, params, { method: 'GET', hideFromInspector: true })); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {

@@ -106,7 +106,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       className={styles.card}
       key={item.uid}
       href={item.url}
-      ref={(ref) => setMarkerElement((ref as unknown) as HTMLDivElement)}
+      ref={(ref) => setMarkerElement(ref as unknown as HTMLDivElement)}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}

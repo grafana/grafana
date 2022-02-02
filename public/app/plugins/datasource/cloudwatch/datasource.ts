@@ -85,7 +85,8 @@ export const MAX_ATTEMPTS = 5;
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport {
+  implements DataSourceWithLogsContextSupport
+{
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;
@@ -262,8 +263,9 @@ export class CloudWatchDatasource
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map(
-      (item: CloudWatchMetricsQuery): MetricQuery => {
+    const validMetricsQueries = metricQueries
+      .filter(this.filterMetricQuery)
+      .map((item: CloudWatchMetricsQuery): MetricQuery => {
         item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
         item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
         item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
@@ -281,8 +283,7 @@ export class CloudWatchDatasource
           type: 'timeSeriesQuery',
           datasource: this.getRef(),
         };
-      }
-    );
+      });
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {
@@ -959,7 +960,7 @@ export class CloudWatchDatasource
         .getVariables()
         .find(({ name }) => name === this.templateSrv.getVariableName(value));
       if (valueVar) {
-        if (((valueVar as unknown) as VariableWithMultiSupport).multi) {
+        if ((valueVar as unknown as VariableWithMultiSupport).multi) {
           const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
           return { ...result, [key]: values };
         }
@@ -980,7 +981,7 @@ export class CloudWatchDatasource
       const variable = this.templateSrv
         .getVariables()
         .find(({ name }) => name === this.templateSrv.getVariableName(target));
-      if (variable && ((variable as unknown) as VariableWithMultiSupport).multi) {
+      if (variable && (variable as unknown as VariableWithMultiSupport).multi) {
         this.debouncedCustomAlert(
           'CloudWatch templating error',
           `Multi template variables are not supported for ${fieldName || target}`

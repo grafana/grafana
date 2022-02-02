@@ -59,7 +59,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  eventBridge: (null as unknown) as EventBusExtended,
+  eventBridge: null as unknown as EventBusExtended,
   cache: [],
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
