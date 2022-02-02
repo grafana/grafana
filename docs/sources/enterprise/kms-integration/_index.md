@@ -13,5 +13,7 @@ Grafana integrates with the following key management systems:
 
 - [AWS KMS]({{< relref "/using-aws-kms-to-encrypt-database-secrets.md" >}})
 - [Azure Key Vault]({{< relref "/using-azure-key-vault-to-encrypt-database-secrets.md" >}})
+- [Google Cloud KMS]({{< relref "/using-google-cloud-kms-to-encrypt-database-secrets.md" >}})
+- [Hashicorp Key Vault]({{< relref "/using-hashicorp-key-vault-to-encrypt-database-secrets.md" >}})
 
 Refer to [Database encryption]({{< relref "../../administration/database-encryption.md" >}}) to learn more about how Grafana encrypts secrets in the database.
