@@ -75,8 +75,8 @@ func (s *Service) DeleteDashboardSnapshot(ctx context.Context, cmd *models.Delet
 	return s.SQLStore.DeleteDashboardSnapshot(ctx, cmd)
 }
 
-func (s *Service) SearchDashboardSnapshots(_ context.Context, query *models.GetDashboardSnapshotsQuery) error {
-	return s.SQLStore.SearchDashboardSnapshots(query)
+func (s *Service) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
+	return s.SQLStore.SearchDashboardSnapshots(ctx, query)
 }
 
 func (s *Service) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {

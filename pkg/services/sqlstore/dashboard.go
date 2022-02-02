@@ -188,23 +188,23 @@ func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 }
 
 // GetDashboard gets a dashboard.
-// func (ss *SQLStore) GetDashboard(id, orgID int64, uid, slug string) (*models.Dashboard, error) {
-// 	if id == 0 && slug == "" && uid == "" {
-// 		return nil, models.ErrDashboardIdentifierNotSet
-// 	}
+func (ss *SQLStore) GetDashboardEnterprise(id, orgID int64, uid, slug string) (*models.Dashboard, error) {
+	if id == 0 && slug == "" && uid == "" {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
 
-// 	dashboard := models.Dashboard{Slug: slug, OrgId: orgID, Id: id, Uid: uid}
-// 	has, err := ss.engine.Get(&dashboard)
-// 	if err != nil {
-// 		return nil, err
-// 	} else if !has {
-// 		return nil, models.ErrDashboardNotFound
-// 	}
+	dashboard := models.Dashboard{Slug: slug, OrgId: orgID, Id: id, Uid: uid}
+	has, err := ss.engine.Get(&dashboard)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, models.ErrDashboardNotFound
+	}
 
-// 	dashboard.SetId(dashboard.Id)
-// 	dashboard.SetUid(dashboard.Uid)
-// 	return &dashboard, nil
-// }
+	dashboard.SetId(dashboard.Id)
+	dashboard.SetUid(dashboard.Uid)
+	return &dashboard, nil
+}
 
 // GetDashboardByTitle gets a dashboard by its title.
 func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
