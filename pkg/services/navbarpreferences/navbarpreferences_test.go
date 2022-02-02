@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -20,6 +23,7 @@ const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
 func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	features := featuremgmt.WithFeatures(featuremgmt.FlagNewNavigation)
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
@@ -27,10 +31,14 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
+		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		service := NavbarPreferencesService{
-			Cfg:      setting.NewCfg(),
+			Cfg:      cfg,
 			SQLStore: sqlStore,
 		}
+		service.Cfg.IsFeatureToggleEnabled = features.IsEnabled
+		fmt.Println("WOW", cfg)
 
 		user := models.SignedInUser{
 			UserId:     1,
@@ -92,7 +100,6 @@ func mockRequestBody(v interface{}) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }
-
 
 func getCompareOptions() []cmp.Option {
 	return []cmp.Option{
