@@ -48,7 +48,7 @@ export async function addToRichHistory(
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
   if (newQueriesToSave.length > 0) {
-    let newRichHistory: RichHistoryQuery = {
+    const newRichHistory: RichHistoryQuery = {
       queries: newQueriesToSave,
       ts,
       datasourceId,
