@@ -4,47 +4,48 @@ import { map, mergeMap } from 'rxjs/operators';
 import { DataFrame, DataTransformerConfig } from '../types';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
 
-const getOperator = (config: DataTransformerConfig): MonoTypeOperatorFunction<DataFrame[]> => (source) => {
-  const info = standardTransformersRegistry.get(config.id);
+const getOperator =
+  (config: DataTransformerConfig): MonoTypeOperatorFunction<DataFrame[]> =>
+  (source) => {
+    const info = standardTransformersRegistry.get(config.id);
 
-  if (!info) {
-    return source;
-  }
+    if (!info) {
+      return source;
+    }
 
-  const defaultOptions = info.transformation.defaultOptions ?? {};
-  const options = { ...defaultOptions, ...config.options };
+    const defaultOptions = info.transformation.defaultOptions ?? {};
+    const options = { ...defaultOptions, ...config.options };
 
-  return source.pipe(
-    mergeMap((before) => of(before).pipe(info.transformation.operator(options), postProcessTransform(before, info)))
-  );
-};
+    return source.pipe(
+      mergeMap((before) => of(before).pipe(info.transformation.operator(options), postProcessTransform(before, info)))
+    );
+  };
 
-const postProcessTransform = (
-  before: DataFrame[],
-  info: TransformerRegistryItem<any>
-): MonoTypeOperatorFunction<DataFrame[]> => (source) =>
-  source.pipe(
-    map((after) => {
-      if (after === before) {
+const postProcessTransform =
+  (before: DataFrame[], info: TransformerRegistryItem<any>): MonoTypeOperatorFunction<DataFrame[]> =>
+  (source) =>
+    source.pipe(
+      map((after) => {
+        if (after === before) {
+          return after;
+        }
+
+        // Add a key to the metadata if the data changed
+        for (const series of after) {
+          if (!series.meta) {
+            series.meta = {};
+          }
+
+          if (!series.meta.transformations) {
+            series.meta.transformations = [info.id];
+          } else {
+            series.meta.transformations = [...series.meta.transformations, info.id];
+          }
+        }
+
         return after;
-      }
-
-      // Add a key to the metadata if the data changed
-      for (const series of after) {
-        if (!series.meta) {
-          series.meta = {};
-        }
-
-        if (!series.meta.transformations) {
-          series.meta.transformations = [info.id];
-        } else {
-          series.meta.transformations = [...series.meta.transformations, info.id];
-        }
-      }
-
-      return after;
-    })
-  );
+      })
+    );
 
 /**
  * Apply configured transformations to the input data

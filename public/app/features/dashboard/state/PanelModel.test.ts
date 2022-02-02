@@ -55,7 +55,7 @@ describe('PanelModel', () => {
       {
         id: 'table',
       },
-      (null as unknown) as ComponentClass<PanelProps>, // react
+      null as unknown as ComponentClass<PanelProps>, // react
       {} // angular
     );
 
