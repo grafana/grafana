@@ -1,8 +1,10 @@
 import { FUNCTIONS } from '../promql';
+import { PromQuery } from '../types';
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
 import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
-import { PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { QueryEditorMode } from './shared/types';
+import { PromOperationId, PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQuery> {
   constructor() {
@@ -22,6 +24,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       PromVisualQueryOperationCategory.RangeFunctions,
       PromVisualQueryOperationCategory.Functions,
       PromVisualQueryOperationCategory.BinaryOps,
+      PromVisualQueryOperationCategory.Options,
     ]);
   }
 
@@ -30,6 +33,24 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     queryString = this.renderOperations(queryString, query.operations);
     queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
     return queryString;
+  }
+
+  getUpdatedSaveModel(query: PromQuery, visualQuery: PromVisualQuery): PromQuery {
+    let legendFormat: string | undefined;
+
+    for (const op of visualQuery.operations) {
+      if (op.id === PromOperationId.LegendFormat) {
+        legendFormat = op.params[0] as string;
+      }
+    }
+
+    return {
+      ...query,
+      expr: promQueryModeller.renderQuery(visualQuery),
+      visualQuery,
+      legendFormat,
+      editorMode: QueryEditorMode.Builder,
+    };
   }
 
   getQueryPatterns(): PromQueryPattern[] {

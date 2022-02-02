@@ -27,13 +27,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onChangeViewModel = (updatedQuery: PromVisualQuery) => {
     setVisualQuery(updatedQuery);
-
-    onChange({
-      ...query,
-      expr: promQueryModeller.renderQuery(updatedQuery),
-      visualQuery: updatedQuery,
-      editorMode: QueryEditorMode.Builder,
-    });
+    onChange(promQueryModeller.getUpdatedSaveModel(query, updatedQuery));
   };
 
   const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {

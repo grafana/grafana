@@ -18,6 +18,22 @@ export enum PromVisualQueryOperationCategory {
   RangeFunctions = 'Range functions',
   Functions = 'Functions',
   BinaryOps = 'Binary operations',
+  Options = 'Options',
+}
+
+export enum PromOperationId {
+  HistogramQuantile = 'histogram_quantile',
+  LabelReplace = 'label_replace',
+  Ln = 'ln',
+  Changes = 'changes',
+  Rate = 'rate',
+  Irate = 'irate',
+  Increase = 'increase',
+  Delta = 'delta',
+  MultiplyBy = '__multiply_by',
+  DivideBy = '__divide_by',
+  NestedQuery = '__nested_query',
+  LegendFormat = '__legend_format',
 }
 
 export interface PromQueryPattern {
