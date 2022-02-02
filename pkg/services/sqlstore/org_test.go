@@ -1,15 +1,18 @@
+//go:build integration
+// +build integration
+
 package sqlstore
 
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/util"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
