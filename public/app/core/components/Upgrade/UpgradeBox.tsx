@@ -67,6 +67,7 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
     text: css`
       margin-bottom: 0;
       padding: ${theme.spacing(2, 0)};
+      line-height: 1.5;
     `,
     button: css`
       margin-top: ${theme.spacing(2)};
