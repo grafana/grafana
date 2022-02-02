@@ -23,7 +23,7 @@ func (f *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body ap
 }
 
 func (f *ForkedTestingApi) forkRouteTestRuleGrafanaConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	return f.grafana.RouteTestRuleConfig(c, body)
+	return f.grafana.RouteTestGrafanaRuleConfig(c, body)
 }
 
 func (f *ForkedTestingApi) forkRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
