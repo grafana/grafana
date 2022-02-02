@@ -276,13 +276,11 @@ export function SelectBase<T>({
           IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
+            const additionalIndicators = [];
 
             if (maxVisibleValues !== undefined) {
               const selectedValuesCount = value.length;
-              const indicatorChildren = [...props.children];
-              indicatorChildren.splice(
-                -1,
-                0,
+              additionalIndicators.push(
                 renderExtraValuesIndicator({
                   maxVisibleValues,
                   selectedValuesCount,
@@ -290,13 +288,22 @@ export function SelectBase<T>({
                   menuIsOpen,
                 })
               );
-              return <IndicatorsContainer {...props}>{indicatorChildren}</IndicatorsContainer>;
             }
 
-            return <IndicatorsContainer {...props} />;
+            if (allowCustomValue && (creatableProps.allowCreateWhileLoading || !isLoading)) {
+              additionalIndicators.push(<Icon name="keyboard" />);
+            }
+
+            const indicatorChildren = [...props.children];
+            // Any additional indicators inserted before last
+            if (indicatorChildren.length > 0) {
+              indicatorChildren.splice(-1, 0, additionalIndicators);
+            }
+
+            return <IndicatorsContainer {...props}>{indicatorChildren}</IndicatorsContainer>;
           },
           IndicatorSeparator() {
-            return <></>;
+            return null;
           },
           Control: CustomControl,
           Option: SelectMenuOptions,

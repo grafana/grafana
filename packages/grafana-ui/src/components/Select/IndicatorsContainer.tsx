@@ -14,6 +14,9 @@ export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsW
         styles.suffix,
         css`
           position: relative;
+          & > * {
+            margin-left: 2px;
+          }
         `
       )}
       ref={ref}
