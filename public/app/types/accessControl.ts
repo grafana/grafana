@@ -54,6 +54,18 @@ export enum AccessControlAction {
   ActionRolesList = 'roles:list',
   ActionBuiltinRolesList = 'roles.builtin:list',
   ActionUserRolesList = 'users.roles:list',
+
+  DashboardsRead = 'dashboards:read',
+  DashboardsWrite = 'dashboards:read',
+  DashboardsDelete = 'dashboards:delete',
+  DashboardsPermissionsRead = 'dashboards.permissions:read',
+  DashboardsPermissionsWrite = 'dashboards.permissions:read',
+
+  FoldersRead = 'folders:read',
+  FoldersWrite = 'folders:read',
+  FoldersDelete = 'folders:delete',
+  FoldersPermissionsRead = 'folders.permissions:read',
+  FoldersPermissionsWrite = 'folders.permissions:read',
 }
 
 export interface Role {
