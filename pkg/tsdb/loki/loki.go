@@ -99,7 +99,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queryRes := backend.DataResponse{}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -132,10 +131,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		defer span.End()
 
 		frames, err := runQuery(client, query)
+
+		queryRes := backend.DataResponse{}
+
 		if err != nil {
-			return result, err
+			queryRes.Error = err
+		} else {
+			queryRes.Frames = frames
 		}
-		queryRes.Frames = frames
+
 		result.Responses[query.RefID] = queryRes
 	}
 	return result, nil
