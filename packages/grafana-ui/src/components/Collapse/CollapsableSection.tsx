@@ -29,30 +29,26 @@ export const CollapsableSection: FC<Props> = ({
   loading = false,
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
-
+  const styles = useStyles2(collapsableSectionStyles);
+  const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
   const onClick = (e: React.MouseEvent) => {
+    if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
     onToggle?.(!open);
     toggleOpen(!open);
   };
-
-  const header = useRef<HTMLDivElement>(null);
-  const onCardClick = (e: React.MouseEvent) => {
-    if (header.current && e.target === header.current) {
-      onClick(e);
-    }
-  };
-
   const { current: id } = useRef(uniqueId());
+
   const buttonLabelId = labelId ?? `collapse-label-${id}`;
-  const styles = useStyles2(collapsableSectionStyles);
-  const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
 
   return (
     <>
-      <div onClick={onCardClick} className={cx(styles.header, className)} title={tooltip} ref={header}>
+      <div onClick={onClick} className={cx(styles.header, className)} title={tooltip}>
         <button
           id={`collapse-button-${id}`}
           className={styles.button}
