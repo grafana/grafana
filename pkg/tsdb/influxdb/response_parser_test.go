@@ -497,18 +497,18 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.EqualError(t, result.Responses["A"].Error, "error parsing query: found THING")
 	})
 
-	t.Run("Influxdb response parser parseValue nil", func(t *testing.T) {
-		value := parseValue(nil)
+	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {
+		value := parseNumber(nil)
 		require.Nil(t, value)
 	})
 
-	t.Run("Influxdb response parser parseValue valid JSON.number", func(t *testing.T) {
-		value := parseValue(json.Number("95.4"))
+	t.Run("Influxdb response parser parseNumber valid JSON.number", func(t *testing.T) {
+		value := parseNumber(json.Number("95.4"))
 		require.Equal(t, *value, 95.4)
 	})
 
-	t.Run("Influxdb response parser parseValue invalid type", func(t *testing.T) {
-		value := parseValue("95.4")
+	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
+		value := parseNumber("95.4")
 		require.Nil(t, value)
 	})
 
@@ -520,7 +520,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})
 
-	t.Run("Influxdb response parser parseValue invalid type", func(t *testing.T) {
+	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
 	})
