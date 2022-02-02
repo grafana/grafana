@@ -35,6 +35,13 @@ Use these options to choose how to display your time series data.
 - [Graph stacked time series]({{< relref "./graph-time-series-stacking.md" >}})
 - [Graph and color schemes]({{< relref "./graph-color-scheme.md" >}})
 
+### Transform
+
+Use this option to transform series values without affecting values shown in tooltip, context menu and legend.
+
+- **Negative Y transform -** Flip the results to negative values on the y axis.
+- **Constant -** Show first value as a constant line.
+
 ## Axis
 
 For more information about adjusting your time series axes, refer to [Change axis display]({{< relref "change-axis-display.md" >}}).
