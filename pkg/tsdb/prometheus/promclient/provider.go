@@ -1,11 +1,9 @@
 package promclient
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/util/maputil"
 
@@ -88,29 +86,6 @@ func (p *Provider) middlewares() []sdkhttpclient.Middleware {
 	}
 
 	return middlewares
-}
-
-func (p *Provider) configureAzureAuthentication(opts sdkhttpclient.Options) error {
-	credentials, err := azcredentials.FromDatasourceData(p.jsonData, p.settings.DecryptedSecureJSONData)
-	if err != nil {
-		err = fmt.Errorf("invalid Azure credentials: %s", err)
-		return err
-	}
-
-	if credentials != nil {
-		opts.CustomOptions["_azureCredentials"] = credentials
-
-		resourceId, err := maputil.GetStringOptional(p.jsonData, "azureEndpointResourceId")
-		if err != nil {
-			return err
-		}
-
-		if resourceId != "" {
-			opts.CustomOptions["azureEndpointResourceId"] = resourceId
-		}
-	}
-
-	return nil
 }
 
 func reqHeaders(headers map[string]string) map[string]string {
