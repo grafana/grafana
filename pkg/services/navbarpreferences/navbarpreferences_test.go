@@ -31,6 +31,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
+	  sqlStore.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagNewNavigation).IsEnabled
 		cfg := setting.NewCfg()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		service := NavbarPreferencesService{
@@ -38,8 +39,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore: sqlStore,
 		}
 		service.Cfg.IsFeatureToggleEnabled = features.IsEnabled
-		fmt.Println("WOW", cfg)
+		fmt.Println("WOW", cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation))
 
+		fmt.Println("WOW in spanish", sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation))
 		user := models.SignedInUser{
 			UserId:     1,
 			Name:       "Signed In User",
