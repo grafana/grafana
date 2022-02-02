@@ -176,7 +176,7 @@ export const Drawer: FC<Props> = ({
             </div>
           )}
           {typeof title !== 'string' && title}
-          <div className={drawerStyles.content} {...overlayProps} ref={overlayRef}>
+          <div className={drawerStyles.content}>
             {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
           </div>
         </div>
