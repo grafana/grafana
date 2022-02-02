@@ -130,7 +130,7 @@ describe('PromQueryBuilder', () => {
 });
 
 function setup(query: PromVisualQuery = defaultQuery) {
-  const languageProvider = (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
       url: '',
@@ -141,7 +141,6 @@ function setup(query: PromVisualQuery = defaultQuery) {
     undefined,
     languageProvider
   );
-
   const props = {
     datasource,
     onRunQuery: () => {},

@@ -9,8 +9,7 @@ export function invalidNamespaceError() {
       },
     },
     config: {
-      url:
-        'api/datasources/proxy/31/azuremonitor/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/grafanadev/providers/grafanadev/select/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=select',
+      url: 'api/datasources/proxy/31/azuremonitor/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/grafanadev/providers/grafanadev/select/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=select',
       method: 'GET',
       retry: 0,
       headers: {

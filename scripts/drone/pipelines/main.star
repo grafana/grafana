@@ -14,7 +14,7 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
+    'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
@@ -99,7 +99,7 @@ def get_steps(edition, is_downstream=False):
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
-        e2e_tests_server_step(edition=edition),
+        grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
         e2e_tests_step('panels-suite', edition=edition),

@@ -26,7 +26,7 @@ import { createFetchResponse } from '../../../../test/helpers/createFetchRespons
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
@@ -360,7 +360,7 @@ describe('ElasticDatasource', function (this: any) {
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
-        headers: ({} as unknown) as Headers,
+        headers: {} as unknown as Headers,
         ok: false,
       };
 

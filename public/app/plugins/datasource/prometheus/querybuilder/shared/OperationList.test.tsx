@@ -59,7 +59,7 @@ describe('OperationList', () => {
 });
 
 function setup(query: PromVisualQuery = defaultQuery) {
-  const languageProvider = (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const props = {
     datasource: new PrometheusDatasource(
       {
