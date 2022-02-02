@@ -8,6 +8,14 @@ type NavbarPreference struct {
 	HideFromNavbar bool   `xorm:"hide_from_navbar"`
 }
 
+type NavbarPreferenceDTO struct {
+	ID             int64  `json:"id"`
+	OrgID          int64  `json:"orgId"`
+	UserID         int64  `json:"userId"`
+	NavItemID      string `json:"navItemId"`
+	HideFromNavbar bool   `json:"hideFromNavbar"`
+}
+
 type GetNavbarPreferencesQuery struct {
 	OrgID  int64
 	UserID int64

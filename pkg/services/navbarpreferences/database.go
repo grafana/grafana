@@ -8,12 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (n *NavbarPreferencesService) getNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreference, error) {
-	navbarPreferences := make([]NavbarPreference, 0)
+func (n *NavbarPreferencesService) getNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreferenceDTO, error) {
+	navbarPreferences := make([]NavbarPreferenceDTO, 0)
 	err := n.SQLStore.WithDbSession(c, func(sess *sqlstore.DBSession) error {
 		// builder
 		builder := sqlstore.SQLBuilder{}
-		builder.Write("SELECT * from navbar_preferences")
+		builder.Write("SELECT * from navbar_preference")
 		builder.Write(` WHERE org_id=? AND user_id=?`, signedInUser.OrgId, signedInUser.UserId)
 		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&navbarPreferences); err != nil {
 			return err
@@ -28,13 +28,13 @@ func (n *NavbarPreferencesService) getNavbarPreferences(c context.Context, signe
 	})
 
 	if err != nil {
-		return []NavbarPreference{}, err
+		return []NavbarPreferenceDTO{}, err
 	}
 
 	return navbarPreferences, nil
 }
 
-func (n *NavbarPreferencesService) createNavbarPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (NavbarPreference, error) {
+func (n *NavbarPreferencesService) createNavbarPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (NavbarPreferenceDTO, error) {
 	preference := NavbarPreference{
 		OrgID:          signedInUser.OrgId,
 		UserID:         signedInUser.UserId,
@@ -51,5 +51,13 @@ func (n *NavbarPreferencesService) createNavbarPreference(c context.Context, sig
 		return nil
 	})
 
-	return preference, err
+	preferenceDTO := NavbarPreferenceDTO{
+		ID:             preference.ID,
+		OrgID:          preference.OrgID,
+		UserID:         preference.UserID,
+		NavItemID:      preference.NavItemID,
+		HideFromNavbar: preference.HideFromNavbar,
+	}
+
+	return preferenceDTO, err
 }

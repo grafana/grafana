@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/navbarpreferences"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -386,17 +385,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	})
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		// TODO remove this hack to check that we can create a preference correctly
-		preference := navbarpreferences.CreateNavbarPreferenceCommand{
-			NavItemID:      "alerting",
-			HideFromNavbar: true,
-		}
-		_, err2 := hs.NavbarPreferencesService.CreateNavbarPreference(c.Req.Context(), c.SignedInUser, preference)
-
-		if err2 != nil {
-			return nil, err2
-		}
-
 		// query navbar_preferences table for any preferences
 		navbarPref, err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
 

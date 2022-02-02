@@ -4,7 +4,7 @@ import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addNavbarPreferencesMigrations(mg *Migrator) {
 	navbar := Table{
-		Name: "navbar_preferences",
+		Name: "navbar_preference",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
@@ -19,5 +19,5 @@ func addNavbarPreferencesMigrations(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create navbar preferences table", NewAddTableMigration(navbar))
+	mg.AddMigration("create navbar preference table", NewAddTableMigration(navbar))
 }
