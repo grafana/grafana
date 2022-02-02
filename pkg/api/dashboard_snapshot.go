@@ -313,7 +313,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 		SignedInUser: c.SignedInUser,
 	}
 
-	err := hs.SQLStore.GetDashboardSnapshot(c.Req.Context(), &searchQuery)
+	err := hs.SQLStore.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}

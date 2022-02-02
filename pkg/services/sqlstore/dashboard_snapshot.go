@@ -84,7 +84,7 @@ func (ss *SQLStore) GetDashboardSnapshot(ctx context.Context, query *models.GetD
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
 // for other roles, it returns snapshots created by the user
-func (ss *SQLStore) SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
+func (ss *SQLStore) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(models.DashboardSnapshotsList, 0)
 
 	sess := x.NewSession()
