@@ -1,16 +1,13 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -393,7 +390,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 		dash.SetVersion(1)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
-		metrics.MApiDashboardInsert.Inc()
+		dash.Uid = util.GenerateShortUID()
 		_, err := sess.Insert(dash)
 		return err
 	})
@@ -402,6 +399,28 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	require.NotNil(t, dash)
 	dash.Data.Set("id", dash.Id)
 	dash.Data.Set("uid", dash.Uid)
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		dashVersion := &models.DashboardVersion{
+			DashboardId:   dash.Id,
+			ParentVersion: dash.Version,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+
+		if affectedRows, err := sess.Insert(dashVersion); err != nil {
+			return err
+		} else if affectedRows == 0 {
+			return models.ErrDashboardNotFound
+		}
+
+		return nil
+	})
+
 	return dash
 }
 
