@@ -148,7 +148,7 @@ Reduce takes one or more time series returned from a query or an expression and 
 
 - **Function -** The reduction function to use
 - **Input -** The variable (refID (such as `A`)) to resample
-- **Mode -** Allows control behavior of reduction function when a series contains non-numerical values (null, NaN, +\-Inf)   
+- **Mode -** Allows control behavior of reduction function when a series contains non-numerical values (null, NaN, +\-Inf)
 
 #### Reduction Functions
 
@@ -184,7 +184,7 @@ In this mode all non-numeric values (null, NaN or +\-Inf) in the input series ar
 
 ##### Replace Non-Numeric
 
-In this mode all non-numeric values are replaced by a pre-defined value.  
+In this mode all non-numeric values are replaced by a pre-defined value.
 
 ### Resample
 
