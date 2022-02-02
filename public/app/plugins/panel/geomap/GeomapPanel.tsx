@@ -15,6 +15,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataFrame,
+  FrameGeometrySourceMode,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -180,6 +181,7 @@ export class GeomapPanel extends Component<Props, State> {
           type: item.id,
           name: this.getNextLayerName(),
           config: cloneDeep(item.defaultOptions),
+          location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
           tooltip: true,
         },
         false
@@ -266,10 +268,7 @@ export class GeomapPanel extends Component<Props, State> {
       layers.push(await this.initLayer(map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
 
       // Default layer values
-      let layerOptions = options.layers;
-      if (!layerOptions) {
-        layerOptions = [defaultMarkersConfig];
-      }
+      const layerOptions = options.layers ?? [defaultMarkersConfig];
 
       for (const lyr of layerOptions) {
         layers.push(await this.initLayer(map, lyr, false));
@@ -278,10 +277,11 @@ export class GeomapPanel extends Component<Props, State> {
       console.error('error loading layers', ex);
     }
 
-    this.layers = layers;
     for (const lyr of layers) {
-      this.map.addLayer(lyr.layer);
+      map.addLayer(lyr.layer);
     }
+    this.layers = layers;
+    this.map = map; // redundant
 
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map.addInteraction(this.mouseWheelZoom);
