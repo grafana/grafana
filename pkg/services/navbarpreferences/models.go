@@ -1,5 +1,7 @@
 package navbarpreferences
 
+import "errors"
+
 type NavbarPreference struct {
 	ID             int64  `xorm:"pk autoincr 'id'"`
 	OrgID          int64  `xorm:"org_id"`
@@ -15,6 +17,15 @@ type NavbarPreferenceDTO struct {
 	NavItemID      string `json:"navItemId"`
 	HideFromNavbar bool   `json:"hideFromNavbar"`
 }
+
+var (
+	// errNavbarPreferenceAlreadyExists is an error for when the user tries to add a navbar preference that already exists.
+	errNavbarPreferenceAlreadyExists = errors.New("navbar preference with that name or UID already exists")
+	// errNavbarPreferenceNotFound is an error for when a navbar preference can't be found.
+	errNavbarPreferenceNotFound = errors.New("navbar preference could not be found")
+	// errNavbarPreferenceDashboardNotFound is an error for when a navbar preference connection can't be found.
+	errNavbarPreferenceDashboardNotFound = errors.New("navbar preference connection could not be found")
+)
 
 type GetNavbarPreferencesQuery struct {
 	OrgID  int64
@@ -36,4 +47,8 @@ type CreateNavbarPreferenceCommand struct {
 type PatchNavbarPreferenceCommand struct {
 	NavItemID      string `json:"navItemId"`
 	HideFromNavbar bool   `json:"hideFromNavbar"`
+}
+
+type NavbarPreferenceResponse struct {
+	Result NavbarPreferenceDTO `json:"result"`
 }
