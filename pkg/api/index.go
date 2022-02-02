@@ -144,9 +144,6 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	fmt.Printf("%+v", featuremgmt.FlagServiceAccounts)
-	fmt.Printf("%+v", hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts))
-	fmt.Printf("hey this is %v", (c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)))
 	return (c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)) &&
 		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts)
 }
