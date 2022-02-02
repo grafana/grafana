@@ -196,11 +196,12 @@ var wireBasicSet = wire.NewSet(
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboards.ProvideService,
+	sqlstore.ProvideService,
+	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
-	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
@@ -210,7 +211,6 @@ var wireSet = wire.NewSet(
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
-	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
 
 	notifications.MockNotificationService,

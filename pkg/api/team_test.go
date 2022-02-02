@@ -77,20 +77,6 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		hs.SQLStore = mockstore.NewSQLStoreMock()
 		teamName := "team foo"
 
-		// TODO: Use a fake SQLStore when it's represented by an interface
-		// orgCreateTeam := createTeam
-		// orgAddTeamMember := addOrUpdateTeamMember
-		// t.Cleanup(func() {
-		// 	createTeam = orgCreateTeam
-		// 	addOrUpdateTeamMember = orgAddTeamMember
-		// })
-
-		// createTeamCalled := 0
-		// createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
-		// 	createTeamCalled++
-		// 	return models.Team{Name: teamName, Id: 42}, nil
-		// }
-
 		addTeamMemberCalled := 0
 		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
 			permission string) error {
@@ -111,8 +97,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			r := hs.CreateTeam(c)
-			// assert.Equal(t, 1, createTeamCalled)
-			// assert.Equal(t, addTeamMemberCalled, 0)
+
 			assert.Equal(t, 200, r.Status())
 			assert.True(t, stub.warnCalled)
 			assert.Equal(t, stub.warnMessage, "Could not add creator to team because is not a real user")
@@ -127,10 +112,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
-			// createTeamCalled, addTeamMemberCalled = 0, 0
 			r := hs.CreateTeam(c)
-			// assert.Equal(t, createTeamCalled, 1)
-			// assert.Equal(t, addTeamMemberCalled, 1)
 			assert.Equal(t, 200, r.Status())
 			assert.False(t, stub.warnCalled)
 		})
