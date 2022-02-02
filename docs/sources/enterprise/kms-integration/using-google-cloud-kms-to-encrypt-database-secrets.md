@@ -16,7 +16,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
 
 1. [Create a key ring](https://cloud.google.com/kms/docs/creating-keys#kms-create-key-ring-console) in Google Cloud KMS.
 
-2. [Create a symmetric encryption key](https://cloud.google.com/kms/docs/creating-keys#create_a_key) in the key ring on the specified location.
+2. [Create a symmetric encryption key](https://cloud.google.com/kms/docs/creating-keys#create_a_key) in the key ring.
 
 3. [Create a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating) and assign it a role: it can be a predefined role or custom role with permissions to encrypt and decrypt secrets with Key Management Service.
 
