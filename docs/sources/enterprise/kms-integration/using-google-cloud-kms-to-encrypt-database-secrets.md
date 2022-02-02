@@ -14,7 +14,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
 - A Google Cloud account with permission to list and create KMS keys and service accounts to access those keys
 - Access to the Grafana [configuration]({{< relref "../../administration/configuration/#config-file-locations" >}}) file
 
-1. [Create a key ring](https://cloud.google.com/kms/docs/creating-keys#kms-create-key-ring-console).
+1. [Create a key ring](https://cloud.google.com/kms/docs/creating-keys#kms-create-key-ring-console) in Google Cloud KMS.
 
 2. [Create a symmetric encryption key](https://cloud.google.com/kms/docs/creating-keys#create_a_key) in the key ring on the specified location.
 
