@@ -390,7 +390,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	if newDashboard {
-		if err := hs.setDashboardPermissions(c, cmd, dash, dashSvc); err != nil {
+		if err := hs.setDashboardPermissions(c, cmd, dashboard, dashSvc); err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
