@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
-import { Button, Switch, useStyles2 } from '@grafana/ui';
+import { EditorHeader, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { Button, useStyles2 } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
+import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { useCallback, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useState } from 'react';
 import { LokiQueryEditor } from '../../components/LokiQueryEditor';
 import { LokiQueryEditorProps } from '../../components/types';
+import { LokiQueryType } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
@@ -35,6 +37,11 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     });
   };
 
+  const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    onChange({ ...query, queryType: event.currentTarget.checked ? LokiQueryType.Instant : LokiQueryType.Range });
+    onRunQuery();
+  };
+
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
 
@@ -53,14 +60,11 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <Stack gap={1}>
-          <label className={styles.switchLabel}>Instant</label>
-          <Switch />
-        </Stack>
-        <Stack gap={1}>
-          <label className={styles.switchLabel}>Exemplars</label>
-          <Switch />
-        </Stack>
+        <QueryHeaderSwitch
+          label="Instant"
+          value={query.queryType === LokiQueryType.Instant}
+          onChange={onInstantChange}
+        />
         <InlineSelect
           value={null}
           placeholder="Query patterns"

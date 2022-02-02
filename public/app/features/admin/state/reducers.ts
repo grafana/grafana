@@ -189,14 +189,8 @@ export const userListAdminSlice = createSlice({
   },
 });
 
-export const {
-  usersFetched,
-  usersFetchBegin,
-  usersFetchEnd,
-  queryChanged,
-  pageChanged,
-  filterChanged,
-} = userListAdminSlice.actions;
+export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged } =
+  userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
 export default {

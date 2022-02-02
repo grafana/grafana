@@ -320,7 +320,11 @@ async function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  const { richHistory: nextRichHistory, richHistoryStorageFull, limitExceeded } = await addToRichHistory(
+  const {
+    richHistory: nextRichHistory,
+    richHistoryStorageFull,
+    limitExceeded,
+  } = await addToRichHistory(
     state.richHistory || [],
     datasourceId,
     datasource.name,
