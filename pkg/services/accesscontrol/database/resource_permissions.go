@@ -45,16 +45,26 @@ func (s *AccessControlStore) SetUserResourcePermission(
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedUserRoleName(userID), s.userAdder(sess, orgID, userID), cmd)
-		if err == nil && hook != nil {
-			return hook(sess, orgID, userID, cmd.ResourceID, cmd.Permission)
-		}
-
+		permission, err = s.setUserResourcePermission(sess, orgID, userID, cmd, hook)
 		return err
 	})
 
+	return permission, err
+}
+func (s *AccessControlStore) setUserResourcePermission(
+	sess *sqlstore.DBSession, orgID, userID int64,
+	cmd accesscontrol.SetResourcePermissionCommand,
+	hook types.UserResourceHookFunc,
+) (*accesscontrol.ResourcePermission, error) {
+	permission, err := s.setResourcePermission(sess, orgID, managedUserRoleName(userID), s.userAdder(sess, orgID, userID), cmd)
 	if err != nil {
 		return nil, err
+	}
+
+	if hook != nil {
+		if err := hook(sess, orgID, userID, cmd.ResourceID, cmd.Permission); err != nil {
+			return nil, err
+		}
 	}
 
 	return permission, nil
@@ -73,16 +83,27 @@ func (s *AccessControlStore) SetTeamResourcePermission(
 	var permission *accesscontrol.ResourcePermission
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
-		if err == nil && hook != nil {
-			return hook(sess, orgID, teamID, cmd.ResourceID, cmd.Permission)
-		}
-
+		permission, err = s.setTeamResourcePermission(sess, orgID, teamID, cmd, hook)
 		return err
 	})
 
+	return permission, err
+}
+
+func (s *AccessControlStore) setTeamResourcePermission(
+	sess *sqlstore.DBSession, orgID, teamID int64,
+	cmd accesscontrol.SetResourcePermissionCommand,
+	hook types.TeamResourceHookFunc,
+) (*accesscontrol.ResourcePermission, error) {
+	permission, err := s.setResourcePermission(sess, orgID, managedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
 	if err != nil {
 		return nil, err
+	}
+
+	if hook != nil {
+		if err := hook(sess, orgID, teamID, cmd.ResourceID, cmd.Permission); err != nil {
+			return nil, err
+		}
 	}
 
 	return permission, nil
@@ -101,15 +122,31 @@ func (s *AccessControlStore) SetBuiltInResourcePermission(
 	var permission *accesscontrol.ResourcePermission
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
-		if err == nil && hook != nil {
-			return hook(sess, orgID, builtInRole, cmd.ResourceID, cmd.Permission)
-		}
+		permission, err = s.setBuiltInResourcePermission(sess, orgID, builtInRole, cmd, hook)
 		return err
 	})
 
 	if err != nil {
 		return nil, err
+	}
+
+	return permission, nil
+}
+
+func (s *AccessControlStore) setBuiltInResourcePermission(
+	sess *sqlstore.DBSession, orgID int64, builtInRole string,
+	cmd accesscontrol.SetResourcePermissionCommand,
+	hook types.BuiltinResourceHookFunc,
+) (*accesscontrol.ResourcePermission, error) {
+	permission, err := s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	if hook != nil {
+		if err := hook(sess, orgID, builtInRole, cmd.ResourceID, cmd.Permission); err != nil {
+			return nil, err
+		}
 	}
 
 	return permission, nil
