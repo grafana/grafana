@@ -1,5 +1,7 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 
+type InsertMode = (prev: number, next: number, threshold: number) => number;
+
 const INSERT_MODES = {
   threshold: (prev: number, next: number, threshold: number) => prev + threshold,
   midpoint: (prev: number, next: number, threshold: number) => (prev + next) / 2,
@@ -7,12 +9,10 @@ const INSERT_MODES = {
   plusone: (prev: number, next: number, threshold: number) => prev + 1,
 };
 
-type InsertMode = keyof typeof INSERT_MODES;
-
 export function applyNullInsertThreshold(
   frame: DataFrame,
   refFieldName?: string | null,
-  insertMode: InsertMode = 'threshold'
+  insertMode: InsertMode = INSERT_MODES.threshold
 ): DataFrame {
   if (frame.length < 2) {
     return frame;
@@ -29,14 +29,16 @@ export function applyNullInsertThreshold(
 
   const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
 
-  const uniqueThresholds = new Set(thresholds);
+  const uniqueThresholds = new Set<number>(thresholds);
 
-  uniqueThresholds.delete(null);
+  uniqueThresholds.delete(null as any);
 
   if (uniqueThresholds.size === 0) {
     return frame;
-  } else if (uniqueThresholds.size === 1) {
-    const threshold = [...uniqueThresholds][0];
+  }
+
+  if (uniqueThresholds.size === 1) {
+    const threshold = uniqueThresholds.values().next().value;
 
     if (threshold <= 0) {
       return frame;
@@ -52,7 +54,7 @@ export function applyNullInsertThreshold(
       return frame;
     }
 
-    const outFrame: DataFrame = {
+    return {
       ...frame,
       length: filledFieldValues[0].length,
       fields: frame.fields.map((field, i) => ({
@@ -60,24 +62,15 @@ export function applyNullInsertThreshold(
         values: new ArrayVector(filledFieldValues[i]),
       })),
     };
-
-    return outFrame;
-  } else {
-    // TODO: unique threshold-per-field (via overrides) is unimplemented
-    // should be done by processing each (refField + thresholdA-field1 + thresholdA-field2...)
-    // as a separate nullInsertThreshold() dataset, then re-join into single dataset via join()
-    return frame;
   }
+
+  // TODO: unique threshold-per-field (via overrides) is unimplemented
+  // should be done by processing each (refField + thresholdA-field1 + thresholdA-field2...)
+  // as a separate nullInsertThreshold() dataset, then re-join into single dataset via join()
+  return frame;
 }
 
-export function nullInsertThreshold(
-  refValues: number[],
-  frameValues: any[][],
-  threshold: number,
-  insertMode: InsertMode
-) {
-  const getInsertValue = INSERT_MODES[insertMode];
-
+function nullInsertThreshold(refValues: number[], frameValues: any[][], threshold: number, getInsertValue: InsertMode) {
   const len = refValues.length;
   let prevValue: number = refValues[0];
   const refValuesNew: number[] = [prevValue];
