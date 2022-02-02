@@ -97,9 +97,9 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
+func getDatasourceService(clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
+	client, err := newHTTPClient(route, dsInfo, &clientProvider)
 	if err != nil {
 		return datasourceService{}, err
 	}
@@ -150,7 +150,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(cfg, clientProvider, model, routeName)
+			service, err := getDatasourceService(clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}
