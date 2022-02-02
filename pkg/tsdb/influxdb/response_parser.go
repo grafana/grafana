@@ -67,30 +67,42 @@ func transformRows(rows []Row, query *Query) data.Frames {
 			}
 
 			var timeArray []time.Time
-			var valueArray []*float64
+			var valType = typeof(row.Values[0][columnIndex])
+			var floatArray []*float64
 
 			for _, valuePair := range row.Values {
 				timestamp, timestampErr := parseTimestamp(valuePair[0])
 				// we only add this row if the timestamp is valid
 				if timestampErr == nil {
-					value := parseValue(valuePair[columnIndex])
 					timeArray = append(timeArray, timestamp)
-					valueArray = append(valueArray, value)
+					if valType == "json.Number" {
+						value := parseNumber(valuePair[columnIndex])
+						floatArray = append(floatArray, value)
+					}
 				}
 			}
 			name := formatFrameName(row, column, query)
 
 			timeField := data.NewField("time", nil, timeArray)
-			valueField := data.NewField("value", row.Tags, valueArray)
 
-			// set a nice name on the value-field
-			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-
-			frames = append(frames, data.NewFrame(name, timeField, valueField))
+			if valType == "json.Number" {
+				valueField := data.NewField("value", row.Tags, floatArray)
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+			}
 		}
 	}
 
 	return frames
+}
+
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
+	frame := data.NewFrame(name, timeField, valueField)
+	frame.Meta = &data.FrameMeta{
+		ExecutedQueryString: queryString,
+	}
+
+	return frame
 }
 
 func formatFrameName(row Row, column string, query *Query) string {
@@ -164,7 +176,11 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	return t, nil
 }
 
-func parseValue(value interface{}) *float64 {
+func typeof(v interface{}) string {
+	return fmt.Sprintf("%T", v)
+}
+
+func parseNumber(value interface{}) *float64 {
 	// NOTE: we use pointers-to-float64 because we need
 	// to represent null-json-values. they come for example
 	// when we do a group-by with fill(null)
