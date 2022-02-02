@@ -1,5 +1,7 @@
 package sqlstore
 
+import "github.com/grafana/grafana/internal/components/datasource"
+
 /*
 This exists as part of the intent-api labeled projects.
 More can be seen at https://github.com/grafana/grafana/issues/44570.
@@ -10,7 +12,7 @@ Until this comment is removed, if you are wondering if you should use things in 
 
 */
 
-//var noBuild = datasource.DataSource{}
+var noBuild = datasource.DataSource{}
 
 // var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
 // 	ProviderDataSourceSchemaStore,
