@@ -527,7 +527,3 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now),
 		routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
 }
-
-func swaggerUI(c *models.ReqContext) {
-	c.HTML(200, "swagger", nil)
-}
