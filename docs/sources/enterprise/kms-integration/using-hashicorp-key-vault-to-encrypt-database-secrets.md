@@ -14,7 +14,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
 - Permissions to manage Hashicorp Vault to enable secrets engines and issue tokens.
 - Access to the Grafana [configuration]({{< relref "../../administration/configuration/#config-file-locations" >}}) file
 
-1. [Enable the transit secrets engine](https://www.vaultproject.io/docs/secrets/transit#setup).
+1. [Enable the transit secrets engine](https://www.vaultproject.io/docs/secrets/transit#setup) in Hashicorp Vault.
 
 2. [Create a named encryption key](https://www.vaultproject.io/docs/secrets/transit#setup).
 
