@@ -105,11 +105,11 @@ describe('Language completion provider', () => {
 
   describe('fetchSeriesLabels', () => {
     it('should interpolate variable in series', () => {
-      const datasource: LokiDatasource = ({
+      const datasource: LokiDatasource = {
         metadataRequest: () => ({ data: { data: [] as any[] } }),
         getTimeRangeParams: () => ({ start: 0, end: 1 }),
         interpolateString: (string: string) => string.replace('$', 'interpolated-'),
-      } as any) as LokiDatasource;
+      } as any as LokiDatasource;
 
       const languageProvider = new LanguageProvider(datasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
