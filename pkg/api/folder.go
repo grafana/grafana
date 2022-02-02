@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -87,6 +89,34 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+}
+
+func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, dashSvc dashboards.DashboardService) error {
+	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		resourceID := strconv.FormatInt(folderID, 10)
+		svc := hs.permissionServices.GetFolderService()
+		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, c.UserId, resourceID, models.PERMISSION_ADMIN.String())
+		if err != nil {
+			return err
+		}
+		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_ADMIN), resourceID, models.PERMISSION_ADMIN.String())
+		if err != nil {
+			return err
+		}
+		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_EDITOR), resourceID, models.PERMISSION_EDIT.String())
+		if err != nil {
+			return err
+		}
+		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_VIEWER), resourceID, models.PERMISSION_VIEW.String())
+		if err != nil {
+			return err
+		}
+	} else if hs.Cfg.EditorsCanAdmin {
+		if err := dashSvc.MakeUserAdmin(c.Req.Context(), c.OrgId, c.UserId, folderID, true); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
