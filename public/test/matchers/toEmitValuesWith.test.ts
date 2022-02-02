@@ -7,7 +7,7 @@ describe('toEmitValuesWith matcher', () => {
   describe('failing tests', () => {
     describe('passing null in expect', () => {
       it('should fail with correct message', async () => {
-        const observable = (null as unknown) as Observable<number>;
+        const observable = null as unknown as Observable<number>;
 
         const rejects = expect(() =>
           expect(observable).toEmitValuesWith((received) => {
@@ -21,7 +21,7 @@ describe('toEmitValuesWith matcher', () => {
 
     describe('passing undefined in expect', () => {
       it('should fail with correct message', async () => {
-        const observable = (undefined as unknown) as Observable<number>;
+        const observable = undefined as unknown as Observable<number>;
 
         const rejects = expect(() =>
           expect(observable).toEmitValuesWith((received) => {
@@ -35,7 +35,7 @@ describe('toEmitValuesWith matcher', () => {
 
     describe('passing number instead of Observable in expect', () => {
       it('should fail with correct message', async () => {
-        const observable = (1 as unknown) as Observable<number>;
+        const observable = 1 as unknown as Observable<number>;
 
         const rejects = expect(() =>
           expect(observable).toEmitValuesWith((received) => {
@@ -77,7 +77,7 @@ describe('toEmitValuesWith matcher', () => {
 
     describe('wrong emitted value types', () => {
       it('should fail with correct message', async () => {
-        const observable = (interval(10).pipe(take(3)) as unknown) as Observable<string>;
+        const observable = interval(10).pipe(take(3)) as unknown as Observable<string>;
 
         const rejects = expect(() =>
           expect(observable).toEmitValuesWith((received) => {
