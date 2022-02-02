@@ -1,4 +1,4 @@
-package navbarpreferences 
+package navbarpreferences
 
 import (
 	"bytes"
@@ -9,14 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	dboards "github.com/grafana/grafana/pkg/dashboards"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -76,3 +69,26 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	})
 }
 
+type scenarioContext struct {
+	ctx           *web.Context
+	service       *NavbarPreferencesService
+	reqContext    *models.ReqContext
+	user          models.SignedInUser
+	folder        *models.Folder
+	initialResult NavbarPreferenceResponse
+	sqlStore      *sqlstore.SQLStore
+}
+
+func getCreateNavbarPreferenceCommand(navItemID string, hideFromNavbar bool) CreateNavbarPreferenceCommand {
+	command := CreateNavbarPreferenceCommand{
+		NavItemID:      navItemID,
+		HideFromNavbar: hideFromNavbar,
+	}
+
+	return command
+}
+
+func mockRequestBody(v interface{}) io.ReadCloser {
+	b, _ := json.Marshal(v)
+	return io.NopCloser(bytes.NewReader(b))
+}
