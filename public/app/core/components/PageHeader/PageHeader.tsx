@@ -120,13 +120,12 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[], highlight
   if (!breadcrumbs || breadcrumbs.length === 0) {
     return (
       <h1 className="page-header__title">
-        <span>{title}</span>{' '}
+        {title}
         {highlightText && (
           <ProBadge
             text={highlightText}
             className={css`
               vertical-align: middle;
-              margin-left: 0;
             `}
           />
         )}
