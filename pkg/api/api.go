@@ -373,7 +373,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
-		apiRoute.Get("/search/", routing.Wrap(Search))
+		apiRoute.Get("/search/", routing.Wrap(hs.Search))
 
 		// metrics
 		apiRoute.Post("/tsdb/query", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesQuery)), routing.Wrap(hs.QueryMetrics))
