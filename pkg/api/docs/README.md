@@ -1,30 +1,19 @@
-# Build specification
+# Generate Go client
 
-The following command will build the API specification inside a docker container.
-
-```bash
-$ make spec.json
-```
-
-# Build specification on M1 Chip
-
-The following command will build the API specification locally.If swagger is not already instaled, it will install it using [Homebrew](brew.sh).
+The following command generates a Go client under: `pkg/clients`
 
 ```bash
-$ make spec-mac
+$ make client-go
 ```
 
-# Server specification
+If you need to manipulate the generated files you can modify appropriately the `mustache` templates in `templates/go`.
+For more details you can refer to [here](https://openapi-generator.tech/docs/templating/) and in the mustache [manual](https://mustache.github.io/mustache.5.html).
 
-The following command will start grafana and swagger API editor serving the generated API specification. Grafana runs behind a nginx proxy for enabling CORS required by some browsers when trying routes via the UI `Try it out` button.
+
+# Generate Python client
+
+The following command generates a Python client under: `pkg/clients`
 
 ```bash
-$ make openapi
+$ make python-go
 ```
-
-Then, you can access the swagger API editor by navigating to `http://localhost:8080/`.
-
-# Trying out the API
-
-For trying the routes via the swagger API editor, you need to select the `HTTP` scheme.
-For making authenticated requests, you need to set your API key or user credentials in `Authorize` modal.
