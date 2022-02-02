@@ -12,11 +12,8 @@ import {
 import { css } from '@emotion/css';
 import { SortOrder } from '@grafana/schema';
 
-import { GeomapLayerHover } from '../event';
-
 export interface Props {
   data?: DataFrame; // source data
-  layers?: GeomapLayerHover[];
   rowIndex?: number | null; // the hover row
   columnIndex?: number | null; // the hover column
   sortOrder?: SortOrder;

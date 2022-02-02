@@ -14,15 +14,15 @@ export interface Props {
 export const ComplexDataHoverView = ({ layers, onClose, isOpen }: Props) => {
   const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
 
-  if (layers) {
-    return (
-      <>
-        {isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
-        <DataHoverTabs layers={layers} setActiveTabIndex={setActiveTabIndex} activeTabIndex={activeTabIndex} />
-        <DataHoverRows layers={layers} activeTabIndex={activeTabIndex} />
-      </>
-    );
-  } else {
+  if (!layers) {
     return null;
   }
+
+  return (
+    <>
+      {isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
+      <DataHoverTabs layers={layers} setActiveTabIndex={setActiveTabIndex} activeTabIndex={activeTabIndex} />
+      <DataHoverRows layers={layers} activeTabIndex={activeTabIndex} />
+    </>
+  );
 };

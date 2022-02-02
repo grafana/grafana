@@ -9,7 +9,7 @@ import { DataHoverRow } from './DataHoverRow';
 import { isString } from 'lodash';
 
 type Props = {
-  layers?: GeomapLayerHover[];
+  layers: GeomapLayerHover[];
   activeTabIndex: number;
 };
 
@@ -21,9 +21,9 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
     setRowMap(new Map(rowMap.set(key, value)));
   };
 
-  const rows =
-    (layers &&
-      layers.map(
+  return (
+    <TabContent>
+      {layers.map(
         (geomapLayer, index) =>
           index === activeTabIndex && (
             <div key={geomapLayer.layer.getName()}>
@@ -52,10 +52,9 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
               </div>
             </div>
           )
-      )) ??
-    null;
-
-  return <TabContent>{rows}</TabContent>;
+      )}
+    </TabContent>
+  );
 };
 
 export const generateLabel = (feature: FeatureLike, idx: number): string => {
