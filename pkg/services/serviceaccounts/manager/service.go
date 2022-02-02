@@ -36,10 +36,6 @@ func ProvideServiceAccountsService(
 		log:      log.New("serviceaccounts"),
 	}
 
-	if err := RegisterRoles(ac); err != nil {
-		s.log.Error("Failed to register roles", "error", err)
-	}
-
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
 	serviceaccountsAPI.RegisterAPIEndpoints(features)
 
