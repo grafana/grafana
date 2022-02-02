@@ -17,8 +17,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 		RouteRegister: routeRegister,
 		log:           log.New("navbarpreferences"),
 	}
-	// TODO implement API
-	// n.registerAPIEndpoints()
+	n.registerAPIEndpoints()
 	return n
 }
 
@@ -27,7 +26,6 @@ type Service interface {
 	GetNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreferenceDTO, error)
 	CreateNavbarPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (NavbarPreferenceDTO, error)
 }
-
 
 // NavbarPreferencesService is the service for the navbar preferences.
 type NavbarPreferencesService struct {
@@ -42,8 +40,7 @@ func (n *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signe
 	return n.getNavbarPreferences(c, signedInUser)
 }
 
-
-// CreateNavbarPreference create the navbar preference for a user 
-func (n *NavbarPreferencesService) CreateNavbarPreference(c context.Context, signedInUser *models.SignedInUser,cmd CreateNavbarPreferenceCommand) (NavbarPreferenceDTO, error) {
+// CreateNavbarPreference create the navbar preference for a user
+func (n *NavbarPreferencesService) CreateNavbarPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (NavbarPreferenceDTO, error) {
 	return n.createNavbarPreference(c, signedInUser, cmd)
 }
