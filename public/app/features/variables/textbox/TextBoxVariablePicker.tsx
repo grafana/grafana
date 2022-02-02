@@ -19,7 +19,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
   }, [variable]);
 
   const updateVariable = useCallback(() => {
-    if (!variable.stateKey) {
+    if (!variable.rootStateKey) {
       console.error('Cannot update variable without stateKey');
       return;
     }
@@ -30,7 +30,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
 
     dispatch(
       toKeyedAction(
-        variable.stateKey,
+        variable.rootStateKey,
         changeVariableProp(
           toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
         )

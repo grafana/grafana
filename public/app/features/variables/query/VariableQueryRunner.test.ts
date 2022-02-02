@@ -48,7 +48,7 @@ function getTestContext(variable?: QueryVariableModel) {
     timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
   });
   const key = '0123456789';
-  variable = variable ?? queryBuilder().withId('query').withStateKey(key).withName('query').build();
+  variable = variable ?? queryBuilder().withId('query').withRootStateKey(key).withName('query').build();
   const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
   const identifier = toKeyedVariableIdentifier(variable);
   const searchFilter = undefined;

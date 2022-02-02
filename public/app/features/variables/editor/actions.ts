@@ -101,7 +101,7 @@ export const switchToNewMode = (key: string, type: VariableType = 'query'): Thun
   const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
   model.id = id;
   model.name = id;
-  model.stateKey = key;
+  model.rootStateKey = key;
   dispatch(
     toKeyedAction(
       key,

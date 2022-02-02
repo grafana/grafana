@@ -25,7 +25,7 @@ function getTestContext({
     variable ??
     queryBuilder()
       .withId('query')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withName('query')
       .withQuery(query)
       .withDatasource({ uid: 'test-data', type: 'test-data' })
@@ -167,7 +167,7 @@ describe('upgradeLegacyQueries', () => {
 
   describe('when called with a custom variable', () => {
     it('then it should not dispatch any actions', async () => {
-      const variable = customBuilder().withId('custom').withStateKey('key').withName('custom').build();
+      const variable = customBuilder().withId('custom').withRootStateKey('key').withName('custom').build();
       const { state, identifier, get, getDatasourceSrv } = getTestContext({ variable });
 
       const dispatchedActions = await thunkTester(state)

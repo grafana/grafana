@@ -36,7 +36,7 @@ describe('textbox actions', () => {
       const key = 'key';
       const variable = textboxBuilder()
         .withId('textbox')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('textbox')
         .withCurrent('A')
         .withQuery('A')
@@ -63,7 +63,7 @@ describe('textbox actions', () => {
       const key = 'key';
       const variable = textboxBuilder()
         .withId('textbox')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('textbox')
         .withCurrent('A')
         .withQuery('A')

@@ -23,7 +23,7 @@ describe('constant actions', () => {
       const variable: ConstantVariableModel = {
         ...initialVariableModelState,
         id: '0',
-        stateKey: 'key',
+        rootStateKey: 'key',
         index: 0,
         type: 'constant',
         name: 'Constant',

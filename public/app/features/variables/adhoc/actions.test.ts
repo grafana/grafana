@@ -56,7 +56,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('Filters')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('Filters')
         .withFilters([existingFilter])
         .withDatasource(options.datasource)
@@ -94,7 +94,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('Filters')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('Filters')
         .withDatasource(options.datasource)
         .build();
@@ -123,7 +123,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('Filters')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('Filters')
         .withFilters([])
         .withDatasource(options.datasource)
@@ -156,14 +156,14 @@ describe('adhoc actions', () => {
 
       const existing = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const variable = adHocBuilder()
         .withId('Filters')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('Filters')
         .withDatasource(options.datasource)
         .build();
@@ -202,7 +202,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withFilters([existing])
         .withDatasource({ uid: 'elasticsearch' })
@@ -243,7 +243,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withFilters([existing])
         .withDatasource({ uid: 'elasticsearch' })
@@ -276,7 +276,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withFilters([])
         .withDatasource({ uid: 'elasticsearch' })
@@ -299,7 +299,7 @@ describe('adhoc actions', () => {
       const key = 'key';
       const variable = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withFilters([])
         .withDatasource({ uid: 'elasticsearch' })
@@ -329,7 +329,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withFilters([filter])
         .withDatasource({ uid: 'elasticsearch' })
@@ -359,7 +359,7 @@ describe('adhoc actions', () => {
 
       const variable = adHocBuilder()
         .withId('elastic-filter')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('elastic-filter')
         .withFilters([existing])
         .withDatasource({ uid: 'elasticsearch' })
@@ -428,7 +428,7 @@ describe('adhoc actions', () => {
       const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder()
         .withId('Filters')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('Filters')
         .withDatasource({ uid: 'influxdb' })
         .build();
@@ -466,7 +466,7 @@ describe('adhoc actions', () => {
       const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder()
         .withId('Filters')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('Filters')
         .withDatasource({ uid: 'influxdb' })
         .build();
@@ -497,7 +497,7 @@ function createAddVariableAction(variable: VariableModel, index = 0) {
   const identifier = toKeyedVariableIdentifier(variable);
   const global = false;
   const data = { global, index, model: { ...variable, index: -1, global } };
-  return toKeyedAction(variable.stateKey!, addVariable(toVariablePayload(identifier, data)));
+  return toKeyedAction(variable.rootStateKey!, addVariable(toVariablePayload(identifier, data)));
 }
 
 function createDatasource(name: string, selectable = true, isDefault = false): DataSourceInstanceSettings {

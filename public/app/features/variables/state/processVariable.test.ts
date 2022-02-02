@@ -72,7 +72,7 @@ describe('processVariable', () => {
   const getTestContext = () => {
     const custom = customBuilder()
       .withId('custom')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withName('custom')
       .withQuery('A,B,C')
       .withOptions('A', 'B', 'C')
@@ -81,7 +81,7 @@ describe('processVariable', () => {
 
     const queryDependsOnCustom = queryBuilder()
       .withId('queryDependsOnCustom')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withName('queryDependsOnCustom')
       .withQuery('$custom.*')
       .withOptions('AA', 'AB', 'AC')
@@ -90,7 +90,7 @@ describe('processVariable', () => {
 
     const queryNoDepends = queryBuilder()
       .withId('queryNoDepends')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withName('queryNoDepends')
       .withQuery('*')
       .withOptions('A', 'B', 'C')

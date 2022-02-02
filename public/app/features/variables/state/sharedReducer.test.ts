@@ -103,7 +103,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -117,7 +117,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -143,7 +143,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -157,7 +157,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -184,7 +184,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': {
             id: '0',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -198,7 +198,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -212,7 +212,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -227,7 +227,7 @@ describe('sharedReducer', () => {
           '11': {
             ...initialQueryVariableModelState,
             id: '11',
-            stateKey: 'key',
+            rootStateKey: 'key',
             name: 'copy_of_Name-1',
             index: 3,
             label: 'Label-1',
@@ -246,7 +246,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -260,7 +260,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -274,7 +274,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -298,7 +298,7 @@ describe('sharedReducer', () => {
         .thenStateShouldEqual({
           '0': {
             id: '0',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-0',
             hide: VariableHide.dontHide,
@@ -312,7 +312,7 @@ describe('sharedReducer', () => {
           },
           '1': {
             id: '1',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-1',
             hide: VariableHide.dontHide,
@@ -326,7 +326,7 @@ describe('sharedReducer', () => {
           },
           '2': {
             id: '2',
-            stateKey: 'key',
+            rootStateKey: 'key',
             type: 'query',
             name: 'Name-2',
             hide: VariableHide.dontHide,
@@ -579,7 +579,7 @@ describe('sharedReducer', () => {
           ...constantAdapterState,
           '0': {
             ...constantAdapterState[0],
-            stateKey: 'key',
+            rootStateKey: 'key',
             name: 'test',
             description: 'new description',
             label: 'new label',

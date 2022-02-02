@@ -23,7 +23,7 @@ describe('custom actions', () => {
       const variable: CustomVariableModel = {
         ...initialVariableModelState,
         id: '0',
-        stateKey: 'key',
+        rootStateKey: 'key',
         index: 0,
         type: 'custom',
         name: 'Custom',

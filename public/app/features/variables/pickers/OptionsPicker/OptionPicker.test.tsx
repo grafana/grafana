@@ -19,7 +19,7 @@ interface Args {
 
 const defaultVariable = queryBuilder()
   .withId('query0')
-  .withStateKey('key')
+  .withRootStateKey('key')
   .withName('query0')
   .withMulti()
   .withCurrent(['A', 'C'])

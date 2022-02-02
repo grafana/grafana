@@ -15,16 +15,16 @@ import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
-  const { stateKey } = ownProps.variable;
-  if (!stateKey) {
-    console.error('AdHocVariableEditor: variable has no stateKey');
+  const { rootStateKey } = ownProps.variable;
+  if (!rootStateKey) {
+    console.error('AdHocVariableEditor: variable has no rootStateKey');
     return {
       editor: initialVariableEditorState as VariableEditorState<AdHocVariableEditorState>,
     };
   }
 
   return {
-    editor: getVariablesState(stateKey, state).editor as VariableEditorState<AdHocVariableEditorState>,
+    editor: getVariablesState(rootStateKey, state).editor as VariableEditorState<AdHocVariableEditorState>,
   };
 };
 
@@ -41,13 +41,13 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    const { stateKey } = this.props.variable;
-    if (!stateKey) {
-      console.error('AdHocVariableEditor: variable has no stateKey');
+    const { rootStateKey } = this.props.variable;
+    if (!rootStateKey) {
+      console.error('AdHocVariableEditor: variable has no rootStateKey');
       return;
     }
 
-    this.props.initAdHocVariableEditor(stateKey);
+    this.props.initAdHocVariableEditor(rootStateKey);
   }
 
   onDatasourceChanged = (option: SelectableValue<DataSourceRef>) => {

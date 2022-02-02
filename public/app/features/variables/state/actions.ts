@@ -122,7 +122,7 @@ export const initDashboardTemplating = (key: string, dashboard: DashboardModel):
     const list = dashboard.templating.list;
     for (let index = 0; index < list.length; index++) {
       const model = fixSelectedInconsistency(list[index]);
-      model.stateKey = key;
+      model.rootStateKey = key;
       if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
@@ -268,13 +268,13 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
 };
 
 export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
-  if (!variable.stateKey) {
+  if (!variable.rootStateKey) {
     throw new Error(`stateKey not found for variable with id:${variable.id}`);
   }
 
   const dependencies: VariableModel[] = [];
 
-  for (const otherVariable of getVariablesByKey(variable.stateKey, state)) {
+  for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
     if (variable === otherVariable) {
       continue;
     }
@@ -286,17 +286,17 @@ export const processVariableDependencies = async (variable: VariableModel, state
     }
   }
 
-  if (!isWaitingForDependencies(variable.stateKey, dependencies, state)) {
+  if (!isWaitingForDependencies(variable.rootStateKey, dependencies, state)) {
     return;
   }
 
   await new Promise<void>((resolve) => {
     const unsubscribe = store.subscribe(() => {
-      if (!variable.stateKey) {
+      if (!variable.rootStateKey) {
         throw new Error(`stateKey not found for variable with id:${variable.id}`);
       }
 
-      if (!isWaitingForDependencies(variable.stateKey, dependencies, store.getState())) {
+      if (!isWaitingForDependencies(variable.rootStateKey, dependencies, store.getState())) {
         unsubscribe();
         resolve();
       }

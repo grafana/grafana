@@ -31,7 +31,7 @@ describe('when setOptionFromUrl is dispatched with a custom variable (no refresh
     const key = 'key';
     const custom = customBuilder()
       .withId('0')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withMulti(isMulti)
       .withOptions('A', 'B', 'C')
       .withCurrent('A')
@@ -65,7 +65,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const key = 'key';
     const custom = customBuilder()
       .withId('0')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withMulti(false)
       .withIncludeAll()
       .withAllValue(allValue)
@@ -99,7 +99,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const key = 'key';
     const custom = customBuilder()
       .withId('0')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withMulti(false)
       .withIncludeAll()
       .withAllValue(allValue)
@@ -130,7 +130,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const key = 'key';
     const custom = customBuilder()
       .withId('0')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withMulti(false)
       .withIncludeAll()
       .withAllValue(allValue)
@@ -161,7 +161,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
     const key = 'key';
     const custom = customBuilder()
       .withId('0')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withMulti(false)
       .withIncludeAll()
       .withAllValue(allValue)

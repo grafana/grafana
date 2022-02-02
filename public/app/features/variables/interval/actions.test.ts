@@ -28,7 +28,7 @@ describe('interval actions', () => {
     it('then correct actions are dispatched', async () => {
       const interval = intervalBuilder()
         .withId('0')
-        .withStateKey('key')
+        .withRootStateKey('key')
         .withQuery('1s,1m,1h,1d')
         .withAuto(false)
         .build();
@@ -78,7 +78,7 @@ describe('interval actions', () => {
     it('then an notifyApp action should be dispatched', async () => {
       const interval = intervalBuilder()
         .withId('0')
-        .withStateKey('key')
+        .withRootStateKey('key')
         .withQuery('1s,1m,1h,1d')
         .withAuto(true)
         .withAutoMin('1xyz') // illegal interval string
@@ -124,7 +124,7 @@ describe('interval actions', () => {
       it('then no actions are dispatched', async () => {
         const interval = intervalBuilder()
           .withId('0')
-          .withStateKey('key')
+          .withRootStateKey('key')
           .withQuery('1s,1m,1h,1d')
           .withAuto(true)
           .withAutoMin('1xyz') // illegal interval string
@@ -145,7 +145,7 @@ describe('interval actions', () => {
   describe('when updateAutoValue is dispatched', () => {
     describe('and auto is false', () => {
       it('then no dependencies are called', async () => {
-        const interval = intervalBuilder().withId('0').withStateKey('key').withAuto(false).build();
+        const interval = intervalBuilder().withId('0').withRootStateKey('key').withAuto(false).build();
 
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),
@@ -183,7 +183,7 @@ describe('interval actions', () => {
       it('then correct dependencies are called', async () => {
         const interval = intervalBuilder()
           .withId('0')
-          .withStateKey('key')
+          .withRootStateKey('key')
           .withName('intervalName')
           .withAuto(true)
           .withAutoCount(33)

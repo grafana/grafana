@@ -253,7 +253,7 @@ describe('options picker actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = queryBuilder()
         .withId('query0')
-        .withStateKey('key')
+        .withRootStateKey('key')
         .withName('query0')
         .withMulti()
         .withCurrent(['A', 'C'])
@@ -279,7 +279,7 @@ describe('options picker actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = queryBuilder()
         .withId('query0')
-        .withStateKey('key')
+        .withRootStateKey('key')
         .withName('query0')
         .withMulti()
         .withCurrent(['A', 'C'])
@@ -305,7 +305,7 @@ describe('options picker actions', () => {
     it('then correct actions are dispatched', async () => {
       const variableInPickerState = queryBuilder()
         .withId('query1')
-        .withStateKey('key')
+        .withRootStateKey('key')
         .withName('query1')
         .withMulti()
         .withCurrent(['A', 'C'])
@@ -314,7 +314,7 @@ describe('options picker actions', () => {
 
       const variable = queryBuilder()
         .withId('query0')
-        .withStateKey('key')
+        .withRootStateKey('key')
         .withName('query0')
         .withMulti()
         .withCurrent(['A'])
@@ -508,7 +508,7 @@ function createMultiVariable(extend?: Partial<QueryVariableModel>): QueryVariabl
     ...initialVariableModelState,
     type: 'query',
     id: '0',
-    stateKey: 'key',
+    rootStateKey: 'key',
     index: 0,
     current: createOption([]),
     options: [],

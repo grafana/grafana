@@ -34,7 +34,7 @@ const getTestContext = (dashboard: DashboardModel) => {
   const key = 'key';
   const interval = intervalBuilder()
     .withId('interval-0')
-    .withStateKey(key)
+    .withRootStateKey(key)
     .withName('interval-0')
     .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
     .withCurrent('1m')
@@ -43,7 +43,7 @@ const getTestContext = (dashboard: DashboardModel) => {
 
   const constant = constantBuilder()
     .withId('constant-1')
-    .withStateKey(key)
+    .withRootStateKey(key)
     .withName('constant-1')
     .withOptions('a constant')
     .withCurrent('a constant')

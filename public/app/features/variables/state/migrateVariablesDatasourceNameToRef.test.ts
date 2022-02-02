@@ -9,8 +9,8 @@ import { toVariablePayload } from '../utils';
 function getTestContext(ds: DataSourceRef, dsInstance?: { uid: string; type: string }) {
   jest.clearAllMocks();
   const key = 'key';
-  const query = queryBuilder().withId('query').withStateKey(key).withName('query').withDatasource(ds).build();
-  const adhoc = adHocBuilder().withId('adhoc').withStateKey(key).withName('adhoc').withDatasource(ds).build();
+  const query = queryBuilder().withId('query').withRootStateKey(key).withName('query').withDatasource(ds).build();
+  const adhoc = adHocBuilder().withId('adhoc').withRootStateKey(key).withName('adhoc').withDatasource(ds).build();
   const templatingState = { variables: { query, adhoc } };
   const state = getPreloadedState(key, templatingState);
   const dispatch = jest.fn();

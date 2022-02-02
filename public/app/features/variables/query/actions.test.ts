@@ -737,7 +737,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
   return {
     type: 'query',
     id: '0',
-    stateKey: 'key',
+    rootStateKey: 'key',
     global: false,
     current: createOption(''),
     options: [],

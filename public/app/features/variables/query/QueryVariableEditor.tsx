@@ -24,16 +24,16 @@ import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
-  const { stateKey } = ownProps.variable;
-  if (!stateKey) {
-    console.error('QueryVariableEditor: variable has no stateKey');
+  const { rootStateKey } = ownProps.variable;
+  if (!rootStateKey) {
+    console.error('QueryVariableEditor: variable has no rootStateKey');
     return {
       editor: initialVariableEditorState as VariableEditorState<QueryVariableEditorState>,
     };
   }
 
   return {
-    editor: getVariablesState(stateKey, state).editor as VariableEditorState<QueryVariableEditorState>,
+    editor: getVariablesState(rootStateKey, state).editor as VariableEditorState<QueryVariableEditorState>,
   };
 };
 

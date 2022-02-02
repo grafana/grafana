@@ -22,7 +22,7 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
   if (!variable) {
     variable = customBuilder()
       .withId('variable')
-      .withStateKey(key)
+      .withRootStateKey(key)
       .withName('variable')
       .withCurrent(['A', 'C'])
       .withOptions('A', 'B', 'C')
@@ -134,7 +134,7 @@ describe('templateVarsChangedInUrl', () => {
         it('then the value should change to the value in dashboard json and dashboard should be refreshed', async () => {
           const constant = constantBuilder()
             .withId('variable')
-            .withStateKey('key')
+            .withRootStateKey('key')
             .withName('variable')
             .withQuery('default value in dash.json')
             .build();

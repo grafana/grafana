@@ -41,16 +41,16 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   };
 
   const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
-    const { stateKey } = ownProps.variable;
-    if (!stateKey) {
-      console.error('OptionPickerFactory: variable has no stateKey');
+    const { rootStateKey } = ownProps.variable;
+    if (!rootStateKey) {
+      console.error('OptionPickerFactory: variable has no rootStateKey');
       return {
         picker: initialOptionPickerState,
       };
     }
 
     return {
-      picker: getVariablesState(stateKey, state).optionsPicker,
+      picker: getVariablesState(rootStateKey, state).optionsPicker,
     };
   };
 
@@ -64,12 +64,12 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     onShowOptions = () =>
       this.props.openOptions(toKeyedVariableIdentifier(this.props.variable), this.props.onVariableChange);
     onHideOptions = () => {
-      if (!this.props.variable.stateKey) {
-        console.error('Variable has no stateKey');
+      if (!this.props.variable.rootStateKey) {
+        console.error('Variable has no rootStateKey');
         return;
       }
 
-      this.props.commitChangesToVariable(this.props.variable.stateKey, this.props.onVariableChange);
+      this.props.commitChangesToVariable(this.props.variable.rootStateKey, this.props.onVariableChange);
     };
 
     onToggleOption = (option: VariableOption, clearOthers: boolean) => {
@@ -98,12 +98,12 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     onNavigate = (key: NavigationKey, clearOthers: boolean) => {
-      if (!this.props.variable.stateKey) {
+      if (!this.props.variable.rootStateKey) {
         console.error('Variable has no stateKey');
         return;
       }
 
-      this.props.navigateOptions(this.props.variable.stateKey, key, clearOthers);
+      this.props.navigateOptions(this.props.variable.rootStateKey, key, clearOthers);
     };
 
     render() {

@@ -165,12 +165,12 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
     const key = getLastKey(getState());
 
-    const model = {
+    const model: AdHocVariableModel = {
       ...cloneDeep(initialAdHocVariableModelState),
       datasource: options.datasource,
       name: filterTableName,
       id: filterTableName,
-      stateKey: key,
+      rootStateKey: key,
     };
 
     const global = false;

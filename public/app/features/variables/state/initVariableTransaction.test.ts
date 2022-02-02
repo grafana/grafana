@@ -94,16 +94,16 @@ describe('initVariablesTransaction', () => {
     describe('and there are variables that have data source that need to be migrated', () => {
       it('then correct actions are dispatched', async () => {
         const legacyDs = ('${ds}' as unknown) as DataSourceRef;
-        const ds = datasourceBuilder().withId('ds').withStateKey('key').withName('ds').withQuery('prom').build();
+        const ds = datasourceBuilder().withId('ds').withRootStateKey('key').withName('ds').withQuery('prom').build();
         const query = queryBuilder()
           .withId('query')
-          .withStateKey('key')
+          .withRootStateKey('key')
           .withName('query')
           .withDatasource(legacyDs)
           .build();
         const adhoc = adHocBuilder()
           .withId('adhoc')
-          .withStateKey('key')
+          .withRootStateKey('key')
           .withName('adhoc')
           .withDatasource(legacyDs)
           .build();

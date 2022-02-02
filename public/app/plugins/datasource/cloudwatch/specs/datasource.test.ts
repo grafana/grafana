@@ -697,7 +697,7 @@ describe('CloudWatchDatasource', () => {
       const var1: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var1',
-        stateKey: key,
+        rootStateKey: key,
         name: 'var1',
         index: 0,
         current: { value: 'var1-foo', text: 'var1-foo', selected: true },
@@ -711,7 +711,7 @@ describe('CloudWatchDatasource', () => {
       const var2: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var2',
-        stateKey: key,
+        rootStateKey: key,
         name: 'var2',
         index: 1,
         current: { value: 'var2-foo', text: 'var2-foo', selected: true },
@@ -725,7 +725,7 @@ describe('CloudWatchDatasource', () => {
       const var3: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var3',
-        stateKey: key,
+        rootStateKey: key,
         name: 'var3',
         index: 2,
         current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
@@ -743,7 +743,7 @@ describe('CloudWatchDatasource', () => {
       const var4: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var4',
-        stateKey: key,
+        rootStateKey: key,
         name: 'var4',
         index: 3,
         options: [

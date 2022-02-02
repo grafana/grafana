@@ -11,10 +11,12 @@ import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { NEW_VARIABLE_ID } from '../constants';
+import { VariableModel } from '../types';
 
 const setupTestContext = (options: Partial<Props>) => {
+  const variableDefaults: Partial<VariableModel> = { rootStateKey: 'key' };
   const defaults: Props = {
-    variable: { ...initialQueryVariableModelState, stateKey: 'key' },
+    variable: { ...initialQueryVariableModelState, ...variableDefaults },
     initQueryVariableEditor: jest.fn(),
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),

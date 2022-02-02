@@ -227,7 +227,7 @@ describe('shared actions', () => {
       const key = 'key';
       const stats = queryBuilder()
         .withId('stats')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('stats')
         .withQuery('stats.*')
         .withRefresh(VariableRefresh.onDashboardLoad)
@@ -238,7 +238,7 @@ describe('shared actions', () => {
 
       const substats = queryBuilder()
         .withId('substats')
-        .withStateKey(key)
+        .withRootStateKey(key)
         .withName('substats')
         .withQuery('stats.$stats.*')
         .withRefresh(VariableRefresh.onDashboardLoad)
@@ -325,11 +325,11 @@ describe('shared actions', () => {
         let custom;
         const key = 'key';
         if (!withOptions) {
-          custom = customBuilder().withId('0').withStateKey(key).withCurrent(withCurrent).withoutOptions().build();
+          custom = customBuilder().withId('0').withRootStateKey(key).withCurrent(withCurrent).withoutOptions().build();
         } else {
           custom = customBuilder()
             .withId('0')
-            .withStateKey(key)
+            .withRootStateKey(key)
             .withOptions(...withOptions)
             .withCurrent(withCurrent)
             .build();
@@ -382,7 +382,7 @@ describe('shared actions', () => {
           if (!withOptions) {
             custom = customBuilder()
               .withId('0')
-              .withStateKey(key)
+              .withRootStateKey(key)
               .withMulti()
               .withCurrent(withCurrent)
               .withoutOptions()
@@ -390,7 +390,7 @@ describe('shared actions', () => {
           } else {
             custom = customBuilder()
               .withId('0')
-              .withStateKey(key)
+              .withRootStateKey(key)
               .withMulti()
               .withOptions(...withOptions)
               .withCurrent(withCurrent)
@@ -433,8 +433,8 @@ describe('shared actions', () => {
     describe('when changeVariableName is dispatched with the same name', () => {
       it('then the correct actions are dispatched', () => {
         const key = 'key';
-        const textbox = textboxBuilder().withId('textbox').withStateKey(key).withName('textbox').build();
-        const constant = constantBuilder().withId('constant').withStateKey(key).withName('constant').build();
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
         reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -456,8 +456,8 @@ describe('shared actions', () => {
     describe('when changeVariableName is dispatched with an unique name', () => {
       it('then the correct actions are dispatched', () => {
         const key = 'key';
-        const textbox = textboxBuilder().withId('textbox').withStateKey(key).withName('textbox').build();
-        const constant = constantBuilder().withId('constant').withStateKey(key).withName('constant').build();
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
         reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -502,8 +502,8 @@ describe('shared actions', () => {
     describe('when changeVariableName is dispatched with an unique name for a new variable', () => {
       it('then the correct actions are dispatched', () => {
         const key = 'key';
-        const textbox = textboxBuilder().withId('textbox').withStateKey(key).withName('textbox').build();
-        const constant = constantBuilder().withId(NEW_VARIABLE_ID).withStateKey(key).withName('constant').build();
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId(NEW_VARIABLE_ID).withRootStateKey(key).withName('constant').build();
 
         reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -548,8 +548,8 @@ describe('shared actions', () => {
     describe('when changeVariableName is dispatched with __newName', () => {
       it('then the correct actions are dispatched', () => {
         const key = 'key';
-        const textbox = textboxBuilder().withId('textbox').withStateKey(key).withName('textbox').build();
-        const constant = constantBuilder().withId('constant').withStateKey(key).withName('constant').build();
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
         reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -575,8 +575,8 @@ describe('shared actions', () => {
     describe('when changeVariableName is dispatched with illegal characters', () => {
       it('then the correct actions are dispatched', () => {
         const key = 'key';
-        const textbox = textboxBuilder().withId('textbox').withStateKey(key).withName('textbox').build();
-        const constant = constantBuilder().withId('constant').withStateKey(key).withName('constant').build();
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
         reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -602,8 +602,8 @@ describe('shared actions', () => {
     describe('when changeVariableName is dispatched with a name that is already used', () => {
       it('then the correct actions are dispatched', () => {
         const key = 'key';
-        const textbox = textboxBuilder().withId('textbox').withStateKey(key).withName('textbox').build();
-        const constant = constantBuilder().withId('constant').withStateKey(key).withName('constant').build();
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
         reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
@@ -633,7 +633,7 @@ describe('shared actions', () => {
         const key = 'key';
         const custom = customBuilder()
           .withId('custom')
-          .withStateKey(key)
+          .withRootStateKey(key)
           .withMulti(true)
           .withCurrent(['A'], ['A'])
           .build();
@@ -676,7 +676,7 @@ describe('shared actions', () => {
         const key = 'key';
         const custom = customBuilder()
           .withId('custom')
-          .withStateKey(key)
+          .withRootStateKey(key)
           .withMulti(false)
           .withCurrent(['A'], ['A'])
           .build();

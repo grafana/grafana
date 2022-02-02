@@ -87,7 +87,7 @@ export const getVariableState = (
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
       id: index.toString(),
-      stateKey: 'key',
+      rootStateKey: 'key',
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -104,7 +104,7 @@ export const getVariableState = (
   if (includeEmpty) {
     variables[NEW_VARIABLE_ID] = {
       id: NEW_VARIABLE_ID,
-      stateKey: 'key',
+      rootStateKey: 'key',
       type: 'query',
       name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
@@ -125,12 +125,15 @@ export const getVariableTestContext = <Model extends VariableModel>(
   adapter: VariableAdapter<Model>,
   variableOverrides: Partial<Model> = {}
 ) => {
-  const defaultVariable = {
-    ...adapter.initialState,
+  const defaults: Partial<VariableModel> = {
     id: '0',
-    stateKey: 'key',
+    rootStateKey: 'key',
     index: 0,
     name: '0',
+  };
+  const defaultVariable = {
+    ...adapter.initialState,
+    ...defaults,
   };
 
   const initialState: VariablesState = {

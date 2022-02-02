@@ -35,7 +35,7 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       await dispatch(updateDataSourceVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
-      const { index, id, state, global, stateKey, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
     getValueForUrl: (variable) => {

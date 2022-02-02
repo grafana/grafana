@@ -102,13 +102,13 @@ export function updateOptionsState(args: {
     source.pipe(
       map((results) => {
         const { variable, dispatch, getTemplatedRegexFunc } = args;
-        if (!variable.stateKey) {
-          console.error('updateOptionsState: variable.stateKey is not defined');
+        if (!variable.rootStateKey) {
+          console.error('updateOptionsState: variable.rootStateKey is not defined');
           return;
         }
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
-        dispatch(toKeyedAction(variable.stateKey, updateVariableOptions(payload)));
+        dispatch(toKeyedAction(variable.rootStateKey, updateVariableOptions(payload)));
       })
     );
 }

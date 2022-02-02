@@ -19,8 +19,8 @@ export class VariableBuilder<T extends VariableModel> {
     return this;
   }
 
-  withStateKey(key: string) {
-    this.variable.stateKey = key;
+  withRootStateKey(key: string) {
+    this.variable.rootStateKey = key;
     return this;
   }
 
