@@ -27,7 +27,11 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
 
   return (
     <FocusScope contain restoreFocus autoFocus>
-      <div data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps}>
+      {/*
+        tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
+        useOverlay may set this on overlayProps in future: see https://github.com/adobe/react-spectrum/issues/2798
+      */}
+      <div tabIndex={-1} data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps}>
         <div className={styles.header}>
           <Icon name="bars" size="xl" />
           <IconButton aria-label="Close navigation menu" name="times" onClick={onClose} size="xl" variant="secondary" />

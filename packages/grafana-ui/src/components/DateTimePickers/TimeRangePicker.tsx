@@ -118,7 +118,11 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
       </Tooltip>
       {isOpen && (
         <FocusScope contain autoFocus restoreFocus>
-          <section ref={ref} {...overlayProps}>
+          {/*
+            tabIndex=-1 is needed here to support highlighting text within the picker when using FocusScope
+            see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+          */}
+          <section tabIndex={-1} ref={ref} {...overlayProps}>
             <TimePickerContent
               timeZone={timeZone}
               fiscalYearStartMonth={fiscalYearStartMonth}

@@ -155,7 +155,11 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           }}
         >
           <FocusScope restoreFocus>
-            <div {...overlayProps} ref={overlayRef}>
+            {/*
+              tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
+              useOverlay may set this on overlayProps in future: see https://github.com/adobe/react-spectrum/issues/2798
+            */}
+            <div tabIndex={-1} {...overlayProps} ref={overlayRef}>
               <DismissButton onDismiss={() => state.close()} />
               {menu}
               <DismissButton onDismiss={() => state.close()} />

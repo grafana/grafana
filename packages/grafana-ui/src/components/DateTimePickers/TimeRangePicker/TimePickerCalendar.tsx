@@ -93,7 +93,12 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (isFullscreen) {
     return (
       <FocusScope contain restoreFocus autoFocus>
+        {/*
+          tabIndex=-1 is needed here to support highlighting text within the calendar when using FocusScope
+          see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+        */}
         <section
+          tabIndex={-1}
           className={styles.container}
           onClick={stopPropagation}
           aria-label={selectors.components.TimePicker.calendar.label}
@@ -110,7 +115,11 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   return (
     <OverlayContainer>
       <FocusScope contain autoFocus restoreFocus>
-        <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps}>
+        {/*
+          tabIndex=-1 is needed here to support highlighting text within the calendar when using FocusScope
+          see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+        */}
+        <section tabIndex={-1} className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps}>
           <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
             <Header {...props} />
             <Body {...props} />

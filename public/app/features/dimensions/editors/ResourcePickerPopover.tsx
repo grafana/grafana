@@ -59,7 +59,11 @@ export const ResourcePickerPopover = (props: Props) => {
 
   return (
     <FocusScope contain autoFocus restoreFocus>
-      <section ref={ref} {...overlayProps}>
+      {/*
+        tabIndex=-1 is needed here to support highlighting text within the picker when using FocusScope
+        useOverlay may set this on overlayProps in future: see https://github.com/adobe/react-spectrum/issues/2798
+      */}
+      <section tabIndex={-1} ref={ref} {...overlayProps}>
         <div className={styles.resourcePickerPopover}>
           <div className={styles.resourcePickerPopoverTabs}>
             <button
