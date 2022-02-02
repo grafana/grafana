@@ -20,7 +20,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
 
 3. [Create a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating) and assign it a role: it can be a predefined role or custom role with permissions to encrypt and decrypt secrets with Key Management Service.
 
-4. [Create and download a JSON file containing service account credentials](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating).
+4. [Create a service account key and save its JSON file](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating) to you computer, for example, as `~/.config/gcloud/sample-project-credentials.json`.
 
 5. From within Grafana, turn on [envelope encryption]({{< relref "../../administration/envelope-encryption.md" >}}).
 
@@ -30,7 +30,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
    <br>
 
    - `key_id`: encryption key ID, refer to [Getting the ID for a Key](https://cloud.google.com/kms/docs/getting-resource-ids#getting_the_id_for_a_key_and_version).
-   - `credentials_file`: path to the JSON file containing a service account credentials.
+   - `credentials_file`: path to service account key JSON file on your computer.
 
    An example of a Google Cloud KMS provider section in the `grafana.ini` file is as follows:
 
@@ -39,8 +39,8 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
    ;[security.encryption.googlekms.example-encryption-key]
    # Google Cloud KMS key ID
    key_id = 1234abcd-12ab-34cd-56ef-1234567890ab
-   # Path to a JSON file with a service account credentials
-   credentials_file = sample-project-credentials.json
+   # Path to a JSON file with a service account key
+   credentials_file = ~/.config/gcloud/sample-project-credentials.json
    ```
 
 7. Update the `[security]` section of the `grafana.ini` configuration file with the new Encryption Provider key that you created:
