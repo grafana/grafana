@@ -146,6 +146,11 @@ export class TeamPages extends PureComponent<Props, State> {
       team!,
       isSignedInUserTeamAdmin
     );
+    const canWriteTeamPermissions = contextSrv.hasAccessInMetadata(
+      AccessControlAction.ActionTeamsPermissionsWrite,
+      team!,
+      isSignedInUserTeamAdmin
+    );
 
     switch (currentPage) {
       case PageTypes.Members:
@@ -158,7 +163,7 @@ export class TeamPages extends PureComponent<Props, State> {
         return canReadTeam && <TeamSettings team={team!} />;
       case PageTypes.GroupSync:
         if (canReadTeamPermissions && isSyncEnabled) {
-          return <TeamGroupSync />;
+          return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} />;
         } else if (config.featureToggles.featureHighlights) {
           return (
             <UpgradeBox

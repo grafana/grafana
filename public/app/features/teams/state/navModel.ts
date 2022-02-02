@@ -24,7 +24,7 @@ export function buildNavModel(team: Team): NavModelItem {
     breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
     children: [
       // With FGAC this tab will always be available (but not always editable)
-      // With Legacy it will be hidden should the user not see it
+      // With Legacy it will be hidden by hideTabsFromNonTeamAdmin should the user not be allowed to see it
       {
         active: false,
         icon: 'sliders-v-alt',
@@ -59,7 +59,13 @@ export function buildNavModel(team: Team): NavModelItem {
     url: `org/teams/edit/${team.id}/groupsync`,
   };
 
-  if (featureEnabled('teamsync')) {
+  // With both Legacy and FGAC the tab is protected being featureEnabled
+  // While team is loading we leave the teamsync tab
+  // With FGAC the External Group Sync tab is available when user has ActionTeamsPermissionsRead for this team
+  if (
+    featureEnabled('teamsync') &&
+    (team === loadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team))
+  ) {
     navModel.children!.push(teamGroupSync);
   } else if (config.featureToggles.featureHighlights) {
     navModel.children!.push({ ...teamGroupSync, tabSuffix: ProBadge });
