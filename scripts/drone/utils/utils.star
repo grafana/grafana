@@ -11,7 +11,7 @@ drone_change_template = '`.drone.yml` and `starlark` files have been changed on 
 
 def pipeline(
     name, edition, trigger, steps, services=[], platform='linux', depends_on=[], environment=None, volumes=[],
-    ):
+    image_pull_secrets=False):
     if platform != 'windows':
         platform_conf = {
             'platform': {
@@ -48,6 +48,10 @@ def pipeline(
         }],
         'depends_on': depends_on,
     }
+    if image_pull_secrets:
+        pipeline.update({
+            'image_pull_secrets': [pull_secret]
+        })
     if environment:
         pipeline.update({
             'environment': environment,

@@ -125,7 +125,7 @@ def pr_pipelines(edition):
                 + test_steps,
         ), pipeline(
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + build_steps,
+                + build_steps, image_pull_secrets=True,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + integration_test_steps,
