@@ -29,15 +29,15 @@ export function keyedVariablesReducer(state = initialKeyedVariablesState, outerA
     const stringKey = toStateKey(key);
     const lastKey = variablesInitTransaction.match(action) ? stringKey : state.lastKey;
     const templatingReducers = getTemplatingReducers();
-    const prevSliceState = state.keys[stringKey];
-    const nextSliceState = templatingReducers(prevSliceState, action);
+    const prevKeyState = state.keys[stringKey];
+    const nextKeyState = templatingReducers(prevKeyState, action);
 
     return {
       ...state,
       lastKey,
       keys: {
         ...state.keys,
-        [stringKey]: nextSliceState,
+        [stringKey]: nextKeyState,
       },
     };
   }
