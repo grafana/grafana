@@ -172,33 +172,33 @@ func (f *ForkedAlertmanagerApi) forkRoutePostTestReceivers(ctx *models.ReqContex
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
-	return f.AMSvc.RouteGetAMAlerts(ctx)
+	return f.GrafanaSvc.RouteGetAMAlerts(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAMAlertGroups(ctx *models.ReqContext) response.Response {
-	return f.AMSvc.RouteGetAMAlertGroups(ctx)
+	return f.GrafanaSvc.RouteGetAMAlertGroups(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.AMSvc.RouteGetAlertingConfig(ctx)
+	return f.GrafanaSvc.RouteGetAlertingConfig(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.AMSvc.RouteGetSilence(ctx)
+	return f.GrafanaSvc.RouteGetSilence(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
-	return f.AMSvc.RouteGetSilences(ctx)
+	return f.GrafanaSvc.RouteGetSilences(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRoutePostGrafanaAMAlerts(ctx *models.ReqContext, conf apimodels.PostableAlerts) response.Response {
-	return f.AMSvc.RoutePostAMAlerts(ctx, conf)
+	return f.GrafanaSvc.RoutePostAMAlerts(ctx, conf)
 }
 
 func (f *ForkedAlertmanagerApi) forkRoutePostGrafanaAlertingConfig(ctx *models.ReqContext, conf apimodels.PostableUserConfig) response.Response {
-	return f.AMSvc.RoutePostAlertingConfig(ctx, conf)
+	return f.GrafanaSvc.RoutePostAlertingConfig(ctx, conf)
 }
 
 func (f *ForkedAlertmanagerApi) forkRoutePostTestGrafanaReceivers(ctx *models.ReqContext, conf apimodels.TestReceiversConfigBodyParams) response.Response {
-	return f.AMSvc.RoutePostTestReceivers(ctx, conf)
+	return f.GrafanaSvc.RoutePostTestReceivers(ctx, conf)
 }
