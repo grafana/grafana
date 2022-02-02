@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -28,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -76,61 +77,60 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 
-	PluginContextProvider       *plugincontext.Provider
-	RouteRegister               routing.RouteRegister
-	Bus                         bus.Bus
-	RenderService               rendering.Service
-	Cfg                         *setting.Cfg
-	Features                    *featuremgmt.FeatureManager
-	SettingsProvider            setting.Provider
-	HooksService                *hooks.HooksService
-	CacheService                *localcache.CacheService
-	DataSourceCache             datasources.CacheService
-	AuthTokenService            models.UserTokenService
-	QuotaService                *quota.QuotaService
-	RemoteCacheService          *remotecache.RemoteCache
-	ProvisioningService         provisioning.ProvisioningService
-	Login                       login.Service
-	License                     models.Licensing
-	AccessControl               accesscontrol.AccessControl
-	DataProxy                   *datasourceproxy.DataSourceProxyService
-	PluginRequestValidator      models.PluginRequestValidator
-	pluginClient                plugins.Client
-	pluginStore                 plugins.Store
-	pluginDashboardManager      plugins.PluginDashboardManager
-	pluginStaticRouteResolver   plugins.StaticRouteResolver
-	pluginErrorResolver         plugins.ErrorResolver
-	SearchService               *search.SearchService
-	ShortURLService             shorturls.Service
-	QueryHistoryService         queryhistory.Service
-	Live                        *live.GrafanaLive
-	LivePushGateway             *pushhttp.Gateway
-	ThumbService                thumbs.Service
-	ContextHandler              *contexthandler.ContextHandler
-	SQLStore                    *sqlstore.SQLStore
-	AlertEngine                 *alerting.AlertEngine
-	LoadSchemaService           *schemaloader.SchemaLoaderService
-	AlertNG                     *ngalert.AlertNG
-	LibraryPanelService         librarypanels.Service
-	LibraryElementService       libraryelements.Service
-	SocialService               social.Service
-	Listener                    net.Listener
-	EncryptionService           encryption.Internal
-	SecretsService              secrets.Service
-	DataSourcesService          *datasources.Service
-	cleanUpService              *cleanup.CleanUpService
-	tracer                      tracing.Tracer
-	grafanaUpdateChecker        *updatechecker.GrafanaService
-	pluginsUpdateChecker        *updatechecker.PluginsService
-	searchUsersService          searchusers.Service
-	ldapGroups                  ldap.Groups
-	teamGuardian                teamguardian.TeamGuardian
-	queryDataService            *query.Service
-	serviceAccountsService      serviceaccounts.Service
-	authInfoService             authinfoservice.Service
-	TeamPermissionsService      *resourcepermissions.Service
-	folderPermissionsService    *resourcepermissions.Service
-	dashboardPermissionsService *resourcepermissions.Service
+	PluginContextProvider     *plugincontext.Provider
+	RouteRegister             routing.RouteRegister
+	Bus                       bus.Bus
+	RenderService             rendering.Service
+	Cfg                       *setting.Cfg
+	Features                  *featuremgmt.FeatureManager
+	SettingsProvider          setting.Provider
+	HooksService              *hooks.HooksService
+	CacheService              *localcache.CacheService
+	DataSourceCache           datasources.CacheService
+	AuthTokenService          models.UserTokenService
+	QuotaService              *quota.QuotaService
+	RemoteCacheService        *remotecache.RemoteCache
+	ProvisioningService       provisioning.ProvisioningService
+	Login                     login.Service
+	License                   models.Licensing
+	AccessControl             accesscontrol.AccessControl
+	DataProxy                 *datasourceproxy.DataSourceProxyService
+	PluginRequestValidator    models.PluginRequestValidator
+	pluginClient              plugins.Client
+	pluginStore               plugins.Store
+	pluginDashboardManager    plugins.PluginDashboardManager
+	pluginStaticRouteResolver plugins.StaticRouteResolver
+	pluginErrorResolver       plugins.ErrorResolver
+	SearchService             *search.SearchService
+	ShortURLService           shorturls.Service
+	QueryHistoryService       queryhistory.Service
+	Live                      *live.GrafanaLive
+	LivePushGateway           *pushhttp.Gateway
+	ThumbService              thumbs.Service
+	ContextHandler            *contexthandler.ContextHandler
+	SQLStore                  *sqlstore.SQLStore
+	AlertEngine               *alerting.AlertEngine
+	LoadSchemaService         *schemaloader.SchemaLoaderService
+	AlertNG                   *ngalert.AlertNG
+	LibraryPanelService       librarypanels.Service
+	LibraryElementService     libraryelements.Service
+	SocialService             social.Service
+	Listener                  net.Listener
+	EncryptionService         encryption.Internal
+	SecretsService            secrets.Service
+	DataSourcesService        *datasources.Service
+	cleanUpService            *cleanup.CleanUpService
+	tracer                    tracing.Tracer
+	grafanaUpdateChecker      *updatechecker.GrafanaService
+	pluginsUpdateChecker      *updatechecker.PluginsService
+	searchUsersService        searchusers.Service
+	ldapGroups                ldap.Groups
+	teamGuardian              teamguardian.TeamGuardian
+	queryDataService          *query.Service
+	serviceAccountsService    serviceaccounts.Service
+	authInfoService           authinfoservice.Service
+	TeamPermissionsService    *resourcepermissions.Service
+	permissionServices        *resourceservices.ResourceServices
 }
 
 type ServerOptions struct {
@@ -157,68 +157,67 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
+	authInfoService authinfoservice.Service, permissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
 	hs := &HTTPServer{
-		Cfg:                         cfg,
-		RouteRegister:               routeRegister,
-		Bus:                         bus,
-		RenderService:               renderService,
-		License:                     licensing,
-		HooksService:                hooksService,
-		CacheService:                cacheService,
-		SQLStore:                    sqlStore,
-		AlertEngine:                 alertEngine,
-		PluginRequestValidator:      pluginRequestValidator,
-		pluginClient:                pluginClient,
-		pluginStore:                 pluginStore,
-		pluginStaticRouteResolver:   pluginStaticRouteResolver,
-		pluginDashboardManager:      pluginDashboardManager,
-		pluginErrorResolver:         pluginErrorResolver,
-		grafanaUpdateChecker:        grafanaUpdateChecker,
-		pluginsUpdateChecker:        pluginsUpdateChecker,
-		SettingsProvider:            settingsProvider,
-		DataSourceCache:             dataSourceCache,
-		AuthTokenService:            userTokenService,
-		cleanUpService:              cleanUpService,
-		ShortURLService:             shortURLService,
-		QueryHistoryService:         queryHistoryService,
-		Features:                    features,
-		ThumbService:                thumbService,
-		RemoteCacheService:          remoteCache,
-		ProvisioningService:         provisioningService,
-		Login:                       loginService,
-		AccessControl:               accessControl,
-		DataProxy:                   dataSourceProxy,
-		SearchService:               searchService,
-		Live:                        live,
-		LivePushGateway:             livePushGateway,
-		PluginContextProvider:       plugCtxProvider,
-		ContextHandler:              contextHandler,
-		LoadSchemaService:           schemaService,
-		AlertNG:                     alertNG,
-		LibraryPanelService:         libraryPanelService,
-		LibraryElementService:       libraryElementService,
-		QuotaService:                quotaService,
-		tracer:                      tracer,
-		log:                         log.New("http.server"),
-		web:                         m,
-		Listener:                    opts.Listener,
-		SocialService:               socialService,
-		EncryptionService:           encryptionService,
-		SecretsService:              secretsService,
-		DataSourcesService:          dataSourcesService,
-		searchUsersService:          searchUsersService,
-		ldapGroups:                  ldapGroups,
-		teamGuardian:                teamGuardian,
-		queryDataService:            queryDataService,
-		serviceAccountsService:      serviceaccountsService,
-		authInfoService:             authInfoService,
-		TeamPermissionsService:      resourcePermissionServices.GetTeamService(),
-		folderPermissionsService:    resourcePermissionServices.GetFolderService(),
-		dashboardPermissionsService: resourcePermissionServices.GetDashboardService(),
+		Cfg:                       cfg,
+		RouteRegister:             routeRegister,
+		Bus:                       bus,
+		RenderService:             renderService,
+		License:                   licensing,
+		HooksService:              hooksService,
+		CacheService:              cacheService,
+		SQLStore:                  sqlStore,
+		AlertEngine:               alertEngine,
+		PluginRequestValidator:    pluginRequestValidator,
+		pluginClient:              pluginClient,
+		pluginStore:               pluginStore,
+		pluginStaticRouteResolver: pluginStaticRouteResolver,
+		pluginDashboardManager:    pluginDashboardManager,
+		pluginErrorResolver:       pluginErrorResolver,
+		grafanaUpdateChecker:      grafanaUpdateChecker,
+		pluginsUpdateChecker:      pluginsUpdateChecker,
+		SettingsProvider:          settingsProvider,
+		DataSourceCache:           dataSourceCache,
+		AuthTokenService:          userTokenService,
+		cleanUpService:            cleanUpService,
+		ShortURLService:           shortURLService,
+		QueryHistoryService:       queryHistoryService,
+		Features:                  features,
+		ThumbService:              thumbService,
+		RemoteCacheService:        remoteCache,
+		ProvisioningService:       provisioningService,
+		Login:                     loginService,
+		AccessControl:             accessControl,
+		DataProxy:                 dataSourceProxy,
+		SearchService:             searchService,
+		Live:                      live,
+		LivePushGateway:           livePushGateway,
+		PluginContextProvider:     plugCtxProvider,
+		ContextHandler:            contextHandler,
+		LoadSchemaService:         schemaService,
+		AlertNG:                   alertNG,
+		LibraryPanelService:       libraryPanelService,
+		LibraryElementService:     libraryElementService,
+		QuotaService:              quotaService,
+		tracer:                    tracer,
+		log:                       log.New("http.server"),
+		web:                       m,
+		Listener:                  opts.Listener,
+		SocialService:             socialService,
+		EncryptionService:         encryptionService,
+		SecretsService:            secretsService,
+		DataSourcesService:        dataSourcesService,
+		searchUsersService:        searchUsersService,
+		ldapGroups:                ldapGroups,
+		teamGuardian:              teamGuardian,
+		queryDataService:          queryDataService,
+		serviceAccountsService:    serviceaccountsService,
+		authInfoService:           authInfoService,
+		TeamPermissionsService:    permissionServices.GetTeamService(),
+		permissionServices:        permissionServices,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
