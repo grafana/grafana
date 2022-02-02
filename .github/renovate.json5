@@ -4,10 +4,12 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
+    "@grafana/slate-react", // should be updated when the `slate` package is updated
     "@types/systemjs",
     "@types/d3-force", // we should bump this once we move to esm modules
     "@types/d3-interpolate", // we should bump this once we move to esm modules
     "@types/d3-scale-chromatic", // we should bump this once we move to esm modules
+    "@types/grafana__slate-react", // should be updated when the `slate` package is updated
     "@types/react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "d3",
     "d3-force", // we should bump this once we move to esm modules
