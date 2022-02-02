@@ -120,7 +120,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
       </Tooltip>
       {isOpen && (
         <FocusScope contain autoFocus restoreFocus>
-          <section tabIndex={-1} ref={ref} {...overlayProps} {...dialogProps}>
+          <section ref={ref} {...overlayProps} {...dialogProps}>
             <TimePickerContent
               timeZone={timeZone}
               fiscalYearStartMonth={fiscalYearStartMonth}
