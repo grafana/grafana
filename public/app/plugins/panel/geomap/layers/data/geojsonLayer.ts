@@ -206,7 +206,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   defaultOptions,
 };
 
-// This will find all geojson files in maps and gazetteer
+// This will find all geojson files in the maps and gazetteer folders
 async function initGeojsonFiles() {
   if (publicGeoJSONFiles) {
     return;

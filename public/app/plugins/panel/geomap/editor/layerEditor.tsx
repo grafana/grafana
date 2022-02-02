@@ -43,7 +43,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
                 delete opts.location;
               }
             }
-            console.log('CHANGE TYPE');
             state.onChange(opts);
             return;
           }
