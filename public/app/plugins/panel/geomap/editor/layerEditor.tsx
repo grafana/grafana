@@ -7,7 +7,6 @@ import { MapLayerState } from '../types';
 import { get as lodashGet } from 'lodash';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
-import { OptionsPaneOptions } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 
 export interface LayerEditorOptions {
   state: MapLayerState;
@@ -86,10 +85,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       }
 
       if (layer.showLocation) {
-        if (!options.location) {
-          options.location = { mode: FrameGeometrySourceMode.Auto };
-        }
-        addLocationFields('Location', 'location', builder, options.location);
+        addLocationFields('Location', 'location.', builder, options.location);
       }
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder);
