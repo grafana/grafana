@@ -1,4 +1,4 @@
-import { MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
+import { FrameGeometrySourceMode, MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
@@ -7,6 +7,7 @@ import { MapLayerState } from '../types';
 import { get as lodashGet } from 'lodash';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
+import { OptionsPaneOptions } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 
 export interface LayerEditorOptions {
   state: MapLayerState;
@@ -31,11 +32,20 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           const layer = geomapLayerRegistry.getIfExists(value);
           if (layer) {
             console.log('Change layer type:', value, state);
-            state.onChange({
+            const opts = {
               ...options, // keep current shared options
               type: layer.id,
               config: { ...layer.defaultOptions }, // clone?
-            });
+            };
+            if (layer.showLocation) {
+              if (!opts.location?.mode) {
+                opts.location = { mode: FrameGeometrySourceMode.Auto };
+              } else {
+                delete opts.location;
+              }
+            }
+            console.log('CHANGE TYPE');
+            state.onChange(opts);
             return;
           }
         }
@@ -76,6 +86,9 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       }
 
       if (layer.showLocation) {
+        if (!options.location) {
+          options.location = { mode: FrameGeometrySourceMode.Auto };
+        }
         addLocationFields('Location', 'location', builder, options.location);
       }
       if (handler.registerOptionsUI) {
