@@ -16,7 +16,7 @@ import {
   RichHistoryServiceError,
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
-} from '../history/richHistoryStorage';
+} from '../history/RichHistoryStorage';
 import {
   filterQueriesByDataSource,
   filterQueriesBySearchFilter,

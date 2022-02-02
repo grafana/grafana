@@ -1,6 +1,6 @@
-import RichHistoryLocalStorage from './richHistoryLocalStorage';
-import RichHistoryRemoteStorage from './richHistoryRemoteStorage';
-import RichHistoryStorage from './richHistoryStorage';
+import RichHistoryLocalStorage from './RichHistoryLocalStorage';
+import RichHistoryRemoteStorage from './RichHistoryRemoteStorage';
+import RichHistoryStorage from './RichHistoryStorage';
 
 const richHistoryLocalStorage = new RichHistoryLocalStorage();
 

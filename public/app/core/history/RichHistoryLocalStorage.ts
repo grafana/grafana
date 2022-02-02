@@ -1,8 +1,4 @@
-import RichHistoryStorage, {
-  RichHistoryServiceError,
-  RichHistoryStorageWarning,
-  RichHistoryStorageWarningDetails,
-} from './richHistoryStorage';
+import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
 import { RichHistoryQuery } from '../../types';
 import store from '../store';
 import { DataQuery } from '@grafana/data';
@@ -19,13 +15,13 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   /**
    * Return all history entries, perform migration and clean up entries not matching retention policy.
    */
-  async getRichHistory(): Promise<RichHistoryQuery[]> {
+  async getRichHistory() {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const transformedRichHistory = migrateRichHistory(richHistory);
     return transformedRichHistory;
   }
 
-  async addToRichHistory(richHistoryQuery: RichHistoryQuery): Promise<RichHistoryStorageWarningDetails | undefined> {
+  async addToRichHistory(richHistoryQuery: RichHistoryQuery) {
     const richHistory = cleanUp(await this.getRichHistory());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
@@ -68,17 +64,17 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     return undefined;
   }
 
-  async deleteAll(): Promise<void> {
+  async deleteAll() {
     store.delete(RICH_HISTORY_KEY);
   }
 
-  async deleteRichHistory(id: number): Promise<void> {
+  async deleteRichHistory(id: number) {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const updatedHistory = richHistory.filter((query) => query.ts !== id);
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 
-  async updateStarred(id: number, starred: boolean): Promise<void> {
+  async updateStarred(id: number, starred: boolean) {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const updatedHistory = richHistory.map((query) => {
       if (query.ts === id) {
@@ -90,7 +86,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 
-  async updateComment(id: number, comment: string): Promise<void> {
+  async updateComment(id: number, comment: string) {
     const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
     const updatedHistory = richHistory.map((query) => {
       if (query.ts === id) {
