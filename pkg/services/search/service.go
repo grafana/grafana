@@ -19,7 +19,6 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus) *SearchService {
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
 	}
-	s.Bus.AddHandler(s.SearchHandler)
 	return s
 }
 
