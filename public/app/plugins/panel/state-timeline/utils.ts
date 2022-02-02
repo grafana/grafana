@@ -69,6 +69,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   colWidth,
   showValue,
   alignValue,
+  mergeValues,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -98,6 +99,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
+    mergeValues,
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
@@ -350,16 +352,20 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
       prev = undefined;
     }
     const active = getActiveThreshold(v, thresholds.steps);
-    if (active === prev) {
-      vals[i] = undefined;
-    } else {
-      vals[i] = thresholdToText.get(active);
-    }
+    vals[i] = thresholdToText.get(active);
     prev = active;
   }
 
   return {
     ...field,
+    config: {
+      ...field.config,
+      custom: {
+        ...field.config.custom,
+        // magic value for join() to leave nulls alone
+        spanNulls: -1,
+      },
+    },
     type: FieldType.string,
     values: new ArrayVector(vals),
     display: (value: string) => ({
@@ -415,18 +421,6 @@ export function prepareTimelineFields(
               },
             },
           };
-
-          if (mergeValues) {
-            let merged = unsetSameFutureValues(field.values.toArray());
-            if (merged) {
-              fields.push({
-                ...field,
-                values: new ArrayVector(merged),
-              });
-              changed = true;
-              continue;
-            }
-          }
           fields.push(field);
           break;
         default:
