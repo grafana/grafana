@@ -26,7 +26,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async addToRichHistory(richHistoryQuery: RichHistoryQuery): Promise<RichHistoryStorageWarningDetails | undefined> {
-    let richHistory = cleanUp(await this.getRichHistory());
+    const richHistory = cleanUp(await this.getRichHistory());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
