@@ -25,8 +25,11 @@ const Receivers: FC = () => {
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
-  const { result: config, loading, error } =
-    (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
+  const {
+    result: config,
+    loading,
+    error,
+  } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   const shouldLoadConfig = isRoot || !config;

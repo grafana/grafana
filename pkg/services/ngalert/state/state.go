@@ -35,23 +35,14 @@ type Evaluation struct {
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
 	// in classic conditions do not have a RefID.
-	Values map[string]EvaluationValue
-}
-
-// EvaluationValue contains the labels and value for a RefID in an evaluation.
-type EvaluationValue struct {
-	Labels data.Labels
-	Value  *float64
+	Values map[string]*float64
 }
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
-func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]EvaluationValue {
-	result := make(map[string]EvaluationValue, len(m))
+func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float64 {
+	result := make(map[string]*float64, len(m))
 	for k, v := range m {
-		result[k] = EvaluationValue{
-			Labels: v.Labels,
-			Value:  v.Value,
-		}
+		result[k] = v.Value
 	}
 	return result
 }

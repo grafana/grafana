@@ -57,7 +57,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                     isMobile={true}
                     pinned={link.showInNavBar}
                     canPin={link.id !== 'search'}
-                    onClickPin={() => link.id && toggleItemPin(link.id)}
+                    onTogglePin={() => link.id && toggleItemPin(link.id)}
                   />
                   {link.children?.map(
                     (childLink, childIndex) =>

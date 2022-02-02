@@ -21,7 +21,10 @@ const defaultIntervalOptions: Array<SelectableValue<string>> = [
   { label: '1d', value: '1d' },
 ];
 
-const hasValue = (searchValue: string) => ({ value }: SelectableValue<string>) => value === searchValue;
+const hasValue =
+  (searchValue: string) =>
+  ({ value }: SelectableValue<string>) =>
+    value === searchValue;
 
 const isValidNewOption = (
   inputValue: string,

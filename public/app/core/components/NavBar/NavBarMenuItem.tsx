@@ -16,7 +16,7 @@ export interface Props {
   isMobile?: boolean;
   canPin?: boolean;
   pinned?: boolean;
-  onClickPin?: () => void;
+  onTogglePin?: () => void;
 }
 
 export function NavBarMenuItem({
@@ -31,16 +31,16 @@ export function NavBarMenuItem({
   isMobile = false,
   canPin = false,
   pinned = false,
-  onClickPin,
+  onTogglePin,
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, styleOverrides);
 
-  const onClickPinn = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const onClickPin = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    onClickPin?.();
+    onTogglePin?.();
   };
 
   const linkContent = (
@@ -84,7 +84,7 @@ export function NavBarMenuItem({
           <IconButton
             name="anchor"
             className={cx('pin-button', styles.pinButton, { [styles.visible]: pinned })}
-            onClick={onClickPinn}
+            onClick={onClickPin}
             tooltip={`${pinned ? 'Unpin' : 'Pin'} menu item`}
           />
         )}
