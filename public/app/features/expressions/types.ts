@@ -36,7 +36,11 @@ export const reducerMode: Array<SelectableValue<ReducerMode>> = [
     label: 'Strict',
     description: 'Result can be NaN if series contains non-numeric data',
   },
-  { value: ReducerMode.DropNonNumbers, label: 'Drop Non-numeric Values', description: 'Drop NaN, +/-Inf and null from input series before reducing' },
+  {
+    value: ReducerMode.DropNonNumbers,
+    label: 'Drop Non-numeric Values',
+    description: 'Drop NaN, +/-Inf and null from input series before reducing',
+  },
   {
     value: ReducerMode.ReplaceNonNumbers,
     label: 'Replace Non-numeric Values',
