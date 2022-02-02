@@ -1,4 +1,11 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState, SelectableValue } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -155,7 +162,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           rxjsmap((v) => getLayerPropertyInfo(v))
         );
 
-        if(!publicGeoJSONFiles) {
+        if (!publicGeoJSONFiles) {
           initGeojsonFiles();
         }
 
@@ -199,7 +206,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   defaultOptions,
 };
 
-
+// This will find all geojson files in maps and gazetteer
 async function initGeojsonFiles() {
   if (publicGeoJSONFiles) {
     return;
@@ -207,25 +214,19 @@ async function initGeojsonFiles() {
   publicGeoJSONFiles = [];
 
   const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
-  for(let folder of ['maps', 'gazetteer']) {
-    console.log( 'List files in', folder);
-    try {
-      ds.listFiles(folder).subscribe({
-            next: (frame) => {
-              frame.forEach((item) => {
-                if(item.name.endsWith('.geojson')) {
-                  const value = `public/${folder}/${item.name}`
-                  publicGeoJSONFiles!.push({
-                    value,
-                    label: value,
-                  })
-                }
-            }  );
-
-            }
+  for (let folder of ['maps', 'gazetteer']) {
+    ds.listFiles(folder).subscribe({
+      next: (frame) => {
+        frame.forEach((item) => {
+          if (item.name.endsWith('.geojson')) {
+            const value = `public/${folder}/${item.name}`;
+            publicGeoJSONFiles!.push({
+              value,
+              label: value,
+            });
+          }
+        });
+      },
     });
-  } catch(ex) {
-    console.log('error loading files from', folder, ex);
-  }
   }
 }
