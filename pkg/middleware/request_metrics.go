@@ -68,7 +68,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles) func(handler string) we
 				// avoiding the sanitize functions for in the new instrumentation
 				// since they dont make much sense. We should remove them later.
 				histogram := httpRequestDurationHistogram.
-					WithLabelValues(handler, strconv.Itoa(rw.Status()), req.Method)
+					WithLabelValues(handler, sanitizeCode(rw.Status()), req.Method)
 				if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
 					// Need to type-convert the Observer to an
 					// ExemplarObserver. This will always work for a
