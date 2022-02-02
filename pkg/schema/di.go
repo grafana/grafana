@@ -10,7 +10,7 @@ import (
 )
 
 // Package state backing for RegisterCoreSchema.
-var cr *CoreRegistry
+var cr *CoreRegistry = &CoreRegistry{}
 
 // atomic guard on registry
 var regguard int32
