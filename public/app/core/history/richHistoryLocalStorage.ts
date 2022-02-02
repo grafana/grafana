@@ -63,9 +63,9 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
         type: RichHistoryStorageWarning.LimitExceeded,
         message: `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items have been removed.`,
       };
-    } else {
-      return undefined;
     }
+
+    return undefined;
   }
 
   async deleteAll(): Promise<void> {
