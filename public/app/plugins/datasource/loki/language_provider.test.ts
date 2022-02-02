@@ -108,7 +108,7 @@ describe('Language completion provider', () => {
       const datasource: LokiDatasource = {
         metadataRequest: () => ({ data: { data: [] as any[] } }),
         getTimeRangeParams: () => ({ start: 0, end: 1 }),
-        interpolateString: (string: string) => string.replace('$', 'interpolated-'),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
       } as any as LokiDatasource;
 
       const languageProvider = new LanguageProvider(datasource);

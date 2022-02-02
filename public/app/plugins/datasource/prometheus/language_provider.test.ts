@@ -84,7 +84,7 @@ describe('Language completion provider', () => {
     it('should interpolate variable in series', () => {
       const languageProvider = new LanguageProvider({
         ...datasource,
-        interpolateString: (string: string) => string.replace('$', 'interpolated-'),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
       } as PrometheusDatasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -102,7 +102,7 @@ describe('Language completion provider', () => {
     it('should interpolate variable in series', () => {
       const languageProvider = new LanguageProvider({
         ...datasource,
-        interpolateString: (string: string) => string.replace('$', 'interpolated-'),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
