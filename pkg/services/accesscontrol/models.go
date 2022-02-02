@@ -234,20 +234,6 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 	return true
 }
 
-type SetResourcePermissionCommand struct {
-	Actions    []string
-	Resource   string
-	ResourceID string
-	Permission string
-}
-
-type GetResourcesPermissionsQuery struct {
-	Actions     []string
-	Resource    string
-	ResourceIDs []string
-	OnlyManaged bool
-}
-
 const (
 	GlobalOrgID = 0
 	// Permission actions

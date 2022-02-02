@@ -17,26 +17,26 @@ type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(
 		ctx context.Context, orgID, userID int64,
-		cmd accesscontrol.SetResourcePermissionCommand,
+		cmd types.SetResourcePermissionCommand,
 		hook types.UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
 		ctx context.Context, orgID, teamID int64,
-		cmd accesscontrol.SetResourcePermissionCommand,
+		cmd types.SetResourcePermissionCommand,
 		hook types.TeamResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetBuiltInResourcePermission sets permissions for managed builtin role on a resource
 	SetBuiltInResourcePermission(
 		ctx context.Context, orgID int64, builtinRole string,
-		cmd accesscontrol.SetResourcePermissionCommand,
+		cmd types.SetResourcePermissionCommand,
 		hook types.BuiltinResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// GetResourcesPermissions will return all permission for all supplied resource ids
-	GetResourcesPermissions(ctx context.Context, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error)
+	GetResourcesPermissions(ctx context.Context, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
 
 func New(options Options, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
@@ -92,7 +92,7 @@ type Service struct {
 }
 
 func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
-	return s.store.GetResourcesPermissions(ctx, orgID, accesscontrol.GetResourcesPermissionsQuery{
+	return s.store.GetResourcesPermissions(ctx, orgID, types.GetResourcesPermissionsQuery{
 		Actions:     s.actions,
 		Resource:    s.options.Resource,
 		ResourceIDs: []string{resourceID},
@@ -118,7 +118,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, err
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
+	return s.store.SetUserResourcePermission(ctx, orgID, userID, types.SetResourcePermissionCommand{
 		Actions:    actions,
 		Permission: permission,
 		ResourceID: resourceID,
@@ -144,7 +144,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, err
 	}
 
-	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, accesscontrol.SetResourcePermissionCommand{
+	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, types.SetResourcePermissionCommand{
 		Actions:    actions,
 		Permission: permission,
 		ResourceID: resourceID,
@@ -170,7 +170,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
-	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, accesscontrol.SetResourcePermissionCommand{
+	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, types.SetResourcePermissionCommand{
 		Actions:    actions,
 		Permission: permission,
 		ResourceID: resourceID,
