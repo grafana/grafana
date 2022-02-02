@@ -274,6 +274,15 @@ func (ss *SQLStore) findDashboards(ctx context.Context, query *search.FindPersis
 		},
 	}
 
+	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
+		filters = []interface{}{
+			permissions.AccessControlDashboardPermissionFilter{
+				User:            query.SignedInUser,
+				PermissionLevel: query.Permission,
+			},
+		}
+	}
+
 	for _, filter := range query.Sort.Filter {
 		filters = append(filters, filter)
 	}
