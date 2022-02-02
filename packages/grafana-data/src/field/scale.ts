@@ -47,13 +47,13 @@ function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
   const trueValue: ColorScaleValue = {
     color: theme.visualization.getColorByName('green'),
     percent: 1,
-    threshold: (undefined as unknown) as Threshold,
+    threshold: undefined as unknown as Threshold,
   };
 
   const falseValue: ColorScaleValue = {
     color: theme.visualization.getColorByName('red'),
     percent: 0,
-    threshold: (undefined as unknown) as Threshold,
+    threshold: undefined as unknown as Threshold,
   };
 
   const mode = getFieldColorModeForField(field);

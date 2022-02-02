@@ -42,7 +42,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
       dispatch(
         toKeyedAction(
           identifier.rootStateKey,
-          duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }))
+          duplicateVariable(toVariablePayload(identifier, { newId: undefined as unknown as string }))
         )
       ),
     removeVariable: (identifier: KeyedVariableIdentifier) => {

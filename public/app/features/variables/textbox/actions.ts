@@ -20,20 +20,19 @@ export const updateTextBoxVariableOptions = (identifier: KeyedVariableIdentifier
   };
 };
 
-export const setTextBoxVariableOptionsFromUrl = (
-  identifier: KeyedVariableIdentifier,
-  urlValue: UrlQueryValue
-): ThunkResult<void> => async (dispatch, getState) => {
-  const { rootStateKey } = identifier;
-  const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
+export const setTextBoxVariableOptionsFromUrl =
+  (identifier: KeyedVariableIdentifier, urlValue: UrlQueryValue): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const { rootStateKey } = identifier;
+    const variableInState = getVariable<TextBoxVariableModel>(identifier, getState());
 
-  const stringUrlValue = ensureStringValues(urlValue);
-  dispatch(
-    toKeyedAction(
-      rootStateKey,
-      changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue }))
-    )
-  );
+    const stringUrlValue = ensureStringValues(urlValue);
+    dispatch(
+      toKeyedAction(
+        rootStateKey,
+        changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue }))
+      )
+    );
 
-  await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variableInState), stringUrlValue));
-};
+    await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variableInState), stringUrlValue));
+  };

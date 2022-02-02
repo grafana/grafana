@@ -99,20 +99,19 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
   };
 };
 
-export const openOptions = (
-  identifier: KeyedVariableIdentifier,
-  callback?: (updated: any) => void
-): ThunkResult<void> => async (dispatch, getState) => {
-  const { id, rootStateKey: uid } = identifier;
-  const picker = getVariablesState(uid, getState()).optionsPicker;
+export const openOptions =
+  (identifier: KeyedVariableIdentifier, callback?: (updated: any) => void): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const { id, rootStateKey: uid } = identifier;
+    const picker = getVariablesState(uid, getState()).optionsPicker;
 
-  if (picker.id && picker.id !== id) {
-    await dispatch(commitChangesToVariable(uid, callback));
-  }
+    if (picker.id && picker.id !== id) {
+      await dispatch(commitChangesToVariable(uid, callback));
+    }
 
-  const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
-  dispatch(toKeyedAction(uid, showOptions(variable)));
-};
+    const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
+    dispatch(toKeyedAction(uid, showOptions(variable)));
+  };
 
 export const toggleOptionByHighlight = (key: string, clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {

@@ -1,13 +1,15 @@
 import type { monacoTypes } from '@grafana/ui';
 
-import language from '../definition';
 import { LinkedToken } from './LinkedToken';
-import { Monaco, TokenType } from './types';
+import { Monaco, TokenTypes } from './types';
+import { LanguageDefinition } from './register';
 
 export function linkedTokenBuilder(
   monaco: Monaco,
+  language: LanguageDefinition,
   model: monacoTypes.editor.ITextModel,
-  position: monacoTypes.IPosition
+  position: monacoTypes.IPosition,
+  tokenTypes: TokenTypes
 ) {
   let current: LinkedToken | null = null;
   let previous: LinkedToken | null = null;
@@ -19,7 +21,7 @@ export function linkedTokenBuilder(
     if (!tokens.length && previous) {
       const token: monacoTypes.Token = {
         offset: 0,
-        type: TokenType.Whitespace,
+        type: tokenTypes.Whitespace,
         language: language.id,
         _tokenBrand: undefined,
       };
@@ -39,17 +41,18 @@ export function linkedTokenBuilder(
       };
 
       const value = model.getValueInRange(range);
-      const sqlToken: LinkedToken = new LinkedToken(token.type, value, range, previous, null);
+      const newToken: LinkedToken = new LinkedToken(token.type, value, range, previous, null, tokenTypes);
 
       if (monaco.Range.containsPosition(range, position)) {
-        current = sqlToken;
+        current = newToken;
       }
 
       if (previous) {
-        previous.next = sqlToken;
+        previous.next = newToken;
       }
-      previous = sqlToken;
+      previous = newToken;
     }
   }
+
   return current;
 }

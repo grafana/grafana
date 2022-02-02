@@ -69,65 +69,62 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
   };
 };
 
-export const completeChangeVariableName = (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> => (
-  dispatch,
-  getState
-) => {
-  const { rootStateKey } = identifier;
-  const originalVariable = getVariable(identifier, getState());
-  if (originalVariable.name === newName) {
-    dispatch(toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
-    return;
-  }
-  const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
-  const global = originalVariable.global;
-  const index = originalVariable.index;
-  const renamedIdentifier = toKeyedVariableIdentifier(model);
+export const completeChangeVariableName =
+  (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> =>
+  (dispatch, getState) => {
+    const { rootStateKey } = identifier;
+    const originalVariable = getVariable(identifier, getState());
+    if (originalVariable.name === newName) {
+      dispatch(toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(identifier, { newName }))));
+      return;
+    }
+    const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
+    const global = originalVariable.global;
+    const index = originalVariable.index;
+    const renamedIdentifier = toKeyedVariableIdentifier(model);
 
-  dispatch(toKeyedAction(rootStateKey, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
-  dispatch(toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName }))));
-  dispatch(switchToEditMode(renamedIdentifier));
-  dispatch(toKeyedAction(rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
-};
+    dispatch(toKeyedAction(rootStateKey, addVariable(toVariablePayload(renamedIdentifier, { global, index, model }))));
+    dispatch(
+      toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName })))
+    );
+    dispatch(switchToEditMode(renamedIdentifier));
+    dispatch(toKeyedAction(rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
+  };
 
-export const switchToNewMode = (key: string, type: VariableType = 'query'): ThunkResult<void> => (
-  dispatch,
-  getState
-) => {
-  const id = getNextAvailableId(type, getVariablesByKey(key, getState()));
-  const identifier: VariableIdentifier = { type, id };
-  const global = false;
-  const index = getNewVariableIndex(key, getState());
-  const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
-  model.id = id;
-  model.name = id;
-  model.rootStateKey = key;
-  dispatch(
-    toKeyedAction(
-      key,
-      addVariable(
-        toVariablePayload<AddVariable>(identifier, { global, model, index })
-      )
-    )
-  );
-  dispatch(toKeyedAction(key, setIdInEditor({ id: identifier.id })));
-};
+export const switchToNewMode =
+  (key: string, type: VariableType = 'query'): ThunkResult<void> =>
+  (dispatch, getState) => {
+    const id = getNextAvailableId(type, getVariablesByKey(key, getState()));
+    const identifier: VariableIdentifier = { type, id };
+    const global = false;
+    const index = getNewVariableIndex(key, getState());
+    const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
+    model.id = id;
+    model.name = id;
+    model.rootStateKey = key;
+    dispatch(toKeyedAction(key, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index }))));
+    dispatch(toKeyedAction(key, setIdInEditor({ id: identifier.id })));
+  };
 
-export const switchToEditMode = (identifier: KeyedVariableIdentifier): ThunkResult<void> => (dispatch) => {
-  const { rootStateKey } = identifier;
-  dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
-};
+export const switchToEditMode =
+  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
+  (dispatch) => {
+    const { rootStateKey } = identifier;
+    dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
+  };
 
-export const switchToListMode = (key: string): ThunkResult<void> => (dispatch, getState) => {
-  dispatch(toKeyedAction(key, clearIdInEditor()));
-  const state = getState();
-  const variables = getEditorVariables(key, state);
-  const dashboard = state.dashboard.getModel();
-  const { usages } = createUsagesNetwork(variables, dashboard);
-  const usagesNetwork = transformUsagesToNetwork(usages);
+export const switchToListMode =
+  (key: string): ThunkResult<void> =>
+  (dispatch, getState) => {
+    dispatch(toKeyedAction(key, clearIdInEditor()));
+    const state = getState();
+    const variables = getEditorVariables(key, state);
+    const dashboard = state.dashboard.getModel();
+    const { usages } = createUsagesNetwork(variables, dashboard);
+    const usagesNetwork = transformUsagesToNetwork(usages);
 
-  dispatch(toKeyedAction(key, initInspect({ usages, usagesNetwork })));
-};
+    dispatch(toKeyedAction(key, initInspect({ usages, usagesNetwork })));
+  };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
   let counter = 0;

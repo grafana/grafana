@@ -32,6 +32,22 @@ func TestFilter_Datasources(t *testing.T) {
 			expectedDataSources: []string{"ds:1", "ds:2", "ds:3", "ds:4", "ds:5", "ds:6", "ds:7", "ds:8", "ds:9", "ds:10"},
 		},
 		{
+			desc:  "expect all data sources for wildcard id scope to be returned",
+			sqlID: "data_source.id",
+			permissions: []*accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:id:*"},
+			},
+			expectedDataSources: []string{"ds:1", "ds:2", "ds:3", "ds:4", "ds:5", "ds:6", "ds:7", "ds:8", "ds:9", "ds:10"},
+		},
+		{
+			desc:  "expect all data sources for wildcard scope to be returned",
+			sqlID: "data_source.id",
+			permissions: []*accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "*"},
+			},
+			expectedDataSources: []string{"ds:1", "ds:2", "ds:3", "ds:4", "ds:5", "ds:6", "ds:7", "ds:8", "ds:9", "ds:10"},
+		},
+		{
 			desc:                "expect no data sources to be returned",
 			sqlID:               "data_source.id",
 			permissions:         []*accesscontrol.Permission{},
@@ -46,6 +62,14 @@ func TestFilter_Datasources(t *testing.T) {
 				{Action: "datasources:read", Scope: "datasources:id:8"},
 			},
 			expectedDataSources: []string{"ds:3", "ds:7", "ds:8"},
+		},
+		{
+			desc:  "expect no data sources to be returned for malformed scope",
+			sqlID: "data_source.id",
+			permissions: []*accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:id:1*"},
+			},
+			expectedDataSources: []string{},
 		},
 		{
 			desc:  "expect error if sqlID is not in the accept list",

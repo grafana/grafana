@@ -63,13 +63,12 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export const initQueryVariableEditor = (identifier: KeyedVariableIdentifier): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
-  const variable = getVariable<QueryVariableModel>(identifier, getState());
-  await dispatch(changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), variable.datasource));
-};
+export const initQueryVariableEditor =
+  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const variable = getVariable<QueryVariableModel>(identifier, getState());
+    await dispatch(changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), variable.datasource));
+  };
 
 export const changeQueryVariableDataSource = (
   identifier: KeyedVariableIdentifier,
@@ -106,45 +105,43 @@ export const changeQueryVariableDataSource = (
   };
 };
 
-export const changeQueryVariableQuery = (
-  identifier: KeyedVariableIdentifier,
-  query: any,
-  definition?: string
-): ThunkResult<void> => async (dispatch, getState) => {
-  const { rootStateKey } = identifier;
-  const variableInState = getVariable<QueryVariableModel>(identifier, getState());
-  if (hasSelfReferencingQuery(variableInState.name, query)) {
-    const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
-    dispatch(toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'query', errorText })));
-    return;
-  }
+export const changeQueryVariableQuery =
+  (identifier: KeyedVariableIdentifier, query: any, definition?: string): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const { rootStateKey } = identifier;
+    const variableInState = getVariable<QueryVariableModel>(identifier, getState());
+    if (hasSelfReferencingQuery(variableInState.name, query)) {
+      const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
+      dispatch(toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'query', errorText })));
+      return;
+    }
 
-  dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'query' })));
-  dispatch(
-    toKeyedAction(
-      rootStateKey,
-      changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query }))
-    )
-  );
-
-  if (definition) {
+    dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'query' })));
     dispatch(
       toKeyedAction(
         rootStateKey,
-        changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition }))
+        changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query }))
       )
     );
-  } else if (typeof query === 'string') {
-    dispatch(
-      toKeyedAction(
-        rootStateKey,
-        changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query }))
-      )
-    );
-  }
 
-  await dispatch(updateOptions(identifier));
-};
+    if (definition) {
+      dispatch(
+        toKeyedAction(
+          rootStateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition }))
+        )
+      );
+    } else if (typeof query === 'string') {
+      dispatch(
+        toKeyedAction(
+          rootStateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query }))
+        )
+      );
+    }
+
+    await dispatch(updateOptions(identifier));
+  };
 
 export function hasSelfReferencingQuery(name: string, query: any): boolean {
   if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {

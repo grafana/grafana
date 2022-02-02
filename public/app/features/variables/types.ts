@@ -146,7 +146,7 @@ export const initialVariableModelState: VariableModel = {
   rootStateKey: null,
   name: '',
   label: null,
-  type: ('' as unknown) as VariableType,
+  type: '' as unknown as VariableType,
   global: false,
   index: -1,
   hide: VariableHide.dontHide,

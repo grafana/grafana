@@ -93,7 +93,7 @@ describe('initVariablesTransaction', () => {
 
     describe('and there are variables that have data source that need to be migrated', () => {
       it('then correct actions are dispatched', async () => {
-        const legacyDs = ('${ds}' as unknown) as DataSourceRef;
+        const legacyDs = '${ds}' as unknown as DataSourceRef;
         const ds = datasourceBuilder().withId('ds').withRootStateKey('key').withName('ds').withQuery('prom').build();
         const query = queryBuilder()
           .withId('query')

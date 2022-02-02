@@ -133,33 +133,35 @@ export const changeVariableDatasource = (
   };
 };
 
-export const initAdHocVariableEditor = (key: string): ThunkResult<void> => (dispatch) => {
-  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
-  const selectable = dataSources.reduce(
-    (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
-      if (ds.meta.mixed) {
+export const initAdHocVariableEditor =
+  (key: string): ThunkResult<void> =>
+  (dispatch) => {
+    const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
+    const selectable = dataSources.reduce(
+      (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
+        if (ds.meta.mixed) {
+          return all;
+        }
+
+        const text = ds.isDefault ? `${ds.name} (default)` : ds.name;
+        const value = getDataSourceRef(ds);
+        all.push({ text, value });
+
         return all;
-      }
+      },
+      [{ text: '', value: {} }]
+    );
 
-      const text = ds.isDefault ? `${ds.name} (default)` : ds.name;
-      const value = getDataSourceRef(ds);
-      all.push({ text, value });
-
-      return all;
-    },
-    [{ text: '', value: {} }]
-  );
-
-  dispatch(
-    toKeyedAction(
-      key,
-      changeVariableEditorExtended({
-        propName: 'dataSources',
-        propValue: selectable,
-      })
-    )
-  );
-};
+    dispatch(
+      toKeyedAction(
+        key,
+        changeVariableEditorExtended({
+          propName: 'dataSources',
+          propValue: selectable,
+        })
+      )
+    );
+  };
 
 const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -177,14 +179,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
     const index = getNewVariableIndex(key, getState());
     const identifier: KeyedVariableIdentifier = { type: 'adhoc', id: model.id, rootStateKey: key };
 
-    dispatch(
-      toKeyedAction(
-        key,
-        addVariable(
-          toVariablePayload<AddVariable>(identifier, { global, model, index })
-        )
-      )
-    );
+    dispatch(toKeyedAction(key, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index }))));
   };
 };
 

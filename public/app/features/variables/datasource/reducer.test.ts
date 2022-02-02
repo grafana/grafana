@@ -38,10 +38,10 @@ describe('dataSourceVariableReducer', () => {
           .whenActionIsDispatched(createDataSourceOptions(payload))
           .thenStateShouldEqual({
             ...initialState,
-            ['0']: ({
+            ['0']: {
               ...initialState['0'],
               options: expected,
-            } as unknown) as DataSourceVariableModel,
+            } as unknown as DataSourceVariableModel,
           });
       }
     );
@@ -64,13 +64,13 @@ describe('dataSourceVariableReducer', () => {
         .whenActionIsDispatched(createDataSourceOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          ['0']: ({
+          ['0']: {
             ...initialState['0'],
             options: [
               { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
               { text: 'default', value: 'default', selected: false },
             ],
-          } as unknown) as DataSourceVariableModel,
+          } as unknown as DataSourceVariableModel,
         });
     });
   });
@@ -92,10 +92,10 @@ describe('dataSourceVariableReducer', () => {
         .whenActionIsDispatched(createDataSourceOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          ['0']: ({
+          ['0']: {
             ...initialState['0'],
             options: [{ text: 'default', value: 'default', selected: false }],
-          } as unknown) as DataSourceVariableModel,
+          } as unknown as DataSourceVariableModel,
         });
     });
   });
@@ -117,10 +117,10 @@ describe('dataSourceVariableReducer', () => {
         .whenActionIsDispatched(createDataSourceOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          ['0']: ({
+          ['0']: {
             ...initialState['0'],
             options: [{ text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false }],
-          } as unknown) as DataSourceVariableModel,
+          } as unknown as DataSourceVariableModel,
         });
     });
   });
@@ -142,13 +142,13 @@ describe('dataSourceVariableReducer', () => {
         .whenActionIsDispatched(createDataSourceOptions(payload))
         .thenStateShouldEqual({
           ...initialState,
-          ['0']: ({
+          ['0']: {
             ...initialState['0'],
             options: [
               { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
               { text: 'default', value: 'default', selected: false },
             ],
-          } as unknown) as DataSourceVariableModel,
+          } as unknown as DataSourceVariableModel,
         });
     });
   });

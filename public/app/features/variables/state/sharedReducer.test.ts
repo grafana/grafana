@@ -45,8 +45,8 @@ describe('sharedReducer', () => {
         global: true,
         index: 0,
         name: 'name from model',
-        type: ('type from model' as unknown) as VariableType,
-        current: ({} as unknown) as VariableOption,
+        type: 'type from model' as unknown as VariableType,
+        current: {} as unknown as VariableOption,
       };
 
       const payload = toVariablePayload({ id: 'name from model', type: 'query' }, { global: true, index: 0, model });
@@ -359,7 +359,7 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [
               { selected: false, text: 'All', value: '$__all' },
@@ -367,7 +367,7 @@ describe('sharedReducer', () => {
               { selected: true, text: 'B', value: 'B' },
             ],
             current: { selected: true, text: ['A', 'B'], value: ['A', 'B'] },
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -389,7 +389,7 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [
               { selected: false, text: 'All', value: '$__all' },
@@ -397,7 +397,7 @@ describe('sharedReducer', () => {
               { selected: true, text: 'B', value: 'B' },
             ],
             current: { selected: true, text: 'A + B', value: ['A', 'B'] },
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -419,7 +419,7 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(setCurrentVariableValue(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             options: [
               { selected: true, text: 'All', value: '$__all' },
@@ -427,7 +427,7 @@ describe('sharedReducer', () => {
               { selected: false, text: 'B', value: 'B' },
             ],
             current: { selected: true, text: 'All', value: ['$__all'] },
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -445,11 +445,11 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(variableStateNotStarted(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             state: LoadingState.NotStarted,
             error: null,
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -467,11 +467,11 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(variableStateFetching(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             state: LoadingState.Loading,
             error: null,
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -489,11 +489,11 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(variableStateCompleted(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             state: LoadingState.Done,
             error: null,
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });
@@ -508,11 +508,11 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(variableStateFailed(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': ({
+          '0': {
             ...initialState[0],
             state: LoadingState.Error,
             error: 'Some error',
-          } as unknown) as QueryVariableModel,
+          } as unknown as QueryVariableModel,
         });
     });
   });

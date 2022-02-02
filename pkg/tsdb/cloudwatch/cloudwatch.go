@@ -47,12 +47,17 @@ type datasourceInfo struct {
 	HTTPClient *http.Client
 }
 
-const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
-const defaultRegion = "default"
+const (
+	cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+	defaultRegion      = "default"
 
-// Constants also defined in datasource/cloudwatch/datasource.ts
-const logIdentifierInternal = "__log__grafana_internal__"
-const logStreamIdentifierInternal = "__logstream__grafana_internal__"
+	// Constants also defined in datasource/cloudwatch/datasource.ts
+	logIdentifierInternal       = "__log__grafana_internal__"
+	logStreamIdentifierInternal = "__logstream__grafana_internal__"
+
+	alertMaxAttempts = 8
+	alertPollPeriod  = 1000 * time.Millisecond
+)
 
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
@@ -222,9 +227,6 @@ func (e *cloudWatchExecutor) getRGTAClient(region string, pluginCtx backend.Plug
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	queryContext backend.DataQuery, model *simplejson.Json) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	const maxAttempts = 8
-	const pollPeriod = 1000 * time.Millisecond
-
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, queryContext.TimeRange)
 	if err != nil {
 		return nil, err
@@ -235,7 +237,7 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 		"queryId": *startQueryOutput.QueryId,
 	})
 
-	ticker := time.NewTicker(pollPeriod)
+	ticker := time.NewTicker(alertPollPeriod)
 	defer ticker.Stop()
 
 	attemptCount := 1
@@ -247,7 +249,7 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 		if isTerminated(*res.Status) {
 			return res, err
 		}
-		if attemptCount >= maxAttempts {
+		if attemptCount >= alertMaxAttempts {
 			return res, fmt.Errorf("fetching of query results exceeded max number of attempts")
 		}
 
@@ -321,13 +323,6 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		if err != nil {
 			return nil, err
 		}
-
-		result, err := e.executeStartQuery(ctx, logsClient, model, q.TimeRange)
-		if err != nil {
-			return nil, err
-		}
-
-		model.Set("queryId", *result.QueryId)
 
 		getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, q, model)
 		if err != nil {
