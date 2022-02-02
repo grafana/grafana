@@ -147,6 +147,9 @@ const FolderPicker: FC<Props> = ({
   return (
     <div data-testid={selectors.components.FolderPicker.containerV2}>
       <AsyncSelect
+        // this small "hack" will essentially re-render the select component when we've created a new folder
+        // (or selected a new folder, unfortunately)
+        key={JSON.stringify(folder)}
         inputId={inputId}
         aria-label={selectors.components.FolderPicker.input}
         loadingMessage="Loading folders..."
@@ -160,7 +163,7 @@ const FolderPicker: FC<Props> = ({
         menuShouldPortal
         tabSelectsValue={false}
       />
-      {CreateFolderModal}
+      {enableCreateNew && CreateFolderModal}
     </div>
   );
 };
