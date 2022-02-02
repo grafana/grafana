@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
 
@@ -23,6 +24,7 @@ type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
 	settings   setting.Provider
+	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	currentProviderID secrets.ProviderID
@@ -36,6 +38,7 @@ func ProvideSecretsService(
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	settings setting.Provider,
+	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
 	providers, err := kmsProvidersService.Provide()
@@ -44,8 +47,10 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption)
-	currentProviderID := readCurrentProviderID(settings)
+	enabled := features.IsEnabled(featuremgmt.FlagEnvelopeEncryption)
+	currentProviderID := normalizeProviderID(secrets.ProviderID(
+		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
+	))
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
@@ -65,6 +70,7 @@ func ProvideSecretsService(
 		providers:         providers,
 		currentProviderID: currentProviderID,
 		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		features:          features,
 		log:               logger,
 	}
 
@@ -73,13 +79,12 @@ func ProvideSecretsService(
 	return s, nil
 }
 
-func readCurrentProviderID(settings setting.Provider) secrets.ProviderID {
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
-	if currentProvider == kmsproviders.Legacy {
-		currentProvider = kmsproviders.Default
+func normalizeProviderID(id secrets.ProviderID) secrets.ProviderID {
+	if id == kmsproviders.Legacy {
+		return kmsproviders.Default
 	}
 
-	return secrets.ProviderID(currentProvider)
+	return id
 }
 
 func (s *SecretsService) registerUsageMetrics() {
@@ -88,7 +93,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+		if s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -131,7 +136,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -174,7 +179,7 @@ func (s *SecretsService) keyName(scope string) string {
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
 	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -325,7 +330,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 2. decrypt data key
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.providers[normalizeProviderID(dataKey.Provider)]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -359,6 +364,15 @@ var (
 
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(gcInterval)
+	grp, gCtx := errgroup.WithContext(ctx)
+
+	for _, p := range s.providers {
+		if svc, ok := p.(secrets.BackgroundProvider); ok {
+			grp.Go(func() error {
+				return svc.Run(gCtx)
+			})
+		}
+	}
 
 	for {
 		select {
@@ -366,9 +380,14 @@ func (s *SecretsService) Run(ctx context.Context) error {
 			s.log.Debug("removing expired data encryption keys from cache...")
 			s.removeExpiredItems()
 			s.log.Debug("done removing expired data encryption keys from cache")
-		case <-ctx.Done():
+		case <-gCtx.Done():
 			s.log.Debug("grafana is shutting down; stopping...")
 			gc.Stop()
+
+			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+
 			return nil
 		}
 	}
