@@ -2223,3 +2223,32 @@ export const tempoSearchResponse = {
     inspectedBytes: '83720',
   },
 };
+
+export const badOTLPResponse = {
+  batches: [
+    {
+      resource: {},
+      instrumentationLibrarySpans: [
+        {
+          spans: [
+            {
+              traceId: 'AAAAAAAAAABguiq7RPE+rg==',
+              spanId: 'cmteMBAvwNA=',
+              parentSpanId: 'OY8PIaPbma4=',
+              name: 'HTTP GET - root',
+              kind: 'SPAN_KIND_CLIENT',
+              startTimeUnixNano: 1627471657255809000,
+              endTimeUnixNano: 1627471657256268000,
+              attributes: [
+                { key: 'http.status_code', value: { intValue: 200 } },
+                { key: 'http.method', value: { stringValue: 'GET' } },
+                { key: 'http.url', value: { stringValue: '/' } },
+                { key: 'component', value: { stringValue: 'net/http' } },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
