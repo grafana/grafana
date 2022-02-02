@@ -331,7 +331,6 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     textToColor.set(items[i].label, items[i].color!);
   }
 
-  let prev: Threshold | undefined = undefined;
   let input = field.values.toArray();
   const vals = new Array<String | undefined>(field.values.length);
   if (thresholds.mode === ThresholdsMode.Percentage) {
@@ -349,11 +348,9 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     const v = input[i];
     if (v == null) {
       vals[i] = v;
-      prev = undefined;
+    } else {
+      vals[i] = thresholdToText.get(getActiveThreshold(v, thresholds.steps));
     }
-    const active = getActiveThreshold(v, thresholds.steps);
-    vals[i] = thresholdToText.get(active);
-    prev = active;
   }
 
   return {
