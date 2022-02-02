@@ -41,10 +41,10 @@ export const LabelFilter: FunctionComponent<Props> = ({
   variableOptionGroup,
 }) => {
   const filters = useMemo(() => stringArrayToFilters(filterArray), [filterArray]);
-  const options = useMemo(() => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))], [
-    labels,
-    variableOptionGroup,
-  ]);
+  const options = useMemo(
+    () => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))],
+    [labels, variableOptionGroup]
+  );
 
   const filtersToStringArray = useCallback((filters: Filter[]) => {
     const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));

@@ -95,14 +95,14 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
       hints.push({
         type: 'EXPAND_RULES',
         label,
-        fix: ({
+        fix: {
           label: 'Expand rules',
           action: {
             type: 'EXPAND_RULES',
             query,
             mapping: mappingForQuery,
           },
-        } as any) as QueryFix,
+        } as any as QueryFix,
       });
     }
   }

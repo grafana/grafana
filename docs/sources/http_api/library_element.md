@@ -176,35 +176,37 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-    "result": {
-      "id": 25,
-      "orgId": 1,
-      "folderId": 0,
-      "uid": "V--OrYHnz",
-      "name": "API docs Example",
-      "kind": 1,
-      "type": "text",
-      "description": "",
-      "model": {...},
-      "version": 1,
-      "meta": {
-          "folderName": "General",
-          "folderUid": "",
-          "connectedDashboards": 1,
-          "created": "2021-09-27T09:56:17+02:00",
-          "updated": "2021-09-27T09:56:17+02:00",
-          "createdBy": {
-              "id": 1,
-              "name": "admin",
-              "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
-          },
-          "updatedBy": {
-              "id": 1,
-              "name": "admin",
-              "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
-          }
-      }
-   }
+    "result": [
+        {
+            "id": 25,
+            "orgId": 1,
+            "folderId": 0,
+            "uid": "V--OrYHnz",
+            "name": "API docs Example",
+            "kind": 1,
+            "type": "text",
+            "description": "",
+            "model": {...},
+            "version": 1,
+            "meta": {
+                "folderName": "General",
+                "folderUid": "",
+                "connectedDashboards": 1,
+                "created": "2021-09-27T09:56:17+02:00",
+                "updated": "2021-09-27T09:56:17+02:00",
+                "createdBy": {
+                    "id": 1,
+                    "name": "admin",
+                    "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
+                },
+                "updatedBy": {
+                    "id": 1,
+                    "name": "admin",
+                    "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
+                }
+            }
+        }
+    ]
 }
 ```
 

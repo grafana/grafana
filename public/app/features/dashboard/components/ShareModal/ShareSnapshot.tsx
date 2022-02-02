@@ -197,14 +197,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   renderStep1() {
     const { onDismiss } = this.props;
-    const {
-      snapshotName,
-      selectedExpireOption,
-      timeoutSeconds,
-      isLoading,
-      sharingButtonText,
-      externalEnabled,
-    } = this.state;
+    const { snapshotName, selectedExpireOption, timeoutSeconds, isLoading, sharingButtonText, externalEnabled } =
+      this.state;
 
     return (
       <>
