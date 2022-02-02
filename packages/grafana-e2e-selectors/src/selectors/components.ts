@@ -33,7 +33,11 @@ export const Components = {
         seriesCount: 'TestData series count',
         spread: 'TestData spread',
         startValue: 'TestData start value',
+        drop: 'TestData drop values',
       },
+    },
+    DataSourceHttpSettings: {
+      urlInput: 'Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',

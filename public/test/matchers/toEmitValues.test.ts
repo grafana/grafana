@@ -6,7 +6,7 @@ describe('toEmitValues matcher', () => {
   describe('failing tests', () => {
     describe('passing null in expect', () => {
       it('should fail', async () => {
-        const observable = (null as unknown) as Observable<number>;
+        const observable = null as unknown as Observable<number>;
 
         const rejects = expect(() => expect(observable).toEmitValues([1, 2, 3])).rejects;
         await rejects.toThrow();
@@ -15,7 +15,7 @@ describe('toEmitValues matcher', () => {
 
     describe('passing undefined in expect', () => {
       it('should fail', async () => {
-        const observable = (undefined as unknown) as Observable<number>;
+        const observable = undefined as unknown as Observable<number>;
 
         const rejects = expect(() => expect(observable).toEmitValues([1, 2, 3])).rejects;
         await rejects.toThrow();
@@ -24,7 +24,7 @@ describe('toEmitValues matcher', () => {
 
     describe('passing number instead of Observable in expect', () => {
       it('should fail', async () => {
-        const observable = (1 as unknown) as Observable<number>;
+        const observable = 1 as unknown as Observable<number>;
 
         const rejects = expect(() => expect(observable).toEmitValues([1, 2, 3])).rejects;
         await rejects.toThrow();
@@ -51,7 +51,7 @@ describe('toEmitValues matcher', () => {
 
     describe('wrong emitted value types', () => {
       it('should fail', async () => {
-        const observable = (interval(10).pipe(take(3)) as unknown) as Observable<string>;
+        const observable = interval(10).pipe(take(3)) as unknown as Observable<string>;
 
         const rejects = expect(() => expect(observable).toEmitValues(['0', '1', '2'])).rejects;
         await rejects.toThrow();
@@ -106,7 +106,7 @@ describe('toEmitValues matcher', () => {
 
     describe('correct emitted values with throw', () => {
       it('should pass with correct message', async () => {
-        const observable = (interval(10).pipe(
+        const observable = interval(10).pipe(
           map((interval) => {
             if (interval > 1) {
               throw 'an error';
@@ -114,7 +114,7 @@ describe('toEmitValues matcher', () => {
 
             return interval;
           })
-        ) as unknown) as Observable<string | number>;
+        ) as unknown as Observable<string | number>;
 
         await expect(observable).toEmitValues([0, 1, 'an error']);
       });
@@ -122,7 +122,7 @@ describe('toEmitValues matcher', () => {
 
     describe('correct emitted values with throwError', () => {
       it('should pass with correct message', async () => {
-        const observable = (interval(10).pipe(
+        const observable = interval(10).pipe(
           mergeMap((interval) => {
             if (interval === 1) {
               return throwError('an error');
@@ -130,7 +130,7 @@ describe('toEmitValues matcher', () => {
 
             return of(interval);
           })
-        ) as unknown) as Observable<string | number>;
+        ) as unknown as Observable<string | number>;
 
         await expect(observable).toEmitValues([0, 'an error']);
       });

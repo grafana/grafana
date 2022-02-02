@@ -19,7 +19,7 @@ import angular, { auto } from 'angular';
 function getReactComponent(name: string | Function, $injector: auto.IInjectorService): ComponentType {
   // if name is a function assume it is component and return it
   if (angular.isFunction(name)) {
-    return (name as unknown) as ComponentType;
+    return name as unknown as ComponentType;
   }
 
   // a React component name must be specified
@@ -46,7 +46,7 @@ function getReactComponent(name: string | Function, $injector: auto.IInjectorSer
     throw Error('Cannot find react component ' + name);
   }
 
-  return (reactComponent as unknown) as ComponentType;
+  return reactComponent as unknown as ComponentType;
 }
 
 // wraps a function with scope.$apply, if already applied just return
