@@ -201,16 +201,6 @@ func parseNumber(value interface{}) *float64 {
 	// to represent null-json-values. they come for example
 	// when we do a group-by with fill(null)
 
-	// FIXME: the value of an influxdb-query can be:
-	// - string
-	// - float
-	// - integer
-	// - boolean
-	//
-	// here we only handle numeric values. this is probably
-	// enough for alerting, but later if we want to support
-	// arbitrary queries, we will have to improve the code
-
 	if value == nil {
 		// this is what json-nulls become
 		return nil
