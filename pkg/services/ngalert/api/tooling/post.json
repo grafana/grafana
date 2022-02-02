@@ -840,6 +840,16 @@
      },
      "type": "array",
      "x-go-name": "Alertmanagers"
+    },
+    "alertmanagersChoice": {
+     "enum": [
+      "all",
+      "internal",
+      "external"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+     "x-go-name": "AlertmanagersChoice"
     }
    },
    "type": "object",
@@ -1753,6 +1763,16 @@
      },
      "type": "array",
      "x-go-name": "Alertmanagers"
+    },
+    "alertmanagersChoice": {
+     "enum": [
+      "all",
+      "internal",
+      "external"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+     "x-go-name": "AlertmanagersChoice"
     }
    },
    "type": "object",
@@ -2913,11 +2933,12 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3099,11 +3120,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
@@ -5097,7 +5119,7 @@
       }
      }
     },
-    "summary": "Creates or updates the NGalert configuration of the user's organization.",
+    "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
     "tags": [
      "configuration"
     ]

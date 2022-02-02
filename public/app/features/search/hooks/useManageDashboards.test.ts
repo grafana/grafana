@@ -27,9 +27,9 @@ describe('useManageDashboards', () => {
       initialLoading: false,
       allChecked: false,
     };
-    const dispatch: Dispatch<SearchAction> = (null as unknown) as Dispatch<SearchAction>;
+    const dispatch: Dispatch<SearchAction> = null as unknown as Dispatch<SearchAction>;
     useSearchMock.mockReturnValue({ state, dispatch, onToggleSection: toggle });
-    const dashboardQuery: DashboardQuery = ({} as unknown) as DashboardQuery;
+    const dashboardQuery: DashboardQuery = {} as unknown as DashboardQuery;
 
     const { result } = renderHook(() => useManageDashboards(dashboardQuery, {}));
 

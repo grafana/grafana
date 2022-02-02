@@ -1607,7 +1607,7 @@
         "tags": [
           "configuration"
         ],
-        "summary": "Creates or updates the NGalert configuration of the user's organization.",
+        "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
         "operationId": "RoutePostNGalertConfig",
         "parameters": [
           {
@@ -2592,6 +2592,16 @@
             "type": "string"
           },
           "x-go-name": "Alertmanagers"
+        },
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ],
+          "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+          "x-go-name": "AlertmanagersChoice"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -3506,6 +3516,16 @@
             "type": "string"
           },
           "x-go-name": "Alertmanagers"
+        },
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ],
+          "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+          "x-go-name": "AlertmanagersChoice"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -4854,11 +4874,12 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {

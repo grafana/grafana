@@ -12,9 +12,9 @@ export class MssqlConfigCtrl {
 
   onPasswordReset: ReturnType<typeof createResetHandler>;
   onPasswordChange: ReturnType<typeof createChangeHandler>;
-  showUserCredentials: boolean = false;
-  showTlsConfig: boolean = false;
-  showCertificateConfig: boolean = false;
+  showUserCredentials = false;
+  showTlsConfig = false;
+  showCertificateConfig = false;
 
   /** @ngInject */
   constructor($scope: any) {
