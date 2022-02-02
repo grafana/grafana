@@ -16,7 +16,7 @@ export const UpgradeBox = ({ text, className, children, size = 'md', ...htmlProp
 
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>
-      <Icon name={'arrow-up'} className={styles.icon} />
+      <Icon name={'rocket'} className={styles.icon} />
       <div>
         <h6>You’ve found a Pro feature!</h6>
         <p className={styles.text}>{text}</p>
@@ -66,8 +66,6 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
       }
     `,
     icon: css`
-      border: 1px solid ${theme.colors.primary.shade};
-      border-radius: 50%;
       margin: ${theme.spacing(0.5, 1, 0.5, 0.5)};
     `,
   };
