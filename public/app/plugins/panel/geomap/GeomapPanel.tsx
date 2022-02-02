@@ -23,17 +23,17 @@ import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
 import { css } from '@emotion/css';
-import { PanelContext, PanelContextRoot, Portal, stylesFactory, VizTooltipContainer } from '@grafana/ui';
+import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
-import { GeomapHoverFeature, GeomapHoverPayload } from './event';
-import { DataHoverView } from './components/DataHoverView';
+import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { cloneDeep } from 'lodash';
+import { GeomapTooltip } from './GeomapTooltip';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -41,6 +41,7 @@ let sharedView: View | undefined = undefined;
 type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
+  ttipOpen: boolean;
 }
 
 export interface GeomapLayerActions {
@@ -77,7 +78,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = { ttipOpen: false };
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
@@ -288,6 +289,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.forceUpdate(); // first render
 
     // Tooltip listener
+    this.map.on('singleclick', this.pointerClickListener);
     this.map.on('pointermove', this.pointerMoveListener);
     this.map.getViewport().addEventListener('mouseout', (evt) => {
       this.props.eventBus.publish(new DataHoverClearEvent());
@@ -305,14 +307,26 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   clearTooltip = () => {
-    if (this.state.ttip) {
-      this.setState({ ttip: undefined });
+    if (this.state.ttip && !this.state.ttipOpen) {
+      this.tooltipPopupClosed();
+    }
+  };
+
+  tooltipPopupClosed = () => {
+    this.setState({ ttipOpen: false, ttip: undefined });
+  };
+
+  pointerClickListener = (evt: MapBrowserEvent<UIEvent>) => {
+    if (this.pointerMoveListener(evt)) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      this.setState({ ttipOpen: true });
     }
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
-    if (!this.map) {
-      return;
+    if (!this.map || this.state.ttipOpen) {
+      return false;
     }
     const mouse = evt.originalEvent as any;
     const pixel = this.map.getEventPixel(mouse);
@@ -328,27 +342,38 @@ export class GeomapPanel extends Component<Props, State> {
     hoverPayload.data = undefined;
     hoverPayload.columnIndex = undefined;
     hoverPayload.rowIndex = undefined;
-    hoverPayload.feature = undefined;
+    hoverPayload.layers = undefined;
+
+    const layers: GeomapLayerHover[] = [];
+    const layerLookup = new Map<MapLayerState, GeomapLayerHover>();
 
     let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
-    const features: GeomapHoverFeature[] = [];
     this.map.forEachFeatureAtPixel(
       pixel,
       (feature, layer, geo) => {
         //match hover layer to layer in layers
         //check if the layer show tooltip is enabled
         //then also pass the list of tooltip fields if exists
+        //this is used as the generic hover event
         if (!hoverPayload.data) {
           const props = feature.getProperties();
           const frame = props['frame'];
           if (frame) {
             hoverPayload.data = ttip.data = frame as DataFrame;
             hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
-          } else {
-            hoverPayload.feature = ttip.feature = feature;
           }
         }
-        features.push({ feature, layer, geo });
+
+        const s: MapLayerState = (layer as any).__state;
+        if (s) {
+          let h = layerLookup.get(s);
+          if (!h) {
+            h = { layer: s, features: [] };
+            layerLookup.set(s, h);
+            layers.push(h);
+          }
+          h.features.push(feature);
+        }
       },
       {
         layerFilter: (l) => {
@@ -357,17 +382,11 @@ export class GeomapPanel extends Component<Props, State> {
         },
       }
     );
-    this.hoverPayload.features = features.length ? features : undefined;
+    this.hoverPayload.layers = layers.length ? layers : undefined;
     this.props.eventBus.publish(this.hoverEvent);
 
-    const currentTTip = this.state.ttip;
-    if (
-      ttip.data !== currentTTip?.data ||
-      ttip.rowIndex !== currentTTip?.rowIndex ||
-      ttip.feature !== currentTTip?.feature
-    ) {
-      this.setState({ ttip: { ...hoverPayload } });
-    }
+    this.setState({ ttip: { ...hoverPayload } });
+    return layers.length ? true : false;
   };
 
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
@@ -558,7 +577,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    const { ttip, topRight, bottomLeft } = this.state;
+    const { ttip, ttipOpen, topRight, bottomLeft } = this.state;
 
     return (
       <>
@@ -567,13 +586,7 @@ export class GeomapPanel extends Component<Props, State> {
           <div className={this.style.map} ref={this.initMapRef}></div>
           <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
-        <Portal>
-          {ttip && (ttip.data || ttip.feature) && (
-            <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
-              <DataHoverView {...ttip} />
-            </VizTooltipContainer>
-          )}
-        </Portal>
+        <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>
     );
   }
