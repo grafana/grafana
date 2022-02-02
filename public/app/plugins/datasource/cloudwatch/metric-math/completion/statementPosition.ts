@@ -5,22 +5,41 @@ import { MetricMathTokenTypes } from './types';
 export function getStatementPosition(currentToken: LinkedToken | null): StatementPosition {
   const previousNonWhiteSpace = currentToken?.getPreviousNonWhiteSpaceToken();
 
-  if (currentToken && previousNonWhiteSpace && previousNonWhiteSpace.is(MetricMathTokenTypes.Delimiter, ',')) {
+  if (currentToken && currentToken.isString()) {
+    return StatementPosition.WithinString;
+  }
+
+  if (currentToken && previousNonWhiteSpace) {
     const currentFunction = currentToken.getPreviousOfType(MetricMathTokenTypes.Function);
-    if (currentFunction && currentFunction.value === 'SEARCH') {
+    const isAfterComma = previousNonWhiteSpace.is(MetricMathTokenTypes.Delimiter, ',');
+    const isWithinSearch = currentFunction && currentFunction.value === 'SEARCH';
+    const allTokensAfterStartOfSearch =
+      currentToken.getPreviousUntil(MetricMathTokenTypes.Function, [], 'SEARCH') || [];
+
+    if (isWithinSearch) {
+      // if there's only one ' then we're still within the first arg
+      if (allTokensAfterStartOfSearch.filter(({ value }) => value === "'").length === 1) {
+        return StatementPosition.WithinString;
+      }
+
+      // if there was a , before the last , and it happened after the start of SEARCH
       const lastComma = previousNonWhiteSpace.getPreviousOfType(MetricMathTokenTypes.Delimiter, ',');
       if (lastComma) {
         const lastCommaIsAfterSearch =
           lastComma.range.startColumn > currentFunction.range.startColumn &&
           lastComma.range.startLineNumber >= currentFunction.range.startLineNumber;
-
         if (lastCommaIsAfterSearch) {
           return StatementPosition.SearchFuncThirdArg;
         }
       }
+
+      // otherwise assume it's the second arg
       return StatementPosition.SearchFuncSecondArg;
     }
-    return StatementPosition.PredefinedFuncSecondArg;
+
+    if (!isWithinSearch && isAfterComma) {
+      return StatementPosition.PredefinedFuncSecondArg;
+    }
   }
 
   if (previousNonWhiteSpace?.endsWith(')')) {
@@ -29,10 +48,6 @@ export function getStatementPosition(currentToken: LinkedToken | null): Statemen
 
   if (!currentToken || !currentToken.isString()) {
     return StatementPosition.PredefinedFunction;
-  }
-
-  if (currentToken && currentToken.isString()) {
-    return StatementPosition.WithinString;
   }
 
   return StatementPosition.Unknown;
