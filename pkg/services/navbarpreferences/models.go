@@ -23,8 +23,6 @@ var (
 	errNavbarPreferenceAlreadyExists = errors.New("navbar preference with that name or UID already exists")
 	// errNavbarPreferenceNotFound is an error for when a navbar preference can't be found.
 	errNavbarPreferenceNotFound = errors.New("navbar preference could not be found")
-	// errNavbarPreferenceDashboardNotFound is an error for when a navbar preference connection can't be found.
-	errNavbarPreferenceDashboardNotFound = errors.New("navbar preference connection could not be found")
 )
 
 type GetNavbarPreferencesQuery struct {
