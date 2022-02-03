@@ -40,15 +40,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, models.ROLE_EDITOR, fn)
+func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
+	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, models.ROLE_EDITOR, fn, sqlStore)
 }
 
-func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
+func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
+		sc.sqlStore = sqlStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
@@ -156,6 +157,7 @@ type scenarioContext struct {
 	req                  *http.Request
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
+	sqlStore             sqlstore.Store
 }
 
 func (sc *scenarioContext) exec() {
