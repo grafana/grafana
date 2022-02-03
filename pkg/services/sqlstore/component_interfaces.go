@@ -1,6 +1,9 @@
 package sqlstore
 
-import "github.com/grafana/grafana/internal/components/datasource"
+import (
+	"github.com/google/wire"
+	"github.com/grafana/grafana/internal/components/datasource"
+)
 
 /*
 This exists as part of the intent-api labeled projects.
@@ -12,28 +15,30 @@ Until this comment is removed, if you are wondering if you should use things in 
 
 */
 
-var noBuild = datasource.DataSource{}
+var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
+	ProvideDataSourceSchemaStore,
+	wire.Bind(new(datasource.Store), new(*storeDS)),
+)
 
-// var SchemaStoreProvidersSet wire.ProviderSet = wire.NewSet(
-// 	ProviderDataSourceSchemaStore,
-// 	wire.Bind(new(datasource.Store), new(*storeDS)),
-// )
+func ProvideDataSourceSchemaStore(ss *SQLStore) *storeDS {
+	return &storeDS{
+		ss: ss,
+	}
+	// return an instantiate instance of storeDS with injected state it may need
+}
 
-// func ProviderDataSourceSchemaStore() *storeDS {
-// 	return &storeDS{}
-// 	// return an instantiate instance of storeDS with injected state it may need
-// }
+type storeDS struct {
+	ss *SQLStore
+}
 
-// type storeDS struct{}
+func (s storeDS) Get(uid string) (datasource.DataSource, error) {
+	return datasource.DataSource{}, nil
+}
 
-// func (s storeDS) Get(uid string) (datasource.DataSource, error) {
-// 	return datasource.DataSource{}, nil
-// }
+func (s storeDS) Upsert(uid string, ds datasource.DataSource) error {
+	return nil
+}
 
-// func (s storeDS) Upsert(uid string, ds datasource.DataSource) error {
-// 	return nil
-// }
-
-// func (s storeDS) Delete(uid string) error {
-// 	return nil
-// }
+func (s storeDS) Delete(uid string) error {
+	return nil
+}
