@@ -417,7 +417,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			dpath := filepath.Dir(fileName)
 			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
 				_ = level.Error(root).Log("Failed to create directory", "dpath", dpath, "err", err)
-				return errutil.Wrapf(err, "failed to create log directory %q", dpath)
+				continue
 			}
 			fileHandler := NewFileWriter()
 			fileHandler.Filename = fileName
@@ -429,7 +429,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
 				_ = level.Error(root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
-				return errutil.Wrapf(err, "failed to initialize file handler")
+				continue
 			}
 
 			loggersToClose = append(loggersToClose, fileHandler)
