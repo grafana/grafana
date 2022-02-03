@@ -35,7 +35,7 @@ const defaultProps = {
     },
     undefined,
     undefined,
-    (new EmptyLanguageProviderMock() as unknown) as PromQlLanguageProvider
+    new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider
   ),
   query: defaultQuery,
   onRunQuery: () => {},

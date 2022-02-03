@@ -53,7 +53,7 @@
     "postinstall": "husky install"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-3/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-4/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "lint-staged": {
@@ -82,7 +82,7 @@
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
-    "@grafana/eslint-config": "2.5.1",
+    "@grafana/eslint-config": "2.5.2",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.1.0-rc1",
     "@lingui/cli": "3.13.0",
@@ -200,7 +200,7 @@
     "postcss-loader": "6.2.1",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.2",
-    "prettier": "2.2.1",
+    "prettier": "2.5.1",
     "raw-loader": "4.0.2",
     "react-refresh": "0.11.0",
     "react-select-event": "^5.1.0",
@@ -221,7 +221,7 @@
     "ts-node": "10.4.0",
     "typescript": "4.4.4",
     "wait-on": "6.0.0",
-    "webpack": "5.67.0",
+    "webpack": "5.68.0",
     "webpack-bundle-analyzer": "4.5.0",
     "webpack-cli": "4.9.1",
     "webpack-dev-server": "4.7.2",
@@ -374,7 +374,7 @@
     "@rushstack/node-core-library": "3.45.0",
     "@rushstack/rig-package": "0.3.7",
     "@rushstack/ts-command-line": "4.10.6",
-    "@storybook/react/webpack": "5.67.0"
+    "@storybook/react/webpack": "5.68.0"
   },
   "workspaces": {
     "packages": [

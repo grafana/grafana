@@ -307,9 +307,9 @@ export function transformFromOTLP(
 /**
  * Transforms trace dataframes to the OpenTelemetry format
  */
-export function transformToOTLP(
-  data: MutableDataFrame
-): { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } {
+export function transformToOTLP(data: MutableDataFrame): {
+  batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[];
+} {
   let result: { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } = {
     batches: [],
   };
@@ -491,7 +491,12 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
     return emptyDataQueryResponse;
   }
 
-  parseJsonFields(frame);
+  try {
+    parseJsonFields(frame);
+  } catch (error) {
+    console.error(error);
+    return { error: { message: 'Unable to parse trace response: ' + error }, data: [] };
+  }
 
   let data = [...response.data];
   if (nodeGraph) {
