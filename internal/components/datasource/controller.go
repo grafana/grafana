@@ -30,7 +30,7 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 	// TODO should Thema-based approaches differ from pure k8s here? (research!)
 	if err := ctrl.NewControllerManagedBy(mgr).
 		Named("datasource-controller").
-		For(&DataSource{}).
+		// For(&DataSource{}).
 		Complete(reconcile.Func(d.Reconcile)); err != nil {
 		return nil, err
 	}
@@ -43,7 +43,8 @@ var errNotFound = errors.New("k8s obj not found")
 func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	ds := DataSource{}
 
-	err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
+	var err error
+	// err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {

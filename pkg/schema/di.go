@@ -12,7 +12,7 @@ import (
 )
 
 // Package state backing for RegisterCoreSchema.
-var cr *CoreRegistry
+var cr *CoreRegistry = &CoreRegistry{}
 
 // atomic guard on registry
 var regguard int32
@@ -181,10 +181,8 @@ func (r *schemaRegistry) Store(sch ObjectSchema) {
 }
 
 func (r *schemaRegistry) Load(name string) (ObjectSchema, bool) {
-	sch, ok := r.M.Load(name)
-	fmt.Println("<<<<", name, sch)
-	if sch == nil {
-		return nil, false
+	if sch, ok := r.M.Load(name); ok {
+		return sch.(ObjectSchema), ok
 	}
-	return sch.(ObjectSchema), ok
+	return nil, false
 }
