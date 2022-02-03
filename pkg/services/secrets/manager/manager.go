@@ -354,7 +354,7 @@ func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider 
 }
 
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
-	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProvider)
+	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
 	if err != nil {
 		return nil
 	}

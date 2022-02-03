@@ -35,7 +35,7 @@ type Store interface {
 	CreateDataKey(ctx context.Context, dataKey DataKey) error
 	CreateDataKeyWithDBSession(ctx context.Context, dataKey DataKey, sess *xorm.Session) error
 	DeleteDataKey(ctx context.Context, name string) error
-	ReEncryptDataKeys(ctx context.Context, providers map[string]Provider, currProvider string) error
+	ReEncryptDataKeys(ctx context.Context, providers map[ProviderID]Provider, currProvider ProviderID) error
 }
 
 // Provider is a key encryption key provider for envelope encryption
