@@ -2,7 +2,7 @@ import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
+import { calculateFontSize, measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import {
   StackingMode,
   VisibilityMode,
@@ -60,10 +60,17 @@ export interface BarsOptions {
 /**
  * @internal
  */
+interface ValueLabelTable {
+  [index: number]: ValueLabel[];
+}
+
+/**
+ * @internal
+ */
 interface ValueLabel {
   x: number;
   y: number;
-  textMetrics: TextMetrics;
+  bbox: Rect;
   text: string;
 }
 
@@ -360,7 +367,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
-    let labels: ValueLabel[] = [];
+    let labels: ValueLabelTable = {};
 
     barRects.forEach((r, i) => {
       let value = rawValue(r.sidx, r.didx);
@@ -385,45 +392,49 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           u.bbox.top +
           (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift);
 
-        // Add the position of the text to the Quadtree
-        // and retrieve metrics for text
-        const textMetrics = u.ctx.measureText(text);
-        labelQt.add({
-          x: x,
-          y: y - textMetrics.actualBoundingBoxAscent,
-          w: textMetrics.width,
-          h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
-        });
+        // Retrieve metrics for the text and calculate
+        // bounding boxes for auto-showing of value labels
+        const textMetrics = measureText(text, fontSize);
 
-        // Cache label placement information for render
-        labels.push({
+        if (labels[r.didx] === undefined) {
+          labels[r.didx] = [];
+        }
+
+        labels[r.didx].push({
+          text: text,
           x: x,
           y: y,
-          textMetrics: textMetrics,
-          text: text,
+          bbox: {
+            x: x,
+            y: y - textMetrics.actualBoundingBoxAscent / 2,
+            w: textMetrics.width,
+            h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+          },
         });
       }
     });
 
-    labels.forEach(({ x, y, text, textMetrics }, i) => {
-      const w = textMetrics.width,
-        h = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+    for (const didx in labels) {
+      for (let i = 0; i < labels[didx].length; i++) {
+        const { text, x, y, bbox } = labels[didx][i];
 
-      if (showValue === VisibilityMode.Always) {
-        u.ctx.fillText(text, x, y);
-      } else if (showValue === VisibilityMode.Auto) {
-        // Search the quad-tree to see if the label intersects
-        // any other labels
-        let intersectsLabel = false;
-        labelQt.get(x, y, w, h, (o) => {
-          if (intersects(x, y, w, h, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            intersectsLabel = true;
+        if (showValue === VisibilityMode.Always) {
+          u.ctx.fillText(text, x, y);
+        } else if (showValue === VisibilityMode.Auto) {
+          let intersectsLabel = false;
+
+          for (let j = 0; j < labels[didx].length; j++) {
+            const o: Rect = labels[didx][j].bbox;
+
+            if (i !== j && intersects(bbox, o)) {
+              intersectsLabel = true;
+            }
           }
-        });
 
-        !intersectsLabel && u.ctx.fillText(text, x, y);
+          !intersectsLabel && u.ctx.fillText(text, x, y);
+        }
       }
-    });
+    }
 
     u.ctx.restore();
   };

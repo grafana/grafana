@@ -14,19 +14,10 @@ export function pointWithin(px: number, py: number, rlft: number, rtop: number, 
 /**
  * @internal
  *
- * Determines if a rectangle intersects another rectangle.
+ * Determines if r2 is intersected by r1.
  */
-export function intersects(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  rlft: number,
-  rtop: number,
-  rrgt: number,
-  rbtm: number
-) {
-  return rlft <= x + w && rbtm <= y + h && rrgt >= x && rtop >= x;
+export function intersects(r1: Rect, r2: Rect) {
+  return r1.x <= r2.x + r2.w && r1.x + r1.w >= r2.x && r1.y + r1.h >= r2.y && r1.y <= r2.y + r2.h;
 }
 
 /**
