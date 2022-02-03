@@ -148,7 +148,7 @@ func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
 		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts)
 }
 
-func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {
+func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)
 }
 
@@ -263,7 +263,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if enableTeams(hs, c) {
+	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
