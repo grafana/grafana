@@ -1,8 +1,6 @@
 package definitions
 
 import (
-	"encoding/json"
-
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 )
 
@@ -163,14 +161,14 @@ type GetLibraryElementsParams struct {
 type CreateLibraryElementParam struct {
 	// in:body
 	// required:true
-	Body CreateLibraryElementCommand `json:"body"`
+	Body libraryelements.CreateLibraryElementCommand `json:"body"`
 }
 
 // swagger:parameters updateLibraryElement
 type UpdateLibraryElementParam struct {
 	// in:body
 	// required:true
-	Body PatchLibraryElementCommand `json:"body"`
+	Body libraryelements.PatchLibraryElementCommand `json:"body"`
 }
 
 // swagger:response getLibraryElementsResponse
@@ -189,45 +187,4 @@ type GetLibraryElementResponse struct {
 type GetLibraryElementConnectionsResponse struct {
 	// in: body
 	Body libraryelements.LibraryElementConnectionsResponse `json:"body"`
-}
-
-// CreateLibraryElementCommand is same as libraryelements.LibraryElementSearchResponse with swagger annotations
-// swagger:model
-type CreateLibraryElementCommand struct {
-	// ID of the folder where the library element is stored.
-	FolderID int64 `json:"folderId"`
-	// Name of the library element.
-	Name string `json:"name"`
-	// The JSON model for the library element.
-	// swagger:type object
-	Model json.RawMessage `json:"model"`
-	// Kind of element to create, Use 1 for library panels or 2 for c.
-	// Description:
-	// * 1 - library panels
-	// * 2 - library variables
-	// Enum: 1,2
-	Kind int64 `json:"kind" binding:"Required"`
-	// required: false
-	UID string `json:"uid"`
-}
-
-// patchLibraryElementCommand is same as libraryelements.patchLibraryElementCommand with swagger annotations
-// swagger:model
-type PatchLibraryElementCommand struct {
-	// ID of the folder where the library element is stored.
-	FolderID int64 `json:"folderId" binding:"Default(-1)"`
-	// Name of the library element.
-	Name string `json:"name"`
-	// The JSON model for the library element.
-	Model json.RawMessage `json:"model"`
-	// Kind of element to create, Use 1 for library panels or 2 for c.
-	// Description:
-	// * 1 - library panels
-	// * 2 - library variables
-	// Enum: 1,2
-	Kind int64 `json:"kind" binding:"Required"`
-	// Version of the library element you are updating.
-	Version int64 `json:"version" binding:"Required"`
-	// required: false
-	UID string `json:"uid"`
 }

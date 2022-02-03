@@ -7164,6 +7164,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -7171,14 +7179,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -7212,16 +7212,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -9659,10 +9659,12 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "CreateDashboardSnapshotCommand": {
-      "description": "CreateDashboardSnapshotCommand is same as models.CreateDashboardSnapshotCommand but with swagger annotations",
       "type": "object",
       "required": ["dashboard"],
       "properties": {
+        "Result": {
+          "$ref": "#/definitions/DashboardSnapshot"
+        },
         "dashboard": {
           "$ref": "#/definitions/Json"
         },
@@ -9679,7 +9681,7 @@
           "x-go-name": "Expires"
         },
         "external": {
-          "description": "Save the snapshot on an external server rather than locally.",
+          "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
           "type": "boolean",
           "default": false,
           "x-go-name": "External"
@@ -9695,7 +9697,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "CreateFolderCommand": {
       "type": "object",
@@ -9715,7 +9717,7 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "CreateLibraryElementCommand": {
-      "description": "CreateLibraryElementCommand is same as libraryelements.LibraryElementSearchResponse with swagger annotations",
+      "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
       "type": "object",
       "properties": {
         "folderId": {
@@ -9746,7 +9748,7 @@
           "x-go-name": "UID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
     },
     "CreateOrUpdateConfigCmd": {
       "type": "object",
@@ -10083,15 +10085,10 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "DashboardAclUpdateItem": {
-      "description": "DashboardAclUpdateItem is same as dtos.DashboardAclUpdateItem but with swagger annotations",
       "type": "object",
       "properties": {
         "permission": {
-          "description": "Permission level\nDescription:\n`1` - View\n`2` - Edit\n`4` - Admin",
-          "type": "integer",
-          "format": "int64",
-          "enum": [1, 2, 4],
-          "x-go-name": "Permission"
+          "$ref": "#/definitions/PermissionType"
         },
         "role": {
           "$ref": "#/definitions/RoleType"
@@ -10107,7 +10104,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "DashboardFullWithMeta": {
       "type": "object",
@@ -10237,6 +10234,65 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "DashboardSnapshot": {
+      "description": "DashboardSnapshot model",
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Dashboard": {
+          "$ref": "#/definitions/Json"
+        },
+        "DashboardEncrypted": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "DeleteKey": {
+          "type": "string"
+        },
+        "Expires": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "External": {
+          "type": "boolean"
+        },
+        "ExternalDeleteUrl": {
+          "type": "string"
+        },
+        "ExternalUrl": {
+          "type": "string"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Key": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "UserId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "DashboardSnapshotDTO": {
       "description": "DashboardSnapshotDTO without dashboard map",
@@ -12285,7 +12341,6 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/accesscontrol"
     },
     "MetricRequest": {
-      "description": "MetricRequest same as dtos.MetricRequest but with swagger annotations",
       "type": "object",
       "required": ["from", "to", "queries"],
       "properties": {
@@ -12324,7 +12379,7 @@
           "example": "now"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "MonthRange": {
       "type": "object",
@@ -12809,7 +12864,7 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "PatchLibraryElementCommand": {
-      "description": "patchLibraryElementCommand is same as libraryelements.patchLibraryElementCommand with swagger annotations",
+      "description": "PatchLibraryElementCommand is the command for patching a LibraryElement",
       "type": "object",
       "properties": {
         "folderId": {
@@ -12846,7 +12901,7 @@
           "x-go-name": "Version"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
     },
     "PauseAlertCommand": {
       "type": "object",
@@ -15125,11 +15180,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "UpdateDashboardAclCommand": {
-      "description": "UpdateDashboardAclCommand is same as dtos.UpdateDashboardAclCommand but with swagger annotations",
       "type": "object",
       "properties": {
         "items": {
-          "description": "The permission items to add/update. Items that are omitted from the list will be removed.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/DashboardAclUpdateItem"
@@ -15137,7 +15190,7 @@
           "x-go-name": "Items"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "UpdateDataSourceCommand": {
       "description": "Also acts as api DTO",
@@ -15306,7 +15359,6 @@
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "UpdatePrefsCmd": {
-      "description": "UpdatePrefsCmd is same as dtos.UpdatePrefsCmd but with swagger annotations",
       "type": "object",
       "properties": {
         "homeDashboardId": {
@@ -15318,16 +15370,20 @@
         },
         "theme": {
           "type": "string",
-          "enum": ["light", "dark", ""],
+          "enum": ["light", "dark"],
           "x-go-name": "Theme"
         },
         "timezone": {
           "type": "string",
-          "enum": ["utc", "browser", ""],
+          "enum": ["utc", "browser"],
           "x-go-name": "Timezone"
+        },
+        "weekStart": {
+          "type": "string",
+          "x-go-name": "WeekStart"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/docs/definitions"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "UpdateRoleCommand": {
       "type": "object",

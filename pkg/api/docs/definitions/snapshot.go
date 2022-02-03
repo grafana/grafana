@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -69,7 +68,7 @@ import (
 type CreateSnapshotParam struct {
 	// in:body
 	// required:true
-	Body CreateDashboardSnapshotCommand `json:"body"`
+	Body models.CreateDashboardSnapshotCommand `json:"body"`
 }
 
 // swagger:parameters getSnapshots
@@ -127,29 +126,4 @@ type GetSnapshotSharingOptionsResponse struct {
 		ExternalSnapshotName string `json:"externalSnapshotName"`
 		ExternalEnabled      bool   `json:"externalEnabled"`
 	} `json:"body"`
-}
-
-// CreateDashboardSnapshotCommand is same as models.CreateDashboardSnapshotCommand but with swagger annotations
-// swagger:model
-type CreateDashboardSnapshotCommand struct {
-	// The complete dashboard model.
-	// required:true
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	// Snapshot name
-	// required:false
-	Name string `json:"name"`
-	// When the snapshot should expire in seconds in seconds. Default is never to expire.
-	// required:false
-	// default:0
-	Expires int64 `json:"expires"`
-	// Save the snapshot on an external server rather than locally.
-	// required:false
-	// default: false
-	External bool `json:"external"`
-	// Define the unique key. Required if `external` is `true`.
-	// required:false
-	Key string `json:"key"`
-	// Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.
-	// required:false
-	DeleteKey string `json:"deleteKey"`
 }

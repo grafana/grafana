@@ -54,7 +54,7 @@ public/api-spec.json-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Gene
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-public/api-merged.json: public/api-spec.json ## Merge generated and ngalert API specs
+public/api-merged.json: public/api-spec.json pkg/services/ngalert/api/tooling/post.json ## Merge generated and ngalert API specs
 	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/post.json
 
 validate-api-spec: public/api-merged.json ## Validate API spec

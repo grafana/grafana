@@ -27,23 +27,11 @@ import "github.com/grafana/grafana/pkg/api/dtos"
 type UpdateUserPreferencesParam struct {
 	// in:body
 	// required:true
-	Body UpdatePrefsCmd `json:"body"`
+	Body dtos.UpdatePrefsCmd `json:"body"`
 }
 
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
 	Body dtos.Prefs `json:"body"`
-}
-
-// UpdatePrefsCmd is same as dtos.UpdatePrefsCmd but with swagger annotations
-// swagger:model
-type UpdatePrefsCmd struct {
-	// Enum: light,dark,
-	Theme string `json:"theme"`
-	// The numerical :id of a favorited dashboard
-	// Default:0
-	HomeDashboardID int64 `json:"homeDashboardId"`
-	// Enum: utc,browser,
-	Timezone string `json:"timezone"`
 }
