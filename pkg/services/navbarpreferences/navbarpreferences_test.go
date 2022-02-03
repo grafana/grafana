@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -110,4 +111,16 @@ func getCompareOptions() []cmp.Option {
 			return in.UTC().Unix()
 		}),
 	}
+}
+
+func validateAndUnMarshalResponse(t *testing.T, resp response.Response) NavbarPreferenceResponse {
+	t.Helper()
+
+	require.Equal(t, 200, resp.Status())
+
+	var result = NavbarPreferenceResponse{}
+	err := json.Unmarshal(resp.Body(), &result)
+	require.NoError(t, err)
+
+	return result
 }

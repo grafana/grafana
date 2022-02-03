@@ -29,7 +29,8 @@ func TestCreateNavbarPreference(t *testing.T) {
 			command := getCreateNavbarPreferenceCommand("explore", true)
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
-			if diff := cmp.Diff(expected, resp, getCompareOptions()...); diff != "" {
+			var result = validateAndUnMarshalResponse(t, resp)
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
