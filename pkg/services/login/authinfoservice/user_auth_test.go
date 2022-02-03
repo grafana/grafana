@@ -110,12 +110,11 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, "loginuser1")
 
 			// remove user
-			_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.Id)
-				require.NoError(t, err)
-
-				return nil
+			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.Id)
+				return err
 			})
+			require.NoError(t, err)
 
 			// get via user_auth for deleted user
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
