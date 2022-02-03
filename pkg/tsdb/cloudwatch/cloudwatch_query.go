@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type cloudWatchQuery struct {
@@ -25,6 +27,7 @@ type cloudWatchQuery struct {
 	UsedExpression   string
 	MetricQueryType  metricQueryType
 	MetricEditorMode metricEditorMode
+	FillMissing      *data.FillMissing
 }
 
 func (q *cloudWatchQuery) getGMDAPIMode() gmdApiMode {

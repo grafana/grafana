@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"math"
 	"regexp"
 	"sort"
@@ -166,6 +167,11 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		metricEditorModeValue = metricEditorMode(memv)
 	}
 
+	fillMissing := &data.FillMissing{
+		Mode:  data.FillMode(model.Get("fillMissing").Get("mode").MustInt(1)),
+		Value: model.Get("fillMissing").Get("value").MustFloat64(),
+	}
+
 	return &cloudWatchQuery{
 		RefId:            refId,
 		Region:           region,
@@ -183,6 +189,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		MetricQueryType:  metricQueryType,
 		MetricEditorMode: metricEditorModeValue,
 		SqlExpression:    sqlExpression,
+		FillMissing:      fillMissing,
 	}, nil
 }
 

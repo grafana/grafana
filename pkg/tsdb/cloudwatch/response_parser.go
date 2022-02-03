@@ -165,8 +165,7 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 			if j > 0 {
 				expectedTimestamp := metric.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
 				if expectedTimestamp.Before(*t) {
-					timestamps = append(timestamps, &expectedTimestamp)
-					points = append(points, nil)
+					timestamps, points = fillMissing(query.FillMissing, timestamps, expectedTimestamp, points, metric.Values[j-1])
 				}
 			}
 			val := metric.Values[j]
@@ -208,6 +207,29 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 	}
 
 	return frames, nil
+}
+
+func fillMissing(fillMissing *data.FillMissing, timestamps []*time.Time, expectedTimestamp time.Time, points []*float64,
+	previousPoint *float64) ([]*time.Time, []*float64) {
+	if fillMissing == nil {
+		fillMissing = &data.FillMissing{Mode: data.FillModeNull}
+	}
+	switch fillMissing.Mode {
+	case data.FillModePrevious:
+		timestamps = append(timestamps, &expectedTimestamp)
+		points = append(points, previousPoint)
+	case data.FillModeValue:
+		timestamps = append(timestamps, &expectedTimestamp)
+		points = append(points, &fillMissing.Value)
+	case data.FillModeNull:
+		timestamps = append(timestamps, &expectedTimestamp)
+		points = append(points, nil)
+	case 4: // do not fill missing
+	default:
+		timestamps = append(timestamps, &expectedTimestamp)
+		points = append(points, nil)
+	}
+	return timestamps, points
 }
 
 func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {

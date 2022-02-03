@@ -9,8 +9,10 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 )
 
 func loadGetMetricDataOutputsFromFile() ([]*cloudwatch.GetMetricDataOutput, error) {
@@ -426,5 +428,70 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, 30.0, *frame.Fields[1].At(3).(*float64))
 		assert.Equal(t, "Value", frame.Fields[1].Name)
 		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
+	})
+
+	t.Run("FillMissing with previous value fill mode", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &queryRowResponse{
+			Labels: []string{"lb"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"lb": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(120 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &cloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb"},
+				"TargetGroup":  {"tg"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			Alias:            "{{namespace}}_{{metric}}_{{stat}}",
+			MetricQueryType:  MetricQueryTypeSearch,
+			MetricEditorMode: MetricEditorModeBuilder,
+			FillMissing: &data.FillMissing{
+				Mode:  0,
+				Value: 0,
+			},
+		}
+		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
+		require.NoError(t, err)
+
+		frame := frames[0]
+		assert.Equal(t, 3, frame.Fields[1].Len())
+		assert.EqualValues(t, 10, *frame.Fields[1].At(0).(*float64))
+		assert.EqualValues(t, 10, *frame.Fields[1].At(1).(*float64))
+		assert.EqualValues(t, 20, *frame.Fields[1].At(2).(*float64))
+	})
+}
+
+func Test_fillMissing(t *testing.T) {
+	t.Run("fill mode previous value", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissing(
+			&data.FillMissing{Mode: 0, Value: 0},
+			[]*time.Time{},
+			time.Unix(0, 0).Add(60*time.Second),
+			[]*float64{pointer.Float64(1)},
+			nil,
+		)
+
+		_ = actualTimestamps
+		_ = actualPoints
 	})
 }
