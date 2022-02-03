@@ -6,18 +6,24 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
 )
 
-func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+func (s simpleSecret) rollback(
+	secretsSrv *manager.SecretsService,
+	encryptionSrv encryption.Internal,
+	sess *xorm.Session,
+	secretKey string,
+) error {
 	var rows []struct {
 		Id     int
 		Secret string
@@ -49,7 +55,7 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 			return err
 		}
 
-		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+		encrypted, err := encryptionSrv.Encrypt(context.Background(), decrypted, secretKey)
 		if err != nil {
 			return err
 		}
@@ -65,12 +71,17 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 		}
 	}
 
-	logger.Infof("Column %s from %s has been re-encrypted successfully\n", s.columnName, s.tableName)
+	logger.Infof("Column %s from %s have been rolled back successfully\n", s.columnName, s.tableName)
 
 	return nil
 }
 
-func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+func (s jsonSecret) rollback(
+	secretsSrv *manager.SecretsService,
+	encryptionSrv encryption.Internal,
+	sess *xorm.Session,
+	secretKey string,
+) error {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
@@ -94,7 +105,7 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 			SecureJsonData map[string][]byte
 		}
 
-		toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+		toUpdate.SecureJsonData, err = encryptionSrv.EncryptJsonData(context.Background(), decrypted, secretKey)
 		if err != nil {
 			return err
 		}
@@ -104,12 +115,17 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 		}
 	}
 
-	logger.Infof("Secure json data from %s has been re-encrypted successfully\n", s.tableName)
+	logger.Infof("Secure json data from %s have been rolled back successfully\n", s.tableName)
 
 	return nil
 }
 
-func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+func (s alertingSecret) rollback(
+	secretsSrv *manager.SecretsService,
+	encryptionSrv encryption.Internal,
+	sess *xorm.Session,
+	secretKey string,
+) error {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration string
@@ -140,7 +156,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 						return err
 					}
 
-					reencrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+					reencrypted, err := encryptionSrv.Encrypt(context.Background(), decrypted, secretKey)
 					if err != nil {
 						return err
 					}
@@ -161,19 +177,19 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 		}
 	}
 
-	logger.Info("Alerting secrets has been re-encrypted successfully\n")
+	logger.Info("Alerting secrets have rolled re-encrypted successfully\n")
 
 	return nil
 }
 
-func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
+func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	if !runner.Features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
 		return nil
 	}
 
 	toMigrate := []interface {
-		reencrypt(*manager.SecretsService, *xorm.Session) error
+		rollback(*manager.SecretsService, encryption.Internal, *xorm.Session, string) error
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", isBase64Encoded: false},
 		simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token", isBase64Encoded: true},
@@ -186,9 +202,17 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 
 	return runner.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		for _, m := range toMigrate {
-			if err := m.reencrypt(runner.SecretsService, sess.Session); err != nil {
+			if err := m.rollback(
+				runner.SecretsService,
+				runner.EncryptionService,
+				sess.Session,
+				runner.Cfg.SecretKey); err != nil {
 				return err
 			}
+		}
+
+		if _, err := sess.Exec("DELETE FROM data_keys"); err != nil {
+			logger.Warn("Error while cleaning up data keys table...", "err", err)
 		}
 
 		return nil
