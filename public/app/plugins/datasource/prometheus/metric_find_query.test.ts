@@ -9,19 +9,19 @@ import { PromOptions } from './types';
 import { FetchResponse } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
 const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
-const instanceSettings = ({
+const instanceSettings = {
   url: 'proxied',
   directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
-} as unknown) as DataSourceInstanceSettings<PromOptions>;
+} as unknown as DataSourceInstanceSettings<PromOptions>;
 const raw = {
   from: toUtc('2018-04-25 10:00'),
   to: toUtc('2018-04-25 11:00'),
@@ -56,7 +56,7 @@ describe('PrometheusMetricFindQuery', () => {
   });
 
   const setupMetricFindQuery = (data: any) => {
-    fetchMock.mockImplementation(() => of(({ status: 'success', data: data.response } as unknown) as FetchResponse));
+    fetchMock.mockImplementation(() => of({ status: 'success', data: data.response } as unknown as FetchResponse));
     return new PrometheusMetricFindQuery(ds, data.query);
   };
 
@@ -141,8 +141,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url:
-          'proxied/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+        url: 'proxied/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
         hideFromInspector: true,
         headers: {},
       });

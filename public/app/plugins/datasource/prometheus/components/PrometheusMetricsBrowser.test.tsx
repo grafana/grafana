@@ -132,7 +132,7 @@ describe('PrometheusMetricsBrowser', () => {
       theme: getTheme(),
       onChange: () => {},
       autoSelect: 0,
-      languageProvider: (mockLanguageProvider as unknown) as PromQlLanguageProvider,
+      languageProvider: mockLanguageProvider as unknown as PromQlLanguageProvider,
       lastUsedLabels: [],
       storeLastUsedLabels: () => {},
       deleteLastUsedLabels: () => {},

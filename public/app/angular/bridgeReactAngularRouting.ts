@@ -31,7 +31,7 @@ const interceptAngularLocation = () => {
       $provide.decorator('$location', [
         '$delegate',
         ($delegate: ILocationService) => {
-          $delegate = (new AngularLocationWrapper() as unknown) as ILocationService;
+          $delegate = new AngularLocationWrapper() as unknown as ILocationService;
           return $delegate;
         },
       ]);

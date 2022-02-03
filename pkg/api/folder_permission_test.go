@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,11 +35,11 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			dashboards.NewFolderService = origNewFolderService
 		})
 		mockFolderService(mock)
-
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 404, sc.resp.Code)
-		})
+		}, mockSQLStore)
 
 		cmd := dtos.UpdateDashboardAclCommand{
 			Items: []dtos.DashboardAclUpdateItem{
@@ -77,11 +78,11 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}
 
 		mockFolderService(mock)
-
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 403, sc.resp.Code)
-		})
+		}, mockSQLStore)
 
 		cmd := dtos.UpdateDashboardAclCommand{
 			Items: []dtos.DashboardAclUpdateItem{
@@ -130,7 +131,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}
 
 		mockFolderService(mock)
-
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
@@ -142,7 +143,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			assert.Len(t, resp, 5)
 			assert.Equal(t, int64(2), resp[0].UserId)
 			assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
-		})
+		}, mockSQLStore)
 
 		cmd := dtos.UpdateDashboardAclCommand{
 			Items: []dtos.DashboardAclUpdateItem{
@@ -325,6 +326,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		mockFolderService(mock)
 
 		var resp []*models.DashboardAclInfoDTO
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
@@ -337,7 +339,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
 			assert.Equal(t, int64(4), resp[1].UserId)
 			assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
-		})
+		}, mockSQLStore)
 
 		cmd := dtos.UpdateDashboardAclCommand{
 			Items: []dtos.DashboardAclUpdateItem{
