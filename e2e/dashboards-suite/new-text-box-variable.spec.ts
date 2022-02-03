@@ -10,10 +10,10 @@ describe('Variables - Text box', () => {
     // Create a new "Custom" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().type('Text box{enter}');
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().clear().type('VariableUnderTest').blur();
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type('Variable under test').blur();
-    e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput().type('cat-dog').blur();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Text box{enter}');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
+    e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2().type('cat-dog').blur();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().eq(0).should('have.text', 'cat-dog');
 
