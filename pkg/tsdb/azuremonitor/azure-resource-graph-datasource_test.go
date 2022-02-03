@@ -170,11 +170,6 @@ func TestUnmarshalResponse(t *testing.T) {
 		   ]
 		}
 	 }`
-	expectedErrMsgShort := `request failed, status: 400 Bad Request
-BadRequest: Please provide below info when asking for support: timestamp = 2022-01-17T15:50:07.9782199Z, correlationId = 7ba435e5-6371-458f-a1b5-1c7ffdba6ff4.
-Details:
-Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
-Unknown function: 'cout'.`
 	bodyWithLines := `{
 		"error":
 		{
@@ -202,21 +197,6 @@ Unknown function: 'cout'.`
 			]
 		}
 	}`
-	expectedErrMsgWithLines := `request failed, status: 400 Bad Request
-BadRequest: Please provide below info when asking for support: timestamp = 2021-06-04T05:09:13.1870573Z, correlationId = f1c5d97f-26db-4bdc-b023-1f0a862004db.
-Details:
-Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
-ParserFailure: line 2, "<"
-ParserFailure: line 4, pos 23, "<"`
-	bodyUnexpected := `{
-		"error":"I m an expected field but of wrong type ! "
-	}`
-	expectedErrMsgUnexpectedError := "request failed, status: 400 Bad Request, body: " + bodyUnexpected
-	bodyUnexpected2 := `{
-		"myerror":"I m completly unexpected and you won't know how to parse me ! ",
-		"code":"boom"
-	}`
-	expectedErrMsgUnexpectedError2 := "request failed, status: 400 Bad Request, body: " + bodyUnexpected2
 
 	tests := []struct {
 		name           string
@@ -224,24 +204,35 @@ ParserFailure: line 4, pos 23, "<"`
 		expectedErrMsg string
 	}{
 		{
-			name:           "short error",
-			body:           bodyShort,
-			expectedErrMsg: expectedErrMsgShort,
+			name: "short error",
+			body: bodyShort,
+			expectedErrMsg: `400 Bad Request. Error returned from Azure:
+BadRequest
+InvalidQuery: Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
+UnknownFunction: Unknown function: 'cout'.
+Please provide below info when asking for support: timestamp = 2022-01-17T15:50:07.9782199Z, correlationId = 7ba435e5-6371-458f-a1b5-1c7ffdba6ff4.`,
 		},
 		{
-			name:           "error with lines",
-			body:           bodyWithLines,
-			expectedErrMsg: expectedErrMsgWithLines,
+			name: "error with lines",
+			body: bodyWithLines,
+			expectedErrMsg: `400 Bad Request. Error returned from Azure:
+BadRequest
+InvalidQuery: Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
+ParserFailure: ParserFailure at line 2: "<"
+ParserFailure: ParserFailure at line 4, col 23: "<"
+Please provide below info when asking for support: timestamp = 2021-06-04T05:09:13.1870573Z, correlationId = f1c5d97f-26db-4bdc-b023-1f0a862004db.`,
 		},
 		{
-			name:           "unexpected error format",
-			body:           bodyUnexpected,
-			expectedErrMsg: expectedErrMsgUnexpectedError,
+			name: "unexpected error format",
+			body: `{"error":"I m an expected field but of wrong type ! "}`,
+			expectedErrMsg: `400 Bad Request. Error returned from Azure:
+{"error":"I m an expected field but of wrong type ! "}`,
 		},
 		{
-			name:           "unexpected error format",
-			body:           bodyUnexpected2,
-			expectedErrMsg: expectedErrMsgUnexpectedError2,
+			name: "unexpected error format",
+			body: `{"myerror":"I m completly unexpected and you won't know how to parse me ! ","code":"boom"}`,
+			expectedErrMsg: `400 Bad Request. Error returned from Azure:
+{"myerror":"I m completly unexpected and you won't know how to parse me ! ","code":"boom"}`,
 		},
 	}
 

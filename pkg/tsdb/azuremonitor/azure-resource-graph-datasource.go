@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
@@ -236,45 +237,14 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}()
 
 	if res.StatusCode/100 != 2 {
-		type ErrorObject struct {
-			Code    string `json:"code"`
-			Message string `json:"message"`
-			Details []struct {
-				Code                    string `json:"code"`
-				Message                 string `json:"message"`
-				Line                    int    `json:"line,omitempty"`
-				CharacterPositionInLine int    `json:"characterPositionInLine,omitempty"`
-				Token                   string `json:"token,omitempty"`
-			} `json:"details"`
-		}
-		type errorResponse struct {
-			ErrorObject `json:"error"`
-		}
-
-		er := errorResponse{}
-
-		err = json.Unmarshal(body, &er)
-		if err != nil || er.Code == "" || er.Message == "" {
-			azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-			return AzureResourceGraphResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
-		}
-
-		errString := er.Code + ": " + er.Message + "\nDetails:"
-		for _, d := range er.Details {
-			errString += "\n" + d.Message
-			if d.Line != 0 {
-				errString += ": line " + fmt.Sprint(d.Line)
-			}
-			if d.CharacterPositionInLine != 0 {
-				errString += ", pos " + fmt.Sprint(d.CharacterPositionInLine)
-			}
-			if d.Token != "" {
-				errString += `, "` + string(d.Token) + `"`
-			}
-		}
-
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureResourceGraphResponse{}, fmt.Errorf("request failed, status: %s\n%s", res.Status, errString)
+		parsedError, err := utils.ParseError(body)
+		// if there was any kind of error while parsing, we default to previous behaviour of sending the whole response body
+		if err != nil {
+			azlog.Warn("Failed to parse error", "err", err, "body", string(body))
+			return AzureResourceGraphResponse{}, fmt.Errorf("%s. Error returned from Azure:\n%s", res.Status, string(body))
+		}
+		return AzureResourceGraphResponse{}, fmt.Errorf("%s. Error returned from Azure:\n%s", res.Status, parsedError)
 	}
 
 	var data AzureResourceGraphResponse
