@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -42,18 +44,23 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	return toJsonStreamingResponse(resp)
 }
 
-func dashboardAndPanelExist(c *models.ReqContext, dashboardId, panelId string) bool {
+func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) error {
+	if dashboardId == "" || panelId == "" {
+		// TODO: make a real error with a status code
+		return models.ErrDashboardOrPanelIdentifierNotSet
+	}
+
 	id, err := strconv.ParseInt(dashboardId, 10, 64)
 	if err != nil {
-		return false //response.Error(http.StatusBadRequest, "id is invalid", err)
+		return err //response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
 	query := models.GetDashboardQuery{
 		Id: id,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
-		return false
+	if err := bus.Dispatch(ctx, &query); err != nil {
+		return err
 		//if errors.Is(err, models.ErrDataSourceNotFound) {
 		///return response.Error(404, "Data source not found", nil)
 		//}
@@ -67,24 +74,40 @@ func dashboardAndPanelExist(c *models.ReqContext, dashboardId, panelId string) b
 	// for this yet, but would most likely be a bug and return an error from
 	// bus.Dispatch
 	if query.Result == nil {
-		return false
+		// TODO: make a real error with a status code
+		return errors.New("missing result from dashboard query")
 	}
 
 	dashboard := query.Result
 
 	// dashboard saved but no panels
 	if dashboard.Data == nil {
-		return false
+		// TODO: make a real error with a status code
+		return errors.New("dashboard has no panels")
 	}
 
-	// not entirely sure this is how we determine a panelId.
-	_, exists := dashboard.Data.Get("results").CheckGet(panelId)
-	if exists {
-		return true
+	pId, err := strconv.ParseInt(panelId, 10, 64)
+	if err != nil {
+		return err //response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+
+	// FIXME: This is ugly and probably expensive.
+	panels := dashboard.Data.Get("panels")
+	for i := 0; ; i++ {
+		panel, ok := panels.CheckGetIndex(i)
+		if !ok {
+			break
+		}
+		panelJson, _ := panel.MarshalJSON()
+		fmt.Printf("Panel %d Id: %d (== %d? %v) from %s\n", i, panel.Get("id").MustInt64(-1), pId, pId == panel.Get("id").MustInt64(-1), string(panelJson))
+
+		if panel.Get("id").MustInt64(-1) == pId {
+			return nil
+		}
 	}
 
 	// no panel with that ID
-	return false
+	return models.ErrDashboardPanelNotFound
 }
 
 // QueryMetricsV2 returns query metrics.
@@ -99,14 +122,15 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	dashboardId := params[":dashboardId"]
 	panelId := params[":panelId"]
 
-	if dashboardId == "" || panelId == "" {
-		// NOTE: Is this an appropriate status code?
-		return response.Error(http.StatusForbidden, "missing dashboard or panel ID", nil)
-	}
-
 	// 404 if dashboard or panel not found
-	if !dashboardAndPanelExist(c, dashboardId, panelId) {
-		return response.Error(http.StatusNotFound, "Dashboard or panel not found", nil)
+	if err := checkDashboardAndPanel(c.Req.Context(), dashboardId, panelId); err != nil {
+		// TODO: return the status code from the error like so:
+		c.Logger.Debug("Failed to find dashboard or panel for validated query", "err", err)
+		var dashboardErr models.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
+		return response.Error(http.StatusNotFound, "Dashboard or panel not found", err)
 	}
 
 	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipCache, reqDTO, true)
