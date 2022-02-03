@@ -24,7 +24,7 @@ Continuous color interpolates a color using the percentage of a value relative t
 <div class="clearfix"></div>
 
 | Color mode                      | Description                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | **Single color**                | Specify a single color, useful in an override rule                                                                                                       |
 | **From thresholds**             | Informs Grafana to take the color from the matching threshold                                                                                            |
 | **Classic palette**             | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
@@ -33,6 +33,6 @@ Continuous color interpolates a color using the percentage of a value relative t
 | **Blues (by value)**            | Continuous color scheme (panel background to blue)                                                                                                       |
 | **Reds (by value)**             | Continuous color scheme (panel background color to blue)                                                                                                 |
 | **Greens (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Purple (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 | . |
+| **Purple (by value)**           | Continuous color scheme (panel background color to blue)                                                                                                 | .   |
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}

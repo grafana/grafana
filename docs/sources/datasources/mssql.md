@@ -202,7 +202,7 @@ Data frame result:
 +---------------------+-----------------+
 ```
 
-**Example using the fill parameter in the \$\_\_timeGroup macro to convert null values to be zero instead:**
+**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
 
 ```sql
 SELECT

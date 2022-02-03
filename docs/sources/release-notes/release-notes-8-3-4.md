@@ -30,7 +30,7 @@ list = false
 - **Login:** Page no longer overflows on mobile. [#43739](https://github.com/grafana/grafana/pull/43739), [@ashharrison90](https://github.com/ashharrison90)
 - **Plugins:** Set backend metadata property for core plugins. [#43349](https://github.com/grafana/grafana/pull/43349), [@marefr](https://github.com/marefr)
 - **Prometheus:** Fill missing steps with null values. [#43622](https://github.com/grafana/grafana/pull/43622), [@ivanahuckova](https://github.com/ivanahuckova)
-- **Prometheus:** Fix interpolation of \$\_\_rate_interval variable. [#44035](https://github.com/grafana/grafana/pull/44035), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Fix interpolation of $\_\_rate_interval variable. [#44035](https://github.com/grafana/grafana/pull/44035), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Prometheus:** Interpolate variables with curly brackets syntax. [#42927](https://github.com/grafana/grafana/pull/42927), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Prometheus:** Respect the http-method data source setting. [#42753](https://github.com/grafana/grafana/pull/42753), [@gabor](https://github.com/gabor)
 - **Table:** Fixes issue with field config applied to wrong fields when hiding columns. [#43376](https://github.com/grafana/grafana/pull/43376), [@torkelo](https://github.com/torkelo)
