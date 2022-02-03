@@ -158,7 +158,6 @@ function generateLegendItems(
   return [...new Array(numberOfSeries)].map((item, i) => {
     return {
       label: `${alphabet[i].toUpperCase()}-series`,
-      name: `${alphabet[i].toUpperCase()}-series`,
       color: colors[i],
       yAxis: 1,
       displayValues: statsToDisplay || [],
