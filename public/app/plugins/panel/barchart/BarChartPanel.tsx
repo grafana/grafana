@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
+import React, { createRef, useMemo, useRef, useState } from 'react';
 import { TooltipDisplayMode, StackingMode, LegendDisplayMode } from '@grafana/schema';
 import {
+  CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
   getFieldDisplayName,
@@ -13,20 +14,34 @@ import {
   GraphNGProps,
   measureText,
   PlotLegend,
-  TooltipPlugin,
+  Portal,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
   useTheme2,
   VizLayout,
   VizLegend,
+  VizTooltipContainer,
 } from '@grafana/ui';
+import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { useOverlay } from '@react-aria/overlays';
+import { useMountedState } from 'react-use';
+import { positionTooltip } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin';
+import { PanelDataErrorView } from '@grafana/runtime';
+
 import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
-import { PanelDataErrorView } from '@grafana/runtime';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
-import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+
+export interface HoverEvent {
+  xIndex: number;
+  yIndex: number;
+  pageX: number;
+  pageY: number;
+}
+
+const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -56,6 +71,21 @@ interface Props extends PanelProps<PanelOptions> {}
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
+
+  let oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+
+  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
+  const [isToolTipOpen, setIsToolTipOpen] = useState<boolean>(false);
+  const isMounted = useMountedState();
+  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
+  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+
+  const onCloseToolTip = () => {
+    setIsToolTipOpen(false);
+  };
+  const ref = createRef<HTMLElement>();
+  const { overlayProps } = useOverlay({ onClose: onCloseToolTip, isDismissable: true, isOpen: isToolTipOpen }, ref);
 
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
@@ -98,35 +128,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       return options.xTickLabelMaxLength;
     }
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
-
-  // Force 'multi' tooltip setting or stacking mode
-  const tooltip = useMemo(() => {
-    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
-      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
-    }
-    return options.tooltip;
-  }, [options.tooltip, options.stacking]);
-
-  if (!info.viz?.fields.length) {
-    return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
-  }
-
-  const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
-    const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
-    if (field) {
-      const disp = getFieldDisplayName(field, alignedFrame);
-      seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
-    }
-
-    return (
-      <DataHoverView
-        data={info.aligned}
-        rowIndex={datapointIdx}
-        columnIndex={seriesIdx}
-        sortOrder={options.tooltip.sort}
-      />
-    );
-  };
 
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
@@ -220,14 +221,102 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
     >
       {(config, alignedFrame) => {
+        if (oldConfig.current !== config) {
+          let rect: DOMRect;
+          // rect of .u-over (grid area)
+          config.addHook('syncRect', (u, r) => {
+            rect = r;
+          });
+
+          const tooltipInterpolator = config.getTooltipInterpolator();
+          if (tooltipInterpolator) {
+            config.addHook('setCursor', (u) => {
+              tooltipInterpolator(
+                setFocusedSeriesIdx,
+                setFocusedPointIdx,
+                (clear) => {
+                  if (clear) {
+                    setCoords(null);
+                    return;
+                  }
+
+                  if (!rect) {
+                    return;
+                  }
+
+                  const { x, y } = positionTooltip(u, rect);
+                  if (x !== undefined && y !== undefined) {
+                    setCoords({ x, y });
+                  }
+                },
+                u
+              );
+            });
+          }
+
+          config.addHook('setLegend', (u) => {
+            if (!isMounted()) {
+              return;
+            }
+            setFocusedPointIdx(u.legend.idx!);
+            if (u.cursor.idxs != null) {
+              for (let i = 0; i < u.cursor.idxs.length; i++) {
+                const sel = u.cursor.idxs[i];
+                if (sel != null) {
+                  const hover: HoverEvent = {
+                    xIndex: sel,
+                    yIndex: 0,
+                    pageX: rect.left + u.cursor.left!,
+                    pageY: rect.top + u.cursor.top!,
+                  };
+                  setHover(hover);
+
+                  return; // only show the first one
+                }
+              }
+            }
+
+            if (!isToolTipOpen) {
+              setHover(undefined);
+            }
+          });
+
+          config.addHook('setSeries', (_, idx) => {
+            if (!isMounted()) {
+              return;
+            }
+            setFocusedSeriesIdx(idx);
+          });
+
+          oldConfig.current = config;
+        }
+
+        let seriesIdx = focusedSeriesIdx;
+        const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
+        if (field) {
+          const disp = getFieldDisplayName(field, alignedFrame);
+          seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
+        }
+
         return (
-          <TooltipPlugin
-            data={alignedFrame}
-            config={config}
-            mode={tooltip.mode}
-            timeZone={timeZone}
-            renderTooltip={renderTooltip}
-          />
+          <Portal>
+            {hover && coords && (
+              <VizTooltipContainer
+                position={{ x: coords.x, y: coords.y }}
+                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                allowPointerEvents
+              >
+                <section ref={ref} {...overlayProps}>
+                  <DataHoverView
+                    data={info.aligned}
+                    rowIndex={focusedPointIdx}
+                    columnIndex={seriesIdx}
+                    sortOrder={options.tooltip.sort}
+                  />
+                </section>
+              </VizTooltipContainer>
+            )}
+          </Portal>
         );
       }}
     </GraphNG>
