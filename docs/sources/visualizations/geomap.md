@@ -23,7 +23,7 @@ The initial view configures how the GeoMap panel renders when the panel is first
 - **View** sets the center for the map when the panel first loads.
 - **Latitude** (available when the **View** mode is _Coordinates_)
 - **Longitude** (available when the **View** mode is _Coordinates_)
-- **Zoom** sets the initial zoom level for the GeoMap panel.
+- **Zoom** sets the initial zoom level for the GeoMap panel, or the initial maximum zoom level in case the _Fit data layers_ view is selected.
 
 ## Data layer
 

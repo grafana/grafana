@@ -9,9 +9,14 @@ interface MapCenterItems extends RegistryItem {
 export enum MapCenterID {
   Zero = 'zero',
   Coordinates = 'coords',
+  Fit = 'fit',
 }
 
 export const centerPointRegistry = new Registry<MapCenterItems>(() => [
+  {
+    id: MapCenterID.Fit as string,
+    name: 'Fit data layers',
+  },
   {
     id: MapCenterID.Zero as string,
     name: '(0°, 0°)',
