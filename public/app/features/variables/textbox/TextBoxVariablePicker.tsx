@@ -39,9 +39,10 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
     variableAdapters.get(variable.type).updateOptions(variable);
   }, [variable, updatedValue, dispatch, onVariableChange]);
 
-  const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value), [
-    setUpdatedValue,
-  ]);
+  const onChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
+    [setUpdatedValue]
+  );
 
   const onBlur = (e: FocusEvent<HTMLInputElement>) => updateVariable();
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
