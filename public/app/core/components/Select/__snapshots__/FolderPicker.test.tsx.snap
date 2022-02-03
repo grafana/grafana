@@ -17,22 +17,5 @@ exports[`FolderPicker should render 1`] = `
     tabSelectsValue={false}
     value={null}
   />
-  <Modal
-    isOpen={false}
-    onClickBackdrop={[Function]}
-    onDismiss={[Function]}
-    title="New dashboard folder"
-  >
-    <Form
-      defaultValues={
-        Object {
-          "folderName": "",
-        }
-      }
-      onSubmit={[Function]}
-    >
-      <Component />
-    </Form>
-  </Modal>
 </div>
 `;

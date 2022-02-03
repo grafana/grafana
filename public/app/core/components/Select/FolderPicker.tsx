@@ -149,7 +149,7 @@ const FolderPicker: FC<Props> = ({
       <AsyncSelect
         // this small "hack" will essentially re-render the select component when we've created a new folder
         // (or selected a new folder, unfortunately)
-        key={JSON.stringify(folder)}
+        key={folder?.title}
         inputId={inputId}
         aria-label={selectors.components.FolderPicker.input}
         loadingMessage="Loading folders..."
