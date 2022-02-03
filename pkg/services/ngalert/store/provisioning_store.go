@@ -27,11 +27,11 @@ type ProvisioningStore interface {
 }
 
 func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
-	recordType := o.GetResourceTypeIdentifier()
-	recordKey := o.GetResourceUniqueIdentifier()
+	recordType := o.ResourceTypeID()
+	recordKey := o.ResourceID()
 
 	provenance := models.ProvenanceNone
-	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		result := make([]*provenanceRecord, 0)
 		q := "SELECT * FROM provenance_type WHERE record_key = ? AND record_type = ? ORDER BY id ASC LIMIT 1"
 		params := []interface{}{recordKey, recordType}
@@ -53,8 +53,8 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (mo
 }
 
 func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
-	recordType := o.GetResourceTypeIdentifier()
-	recordKey := o.GetResourceUniqueIdentifier()
+	recordType := o.ResourceTypeID()
+	recordKey := o.ResourceID()
 
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: Add a unit-of-work pattern, so updating objects + provenance will happen consistently with rollbacks across stores.

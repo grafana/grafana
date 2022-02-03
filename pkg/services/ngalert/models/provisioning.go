@@ -9,6 +9,6 @@ const (
 )
 
 type Provisionable interface {
-	GetResourceTypeIdentifier() string
-	GetResourceUniqueIdentifier() string
+	ResourceTypeID() string
+	ResourceID() string
 }
