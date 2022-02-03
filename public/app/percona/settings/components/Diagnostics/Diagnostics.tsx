@@ -23,6 +23,7 @@ export const Diagnostics: FC = () => {
         </Tooltip>
       </div>
       <LinkButton
+        target="_blank"
         href="/logs.zip"
         className={styles.diagnosticsButton}
         variant="secondary"
