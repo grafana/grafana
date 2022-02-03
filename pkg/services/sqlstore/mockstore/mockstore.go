@@ -34,6 +34,10 @@ func (m SQLStoreMock) GetDashboardSnapshot(query *models.GetDashboardSnapshotQue
 	return m.ExpectedError
 }
 
+func (m SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+	return m.ExpectedError
+}
+
 func (m SQLStoreMock) SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
 	return m.ExpectedError
 }
