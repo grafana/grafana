@@ -124,46 +124,28 @@ export class ShareLink extends PureComponent<Props, State> {
           </Field>
         </FieldSet>
 
-        {panel && config.rendererAvailable && (
-          <>
-            {isDashboardSaved && (
-              <div className="gf-form">
-                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" /> Direct link rendered image
-                </a>
-              </div>
-            )}
-            {panel && !config.rendererAvailable && (
-              <Alert severity="info" title="Image Renderer plugin not installed">
-                <p>
-                  <>To render a panel image, you must install the </>
-                  <a
-                    href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to/render-dashboard-images.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="external-link"
-                  >
-                    Image Renderer plugin
-                  </a>
-                  . Please contact your PMM administrator to install the plugin.
-                </p>
-              </Alert>
-            )}
-          </>
+        {panel && config.rendererAvailable && isDashboardSaved && (
+          <div className="gf-form">
+            <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+              <Icon name="camera" /> Direct link rendered image
+            </a>
+          </div>
         )}
 
         {panel && !config.rendererAvailable && (
-          <Alert severity="info" title="Image renderer plugin not installed" bottomSpacing={0}>
-            <>To render a panel image, you must install the </>
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
-              Grafana image renderer plugin
-            </a>
-            . Please contact your Grafana administrator to install the plugin.
+          <Alert severity="info" title="Image Renderer plugin not installed">
+            <p>
+              <>To render a panel image, you must install the </>
+              <a
+                href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to/render-dashboard-images.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="external-link"
+              >
+                Image Renderer plugin
+              </a>
+              . Please contact your PMM administrator to install the plugin.
+            </p>
           </Alert>
         )}
       </>
