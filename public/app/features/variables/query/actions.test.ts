@@ -68,9 +68,9 @@ describe('query actions', () => {
 
   beforeEach(() => {
     originalTimeSrv = getTimeSrv();
-    setTimeSrv(({
+    setTimeSrv({
       timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
-    } as unknown) as TimeSrv);
+    } as unknown as TimeSrv);
     setVariableQueryRunner(new VariableQueryRunner());
   });
 
@@ -269,7 +269,7 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and metricsource without value is available', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
-      const testMetricSource = { name: 'test', value: (null as unknown) as string, meta: {} };
+      const testMetricSource = { name: 'test', value: null as unknown as string, meta: {} };
       const editor = {};
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);

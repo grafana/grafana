@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -112,7 +111,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	err = updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
+	err = hs.SQLStore.UpdateUserPermissions(userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
@@ -229,11 +228,4 @@ func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
-}
-
-// updateUserPermissions updates the user's permissions.
-//
-// Stubbable by tests.
-var updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
-	return sqlStore.UpdateUserPermissions(userID, isAdmin)
 }

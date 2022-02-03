@@ -18,7 +18,7 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
+    'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
@@ -226,7 +226,7 @@ def get_steps(edition, ver_mode):
         copy_packages_for_docker_step(),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
-        e2e_tests_server_step(edition=edition),
+        grafana_server_step(edition=edition),
     ])
 
     if not disable_tests:
@@ -285,7 +285,7 @@ def get_oss_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -308,7 +308,7 @@ def get_oss_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode),
+                'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
                 'oss-test-{}'.format(ver_mode),
                 'oss-integration-tests-{}'.format(ver_mode)
             ]

@@ -7,26 +7,28 @@ package log
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	gokitlog "github.com/go-kit/log"
-	"github.com/go-kit/log/term"
 	"github.com/go-stack/stack"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var loggersToClose []DisposableHandler
 var loggersToReload []ReloadableHandler
-var filters map[string]level.Option
-var Root MultiLoggers
+var root *logManager
 
 const (
 	// top 7 calls in the stack are within logger
@@ -37,8 +39,212 @@ const (
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
-	filters = map[string]level.Option{}
-	Root.AddLogger(gokitlog.NewLogfmtLogger(os.Stderr), "info", filters)
+
+	// Use console by default
+	format := getLogFormat("console")
+	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
+	root = newManager(logger)
+}
+
+// logManager manage loggers
+type logManager struct {
+	*ConcreteLogger
+	loggersByName map[string]*ConcreteLogger
+	logFilters    []LogWithFilters
+	mutex         sync.RWMutex
+}
+
+func newManager(logger gokitlog.Logger) *logManager {
+	return &logManager{
+		ConcreteLogger: newConcreteLogger(logger),
+		loggersByName:  map[string]*ConcreteLogger{},
+	}
+}
+
+func (lm *logManager) initialize(loggers []LogWithFilters) {
+	lm.mutex.Lock()
+	defer lm.mutex.Unlock()
+
+	defaultLoggers := make([]gokitlog.Logger, len(loggers))
+	for index, logger := range loggers {
+		defaultLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)
+	}
+
+	lm.ConcreteLogger.SetLogger(&compositeLogger{loggers: defaultLoggers})
+	lm.logFilters = loggers
+
+	loggersByName := []string{}
+	for k := range lm.loggersByName {
+		loggersByName = append(loggersByName, k)
+	}
+	sort.Strings(loggersByName)
+
+	for _, name := range loggersByName {
+		ctxLoggers := make([]gokitlog.Logger, len(loggers))
+
+		for index, logger := range loggers {
+			if filterLevel, exists := logger.filters[name]; !exists {
+				ctxLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)
+			} else {
+				ctxLoggers[index] = level.NewFilter(logger.val, filterLevel)
+			}
+		}
+
+		lm.loggersByName[name].SetLogger(&compositeLogger{loggers: ctxLoggers})
+	}
+}
+
+func (lm *logManager) SetLogger(logger gokitlog.Logger) {
+	lm.ConcreteLogger.SetLogger(logger)
+}
+
+func (lm *logManager) GetLogger() gokitlog.Logger {
+	return lm.ConcreteLogger.GetLogger()
+}
+
+func (lm *logManager) Log(args ...interface{}) error {
+	lm.mutex.RLock()
+	defer lm.mutex.RUnlock()
+	if err := lm.ConcreteLogger.Log(args...); err != nil {
+		log.Println("Logging error", "error", err)
+	}
+
+	return nil
+}
+
+func (lm *logManager) New(ctx ...interface{}) *ConcreteLogger {
+	lm.mutex.Lock()
+	defer lm.mutex.Unlock()
+	if len(ctx) == 0 {
+		return lm.ConcreteLogger
+	}
+
+	loggerName, ok := ctx[0].(string)
+	if !ok {
+		return lm.ConcreteLogger
+	}
+
+	if logger, exists := lm.loggersByName[loggerName]; exists {
+		return logger
+	}
+
+	ctx = append([]interface{}{"logger"}, ctx...)
+
+	if len(lm.logFilters) == 0 {
+		ctxLogger := newConcreteLogger(lm.logger, ctx...)
+		lm.loggersByName[loggerName] = ctxLogger
+		return ctxLogger
+	}
+
+	compositeLogger := newCompositeLogger()
+	for _, logWithFilter := range lm.logFilters {
+		filterLevel, ok := logWithFilter.filters[loggerName]
+		if ok {
+			logWithFilter.val = level.NewFilter(logWithFilter.val, filterLevel)
+		} else {
+			logWithFilter.val = level.NewFilter(logWithFilter.val, logWithFilter.maxLevel)
+		}
+
+		compositeLogger.loggers = append(compositeLogger.loggers, logWithFilter.val)
+	}
+
+	ctxLogger := newConcreteLogger(compositeLogger, ctx...)
+	lm.loggersByName[loggerName] = ctxLogger
+	return ctxLogger
+}
+
+type ConcreteLogger struct {
+	ctx    []interface{}
+	logger gokitlog.Logger
+	mutex  sync.RWMutex
+}
+
+func newConcreteLogger(logger gokitlog.Logger, ctx ...interface{}) *ConcreteLogger {
+	if len(ctx) == 0 {
+		ctx = []interface{}{}
+	} else {
+		logger = gokitlog.With(logger, ctx...)
+	}
+
+	return &ConcreteLogger{
+		ctx:    ctx,
+		logger: logger,
+	}
+}
+
+func (cl *ConcreteLogger) SetLogger(logger gokitlog.Logger) {
+	cl.mutex.Lock()
+	cl.logger = gokitlog.With(logger, cl.ctx...)
+	cl.mutex.Unlock()
+}
+
+func (cl *ConcreteLogger) GetLogger() gokitlog.Logger {
+	cl.mutex.Lock()
+	defer cl.mutex.Unlock()
+	return cl.logger
+}
+
+func (cl *ConcreteLogger) Warn(msg string, args ...interface{}) {
+	_ = cl.log(msg, level.WarnValue(), args...)
+}
+
+func (cl *ConcreteLogger) Debug(msg string, args ...interface{}) {
+	// args = append([]interface{}{level.Key(), level.DebugValue(), "msg", msg}, args...)
+	_ = cl.log(msg, level.DebugValue(), args...)
+}
+
+func (cl *ConcreteLogger) Error(msg string, args ...interface{}) {
+	_ = cl.log(msg, level.ErrorValue(), args...)
+}
+
+func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
+	_ = cl.log(msg, level.InfoValue(), args...)
+}
+
+func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
+	cl.mutex.RLock()
+	logger := gokitlog.With(cl.logger, "t", gokitlog.TimestampFormat(time.Now, "2006-01-02T15:04:05.99-0700"))
+	cl.mutex.RUnlock()
+
+	args = append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)
+
+	return logger.Log(args...)
+}
+
+func (cl *ConcreteLogger) Log(keyvals ...interface{}) error {
+	cl.mutex.RLock()
+	defer cl.mutex.RUnlock()
+	return cl.logger.Log(keyvals...)
+}
+
+func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
+	if len(ctx) == 0 {
+		root.New()
+	}
+
+	keyvals := []interface{}{}
+
+	if len(cl.ctx)%2 == 1 {
+		cl.ctx = append(cl.ctx, nil)
+	}
+
+	for i := 0; i < len(cl.ctx); i += 2 {
+		k, v := cl.ctx[i], cl.ctx[i+1]
+
+		if k == "logger" {
+			continue
+		}
+
+		keyvals = append(keyvals, k, v)
+	}
+
+	keyvals = append(keyvals, ctx...)
+
+	return root.New(keyvals...)
+}
+
+func New(ctx ...interface{}) *ConcreteLogger {
+	return root.New(ctx...)
 }
 
 type LogWithFilters struct {
@@ -47,111 +253,23 @@ type LogWithFilters struct {
 	maxLevel level.Option
 }
 
-type MultiLoggers struct {
-	loggers []LogWithFilters
-}
-
-func (ml *MultiLoggers) AddLogger(val gokitlog.Logger, levelName string, filters map[string]level.Option) {
-	logger := LogWithFilters{val: val, filters: filters, maxLevel: getLogLevelFromString(levelName)}
-	ml.loggers = append(ml.loggers, logger)
-}
-
-func (ml *MultiLoggers) SetLogger(des MultiLoggers) {
-	ml.loggers = des.loggers
-}
-
-func (ml *MultiLoggers) GetLogger() MultiLoggers {
-	return *ml
-}
-
-func (ml MultiLoggers) Warn(msg string, args ...interface{}) {
-	args = append([]interface{}{level.Key(), level.WarnValue(), "msg", msg}, args...)
-	err := ml.Log(args...)
-	if err != nil {
-		_ = level.Error(Root).Log("Logging error", "error", err)
-	}
-}
-
-func (ml MultiLoggers) Debug(msg string, args ...interface{}) {
-	args = append([]interface{}{level.Key(), level.DebugValue(), "msg", msg}, args...)
-	err := ml.Log(args...)
-	if err != nil {
-		_ = level.Error(Root).Log("Logging error", "error", err)
-	}
-}
-
-func (ml MultiLoggers) Error(msg string, args ...interface{}) {
-	args = append([]interface{}{level.Key(), level.ErrorValue(), "msg", msg}, args...)
-	err := ml.Log(args...)
-	if err != nil {
-		_ = level.Error(Root).Log("Logging error", "error", err)
-	}
-}
-
-func (ml MultiLoggers) Info(msg string, args ...interface{}) {
-	args = append([]interface{}{level.Key(), level.InfoValue(), "msg", msg}, args...)
-	err := ml.Log(args...)
-	if err != nil {
-		_ = level.Error(Root).Log("Logging error", "error", err)
-	}
-}
-
-func (ml MultiLoggers) Log(keyvals ...interface{}) error {
-	for _, multilogger := range ml.loggers {
-		multilogger.val = gokitlog.With(multilogger.val, "t", gokitlog.TimestampFormat(time.Now, "2006-01-02T15:04:05.99-0700"))
-		if err := multilogger.val.Log(keyvals...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// New creates a new logger from the existing one with additional context
-func (ml MultiLoggers) New(ctx ...interface{}) MultiLoggers {
-	return with(ml, gokitlog.With, ctx)
-}
-
-// New creates MultiLoggers with the provided context and caller that is added as a suffix.
-// The first element of the context must be the logger name
-func New(ctx ...interface{}) MultiLoggers {
+func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
-		return Root
+		return ctxLogger
 	}
-	var newloger MultiLoggers
-	ctx = append([]interface{}{"logger"}, ctx...)
-	for _, logWithFilter := range Root.loggers {
-		logWithFilter.val = gokitlog.With(logWithFilter.val, ctx...)
-		v, ok := logWithFilter.filters[ctx[0].(string)]
-		if ok {
-			logWithFilter.val = level.NewFilter(logWithFilter.val, v)
-		} else {
-			logWithFilter.val = level.NewFilter(logWithFilter.val, logWithFilter.maxLevel)
-		}
-		newloger.loggers = append(newloger.loggers, logWithFilter)
-	}
-	return newloger
-}
 
-func with(loggers MultiLoggers, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) MultiLoggers {
-	if len(ctx) == 0 {
-		return loggers
-	}
-	var newloger MultiLoggers
-	for _, l := range loggers.loggers {
-		l.val = withFunc(l.val, ctx...)
-		newloger.loggers = append(newloger.loggers, l)
-	}
-	return newloger
+	ctxLogger.logger = withFunc(ctxLogger.logger, ctx...)
+	return ctxLogger
 }
 
 // WithPrefix adds context that will be added to the log message
-func WithPrefix(loggers MultiLoggers, ctx ...interface{}) MultiLoggers {
-	return with(loggers, gokitlog.WithPrefix, ctx)
+func WithPrefix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
+	return with(ctxLogger, gokitlog.WithPrefix, ctx)
 }
 
 // WithSuffix adds context that will be appended at the end of the log message
-func WithSuffix(loggers MultiLoggers, ctx ...interface{}) MultiLoggers {
-	return with(loggers, gokitlog.WithSuffix, ctx)
+func WithSuffix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
+	return with(ctxLogger, gokitlog.WithSuffix, ctx)
 }
 
 var logLevels = map[string]level.Option{
@@ -174,7 +292,7 @@ func getLogLevelFromString(levelName string) level.Option {
 	loglevel, ok := logLevels[levelName]
 
 	if !ok {
-		_ = level.Error(Root).Log("Unknown log level", "level", levelName)
+		_ = level.Error(root).Log("Unknown log level", "level", levelName)
 		return level.AllowError()
 	}
 
@@ -216,37 +334,12 @@ func Caller(depth int) gokitlog.Valuer {
 
 type Formatedlogger func(w io.Writer) gokitlog.Logger
 
-func terminalColorFn(keyvals ...interface{}) term.FgBgColor {
-	for i := 0; i < len(keyvals)-1; i += 2 {
-		if keyvals[i] != level.Key() {
-			continue
-		}
-		switch keyvals[i+1] {
-		case "trace":
-			return term.FgBgColor{Fg: term.Gray}
-		case level.DebugValue():
-			return term.FgBgColor{Fg: term.Gray}
-		case level.InfoValue():
-			return term.FgBgColor{Fg: term.Green}
-		case level.WarnValue():
-			return term.FgBgColor{Fg: term.Yellow}
-		case level.ErrorValue():
-			return term.FgBgColor{Fg: term.Red}
-		case "crit":
-			return term.FgBgColor{Fg: term.Gray, Bg: term.DarkRed}
-		default:
-			return term.FgBgColor{}
-		}
-	}
-	return term.FgBgColor{}
-}
-
 func getLogFormat(format string) Formatedlogger {
 	switch format {
 	case "console":
 		if isatty.IsTerminal(os.Stdout.Fd()) {
 			return func(w io.Writer) gokitlog.Logger {
-				return term.NewColorLogger(w, gokitlog.NewLogfmtLogger, terminalColorFn)
+				return term.NewTerminalLogger(w)
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {
@@ -304,7 +397,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		mode = strings.TrimSpace(mode)
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
-			_ = level.Error(Root).Log("Unknown log mode", "mode", mode)
+			_ = level.Error(root).Log("Unknown log mode", "mode", mode)
 			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
 		}
 
@@ -323,7 +416,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
 			dpath := filepath.Dir(fileName)
 			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
-				_ = level.Error(Root).Log("Failed to create directory", "dpath", dpath, "err", err)
+				_ = level.Error(root).Log("Failed to create directory", "dpath", dpath, "err", err)
 				continue
 			}
 			fileHandler := NewFileWriter()
@@ -335,7 +428,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
-				_ = level.Error(Root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
+				_ = level.Error(root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
 				continue
 			}
 
@@ -358,20 +451,14 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			}
 		}
 
-		// copy joined default + mode filters into filters
-		for key, value := range modeFilters {
-			if _, exist := filters[key]; !exist {
-				filters[key] = value
-			}
-		}
-
 		handler.filters = modeFilters
 		handler.maxLevel = leveloption
-		// handler = LogFilterHandler(leveloption, modeFilters, handler)
 		configLoggers = append(configLoggers, handler)
 	}
+
 	if len(configLoggers) > 0 {
-		Root.loggers = configLoggers
+		root.initialize(configLoggers)
 	}
+
 	return nil
 }

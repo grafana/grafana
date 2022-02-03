@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
 )
@@ -16,7 +17,7 @@ import (
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg, tracer tracing.Tracer) *sdkhttpclient.Provider {
+func New(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
@@ -35,7 +36,7 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer) *sdkhttpclient.Provider {
 
 	setDefaultTimeoutOptions(cfg)
 
-	if cfg.FeatureToggles["httpclientprovider_azure_auth"] {
+	if features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
 		middlewares = append(middlewares, AzureMiddleware(cfg))
 	}
 

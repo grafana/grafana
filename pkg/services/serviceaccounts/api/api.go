@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -40,14 +40,14 @@ func NewServiceAccountsAPI(
 }
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
-	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 ) {
-	if !cfg.FeatureToggles["service-accounts"] {
+	if !features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		return
 	}
 
 	auth := acmiddleware.Middleware(api.accesscontrol)
-	api.RouterRegister.Group("/api/org/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))

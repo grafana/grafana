@@ -70,15 +70,15 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, test.userID, s)
+				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, accesscontrol.User{ID: test.userID}, s, nil)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetUserResourcePermission(context.Background(), test.userID, test.userID, accesscontrol.SetResourcePermissionCommand{
+			added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, accesscontrol.SetResourcePermissionCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
-			})
+			}, nil)
 
 			require.NoError(t, err)
 			if len(test.actions) == 0 {
@@ -148,7 +148,7 @@ func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, s)
+				_, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, s, nil)
 				require.NoError(t, err)
 			}
 
@@ -156,7 +156,7 @@ func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
-			})
+			}, nil)
 
 			require.NoError(t, err)
 			if len(test.actions) == 0 {
@@ -226,7 +226,7 @@ func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, s)
+				_, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, s, nil)
 				require.NoError(t, err)
 			}
 
@@ -234,7 +234,7 @@ func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
-			})
+			}, nil)
 
 			require.NoError(t, err)
 			if len(test.actions) == 0 {
@@ -352,11 +352,11 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, u.Id, accesscontrol.SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.Id}, accesscontrol.SetResourcePermissionCommand{
 			Actions:    actions,
 			Resource:   resource,
 			ResourceID: resourceID,
-		})
+		}, nil)
 		require.NoError(t, err)
 	}
 }

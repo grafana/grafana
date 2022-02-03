@@ -1,15 +1,16 @@
-import React from 'react';
-import { LegacyForms } from '@grafana/ui';
-import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue, toOption } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { LegacyForms } from '@grafana/ui';
+import React from 'react';
 
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from './';
 import { AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
+import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from './';
 
 const { Input } = LegacyForms;
 
 export interface Props {
+  refId: string;
   onQueryChange: (target: AnnotationTarget) => void;
   target: AnnotationTarget;
   datasource: CloudMonitoringDatasource;
@@ -97,12 +98,14 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     return (
       <>
         <Project
+          refId={this.props.refId}
           templateVariableOptions={variableOptions}
           datasource={datasource}
           projectName={projectName || datasource.getDefaultProject()}
           onChange={(value) => this.onChange('projectName', value)}
         />
         <Metrics
+          refId={this.props.refId}
           projectName={projectName}
           metricType={metricType}
           templateSrv={datasource.templateSrv}

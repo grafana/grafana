@@ -10,9 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestKafkaNotifier(t *testing.T) {
@@ -117,21 +115,14 @@ func TestKafkaNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewKafkaNotifier(m, tmpl)
+			webhookSender := mockNotificationService()
+			pn, err := NewKafkaNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			body := ""
-			actUrl := ""
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				actUrl = webhook.Url
-				return nil
-			})
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -145,8 +136,8 @@ func TestKafkaNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expUrl, actUrl)
-			require.JSONEq(t, c.expMsg, body)
+			require.Equal(t, c.expUrl, webhookSender.Webhook.Url)
+			require.JSONEq(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}
 }

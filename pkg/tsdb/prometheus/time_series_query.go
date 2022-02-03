@@ -314,44 +314,24 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, len(v.Values))
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(v.Values))
 
-		baseTimestamp := alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
-		endTimestamp := alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
-		// For each step we create 1 data point. This results in range / step + 1 data points.
-		datapointsCount := int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
+		for i, k := range v.Values {
+			timeField.Set(i, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			value := float64(k.Value)
 
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
-		idx := 0
-
-		for _, pair := range v.Values {
-			timestamp := int64(pair.Timestamp)
-			value := float64(pair.Value)
-
-			for t := baseTimestamp; t < timestamp; t += query.Step.Milliseconds() {
-				timeField.Set(idx, time.Unix(0, t*1000000).UTC())
-				idx++
-			}
-
-			timeField.Set(idx, time.Unix(pair.Timestamp.Unix(), 0).UTC())
 			if !math.IsNaN(value) {
-				valueField.Set(idx, &value)
+				valueField.Set(i, &value)
 			}
-			baseTimestamp = timestamp + query.Step.Milliseconds()
-			idx++
-		}
-
-		for t := baseTimestamp; t <= endTimestamp; t += query.Step.Milliseconds() {
-			timeField.Set(idx, time.Unix(0, t*1000000).UTC())
-			idx++
 		}
 
 		name := formatLegend(v.Metric, query)
 		timeField.Name = data.TimeSeriesTimeFieldName
+		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
-
 		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
 	}
 
