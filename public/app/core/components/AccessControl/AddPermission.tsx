@@ -57,7 +57,8 @@ export const AddPermission = ({
   const renderMissingListUserRights = () => {
     return (
       <Alert severity="info" title="Missing permission">
-        You are missing the permission to list users (org.users:read). Please contact your administrator to get this resolved.
+        You are missing the permission to list users (org.users:read). Please contact your administrator to get this
+        resolved.
       </Alert>
     );
   };
