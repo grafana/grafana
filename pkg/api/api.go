@@ -154,7 +154,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
-			userRoute.Get("/quotas", routing.Wrap(GetUserQuotas))
+			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
 			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
 			// For dev purpose
 			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
@@ -264,7 +264,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
-			prefRoute.Post("/set-home-dash", routing.Wrap(SetHomeDashboard))
+			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
 		})
 
 		// Data sources
@@ -493,8 +493,8 @@ func (hs *HTTPServer) registerRoutes() {
 		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(AdminDeleteUser))
 		adminUserRoute.Post("/:id/disable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
 		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(AdminEnableUser))
-		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(GetUserQuotas))
-		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(UpdateUserQuota))
+		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
+		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
 
 		adminUserRoute.Post("/:id/logout", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
 		adminUserRoute.Get("/:id/auth-tokens", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))

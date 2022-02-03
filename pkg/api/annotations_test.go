@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,6 +56,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						assert.Equal(t, 403, sc.resp.Code)
 					})
 
+				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -62,7 +64,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
-					})
+					}, mock)
 			})
 		})
 
@@ -84,7 +86,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
-
+				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -92,7 +94,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
-					})
+					}, mock)
 			})
 		})
 	})
@@ -165,7 +167,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
 				})
-
+				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						setUp()
@@ -174,7 +176,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
-					})
+					}, mock)
 			})
 		})
 
@@ -198,7 +200,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
-
+				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						setUp()
@@ -207,7 +209,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
-					})
+					}, mock)
 			})
 		})
 

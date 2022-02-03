@@ -166,17 +166,15 @@ func (s Series) GetPoint(pointIdx int) (time.Time, *float64) {
 }
 
 // SetPoint sets the time and value on the corresponding vectors at the specified index.
-func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) (err error) {
+func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) {
 	s.Frame.Fields[seriesTypeTimeIdx].Set(pointIdx, t)
 	s.Frame.Fields[seriesTypeValIdx].Set(pointIdx, f)
-	return
 }
 
 // AppendPoint appends a point (time/value).
-func (s Series) AppendPoint(pointIdx int, t time.Time, f *float64) (err error) {
+func (s Series) AppendPoint(t time.Time, f *float64) {
 	s.Frame.Fields[seriesTypeTimeIdx].Append(t)
 	s.Frame.Fields[seriesTypeValIdx].Append(f)
-	return
 }
 
 // Len returns the length of the series.
@@ -214,8 +212,8 @@ func (ss SortSeriesByTime) Len() int { return Series(ss).Len() }
 func (ss SortSeriesByTime) Swap(i, j int) {
 	iTimeVal, iFVal := Series(ss).GetPoint(i)
 	jTimeVal, jFVal := Series(ss).GetPoint(j)
-	_ = Series(ss).SetPoint(j, iTimeVal, iFVal)
-	_ = Series(ss).SetPoint(i, jTimeVal, jFVal)
+	Series(ss).SetPoint(j, iTimeVal, iFVal)
+	Series(ss).SetPoint(i, jTimeVal, jFVal)
 }
 
 func (ss SortSeriesByTime) Less(i, j int) bool {
