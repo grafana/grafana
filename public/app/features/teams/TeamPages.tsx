@@ -155,7 +155,6 @@ export class TeamPages extends PureComponent<Props, State> {
     switch (currentPage) {
       case PageTypes.Members:
         if (contextSrv.accessControlEnabled()) {
-          // TODO check if the accesscontrol permission check is performed in the component
           return <TeamPermissions team={team!} />;
         } else {
           return <TeamMembers syncEnabled={isSyncEnabled} members={members} />;
