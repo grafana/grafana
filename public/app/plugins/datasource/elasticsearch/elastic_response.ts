@@ -399,9 +399,9 @@ export class ElasticResponse {
 
   nameSeries(seriesList: any, target: ElasticsearchQuery) {
     const metricTypeCount = uniq(map(seriesList, 'metric')).length;
-    const hasTopMetricWithMultipleMetrics = (target.metrics?.filter(
-      (m) => m.type === 'top_metrics'
-    ) as TopMetrics[]).some((m) => (m?.settings?.metrics?.length || 0) > 1);
+    const hasTopMetricWithMultipleMetrics = (
+      target.metrics?.filter((m) => m.type === 'top_metrics') as TopMetrics[]
+    ).some((m) => (m?.settings?.metrics?.length || 0) > 1);
 
     for (let i = 0; i < seriesList.length; i++) {
       const series = seriesList[i];
@@ -766,10 +766,10 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
       });
 };
 
-const toNameTypePair = (docs: Array<Record<string, any>>) => (propName: string): [string, FieldType] => [
-  propName,
-  guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),
-];
+const toNameTypePair =
+  (docs: Array<Record<string, any>>) =>
+  (propName: string): [string, FieldType] =>
+    [propName, guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName])];
 
 /**
  * Trying to guess data type from its value. This is far from perfect, as in order to have accurate guess

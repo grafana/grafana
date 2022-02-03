@@ -161,7 +161,7 @@ describe('richHistory', () => {
       expect(history.filter((h) => !h.starred)).toHaveLength(notStarredItemsInHistory);
 
       const { richHistory: newHistory } = addToRichHistory(
-        (history as any) as RichHistoryQuery[],
+        history as any as RichHistoryQuery[],
         mock.storedHistory[0].datasourceId,
         mock.storedHistory[0].datasourceName,
         [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],

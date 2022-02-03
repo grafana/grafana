@@ -17,10 +17,10 @@ import * as MetricMathTestData from '../../__mocks__/metric-math-test-data';
 
 const getSuggestions = async (value: string, position: IPosition) => {
   const setup = new MetricMathCompletionItemProvider(
-    ({
+    {
       getVariables: () => [],
       getActualRegion: () => 'us-east-2',
-    } as any) as CloudWatchDatasource,
+    } as any as CloudWatchDatasource,
     getTemplateSrv()
   );
   const monaco = MonacoMock as Monaco;
