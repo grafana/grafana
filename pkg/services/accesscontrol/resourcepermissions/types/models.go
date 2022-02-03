@@ -12,10 +12,7 @@ type SetResourcePermissionsCommand struct {
 	TeamID      int64
 	BuiltinRole string
 
-	Actions    []string
-	Resource   string
-	ResourceID string
-	Permission string
+	SetResourcePermissionCommand
 }
 
 type GetResourcesPermissionsQuery struct {

@@ -205,10 +205,12 @@ func (s *Service) SetPermissions(
 			UserID:      cmd.UserID,
 			TeamID:      cmd.TeamID,
 			BuiltinRole: cmd.BuiltinRole,
-			Actions:     actions,
-			Resource:    s.options.Resource,
-			ResourceID:  resourceID,
-			Permission:  cmd.Permission,
+			SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+				Actions:    actions,
+				Resource:   s.options.Resource,
+				ResourceID: resourceID,
+				Permission: cmd.Permission,
+			},
 		})
 	}
 

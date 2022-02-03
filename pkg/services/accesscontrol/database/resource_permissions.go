@@ -161,20 +161,14 @@ func (s *AccessControlStore) SetResourcePermissions(
 	var permissions []accesscontrol.ResourcePermission
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, c := range commands {
+		for _, cmd := range commands {
 			var p *accesscontrol.ResourcePermission
-			cmd := types.SetResourcePermissionCommand{
-				Actions:    c.Actions,
-				Resource:   c.Resource,
-				ResourceID: c.ResourceID,
-				Permission: c.Permission,
-			}
-			if c.UserID != 0 {
-				p, err = s.setUserResourcePermission(sess, orgID, c.UserID, cmd, hooks.User)
-			} else if c.TeamID != 0 {
-				p, err = s.setTeamResourcePermission(sess, orgID, c.TeamID, cmd, hooks.Team)
-			} else if models.RoleType(c.BuiltinRole).IsValid() || c.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
-				p, err = s.setBuiltInResourcePermission(sess, orgID, c.BuiltinRole, cmd, hooks.BuiltInRole)
+			if cmd.UserID != 0 {
+				p, err = s.setUserResourcePermission(sess, orgID, cmd.UserID, cmd.SetResourcePermissionCommand, hooks.User)
+			} else if cmd.TeamID != 0 {
+				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
+			} else if models.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
+				p, err = s.setBuiltInResourcePermission(sess, orgID, cmd.BuiltinRole, cmd.SetResourcePermissionCommand, hooks.BuiltInRole)
 			}
 			if err != nil {
 				return err

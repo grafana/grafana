@@ -261,22 +261,28 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 			orgID: 1,
 			commands: []types.SetResourcePermissionsCommand{
 				{
-					UserID:     1,
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					UserID: 1,
+					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+						Actions:    []string{"datasources:query"},
+						Resource:   "datasources",
+						ResourceID: "1",
+					},
 				},
 				{
-					TeamID:     3,
-					Actions:    []string{"datasources:query"},
-					Resource:   "datasources",
-					ResourceID: "1",
+					TeamID: 3,
+					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+						Actions:    []string{"datasources:query"},
+						Resource:   "datasources",
+						ResourceID: "1",
+					},
 				},
 				{
 					BuiltinRole: "Admin",
-					Actions:     []string{"datasources:query"},
-					Resource:    "datasources",
-					ResourceID:  "1",
+					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+						Actions:    []string{"datasources:query"},
+						Resource:   "datasources",
+						ResourceID: "1",
+					},
 				},
 			},
 		},
