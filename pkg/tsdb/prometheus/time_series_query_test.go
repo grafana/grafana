@@ -556,7 +556,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		// Test fields
@@ -594,7 +594,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(5, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -631,16 +631,16 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Fields[0].Len(), 4)
-		require.Equal(t, res[0].Fields[0].At(1), time.Unix(2, 0).UTC())
-		require.Equal(t, res[0].Fields[0].At(2), time.Unix(3, 0).UTC())
-		require.Equal(t, res[0].Fields[1].Len(), 4)
-		require.Nil(t, res[0].Fields[1].At(1))
-		require.Nil(t, res[0].Fields[1].At(2))
+		require.Equal(t, res[0].Fields[0].Len(), 2)
+		require.Equal(t, time.Unix(1, 0).UTC(), res[0].Fields[0].At(0))
+		require.Equal(t, time.Unix(4, 0).UTC(), res[0].Fields[0].At(1))
+		require.Equal(t, res[0].Fields[1].Len(), 2)
+		require.Equal(t, float64(1), *res[0].Fields[1].At(0).(*float64))
+		require.Equal(t, float64(4), *res[0].Fields[1].At(1).(*float64))
 	})
 
 	t.Run("matrix response with from alerting missed data points should be parsed correctly", func(t *testing.T) {
@@ -662,7 +662,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, false)
+		res, err := parseTimeSeriesResponse(value, query)
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -693,7 +693,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			End:          time.Unix(4, 0).UTC(),
 			UtcOffsetSec: 0,
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		var nilPointer *float64
@@ -713,7 +713,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		query := &PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
@@ -740,7 +740,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		query := &PrometheusQuery{}
-		res, err := parseTimeSeriesResponse(value, query, true)
+		res, err := parseTimeSeriesResponse(value, query)
 		require.NoError(t, err)
 
 		require.Len(t, res, 1)
