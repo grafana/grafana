@@ -32,7 +32,7 @@ type simpleCrawler struct {
 func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
 	c := &simpleCrawler{
 		renderService: renderService,
-		threadCount:   5,
+		threadCount:   6,
 		glive:         gl,
 		thumbnailRepo: repo,
 		status: crawlStatus{
@@ -200,6 +200,7 @@ func (r *simpleCrawler) walkFinished() {
 
 	r.status.State = stopped
 	r.status.Finished = time.Now()
+	tlog.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "durationInSeconds", int64(time.Since(r.status.Started)/time.Second))
 }
 
 func (r *simpleCrawler) shouldWalk() bool {
@@ -253,6 +254,7 @@ func (r *simpleCrawler) walk() {
 
 				thumbnailId, err := r.thumbnailRepo.saveFromFile(res.FilePath, models.DashboardThumbnailMeta{
 					DashboardUID: item.Uid,
+					OrgId:        item.OrgId,
 					Theme:        r.opts.Theme,
 					Kind:         r.thumbnailKind,
 				}, item.Version)
@@ -267,7 +269,6 @@ func (r *simpleCrawler) walk() {
 			}()
 		}
 		r.broadcastStatus()
-		time.Sleep(5 * time.Second)
 	}
 
 	r.walkFinished()

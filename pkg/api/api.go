@@ -120,7 +120,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/signup/step2", routing.Wrap(hs.SignUpStep2))
 
 	// invited
-	r.Get("/api/user/invite/:code", routing.Wrap(GetInviteInfoByCode))
+	r.Get("/api/user/invite/:code", routing.Wrap(hs.GetInviteInfoByCode))
 	r.Post("/api/user/invite/complete", routing.Wrap(hs.CompleteInvite))
 
 	// reset password
@@ -216,9 +216,9 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUserForCurrentOrg))
 
 			// invites
-			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), quota("user"), routing.Wrap(AddOrgInvite))
-			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(RevokeInvite))
+			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.GetPendingOrgInvites))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), quota("user"), routing.Wrap(hs.AddOrgInvite))
+			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.RevokeInvite))
 
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))

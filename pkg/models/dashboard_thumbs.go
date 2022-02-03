@@ -1,7 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -30,16 +32,28 @@ const (
 	ThumbnailStateLocked ThumbnailState = "locked"
 )
 
-func ParseThumbnailState(str string) (ThumbnailState, error) {
-	switch str {
-	case string(ThumbnailStateDefault):
-		return ThumbnailStateDefault, nil
-	case string(ThumbnailStateStale):
-		return ThumbnailStateStale, nil
-	case string(ThumbnailStateLocked):
-		return ThumbnailStateLocked, nil
+func (s ThumbnailState) IsValid() bool {
+	return s == ThumbnailStateDefault || s == ThumbnailStateStale || s == ThumbnailStateLocked
+}
+
+func (r *ThumbnailState) UnmarshalJSON(data []byte) error {
+	var str string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
 	}
-	return ThumbnailStateDefault, errors.New("unknown thumbnail state " + str)
+
+	*r = ThumbnailState(str)
+
+	if !r.IsValid() {
+		if (*r) != "" {
+			return fmt.Errorf("JSON validation error: invalid thumbnail state value: %s", *r)
+		}
+
+		*r = ThumbnailStateDefault
+	}
+
+	return nil
 }
 
 // IsKnownThumbnailKind checks if the value is supported
@@ -81,6 +95,7 @@ type DashboardThumbnail struct {
 // DashboardThumbnailMeta uniquely identifies a thumbnail; a natural key
 type DashboardThumbnailMeta struct {
 	DashboardUID string
+	OrgId        int64
 	PanelID      int64
 	Kind         ThumbnailKind
 	Theme        Theme
@@ -96,6 +111,7 @@ const DashboardVersionForManualThumbnailUpload = -1
 
 type DashboardWithStaleThumbnail struct {
 	Id      int64
+	OrgId   int64
 	Uid     string
 	Version int
 	Slug    string

@@ -99,7 +99,7 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 }
 
 type updateThumbnailStateRequest struct {
-	State string `json:"state"`
+	State models.ThumbnailState `json:"state" binding:"Required"`
 }
 
 func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
@@ -117,26 +117,20 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 		return
 	}
 
-	newState, err := models.ParseThumbnailState(body.State)
-	if err != nil {
-		tlog.Error("Error parsing update thumbnail state request body", "dashboardUid", req.UID, "err", err.Error())
-		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
-		return
-	}
-
-	err = hs.thumbnailRepo.updateThumbnailState(newState, models.DashboardThumbnailMeta{
+	err = hs.thumbnailRepo.updateThumbnailState(body.State, models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
+		OrgId:        req.OrgID,
 		Theme:        req.Theme,
 		Kind:         models.ThumbnailKindDefault,
 	})
 
 	if err != nil {
-		tlog.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", newState)
+		tlog.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", body.State)
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
 
-	tlog.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", newState)
+	tlog.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", body.State)
 	c.JSON(200, map[string]string{"success": "true"})
 }
 
@@ -148,6 +142,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 
 	res, err := hs.thumbnailRepo.getThumbnail(models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
+		OrgId:        req.OrgID,
 		Theme:        req.Theme,
 		Kind:         models.ThumbnailKindDefault,
 	})
@@ -227,6 +222,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 
 	_, err = hs.thumbnailRepo.saveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
+		OrgId:        req.OrgID,
 		Theme:        req.Theme,
 		Kind:         req.Kind,
 	}, models.DashboardVersionForManualThumbnailUpload)
