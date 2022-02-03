@@ -1,6 +1,5 @@
-import { Button, useStyles } from '@grafana/ui';
+import { useStyles, ClipboardButton } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
-import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { BackupLogChunk } from '../../Backup.types';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
@@ -53,9 +52,9 @@ export const ChunkedLogsViewer: FC<ChunkedLogsViewerProps> = ({ getLogChunks }) 
 
   return (
     <>
-      <CopyToClipboard text={formatLogs} elType="span" className={styles.copyBtnHolder}>
-        <Button variant="secondary">{Messages.copyToClipboard}</Button>
-      </CopyToClipboard>
+      <ClipboardButton variant="secondary" getText={formatLogs} className={styles.copyBtnHolder}>
+        {Messages.copyToClipboard}
+      </ClipboardButton>
       <pre>
         {formatLogs()}
         {!lastLog && <div className={styles.loadingHolder}>{Messages.loading}</div>}
