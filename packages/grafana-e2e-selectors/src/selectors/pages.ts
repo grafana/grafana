@@ -151,6 +151,9 @@ export const Pages = {
           CustomVariable: {
             customValueInput: 'data-testid custom-variable-input',
           },
+          IntervalVariable: {
+            intervalsValueInput: 'data-testid interval variable intervals input',
+          },
         },
       },
     },
