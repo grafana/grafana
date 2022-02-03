@@ -195,14 +195,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(dataIdx));
-      const label = getFieldDisplayName(field, otherProps.data);
 
       tooltip = (
         <SeriesTable
           series={[
             {
               color: display.color || FALLBACK_COLOR,
-              label,
+              label: getFieldDisplayName(field, otherProps.data),
               value: display ? formattedValueToString(display) : null,
             },
           ]}
@@ -232,12 +231,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
         const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
         const display = field.display!(v);
-        const label = getFieldDisplayName(field, frame);
 
         sortIdx.push([series.length, v]);
         series.push({
           color: display.color || FALLBACK_COLOR,
-          label,
+          label: getFieldDisplayName(field, frame),
           value: display ? formattedValueToString(display) : null,
           isActive: focusedSeriesIdx === i,
         });
