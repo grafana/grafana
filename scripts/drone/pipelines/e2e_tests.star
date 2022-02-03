@@ -10,9 +10,9 @@ def grafana_server_step(edition, port=3001):
 
     environment = {
         'PORT': port,
+        'ARCH': 'linux-amd64'
     }
     if package_file_pfx:
-        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
         environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
 
     return {
@@ -20,7 +20,9 @@ def grafana_server_step(edition, port=3001):
         'image': build_image,
         'detach': True,
         'depends_on': [
-            'package' + enterprise2_suffix(edition),
+            'build-plugins',
+            'build-backend',
+            'build-frontend',
             ],
         'environment': environment,
         'commands': [
@@ -36,7 +38,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
         'image': 'cypress/included:9.3.1',
         'depends_on': [
-            'package',
+            'grafana-server',
         ],
         'environment': {
             'HOST': 'grafana-server' + enterprise2_suffix(edition),
