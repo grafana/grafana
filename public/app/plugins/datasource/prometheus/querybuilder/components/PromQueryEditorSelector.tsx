@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LoadingState, SelectableValue } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
-import { PromQueryEditor } from '../../components/PromQueryEditor';
+import { FORMAT_OPTIONS, PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
@@ -42,9 +42,15 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     onRunQuery();
   };
 
+  const onChangeFormat = (value: SelectableValue<string>) => {
+    onChange({ ...query, format: value.value });
+    onRunQuery();
+  };
+
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
   const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
+  const formatOption = FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0];
 
   return (
     <>
@@ -61,10 +67,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <QueryHeaderSwitch label="Instant" value={query.instant} onChange={onInstantChange} />
-        {showExemplarSwitch && (
-          <QueryHeaderSwitch label="Exemplars" value={query.exemplar} onChange={onExemplarChange} />
-        )}
         {editorMode === QueryEditorMode.Builder && (
           <>
             <InlineSelect
@@ -81,6 +83,17 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             />
           </>
         )}
+        <QueryHeaderSwitch label="Instant" value={query.instant} onChange={onInstantChange} />
+        {showExemplarSwitch && (
+          <QueryHeaderSwitch label="Exemplars" value={query.exemplar} onChange={onExemplarChange} />
+        )}
+        <InlineSelect
+          value={formatOption}
+          label="Format"
+          allowCustomValue
+          onChange={onChangeFormat}
+          options={FORMAT_OPTIONS}
+        />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
