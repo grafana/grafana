@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
@@ -321,6 +323,9 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		if limitReached {
 			return response.Error(403, "Quota reached", nil)
 		}
+		if canCreate, err := hs.canCreateDashboard(c, cmd); !canCreate || err != nil {
+			return response.Error(403, "Not allowed to create dashboard", err)
+		}
 	}
 
 	svc := dashboards.NewProvisioningService(hs.SQLStore)
@@ -410,6 +415,18 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		"uid":     dashboard.Uid,
 		"url":     dashboard.GetUrl(),
 	})
+}
+
+func (hs *HTTPServer) canCreateDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) (bool, error) {
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		// when access control is disabled checks in guardian is enough
+		return true, nil
+	}
+	scope := accesscontrol.Scope("folders", "id", strconv.FormatInt(cmd.FolderId, 10))
+	return hs.AccessControl.Evaluate(
+		c.Req.Context(), c.SignedInUser,
+		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate, scope),
+	)
 }
 
 func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.SaveDashboardCommand, dash *models.Dashboard, dashSvc dashboards.DashboardService) error {
