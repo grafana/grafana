@@ -14,7 +14,7 @@ interface Props {
   options: PanelProps<UnifiedAlertListOptions>['options'];
 }
 
-export const AlertInstances = ({ alerts, options }: Props) => {
+export const AlertInstances: FC<Props> = ({ alerts, options }) => {
   // when custom grouping is enabled, we will always uncollapse the list of alert instances
   const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
   const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
