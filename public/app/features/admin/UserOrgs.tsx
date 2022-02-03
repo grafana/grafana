@@ -176,7 +176,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td className={labelClass}>
           <label htmlFor={inputId}>{org.name}</label>
         </td>
-        {contextSrv.accessControlEnabled() ? (
+        {contextSrv.licensedAccessControlEnabled() ? (
           <td>
             <div className={styles.rolePickerWrapper}>
               <div className={styles.rolePicker}>
