@@ -141,8 +141,9 @@ export function locationSearchToObject(search: string | number): UrlQueryMap {
  */
 export let locationService: LocationService = new HistoryWrapper();
 
-/** @internal
+/**
  * Used for tests only
+ * @internal
  */
 export const setLocationService = (location: LocationService) => {
   if (process.env.NODE_ENV !== 'test') {
