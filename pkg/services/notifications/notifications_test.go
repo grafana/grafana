@@ -201,7 +201,7 @@ func TestSendEmailAsync(t *testing.T) {
 			Template:    "welcome_on_signup",
 		}
 
-		err = ns.sendEmailCommandHandler(context.Background(), cmd)
+		err = ns.SendEmailCommandHandler(context.Background(), cmd)
 
 		require.ErrorIs(t, err, models.ErrSmtpNotEnabled)
 		require.Empty(t, mailer.Sent)
