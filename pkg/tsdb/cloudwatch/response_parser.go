@@ -224,7 +224,7 @@ func fillMissing(fillMissing *data.FillMissing, timestamps []*time.Time, expecte
 	case data.FillModeNull:
 		timestamps = append(timestamps, &expectedTimestamp)
 		points = append(points, nil)
-	case 4: // do not fill missing
+	case 4: // TODO: need to represent an "opt-out" for fill missing
 	default:
 		timestamps = append(timestamps, &expectedTimestamp)
 		points = append(points, nil)
