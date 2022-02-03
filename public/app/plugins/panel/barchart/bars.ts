@@ -91,7 +91,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
-  let labelQt: Quadtree;
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -278,10 +277,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   // Build bars
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
-    labelQt = labelQt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
-
     qt.clear();
-    labelQt.clear();
 
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
