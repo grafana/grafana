@@ -13,6 +13,7 @@ import {
   LoadingState,
   TimeRange,
   ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -191,8 +192,12 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
 
   rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
     try {
-      let data: any[] = JSON.parse(target.rawFrameContent || '[]');
-      return of({ data }).pipe(delay(100));
+      const data = JSON.parse(target.rawFrameContent ?? '[]').map((v: any) => {
+        const f = toDataFrame(v);
+        f.refId = target.refId;
+        return f;
+      });
+      return of({ data, state: LoadingState.Done }).pipe(delay(100));
     } catch (ex) {
       return of({ data: [], error: ex }).pipe(delay(100));
     }

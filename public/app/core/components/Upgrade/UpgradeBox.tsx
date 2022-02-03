@@ -3,12 +3,15 @@ import { css, cx } from '@emotion/css';
 import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
+type ComponentSize = 'sm' | 'md';
+
 export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
   text: string;
+  size?: ComponentSize;
 }
 
-export const UpgradeBox = ({ text, className, ...htmlProps }: Props) => {
-  const styles = useStyles2(getUpgradeBoxStyles);
+export const UpgradeBox = ({ text, className, size = 'md', ...htmlProps }: Props) => {
+  const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
 
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>
@@ -18,7 +21,7 @@ export const UpgradeBox = ({ text, className, ...htmlProps }: Props) => {
         <p className={styles.text}>{text}</p>
         <LinkButton
           variant="primary"
-          size={'sm'}
+          size={size}
           className={styles.button}
           href="https://grafana.com/profile/org/subscription"
           target="__blank"
@@ -31,8 +34,9 @@ export const UpgradeBox = ({ text, className, ...htmlProps }: Props) => {
   );
 };
 
-const getUpgradeBoxStyles = (theme: GrafanaTheme2) => {
+const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
   const borderRadius = theme.shape.borderRadius(2);
+  const fontBase = size === 'md' ? 'body' : 'bodySmall';
 
   return {
     box: css`
@@ -43,7 +47,7 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.primary.shade};
       padding: ${theme.spacing(2)};
       color: ${theme.colors.primary.text};
-      font-size: ${theme.typography.bodySmall.fontSize};
+      font-size: ${theme.typography[fontBase].fontSize};
       text-align: left;
       line-height: 16px;
     `,
@@ -52,6 +56,12 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2) => {
     `,
     button: css`
       margin-top: ${theme.spacing(2)};
+
+      &:focus-visible {
+        box-shadow: none;
+        color: ${theme.colors.text.primary};
+        outline: 2px solid ${theme.colors.primary.main};
+      }
     `,
     icon: css`
       border: 1px solid ${theme.colors.primary.shade};

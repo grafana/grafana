@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,23 +16,24 @@ import (
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(
-		ctx context.Context, orgID, userID int64,
+		ctx context.Context, orgID int64,
+		user accesscontrol.User,
 		cmd accesscontrol.SetResourcePermissionCommand,
-		hook func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error,
+		hook types.UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
 		ctx context.Context, orgID, teamID int64,
 		cmd accesscontrol.SetResourcePermissionCommand,
-		hook func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error,
+		hook types.TeamResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetBuiltInResourcePermission sets permissions for managed builtin role on a resource
 	SetBuiltInResourcePermission(
 		ctx context.Context, orgID int64, builtinRole string,
 		cmd accesscontrol.SetResourcePermissionCommand,
-		hook func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error,
+		hook types.BuiltinResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// GetResourcesPermissions will return all permission for all supplied resource ids
@@ -99,7 +101,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 	})
 }
 
-func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.Users {
 		return nil, ErrInvalidAssignment
 	}
@@ -113,11 +115,11 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, err
 	}
 
-	if err := s.validateUser(ctx, orgID, userID); err != nil {
+	if err := s.validateUser(ctx, orgID, user.ID); err != nil {
 		return nil, err
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
+	return s.store.SetUserResourcePermission(ctx, orgID, user, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
 		Permission: permission,
 		ResourceID: resourceID,

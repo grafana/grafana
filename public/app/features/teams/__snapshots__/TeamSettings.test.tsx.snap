@@ -16,12 +16,14 @@ exports[`Render should render component 1`] = `
           "permission": 0,
         }
       }
+      disabled={false}
       onSubmit={[Function]}
     >
       <Component />
     </Form>
   </FieldSet>
   <SharedPreferences
+    disabled={false}
     resourceUri="teams/1"
   />
 </VerticalGroup>

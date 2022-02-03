@@ -40,7 +40,7 @@ const UsersTable: FC<Props> = (props) => {
         console.error('Error loading options');
       }
     }
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchOptions();
     }
   }, [orgId]);
@@ -88,7 +88,7 @@ const UsersTable: FC<Props> = (props) => {
                 <td className="width-1">{user.lastSeenAtAge}</td>
 
                 <td className="width-8">
-                  {contextSrv.accessControlEnabled() ? (
+                  {contextSrv.licensedAccessControlEnabled() ? (
                     <UserRolePicker
                       userId={user.userId}
                       orgId={orgId}

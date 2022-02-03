@@ -1081,7 +1081,7 @@ func newLoader(cfg *plugins.Cfg) *Loader {
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
 		pluginInitializer:  initializer.New(cfg, provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))), &fakeLicensingService{}),
-		signatureValidator: signature.NewValidator(&signature.UnsignedPluginAuthorizer{Cfg: cfg}),
+		signatureValidator: signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)),
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                &fakeLogger{},
 	}
@@ -1128,8 +1128,8 @@ type fakeLogger struct {
 	log.Logger
 }
 
-func (fl fakeLogger) New(_ ...interface{}) log.MultiLoggers {
-	return log.MultiLoggers{}
+func (fl fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
+	return &log.ConcreteLogger{}
 }
 
 func (fl fakeLogger) Info(_ string, _ ...interface{}) {
