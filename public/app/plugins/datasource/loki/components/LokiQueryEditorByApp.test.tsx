@@ -8,14 +8,14 @@ import { testIds as regularTestIds } from './LokiQueryEditor';
 import LokiQueryEditorByApp from './LokiQueryEditorByApp';
 
 function setup(app: CoreApp): RenderResult {
-  const dataSource = ({
+  const dataSource = {
     languageProvider: {
       start: () => Promise.resolve([]),
       getSyntax: () => {},
       getLabelKeys: () => [],
       metrics: [],
     },
-  } as unknown) as LokiDatasource;
+  } as unknown as LokiDatasource;
 
   return render(
     <LokiQueryEditorByApp

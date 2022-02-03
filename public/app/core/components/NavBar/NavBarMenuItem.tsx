@@ -10,7 +10,7 @@ export interface Props {
   onClick?: () => void;
   styleOverrides?: string;
   target?: HTMLAnchorElement['target'];
-  text: string;
+  text: React.ReactNode;
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;

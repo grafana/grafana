@@ -12,17 +12,19 @@ import (
 type Service struct {
 	enc      encryption.Internal
 	settings setting.Provider
+	features featuremgmt.FeatureToggles
 }
 
-func ProvideService(enc encryption.Internal, settings setting.Provider) Service {
+func ProvideService(enc encryption.Internal, settings setting.Provider, features featuremgmt.FeatureToggles) Service {
 	return Service{
 		enc:      enc,
 		settings: settings,
+		features: features,
 	}
 }
 
 func (s Service) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return nil, nil
 	}
 

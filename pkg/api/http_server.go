@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -119,8 +120,10 @@ type HTTPServer struct {
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
 	tracer                    tracing.Tracer
-	updateChecker             *updatechecker.Service
+	grafanaUpdateChecker      *updatechecker.GrafanaService
+	pluginsUpdateChecker      *updatechecker.PluginsService
 	searchUsersService        searchusers.Service
+	ldapGroups                ldap.Groups
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
@@ -148,9 +151,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
-	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
+	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
+	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -171,7 +175,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStaticRouteResolver: pluginStaticRouteResolver,
 		pluginDashboardManager:    pluginDashboardManager,
 		pluginErrorResolver:       pluginErrorResolver,
-		updateChecker:             updateChecker,
+		grafanaUpdateChecker:      grafanaUpdateChecker,
+		pluginsUpdateChecker:      pluginsUpdateChecker,
 		SettingsProvider:          settingsProvider,
 		DataSourceCache:           dataSourceCache,
 		AuthTokenService:          userTokenService,
@@ -204,6 +209,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		ldapGroups:                ldapGroups,
 		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
 		serviceAccountsService:    serviceaccountsService,
@@ -426,6 +432,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(middleware.RequestTracing(hs.tracer))
+	m.Use(middleware.RequestMetrics(hs.Features))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

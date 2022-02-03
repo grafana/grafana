@@ -129,11 +129,12 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> = {
-  id: DataTransformerID.filterByRefId,
-  editor: FilterByRefIdTransformerEditor,
-  transformation: standardTransformers.filterFramesByRefIdTransformer,
-  name: 'Filter data by query',
-  description:
-    'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
-};
+export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> =
+  {
+    id: DataTransformerID.filterByRefId,
+    editor: FilterByRefIdTransformerEditor,
+    transformation: standardTransformers.filterFramesByRefIdTransformer,
+    name: 'Filter data by query',
+    description:
+      'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
+  };

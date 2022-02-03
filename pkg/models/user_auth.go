@@ -120,8 +120,3 @@ type TeamOrgGroupDTO struct {
 	OrgName  string `json:"orgName"`
 	GroupDN  string `json:"groupDN"`
 }
-
-type GetTeamsForLDAPGroupCommand struct {
-	Groups []string
-	Result []TeamOrgGroupDTO
-}

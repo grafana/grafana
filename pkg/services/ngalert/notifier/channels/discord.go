@@ -103,6 +103,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
 		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
+		return false, tmplErr
 	}
 
 	body, err := json.Marshal(bodyJSON)

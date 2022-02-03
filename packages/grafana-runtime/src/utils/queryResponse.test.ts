@@ -2,7 +2,7 @@ import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 import { FetchError, FetchResponse } from 'src/services';
 import { BackendDataSourceResponse, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
-const resp = ({
+const resp = {
   data: {
     results: {
       A: {
@@ -45,9 +45,9 @@ const resp = ({
       },
     },
   },
-} as any) as FetchResponse<BackendDataSourceResponse>;
+} as any as FetchResponse<BackendDataSourceResponse>;
 
-const resWithError = ({
+const resWithError = {
   data: {
     results: {
       A: {
@@ -73,7 +73,7 @@ const resWithError = ({
       },
     },
   },
-} as any) as FetchResponse<BackendDataSourceResponse>;
+} as any as FetchResponse<BackendDataSourceResponse>;
 
 const emptyResults = {
   data: { results: { '': { refId: '' } } },

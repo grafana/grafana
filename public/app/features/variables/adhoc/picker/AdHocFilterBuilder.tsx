@@ -26,9 +26,10 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
     [setKey]
   );
 
-  const onOperatorChanged = useCallback((item: SelectableValue<string>) => setOperator(item.value ?? ''), [
-    setOperator,
-  ]);
+  const onOperatorChanged = useCallback(
+    (item: SelectableValue<string>) => setOperator(item.value ?? ''),
+    [setOperator]
+  );
 
   const onValueChanged = useCallback(
     (item: SelectableValue<string>) => {
