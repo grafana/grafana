@@ -137,7 +137,7 @@ Family: scuemata.#Family & {
                 // because they share a version timeline with the dashboard
                 // schema; they do not evolve independently.
                 #Panel: {
-                    // The panel plugin type id. 
+                    // The panel plugin type id.
                     type: !=""
 
                     // TODO docs
@@ -169,8 +169,11 @@ Family: scuemata.#Family & {
                     description?: string
                     // Whether to display the panel without a background.
                     transparent: bool | *false
-                    // Name of default datasource.
-                    datasource?: string
+                    // The datasource used in all targets.
+                    datasource?: {
+                      type?: string
+                      uid?: string
+                    }
                     // Grid position.
                     gridPos?: {
                         // Panel
@@ -347,6 +350,8 @@ Family: scuemata.#Family & {
                     }
                     id: number
                     panels: [...(#Panel | #GraphPanel)]
+                    // Name of template variable to repeat for.
+                    repeat?: string
                 }
                 // Support for legacy graph panels.
                 #GraphPanel: {

@@ -10,8 +10,8 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
 
 variableAdapters.setInit(() => [
-  (createQueryVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
-  (createAdHocVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
+  createQueryVariableAdapter() as unknown as VariableAdapter<VariableModel>,
+  createAdHocVariableAdapter() as unknown as VariableAdapter<VariableModel>,
 ]);
 
 describe('templateSrv', () => {

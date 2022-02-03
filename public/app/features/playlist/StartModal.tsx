@@ -1,8 +1,8 @@
 import React, { FC, useState } from 'react';
 import { SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PlaylistDTO } from './types';
-import { Button, Checkbox, Field, Modal, RadioButtonGroup, VerticalGroup } from '@grafana/ui';
+import { PlaylistDTO, PlaylistMode } from './types';
+import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@grafana/ui';
 
 export interface StartModalProps {
   playlist: PlaylistDTO;
@@ -10,10 +10,10 @@ export interface StartModalProps {
 }
 
 export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
-  const [mode, setMode] = useState<any>(false);
+  const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 
-  const modes: Array<SelectableValue<any>> = [
+  const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: 'Normal', value: false },
     { label: 'TV', value: 'tv' },
     { label: 'Kiosk', value: true },
@@ -32,7 +32,7 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
 
   return (
     <Modal isOpen={true} icon="play" title="Start playlist" onDismiss={onDismiss}>
-      <VerticalGroup>
+      <FieldSet>
         <Field label="Mode">
           <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
         </Field>
@@ -43,7 +43,7 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
           value={autoFit}
           onChange={(e) => setAutofit(e.currentTarget.checked)}
         />
-      </VerticalGroup>
+      </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
           Start {playlist.name}

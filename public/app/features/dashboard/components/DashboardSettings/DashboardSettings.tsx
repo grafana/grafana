@@ -138,10 +138,8 @@ export function DashboardSettings({ dashboard, editview }: Props) {
             <aside className="dashboard-settings__aside">
               {pages.map((page) => (
                 <Link
-                  to={(loc) => {
-                    reportInteraction(`Dashboard settings navigation to ${page.id}`);
-                    return locationUtil.updateSearchParams(loc.search, `editview=${page.id}`);
-                  }}
+                  onClick={() => reportInteraction(`Dashboard settings navigation to ${page.id}`)}
+                  to={(loc) => locationUtil.updateSearchParams(loc.search, `editview=${page.id}`)}
                   className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
                   key={page.id}
                 >

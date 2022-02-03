@@ -1,12 +1,14 @@
 import { PanelChrome } from '@grafana/ui';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 import React, { useEffect, useState } from 'react';
-import { PanelModel, DashboardModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { usePanelLatestData } from './usePanelLatestData';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
 import { RefreshEvent } from '@grafana/runtime';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { getTimeSrv, TimeSrv } from '../../services/TimeSrv';
+import { getTimeSrv } from '../../services/TimeSrv';
+import PanelHeaderCorner from '../../dashgrid/PanelHeader/PanelHeaderCorner';
+
 interface Props {
   width: number;
   height: number;
@@ -24,7 +26,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
 
   // Subscribe to panel event
   useEffect(() => {
-    const timeSrv: TimeSrv = getTimeSrv();
+    const timeSrv = getTimeSrv();
     const timeData = applyPanelTimeOverrides(panel, timeSrv.timeRange());
 
     const sub = panel.events.subscribe(RefreshEvent, () => {
@@ -42,15 +44,18 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
   return (
     <PanelChrome width={width} height={height} padding="none">
       {(innerWidth, innerHeight) => (
-        <PanelRenderer
-          title="Raw data"
-          pluginId="table"
-          width={innerWidth}
-          height={innerHeight}
-          data={data}
-          options={options}
-          onOptionsChange={setOptions}
-        />
+        <>
+          <PanelHeaderCorner panel={panel} error={data?.error?.message} />
+          <PanelRenderer
+            title="Raw data"
+            pluginId="table"
+            width={innerWidth}
+            height={innerHeight}
+            data={data}
+            options={options}
+            onOptionsChange={setOptions}
+          />
+        </>
       )}
     </PanelChrome>
   );

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { within } from '@testing-library/dom';
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import TestProvider from '../../../test/helpers/TestProvider';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';
@@ -90,28 +91,28 @@ function getSelectors() {
   const dashboardSelect = () => screen.getByTestId('User preferences home dashboard drop down');
   const timepickerSelect = () => screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
   const teamsTable = () => screen.getByRole('table', { name: /user teams table/i });
-  const orgsTable = () => screen.getByRole('table', { name: /user organizations table/i });
-  const sessionsTable = () => screen.getByRole('table', { name: /user sessions table/i });
+  const orgsTable = () => screen.getByTestId(selectors.components.UserProfile.orgsTable);
+  const sessionsTable = () => screen.getByTestId(selectors.components.UserProfile.sessionsTable);
   return {
     name: () => screen.getByRole('textbox', { name: /^name$/i }),
     email: () => screen.getByRole('textbox', { name: /email/i }),
     username: () => screen.getByRole('textbox', { name: /username/i }),
-    saveProfile: () => screen.getByRole('button', { name: /edit user profile save button/i }),
+    saveProfile: () => screen.getByTestId(selectors.components.UserProfile.profileSaveButton),
     dashboardSelect,
     dashboardValue: () => within(dashboardSelect()).getByText(/default/i),
     timepickerSelect,
     timepickerValue: () => within(timepickerSelect()).getByText(/coordinated universal time/i),
-    savePreferences: () => screen.getByRole('button', { name: /user preferences save button/i }),
+    savePreferences: () => screen.getByTestId(selectors.components.UserProfile.preferencesSaveButton),
     teamsTable,
     teamsRow: () => within(teamsTable()).getByRole('row', { name: /team one team.one@test\.com 2000/i }),
     orgsTable,
     orgsEditorRow: () => within(orgsTable()).getByRole('row', { name: /main editor current/i }),
-    orgsViewerRow: () => within(orgsTable()).getByRole('row', { name: /second viewer select/i }),
-    orgsAdminRow: () => within(orgsTable()).getByRole('row', { name: /third admin select/i }),
+    orgsViewerRow: () => within(orgsTable()).getByRole('row', { name: /second viewer select organisation/i }),
+    orgsAdminRow: () => within(orgsTable()).getByRole('row', { name: /third admin select organisation/i }),
     sessionsTable,
     sessionsRow: () =>
       within(sessionsTable()).getByRole('row', {
-        name: /now 2021-01-01 04:00:00 localhost chrome on mac os x 11/i,
+        name: /now January 1, 2021 localhost chrome on mac os x 11/i,
       }),
   };
 }
@@ -125,7 +126,11 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<UserProfileEditPage {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <UserProfileEditPage {...props} />
+    </TestProvider>
+  );
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
 
@@ -253,7 +258,7 @@ describe('UserProfileEditPage', () => {
         const { props } = await getTestContext();
         const orgsAdminSelectButton = () =>
           within(getSelectors().orgsAdminRow()).getByRole('button', {
-            name: /switch to the organization named Third/i,
+            name: /select organisation/i,
           });
 
         userEvent.click(orgsAdminSelectButton());

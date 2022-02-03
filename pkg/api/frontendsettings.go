@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,20 +24,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			return nil, err
 		}
 
-		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
-			User:        c.SignedInUser,
-			Datasources: query.Result,
+		filtered, err := filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+		if err != nil {
+			return nil, err
 		}
 
-		if err := bus.Dispatch(c.Req.Context(), &dsFilterQuery); err != nil {
-			if !errors.Is(err, bus.ErrHandlerNotFound) {
-				return nil, err
-			}
-
-			orgDataSources = query.Result
-		} else {
-			orgDataSources = dsFilterQuery.Result
-		}
+		orgDataSources = filtered
 	}
 
 	dataSources := make(map[string]plugins.DataSourceDTO)
@@ -223,6 +214,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
+		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
@@ -247,8 +239,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.updateChecker.LatestGrafanaVersion(),
-			"hasUpdate":     hs.updateChecker.GrafanaUpdateAvailable(),
+			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
+			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
 			"env":           setting.Env,
 		},
 		"licenseInfo": map[string]interface{}{
@@ -258,7 +250,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"edition":         hs.License.Edition(),
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
@@ -278,7 +270,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
 		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(false),
+			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 		"featureHighlights": map[string]bool{

@@ -79,7 +79,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					LastEvaluationTime: evaluationTime,
@@ -133,7 +133,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					LastEvaluationTime: evaluationTime,
@@ -156,7 +156,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime,
@@ -213,12 +213,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(1 * time.Minute),
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
@@ -274,12 +274,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(1 * time.Minute),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
@@ -346,17 +346,17 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(80 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(80 * time.Second),
@@ -438,24 +438,14 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.Pending,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(20 * time.Second),
-							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(30 * time.Second),
@@ -529,24 +519,14 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.NoData,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime,
@@ -605,12 +585,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -669,12 +649,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime,
@@ -733,12 +713,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -797,12 +777,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -860,7 +840,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -924,7 +904,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -991,7 +971,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           time.Time{},
@@ -1049,12 +1029,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -1114,12 +1094,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -1179,12 +1159,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Error,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -1258,12 +1238,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Error,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -1337,24 +1317,19 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.Alerting,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
 							EvaluationState: eval.Error,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(70 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(70 * time.Second),
@@ -1429,24 +1404,19 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.NoData,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
 							EvaluationState: eval.Error,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(50 * time.Second),
 							EvaluationState: eval.NoData,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					StartsAt:           evaluationTime.Add(30 * time.Second),
@@ -1498,7 +1468,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					LastEvaluationTime: evaluationTime,
@@ -1603,7 +1573,7 @@ func TestStaleResultsHandler(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime.Add(3 * time.Minute),
 							EvaluationState: eval.Normal,
-							Values:          make(map[string]state.EvaluationValue),
+							Values:          make(map[string]*float64),
 						},
 					},
 					LastEvaluationTime: evaluationTime.Add(3 * time.Minute),

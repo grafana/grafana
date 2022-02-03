@@ -64,10 +64,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onRunQuery();
   };
 
-  const currentScenario = useMemo(() => scenarioList?.find((scenario) => scenario.id === query.scenarioId), [
-    scenarioList,
-    query,
-  ]);
+  const currentScenario = useMemo(
+    () => scenarioList?.find((scenario) => scenario.id === query.scenarioId),
+    [scenarioList, query]
+  );
   const scenarioId = currentScenario?.id;
 
   const onScenarioChange = (item: SelectableValue<string>) => {
@@ -82,6 +82,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       scenarioId: item.value!,
       refId: query.refId,
       alias: query.alias,
+      datasource: query.datasource,
     };
 
     if (scenario.stringInput) {

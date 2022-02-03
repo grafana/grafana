@@ -96,7 +96,7 @@ describe('LogsPanel', () => {
 });
 
 const setup = (propsOverrides?: {}) => {
-  const props = ({
+  const props = {
     data: {
       error: undefined,
       request: {
@@ -119,7 +119,7 @@ const setup = (propsOverrides?: {}) => {
     title: 'Logs panel',
     id: 1,
     ...propsOverrides,
-  } as unknown) as LogsPanelProps;
+  } as unknown as LogsPanelProps;
 
   return render(<LogsPanel {...props} />);
 };

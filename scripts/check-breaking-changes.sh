@@ -1,32 +1,29 @@
 #!/usr/bin/env bash
 
-# Find existing packages using Lerna
-PACKAGES=$(lerna list -p -l)
+# Find package directories
+PACKAGES=$(ls -d ./packages/*/)
 EXIT_CODE=0
 GITHUB_MESSAGE=""
 
 # Loop through the packages
-while IFS= read -r line; do
+while IFS=" " read -r -a package; do
 
-    # Read package info
-    IFS=':' read -ra ADDR <<< "$line"
-    PACKAGE_PATH="${ADDR[0]}"
-    PACKAGE_NAME="${ADDR[1]}"
+    # shellcheck disable=SC2128
+    PACKAGE_PATH=$(basename "$package")
 
     # Calculate current and previous package paths / names
-    PREV="$PACKAGE_NAME@canary"
-    CURRENT="$PACKAGE_PATH/dist/"
+    PREV="./main/packages/$PACKAGE_PATH/dist/"
+    CURRENT="./pr/packages/$PACKAGE_PATH/dist/"
 
-    # Temporarily skipping @grafana/toolkit, as it doesn't have any exposed static typing
-    if [[ "$PACKAGE_NAME" == '@grafana/toolkit' ]]; then
+    # Temporarily skipping these packages as they don't have any exposed static typing
+    if [[ "$PACKAGE_PATH" == 'grafana-toolkit' || "$PACKAGE_PATH" == 'jaeger-ui-components' ]]; then
         continue
     fi
-
 
     # Run the comparison and record the exit code
     echo ""
     echo ""
-    echo "${PACKAGE_NAME}"
+    echo "${PACKAGE_PATH}"
     echo "================================================="
     npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT"
 
@@ -39,8 +36,8 @@ while IFS= read -r line; do
     if [ $STATUS -gt 0 ]
     then
         EXIT_CODE=1
-        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_NAME}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
-    fi    
+        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
+    fi
 
 done <<< "$PACKAGES"
 

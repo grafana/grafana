@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -45,7 +46,9 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 func TestEngineProcessJob(t *testing.T) {
 	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg())
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg(), tracer)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3

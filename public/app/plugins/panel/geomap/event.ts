@@ -1,18 +1,17 @@
 import { FeatureLike } from 'ol/Feature';
-import { SimpleGeometry } from 'ol/geom';
-import { Layer } from 'ol/layer';
 import { DataHoverPayload } from '@grafana/data';
-import { Source } from 'ol/source';
+import { MapLayerState } from './types';
 
-export interface GeomapHoverFeature {
-  feature: FeatureLike;
-  layer: Layer<Source>;
-  geo: SimpleGeometry;
+export interface GeomapLayerHover {
+  layer: MapLayerState;
+  features: FeatureLike[];
 }
 
 export interface GeomapHoverPayload extends DataHoverPayload {
-  features?: GeomapHoverFeature[];
-  feature?: FeatureLike;
+  // List of layers
+  layers?: GeomapLayerHover[];
+
+  // Global mouse coordinates for the hover layer
   pageX: number;
   pageY: number;
 }

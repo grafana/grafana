@@ -28,7 +28,7 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ### v7.3.0-beta1
 
-- OpenShift compatability. [#27813](https://github.com/grafana/grafana/pull/27813), [@xlson](https://github.com/grafana/grafana/pull/27813)
+- OpenShift compatibility. [#27813](https://github.com/grafana/grafana/pull/27813), [@xlson](https://github.com/grafana/grafana/pull/27813)
 
 ### v7.0.0-beta3
 
@@ -88,7 +88,7 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ### v4.2.0
 
-- Plugins are now installed into ${GF_PATHS_PLUGINS}.
+- Plugins are now installed into \${GF_PATHS_PLUGINS}.
 - Building the container now requires a full URL to the Debian package instead of just the version.
 - Fixed bug caused by installing multiple plugins.
 

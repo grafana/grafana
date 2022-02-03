@@ -15,6 +15,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 
 	"github.com/centrifugal/centrifuge"
@@ -46,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"golang.org/x/sync/errgroup"
@@ -66,14 +66,14 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	logsService *cloudwatch.LogsService, pluginStore plugins.Store, cacheService *localcache.CacheService,
+	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
+		Features:              toggles,
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
-		LogsService:           logsService,
 		pluginStore:           pluginStore,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
@@ -176,7 +176,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
+	if g.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
 		var builder pipeline.RuleBuilder
 		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
 			builder = &pipeline.DevRuleBuilder{
@@ -393,8 +393,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 type GrafanaLive struct {
 	PluginContextProvider *plugincontext.Provider
 	Cfg                   *setting.Cfg
+	Features              featuremgmt.FeatureToggles
 	RouteRegister         routing.RouteRegister
-	LogsService           *cloudwatch.LogsService
 	CacheService          *localcache.CacheService
 	DataSourceCache       datasources.CacheService
 	SQLStore              *sqlstore.SQLStore
@@ -895,13 +895,6 @@ func (g *GrafanaLive) handleGrafanaScope(_ *models.SignedInUser, namespace strin
 }
 
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	// Temporary hack until we have a more generic solution later on
-	if namespace == "cloudwatch" {
-		return &cloudwatch.LogQueryRunnerSupplier{
-			Publisher: g.Publish,
-			Service:   g.LogsService,
-		}, nil
-	}
 	streamHandler, err := g.getStreamPlugin(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)

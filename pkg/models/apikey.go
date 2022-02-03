@@ -27,15 +27,13 @@ type ApiKey struct {
 // ---------------------
 // COMMANDS
 type AddApiKeyCommand struct {
-	Name                    string   `json:"name" binding:"Required"`
-	Role                    RoleType `json:"role" binding:"Required"`
-	OrgId                   int64    `json:"-"`
-	Key                     string   `json:"-"`
-	SecondsToLive           int64    `json:"secondsToLive"`
-	ServiceAccountId        int64    `json:"serviceAccount"`
-	CreateNewServiceAccount bool     `json:"createServiceAccount"`
-
-	Result *ApiKey `json:"-"`
+	Name             string   `json:"name" binding:"Required"`
+	Role             RoleType `json:"role" binding:"Required"`
+	OrgId            int64    `json:"-"`
+	Key              string   `json:"-"`
+	SecondsToLive    int64    `json:"secondsToLive"`
+	ServiceAccountId int64    `json:"-"`
+	Result           *ApiKey  `json:"-"`
 }
 
 type DeleteApiKeyCommand struct {

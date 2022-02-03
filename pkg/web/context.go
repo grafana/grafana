@@ -179,13 +179,6 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
-// ParamsInt64 returns params result in int64 type.
-// e.g. ctx.ParamsInt64(":uid")
-func (ctx *Context) ParamsInt64(name string) int64 {
-	n, _ := strconv.ParseInt(Params(ctx.Req)[name], 10, 64)
-	return n
-}
-
 // GetCookie returns given cookie value from request header.
 func (ctx *Context) GetCookie(name string) string {
 	cookie, err := ctx.Req.Cookie(name)

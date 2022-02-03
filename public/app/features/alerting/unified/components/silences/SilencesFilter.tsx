@@ -6,15 +6,17 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { parseMatchers } from '../../utils/alertmanager';
-import { debounce } from 'lodash';
+import { debounce, uniqueId } from 'lodash';
 
 const stateOptions: SelectableValue[] = Object.entries(SilenceState).map(([key, value]) => ({
   label: key,
   value,
 }));
 
+const getQueryStringKey = () => uniqueId('query-string-');
+
 export const SilencesFilter = () => {
-  const [queryStringKey, setQueryStringKey] = useState(`queryString-${Math.random() * 100}`);
+  const [queryStringKey, setQueryStringKey] = useState(getQueryStringKey());
   const [queryParams, setQueryParams] = useQueryParams();
   const { queryString, silenceState } = getSilenceFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
@@ -33,7 +35,7 @@ export const SilencesFilter = () => {
       queryString: null,
       silenceState: null,
     });
-    setTimeout(() => setQueryStringKey(''));
+    setTimeout(() => setQueryStringKey(getQueryStringKey()));
   };
 
   const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;

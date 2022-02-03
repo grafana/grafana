@@ -1,5 +1,5 @@
 import config from 'app/core/config';
-import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, locationService } from '@grafana/runtime';
 import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction, UserFilter } from 'app/types';
 
@@ -25,7 +25,7 @@ import {
 } from './reducers';
 import { debounce } from 'lodash';
 import { contextSrv } from 'app/core/core';
-import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 // UserAdminPage
 
 export function loadAdminUserPage(userId: number): ThunkResult<void> {
@@ -54,7 +54,7 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
 
 export function loadUserProfile(userId: number): ThunkResult<void> {
   return async (dispatch) => {
-    const user = await getBackendSrv().get(addAccessControlQueryParam(`/api/users/${userId}`));
+    const user = await getBackendSrv().get(`/api/users/${userId}`, accessControlQueryParam());
     dispatch(userProfileLoadedAction(user));
   };
 }
@@ -144,12 +144,13 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
 
     const tokens = await getBackendSrv().get(`/api/admin/users/${userId}/auth-tokens`);
     tokens.reverse();
+
     const sessions = tokens.map((session: UserSession) => {
       return {
         id: session.id,
         isActive: session.isActive,
         seenAt: dateTimeFormatTimeAgo(session.seenAt),
-        createdAt: dateTimeFormat(session.createdAt, { format: 'MMMM DD, YYYY' }),
+        createdAt: session.createdAt,
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,
@@ -158,6 +159,7 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
         device: session.device,
       };
     });
+
     dispatch(userSessionsLoadedAction(sessions));
   };
 }

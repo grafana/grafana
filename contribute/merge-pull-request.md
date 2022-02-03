@@ -85,7 +85,20 @@ In case the pull request introduces a breaking change you should document this. 
 
 ### Should the pull request be backported?
 
+An active decision of backporting needs to be taken for every pull request. There's a pull request check named **Backport Check** that will enforce this. By adding/removing labels on the pull request the check will be re-evaluated.
+
+#### No backport
+
+If you don't want to backport you need to add a label named **no-backport** to the pull request.
+
+#### Backport
+
 If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](.github/bot.md#backport-pr) for detailed instructions.
+
+The general rule of thumb regarding what changes goes into what release is:
+
+- bug fixes should be released in patch releases, e.g. v8.1.3, if the bug was introduced in the same major/minor or lower patch version.
+- new features should go into the next major/minor version, e.g. v8.0.0, v8.2.0.
 
 Some examples when backport is required:
 

@@ -69,6 +69,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   colWidth,
   showValue,
   alignValue,
+  mergeValues,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -98,6 +99,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
+    mergeValues,
     rowHeight: rowHeight!,
     colWidth: colWidth,
     showValue: showValue!,
@@ -236,13 +238,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     });
   }
 
-  if (sync !== DashboardCursorSync.Off) {
+  if (sync && sync() !== DashboardCursorSync.Off) {
     let cursor: Partial<uPlot.Cursor> = {};
 
     cursor.sync = {
       key: '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+          if (sync && sync() === DashboardCursorSync.Off) {
+            return false;
+          }
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
             payload.point[xScaleUnit] = null;
@@ -326,7 +331,6 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     textToColor.set(items[i].label, items[i].color!);
   }
 
-  let prev: Threshold | undefined = undefined;
   let input = field.values.toArray();
   const vals = new Array<String | undefined>(field.values.length);
   if (thresholds.mode === ThresholdsMode.Percentage) {
@@ -344,19 +348,21 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     const v = input[i];
     if (v == null) {
       vals[i] = v;
-      prev = undefined;
-    }
-    const active = getActiveThreshold(v, thresholds.steps);
-    if (active === prev) {
-      vals[i] = undefined;
     } else {
-      vals[i] = thresholdToText.get(active);
+      vals[i] = thresholdToText.get(getActiveThreshold(v, thresholds.steps));
     }
-    prev = active;
   }
 
   return {
     ...field,
+    config: {
+      ...field.config,
+      custom: {
+        ...field.config.custom,
+        // magic value for join() to leave nulls alone
+        spanNulls: -1,
+      },
+    },
     type: FieldType.string,
     values: new ArrayVector(vals),
     display: (value: string) => ({
@@ -412,18 +418,6 @@ export function prepareTimelineFields(
               },
             },
           };
-
-          if (mergeValues) {
-            let merged = unsetSameFutureValues(field.values.toArray());
-            if (merged) {
-              fields.push({
-                ...field,
-                values: new ArrayVector(merged),
-              });
-              changed = true;
-              continue;
-            }
-          }
           fields.push(field);
           break;
         default:
@@ -566,4 +560,65 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
   }
 
   return end;
+}
+
+/**
+ * Returns the precise duration of a time range passed in milliseconds.
+ * This function calculates with 30 days month and 365 days year.
+ * adapted from https://gist.github.com/remino/1563878
+ * @param milliSeconds The duration in milliseconds
+ * @returns A formated string of the duration
+ */
+export function fmtDuration(milliSeconds: number): string {
+  if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {
+    return '';
+  }
+
+  let yr: number, mo: number, wk: number, d: number, h: number, m: number, s: number, ms: number;
+
+  s = Math.floor(milliSeconds / 1000);
+  m = Math.floor(s / 60);
+  s = s % 60;
+  h = Math.floor(m / 60);
+  m = m % 60;
+  d = Math.floor(h / 24);
+  h = h % 24;
+
+  yr = Math.floor(d / 365);
+  if (yr > 0) {
+    d = d % 365;
+  }
+
+  mo = Math.floor(d / 30);
+  if (mo > 0) {
+    d = d % 30;
+  }
+
+  wk = Math.floor(d / 7);
+
+  if (wk > 0) {
+    d = d % 7;
+  }
+
+  ms = Math.round((milliSeconds % 1000) * 1000) / 1000;
+
+  return (
+    yr > 0
+      ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+      : mo > 0
+      ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+      : wk > 0
+      ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+      : d > 0
+      ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+      : h > 0
+      ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+      : m > 0
+      ? m + 'm ' + (s > 0 ? s + 's ' : '')
+      : s > 0
+      ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+      : ms > 0
+      ? ms + 'ms '
+      : '0'
+  ).trim();
 }

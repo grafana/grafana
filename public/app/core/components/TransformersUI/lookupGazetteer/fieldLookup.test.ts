@@ -1,7 +1,7 @@
 import { FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 import { DataTransformerID } from '@grafana/data/src/transformations/transformers/ids';
-import { Gazetteer } from 'app/plugins/panel/geomap/gazetteer/gazetteer';
+import { frameAsGazetter } from 'app/features/geo/gazetteer/gazetteer';
 import { addFieldsFromGazetteer } from './fieldLookup';
 
 describe('Lookup gazetteer', () => {
@@ -23,91 +23,93 @@ describe('Lookup gazetteer', () => {
 
     const matcher = fieldMatchers.get(FieldMatcherID.byName).get(cfg.options?.lookupField);
 
-    const values = new Map()
-      .set('AL', { name: 'Alabama', id: 'AL', coords: [-80.891064, 12.448457] })
-      .set('AK', { name: 'Arkansas', id: 'AK', coords: [-100.891064, 24.448457] })
-      .set('AZ', { name: 'Arizona', id: 'AZ', coords: [-111.891064, 33.448457] })
-      .set('Arizona', { name: 'Arizona', id: 'AZ', coords: [-111.891064, 33.448457] });
+    const frame = toDataFrame({
+      fields: [
+        { name: 'id', values: ['AL', 'AK', 'AZ'] },
+        { name: 'name', values: ['Alabama', 'Arkansas', 'Arizona'] },
+        { name: 'lng', values: [-80.891064, -100.891064, -111.891064] },
+        { name: 'lat', values: [12.448457, 24.448457, 33.448457] },
+      ],
+    });
+    const gaz = frameAsGazetter(frame, { path: 'path/to/gaz.json' });
+    const out = await addFieldsFromGazetteer([data], gaz, matcher)[0];
 
-    const gaz: Gazetteer = {
-      count: 3,
-      examples: () => ['AL', 'AK', 'AZ'],
-      find: (k) => {
-        let v = values.get(k);
-        if (!v && typeof k === 'string') {
-          v = values.get(k.toUpperCase());
-        }
-        return v;
-      },
-      path: 'public/gazetteer/usa-states.json',
-    };
-
-    expect(await addFieldsFromGazetteer([data], gaz, matcher)).toMatchInlineSnapshot(`
+    expect(out.fields).toMatchInlineSnapshot(`
       Array [
         Object {
-          "creator": [Function],
-          "fields": Array [
-            Object {
-              "config": Object {},
-              "name": "location",
-              "type": "string",
-              "values": Array [
-                "AL",
-                "AK",
-                "Arizona",
-                "Arkansas",
-                "Somewhere",
-              ],
-            },
-            Object {
-              "config": Object {},
-              "name": "lon",
-              "type": "number",
-              "values": Array [
-                -80.891064,
-                -100.891064,
-                -111.891064,
-                ,
-                ,
-              ],
-            },
-            Object {
-              "config": Object {},
-              "name": "lat",
-              "type": "number",
-              "values": Array [
-                12.448457,
-                24.448457,
-                33.448457,
-                ,
-                ,
-              ],
-            },
-            Object {
-              "config": Object {},
-              "name": "values",
-              "state": Object {
-                "displayName": "values",
-              },
-              "type": "number",
-              "values": Array [
-                0,
-                10,
-                5,
-                1,
-                5,
-              ],
-            },
-          ],
-          "first": Array [
+          "config": Object {},
+          "name": "location",
+          "type": "string",
+          "values": Array [
             "AL",
             "AK",
             "Arizona",
             "Arkansas",
             "Somewhere",
           ],
-          "length": 5,
-          "name": "locations",
+        },
+        Object {
+          "config": Object {},
+          "name": "id",
+          "type": "string",
+          "values": Array [
+            "AL",
+            "AK",
+            ,
+            ,
+            ,
+          ],
+        },
+        Object {
+          "config": Object {},
+          "name": "name",
+          "type": "string",
+          "values": Array [
+            "Alabama",
+            "Arkansas",
+            ,
+            ,
+            ,
+          ],
+        },
+        Object {
+          "config": Object {},
+          "name": "lng",
+          "type": "number",
+          "values": Array [
+            -80.891064,
+            -100.891064,
+            ,
+            ,
+            ,
+          ],
+        },
+        Object {
+          "config": Object {},
+          "name": "lat",
+          "type": "number",
+          "values": Array [
+            12.448457,
+            24.448457,
+            ,
+            ,
+            ,
+          ],
+        },
+        Object {
+          "config": Object {},
+          "name": "values",
+          "state": Object {
+            "displayName": "values",
+          },
+          "type": "number",
+          "values": Array [
+            0,
+            10,
+            5,
+            1,
+            5,
+          ],
         },
       ]
     `);

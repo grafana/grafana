@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,25 +24,14 @@ import (
 
 var logger = log.New("tsdb.mssql")
 
-const pluginID = "mssql"
-
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
-	s := &Service{
+func ProvideService(cfg *setting.Cfg) *Service {
+	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-	}
-	return s, nil
 }
 
 func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
@@ -95,7 +82,6 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		if cfg.Env == setting.Dev {
 			logger.Debug("getEngine", "connection", cnnstr)
 		}
-
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mssql",
 			ConnectionString:  cnnstr,
@@ -158,8 +144,12 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	if addr.Port != "0" {
 		args = append(args, "port", addr.Port)
 	}
-
 	logger.Debug("Generating connection string", args...)
+
+	encrypt := dsInfo.JsonData.Encrypt
+	tlsSkipVerify := dsInfo.JsonData.TlsSkipVerify
+	hostNameInCertificate := dsInfo.JsonData.Servername
+	certificate := dsInfo.JsonData.RootCertFile
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
 		dsInfo.Database,
@@ -170,13 +160,15 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
+	if encrypt == "true" {
+		connStr += fmt.Sprintf("encrypt=%s;TrustServerCertificate=%t;", encrypt, tlsSkipVerify)
+		if hostNameInCertificate != "" {
+			connStr += fmt.Sprintf("hostNameInCertificate=%s;", hostNameInCertificate)
+		}
 
-	if dsInfo.JsonData.Encrypt == "" {
-		dsInfo.JsonData.Encrypt = "false"
-	}
-
-	if dsInfo.JsonData.Encrypt != "false" {
-		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
+		if certificate != "" {
+			connStr += fmt.Sprintf("certificate=%s;", certificate)
+		}
 	}
 	return connStr, nil
 }

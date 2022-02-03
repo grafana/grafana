@@ -22,7 +22,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Indicates if field is required */
   required?: boolean;
   /** Error message to display */
-  error?: string | null;
+  error?: React.ReactNode;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
