@@ -202,6 +202,7 @@ var wireBasicSet = wire.NewSet(
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
+	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
@@ -214,6 +215,7 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
+	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
