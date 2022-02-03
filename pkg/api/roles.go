@@ -309,3 +309,12 @@ var teamsAccessEvaluator = accesscontrol.EvalAll(
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
 	),
 )
+
+// teamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+var teamsEditAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+	),
+)

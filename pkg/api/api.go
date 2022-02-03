@@ -58,9 +58,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
 	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
-	// TODO verify that there is no other view than edit and new
-	// TODO use ID and scope this access
-	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsAccessEvaluator), hs.Index)
+	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
 	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
 	r.Get("/org/serviceaccounts", middleware.ReqOrgAdmin, hs.Index)
 	r.Get("/org/serviceaccounts/:serviceAccountId", middleware.ReqOrgAdmin, hs.Index)
