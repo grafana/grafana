@@ -993,7 +993,7 @@ export class PrometheusDatasource
   }
 
   interpolateString(string: string) {
-    return this.templateSrv.replace(string, {});
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
   }
 }
 
