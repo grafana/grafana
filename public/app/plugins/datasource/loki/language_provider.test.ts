@@ -103,6 +103,27 @@ describe('Language completion provider', () => {
     });
   });
 
+  describe('fetchSeriesLabels', () => {
+    it('should interpolate variable in series', () => {
+      const datasource: LokiDatasource = {
+        metadataRequest: () => ({ data: { data: [] as any[] } }),
+        getTimeRangeParams: () => ({ start: 0, end: 1 }),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as any as LokiDatasource;
+
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue([]);
+      fetchSeriesLabels('$stream');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+        end: 1,
+        'match[]': 'interpolated-stream',
+        start: 0,
+      });
+    });
+  });
+
   describe('label key suggestions', () => {
     it('returns all label suggestions on empty selector', async () => {
       const datasource = makeMockLokiDatasource({ label1: [], label2: [] });

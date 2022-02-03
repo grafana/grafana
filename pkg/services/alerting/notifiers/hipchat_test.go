@@ -23,7 +23,7 @@ func TestHipChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -39,7 +39,7 @@ func TestHipChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			hipchatNotifier := not.(*HipChatNotifier)
 
 			require.Nil(t, err)
@@ -65,7 +65,7 @@ func TestHipChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewHipChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			hipchatNotifier := not.(*HipChatNotifier)
 
 			require.Nil(t, err)
