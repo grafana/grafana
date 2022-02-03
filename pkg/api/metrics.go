@@ -118,7 +118,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 
 	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
 		// validated queries is not enabled
-		return response.Error(400, "Validated queries feature is disabled", nil)
+		return response.Error(409, "Validated queries feature is disabled", nil)
 	}
 
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
