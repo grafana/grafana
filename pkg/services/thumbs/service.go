@@ -174,9 +174,9 @@ func (hs *thumbService) GetSystemRequirements(c *models.ReqContext) {
 	}
 
 	if res.IsSupported {
-		c.JSON(200, map[string]interface{}{"requirementsMet": true})
+		c.JSON(200, map[string]interface{}{"met": true})
 	} else {
-		c.JSON(200, map[string]interface{}{"requirementsMet": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
+		c.JSON(200, map[string]interface{}{"met": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
 	}
 }
 
