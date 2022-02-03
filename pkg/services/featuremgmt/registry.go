@@ -13,19 +13,16 @@ var (
 			Description: "encrypt secrets",
 			State:       FeatureStateBeta,
 		},
-
 		{
 			Name:        "httpclientprovider_azure_auth",
 			Description: "use http client for azure auth",
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "service-accounts",
-			Description:     "support service accounts",
-			State:           FeatureStateBeta,
-			RequiresLicense: true,
+			Name:        "service-accounts",
+			Description: "support service accounts",
+			State:       FeatureStateBeta,
 		},
-
 		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",

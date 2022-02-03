@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,25 +35,18 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}
-
+		mock := mockstore.SQLStoreMock{
+			ExpectedError: models.ErrLastGrafanaAdmin,
+		}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
-				// TODO: Use a fake SQLStore when it's represented by an interface
-				origUpdateUserPermissions := updateUserPermissions
-				t.Cleanup(func() {
-					updateUserPermissions = origUpdateUserPermissions
-				})
-
-				updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
-					return models.ErrLastGrafanaAdmin
-				}
-
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
-			})
+			}, mock)
 	})
 
 	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
+		mock := mockstore.NewSQLStoreMock()
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
 				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
@@ -62,54 +56,41 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
-			})
+			}, mock)
 	})
 
 	t.Run("When a server admin attempts to logout a non-existing user from all devices", func(t *testing.T) {
+		mock := mockstore.SQLStoreMock{
+			ExpectedError: models.ErrUserNotFound,
+		}
 		adminLogoutUserScenario(t, "Should return not found when calling POST on", "/api/admin/users/200/logout",
 			"/api/admin/users/:id/logout", func(sc *scenarioContext) {
-				userID := int64(0)
-
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
-					userID = cmd.Id
-					return models.ErrUserNotFound
-				})
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-				assert.Equal(t, int64(200), userID)
-			})
+			}, mock)
 	})
 
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-
+		mock := mockstore.SQLStoreMock{
+			ExpectedError: models.ErrUserNotFound,
+		}
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
 			"/api/admin/users/200/revoke-auth-token", "/api/admin/users/:id/revoke-auth-token", cmd, func(sc *scenarioContext) {
-				var userID int64
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
-					userID = cmd.Id
-					return models.ErrUserNotFound
-				})
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-				assert.Equal(t, int64(200), userID)
-			})
+			}, mock)
 	})
 
 	t.Run("When a server admin gets auth tokens for a non-existing user", func(t *testing.T) {
+		mock := mockstore.SQLStoreMock{
+			ExpectedError: models.ErrUserNotFound,
+		}
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",
 			"/api/admin/users/200/auth-tokens", "/api/admin/users/:id/auth-tokens", func(sc *scenarioContext) {
-				var userID int64
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
-					userID = cmd.Id
-					return models.ErrUserNotFound
-				})
-
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 404, sc.resp.Code)
-				assert.Equal(t, int64(200), userID)
-			})
+			}, mock)
 	})
 
 	t.Run("When a server admin attempts to enable/disable a nonexistent user", func(t *testing.T) {
@@ -305,12 +286,13 @@ func TestAdminAPIEndpoint(t *testing.T) {
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc) {
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg:      setting.NewCfg(),
+			SQLStore: sqlStore,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -330,13 +312,14 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 	})
 }
 
-func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
+func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
+			SQLStore:         sqlStore,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -357,7 +340,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc) {
+func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
@@ -366,6 +349,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
+			SQLStore:         sqlStore,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -386,7 +370,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 	})
 }
 
-func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
+func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
@@ -395,6 +379,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
+			SQLStore:         sqlStore,
 		}
 
 		sc := setupScenarioContext(t, url)
