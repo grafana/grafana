@@ -98,4 +98,7 @@ export interface ManifestInfo {
   plugin: string;
   version: string;
   files: Record<string, string>;
+  toolkit?: {
+    version: string;
+  };
 }

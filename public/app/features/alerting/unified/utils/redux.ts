@@ -75,7 +75,7 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     reducers: {},
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) =>
-        requestStateReducer(asyncThunk, state, (action as unknown) as AsyncRequestAction<T>)
+        requestStateReducer(asyncThunk, state, action as unknown as AsyncRequestAction<T>)
       ),
   });
 }
@@ -97,7 +97,7 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) => {
         if (isAsyncThunkAction(asyncThunk)(action)) {
-          const asyncAction = (action as unknown) as AsyncRequestAction<T>;
+          const asyncAction = action as unknown as AsyncRequestAction<T>;
           const entityId = getEntityId(asyncAction.meta.arg);
           return {
             ...state,

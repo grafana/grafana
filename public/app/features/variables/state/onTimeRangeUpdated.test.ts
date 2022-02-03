@@ -55,25 +55,25 @@ const getTestContext = (dashboard: DashboardModel) => {
     },
   };
   const updateTimeRangeMock = jest.fn();
-  const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
+  const templateSrvMock = { updateTimeRange: updateTimeRangeMock } as unknown as TemplateSrv;
   const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, events: appEvents };
   const templateVariableValueUpdatedMock = jest.fn();
   const startRefreshMock = jest.fn();
   dashboard.templateVariableValueUpdated = templateVariableValueUpdatedMock;
   dashboard.startRefresh = startRefreshMock;
-  const dashboardState = ({
+  const dashboardState = {
     getModel: () => dashboard,
-  } as unknown) as DashboardState;
+  } as unknown as DashboardState;
   const adapter = variableAdapters.get('interval');
-  const preloadedState = ({
+  const preloadedState = {
     dashboard: dashboardState,
-    templating: ({
+    templating: {
       variables: {
         'interval-0': { ...interval },
         'constant-1': { ...constant },
       },
-    } as unknown) as TemplatingState,
-  } as unknown) as RootReducerType;
+    } as unknown as TemplatingState,
+  } as unknown as RootReducerType;
 
   return {
     interval,
