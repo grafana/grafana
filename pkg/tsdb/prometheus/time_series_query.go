@@ -527,7 +527,7 @@ func newDataFrame(name string, typ string, fields ...*data.Field) *data.Frame {
 	frame := data.NewFrame(name, fields...)
 	frame.Meta = &data.FrameMeta{
 		Custom: map[string]string{
-			"resultType": typ,
+			"resultType": typ, // Note: SSE depends on this property and map type
 		},
 	}
 
