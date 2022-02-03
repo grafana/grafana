@@ -7,8 +7,6 @@ import (
 
 	"github.com/grafana/thema"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 // Package state backing for RegisterCoreSchema.
@@ -16,33 +14,6 @@ var cr *CoreRegistry = &CoreRegistry{}
 
 // atomic guard on registry
 var regguard int32
-
-var schm *runtime.Scheme = runtime.NewScheme()
-
-var (
-	groupName    = "grafana.ap.group"
-	groupVersion = "v1"
-	once         sync.Once
-)
-
-func getCoreRegistry() *CoreRegistry {
-	once.Do(func() {
-		schemaGroupVersion := schema.GroupVersion{Group: groupName, Version: groupVersion}
-		cr = &CoreRegistry{
-			schemeBuilder: &scheme.Builder{GroupVersion: schemaGroupVersion},
-		}
-	})
-	fmt.Println("<<<<", cr)
-	return cr
-}
-
-func GetScheme() *runtime.Scheme {
-	return schm
-}
-
-func GetAddToScheme() func(*runtime.Scheme) error {
-	return getCoreRegistry().schemeBuilder.AddToScheme
-}
 
 // RegisterCoreSchema registers a core schema, storing it in package-level
 // state.
@@ -73,18 +44,17 @@ func RegisterCoreSchema(sch ObjectSchema) {
 	// better to do it now rather than risk profoundly confusing errors later,
 	// given that we at least theoretically have recourse have recourse to
 	// refactor to get away from this global state via wire
-	if _, has := getCoreRegistry().Load(sch.Name()); has {
+	if _, has := cr.Load(sch.Name()); has {
 		panic(fmt.Sprintf("core object schema with name %s already exists", sch.Name()))
 	}
 
-	getCoreRegistry().Store(sch)
-	getCoreRegistry().schemeBuilder.Register(sch.GetRuntimeObjects()...)
+	cr.Store(sch)
 }
 
 func LoadCoreSchema(name string) (ObjectSchema, bool) {
 	// No more writes allowed
 	atomic.CompareAndSwapInt32(&regguard, 0, 1)
-	return getCoreRegistry().Load(name)
+	return cr.Load(name)
 }
 
 // ProvideReadOnlyCoreRegistry provides a listing of all known core ObjectSchema
@@ -97,7 +67,7 @@ func ProvideReadOnlyCoreRegistry() CoreSchemaList {
 	atomic.CompareAndSwapInt32(&regguard, 0, 1)
 
 	var sl []ObjectSchema
-	getCoreRegistry().M.Range(func(key, value interface{}) bool {
+	cr.M.Range(func(key, value interface{}) bool {
 		sl = append(sl, value.(ObjectSchema))
 		return true
 	})
@@ -172,8 +142,7 @@ type CoreRegistry = schemaRegistry
 // because referencing these in other Go code will likely trigger component
 // group condition rules
 type schemaRegistry struct {
-	M             sync.Map
-	schemeBuilder *scheme.Builder
+	M sync.Map
 }
 
 func (r *schemaRegistry) Store(sch ObjectSchema) {

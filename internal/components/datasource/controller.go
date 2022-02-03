@@ -16,8 +16,8 @@ type DatasourceReconciler struct {
 }
 
 type Store interface {
-	Get(string) (DataSourceSpec, error)
-	Upsert(string, DataSourceSpec) error
+	Get(string) (DataSourceCR, error)
+	Upsert(string, DataSourceCR) error
 	Delete(string) error
 }
 
@@ -30,7 +30,7 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 	// TODO should Thema-based approaches differ from pure k8s here? (research!)
 	if err := ctrl.NewControllerManagedBy(mgr).
 		Named("datasource-controller").
-		// For(&DataSource{}).
+		For(&DataSourceCR{}).
 		Complete(reconcile.Func(d.Reconcile)); err != nil {
 		return nil, err
 	}
@@ -41,10 +41,9 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 var errNotFound = errors.New("k8s obj not found")
 
 func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	ds := DataSource{}
+	ds := DataSourceCR{}
 
-	var err error
-	// err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
+	err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {
@@ -58,7 +57,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}, err
 	}
 
-	if err := d.sto.Upsert(req.Name, ds.Spec); err != nil {
+	if err := d.sto.Upsert(req.Name, ds); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,
