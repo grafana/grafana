@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 
@@ -96,7 +97,7 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 }
 
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock, sqlStore *sqlstore.SQLStore) *web.Mux {
-	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(sqlStore))
+	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, database.NewServiceAccountsStore(sqlStore))
 	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
 
 	m := web.New()

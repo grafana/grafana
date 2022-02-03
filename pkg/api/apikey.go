@@ -114,16 +114,3 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 
 	return response.JSON(200, result)
 }
-
-// AddAPIKey adds an additional API key to a service account
-func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
-	cmd := models.AddApiKeyCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	if !hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
-	}
-
-	return hs.AddAPIKey(c)
-}
