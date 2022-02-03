@@ -14,8 +14,7 @@ seqs: [
                 name: string
                 type: string
                 typeLogoUrl: string
-                // access: *"proxy" | "direct" // TODO are we sure this default is right?
-                access: string // FIXME doing this until sam figures out how to deal with CUE<->Go type mappings
+                access: *"proxy" | "direct" // TODO are we sure this default is right?
                 url: string
                 password: string
                 user: string
@@ -23,8 +22,13 @@ seqs: [
                 basicAuth: bool
                 basicAuthUser: string
                 basicAuthPassword: string
-                //secureJsonFields: [string]: bool
-                // TODO do the rest
+                withCredentials: bool | *false
+                isDefault: bool | *false
+                jsonData?: [string]: _
+                version: int32
+                readOnly: bool | *false
+                secureJsonFields?: [string]: bool
+                accessControl?: [string]: bool
             }
         ]
     },
