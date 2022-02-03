@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"context"
+
 	"github.com/google/wire"
 	"github.com/grafana/grafana/internal/components/datasource"
 )
@@ -31,14 +33,14 @@ type storeDS struct {
 	ss *SQLStore
 }
 
-func (s storeDS) Get(uid string) (datasource.DataSource, error) {
+func (s storeDS) Get(ctx context.Context, uid string) (datasource.DataSource, error) {
 	return datasource.DataSource{}, nil
 }
 
-func (s storeDS) Upsert(uid string, ds datasource.DataSource) error {
+func (s storeDS) Upsert(ctx context.Context, uid string, ds datasource.DataSource) error {
 	return nil
 }
 
-func (s storeDS) Delete(uid string) error {
+func (s storeDS) Delete(ctx context.Context, uid string) error {
 	return nil
 }
