@@ -82,11 +82,10 @@ type DataSource struct {
 	// OrgId             int64                  `json:"orgId"`
 
 	//UID         string `json:"uid"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	TypeLogoUrl string `json:"typeLogoUrl"`
-	// Access            models.DsAccess        `json:"access"`
-	Access            string `json:"access"` // enum: "proxy" | "direct"
+	Name              string `json:"name"`
+	Type              string `json:"type"`
+	TypeLogoUrl       string `json:"typeLogoUrl"`
+	Access            string `json:"access"` // enum: *"proxy" | "direct"
 	Url               string `json:"url"`
 	Password          string `json:"password"`
 	User              string `json:"user"`
@@ -94,15 +93,15 @@ type DataSource struct {
 	BasicAuth         bool   `json:"basicAuth"`
 	BasicAuthUser     string `json:"basicAuthUser"`
 	BasicAuthPassword string `json:"basicAuthPassword"`
-	//WithCredentials   bool   `json:"withCredentials"`
-	//IsDefault         bool   `json:"isDefault"`
+	WithCredentials   bool   `json:"withCredentials,omitempty"`
+	IsDefault         bool   `json:"isDefault"`
 	// JsonData          *simplejson.Json       `json:"jsonData,omitempty"`
-	JsonData map[string]interface{} `json:"jsonData,omitempty"`
-	//SecureJsonFields map[string]bool        `json:"secureJsonFields"`
-	//Version          int                    `json:"version"`
-	//ReadOnly         bool                   `json:"readOnly"`
+	JsonData         map[string]interface{} `json:"jsonData,omitempty"`
+	SecureJsonFields map[string]bool        `json:"secureJsonFields,omitempty"`
+	Version          int                    `json:"version"`
+	ReadOnly         bool                   `json:"readOnly"`
 	// AccessControl     accesscontrol.Metadata `json:"accessControl,omitempty"`
-	//AccessControl map[string]bool `json:"accessControl,omitempty"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 func (ds *DataSource) DeepCopyObject() runtime.Object {
