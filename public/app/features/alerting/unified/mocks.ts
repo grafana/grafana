@@ -45,7 +45,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
     name: `Prometheus-${id}`,
     access: 'proxy',
     jsonData: {} as T,
-    meta: ({
+    meta: {
       info: {
         logos: {
           small: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
@@ -53,7 +53,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any) as DataSourcePluginMeta,
+    } as any as DataSourcePluginMeta,
     ...partial,
   };
 }
@@ -280,7 +280,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
     return (
       DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
-      (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
+      ({ meta: { info: { logos: {} } } } as unknown as DataSourceInstanceSettings)
     );
   }
 

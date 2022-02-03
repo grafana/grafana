@@ -17,22 +17,22 @@ const getTestContext = () => {
     status: 200,
     statusText: 'OK',
     ok: true,
-    headers: (null as unknown) as Headers,
+    headers: null as unknown as Headers,
     redirected: false,
-    type: (null as unknown) as ResponseType,
+    type: null as unknown as ResponseType,
     url: options.url,
-    config: (null as unknown) as BackendSrvRequest,
+    config: null as unknown as BackendSrvRequest,
   });
 
   const fetchMock = jest.fn().mockReturnValue(fetchResult);
   const setInProgressMock = jest.fn();
 
-  const queueMock: FetchQueue = ({
+  const queueMock: FetchQueue = {
     add: jest.fn(),
     setInProgress: setInProgressMock,
     setDone: jest.fn(),
     getUpdates: jest.fn(),
-  } as unknown) as FetchQueue;
+  } as unknown as FetchQueue;
 
   const responseQueue = new ResponseQueue(queueMock, fetchMock);
 

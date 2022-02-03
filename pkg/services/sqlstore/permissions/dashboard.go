@@ -81,11 +81,6 @@ type AccessControlDashboardPermissionFilter struct {
 	PermissionLevel models.PermissionType
 }
 
-const (
-	folderScopePrefix    = "folders:"
-	dashboardScopePrefix = "dashboards:"
-)
-
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
 	builder := strings.Builder{}
 

@@ -231,7 +231,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Team writer",
 			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
 			Group:       "Teams",
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
 				{Action: accesscontrol.ActionTeamsDelete, Scope: accesscontrol.ScopeTeamsAll},

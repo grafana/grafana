@@ -18,7 +18,13 @@ import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-import { failedMetric, mapPromMetricsToServiceMap, serviceMapMetrics, totalsMetric } from './graphTransform';
+import {
+  failedMetric,
+  histogramMetric,
+  mapPromMetricsToServiceMap,
+  serviceMapMetrics,
+  totalsMetric,
+} from './graphTransform';
 import {
   transformTrace,
   transformTraceList,
@@ -320,6 +326,11 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
           makePromLink(
             'Request rate',
             `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__interval])`,
+            datasourceUid
+          ),
+          makePromLink(
+            'Request histogram',
+            `histogram_quantile(0.9, rate(${histogramMetric}{server="\${__data.fields.id}"}[$__interval]))`,
             datasourceUid
           ),
           makePromLink(

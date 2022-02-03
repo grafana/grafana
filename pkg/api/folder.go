@@ -80,18 +80,16 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	if hs.Cfg.EditorsCanAdmin {
-		if err := s.MakeUserAdmin(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
-			hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
-				c.SignedInUser.UserId, "error", err)
-		}
+	if err := hs.setFolderPermission(c, folder.Id, s); err != nil {
+		hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
+			c.SignedInUser.UserId, "error", err)
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
 	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
-func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, dashSvc dashboards.DashboardService) error {
+func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, dashSvc dashboards.FolderService) error {
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(folderID, 10)
 		svc := hs.permissionServices.GetFolderService()

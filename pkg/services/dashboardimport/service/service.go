@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
@@ -19,14 +20,14 @@ import (
 func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store,
-	libraryPanelService librarypanels.Service) *ImportDashboardService {
+	libraryPanelService librarypanels.Service, ac accesscontrol.AccessControl) *ImportDashboardService {
 	s := &ImportDashboardService{
 		pluginDashboardManager: pluginDashboardManager,
 		dashboardService:       dashboards.NewService(sqlStore),
 		libraryPanelService:    libraryPanelService,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore)
+	dashboardImportAPI := api.New(s, quotaService, schemaLoaderService, pluginStore, ac)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s

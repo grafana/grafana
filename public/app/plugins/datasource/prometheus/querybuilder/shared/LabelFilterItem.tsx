@@ -8,8 +8,8 @@ export interface Props {
   defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
   onChange: (value: QueryBuilderLabelFilter) => void;
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
-  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<string[]>;
+  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onDelete: () => void;
 }
 
@@ -53,18 +53,18 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoadingLabelNames: true });
-            const labelNames = (await onGetLabelNames(item)).map((x) => ({ label: x, value: x }));
+            const labelNames = await onGetLabelNames(item);
             setState({ labelNames, isLoadingLabelNames: undefined });
           }}
           isLoading={state.isLoadingLabelNames}
           options={state.labelNames}
           onChange={(change) => {
             if (change.label) {
-              onChange(({
+              onChange({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              } as any) as QueryBuilderLabelFilter);
+              } as any as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -75,7 +75,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange(({ ...item, op: change.value } as any) as QueryBuilderLabelFilter);
+              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
             }
           }}
         />
@@ -90,7 +90,7 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
             const labelValues = await onGetLabelValues(item);
             setState({
               ...state,
-              labelValues: labelValues.map((value) => ({ label: value, value })),
+              labelValues,
               isLoadingLabelValues: undefined,
             });
           }}
@@ -99,14 +99,14 @@ export function LabelFilterItem({ item, defaultOp, onChange, onDelete, onGetLabe
           options={getOptions()}
           onChange={(change) => {
             if (change.value) {
-              onChange(({ ...item, value: change.value, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
+              onChange({ ...item, value: change.value, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
             } else {
               const changes = change
                 .map((change: any) => {
                   return change.label;
                 })
                 .join('|');
-              onChange(({ ...item, value: changes, op: item.op ?? defaultOp } as any) as QueryBuilderLabelFilter);
+              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
             }
           }}
         />

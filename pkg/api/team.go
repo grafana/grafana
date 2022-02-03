@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -25,7 +24,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
-	team, err := createTeam(hs.SQLStore, cmd.Name, cmd.Email, c.OrgId)
+	team, err := hs.SQLStore.CreateTeam(cmd.Name, cmd.Email, c.OrgId)
 	if err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(409, "Team name taken", err)
@@ -45,7 +44,6 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
 	}
-
 	return response.JSON(200, &util.DynMap{
 		"teamId":  team.Id,
 		"message": "Team created",
@@ -210,11 +208,4 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Respo
 	}
 
 	return hs.updatePreferencesFor(c.Req.Context(), orgId, 0, teamId, &dtoCmd)
-}
-
-// createTeam creates a team.
-//
-// Stubbable by tests.
-var createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
-	return sqlStore.CreateTeam(name, email, orgID)
 }

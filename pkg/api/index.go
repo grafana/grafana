@@ -144,9 +144,8 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN &&
-		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) &&
-		hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
+	return (c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)) &&
+		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts)
 }
 
 func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {
@@ -498,7 +497,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled != nil && *setting.AlertingEnabled || uaVisibleForOrg {
+	if uaVisibleForOrg {
 		children = append(children, &dtos.NavLink{
 			Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "bell", Url: hs.Cfg.AppSubURL + "/alerting/new",
