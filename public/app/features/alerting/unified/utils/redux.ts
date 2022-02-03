@@ -161,3 +161,19 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
   }
   return (e as Error)?.message || String(e);
 }
+
+export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateFulfilled);
+}
+
+export function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading && !state.error;
+}
+
+export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestStatePending<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && state.loading;
+}
