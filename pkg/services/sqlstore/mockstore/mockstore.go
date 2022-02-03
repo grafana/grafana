@@ -9,7 +9,7 @@ import (
 )
 
 type SQLStoreMock struct {
-	SQLStore      *sqlstore.SQLStore
+	ExpectedUser  *models.User
 	ExpectedError error
 }
 
@@ -98,6 +98,7 @@ func (m SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserComma
 }
 
 func (m SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
+	query.Result = m.ExpectedUser
 	return m.ExpectedError
 }
 
@@ -150,7 +151,7 @@ func (m SQLStoreMock) DeleteUser(ctx context.Context, cmd *models.DeleteUserComm
 }
 
 func (m SQLStoreMock) UpdateUserPermissions(userID int64, isAdmin bool) error {
-	return nil // TODO: Implement
+	return m.ExpectedError
 }
 
 func (m SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
@@ -158,7 +159,11 @@ func (m SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHe
 }
 
 func (m SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
-	return models.Team{}, nil // TODO: Implement
+	return models.Team{
+		Name:  name,
+		Email: email,
+		OrgId: orgID,
+	}, nil
 }
 
 func (m SQLStoreMock) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {

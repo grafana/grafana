@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -41,7 +42,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	sqlStore.Cfg = settings
 	hs.SQLStore = sqlStore
-
+	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
 
@@ -54,7 +55,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.Len(t, resp, 3)
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
@@ -72,7 +73,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, int64(3), resp.TotalCount)
 		assert.Equal(t, 1000, resp.PerPage)
 		assert.Equal(t, 1, resp.Page)
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
@@ -90,7 +91,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, int64(3), resp.TotalCount)
 		assert.Equal(t, 2, resp.PerPage)
 		assert.Equal(t, 2, resp.Page)
-	})
+	}, mock)
 
 	t.Run("Given there are two hidden users", func(t *testing.T) {
 		settings.HiddenUsers = map[string]struct{}{
@@ -113,7 +114,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 			assert.Len(t, resp, 2)
 			assert.Equal(t, testUserLogin, resp[0].Login)
 			assert.Equal(t, "user2", resp[1].Login)
-		})
+		}, mock)
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -130,7 +131,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Len(t, resp, 2)
 				assert.Equal(t, testUserLogin, resp[0].Login)
 				assert.Equal(t, "user2", resp[1].Login)
-			})
+			}, mock)
 	})
 }
 
