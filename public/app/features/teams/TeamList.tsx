@@ -69,7 +69,11 @@ export class TeamList extends PureComponent<Props, State> {
     const { editorsCanAdmin, signedInUser } = this.props;
     const permission = team.permission;
     const teamUrl = `org/teams/edit/${team.id}`;
-    const canDelete = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
+    const canDelete = contextSrv.hasAccessInMetadata(
+      AccessControlAction.ActionTeamsDelete,
+      team,
+      isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser })
+    );
 
     return (
       <tr key={team.id}>
