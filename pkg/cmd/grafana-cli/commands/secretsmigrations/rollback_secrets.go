@@ -211,6 +211,10 @@ func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
 			}
 		}
 
+		if _, err := sess.Exec("DELETE FROM data_keys"); err != nil {
+			logger.Warn("Error while cleaning up data keys table...", "err", err)
+		}
+
 		return nil
 	})
 }
