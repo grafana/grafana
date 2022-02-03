@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -21,7 +20,6 @@ import (
 )
 
 const userInDbName = "user_in_db"
-const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
 func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNewNavigation)
@@ -41,9 +39,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore: sqlStore,
 		}
 		service.Cfg.IsFeatureToggleEnabled = features.IsEnabled
-		fmt.Println("WOW", cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation))
 
-		fmt.Println("WOW in spanish", sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation))
 		user := models.SignedInUser{
 			UserId:     1,
 			Name:       "Signed In User",
@@ -82,13 +78,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 }
 
 type scenarioContext struct {
-	ctx           *web.Context
-	service       *NavbarPreferencesService
-	reqContext    *models.ReqContext
-	user          models.SignedInUser
-	folder        *models.Folder
-	initialResult NavbarPreferenceResponse
-	sqlStore      *sqlstore.SQLStore
+	ctx        *web.Context
+	service    *NavbarPreferencesService
+	reqContext *models.ReqContext
+	user       models.SignedInUser
+	sqlStore   *sqlstore.SQLStore
 }
 
 func getCreateNavbarPreferenceCommand(navItemID string, hideFromNavbar bool) CreateNavbarPreferenceCommand {

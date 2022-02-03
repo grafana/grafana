@@ -13,7 +13,7 @@ import (
 
 func (n *NavbarPreferencesService) registerAPIEndpoints() {
 	n.RouteRegister.Group("/api/navbar-preferences", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(n.createHandler))
+		entities.Put("/", middleware.ReqSignedIn, routing.Wrap(n.createHandler))
 		// entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
 		// entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(l.patchHandler))
 	})
@@ -21,12 +21,21 @@ func (n *NavbarPreferencesService) registerAPIEndpoints() {
 
 // createHandler handles POST /api/navbar-preferences.
 func (n *NavbarPreferencesService) createHandler(c *models.ReqContext) response.Response {
-	cmd := CreateNavbarPreferenceCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	createCmd := CreateNavbarPreferenceCommand{}
+	if err := web.Bind(c.Req, &createCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	preference, err := n.createNavbarPreference(c.Req.Context(), c.SignedInUser, cmd)
+	// TODO tidy up this logic
+	hasExistingPreference, err := n.hasExistingPreference(c.Req.Context(), c.SignedInUser, createCmd)
+	if err != nil {
+		return toNavbarPreferenceError(err, "Failed to create navbar preference")
+	}
+	if hasExistingPreference {
+		return toNavbarPreferenceError(errNavbarPreferenceAlreadyExists, "Failed to create navbar preference")
+	}
+
+	preference, err := n.createNavbarPreference(c.Req.Context(), c.SignedInUser, createCmd)
 	if err != nil {
 		return toNavbarPreferenceError(err, "Failed to create navbar preferences")
 	}

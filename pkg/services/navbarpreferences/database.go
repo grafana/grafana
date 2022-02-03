@@ -8,6 +8,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+func (n *NavbarPreferencesService) hasExistingPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (bool, error) {
+	navbarPreferences := make([]NavbarPreferenceDTO, 0)
+	err := n.SQLStore.WithDbSession(c, func(sess *sqlstore.DBSession) error {
+		// builder
+		builder := sqlstore.SQLBuilder{}
+		builder.Write("SELECT * from navbar_preference")
+		builder.Write(` WHERE org_id=? AND user_id=? AND nav_item_id=?`, signedInUser.OrgId, signedInUser.UserId, cmd.NavItemID)
+		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&navbarPreferences); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if len(navbarPreferences) > 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func (n *NavbarPreferencesService) getNavbarPreferences(c context.Context, signedInUser *models.SignedInUser) ([]NavbarPreferenceDTO, error) {
 	navbarPreferences := make([]NavbarPreferenceDTO, 0)
 	err := n.SQLStore.WithDbSession(c, func(sess *sqlstore.DBSession) error {
