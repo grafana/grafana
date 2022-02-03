@@ -254,6 +254,7 @@ func (r *simpleCrawler) walk() {
 
 				thumbnailId, err := r.thumbnailRepo.saveFromFile(res.FilePath, models.DashboardThumbnailMeta{
 					DashboardUID: item.Uid,
+					OrgId:        item.OrgId,
 					Theme:        r.opts.Theme,
 					Kind:         r.thumbnailKind,
 				}, item.Version)

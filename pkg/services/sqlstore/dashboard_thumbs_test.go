@@ -23,8 +23,8 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should insert dashboard in default state", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
-		thumb := getThumbnail(t, sqlStore, dash.Uid)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
+		thumb := getThumbnail(t, sqlStore, dash.Uid, dash.OrgId)
 
 		require.Positive(t, thumb.Id)
 		require.Equal(t, models.ThumbnailStateDefault, thumb.State)
@@ -34,13 +34,13 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should be able to update the thumbnail", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
-		thumb := getThumbnail(t, sqlStore, dash.Uid)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
+		thumb := getThumbnail(t, sqlStore, dash.Uid, dash.OrgId)
 
 		insertedThumbnailId := thumb.Id
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version+1)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version+1)
 
-		updatedThumb := getThumbnail(t, sqlStore, dash.Uid)
+		updatedThumb := getThumbnail(t, sqlStore, dash.Uid, dash.OrgId)
 		require.Equal(t, insertedThumbnailId, updatedThumb.Id)
 		require.Equal(t, dash.Version+1, updatedThumb.DashboardVersion)
 	})
@@ -49,7 +49,7 @@ func TestSqlStorage(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
 
 		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
@@ -60,8 +60,8 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should return dashboards with thumbnails marked as stale", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
-		updateThumbnailState(t, sqlStore, dash.Uid, models.ThumbnailStateStale)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
+		updateThumbnailState(t, sqlStore, dash.Uid, dash.OrgId, models.ThumbnailStateStale)
 
 		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
@@ -73,9 +73,9 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should not return dashboards with updated thumbnails that had been marked as stale", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
-		updateThumbnailState(t, sqlStore, dash.Uid, models.ThumbnailStateStale)
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
+		updateThumbnailState(t, sqlStore, dash.Uid, dash.OrgId, models.ThumbnailStateStale)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
 
 		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
@@ -97,7 +97,7 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should find dashboards with outdated thumbnails", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
@@ -113,8 +113,8 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should not return dashboards with locked thumbnails even if they are outdated", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.Version)
-		updateThumbnailState(t, sqlStore, dash.Uid, models.ThumbnailStateLocked)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
+		updateThumbnailState(t, sqlStore, dash.Uid, dash.OrgId, models.ThumbnailStateLocked)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
@@ -129,7 +129,7 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should not return dashboards with manually uploaded thumbnails by default", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, models.DashboardVersionForManualThumbnailUpload)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, models.DashboardVersionForManualThumbnailUpload)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
@@ -144,7 +144,7 @@ func TestSqlStorage(t *testing.T) {
 	t.Run("Should return dashboards with manually uploaded thumbnails if requested", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, models.DashboardVersionForManualThumbnailUpload)
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, models.DashboardVersionForManualThumbnailUpload)
 
 		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
 			"tags": "different-tag",
@@ -160,11 +160,12 @@ func TestSqlStorage(t *testing.T) {
 	})
 }
 
-func getThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string) *models.DashboardThumbnail {
+func getThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string, orgId int64) *models.DashboardThumbnail {
 	t.Helper()
 	cmd := models.GetDashboardThumbnailCommand{
 		DashboardThumbnailMeta: models.DashboardThumbnailMeta{
 			DashboardUID: dashboardUID,
+			OrgId:        orgId,
 			PanelID:      0,
 			Kind:         models.ThumbnailKindDefault,
 			Theme:        models.ThemeDark,
@@ -176,11 +177,12 @@ func getThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string) *models
 	return thumb
 }
 
-func upsertTestDashboardThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string, dashboardVersion int) *models.DashboardThumbnail {
+func upsertTestDashboardThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string, orgId int64, dashboardVersion int) *models.DashboardThumbnail {
 	t.Helper()
 	cmd := models.SaveDashboardThumbnailCommand{
 		DashboardThumbnailMeta: models.DashboardThumbnailMeta{
 			DashboardUID: dashboardUID,
+			OrgId:        orgId,
 			PanelID:      0,
 			Kind:         models.ThumbnailKindDefault,
 			Theme:        models.ThemeDark,
@@ -196,11 +198,12 @@ func upsertTestDashboardThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID
 	return dash
 }
 
-func updateThumbnailState(t *testing.T, sqlStore *SQLStore, dashboardUID string, state models.ThumbnailState) {
+func updateThumbnailState(t *testing.T, sqlStore *SQLStore, dashboardUID string, orgId int64, state models.ThumbnailState) {
 	t.Helper()
 	cmd := models.UpdateThumbnailStateCommand{
 		DashboardThumbnailMeta: models.DashboardThumbnailMeta{
 			DashboardUID: dashboardUID,
+			OrgId:        orgId,
 			PanelID:      0,
 			Kind:         models.ThumbnailKindDefault,
 			Theme:        models.ThemeDark,

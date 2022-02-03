@@ -42,7 +42,7 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 
 		thumb := &models.DashboardThumbnail{}
 
-		dash, err := findDashboardIDByUID(sess, cmd.DashboardUID)
+		dash, err := findDashboardIdByThumbMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil {
 			return err
@@ -100,6 +100,7 @@ func (ss *SQLStore) FindDashboardsWithStaleThumbnails(cmd *models.FindDashboards
 
 		sess.Cols("dashboard.id",
 			"dashboard.uid",
+			"dashboard.org_id",
 			"dashboard.version",
 			"dashboard.slug")
 
@@ -121,7 +122,7 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 
 	sess.Table("dashboard_thumbnail")
 	sess.Join("INNER", "dashboard", "dashboard.id = dashboard_thumbnail.dashboard_id")
-	sess.Where("dashboard.uid = ? AND panel_id = ? AND kind = ? AND theme = ?", meta.DashboardUID, meta.PanelID, meta.Kind, meta.Theme)
+	sess.Where("dashboard.uid = ? AND dashboard.org_id = ? AND panel_id = ? AND kind = ? AND theme = ?", meta.DashboardUID, meta.OrgId, meta.PanelID, meta.Kind, meta.Theme)
 	sess.Cols("dashboard_thumbnail.id",
 		"dashboard_thumbnail.dashboard_id",
 		"dashboard_thumbnail.panel_id",
@@ -149,10 +150,10 @@ type dash struct {
 	Id int64
 }
 
-func findDashboardIDByUID(sess *DBSession, dashboardUID string) (*dash, error) {
+func findDashboardIdByThumbMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*dash, error) {
 	result := &dash{}
 
-	sess.Table("dashboard").Where("dashboard.uid = ?", dashboardUID).Cols("id")
+	sess.Table("dashboard").Where("dashboard.uid = ? AND dashboard.org_id = ?", meta.DashboardUID, meta.OrgId).Cols("id")
 	exists, err := sess.Get(result)
 
 	if err != nil {
