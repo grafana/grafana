@@ -84,6 +84,10 @@ func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models
 	return a.user, a.err
 }
 
+func (a *authInfoServiceMock) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	return nil
+}
+
 func Test_teamSync(t *testing.T) {
 	b := bus.New()
 	authInfoMock := &authInfoServiceMock{}

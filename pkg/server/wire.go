@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -144,6 +145,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
+	authinfodatabase.ProvideAuthInfoStore,
+	wire.Bind(new(login.Store), new(*authinfodatabase.AuthInfoStore)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	live.ProvideService,
@@ -190,7 +193,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
-	wire.Bind(new(authinfoservice.Service), new(*authinfoservice.Implementation)),
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	resourceservices.ProvideResourceServices,
