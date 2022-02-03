@@ -42,6 +42,8 @@ Use this option to transform series values without affecting values shown in too
 - **Negative Y transform -** Flip the results to negative values on the y axis.
 - **Constant -** Show first value as a constant line.
 
+> **Note:** Transform option is only available as an override.
+
 ## Axis
 
 For more information about adjusting your time series axes, refer to [Change axis display]({{< relref "change-axis-display.md" >}}).
