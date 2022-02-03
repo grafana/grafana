@@ -471,19 +471,35 @@ func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool
 
 // GetTeamMembers return a list of members for the specified team
 func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
-	query.Result = make([]*models.TeamMemberDTO, 0)
-	sess := x.Table("team_member")
-	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+	return ss.getTeamMembers(ctx, query, nil)
+}
+
+// GetFilteredTeamMembers return a list of members for the specified team filtered based on the user's permissions
+func (ss *SQLStore) GetFilteredTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+	var acFilter *ac.SqlFilter
+	var err error
 
 	// With accesscontrol we filter out users based on the SignedInUser's permissions
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
 	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-		acWhere, acArgs, err := ac.Filter(ctx, "user.id", "users", ac.ActionOrgUsersRead, query.SignedInUser)
+		*acFilter, err = ac.Filter(ctx, "user.id", "users", ac.ActionOrgUsersRead, query.SignedInUser)
 		if err != nil {
 			return err
 		}
-		sess.Where(acWhere, acArgs...)
+	}
+
+	return ss.getTeamMembers(ctx, query, acFilter)
+}
+
+// getTeamMembers return a list of members for the specified team
+func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SqlFilter) error {
+	query.Result = make([]*models.TeamMemberDTO, 0)
+	sess := x.Table("team_member")
+	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+
+	if acUserFilter != nil {
+		sess.Where(acUserFilter.Where, acUserFilter.Args...)
 	}
 
 	// Join with only most recent auth module

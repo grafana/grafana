@@ -31,7 +31,7 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 		SignedInUser: user,
 	}
 
-	results, err := s.store.GetTeamMembers(ctx, cmd)
+	results, err := s.store.GetFilteredTeamMembers(ctx, cmd)
 	if err != nil {
 		return err
 	}

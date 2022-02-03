@@ -7,7 +7,6 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana-server/",
-      "cwd": "${workspaceFolder}",
       "env": {},
       "cwd": "${workspaceFolder}",
       "args": ["--homepath", "${workspaceFolder}", "--packaging", "dev"]

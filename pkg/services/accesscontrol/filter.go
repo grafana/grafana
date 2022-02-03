@@ -9,6 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type SqlFilter struct {
+	Where string
+	Args  []interface{}
+}
+
 var sqlIDAcceptList = map[string]struct{}{
 	"org_user.user_id": {},
 	"role.id":          {},

@@ -26,7 +26,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId, SignedInUser: c.SignedInUser}
 
-	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetFilteredTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
