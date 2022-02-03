@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"net/http"
 	"strconv"
 
@@ -114,6 +115,12 @@ func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) er
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
 	reqDTO := dtos.MetricRequest{}
+
+	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
+		// validated queries is not enabled
+		return response.Error(400, "Validated queries feature is disabled", nil)
+	}
+
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

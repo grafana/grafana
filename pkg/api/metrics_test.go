@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -199,6 +200,8 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		&fakeOAuthTokenService{},
 	)
 
+	sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagValidatedQueries, true)
+
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
 
@@ -238,6 +241,22 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			t,
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, "{\"error\":\"Unique identifier needed to be able to get a dashboard panel\",\"message\":\"Unique identifier needed to be able to get a dashboard panel\"}", response.Body.String())
+	})
+
+	t.Run("Cannot query when ValidatedQueries is disabled", func(t *testing.T) {
+		sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagValidatedQueries, false)
+
+		response := callAPI(
+			sc.server,
+			http.MethodPost,
+			"/api/dashboards/id//panels//query",
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, "{\"message\":\"Validated queries feature is disabled\"}", response.Body.String())
 	})
 }
 
