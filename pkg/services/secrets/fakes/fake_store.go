@@ -46,6 +46,6 @@ func (f FakeSecretsStore) DeleteDataKey(_ context.Context, name string) error {
 	return nil
 }
 
-func (f FakeSecretsStore) ReEncryptDataKeys(_ context.Context, _ map[string]secrets.Provider, _ string) error {
+func (f FakeSecretsStore) ReEncryptDataKeys(_ context.Context, _ map[secrets.ProviderID]secrets.Provider, _ secrets.ProviderID) error {
 	return nil
 }
