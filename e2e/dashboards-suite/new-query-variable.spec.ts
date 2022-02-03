@@ -2,7 +2,7 @@ import { e2e } from '@grafana/e2e';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
-describe('Variables - Add variable', () => {
+describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });

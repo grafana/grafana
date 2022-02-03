@@ -130,7 +130,7 @@ export class TeamPages extends PureComponent<Props, State> {
       case PageTypes.GroupSync:
         if (isSignedInUserTeamAdmin && isSyncEnabled) {
           return <TeamGroupSync />;
-        } else if (config.featureHighlights.enabled) {
+        } else if (config.featureToggles.featureHighlights) {
           return (
             <UpgradeBox
               text={

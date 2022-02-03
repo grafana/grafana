@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2"
 
@@ -41,7 +42,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		},
 		TotalCount: 2,
 	}
-
+	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -100,7 +101,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		resp.UpdatedAt = fakeNow
 		resp.AvatarUrl = avatarUrl
 		require.EqualValues(t, expected, resp)
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
@@ -141,7 +142,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.Equal(t, "admin", resp.Login)
 		require.Equal(t, "admin@test.com", resp.Email)
 		require.True(t, resp.IsGrafanaAdmin)
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		var sentLimit int
@@ -165,7 +166,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 		require.NoError(t, err)
 		assert.Equal(t, 2, len(respJSON.MustArray()))
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		var sentLimit int
@@ -185,7 +186,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		assert.Equal(t, 10, sentLimit)
 		assert.Equal(t, 2, sendPage)
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		var sentLimit int
@@ -211,7 +212,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		assert.Equal(t, 2, respJSON.Get("totalCount").MustInt())
 		assert.Equal(t, 2, len(respJSON.Get("users").MustArray()))
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		var sentLimit int
@@ -231,5 +232,5 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		assert.Equal(t, 10, sentLimit)
 		assert.Equal(t, 2, sendPage)
-	})
+	}, mock)
 }

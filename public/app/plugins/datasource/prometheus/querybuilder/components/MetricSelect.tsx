@@ -8,7 +8,7 @@ import { css } from '@emotion/css';
 export interface Props {
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
-  onGetMetrics: () => Promise<string[]>;
+  onGetMetrics: () => Promise<SelectableValue[]>;
 }
 
 export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
@@ -17,12 +17,6 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     metrics?: Array<SelectableValue<any>>;
     isLoading?: boolean;
   }>({});
-
-  const loadMetrics = async () => {
-    return await onGetMetrics().then((res) => {
-      return res.map((value) => ({ label: value, value }));
-    });
-  };
 
   return (
     <EditorFieldGroup>
@@ -35,7 +29,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoading: true });
-            const metrics = await loadMetrics();
+            const metrics = await onGetMetrics();
             setState({ metrics, isLoading: undefined });
           }}
           isLoading={state.isLoading}
