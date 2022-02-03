@@ -87,10 +87,24 @@ describe('PromQueryBuilder', () => {
     expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true);
   });
 
+  it('tries to load variables in metric field', async () => {
+    const { datasource } = setup();
+    datasource.getVariables = jest.fn().mockReturnValue([]);
+    openMetricSelect();
+    expect(datasource.getVariables).toBeCalled();
+  });
+
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     openLabelNameSelect();
     expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}');
+  });
+
+  it('tries to load variables in label field', async () => {
+    const { datasource } = setup();
+    datasource.getVariables = jest.fn().mockReturnValue([]);
+    openLabelNameSelect();
+    expect(datasource.getVariables).toBeCalled();
   });
 
   it('tries to load labels when metric selected and other labels are already present', async () => {
@@ -117,23 +131,24 @@ describe('PromQueryBuilder', () => {
 
 function setup(query: PromVisualQuery = defaultQuery) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const datasource = new PrometheusDatasource(
+    {
+      url: '',
+      jsonData: {},
+      meta: {} as any,
+    } as any,
+    undefined,
+    undefined,
+    languageProvider
+  );
   const props = {
-    datasource: new PrometheusDatasource(
-      {
-        url: '',
-        jsonData: {},
-        meta: {} as any,
-      } as any,
-      undefined,
-      undefined,
-      languageProvider
-    ),
+    datasource,
     onRunQuery: () => {},
     onChange: () => {},
   };
 
   render(<PromQueryBuilder {...props} query={query} />);
-  return { languageProvider };
+  return { languageProvider, datasource };
 }
 
 function getMetricSelect() {
