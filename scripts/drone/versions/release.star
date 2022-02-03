@@ -1,10 +1,14 @@
 load(
     'scripts/drone/init/init.star',
-    'disable_tests',
     'download_grabpl_step',
     'initialize_step',
+)
+
+load(
+    'scripts/drone/utils/var.star',
     'build_image',
     'publish_image',
+    'disable_tests',
 )
 
 load(

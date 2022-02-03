@@ -1,4 +1,5 @@
-load('scripts/drone/init/init.star', 'enterprise2_suffix', 'build_image')
+load('scripts/drone/utils/var.star', 'build_image')
+load('scripts/drone/init/init.star', 'enterprise2_suffix')
 
 def test_backend_step(edition):
     return {

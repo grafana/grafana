@@ -1,4 +1,4 @@
-load('scripts/drone/init/init.star', 'build_image')
+load('scripts/drone/utils/var.star', 'build_image')
 
 def validate_scuemata_step():
     return {

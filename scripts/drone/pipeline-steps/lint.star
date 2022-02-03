@@ -1,4 +1,5 @@
-load('scripts/drone/init/init.star', 'enterprise2_suffix', 'curl_image', 'build_image')
+load('scripts/drone/utils/var.star', 'curl_image', 'build_image')
+load('scripts/drone/init/init.star', 'enterprise2_suffix')
 
 def lint_drone_step():
     return {

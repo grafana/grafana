@@ -1,4 +1,5 @@
-load('scripts/drone/init/init.star', 'build_image', 'enterprise2_suffix', 'test_release_ver', 'grafana_docker_image')
+load('scripts/drone/utils/var.star', 'build_image', 'test_release_ver', 'grafana_docker_image')
+load('scripts/drone/init/init.star', 'enterprise2_suffix')
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'gcp_upload_artifacts_key')
 
 def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):

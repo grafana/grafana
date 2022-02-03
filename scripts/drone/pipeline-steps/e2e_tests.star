@@ -1,4 +1,5 @@
-load('scripts/drone/init/init.star', 'build_image', 'enterprise2_suffix')
+load('scripts/drone/utils/var.star', 'build_image')
+load('scripts/drone/init/init.star', 'enterprise2_suffix')
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'gcp_upload_artifacts_key')
 
 def grafana_server_step(edition, port=3001):
