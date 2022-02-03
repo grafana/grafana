@@ -9992,13 +9992,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/rbush@npm:^3":
-  version: 3.0.0
-  resolution: "@types/rbush@npm:3.0.0"
-  checksum: 050eb2af4d7cb59c5b3dddfb9af93e4abfcffb1766d82fdcd4d37e03cff374f7cf761eef3b8cd48f976416ee3dd7ee4991bde938698865ed0c660317f3a020c2
-  languageName: node
-  linkType: hard
-
 "@types/rc-time-picker@npm:^3":
   version: 3.4.1
   resolution: "@types/rc-time-picker@npm:3.4.1"
@@ -19853,7 +19846,6 @@ __metadata:
     "@types/papaparse": 5.3.1
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
-    "@types/rbush": ^3
     "@types/rc-time-picker": ^3
     "@types/react": 17.0.38
     "@types/react-beautiful-dnd": 13.1.2
@@ -19986,7 +19978,6 @@ __metadata:
     prismjs: 1.26.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
-    rbush: ^3.0.1
     rc-cascader: 3.2.1
     rc-drawer: 4.4.3
     rc-slider: 9.7.5
