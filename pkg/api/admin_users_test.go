@@ -416,7 +416,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 			sc.context.UserId = testUserID
 
 			if action == "enable" {
-				return AdminEnableUser(c)
+				return hs.AdminEnableUser(c)
 			}
 
 			return hs.AdminDisableUser(c)
@@ -429,6 +429,9 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 }
 
 func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
+	hs := HTTPServer{
+		SQLStore: mockstore.NewSQLStoreMock(),
+	}
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
@@ -437,7 +440,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 			sc.context = c
 			sc.context.UserId = testUserID
 
-			return AdminDeleteUser(c)
+			return hs.AdminDeleteUser(c)
 		})
 
 		sc.m.Delete(routePattern, sc.defaultHandler)
