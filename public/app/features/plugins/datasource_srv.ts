@@ -244,7 +244,7 @@ export class DatasourceSrv implements DataSourceService {
       for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
         const dsVar = variable as DataSourceVariableModel;
         const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
-        const dsName = (first as unknown) as string;
+        const dsName = first as unknown as string;
         const dsSettings = this.settingsMapByName[dsName];
 
         if (dsSettings) {

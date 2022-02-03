@@ -231,7 +231,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Team writer",
 			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
 			Group:       "Teams",
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
 				{Action: accesscontrol.ActionTeamsDelete, Scope: accesscontrol.ScopeTeamsAll},
@@ -256,7 +256,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 // dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
 var dataSourcesConfigurationAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesRead),
 	accesscontrol.EvalAny(
 		accesscontrol.EvalPermission(ActionDatasourcesCreate),
 		accesscontrol.EvalPermission(ActionDatasourcesDelete),
@@ -266,14 +266,14 @@ var dataSourcesConfigurationAccessEvaluator = accesscontrol.EvalAll(
 
 // dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
 var dataSourcesNewAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesRead),
 	accesscontrol.EvalPermission(ActionDatasourcesCreate),
 	accesscontrol.EvalPermission(ActionDatasourcesWrite),
 )
 
 // dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
 var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionDatasourcesRead, ScopeDatasourcesAll),
+	accesscontrol.EvalPermission(ActionDatasourcesRead),
 	accesscontrol.EvalPermission(ActionDatasourcesWrite),
 )
 

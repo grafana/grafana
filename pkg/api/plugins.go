@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -143,7 +142,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetPluginSettingById(c.Req.Context(), &query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return response.Error(500, "Failed to get login settings", nil)
 		}
@@ -175,7 +174,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.UpdatePluginSetting(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
