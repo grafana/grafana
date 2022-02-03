@@ -106,9 +106,7 @@ getLocationSrv.update({
 });
 
 // after
-locationService.pushPartial({
-  value: 1,
-});
+locationService.partial({ value: 1 });
 ```
 
 **Example:** How to update the search/query parameter for the current route and add replacing it in the navigation history.
@@ -124,9 +122,7 @@ getLocationSrv.update({
 });
 
 // after
-locationService.replacePartial({
-  'var-variable': 1,
-});
+locationService.partial({ 'var-variable': 1 }, true);
 ```
 
 ## From version 7.x.x to 8.x.x

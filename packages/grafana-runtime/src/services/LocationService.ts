@@ -5,7 +5,7 @@ import { attachDebugger, createLogger } from '@grafana/ui';
 import { config } from '../config';
 
 /**
- * @alpha
+ * @public
  * A wrapper to help work with browser location and history
  */
 export interface LocationService {
@@ -120,7 +120,7 @@ export class HistoryWrapper implements LocationService {
 }
 
 /**
- * @alpha
+ * @public
  * Parses a location search string to an object
  * */
 export function locationSearchToObject(search: string | number): UrlQueryMap {
@@ -137,7 +137,7 @@ export function locationSearchToObject(search: string | number): UrlQueryMap {
 }
 
 /**
- * @alpha
+ * @public
  */
 export let locationService: LocationService = new HistoryWrapper();
 
