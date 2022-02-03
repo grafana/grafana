@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	usernameAdmin    = "admin2"
+	usernameAdmin    = "admin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )
