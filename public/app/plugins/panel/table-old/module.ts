@@ -266,6 +266,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export const plugin = new PanelPlugin((null as unknown) as ComponentType<PanelProps<any>>);
+export const plugin = new PanelPlugin(null as unknown as ComponentType<PanelProps<any>>);
 plugin.angularPanelCtrl = TablePanelCtrl;
 plugin.setNoPadding();

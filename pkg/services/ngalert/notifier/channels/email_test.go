@@ -66,11 +66,11 @@ func TestEmailNotifier(t *testing.T) {
 		require.True(t, ok)
 
 		expected := map[string]interface{}{
-			"subject":      emailSender.Email.Subject,
-			"to":           emailSender.Email.To,
-			"single_email": emailSender.Email.SingleEmail,
-			"template":     emailSender.Email.Template,
-			"data":         emailSender.Email.Data,
+			"subject":      emailSender.EmailSync.Subject,
+			"to":           emailSender.EmailSync.To,
+			"single_email": emailSender.EmailSync.SingleEmail,
+			"template":     emailSender.EmailSync.Template,
+			"data":         emailSender.EmailSync.Data,
 		}
 		require.Equal(t, map[string]interface{}{
 			"subject":      "[FIRING:1]  (AlwaysFiring warning)",

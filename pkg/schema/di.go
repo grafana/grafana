@@ -137,6 +137,9 @@ func (r *schemaRegistry) Store(sch ObjectSchema) {
 }
 
 func (r *schemaRegistry) Load(name string) (ObjectSchema, bool) {
-	sch, ok := r.M.Load(name)
-	return sch.(ObjectSchema), ok
+
+	if sch, ok := r.M.Load(name); ok {
+		return sch.(ObjectSchema), ok
+	}
+	return nil, false
 }

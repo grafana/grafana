@@ -64,7 +64,7 @@ describe('data source actions', () => {
               { type: 'datasource', id: '0' },
               {
                 sources,
-                regex: (undefined as unknown) as RegExp,
+                regex: undefined as unknown as RegExp,
               }
             )
           ),
