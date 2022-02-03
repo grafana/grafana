@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/wire"
 	"github.com/grafana/grafana/internal/components/datasource"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 /*
@@ -34,10 +36,65 @@ type storeDS struct {
 }
 
 func (s storeDS) Get(ctx context.Context, uid string) (datasource.DataSource, error) {
-	return datasource.DataSource{}, nil
+	cmd := &models.GetDataSourceQuery{
+		OrgId: 1, // Hardcode for now
+		Uid:   uid,
+	}
+
+	if err := s.ss.GetDataSource(ctx, cmd); err != nil {
+		return datasource.DataSource{}, err
+	}
+
+	ds := cmd.Result
+
+	jdMap := ds.JsonData.MustMap()
+	// if err != nil {
+	// 	return datasource.DataSource{}, err
+	// }
+
+	return datasource.DataSource{
+		Name:              ds.Name,
+		Type:              ds.Type,
+		Access:            string(ds.Access),
+		Url:               ds.Url,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          jdMap,
+		// SecureJsonData: TODO,
+		UID: ds.Uid,
+	}, nil
 }
 
-func (s storeDS) Upsert(ctx context.Context, uid string, ds datasource.DataSource) error {
+func (s storeDS) Insert(ctx context.Context, ds datasource.DataSource) error {
+	cmd := &models.AddDataSourceCommand{
+		Name:              ds.Name,
+		Type:              ds.Type,
+		Access:            models.DsAccess(ds.Access),
+		Url:               ds.Url,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          simplejson.NewFromAny(ds.JsonData),
+		// SecureJsonData: TODO,
+		Uid:   ds.UID,
+		OrgId: 1, // hardcode for now, TODO
+	}
+	return s.ss.AddDataSource(ctx, cmd)
+
+}
+
+func (s storeDS) Update(ctx context.Context, ds datasource.DataSource) error {
 	return nil
 }
 
