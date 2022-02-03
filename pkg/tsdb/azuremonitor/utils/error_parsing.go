@@ -12,6 +12,7 @@ type ErrorObject struct {
 	Line                    int           `json:"line,omitempty"`
 	CharacterPositionInLine int           `json:"characterPositionInLine,omitempty"`
 	Token                   string        `json:"token,omitempty"`
+	ExpectedToken           string        `json:"expectedToken,omitempty"`
 	Details                 []ErrorObject `json:"details"`
 }
 type errorResponse struct {
@@ -55,6 +56,9 @@ func ParseError(e []byte) (string, error) {
 		}
 		if d.Token != "" {
 			errString += `: "` + string(d.Token) + `"`
+		}
+		if d.ExpectedToken != "" {
+			errString += ` expected "` + string(d.ExpectedToken) + `"`
 		}
 		errString += "\n"
 	}

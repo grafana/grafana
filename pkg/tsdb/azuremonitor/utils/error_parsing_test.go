@@ -50,6 +50,19 @@ func TestParseError(t *testing.T) {
 			]
 		}
 	}`
+	bodyWithLines2 := `{
+		"error":{
+			"code":"BadRequest",
+			"message":"Please provide below info when asking for support: timestamp = 2022-02-03T14:35:01.5227256Z, correlationId = 30ec5e09-c501-4fe1-9db6-43e76d3e4893.",
+			"details":[
+				{"code":"InvalidQuery",
+				"message":"Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying."},
+				{"code":"ParserFailure","message":"ParserFailure","line":1,"characterPositionInLine":26,"token":"<"},
+				{"code":"ParserFailure","message":"ParserFailure","line":1,"characterPositionInLine":26,"token":"<","expectedToken":"ǃ"},
+				{"code":"ParserFailure","message":"ParserFailure","line":1,"characterPositionInLine":28,"token":"<","expectedToken":":"}
+			]
+		}
+	}`
 
 	tests := []struct {
 		name        string
@@ -64,6 +77,16 @@ func TestParseError(t *testing.T) {
 InvalidQuery: Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
 UnknownFunction: Unknown function: 'cout'.
 Please provide below info when asking for support: timestamp = 2022-01-17T15:50:07.9782199Z, correlationId = 7ba435e5-6371-458f-a1b5-1c7ffdba6ff4.`,
+		},
+		{
+			name: "error with lines",
+			body: bodyWithLines2,
+			expectedRes: `BadRequest
+InvalidQuery: Query is invalid. Please refer to the documentation for the Azure Resource Graph service and fix the error before retrying.
+ParserFailure: ParserFailure at line 1, col 26: "<"
+ParserFailure: ParserFailure at line 1, col 26: "<" expected "ǃ"
+ParserFailure: ParserFailure at line 1, col 28: "<" expected ":"
+Please provide below info when asking for support: timestamp = 2022-02-03T14:35:01.5227256Z, correlationId = 30ec5e09-c501-4fe1-9db6-43e76d3e4893.`,
 		},
 		{
 			name: "error with lines",
