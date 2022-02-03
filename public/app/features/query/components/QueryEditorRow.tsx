@@ -137,7 +137,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     this.setState({
-      datasource: (datasource as unknown) as DataSourceApi<TQuery>,
+      datasource: datasource as unknown as DataSourceApi<TQuery>,
       loadedDataSourceIdentifier: dataSourceIdentifier,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });

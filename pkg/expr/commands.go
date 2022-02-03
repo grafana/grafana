@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -69,19 +70,25 @@ func (gm *MathCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
 type ReduceCommand struct {
-	Reducer     string
-	VarToReduce string
-	refID       string
+	Reducer      string
+	VarToReduce  string
+	refID        string
+	seriesMapper mathexp.ReduceMapper
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(refID, reducer, varToReduce string) *ReduceCommand {
-	// TODO: validate reducer here, before execution
-	return &ReduceCommand{
-		Reducer:     reducer,
-		VarToReduce: varToReduce,
-		refID:       refID,
+func NewReduceCommand(refID, reducer, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
+	_, err := mathexp.GetReduceFunc(reducer)
+	if err != nil {
+		return nil, err
 	}
+
+	return &ReduceCommand{
+		Reducer:      reducer,
+		VarToReduce:  varToReduce,
+		refID:        refID,
+		seriesMapper: mapper,
+	}, nil
 }
 
 // UnmarshalReduceCommand creates a MathCMD from Grafana's frontend query.
@@ -105,7 +112,36 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T for refId %v", rawReducer, rn.RefID)
 	}
 
-	return NewReduceCommand(rn.RefID, redFunc, varToReduce), nil
+	var mapper mathexp.ReduceMapper = nil
+	settings, ok := rn.Query["settings"]
+	if ok {
+		switch s := settings.(type) {
+		case map[string]interface{}:
+			mode, ok := s["mode"]
+			if ok && mode != "" {
+				switch mode {
+				case "dropNN":
+					mapper = mathexp.DropNonNumber{}
+				case "replaceNN":
+					valueStr, ok := s["replaceWithValue"]
+					if !ok {
+						return nil, fmt.Errorf("expected settings.replaceWithValue to be specified when mode is 'replaceNN' for refId %v", rn.RefID)
+					}
+					switch value := valueStr.(type) {
+					case float64:
+						mapper = mathexp.ReplaceNonNumberWithValue{Value: value}
+					default:
+						return nil, fmt.Errorf("expected settings.replaceWithValue to be a number, got %T for refId %v", value, rn.RefID)
+					}
+				default:
+					return nil, fmt.Errorf("reducer mode %s is not supported for refId %v. Supported only: [dropNN,replaceNN]", mode, rn.RefID)
+				}
+			}
+		default:
+			return nil, fmt.Errorf("expected settings to be an object, got %T for refId %v", s, rn.RefID)
+		}
+	}
+	return NewReduceCommand(rn.RefID, redFunc, varToReduce, mapper)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -123,7 +159,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 		if !ok {
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
-		num, err := series.Reduce(gr.refID, gr.Reducer)
+		num, err := series.Reduce(gr.refID, gr.Reducer, gr.seriesMapper)
 		if err != nil {
 			return newRes, err
 		}
