@@ -11,9 +11,8 @@ import { getTeamGroups } from './state/selectors';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
-function mapStateToProps(state: StoreState, props: OwnProps) {
+function mapStateToProps(state: StoreState) {
   return {
-    isReadOnly: props.isReadOnly,
     groups: getTeamGroups(state.team),
   };
 }
@@ -31,18 +30,17 @@ interface OwnProps {
 interface State {
   isAdding: boolean;
   newGroupId: string;
-  isReadOnly: boolean;
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-export type Props = ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
 export class TeamGroupSync extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newGroupId: '', isReadOnly: props.isReadOnly };
+    this.state = { isAdding: false, newGroupId: '' };
   }
 
   componentDidMount() {
@@ -76,7 +74,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 
   renderGroup(group: TeamGroup) {
-    const { isReadOnly } = this.state;
+    const { isReadOnly } = this.props;
     return (
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
@@ -90,8 +88,8 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isReadOnly, isAdding, newGroupId } = this.state;
-    const groups = this.props.groups;
+    const { isAdding, newGroupId } = this.state;
+    const { groups, isReadOnly } = this.props;
 
     return (
       <div>
