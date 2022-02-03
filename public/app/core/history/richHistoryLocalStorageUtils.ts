@@ -21,10 +21,12 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
 };
 
 export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
+  const filter1 = createRetentionPeriodBoundary(timeFilter[0], true); // probably the vars should have a different name
+  const filter2 = createRetentionPeriodBoundary(timeFilter[1], false);
   return queries.filter(
     (q) =>
-      q.ts < createRetentionPeriodBoundary(timeFilter[0], true) &&
-      q.ts > createRetentionPeriodBoundary(timeFilter[1], false)
+      q.ts < filter1
+      q.ts > filter2
   );
 }
 
