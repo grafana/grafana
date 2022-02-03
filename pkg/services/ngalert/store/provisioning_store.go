@@ -37,7 +37,7 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (mo
 		params := []interface{}{recordKey, recordType}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
-			return err
+			return fmt.Errorf("failed to query for existing provenance status: %w", err)
 		}
 		if len(result) < 1 {
 			return nil
