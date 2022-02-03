@@ -10,7 +10,6 @@ import {
   FieldType,
   LogRowModel,
   MutableDataFrame,
-  TimeSeries,
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, config } from '@grafana/runtime';
