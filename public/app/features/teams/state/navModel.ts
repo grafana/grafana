@@ -40,7 +40,7 @@ export function buildNavModel(team: Team): NavModelItem {
 
   if (featureEnabled('teamsync')) {
     navModel.children!.push(teamGroupSync);
-  } else if (config.featureHighlights.enabled) {
+  } else if (config.featureToggles.featureHighlights) {
     navModel.children!.push({ ...teamGroupSync, tabSuffix: ProBadge });
   }
 
