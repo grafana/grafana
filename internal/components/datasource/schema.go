@@ -8,7 +8,7 @@ import (
 	"testing/fstest"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
+	"github.com/grafana/grafana/internal/cuectx"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/kernel"
@@ -19,8 +19,7 @@ import (
 var sch *schema.ThemaSchema
 
 func init() {
-	// FIXME derive lib from some central place
-	lib := thema.NewLibrary(cuecontext.New())
+	lib := cuectx.ProvideThemaLibrary()
 	lin, err := DatasourceLineage(lib)
 	if err != nil {
 		panic(err)
@@ -29,6 +28,15 @@ func init() {
 		Lineage: lin,
 	}
 	schema.RegisterCoreSchema(sch)
+
+	// Calling this ensures our program cannot start if the Go DataSource type
+	// is not aligned with the canonical schema version in our lineage
+	_ = newDataSourceJSONKernel(lin)
+
+	zsch, _ := lin.Schema(thema.SV(0, 0))
+	if err = thema.AssignableTo(zsch, DataSource{}); err != nil {
+		panic(err)
+	}
 }
 
 //go:embed datasource.cue
@@ -69,8 +77,6 @@ func newDataSourceJSONKernel(lin thema.Lineage) kernel.InputKernel {
 		TypeFactory: func() interface{} { return &DataSource{} },
 	})
 	if err != nil {
-		// Panic here guarantees that our program cannot start if the Go ship type is
-		// not aligned with the shipVersion schema from our lineage
 		panic(err)
 	}
 	return jdk
@@ -82,11 +88,10 @@ type DataSource struct {
 	// OrgId             int64                  `json:"orgId"`
 
 	//UID         string `json:"uid"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	TypeLogoUrl string `json:"typeLogoUrl"`
-	// Access            models.DsAccess        `json:"access"`
-	Access            string `json:"access"` // enum: "proxy" | "direct"
+	Name              string `json:"name"`
+	Type              string `json:"type"`
+	TypeLogoUrl       string `json:"typeLogoUrl"`
+	Access            string `json:"access"` // enum: *"proxy" | "direct"
 	Url               string `json:"url"`
 	Password          string `json:"password"`
 	User              string `json:"user"`
@@ -94,15 +99,15 @@ type DataSource struct {
 	BasicAuth         bool   `json:"basicAuth"`
 	BasicAuthUser     string `json:"basicAuthUser"`
 	BasicAuthPassword string `json:"basicAuthPassword"`
-	//WithCredentials   bool   `json:"withCredentials"`
-	//IsDefault         bool   `json:"isDefault"`
+	WithCredentials   bool   `json:"withCredentials,omitempty"`
+	IsDefault         bool   `json:"isDefault"`
 	// JsonData          *simplejson.Json       `json:"jsonData,omitempty"`
-	JsonData map[string]interface{} `json:"jsonData,omitempty"`
-	//SecureJsonFields map[string]bool        `json:"secureJsonFields"`
-	//Version          int                    `json:"version"`
-	//ReadOnly         bool                   `json:"readOnly"`
+	JsonData         map[string]interface{} `json:"jsonData,omitempty"`
+	SecureJsonFields map[string]bool        `json:"secureJsonFields,omitempty"`
+	Version          int                    `json:"version"`
+	ReadOnly         bool                   `json:"readOnly"`
 	// AccessControl     accesscontrol.Metadata `json:"accessControl,omitempty"`
-	//AccessControl map[string]bool `json:"accessControl,omitempty"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 func (ds *DataSource) DeepCopyObject() runtime.Object {
