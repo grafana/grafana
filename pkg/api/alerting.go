@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ValidateOrgAlert(c *models.ReqContext) {
+func (hs *HTTPServer) ValidateOrgAlert(c *models.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "alertId is invalid", nil)
@@ -39,7 +39,7 @@ func ValidateOrgAlert(c *models.ReqContext) {
 	}
 }
 
-func GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
 	dashboardID := c.QueryInt64("dashboardId")
 
 	if dashboardID == 0 {
@@ -59,7 +59,7 @@ func GetAlertStatesForDashboard(c *models.ReqContext) response.Response {
 }
 
 // GET /api/alerts
-func GetAlerts(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 	dashboardQuery := c.Query("dashboardQuery")
 	dashboardTags := c.QueryStrings("dashboardTag")
 	stringDashboardIDs := c.QueryStrings("dashboardId")
@@ -181,7 +181,7 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 }
 
 // GET /api/alerts/:id
-func GetAlert(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
@@ -195,7 +195,7 @@ func GetAlert(c *models.ReqContext) response.Response {
 	return response.JSON(200, &query.Result)
 }
 
-func GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
 	return func(_ *models.ReqContext) response.Response {
 		if ngalertEnabled {
 			return response.JSON(200, notifier.GetAvailableNotifiers())
@@ -206,8 +206,8 @@ func GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Re
 	}
 }
 
-func GetAlertNotificationLookup(c *models.ReqContext) response.Response {
-	alertNotifications, err := getAlertNotificationsInternal(c)
+func (hs *HTTPServer) GetAlertNotificationLookup(c *models.ReqContext) response.Response {
+	alertNotifications, err := hs.getAlertNotificationsInternal(c)
 	if err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
@@ -221,8 +221,8 @@ func GetAlertNotificationLookup(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func GetAlertNotifications(c *models.ReqContext) response.Response {
-	alertNotifications, err := getAlertNotificationsInternal(c)
+func (hs *HTTPServer) GetAlertNotifications(c *models.ReqContext) response.Response {
+	alertNotifications, err := hs.getAlertNotificationsInternal(c)
 	if err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
@@ -236,7 +236,7 @@ func GetAlertNotifications(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
+func (hs *HTTPServer) getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
 	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(c.Req.Context(), query); err != nil {
@@ -507,7 +507,7 @@ func NotificationTest(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/:alertId/pause
-func PauseAlert(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PauseAlert(c *models.ReqContext) response.Response {
 	dto := dtos.PauseAlertCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -567,7 +567,7 @@ func PauseAlert(c *models.ReqContext) response.Response {
 }
 
 // POST /api/admin/pause-all-alerts
-func PauseAllAlerts(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PauseAllAlerts(c *models.ReqContext) response.Response {
 	dto := dtos.PauseAllAlertsCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

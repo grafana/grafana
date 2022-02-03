@@ -383,18 +383,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(PauseAlert))
-			alertsRoute.Get("/:alertId", ValidateOrgAlert, routing.Wrap(GetAlert))
-			alertsRoute.Get("/", routing.Wrap(GetAlerts))
-			alertsRoute.Get("/states-for-dashboard", routing.Wrap(GetAlertStatesForDashboard))
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert))
+			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
+			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
+			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		})
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
-			GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
+			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
 		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
-			alertNotifications.Get("/", routing.Wrap(GetAlertNotifications))
+			alertNotifications.Get("/", routing.Wrap(hs.GetAlertNotifications))
 			alertNotifications.Post("/test", routing.Wrap(NotificationTest))
 			alertNotifications.Post("/", routing.Wrap(CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", routing.Wrap(hs.UpdateAlertNotification))
@@ -407,7 +407,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// alert notifications without requirement of user to be org editor
 		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/lookup", routing.Wrap(GetAlertNotificationLookup))
+			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
 		})
 
 		apiRoute.Get("/annotations", routing.Wrap(GetAnnotations))
@@ -464,7 +464,7 @@ func (hs *HTTPServer) registerRoutes() {
 			adminRoute.Get("/settings/features", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Features.HandleGetSettings)
 		}
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(PauseAllAlerts))
+		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts))
 
 		if hs.ThumbService != nil {
 			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StartCrawler))

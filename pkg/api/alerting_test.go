@@ -87,6 +87,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
+			hs := &HTTPServer{}
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(ctx context.Context, query *search.Query) error {
 				searchQuery = query
@@ -99,7 +100,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			sc.handlerFunc = GetAlerts
+			sc.handlerFunc = hs.GetAlerts
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 			require.Nil(t, searchQuery)
@@ -110,6 +111,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		"/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery",
 		"/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
+			hs := &HTTPServer{}
 
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(ctx context.Context, query *search.Query) error {
@@ -127,7 +129,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			sc.handlerFunc = GetAlerts
+			sc.handlerFunc = hs.GetAlerts
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 			require.NotNil(t, searchQuery)
@@ -167,6 +169,7 @@ func postAlertScenario(t *testing.T, desc string, url string, routePattern strin
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		hs := &HTTPServer{}
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -175,7 +178,7 @@ func postAlertScenario(t *testing.T, desc string, url string, routePattern strin
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PauseAlert(c)
+			return hs.PauseAlert(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
