@@ -13,6 +13,24 @@ export function pointWithin(px: number, py: number, rlft: number, rtop: number, 
 
 /**
  * @internal
+ *
+ * Determines if a rectangle intersects another rectangle.
+ */
+export function intersects(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  rlft: number,
+  rtop: number,
+  rrgt: number,
+  rbtm: number
+) {
+  return rlft <= x + w && rbtm <= y + h && rrgt >= x && rtop >= x;
+}
+
+/**
+ * @internal
  */
 export class Quadtree {
   o: Rect[];

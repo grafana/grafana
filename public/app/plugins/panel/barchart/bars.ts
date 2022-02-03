@@ -1,5 +1,5 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
-import { pointWithin, Quadtree, Rect } from './quadtree';
+import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
@@ -14,9 +14,6 @@ import {
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { BarTree } from './rtree';
-import RBush from 'rbush';
-import { intersects } from 'semver';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -63,6 +60,16 @@ export interface BarsOptions {
 /**
  * @internal
  */
+interface ValueLabel {
+  x: number;
+  y: number;
+  textMetrics: TextMetrics;
+  text: string;
+}
+
+/**
+ * @internal
+ */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const { xOri, xDir: dir, rawValue, getColor, formatValue, fillOpacity = 1, showValue, xSpacing = 0 } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
@@ -77,8 +84,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
-  let rt: RBush<Rect>;
-  let labelRt: RBush<Rect>;
+  let labelQt: Quadtree;
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -251,7 +257,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
-      rt.insert(barRect);
       qt.add(barRect);
       barRects.push(barRect);
     },
@@ -266,11 +271,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   // Build bars
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
-    rt = rt || new BarTree(6);
-    labelRt = labelRt || new BarTree(6);
+    labelQt = labelQt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
-    rt.clear();
+    labelQt.clear();
 
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
@@ -356,7 +360,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
-    let labels = [];
+    let labels: ValueLabel[] = [];
 
     barRects.forEach((r, i) => {
       let value = rawValue(r.sidx, r.didx);
@@ -375,18 +379,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
 
         // Calculate final co-ordinates for text position
-        // And retrieve metrics for rendered text
         const x =
           u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset);
         const y =
           u.bbox.top +
           (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift);
-        const textMetrics = u.ctx.measureText(text);
 
-        // Insert label into r-tree for intersection calculations
-        labelRt.insert({
+        // Add the position of the text to the Quadtree
+        // and retrieve metrics for text
+        const textMetrics = u.ctx.measureText(text);
+        labelQt.add({
           x: x,
-          y: y,
+          y: y - textMetrics.actualBoundingBoxAscent,
           w: textMetrics.width,
           h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
         });
@@ -402,17 +406,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     labels.forEach(({ x, y, text, textMetrics }, i) => {
-      // Retrieve any intersecting objects
-      const searchObj = {
-        minX: x,
-        minY: y,
-        maxX: x + textMetrics.width,
-        maxY: y + textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
-      };
-      let intersectsLabels = labelRt.search(searchObj);
+      const w = textMetrics.width,
+        h = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
 
-      if (showValue === VisibilityMode.Always || (showValue === VisibilityMode.Auto && intersectsLabels.length <= 1)) {
+      if (showValue === VisibilityMode.Always) {
         u.ctx.fillText(text, x, y);
+      } else if (showValue === VisibilityMode.Auto) {
+        // Search the quad-tree to see if the label intersects
+        // any other labels
+        let intersectsLabel = false;
+        labelQt.get(x, y, w, h, (o) => {
+          if (intersects(x, y, w, h, o.x, o.y, o.x + o.w, o.y + o.h)) {
+            intersectsLabel = true;
+          }
+        });
+
+        !intersectsLabel && u.ctx.fillText(text, x, y);
       }
     });
 
@@ -430,22 +439,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let cx = u.cursor.left! * devicePixelRatio;
     let cy = u.cursor.top! * devicePixelRatio;
 
-    // console.log(cx, cy);
-    let res = rt.search({
-      minX: cx,
-      minY: cy,
-      maxX: cx,
-      maxY: cy,
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
     });
-    found = res[0];
-
-    // console.log(res.length);
-
-    // qt.get(cx, cy, 1, 1, (o) => {
-    //   if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-    //     found = o;
-    //   }
-    // });
 
     if (found) {
       // prettier-ignore
