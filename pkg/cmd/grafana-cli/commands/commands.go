@@ -188,6 +188,11 @@ var adminCommands = []*cli.Command{
 				Usage:  "Rolls back secrets to legacy encryption. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsmigrations.RollBackSecrets),
 			},
+			{
+				Name:   "re-encrypt-data-keys",
+				Usage:  "Rotates persisted data encryption keys. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.ReEncryptDEKS),
+			},
 		},
 	},
 }
