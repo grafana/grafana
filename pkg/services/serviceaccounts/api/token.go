@@ -43,10 +43,17 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 
 // AddAPIKey adds an additional API key to a service account
 func (api *ServiceAccountsAPI) CreateNewServiceAccountToken(c *models.ReqContext) response.Response {
+	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
+
 	cmd := models.AddApiKeyCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	cmd.ServiceAccountId = &saID
 
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)

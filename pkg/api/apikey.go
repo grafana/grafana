@@ -81,6 +81,8 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 			return response.Error(400, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
+
+	cmd.ServiceAccountId = nil // API keys can't be added to SAs through this endpoint
 	cmd.OrgId = c.OrgId
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
