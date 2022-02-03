@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -18,7 +19,7 @@ func TestProvisioningStore(t *testing.T) {
 			UID: "asdf",
 		}
 
-		provenance, err := dbstore.GetProvenance(&rule)
+		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, provenance)
@@ -28,10 +29,10 @@ func TestProvisioningStore(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "123",
 		}
-		err := dbstore.SetProvenance(&rule, models.ProvenanceFile)
+		err := dbstore.SetProvenance(context.Background(), &rule, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		p, err := dbstore.GetProvenance(&rule)
+		p, err := dbstore.GetProvenance(context.Background(), &rule)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)

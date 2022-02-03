@@ -21,12 +21,12 @@ func (pr provenanceRecord) TableName() string {
 }
 
 type ProvisioningStore interface {
-	GetProvenance(o models.Provisionable) (models.Provenance, error)
+	GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error)
 	// TODO: API to query all provenances for a specific type?
-	SetProvenance(o models.Provisionable, p models.Provenance) error
+	SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error
 }
 
-func (st DBstore) GetProvenance(o models.Provisionable) (models.Provenance, error) {
+func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
 	recordType := o.GetResourceTypeIdentifier()
 	recordKey := o.GetResourceUniqueIdentifier()
 
@@ -52,11 +52,11 @@ func (st DBstore) GetProvenance(o models.Provisionable) (models.Provenance, erro
 	return provenance, nil
 }
 
-func (st DBstore) SetProvenance(o models.Provisionable, p models.Provenance) error {
+func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
 	recordType := o.GetResourceTypeIdentifier()
 	recordKey := o.GetResourceUniqueIdentifier()
 
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: Add a unit-of-work pattern, so updating objects + provenance will happen consistently with rollbacks across stores.
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
