@@ -3,7 +3,17 @@
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
-exports[`number of console messages when running tests should shrink`] = {
-  value: `153
+exports[`number of console logs when running tests should shrink`] = {
+  value: `11
+`
+};
+
+exports[`number of console warnings when running tests should shrink`] = {
+  value: `47
+`
+};
+
+exports[`number of console errors when running tests should shrink`] = {
+  value: `95
 `
 };
