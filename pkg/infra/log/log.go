@@ -335,7 +335,6 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
 			if err := fileHandler.Init(); err != nil {
-				continue
 				_ = level.Error(Root).Log("Failed to initialize file handler", "dpath", dpath, "err", err)
 				continue
 			}
