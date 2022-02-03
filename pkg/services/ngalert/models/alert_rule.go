@@ -113,6 +113,10 @@ func (alertRule *AlertRule) ResourceID() string {
 	return alertRule.UID
 }
 
+func (alertRule *AlertRule) ResourceOrgID() int64 {
+	return alertRule.OrgID
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`

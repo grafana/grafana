@@ -342,10 +342,10 @@ func AddProvisioningMigrations(mg *migrator.Migrator) {
 			{Name: "provenance", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"record_type", "record_key"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"record_type", "record_key", "org_id"}, Type: migrator.UniqueIndex},
 		},
 	}
 
 	mg.AddMigration("create provenance_type table", migrator.NewAddTableMigration(provisioningTable))
-	mg.AddMigration("add index to uniquify (record_key, record_type) columns", migrator.NewAddIndexMigration(provisioningTable, provisioningTable.Indices[0]))
+	mg.AddMigration("add index to uniquify (record_key, record_type, org_id) columns", migrator.NewAddIndexMigration(provisioningTable, provisioningTable.Indices[0]))
 }

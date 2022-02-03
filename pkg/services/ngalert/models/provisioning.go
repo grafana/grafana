@@ -12,4 +12,5 @@ const (
 type Provisionable interface {
 	ResourceTypeID() string
 	ResourceID() string
+	ResourceOrgID() int64
 }
