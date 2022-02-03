@@ -143,7 +143,6 @@ export class ContextSrv {
     return this.hasPermission(action);
   }
 
-  // TODO find a better name?
   hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
     if (!config.featureToggles['accesscontrol']) {
       return fallBack;
