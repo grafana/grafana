@@ -22,10 +22,13 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      if (newMetricEditorMode === QueryEditorMode.Builder) {
-        buildVisualQueryFromString(query.expr);
+      console.log('onEditorModeChange', newMetricEditorMode);
+      const change = { ...query, editorMode: newMetricEditorMode };
+      if (newMetricEditorMode === QueryEditorMode.Builder && query.expr) {
+        change.visualQuery = buildVisualQueryFromString(query.expr);
+        setVisualQuery(change.visualQuery);
       }
-      onChange({ ...query, editorMode: newMetricEditorMode });
+      onChange(change);
     },
     [onChange, query]
   );

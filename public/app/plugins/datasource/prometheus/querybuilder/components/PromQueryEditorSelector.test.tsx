@@ -6,6 +6,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { QueryEditorMode } from '../shared/types';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import PromQlLanguageProvider from '../../language_provider';
+import { PromQuery } from '../../types';
 
 // We need to mock this because it seems jest has problem importing monaco in tests
 jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
@@ -106,22 +107,48 @@ describe('PromQueryEditorSelector', () => {
       editorMode: QueryEditorMode.Explain,
     });
   });
+
+  it('parses query when changing to builder mode', async () => {
+    const { rerender } = renderWithMode(QueryEditorMode.Code, {
+      refId: 'A',
+      expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+      editorMode: QueryEditorMode.Code,
+    });
+    switchToMode(QueryEditorMode.Builder);
+    rerender(
+      <PromQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+          editorMode: QueryEditorMode.Builder,
+        }}
+      />
+    );
+
+    await screen.findByText('test_metric');
+    expect(screen.getByText('host.docker.internal:3000')).toBeInTheDocument();
+    expect(screen.getByText('rate')).toBeInTheDocument();
+    expect(screen.getByText('$__interval')).toBeInTheDocument();
+  });
 });
 
-function renderWithMode(mode: QueryEditorMode) {
+function renderWithMode(mode: QueryEditorMode, query?: PromQuery) {
   const onChange = jest.fn();
-  render(
+  const stuff = render(
     <PromQueryEditorSelector
       {...defaultProps}
       onChange={onChange}
-      query={{
-        refId: 'A',
-        expr: '',
-        editorMode: mode,
-      }}
+      query={
+        query || {
+          refId: 'A',
+          expr: '',
+          editorMode: mode,
+        }
+      }
     />
   );
-  return { onChange };
+  return { onChange, ...stuff };
 }
 
 function expectCodeEditor() {
