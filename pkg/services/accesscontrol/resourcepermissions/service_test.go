@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -47,13 +46,13 @@ func TestService_SetUserPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetUser = func(session *sqlstore.DBSession, orgID int64, user types.User, resourceID, permission string) error {
+				service.options.OnSetUser = func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
 			}
 
-			_, err = service.SetUserPermission(context.Background(), user.OrgId, types.User{ID: user.Id}, "1", "")
+			_, err = service.SetUserPermission(context.Background(), user.OrgId, accesscontrol.User{ID: user.Id}, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})

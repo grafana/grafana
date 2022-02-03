@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 )
 
 type MockService struct {
@@ -18,7 +17,7 @@ func (m *MockService) GetPermissions(ctx context.Context, orgID int64, resourceI
 	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
 
-func (m *MockService) SetUserPermission(ctx context.Context, orgID int64, user types.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (m *MockService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, user, resourceID, permission)
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }

@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -71,11 +70,11 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, types.User{ID: test.userID}, s, nil)
+				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, accesscontrol.User{ID: test.userID}, s, nil)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetUserResourcePermission(context.Background(), test.userID, types.User{ID: test.userID}, accesscontrol.SetResourcePermissionCommand{
+			added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, accesscontrol.SetResourcePermissionCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
@@ -353,7 +352,7 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, types.User{ID: u.Id}, accesscontrol.SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.Id}, accesscontrol.SetResourcePermissionCommand{
 			Actions:    actions,
 			Resource:   resource,
 			ResourceID: resourceID,

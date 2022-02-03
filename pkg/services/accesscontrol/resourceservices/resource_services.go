@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -78,7 +77,7 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
-		OnSetUser: func(session *sqlstore.DBSession, orgID int64, user types.User, resourceID, permission string) error {
+		OnSetUser: func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err

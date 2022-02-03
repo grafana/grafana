@@ -34,7 +34,7 @@ func (p *flatResourcePermission) Managed() bool {
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
-	ctx context.Context, orgID int64, user types.User,
+	ctx context.Context, orgID int64, user accesscontrol.User,
 	cmd accesscontrol.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
