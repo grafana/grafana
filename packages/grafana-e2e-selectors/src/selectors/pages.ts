@@ -142,7 +142,7 @@ export const Pages = {
             constantOptionsQueryInputV2: 'data-testid Variable editor Form Constant Query field',
           },
           DatasourceVariable: {
-            datasourceSelect: 'Variable editor',
+            datasourceSelect: 'data-testid Variable editor',
           },
           TextBoxVariable: {
             textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
