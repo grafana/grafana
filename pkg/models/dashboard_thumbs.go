@@ -36,21 +36,21 @@ func (s ThumbnailState) IsValid() bool {
 	return s == ThumbnailStateDefault || s == ThumbnailStateStale || s == ThumbnailStateLocked
 }
 
-func (r *ThumbnailState) UnmarshalJSON(data []byte) error {
+func (s *ThumbnailState) UnmarshalJSON(data []byte) error {
 	var str string
 	err := json.Unmarshal(data, &str)
 	if err != nil {
 		return err
 	}
 
-	*r = ThumbnailState(str)
+	*s = ThumbnailState(str)
 
-	if !r.IsValid() {
-		if (*r) != "" {
-			return fmt.Errorf("JSON validation error: invalid thumbnail state value: %s", *r)
+	if !s.IsValid() {
+		if (*s) != "" {
+			return fmt.Errorf("JSON validation error: invalid thumbnail state value: %s", *s)
 		}
 
-		*r = ThumbnailStateDefault
+		*s = ThumbnailStateDefault
 	}
 
 	return nil
