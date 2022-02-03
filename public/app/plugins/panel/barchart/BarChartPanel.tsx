@@ -1,5 +1,5 @@
 import React, { createRef, useMemo, useRef, useState } from 'react';
-import { TooltipDisplayMode, StackingMode, LegendDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   CartesianCoords2D,
   compareDataFrameStructures,
@@ -27,7 +27,6 @@ import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { useOverlay } from '@react-aria/overlays';
 import { useMountedState } from 'react-use';
 import { positionTooltip } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin';
-import { PanelDataErrorView } from '@grafana/runtime';
 
 import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
