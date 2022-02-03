@@ -16,6 +16,7 @@ import ldapReducers from 'app/features/admin/state/reducers';
 import templatingReducers from 'app/features/variables/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
+import previewsReducers from 'app/features/search/reducers/previews';
 import panelsReducers from 'app/features/panel/state/reducers';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 
@@ -27,6 +28,7 @@ const rootReducers = {
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
+  ...previewsReducers,
   ...dataSourcesReducers,
   ...usersReducers,
   ...serviceAccountsReducer,

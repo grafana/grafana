@@ -7,6 +7,7 @@ import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
+import { PreviewsSystemRequirements } from './PreviewsSystemRequirements';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -41,6 +42,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
               showPreviews,
             }}
           />
+          <PreviewsSystemRequirements showPreviews={showPreviews} />
           <CustomScrollbar>
             <SearchResults
               results={results}
