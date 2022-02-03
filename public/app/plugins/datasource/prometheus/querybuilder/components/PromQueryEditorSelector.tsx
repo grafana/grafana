@@ -3,6 +3,7 @@ import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, FlexItem, InlineSelect, Space, Stack } from '@grafana/experimental';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
+
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -11,6 +12,7 @@ import { QueryEditorMode } from '../shared/types';
 import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { buildVisualQueryFromString } from '../parsing';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -19,6 +21,9 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
+      if (newMetricEditorMode === QueryEditorMode.Builder) {
+        buildVisualQueryFromString(query.expr);
+      }
       onChange({ ...query, editorMode: newMetricEditorMode });
     },
     [onChange, query]
