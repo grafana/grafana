@@ -9,7 +9,7 @@ import (
 )
 
 type SQLStoreMock struct {
-	SQLStore      *sqlstore.SQLStore
+	ExpectedUser  *models.User
 	ExpectedError error
 }
 
@@ -57,22 +57,6 @@ func (m SQLStoreMock) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgComman
 	return nil // TODO: Implement
 }
 
-func (m SQLStoreMock) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
-	return nil, nil // TODO: Implement
-}
-
-func (m SQLStoreMock) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
-	return nil, nil // TODO: Implement
-}
-
-func (m SQLStoreMock) SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
-	return nil, nil // TODO: Implement
-}
-
-func (m SQLStoreMock) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	return nil, nil // TODO: Implement
-}
-
 func (m SQLStoreMock) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	return nil // TODO: Implement
 }
@@ -98,6 +82,7 @@ func (m SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserComma
 }
 
 func (m SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
+	query.Result = m.ExpectedUser
 	return m.ExpectedError
 }
 
@@ -150,7 +135,7 @@ func (m SQLStoreMock) DeleteUser(ctx context.Context, cmd *models.DeleteUserComm
 }
 
 func (m SQLStoreMock) UpdateUserPermissions(userID int64, isAdmin bool) error {
-	return nil // TODO: Implement
+	return m.ExpectedError
 }
 
 func (m SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
@@ -158,7 +143,11 @@ func (m SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHe
 }
 
 func (m SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
-	return models.Team{}, nil // TODO: Implement
+	return models.Team{
+		Name:  name,
+		Email: email,
+		OrgId: orgID,
+	}, nil
 }
 
 func (m SQLStoreMock) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
@@ -301,14 +290,6 @@ func (m SQLStoreMock) DeleteExpiredVersions(ctx context.Context, cmd *models.Del
 	return nil // TODO: Implement
 }
 
-func (m SQLStoreMock) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
-	return nil // TODO: Implement
-}
-
-func (m SQLStoreMock) UpdateDashboardACLCtx(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
-	return nil // TODO: Implement
-}
-
 func (m SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 	return nil // TODO: Implement
 }
@@ -346,10 +327,6 @@ func (m SQLStoreMock) GetAllAlertQueryHandler(ctx context.Context, query *models
 }
 
 func (m SQLStoreMock) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
-	return nil // TODO: Implement
-}
-
-func (m SQLStoreMock) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	return nil // TODO: Implement
 }
 
@@ -397,10 +374,6 @@ func (m SQLStoreMock) GetDashboard(id int64, orgID int64, uid string, slug strin
 	return nil, nil // TODO: Implement
 }
 
-func (m SQLStoreMock) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
-	return nil, nil // TODO: Implement
-}
-
 func (m SQLStoreMock) SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error {
 	return nil // TODO: Implement
 }
@@ -415,10 +388,6 @@ func (m SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashbo
 
 func (m SQLStoreMock) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
 	return nil // TODO: Implement
-}
-
-func (m SQLStoreMock) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
-	return false, nil // TODO: Implement
 }
 
 func (m SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {

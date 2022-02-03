@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -160,7 +161,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -172,7 +173,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.False(t, dash.Meta.CanEdit)
 					assert.False(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -186,7 +187,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.Equal(t, 403, sc.resp.Code)
 
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
@@ -194,7 +195,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
@@ -202,12 +203,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 		})
 
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
-
+			sqlStoreMock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -218,7 +219,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.True(t, dash.Meta.CanEdit)
 					assert.True(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
-				})
+				}, sqlStoreMock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -229,10 +230,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 						LibraryPanelService:   &mockLibraryPanelService{},
 						LibraryElementService: &mockLibraryElementService{},
 						dashboardService:      &dashboards.FakeDashboardService{},
+						SQLStore:              sqlStoreMock,
 					})
 					assert.Equal(t, 200, sc.resp.Code)
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-				})
+				}, sqlStoreMock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
@@ -240,7 +242,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 200, sc.resp.Code)
-				})
+				}, sqlStoreMock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
@@ -248,7 +250,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 200, sc.resp.Code)
-				})
+				}, sqlStoreMock)
 		})
 	})
 
@@ -260,6 +262,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			dashboardService:      service.ProvideDashboardService(dashboardStore),
+			SQLStore:              mockstore.NewSQLStoreMock(),
 		}
 
 		setUp := func() *testState {
@@ -319,7 +322,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
 			role := models.ROLE_VIEWER
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -328,7 +331,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -337,7 +340,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					callDeleteDashboardByUID(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
@@ -345,7 +348,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
@@ -353,12 +356,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 		})
 
 		t.Run("When user is an Org Editor and has no permissions for this dashboard", func(t *testing.T) {
 			role := models.ROLE_EDITOR
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -368,7 +371,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -377,7 +380,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					callDeleteDashboardByUID(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
@@ -385,7 +388,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
@@ -393,7 +396,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 		})
 
 		t.Run("When user is an Org Viewer but has an edit permission", func(t *testing.T) {
@@ -411,7 +414,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				})
 				return state
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUpInner()
@@ -422,29 +425,28 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.True(t, dash.Meta.CanEdit)
 					assert.True(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
-				})
+				}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
-
 				callDeleteDashboardByUID(sc, hs)
 				assert.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				callGetDashboardVersion(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				callGetDashboardVersions(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-			})
+			}, mock)
 		})
 
 		t.Run("When user is an Org Viewer and viewers can edit", func(t *testing.T) {
@@ -470,7 +472,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				return state
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
@@ -481,7 +483,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.True(t, dash.Meta.CanEdit)
 				assert.False(t, dash.Meta.CanSave)
 				assert.False(t, dash.Meta.CanAdmin)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
@@ -489,7 +491,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callDeleteDashboardByUID(sc, hs)
 				assert.Equal(t, 403, sc.resp.Code)
 				assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-			})
+			}, mock)
 		})
 
 		t.Run("When user is an Org Viewer but has an admin permission", func(t *testing.T) {
@@ -507,7 +509,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				})
 				return state
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
@@ -517,7 +519,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.True(t, dash.Meta.CanEdit)
 				assert.True(t, dash.Meta.CanSave)
 				assert.True(t, dash.Meta.CanAdmin)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
@@ -525,21 +527,21 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callDeleteDashboardByUID(sc, hs)
 				assert.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				callGetDashboardVersion(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				callGetDashboardVersions(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-			})
+			}, mock)
 		})
 
 		t.Run("When user is an Org Editor but has a view permission", func(t *testing.T) {
@@ -557,7 +559,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				})
 				return state
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
@@ -565,7 +567,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 				assert.False(t, dash.Meta.CanEdit)
 				assert.False(t, dash.Meta.CanSave)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
@@ -573,21 +575,21 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callDeleteDashboardByUID(sc, hs)
 				assert.Equal(t, 403, sc.resp.Code)
 				assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				callGetDashboardVersion(sc)
 				assert.Equal(t, 403, sc.resp.Code)
-			})
+			}, mock)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				callGetDashboardVersions(sc)
 				assert.Equal(t, 403, sc.resp.Code)
-			})
+			}, mock)
 		})
 	})
 
@@ -962,7 +964,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 		}
-
+		sqlStoreMock := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/abcdefghi", "/api/dashboards/db/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
@@ -976,12 +978,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryPanelService:   &mockLibraryPanelService{},
 				LibraryElementService: &mockLibraryElementService{},
 				dashboardService:      service.ProvideDashboardService(dashboardStore),
+				SQLStore:              sqlStoreMock,
 			})
 
 			assert.Equal(t, 400, sc.resp.Code)
 			result := sc.ToJSON()
 			assert.Equal(t, models.ErrDashboardCannotDeleteProvisionedDashboard.Error(), result.Get("error").MustString())
-		})
+		}, sqlStoreMock)
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
@@ -998,9 +1001,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			dash := getDashboardShouldReturn200WithConfig(t, sc, fakeProvisioningService, dashboardStore)
 
-			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId)
-		})
+			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId, sqlStoreMock)
+		}, sqlStoreMock)
 
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
@@ -1018,6 +1022,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryPanelService:          &mockLibraryPanelService{},
 				LibraryElementService:        &mockLibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
+				SQLStore:                     mockSQLStore,
 			}
 			callGetDashboard(sc, hs)
 
@@ -1028,7 +1033,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, false, dash.Meta.Provisioned)
-		})
+		}, mockSQLStore)
 	})
 }
 
@@ -1054,6 +1059,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		LibraryElementService:        &libraryElementsService,
 		ProvisioningService:          provisioningService,
 		dashboardProvisioningService: service.ProvideDashboardService(dashboardStore),
+		SQLStore:                     sc.sqlStore,
 	}
 
 	callGetDashboard(sc, hs)

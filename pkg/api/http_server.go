@@ -108,7 +108,7 @@ type HTTPServer struct {
 	LivePushGateway              *pushhttp.Gateway
 	ThumbService                 thumbs.Service
 	ContextHandler               *contexthandler.ContextHandler
-	SQLStore                     *sqlstore.SQLStore
+	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
 	LoadSchemaService            *schemaloader.SchemaLoaderService
 	AlertNG                      *ngalert.AlertNG
@@ -441,6 +441,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(middleware.RequestTracing(hs.tracer))
+	m.Use(middleware.RequestMetrics(hs.Features))
 
 	m.Use(middleware.Logger(hs.Cfg))
 
