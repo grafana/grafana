@@ -19,7 +19,7 @@ describe('Variables - Constant', () => {
 
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
+    e2e.components.BackButton.backArrow().click({ force: true });
     e2e.components.RefreshPicker.runButtonV2().click();
 
     // Assert it was rendered
