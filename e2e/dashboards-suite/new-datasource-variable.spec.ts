@@ -2,14 +2,13 @@ import { e2e } from '@grafana/e2e';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 
-describe('Variables - Constant', () => {
-  it('can add a new text box variable', () => {
+describe('Variables - Datasource', () => {
+  it('can add a new datasource variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
-    // Create a new "Constant" variable
+    // Create a new "Datasource" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
-
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Data source{enter}');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();

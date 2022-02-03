@@ -3,7 +3,7 @@ import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 
 describe('Variables - Constant', () => {
-  it('can add a new text box variable', () => {
+  it('can add a new constant variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
