@@ -3,9 +3,9 @@ import { CoreApp } from '@grafana/data';
 import { LokiQueryEditorProps } from './types';
 import { LokiQueryEditor } from './LokiQueryEditor';
 import { LokiQueryEditorForAlerting } from './LokiQueryEditorForAlerting';
+import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
 import { LokiQueryEditorSelector } from '../querybuilder/components/LokiQueryEditorSelector';
 import { config } from '@grafana/runtime';
-import LokiExploreQueryEditor from './LokiExploreQueryEditor';
 
 export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
   const { app } = props;
