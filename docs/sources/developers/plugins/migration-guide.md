@@ -15,6 +15,8 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
   - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
   - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
+  - [8.3 Deprecations](#83-deprecations)
+    - [LocationService replaces getLocationSrv](#locationservice-replaces-getlocationsrv)
 - [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
     - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
@@ -47,6 +49,85 @@ Removed due to being an internal component.
 ### Thresholds Editor has been removed from @grafana-ui library
 
 Removed due to being an internal component.
+
+### 8.3 deprecations
+
+#### LocationService replaces getLocationSrv
+
+A while back we migrated to use a new routing system. At the same time we introduced a new service for managing locations, navigation etc. and we are now making that service the primary one to use.
+
+**Example:** How to import the service.
+
+```ts
+// before
+import { getLocationSrv } from '@grafana/runtime';
+
+// after
+import { locationService } from '@grafana/runtime';
+```
+
+**Example:** How to navigate to a path and add a new record in the navigation history so you can navigate back to the previous one.
+
+```ts
+// before
+getLocationSrv.update({
+  path: '/route-to-navigate-to',
+  replace: false,
+});
+
+// after
+locationService.push('/route-to-navigate-to');
+```
+
+**Example:** How to navigate to a path and replacing the current record in the navigation history.
+
+```ts
+// before
+getLocationSrv.update({
+  path: '/route-to-navigate-to',
+  replace: true,
+});
+
+// after
+locationService.replace('/route-to-navigate-to');
+```
+
+**Example:** How to update the search/query parameter for the current route and add a new record in the navigation history so you can navigate back to the previous one.
+
+```ts
+// How to navigate to a new path
+// before
+getLocationSrv.update({
+  query: {
+    value: 1,
+  },
+  partial: true,
+  replace: false,
+});
+
+// after
+locationService.pushPartial({
+  value: 1,
+});
+```
+
+**Example:** How to update the search/query parameter for the current route and add replacing it in the navigation history.
+
+```ts
+// before
+getLocationSrv.update({
+  query: {
+    'var-variable': 1,
+  },
+  partial: true,
+  replace: true,
+});
+
+// after
+locationService.replacePartial({
+  'var-variable': 1,
+});
+```
 
 ## From version 7.x.x to 8.x.x
 
