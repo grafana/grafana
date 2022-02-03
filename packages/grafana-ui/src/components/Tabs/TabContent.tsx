@@ -3,23 +3,20 @@ import React, { FC, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-const getTabContentStyle = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    tabContent: css`
-      background: ${theme.colors.background.primary};
-    `,
-  };
+const getTabContentStyle = (theme: GrafanaTheme2) => ({
+  tabContent: css`
+    background: ${theme.colors.background.canvas};
+  `,
 });
 
 export const TabContent: FC<Props> = ({ children, className, ...restProps }) => {
-  const theme = useTheme2();
-  const styles = getTabContentStyle(theme);
+  const styles = useStyles2(getTabContentStyle);
 
   return (
     <div {...restProps} className={cx(styles.tabContent, className)}>
