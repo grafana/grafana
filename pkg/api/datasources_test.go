@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,6 +28,7 @@ const (
 )
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
+	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
 		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
@@ -45,6 +47,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			Bus:         bus.GetBus(),
 			Cfg:         setting.NewCfg(),
 			pluginStore: &fakePluginStore{},
+			SQLStore:    mock,
 		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
@@ -57,7 +60,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		assert.Equal(t, "BBB", respJSON[1]["name"])
 		assert.Equal(t, "mmm", respJSON[2]["name"])
 		assert.Equal(t, "ZZZ", respJSON[3]["name"])
-	})
+	}, mock)
 
 	loggedInUserScenario(t, "Should be able to save a data source when calling DELETE on non-existing",
 		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
@@ -70,7 +73,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
-		})
+		}, mock)
 }
 
 // Adding data sources with invalid URLs should lead to an error.

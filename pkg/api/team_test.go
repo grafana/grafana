@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = sqlstore.InitTestDB(t)
-
+		mock := mockstore.SQLStoreMock{}
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
 			require.NoError(t, err)
@@ -50,7 +51,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 			assert.EqualValues(t, 2, resp.TotalCount)
 			assert.Equal(t, 2, len(resp.Teams))
-		})
+		}, mock)
 
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
@@ -67,28 +68,14 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 			assert.EqualValues(t, 2, resp.TotalCount)
 			assert.Equal(t, 0, len(resp.Teams))
-		})
+		}, mock)
 	})
 
 	t.Run("When creating team with API key", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-
+		hs.SQLStore = mockstore.NewSQLStoreMock()
 		teamName := "team foo"
-
-		// TODO: Use a fake SQLStore when it's represented by an interface
-		orgCreateTeam := createTeam
-		orgAddTeamMember := addOrUpdateTeamMember
-		t.Cleanup(func() {
-			createTeam = orgCreateTeam
-			addOrUpdateTeamMember = orgAddTeamMember
-		})
-
-		createTeamCalled := 0
-		createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
-			createTeamCalled++
-			return models.Team{Name: teamName, Id: 42}, nil
-		}
 
 		addTeamMemberCalled := 0
 		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
@@ -109,9 +96,9 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
-			hs.CreateTeam(c)
-			assert.Equal(t, createTeamCalled, 1)
-			assert.Equal(t, addTeamMemberCalled, 0)
+			r := hs.CreateTeam(c)
+
+			assert.Equal(t, 200, r.Status())
 			assert.True(t, stub.warnCalled)
 			assert.Equal(t, stub.warnMessage, "Could not add creator to team because is not a real user")
 		})
@@ -125,10 +112,8 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
-			createTeamCalled, addTeamMemberCalled = 0, 0
-			hs.CreateTeam(c)
-			assert.Equal(t, createTeamCalled, 1)
-			assert.Equal(t, addTeamMemberCalled, 1)
+			r := hs.CreateTeam(c)
+			assert.Equal(t, 200, r.Status())
 			assert.False(t, stub.warnCalled)
 		})
 	})

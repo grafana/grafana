@@ -54,6 +54,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   datasource={
     Object {
       "getTimeRangeParams": [Function],
+      "interpolateString": [Function],
       "languageProvider": LokiLanguageProvider {
         "cleanText": [Function],
         "datasource": [Circular],

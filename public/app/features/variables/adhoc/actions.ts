@@ -147,11 +147,7 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
     const index = getNewVariableIndex(getState());
     const identifier: VariableIdentifier = { type: 'adhoc', id: model.id };
 
-    dispatch(
-      addVariable(
-        toVariablePayload<AddVariable>(identifier, { global, model, index })
-      )
-    );
+    dispatch(addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })));
   };
 };
 
