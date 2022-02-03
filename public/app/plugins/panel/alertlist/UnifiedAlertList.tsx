@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { sortBy } from 'lodash';
 import { useDispatch } from 'react-redux';
-import { GrafanaTheme, PanelProps } from '@grafana/data';
-import { CustomScrollbar, LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import alertDef from 'app/features/alerting/state/alertDef';
@@ -44,7 +44,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     (name) => promRulesRequests[name]?.result?.length && !promRulesRequests[name]?.error
   );
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const rules = useMemo(
     () =>
@@ -146,10 +146,10 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
   return filteredRules;
 }
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   cardContainer: css`
-    padding: ${theme.spacing.xs} 0 ${theme.spacing.xxs} 0;
-    line-height: ${theme.typography.lineHeight.md};
+    padding: ${theme.v1.spacing.xs} 0 ${theme.v1.spacing.xxs} 0;
+    line-height: ${theme.v1.typography.lineHeight.md};
     margin-bottom: 0px;
   `,
   container: css`
@@ -167,34 +167,34 @@ export const getStyles = (theme: GrafanaTheme) => ({
     align-items: center;
     width: 100%;
     height: 100%;
-    background: ${theme.colors.bg2};
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    border-radius: ${theme.border.radius.md};
-    margin-bottom: ${theme.spacing.xs};
+    background: ${theme.v1.colors.bg2};
+    padding: ${theme.v1.spacing.xs} ${theme.v1.spacing.sm};
+    border-radius: ${theme.v1.border.radius.md};
+    margin-bottom: ${theme.v1.spacing.xs};
 
     & > * {
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.v1.spacing.sm};
     }
   `,
   alertName: css`
-    font-size: ${theme.typography.size.md};
-    font-weight: ${theme.typography.weight.bold};
+    font-size: ${theme.v1.typography.size.md};
+    font-weight: ${theme.v1.typography.weight.bold};
   `,
   alertLabels: css`
     > * {
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.v1.spacing.xs};
     }
   `,
   alertDuration: css`
-    font-size: ${theme.typography.size.sm};
+    font-size: ${theme.v1.typography.size.sm};
   `,
   alertRuleItemText: css`
-    font-weight: ${theme.typography.weight.bold};
-    font-size: ${theme.typography.size.sm};
+    font-weight: ${theme.v1.typography.weight.bold};
+    font-size: ${theme.v1.typography.size.sm};
     margin: 0;
   `,
   alertRuleItemTime: css`
-    color: ${theme.colors.textWeak};
+    color: ${theme.v1.colors.textWeak};
     font-weight: normal;
     white-space: nowrap;
   `,
@@ -212,7 +212,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
     height: 100%;
   `,
   alertIcon: css`
-    margin-right: ${theme.spacing.xs};
+    margin-right: ${theme.v1.spacing.xs};
   `,
   instanceDetails: css`
     min-width: 1px;
@@ -221,6 +221,6 @@ export const getStyles = (theme: GrafanaTheme) => ({
     text-overflow: ellipsis;
   `,
   customGroupDetails: css`
-    margin-bottom: ${theme.spacing.xs};
+    margin-bottom: ${theme.v1.spacing.xs};
   `,
 });

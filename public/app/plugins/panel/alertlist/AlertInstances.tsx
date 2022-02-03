@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Alert } from 'app/types/unified-alerting';
@@ -24,10 +24,10 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
     setDisplayInstances((display) => !display);
   }, []);
 
-  const filteredAlerts = useMemo((): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [], [
-    alerts,
-    options,
-  ]);
+  const filteredAlerts = useMemo(
+    (): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [],
+    [alerts, options]
+  );
 
   return (
     <div>

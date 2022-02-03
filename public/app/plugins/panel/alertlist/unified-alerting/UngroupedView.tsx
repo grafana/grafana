@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Icon, IconName, useStyles, useStyles2 } from '@grafana/ui';
+import { Icon, IconName, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
@@ -16,7 +16,7 @@ type UngroupedModeProps = {
 };
 
 const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
 
   const rulesToDisplay = rules.length <= options.maxItems ? rules : rules.slice(0, options.maxItems);
@@ -75,8 +75,7 @@ const getStateTagStyles = (theme: GrafanaTheme2) => ({
     display: inline-block;
     color: white;
     border-radius: ${theme.shape.borderRadius()};
-    font-size: ${theme.typography.size.sm};
-    /* padding: ${theme.spacing(2, 0)}; */
+    font-size: ${theme.v1.typography.size.sm};
     text-transform: capitalize;
     line-height: 1.2;
     flex-shrink: 0;
