@@ -1,5 +1,5 @@
 load(
-    'scripts/drone/steps/lib.star',
+    'scripts/drone/init/init.star',
     'download_grabpl_step',
     'slack_step',
 )

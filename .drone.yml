@@ -11,7 +11,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -111,7 +111,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -189,12 +189,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
+  - package
   detach: true
   environment:
-    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -202,7 +199,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -211,7 +208,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -220,7 +217,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -229,7 +226,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -359,7 +356,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -420,7 +417,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -521,7 +518,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -622,12 +619,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
+  - package
   detach: true
   environment:
-    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -635,7 +629,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -644,7 +638,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -653,7 +647,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -662,7 +656,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -870,7 +864,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -938,7 +932,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1021,7 +1015,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1104,7 +1098,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1232,12 +1226,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
+  - package
   detach: true
   environment:
-    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -1245,7 +1236,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1254,7 +1245,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1263,7 +1254,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1272,7 +1263,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1411,7 +1402,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1532,7 +1523,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1616,7 +1607,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -1675,7 +1666,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1837,12 +1828,10 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
+  - package
   detach: true
   environment:
-    ARCH: linux-amd64
+    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.4.9
@@ -1851,7 +1840,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1860,7 +1849,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1869,7 +1858,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -1878,7 +1867,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -2017,7 +2006,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2190,7 +2179,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2318,7 +2307,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2393,7 +2382,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2471,7 +2460,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2532,7 +2521,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2610,7 +2599,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2672,7 +2661,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2708,7 +2697,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2755,7 +2744,7 @@ steps:
   name: initialize
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2803,7 +2792,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2868,7 +2857,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2993,12 +2982,9 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
+  - package
   detach: true
   environment:
-    ARCH: linux-amd64
     PORT: 3001
   image: grafana/build-container:1.4.9
   name: grafana-server
@@ -3006,7 +2992,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3015,7 +3001,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3024,7 +3010,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3033,7 +3019,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3131,7 +3117,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3245,7 +3231,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3322,7 +3308,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: initialize
@@ -3370,7 +3356,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3526,12 +3512,10 @@ steps:
 - commands:
   - ./scripts/grafana-server/start-server
   depends_on:
-  - build-plugins
-  - build-backend
-  - build-frontend
+  - package
   detach: true
   environment:
-    ARCH: linux-amd64
+    PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.4.9
@@ -3540,7 +3524,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3549,7 +3533,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3558,7 +3542,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3567,7 +3551,7 @@ steps:
   - apt-get install -y netcat
   - ./bin/grabpl e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
-  - grafana-server
+  - package
   environment:
     HOST: grafana-server
   image: cypress/included:9.3.1
@@ -3709,7 +3693,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3874,7 +3858,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3994,7 +3978,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.7/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.8.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4191,6 +4175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f26fc6de1d7ec3cf5608b70c851c8cf2b998e07abad8c52714e72ad072492387
+hmac: f97b8a695295a5684c7ec012becb41f5cdf65e253daa1aec80e4a7755a121654
 
 ...

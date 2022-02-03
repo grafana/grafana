@@ -4,11 +4,11 @@
 # 3. Run `make drone`
 # More information about this process here: https://github.com/grafana/deployment_tools/blob/master/docs/infrastructure/drone/signing.md
 
-load('scripts/drone/pipelines/pr.star', 'pr_pipelines')
-load('scripts/drone/pipelines/main.star', 'main_pipelines')
-load('scripts/drone/pipelines/release.star', 'release_pipelines', 'publish_image_pipelines', 'publish_artifacts_pipelines', 'publish_npm_pipelines', 'publish_packages_pipeline')
+load('scripts/drone/versions/pr.star', 'pr_pipelines')
+load('scripts/drone/versions/main.star', 'main_pipelines')
+load('scripts/drone/versions/release.star', 'release_pipelines', 'publish_image_pipelines', 'publish_artifacts_pipelines', 'publish_npm_pipelines', 'publish_packages_pipeline')
 load('scripts/drone/version.star', 'version_branch_pipelines')
-load('scripts/drone/pipelines/cron.star', 'cronjobs')
+load('scripts/drone/versions/cron.star', 'cronjobs')
 load('scripts/drone/vault.star', 'secrets')
 
 def main(ctx):

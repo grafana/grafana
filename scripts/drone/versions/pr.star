@@ -1,35 +1,68 @@
 load(
-    'scripts/drone/steps/lib.star',
+    'scripts/drone/init/init.star',
     'download_grabpl_step',
     'initialize_step',
+)
+
+load(
+    'scripts/drone/pipelines/unit_tests.star',
+    'test_frontend_step',
+    'test_backend_step',
+    'test_backend_integration_step',
+)
+
+load(
+    'scripts/drone/pipelines/lint.star',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
-    'build_backend_step',
-    'build_frontend_step',
-    'build_plugins_step',
-    'test_backend_step',
-    'test_backend_integration_step',
-    'test_frontend_step',
-    'package_step',
-    'grafana_server_step',
-    'e2e_tests_step',
-    'e2e_tests_artifacts',
-    'build_storybook_step',
-    'build_frontend_docs_step',
-    'build_docs_website_step',
-    'copy_packages_for_docker_step',
-    'build_docker_images_step',
+)
+
+load(
+    'scripts/drone/pipelines/integration_tests.star',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
+)
+
+load(
+    'scripts/drone/pipelines/e2e_tests.star',
+    'grafana_server_step',
+    'e2e_tests_step',
+    'e2e_tests_artifacts',
+)
+
+load(
+    'scripts/drone/pipelines/build.star',
+    'build_backend_step',
+    'build_frontend_step',
+    'build_plugins_step',
+    'build_storybook_step',
+    'build_frontend_docs_step',
+    'build_docs_website_step',
+    'build_docker_images_step',
+)
+
+load(
+    'scripts/drone/pipelines/package.star',
+    'package_step',
+    'package_docker_images_step',
+    'copy_packages_for_docker_step',
+)
+
+load(
+    'scripts/drone/pipelines/frontend.star',
+    'test_a11y_frontend_step'
+)
+
+load(
+    'scripts/drone/pipelines/cue.star',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
-    'test_a11y_frontend_step',
 )
 
 load(

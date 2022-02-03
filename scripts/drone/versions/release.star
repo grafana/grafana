@@ -1,42 +1,55 @@
 load(
-    'scripts/drone/steps/lib.star',
+    'scripts/drone/init/init.star',
     'disable_tests',
     'download_grabpl_step',
     'initialize_step',
-    'lint_drone_step',
-    'test_release_ver',
     'build_image',
     'publish_image',
+)
+
+load(
+    'scripts/drone/pipelines/windows.star',
+    'get_windows_steps',
+)
+
+load(
+    'scripts/drone/pipelines/unit_tests.star',
+    'test_frontend_step',
+    'test_backend_step',
+    'test_backend_integration_step',
+)
+
+load(
+    'scripts/drone/pipelines/lint.star',
+    'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
-    'test_backend_step',
-    'test_backend_integration_step',
-    'test_frontend_step',
-    'build_backend_step',
-    'build_frontend_step',
-    'build_plugins_step',
-    'package_step',
-    'grafana_server_step',
-    'e2e_tests_step',
-    'e2e_tests_artifacts',
-    'build_storybook_step',
-    'copy_packages_for_docker_step',
-    'package_docker_images_step',
+)
+
+load(
+    'scripts/drone/pipelines/integration_tests.star',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
     'memcached_integration_tests_step',
-    'get_windows_steps',
     'benchmark_ldap_step',
-    'frontend_metrics_step',
-    'store_storybook_step',
-    'upload_packages_step',
-    'store_packages_step',
-    'upload_cdn_step',
-    'validate_scuemata_step',
-    'ensure_cuetsified_step'
+)
+
+load(
+    'scripts/drone/pipelines/e2e_tests.star',
+    'grafana_server_step',
+    'e2e_tests_step',
+    'e2e_tests_artifacts',
+)
+
+load(
+    'scripts/drone/pipelines/build.star',
+    'build_backend_step',
+    'build_frontend_step',
+    'build_plugins_step',
+    'build_storybook_step',
 )
 
 load(
@@ -44,6 +57,28 @@ load(
     'integration_test_services',
     'integration_test_services_volumes',
     'ldap_service',
+)
+
+load(
+    'scripts/drone/pipelines/package.star',
+    'package_step',
+    'package_docker_images_step',
+    'upload_packages_step',
+    'store_packages_step',
+    'upload_cdn_step',
+    'store_storybook_step',
+    'copy_packages_for_docker_step',
+)
+
+load(
+    'scripts/drone/pipelines/frontend.star',
+    'frontend_metrics_step',
+)
+
+load(
+    'scripts/drone/pipelines/cue.star',
+    'validate_scuemata_step',
+    'ensure_cuetsified_step',
 )
 
 load(
@@ -271,21 +306,20 @@ def get_steps(edition, ver_mode):
 
     return test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps
 
-def get_oss_pipelines(trigger, ver_mode):
-    edition = 'oss'
+def get_pipelines(edition, trigger, ver_mode):
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
     test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     windows_pipeline = pipeline(
-        name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
+        name='{}-windows-{}'.format(edition, ver_mode), edition=edition, trigger=trigger,
         steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
         platform='windows', depends_on=[
-            'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
+            '{}-build{}-publish-{}'.format(edition, get_e2e_suffix(), ver_mode),
         ],
     )
     pipelines = [
         pipeline(
-            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='{}-build{}-publish-{}'.format(edition, get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -294,60 +328,13 @@ def get_oss_pipelines(trigger, ver_mode):
     if not disable_tests:
         pipelines.extend([
             pipeline(
-                name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
+                name='{}-test-{}'.format(edition, ver_mode), edition=edition, trigger=trigger, services=[],
                 steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  test_steps,
+                      test_steps,
                 volumes=[],
             ),
             pipeline(
-                name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                      integration_test_steps,
-                volumes=volumes,
-            )
-        ])
-        deps = {
-            'depends_on': [
-                'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-                'oss-test-{}'.format(ver_mode),
-                'oss-integration-tests-{}'.format(ver_mode)
-            ]
-        }
-        windows_pipeline.update(deps)
-
-    pipelines.extend([windows_pipeline])
-    return pipelines
-
-def get_enterprise_pipelines(trigger, ver_mode):
-    edition = 'enterprise'
-    services = integration_test_services(edition=edition)
-    volumes = integration_test_services_volumes()
-    test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
-    windows_pipeline = pipeline(
-        name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
-        platform='windows', depends_on=[
-            'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-        ],
-    )
-    pipelines = [
-        pipeline(
-            name='enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  build_steps + package_steps + publish_steps,
-            volumes=volumes,
-        ),
-    ]
-    if not disable_tests:
-        pipelines.extend([
-            pipeline(
-                name='enterprise-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  test_steps,
-                volumes=[],
-            ),
-            pipeline(
-                name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
+                name='{}-integration-tests-{}'.format(edition, ver_mode), edition=edition, trigger=trigger, services=services,
                 steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                       integration_test_steps,
                 volumes=volumes,
@@ -355,9 +342,9 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
-                'enterprise-test-{}'.format(ver_mode),
-                'enterprise-integration-tests-{}'.format(ver_mode)
+                '{}-build{}-publish-{}'.format(edition, get_e2e_suffix(), ver_mode),
+                '{}-test-{}'.format(edition, ver_mode),
+                '{}-integration-tests-{}'.format(edition, ver_mode)
             ]
         }
         windows_pipeline.update(deps)
@@ -456,8 +443,8 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
     # The release pipelines include also enterprise ones, so both editions are built for a release.
     # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
     # in OSS release builds, we simplify the UX for the release engineer.
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
+    oss_pipelines = get_pipelines(edition='oss', ver_mode=ver_mode, trigger=trigger)
+    enterprise_pipelines = get_pipelines(edition='enterprise', ver_mode=ver_mode, trigger=trigger)
 
     pipelines = oss_pipelines + enterprise_pipelines
 

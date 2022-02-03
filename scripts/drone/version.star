@@ -1,5 +1,5 @@
 load(
-    'scripts/drone/pipelines/release.star',
+    'scripts/drone/versions/release.star',
     'release_pipelines',
 )
 
