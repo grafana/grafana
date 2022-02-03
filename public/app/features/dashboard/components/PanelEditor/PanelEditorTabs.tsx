@@ -86,9 +86,9 @@ function renderAlertTab(
   dashboard: DashboardModel,
   onChangeTab: (tab: PanelEditorTab) => void
 ) {
-  const alertingNotEnabled = !config.alertingEnabled && !config.unifiedAlertingEnabled;
+  const alertingDisabled = !config.alertingEnabled && !config.unifiedAlertingEnabled;
 
-  if (alertingNotEnabled) {
+  if (alertingDisabled) {
     return null;
   }
 
