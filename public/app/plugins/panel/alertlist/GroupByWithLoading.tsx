@@ -20,7 +20,7 @@ interface Props {
   onChange: (keys: string[]) => void;
 }
 
-export const GroupBy: FC<Props> = (props: Props) => {
+export const GroupBy: FC<Props> = (props) => {
   const { onChange, id, defaultValue } = props;
   const dispatch = useDispatch();
 
