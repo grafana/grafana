@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/url"
 	"testing"
 
@@ -98,6 +99,14 @@ func TestDiscordNotifier(t *testing.T) {
 			name:         "Error in initialization",
 			settings:     `{}`,
 			expInitError: `failed to validate receiver "discord_testing" of type "discord": could not find webhook url property in settings`,
+		},
+		{
+			name: "Invalid template returns error",
+			settings: `{
+				"url": "http://localhost",
+				"message": "{{ template \"invalid.template\" }}"
+			}`,
+			expMsgError: errors.New("template: :1:12: executing \"\" at <{{template \"invalid.template\"}}>: template \"invalid.template\" not defined"),
 		},
 		{
 			name: "Default config with one alert, use default discord username",

@@ -65,6 +65,7 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -205,6 +206,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
+	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -217,6 +219,8 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
+	mockstore.NewSQLStoreMock,
+	wire.Bind(new(sqlstore.Store), new(*mockstore.SQLStoreMock)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {

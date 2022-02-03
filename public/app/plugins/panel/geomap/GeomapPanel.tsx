@@ -246,7 +246,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (!div) {
-      this.map = (undefined as unknown) as OpenLayersMap;
+      this.map = undefined as unknown as OpenLayersMap;
       return;
     }
     const { options } = this.props;
