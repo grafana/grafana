@@ -74,10 +74,7 @@ export function addParsedLabelToQuery(expr: string, key: string, value: string |
 }
 
 // we are migrating from `.instant` and `.range` to `.queryType`
-// the problem is, some old queries have `.instant` and `.range`,
-// and do not have `.queryType`, and we have to support those.
-// this function looks at all those properties, and returns
-// a new query object that:
+// this function returns a new query object that:
 // - has `.queryType`
 // - does not have `.instant`
 // - does not have `.range`
