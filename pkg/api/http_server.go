@@ -158,7 +158,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices,
-	notifications notifications.NotificationService) (*HTTPServer, error) {
+	notificationService *notifications.NotificationService) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -218,7 +218,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		serviceAccountsService:    serviceaccountsService,
 		authInfoService:           authInfoService,
 		TeamPermissionsService:    resourcePermissionServices.GetTeamService(),
-		NotificationService:       notifications,
+		NotificationService:       notificationService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
