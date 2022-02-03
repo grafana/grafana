@@ -8,6 +8,7 @@ const (
 	ProvenanceFile Provenance = "file"
 )
 
+// Provisionable represents a resource that can be created through a provisioning mechanism, such as Terraform or config file.
 type Provisionable interface {
 	ResourceTypeID() string
 	ResourceID() string
