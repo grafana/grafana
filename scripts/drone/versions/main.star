@@ -6,19 +6,19 @@ load(
 )
 
 load(
-    'scripts/drone/pipelines/windows.star',
+    'scripts/drone/pipeline-steps/windows.star',
     'get_windows_steps',
 )
 
 load(
-    'scripts/drone/pipelines/unit_tests.star',
+    'scripts/drone/pipeline-steps/unit_tests.star',
     'test_frontend_step',
     'test_backend_step',
     'test_backend_integration_step',
 )
 
 load(
-    'scripts/drone/pipelines/lint.star',
+    'scripts/drone/pipeline-steps/lint.star',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -27,7 +27,7 @@ load(
 )
 
 load(
-    'scripts/drone/pipelines/integration_tests.star',
+    'scripts/drone/pipeline-steps/integration_tests.star',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -36,14 +36,14 @@ load(
 )
 
 load(
-    'scripts/drone/pipelines/e2e_tests.star',
+    'scripts/drone/pipeline-steps/e2e_tests.star',
     'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
 )
 
 load(
-    'scripts/drone/pipelines/build.star',
+    'scripts/drone/pipeline-steps/build.star',
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
@@ -53,7 +53,7 @@ load(
 )
 
 load(
-    'scripts/drone/pipelines/package.star',
+    'scripts/drone/pipeline-steps/package.star',
     'package_step',
     'upload_packages_step',
     'store_packages_step',
@@ -64,7 +64,7 @@ load(
 
 
 load(
-    'scripts/drone/pipelines/frontend.star',
+    'scripts/drone/pipeline-steps/frontend.star',
     'frontend_metrics_step',
     'release_canary_npm_packages_step',
     'test_a11y_frontend_step'
@@ -72,7 +72,7 @@ load(
 
 
 load(
-    'scripts/drone/pipelines/cue.star',
+    'scripts/drone/pipeline-steps/cue.star',
     'validate_scuemata_step',
     'ensure_cuetsified_step',
 )
