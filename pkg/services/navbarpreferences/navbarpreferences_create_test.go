@@ -15,7 +15,7 @@ func TestCreateNavbarPreference(t *testing.T) {
 		require.Equal(t, 400, resp.Status())
 	})
 	*/
-	testScenario(t, "When an admin tries to create a library panel that does not exists, it should succeed",
+	testScenario(t, "When an admin tries to create a navigation preference that does not exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			var expected = NavbarPreferenceResponse{
 				Result: NavbarPreferenceDTO{

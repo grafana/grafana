@@ -30,8 +30,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		ctx := web.Context{Req: &http.Request{}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
-		sqlStore := sqlstore.InitTestDB(t)
-	  sqlStore.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagNewNavigation).IsEnabled
+		sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{
+			Features: features,
+		})
 		cfg := setting.NewCfg()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		service := NavbarPreferencesService{
