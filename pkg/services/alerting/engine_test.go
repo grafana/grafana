@@ -43,12 +43,66 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 	return nil
 }
 
+// A mock implementation of the AlertStore interface, allowing to override certain methods individually
+type AlertStoreMock struct {
+	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
+	getDataSource                      func(context.Context, *models.GetDataSourceQuery) error
+	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
+	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
+}
+
+func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *models.GetDataSourceQuery) error {
+	if a.getDataSource != nil {
+		return a.getDataSource(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.GetAllAlertsQuery) error {
+	if a.getAllAlerts != nil {
+		return a.getAllAlerts(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *models.GetAlertNotificationsWithUidToSendQuery) error {
+	if a.getAlertNotificationsWithUidToSend != nil {
+		return a.getAlertNotificationsWithUidToSend(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
+	if a.getOrCreateNotificationState != nil {
+		return a.getOrCreateNotificationState(c, cmd)
+	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetDashboardUIDById(_ context.Context, _ *models.GetDashboardRefByIdQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) SetAlertNotificationStateToCompleteCommand(_ context.Context, _ *models.SetAlertNotificationStateToCompleteCommand) error {
+	return nil
+}
+
+func (a *AlertStoreMock) SetAlertNotificationStateToPendingCommand(_ context.Context, _ *models.SetAlertNotificationStateToPendingCommand) error {
+	return nil
+}
+
+func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStateCommand) error {
+	return nil
+}
+
 func TestEngineProcessJob(t *testing.T) {
 	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), setting.NewCfg(), tracer)
+
+	store := &AlertStoreMock{}
+	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg())
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -56,19 +110,19 @@ func TestEngineProcessJob(t *testing.T) {
 	job := &Job{running: true, Rule: &Rule{}}
 
 	t.Run("Should register usage metrics func", func(t *testing.T) {
-		bus.AddHandler(func(ctx context.Context, q *models.GetAllAlertsQuery) error {
+		store.getAllAlerts = func(ctx context.Context, q *models.GetAllAlertsQuery) error {
 			settings, err := simplejson.NewJson([]byte(`{"conditions": [{"query": { "datasourceId": 1}}]}`))
 			if err != nil {
 				return err
 			}
 			q.Result = []*models.Alert{{Settings: settings}}
 			return nil
-		})
+		}
 
-		bus.AddHandler(func(ctx context.Context, q *models.GetDataSourceQuery) error {
+		store.getDataSource = func(ctx context.Context, q *models.GetDataSourceQuery) error {
 			q.Result = &models.DataSource{Id: 1, Type: models.DS_PROMETHEUS}
 			return nil
-		})
+		}
 
 		report, err := usMock.GetUsageReport(context.Background())
 		require.Nil(t, err)

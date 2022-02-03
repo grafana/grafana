@@ -224,7 +224,7 @@ describe('state functions', () => {
 });
 
 describe('getExploreUrl', () => {
-  const args = ({
+  const args = {
     panel: {
       getSavedId: () => 1,
       targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
@@ -240,7 +240,7 @@ describe('getExploreUrl', () => {
     timeSrv: {
       timeRangeForUrl: () => '1',
     },
-  } as unknown) as GetExploreUrlArguments;
+  } as unknown as GetExploreUrlArguments;
 
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));

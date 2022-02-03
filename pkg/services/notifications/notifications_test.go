@@ -17,7 +17,7 @@ func TestProvideService(t *testing.T) {
 	t.Run("When invalid from_address in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.FromAddress = "@notanemail@"
-		_, _, err := createSutWithConfig(bus, cfg)
+		_, _, err := createSutWithConfig(t, bus, cfg)
 
 		require.Error(t, err)
 	})
@@ -25,7 +25,7 @@ func TestProvideService(t *testing.T) {
 	t.Run("When template_patterns fails to parse", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.TemplatesPatterns = append(cfg.Smtp.TemplatesPatterns, "/usr/not-a-dir/**")
-		_, _, err := createSutWithConfig(bus, cfg)
+		_, _, err := createSutWithConfig(t, bus, cfg)
 
 		require.Error(t, err)
 	})
@@ -119,7 +119,7 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.Enabled = false
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommandSync{
 			SendEmailCommand: models.SendEmailCommand{
@@ -139,7 +139,7 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When invalid content type in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommandSync{
 			SendEmailCommand: models.SendEmailCommand{
@@ -178,7 +178,7 @@ func TestSendEmailAsync(t *testing.T) {
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)
-		err := sut.sendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
+		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
 		require.NoError(t, err)
 
 		sentMsg := <-sut.mailQueue
@@ -192,7 +192,7 @@ func TestSendEmailAsync(t *testing.T) {
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.Enabled = false
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommand{
 			Subject:     "subject",
@@ -201,7 +201,7 @@ func TestSendEmailAsync(t *testing.T) {
 			Template:    "welcome_on_signup",
 		}
 
-		err = bus.Dispatch(context.Background(), cmd)
+		err = ns.SendEmailCommandHandler(context.Background(), cmd)
 
 		require.ErrorIs(t, err, models.ErrSmtpNotEnabled)
 		require.Empty(t, mailer.Sent)
@@ -210,7 +210,7 @@ func TestSendEmailAsync(t *testing.T) {
 	t.Run("When invalid content type in configuration", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
-		_, mailer, err := createSutWithConfig(bus, cfg)
+		_, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &models.SendEmailCommand{
 			Subject:     "subject",
@@ -245,12 +245,12 @@ func createSut(t *testing.T, bus bus.Bus) (*NotificationService, *FakeMailer) {
 	t.Helper()
 
 	cfg := createSmtpConfig()
-	ns, fm, err := createSutWithConfig(bus, cfg)
+	ns, fm, err := createSutWithConfig(t, bus, cfg)
 	require.NoError(t, err)
 	return ns, fm
 }
 
-func createSutWithConfig(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
+func createSutWithConfig(t *testing.T, bus bus.Bus, cfg *setting.Cfg) (*NotificationService, *FakeMailer, error) {
 	smtp := NewFakeMailer()
 	ns, err := ProvideService(bus, cfg, smtp)
 	return ns, smtp, err
