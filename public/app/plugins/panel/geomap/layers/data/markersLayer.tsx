@@ -50,7 +50,7 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
 export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   id: MARKERS_LAYER_ID,
   name: 'Markers',
-  description: 'use markers to render each data point',
+  description: 'Use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
 
@@ -112,6 +112,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
+          source.clear();
           return; // ignore empty
         }
 
@@ -162,7 +163,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           .addBooleanSwitch({
             path: 'config.showLegend',
             name: 'Show legend',
-            description: 'Show legend',
+            description: 'Show map legend',
             defaultValue: defaultOptions.showLegend,
           });
       },

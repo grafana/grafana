@@ -96,6 +96,11 @@ type Session interface {
 	Dispose(ctx context.Context)
 }
 
+type CapabilitySupportRequestResult struct {
+	IsSupported      bool
+	SemverConstraint string
+}
+
 type Service interface {
 	IsAvailable() bool
 	Version() string
@@ -103,5 +108,6 @@ type Service interface {
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
+	HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 }

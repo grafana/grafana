@@ -3,7 +3,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { ServiceAccountDTO } from 'app/types';
 import { serviceAccountLoaded, serviceAccountsLoaded } from './reducers';
 
-const BASE_URL = `/api/org/serviceaccounts`;
+const BASE_URL = `/api/serviceaccounts`;
 
 export function loadServiceAccount(id: number): ThunkResult<void> {
   return async (dispatch) => {
