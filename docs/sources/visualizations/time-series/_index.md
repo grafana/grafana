@@ -39,7 +39,7 @@ Use these options to choose how to display your time series data.
 
 Use this option to transform the series values without affecting the values shown in the tooltip, context menu, and legend.
 
-- **Negative Y transform -** Flip the results to negative values on the y axis.
+- **Negative Y transform -** Flip the results to negative values on the Y axis.
 - **Constant -** Show first value as a constant line.
 
 ## Axis
