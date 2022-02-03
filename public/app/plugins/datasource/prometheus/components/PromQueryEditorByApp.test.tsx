@@ -6,6 +6,7 @@ import { noop } from 'lodash';
 import { PrometheusDatasource } from '../datasource';
 import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
 import { testIds as regularTestIds } from './PromQueryEditor';
+import { testIds as exploreTestIds } from './PromExploreQueryEditor';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related
@@ -18,7 +19,7 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
 });
 
 function setup(app: CoreApp): RenderResult {
-  const dataSource = ({
+  const dataSource = {
     createQuery: jest.fn((q) => q),
     getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
@@ -28,7 +29,7 @@ function setup(app: CoreApp): RenderResult {
       getLabelKeys: () => [],
       metrics: [],
     },
-  } as unknown) as PrometheusDatasource;
+  } as unknown as PrometheusDatasource;
 
   return render(
     <PromQueryEditorByApp
@@ -59,7 +60,7 @@ describe('PromQueryEditorByApp', () => {
   it('should render regular query editor for explore', () => {
     const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
 
-    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(getByTestId(exploreTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 

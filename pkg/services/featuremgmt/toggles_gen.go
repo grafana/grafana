@@ -86,4 +86,8 @@ const (
 	// FlagSwaggerUi
 	// Serves swagger UI
 	FlagSwaggerUi = "swagger-ui"
+
+	// FlagFeatureHighlights
+	// Highlight Enterprise features
+	FlagFeatureHighlights = "featureHighlights"
 )

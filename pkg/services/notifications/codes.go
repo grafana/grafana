@@ -70,7 +70,6 @@ func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bo
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("code : %s\ncode2: %s", retCode, code)
 	if retCode == code && minutes > 0 {
 		// check time is expired or not
 		before, _ := time.ParseInLocation("200601021504", start, time.Local)

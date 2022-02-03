@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -25,7 +24,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
-	team, err := createTeam(hs.SQLStore, cmd.Name, cmd.Email, c.OrgId)
+	team, err := hs.SQLStore.CreateTeam(cmd.Name, cmd.Email, c.OrgId)
 	if err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(409, "Team name taken", err)
@@ -45,7 +44,6 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
 	}
-
 	return response.JSON(200, &util.DynMap{
 		"teamId":  team.Id,
 		"message": "Team created",
@@ -177,10 +175,13 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
+
 	orgId := c.OrgId
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to view team preferences.", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to view team preferences.", err)
+		}
 	}
 
 	return hs.getPreferencesFor(c.Req.Context(), orgId, 0, teamId)
@@ -192,22 +193,19 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Respo
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
+
 	orgId := c.OrgId
 
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to update team preferences.", err)
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team preferences.", err)
+		}
 	}
 
 	return hs.updatePreferencesFor(c.Req.Context(), orgId, 0, teamId, &dtoCmd)
-}
-
-// createTeam creates a team.
-//
-// Stubbable by tests.
-var createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
-	return sqlStore.CreateTeam(name, email, orgID)
 }
