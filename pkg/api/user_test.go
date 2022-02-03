@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -46,7 +47,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		srv := authinfoservice.ProvideAuthInfoService(bus.New(), sqlStore, &authinfoservice.OSSUserProtectionImpl{}, secretsService)
+		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, bus.New(), secretsService)
+		srv := authinfoservice.ProvideAuthInfoService(&authinfoservice.OSSUserProtectionImpl{}, authInfoStore)
 		hs.authInfoService = srv
 
 		createUserCmd := models.CreateUserCommand{
