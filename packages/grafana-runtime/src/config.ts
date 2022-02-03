@@ -93,7 +93,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
-    enabled: false,
+    enabled: true,
   };
   featureHighlights = {
     enabled: false,

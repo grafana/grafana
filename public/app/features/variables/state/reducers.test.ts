@@ -7,7 +7,7 @@ import { VariablesState, toVariablePayload, VariablePayload } from './types';
 import { VariableType } from '@grafana/data';
 
 const variableAdapter: VariableAdapter<QueryVariableModel> = {
-  id: ('mock' as unknown) as VariableType,
+  id: 'mock' as unknown as VariableType,
   name: 'Mock label',
   description: 'Mock description',
   dependsOn: jest.fn(),
@@ -106,12 +106,12 @@ describe('variablesReducer', () => {
       const mockAction = createAction<VariablePayload>('mockAction');
       reducerTester<VariablesState>()
         .givenReducer(variablesReducer, initialState)
-        .whenActionIsDispatched(mockAction(toVariablePayload({ type: ('mock' as unknown) as VariableType, id: '0' })))
+        .whenActionIsDispatched(mockAction(toVariablePayload({ type: 'mock' as unknown as VariableType, id: '0' })))
         .thenStateShouldEqual(initialState);
       expect(variableAdapters.get('mock').reducer).toHaveBeenCalledTimes(1);
       expect(variableAdapters.get('mock').reducer).toHaveBeenCalledWith(
         initialState,
-        mockAction(toVariablePayload({ type: ('mock' as unknown) as VariableType, id: '0' }))
+        mockAction(toVariablePayload({ type: 'mock' as unknown as VariableType, id: '0' }))
       );
     });
   });

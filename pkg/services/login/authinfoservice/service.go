@@ -22,6 +22,10 @@ type Implementation struct {
 	logger                log.Logger
 }
 
+type Service interface {
+	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
+}
+
 func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, userProtectionService login.UserProtectionService,
 	secretsService secrets.Service) *Implementation {
 	s := &Implementation{

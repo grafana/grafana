@@ -14,8 +14,8 @@ describe('getAlertingValidationMessage', () => {
   describe('when called with some targets containing template variables', () => {
     it('then it should return false', async () => {
       let call = 0;
-      const datasource: DataSourceApi = ({
-        meta: ({ alerting: true } as any) as PluginMeta,
+      const datasource: DataSourceApi = {
+        meta: { alerting: true } as any as PluginMeta,
         targetContainsTemplate: () => {
           if (call === 0) {
             call++;
@@ -25,7 +25,7 @@ describe('getAlertingValidationMessage', () => {
         },
         name: 'some name',
         uid: 'some uid',
-      } as any) as DataSourceApi;
+      } as any as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: (ref: DataSourceRef) => {
@@ -55,16 +55,16 @@ describe('getAlertingValidationMessage', () => {
 
   describe('when called with some targets using a datasource that does not support alerting', () => {
     it('then it should return false', async () => {
-      const alertingDatasource: DataSourceApi = ({
-        meta: ({ alerting: true } as any) as PluginMeta,
+      const alertingDatasource: DataSourceApi = {
+        meta: { alerting: true } as any as PluginMeta,
         targetContainsTemplate: () => false,
         name: 'alertingDatasource',
-      } as any) as DataSourceApi;
-      const datasource: DataSourceApi = ({
-        meta: ({ alerting: false } as any) as PluginMeta,
+      } as any as DataSourceApi;
+      const datasource: DataSourceApi = {
+        meta: { alerting: false } as any as PluginMeta,
         targetContainsTemplate: () => false,
         name: 'datasource',
-      } as any) as DataSourceApi;
+      } as any as DataSourceApi;
 
       const datasourceSrv: DataSourceSrv = {
         get: (name: string) => {
@@ -96,11 +96,11 @@ describe('getAlertingValidationMessage', () => {
 
   describe('when called with all targets containing template variables', () => {
     it('then it should return false', async () => {
-      const datasource: DataSourceApi = ({
-        meta: ({ alerting: true } as any) as PluginMeta,
+      const datasource: DataSourceApi = {
+        meta: { alerting: true } as any as PluginMeta,
         targetContainsTemplate: () => true,
         name: 'some name',
-      } as any) as DataSourceApi;
+      } as any as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: (ref: DataSourceRef) => {
@@ -130,12 +130,12 @@ describe('getAlertingValidationMessage', () => {
 
   describe('when called with all targets using a datasource that does not support alerting', () => {
     it('then it should return false', async () => {
-      const datasource: DataSourceApi = ({
-        meta: ({ alerting: false } as any) as PluginMeta,
+      const datasource: DataSourceApi = {
+        meta: { alerting: false } as any as PluginMeta,
         targetContainsTemplate: () => false,
         name: 'some name',
         uid: 'theid',
-      } as any) as DataSourceApi;
+      } as any as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: (ref: DataSourceRef) => {
@@ -165,11 +165,11 @@ describe('getAlertingValidationMessage', () => {
 
   describe('when called with transformations', () => {
     it('then it should return false', async () => {
-      const datasource: DataSourceApi = ({
-        meta: ({ alerting: true } as any) as PluginMeta,
+      const datasource: DataSourceApi = {
+        meta: { alerting: true } as any as PluginMeta,
         targetContainsTemplate: () => false,
         name: 'some name',
-      } as any) as DataSourceApi;
+      } as any as DataSourceApi;
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: (ref: DataSourceRef) => {

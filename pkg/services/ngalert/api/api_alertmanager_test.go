@@ -261,7 +261,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"))
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
 	require.NoError(t, err)
 	t.Cleanup(cleanOrgDirectories(tmpDir, t))
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
