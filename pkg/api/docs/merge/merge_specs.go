@@ -4,16 +4,18 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
 )
 
 // mergeSpecs merges OSS API spec with one or more other OpenAPI specs
-func mergeSpecs(sources ...string) error {
+func mergeSpecs(output string, sources ...string) error {
 	if len(sources) < 2 {
 		return fmt.Errorf("no APIs to merge")
 	}
@@ -57,12 +59,13 @@ func mergeSpecs(sources ...string) error {
 		paths := additionalSpec.OrigSpec().SwaggerProps.Paths
 		if paths != nil {
 			for k, pi := range paths.Paths {
+				kk := strings.TrimPrefix(k, specOSS.BasePath) // remove base path if exists
 				if specOSS.SwaggerProps.Paths == nil {
 					specOSS.SwaggerProps.Paths = &spec.Paths{
 						Paths: make(map[string]spec.PathItem),
 					}
 				}
-				specOSS.SwaggerProps.Paths.Paths[k] = pi
+				specOSS.SwaggerProps.Paths.Paths[kk] = pi
 			}
 		}
 
@@ -81,7 +84,7 @@ func mergeSpecs(sources ...string) error {
 		return fmt.Errorf("failed to intend new spec: %w", err)
 	}
 
-	f, err = os.Create("merged.json")
+	f, err = os.Create(output)
 	if err != nil {
 		return fmt.Errorf("failed to create file for new spec: %w", err)
 	}
@@ -96,7 +99,9 @@ func mergeSpecs(sources ...string) error {
 }
 
 func main() {
-	err := mergeSpecs(os.Args[1:]...)
+	output := flag.String("o", "../../../swagger-ui/merged.json", "the output path")
+	flag.Parse()
+	err := mergeSpecs(*output, flag.Args()...)
 	if err != nil {
 		fmt.Printf("something went wrong: %s\n", err.Error())
 	}
