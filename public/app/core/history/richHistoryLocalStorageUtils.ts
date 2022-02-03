@@ -29,7 +29,7 @@ export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [nu
 }
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
-  return listOfDatasourceFilters && listOfDatasourceFilters.length > 0
+  return listOfDatasourceFilters.length > 0
     ? queries.filter((q) => listOfDatasourceFilters.includes(q.datasourceName))
     : queries;
 }
