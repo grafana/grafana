@@ -6,6 +6,7 @@ import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
+export const INTERNAL_NEGATIVE_Y_PREFIX = '__internalNegY';
 
 export function timeFormatToTemplate(f: string) {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
@@ -137,10 +138,15 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
     customConfig.stacking?.group &&
     !customConfig.hideFrom?.viz
   ) {
-    if (!groups.has(customConfig.stacking.group)) {
-      groups.set(customConfig.stacking.group, [seriesIdx]);
+    const group =
+      customConfig.transform === GraphTransform.NegativeY
+        ? `${INTERNAL_NEGATIVE_Y_PREFIX}-${customConfig.stacking.group}`
+        : customConfig.stacking.group;
+
+    if (!groups.has(group)) {
+      groups.set(group, [seriesIdx]);
     } else {
-      groups.set(customConfig.stacking.group, groups.get(customConfig.stacking.group)!.concat(seriesIdx));
+      groups.set(group, groups.get(group)!.concat(seriesIdx));
     }
   }
 }

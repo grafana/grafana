@@ -19,7 +19,6 @@ import { Portal } from '../../Portal/Portal';
 import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { findMidPointYPosition, pluginLog } from '../utils';
-import { SeriesLabel } from './SeriesLabel';
 
 interface TooltipPluginProps {
   timeZone: TimeZone;
@@ -196,10 +195,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       xVal = xFieldFmt(xField!.values.get(dataIdx)).text;
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(dataIdx));
-      const fieldDisplayName = getFieldDisplayName(field, otherProps.data);
-      const transformMode = field.config?.custom?.transform;
+      const label = getFieldDisplayName(field, otherProps.data);
 
-      const label = <SeriesLabel name={fieldDisplayName} transformMode={transformMode} />;
       tooltip = (
         <SeriesTable
           series={[
@@ -235,10 +232,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
         const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
         const display = field.display!(v);
-        const fieldDisplayName = getFieldDisplayName(field, frame);
-        const transformMode = field.config?.custom?.transform;
-
-        const label = <SeriesLabel name={fieldDisplayName} transformMode={transformMode} />;
+        const label = getFieldDisplayName(field, frame);
 
         sortIdx.push([series.length, v]);
         series.push({

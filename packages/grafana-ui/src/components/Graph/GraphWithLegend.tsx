@@ -76,7 +76,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
       : acc.concat([
           {
             label: s.label,
-            name: s.label,
             color: s.color || '',
             disabled: !s.isVisible,
             yAxis: s.yAxis.index,
@@ -116,7 +115,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
               sortDesc={sortLegendDesc}
               onLabelClick={(item, event) => {
                 if (onSeriesToggle) {
-                  onSeriesToggle(item.name, event);
+                  onSeriesToggle(item.label, event);
                 }
               }}
               onToggleSort={onToggleSort}
