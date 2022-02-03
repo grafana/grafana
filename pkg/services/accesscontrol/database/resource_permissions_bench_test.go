@@ -93,7 +93,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 			_, err := ac.SetUserResourcePermission(
 				context.Background(),
 				accesscontrol.GlobalOrgID,
-				userIds[i],
+				accesscontrol.User{ID: userIds[i]},
 				accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{dsAction},
 					Resource:   dsResource,
