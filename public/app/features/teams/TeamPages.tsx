@@ -89,7 +89,7 @@ export class TeamPages extends PureComponent<Props, State> {
     const { loadTeam, teamId } = this.props;
     this.setState({ isLoading: true });
     const team = await loadTeam(teamId);
-    // TODO see if we can do something better
+    // With accesscontrol, the TeamPermissions will fetch team members
     if (!contextSrv.accessControlEnabled()) {
       await this.props.loadTeamMembers();
     }
@@ -154,7 +154,8 @@ export class TeamPages extends PureComponent<Props, State> {
 
     switch (currentPage) {
       case PageTypes.Members:
-        if (config.featureToggles['accesscontrol']) {
+        if (contextSrv.accessControlEnabled()) {
+          // TODO check if the accesscontrol permission check is performed in the component
           return <TeamPermissions team={team!} />;
         } else {
           return <TeamMembers syncEnabled={isSyncEnabled} members={members} />;

@@ -207,33 +207,29 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/teams',
-      // TODO why the legacy condition is: "editorsCanAdmin ? [] : ['Editor', 'Admin']"
-      // instead of:                       "editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']""
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']), [
-          AccessControlAction.ActionTeamsRead,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
+          [AccessControlAction.ActionTeamsRead]
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
     },
     {
       path: '/org/teams/new',
-      // TODO why the legacy condition is: "editorsCanAdmin ? [] : ['Admin']"
-      // instead of:                       "editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']""
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? [] : ['Admin']), [
-          AccessControlAction.ActionTeamsCreate,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
+          [AccessControlAction.ActionTeamsCreate]
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
     {
       path: '/org/teams/edit/:id/:page?',
-      // TODO why the legacy condition is: "editorsCanAdmin ? [] : ['Admin']"
-      // instead of:                       "editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']""
       roles: () =>
-        contextSrv.evaluatePermission(() => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']), [
-          AccessControlAction.ActionTeamsWrite,
-          AccessControlAction.ActionTeamsPermissionsWrite,
-        ]),
+        contextSrv.evaluatePermission(
+          () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
+          [AccessControlAction.ActionTeamsWrite, AccessControlAction.ActionTeamsPermissionsWrite]
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },
     {
