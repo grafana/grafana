@@ -11,9 +11,7 @@ const mockItem: RichHistoryQuery = {
   ts: 2,
   starred: true,
   datasourceName: 'dev-test',
-  datasourceId: 'test-id',
   comment: 'test',
-  sessionName: 'session-name',
   queries: [{ refId: 'ref', query: 'query-test' } as DataQuery],
 };
 
@@ -21,9 +19,7 @@ const mockItem2: RichHistoryQuery = {
   ts: 3,
   starred: true,
   datasourceName: 'dev-test-2',
-  datasourceId: 'test-id-2',
   comment: 'test-2',
-  sessionName: 'session-name-2',
   queries: [{ refId: 'ref-2', query: 'query-2' } as DataQuery],
 };
 
