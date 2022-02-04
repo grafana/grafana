@@ -89,7 +89,7 @@ func (r *simpleCrawler) Start(ctx context.Context, authOpts rendering.AuthOpts, 
 
 	now := time.Now()
 
-	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails()
+	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails(theme, thumbnailKind)
 	if err != nil {
 		tlog.Error("Error when fetching dashboards with stale thumbnails", "err", err.Error())
 		return err
