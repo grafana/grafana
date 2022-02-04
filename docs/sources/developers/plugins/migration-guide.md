@@ -92,7 +92,7 @@ getLocationSrv.update({
 locationService.replace('/route-to-navigate-to');
 ```
 
-**Example:** How to update the search/query parameter for the current route and add a new record in the navigation history so you can navigate back to the previous one.
+**Example:** Update the search or query parameter for the current route and add a new record in the navigation history so that you can navigate back to the previous one.
 
 ```ts
 // How to navigate to a new path
