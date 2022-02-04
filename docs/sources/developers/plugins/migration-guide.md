@@ -66,7 +66,7 @@ import { getLocationSrv } from '@grafana/runtime';
 import { locationService } from '@grafana/runtime';
 ```
 
-**Example:** How to navigate to a path and add a new record in the navigation history so you can navigate back to the previous one.
+**Example:** Navigate to a path and add a new record in the navigation history so that you can navigate back to the previous one.
 
 ```ts
 // before
