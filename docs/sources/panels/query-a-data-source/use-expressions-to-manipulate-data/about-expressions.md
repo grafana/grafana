@@ -148,10 +148,9 @@ Reduce takes one or more time series returned from a query or an expression and 
 
 - **Function -** The reduction function to use
 - **Input -** The variable (refID (such as `A`)) to resample
+- **Mode -** Allows control behavior of reduction function when a series contains non-numerical values (null, NaN, +\-Inf)
 
 #### Reduction Functions
-
-> **Note:** In the future we plan to add options to control empty, NaN, and null behavior for reduction functions.
 
 ##### Count
 
@@ -159,19 +158,33 @@ Count returns the number of points in each series.
 
 ##### Mean
 
-Mean returns the total of all values in each series divided by the number of points in that series. If any values in the series are null or nan, or if the series is empty, NaN is returned.
+Mean returns the total of all values in each series divided by the number of points in that series. In `strict` mode if any values in the series are null or nan, or if the series is empty, NaN is returned.
 
 ##### Min and Max
 
-Min and Max return the smallest or largest value in the series respectively. If any values in the series are null or nan, or if the series is empty, NaN is returned.
+Min and Max return the smallest or largest value in the series respectively. In `strict` mode if any values in the series are null or nan, or if the series is empty, NaN is returned.
 
 ##### Sum
 
-Sum returns the total of all values in the series. If series is of zero length, the sum will be 0. If there are any NaN or Null values in the series, NaN is returned.
+Sum returns the total of all values in the series. If series is of zero length, the sum will be 0. In `strict` mode if there are any NaN or Null values in the series, NaN is returned.
 
 #### Last
 
 Last returns the last number in the series. If the series has no values then returns NaN.
+
+#### Reduction Modes
+
+##### Strict
+
+In Strict mode the input series is processed as is. If any values in the series are non-numeric (null, NaN or +\-Inf), NaN is returned.
+
+##### Drop Non-Numeric
+
+In this mode all non-numeric values (null, NaN or +\-Inf) in the input series are filtered out before executing the reduction function.
+
+##### Replace Non-Numeric
+
+In this mode all non-numeric values are replaced by a pre-defined value.
 
 ### Resample
 

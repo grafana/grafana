@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/navlinks"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -144,12 +143,11 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN &&
-		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) &&
-		hs.serviceAccountsService.Migrated(c.Req.Context(), c.OrgId)
+	return (c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)) &&
+		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts)
 }
 
-func enableTeams(hs *HTTPServer, c *models.ReqContext) bool {
+func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)
 }
 
@@ -264,7 +262,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if enableTeams(hs, c) {
+	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Teams",
 			Id:          "teams",
@@ -541,7 +539,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
 	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
+	if err := hs.SQLStore.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return nil, err
 	}
 	hasEditPerm := hasEditPermissionInFoldersQuery.Result
@@ -554,7 +552,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.Dispatch(c.Req.Context(), &prefsQuery); err != nil {
+	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
 	prefs := prefsQuery.Result

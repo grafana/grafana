@@ -60,9 +60,8 @@ type FindPersistedDashboardsQuery struct {
 }
 
 type SearchService struct {
-	Bus bus.Bus
-	Cfg *setting.Cfg
-
+	Bus         bus.Bus
+	Cfg         *setting.Cfg
 	sortOptions map[string]SortOption
 }
 
