@@ -21,6 +21,9 @@ type sqlThumbnailRepository struct {
 }
 
 func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error) {
+	// the filePath variable is never set by the user. it refers to a temporary file created either in
+	//   1. thumbs/service.go, when user uploads a thumbnail
+	//   2. the rendering service, when image-renderer returns a screenshot
 	content, err := os.ReadFile(filepath.Clean(filePath))
 
 	if err != nil {
