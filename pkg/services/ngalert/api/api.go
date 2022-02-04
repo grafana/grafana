@@ -103,6 +103,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			Cfg:               api.Cfg,
 			ExpressionService: api.ExpressionService,
 			DatasourceCache:   api.DatasourceCache,
+			secretsService:    api.SecretsService,
 			log:               logger,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
