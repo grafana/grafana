@@ -8,8 +8,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 var ErrProvokedError = errors.New("testing error")
@@ -52,5 +53,39 @@ func TestTransaction(t *testing.T) {
 		err = ss.GetApiKeyById(context.Background(), query)
 		require.Nil(t, err)
 		require.Equal(t, cmd.Result.Id, query.Result.Id)
+	})
+}
+
+func TestReuseSessionWithTransaction(t *testing.T) {
+	ss := InitTestDB(t)
+
+	t.Run("top level transaction", func(t *testing.T) {
+		var outerSession *DBSession
+		err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+			value := ctx.Value(ContextSessionKey{})
+			var ok bool
+			outerSession, ok = value.(*DBSession)
+
+			require.True(t, ok, "Session should be available in the context but it does not exist")
+			require.True(t, outerSession.transactionOpen, "Transaction should be open")
+
+			require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
+				require.Equal(t, outerSession, sess)
+				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
+
+			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				require.Equal(t, outerSession, sess)
+				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
+
+			require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
+			return nil
+		})
+
+		require.NoError(t, err)
+		require.True(t, outerSession.IsClosed())
 	})
 }

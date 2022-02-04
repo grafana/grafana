@@ -5,11 +5,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/mattn/go-sqlite3"
-	"xorm.io/xorm"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
@@ -35,14 +36,36 @@ func inTransactionWithRetry(callback DBTransactionFunc, retry int) error {
 }
 
 func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc, retry int) error {
-	sess, err := startSession(ctx, engine, true)
+	sess, isNew, err := startSessionOrUseExisting(ctx, engine, true)
 	if err != nil {
 		return err
 	}
 
-	defer sess.Close()
+	commitTransaction := true
+
+	if isNew { // if this call initiated the session, it should be responsible for closing it.
+		defer sess.Close()
+	} else {
+		if !sess.transactionOpen {
+			tsclogger.Info("opening transaction for existing session")
+			if err = sess.Session.Begin(); err != nil {
+				return err
+			}
+			sess.transactionOpen = true
+			defer func() {
+				sess.transactionOpen = false
+			}()
+		} else {
+			tsclogger.Info("reusing existing transaction")
+			commitTransaction = false
+		}
+	}
 
 	err = callback(sess)
+
+	if !commitTransaction {
+		return nil
+	}
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
 	var sqlError sqlite3.Error
