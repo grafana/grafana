@@ -204,7 +204,7 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onStarrQuery = () => {
-    updateRichHistory(query.id, 'starred');
+    updateRichHistory(query.id, 'starred', !query.starred);
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);

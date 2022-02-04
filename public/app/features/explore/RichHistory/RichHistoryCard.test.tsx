@@ -4,6 +4,8 @@ import { RichHistoryCard, Props } from './RichHistoryCard';
 import { ExploreId, RichHistoryQuery } from '../../../types/explore';
 import { DataSourceApi, DataQuery } from '@grafana/data';
 
+const updateRichHistoryMock = jest.fn();
+
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     query: {
@@ -22,7 +24,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     dsImg: '/app/img',
     isRemoved: false,
     changeDatasource: jest.fn(),
-    updateRichHistory: jest.fn(),
+    updateRichHistory: updateRichHistoryMock,
     setQueries: jest.fn(),
     exploreId: ExploreId.left,
     datasourceInstance: { name: 'Datasource' } as DataSourceApi,
@@ -124,11 +126,17 @@ describe('RichHistoryCard', () => {
   describe('starring', () => {
     it('should have title "Star query", if not starred', () => {
       const wrapper = setup();
-      expect(wrapper.find({ title: 'Star query' })).toHaveLength(1);
+      const starButton = wrapper.find({ title: 'Star query' });
+      expect(starButton).toHaveLength(1);
+      starButton.simulate('click');
+      expect(updateRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, 'starred', true);
     });
     it('should have title "Unstar query", if not starred', () => {
       const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.find({ title: 'Unstar query' })).toHaveLength(1);
+      const starButton = wrapper.find({ title: 'Unstar query' });
+      expect(starButton).toHaveLength(1);
+      starButton.simulate('click');
+      expect(updateRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, 'starred', false);
     });
   });
 });
