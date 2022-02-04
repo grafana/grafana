@@ -125,3 +125,5 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     );
   }
 }
+
+export const DataSourceVariableEditor = connector(DataSourceVariableEditorUnConnected);

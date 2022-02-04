@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceRef } from '@grafana/data';
 
 import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
 import { getInstanceState, initialVariablesState, VariablePayload, VariablesState } from '../state/types';

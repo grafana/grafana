@@ -62,7 +62,7 @@ describe('variableEditorReducer', () => {
         name: 'A name',
         isValid: false,
         errors: { update: 'Something wrong' },
-        extended: { prop: 1000 },
+        extended: null,
       };
       const payload = toVariablePayload({ id: '0', type: 'textbox' });
       reducerTester<VariableEditorState>()
@@ -188,6 +188,7 @@ describe('variableEditorReducer', () => {
         .thenStateShouldEqual({
           ...initialVariableEditorState,
           extended: {
+            // @ts-ignore - temp ignoring this, we'll fix it soon
             someProp: [{}],
           },
         });
