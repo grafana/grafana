@@ -36,7 +36,7 @@ const mock: any = {
     },
   ],
   testComment: '',
-  testDatasourceId: 'datasourceId',
+  testDatasourceUid: 'datasourceUid',
   testDatasourceName: 'datasourceName',
   testQueries: [
     { expr: 'query3', refId: 'B' },
@@ -85,6 +85,7 @@ describe('richHistory', () => {
       Date.now = jest.fn(() => 2);
       const { richHistory: newHistory } = await addToRichHistory(
         mock.storedHistory,
+        mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,
         mock.testStarred,
@@ -100,6 +101,7 @@ describe('richHistory', () => {
 
       const { richHistory } = await addToRichHistory(
         mock.storedHistory,
+        mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,
         mock.testStarred,
@@ -126,6 +128,7 @@ describe('richHistory', () => {
 
       const { richHistory: newHistory } = await addToRichHistory(
         mock.storedHistory,
+        mock.storedHistory[0].datasourceUid,
         mock.storedHistory[0].datasourceName,
         [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
         mock.testStarred,
@@ -146,6 +149,7 @@ describe('richHistory', () => {
 
       const { richHistory, limitExceeded } = await addToRichHistory(
         mock.storedHistory,
+        mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,
         mock.testStarred,
@@ -160,21 +164,21 @@ describe('richHistory', () => {
 
   describe('updateStarredInRichHistory', () => {
     it('should update starred in query in history', async () => {
-      const updatedStarred = await updateStarredInRichHistory(mock.storedHistory, 1);
+      const updatedStarred = await updateStarredInRichHistory(mock.storedHistory, '1', !mock.starred);
       expect(updatedStarred[0].starred).toEqual(false);
     });
   });
 
   describe('updateCommentInRichHistory', () => {
     it('should update comment in query in history', async () => {
-      const updatedComment = await updateCommentInRichHistory(mock.storedHistory, 1, 'new comment');
+      const updatedComment = await updateCommentInRichHistory(mock.storedHistory, '1', 'new comment');
       expect(updatedComment[0].comment).toEqual('new comment');
     });
   });
 
   describe('deleteQueryInRichHistory', () => {
     it('should delete query in query in history', async () => {
-      const deletedHistory = await deleteQueryInRichHistory(mock.storedHistory, 1);
+      const deletedHistory = await deleteQueryInRichHistory(mock.storedHistory, '1');
       expect(deletedHistory).toEqual([]);
     });
   });

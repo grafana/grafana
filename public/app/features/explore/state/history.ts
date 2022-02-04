@@ -23,15 +23,23 @@ export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore
 // Action creators
 //
 
-export const updateRichHistory = (id: string, property: string, updatedProperty?: string): ThunkResult<void> => {
+export const updateRichHistory = (
+  id: string,
+  property: string,
+  updatedProperty?: string | boolean
+): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    // Side-effect: Saving rich history in localstorage
+    // Side-effect: Saving rich history
     let nextRichHistory;
     if (property === 'starred') {
-      nextRichHistory = await updateStarredInRichHistory(getState().explore.richHistory, id);
+      nextRichHistory = await updateStarredInRichHistory(
+        getState().explore.richHistory,
+        id,
+        updatedProperty as boolean
+      );
     }
     if (property === 'comment') {
-      nextRichHistory = await updateCommentInRichHistory(getState().explore.richHistory, id, updatedProperty);
+      nextRichHistory = await updateCommentInRichHistory(getState().explore.richHistory, id, updatedProperty as string);
     }
     if (property === 'delete') {
       nextRichHistory = await deleteQueryInRichHistory(getState().explore.richHistory, id);

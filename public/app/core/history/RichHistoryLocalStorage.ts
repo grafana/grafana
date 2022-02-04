@@ -2,7 +2,7 @@ import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning 
 import { RichHistoryQuery } from '../../types';
 import store from '../store';
 import { DataQuery } from '@grafana/data';
-import { isEqual, omit } from 'lodash';
+import { find, isEqual, omit } from 'lodash';
 import {
   createRetentionPeriodBoundary,
   LocalStorageConverter,
@@ -102,29 +102,30 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async updateStarred(id: string, starred: boolean) {
-    const ts = parseInt(id, 10);
-    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
-    const updatedHistory = richHistory.map((query) => {
-      if (query.ts === ts) {
-        query.starred = starred;
-      }
-      return query;
-    });
-
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updateRichHistory(id, (richHistoryDTO) => (richHistoryDTO.starred = starred));
   }
 
   async updateComment(id: string, comment: string) {
-    const ts = parseInt(id, 10);
-    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
-    const updatedHistory = richHistory.map((query) => {
-      if (query.ts === ts) {
-        query.comment = comment;
-      }
-      return query;
-    });
-    store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    return updateRichHistory(id, (richHistoryDTO) => (richHistoryDTO.comment = comment));
   }
+}
+
+function updateRichHistory(
+  id: string,
+  updateCallback: (richHistoryDTO: RichHistoryLocalStorageDTO) => void
+): RichHistoryQuery {
+  const ts = parseInt(id, 10);
+  const richHistoryDTOs: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
+  const richHistoryDTO = find(richHistoryDTOs, { ts });
+
+  if (!richHistoryDTO) {
+    throw new Error('Rich history item not found.');
+  }
+
+  updateCallback(richHistoryDTO);
+
+  store.setObject(RICH_HISTORY_KEY, richHistoryDTOs);
+  return LocalStorageConverter.fromDTO(richHistoryDTO);
 }
 
 /**

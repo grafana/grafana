@@ -96,26 +96,10 @@ export async function deleteAllFromRichHistory(): Promise<void> {
   return getRichHistoryStorage().deleteAll();
 }
 
-export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], id: string) {
-  let updatedQuery: RichHistoryQuery | undefined;
-
-  const updatedHistory = richHistory.map((query) => {
-    /* Timestamps are currently unique - we can use them to identify specific queries */
-    if (query.id === id) {
-      const isStarred = query.starred;
-      updatedQuery = Object.assign({}, query, { starred: !isStarred });
-      return updatedQuery;
-    }
-    return query;
-  });
-
-  if (!updatedQuery) {
-    return richHistory;
-  }
-
+export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], id: string, starred: boolean) {
   try {
-    await getRichHistoryStorage().updateStarred(id, updatedQuery.starred);
-    return updatedHistory;
+    const updatedQuery = await getRichHistoryStorage().updateStarred(id, starred);
+    return richHistory.map((query) => (query.id === id ? updatedQuery : query));
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
@@ -127,22 +111,9 @@ export async function updateCommentInRichHistory(
   id: string,
   newComment: string | undefined
 ) {
-  let updatedQuery: RichHistoryQuery | undefined;
-  const updatedHistory = richHistory.map((query) => {
-    if (query.id === id) {
-      updatedQuery = Object.assign({}, query, { comment: newComment });
-      return updatedQuery;
-    }
-    return query;
-  });
-
-  if (!updatedQuery) {
-    return richHistory;
-  }
-
   try {
-    await getRichHistoryStorage().updateComment(id, newComment);
-    return updatedHistory;
+    const updatedQuery = await getRichHistoryStorage().updateComment(id, newComment);
+    return richHistory.map((query) => (query.id === id ? updatedQuery : query));
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
