@@ -26,13 +26,11 @@ const mock: any = {
   storedHistory: [
     {
       comment: '',
-      datasourceId: 'datasource historyId',
       datasourceName: 'datasource history name',
       queries: [
         { expr: 'query1', maxLines: null, refId: '1' },
         { expr: 'query2', refId: '2' },
       ],
-      sessionName: '',
       starred: true,
       ts: 1,
     },
@@ -75,10 +73,8 @@ describe('richHistory', () => {
     const expectedResult = [
       {
         comment: mock.testComment,
-        datasourceId: mock.testDatasourceId,
         datasourceName: mock.testDatasourceName,
         queries: mock.testQueries,
-        sessionName: mock.testSessionName,
         starred: mock.testStarred,
         ts: 2,
       },
@@ -114,10 +110,8 @@ describe('richHistory', () => {
       expect(richHistory).toMatchObject(expectedResult);
       expect(richHistoryStorageMock.addToRichHistory).toBeCalledWith({
         datasourceName: mock.testDatasourceName,
-        datasourceId: mock.testDatasourceId,
         starred: mock.testStarred,
         comment: mock.testComment,
-        sessionName: mock.testSessionName,
         queries: mock.testQueries,
         ts: 2,
       });
