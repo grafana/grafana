@@ -85,9 +85,9 @@ func newDataSourceJSONKernel(lin thema.Lineage) kernel.InputKernel {
 type DataSource struct {
 	// Omitting these two at least for now, because sequential IDs == :(
 	// Id                int64                  `json:"id"`
-	// OrgId             int64                  `json:"orgId"`
+	// OrgId int64 `json:"orgId"` // May change, but to make store work
 
-	//UID         string `json:"uid"`
+	UID               string `json:"uid"` // May change, but to make store work
 	Name              string `json:"name"`
 	Type              string `json:"type"`
 	TypeLogoUrl       string `json:"typeLogoUrl"`
