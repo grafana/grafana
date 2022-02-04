@@ -26,7 +26,7 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -48,7 +48,7 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			pushoverNotifier := not.(*PushoverNotifier)
 
 			require.Nil(t, err)
@@ -74,7 +74,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateAlerting,
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)
@@ -85,7 +85,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateOK,
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)

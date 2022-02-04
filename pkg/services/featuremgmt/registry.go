@@ -110,5 +110,10 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
+		{
+			Name:        "featureHighlights",
+			Description: "Highlight Enterprise features",
+			State:       FeatureStateStable,
+		},
 	}
 )

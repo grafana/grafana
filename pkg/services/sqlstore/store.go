@@ -12,6 +12,7 @@ type Store interface {
 	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
 	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
 	GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error
+	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)
