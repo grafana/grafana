@@ -1,5 +1,5 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
-load('scripts/drone/utils/var.star', 'grabpl_version', 'build_image', 'publish_image', 'grafana_docker_image', 'deploy_docker_image', 'alpine_image', 'curl_image', 'windows_image', 'wix_image', 'disable_tests')
+load('scripts/drone/var.star', 'grabpl_version', 'build_image', 'publish_image', 'grafana_docker_image', 'deploy_docker_image', 'alpine_image', 'curl_image', 'windows_image', 'wix_image', 'disable_tests')
 
 def slack_step(channel, template, secret):
     return {

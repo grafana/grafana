@@ -1,4 +1,4 @@
-load('scripts/drone/utils/var.star', 'build_image', 'test_release_ver', 'publish_image')
+load('scripts/drone/var.star', 'build_image', 'test_release_ver', 'publish_image')
 load('scripts/drone/init/init.star', 'enterprise2_suffix', 'end_to_end_tests_deps')
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'prerelease_bucket')
 

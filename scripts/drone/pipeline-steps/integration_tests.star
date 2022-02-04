@@ -1,4 +1,4 @@
-load('scripts/drone/utils/var.star', 'build_image')
+load('scripts/drone/var.star', 'build_image')
 
 def postgres_integration_tests_step(edition, ver_mode):
     deps = []

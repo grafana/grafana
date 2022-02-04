@@ -1,4 +1,4 @@
-load('scripts/drone/utils/var.star', 'wix_image', 'grabpl_version')
+load('scripts/drone/var.star', 'wix_image', 'grabpl_version')
 load('scripts/drone/init/init.star', 'enterprise2_suffix')
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'prerelease_bucket')
 

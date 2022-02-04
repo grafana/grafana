@@ -5,7 +5,7 @@ load(
 )
 
 load(
-    'scripts/drone/utils/var.star',
+    'scripts/drone/var.star',
     'build_image',
     'publish_image',
     'disable_tests',

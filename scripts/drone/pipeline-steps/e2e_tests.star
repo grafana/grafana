@@ -1,4 +1,4 @@
-load('scripts/drone/utils/var.star', 'build_image')
+load('scripts/drone/var.star', 'build_image')
 load('scripts/drone/init/init.star', 'enterprise2_suffix')
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'gcp_upload_artifacts_key')
 
