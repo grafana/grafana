@@ -15,7 +15,7 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
   - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
   - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
-  - [8.3 Deprecations](#83-deprecations)
+  - [8.4 Deprecations](#84-deprecations)
     - [LocationService replaces getLocationSrv](#locationservice-replaces-getlocationsrv)
 - [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
   - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
@@ -50,11 +50,11 @@ Removed due to being an internal component.
 
 Removed due to being an internal component.
 
-### 8.3 deprecations
+### 8.4 deprecations
 
 #### LocationService replaces getLocationSrv
 
-IIn a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.  
+In a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.
 
 **Example:** Import the service.
 
