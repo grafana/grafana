@@ -9,7 +9,7 @@ import (
 )
 
 func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {
 			return err
@@ -82,7 +82,7 @@ func (ss *SQLStore) UpdateThumbnailState(cmd *models.UpdateThumbnailStateCommand
 }
 
 func (ss *SQLStore) FindDashboardsWithStaleThumbnails(cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		sess.Table("dashboard")
 		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id AND dashboard_thumbnail.theme = ? AND dashboard_thumbnail.kind = ?", cmd.Theme, cmd.Kind)
 		sess.Where("dashboard.is_folder = ?", dialect.BooleanStr(false))
