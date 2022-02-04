@@ -43,7 +43,7 @@ func ProvideBridgeService(cfg *rest.Config, list schema.CoreSchemaList) (*Bridge
 	for _, cr := range list {
 		schemaBuilder.Register(cr.GetRuntimeObjects()...)
 	}
-	
+
 	mgropts := ctrl.Options{
 		Scheme: schm,
 	}
@@ -59,11 +59,13 @@ func ProvideBridgeService(cfg *rest.Config, list schema.CoreSchemaList) (*Bridge
 		Manager: mgr,
 	}
 
-	go func() {
-		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-			panic(err)
-		}
-	}()
+	/*
+		go func() {
+			if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+				panic(err)
+			}
+		}()
+	*/
 
 	return b, nil
 }
