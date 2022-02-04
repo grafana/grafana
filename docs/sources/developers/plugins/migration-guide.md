@@ -79,7 +79,7 @@ getLocationSrv.update({
 locationService.push('/route-to-navigate-to');
 ```
 
-**Example:** How to navigate to a path and replacing the current record in the navigation history.
+**Example:** Navigate to a path and replace the current record in the navigation history.
 
 ```ts
 // before
