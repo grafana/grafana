@@ -65,10 +65,6 @@ export class TeamList extends PureComponent<Props, State> {
     this.props.setSearchQuery(value);
   };
 
-  getRoleOptions = () => {
-    return Promise.resolve(this.state.roleOptions);
-  };
-
   renderTeam(team: Team) {
     const { editorsCanAdmin, signedInUser } = this.props;
     const permission = team.permission;
