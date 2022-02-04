@@ -165,7 +165,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, "Could not enable external user", respJSON.Get("message").MustString())
 
-				userID := sc.authInfoService.(*mockAuthInfoService).LatestUserID
+				userID := sc.authInfoService.LatestUserID
 				assert.Equal(t, int64(42), userID)
 			})
 	})
