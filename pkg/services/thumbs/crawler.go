@@ -125,7 +125,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	r.broadcastStatus()
 	r.queueMutex.Unlock()
 
-	tlog.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items))
+	tlog.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind))
 
 	group, gCtx := errgroup.WithContext(ctx)
 	// create a pool of workers
