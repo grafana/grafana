@@ -165,7 +165,7 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 			if j > 0 {
 				expectedTimestamp := metric.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
 				if expectedTimestamp.Before(*t) {
-					timestamps, points = fillMissing(query.FillMissing, timestamps, expectedTimestamp, points, metric.Values[j-1])
+					timestamps, points = fillMissingValuesOrOptOut(query.FillMissing, timestamps, expectedTimestamp, points, metric.Values[j-1])
 				}
 			}
 			val := metric.Values[j]
@@ -209,22 +209,16 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 	return frames, nil
 }
 
-func fillMissing(fillMissing *data.FillMissing, timestamps []*time.Time, expectedTimestamp time.Time, points []*float64,
+func fillMissingValuesOrOptOut(fillMissing fillMissing, timestamps []*time.Time, expectedTimestamp time.Time, points []*float64,
 	previousPoint *float64) ([]*time.Time, []*float64) {
-	if fillMissing == nil {
-		fillMissing = &data.FillMissing{Mode: data.FillModeNull}
-	}
-	switch fillMissing.Mode {
-	case data.FillModePrevious:
+	switch fillMissing.mode {
+	case previous:
 		timestamps = append(timestamps, &expectedTimestamp)
 		points = append(points, previousPoint)
-	case data.FillModeValue:
+	case value:
 		timestamps = append(timestamps, &expectedTimestamp)
-		points = append(points, &fillMissing.Value)
-	case data.FillModeNull:
-		timestamps = append(timestamps, &expectedTimestamp)
-		points = append(points, nil)
-	case 4: // TODO: need to represent an "opt-out" for fill missing
+		points = append(points, &fillMissing.value)
+	case optOut:
 	default:
 		timestamps = append(timestamps, &expectedTimestamp)
 		points = append(points, nil)

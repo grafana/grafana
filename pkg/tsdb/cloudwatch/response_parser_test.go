@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -442,7 +441,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 		query := &cloudWatchQuery{
 			Period:      60,
-			FillMissing: &data.FillMissing{Mode: data.FillModePrevious},
+			FillMissing: fillMissing{mode: previous},
 		}
 		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
 		require.NoError(t, err)
@@ -473,7 +472,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 		query := &cloudWatchQuery{
 			Period:      60,
-			FillMissing: &data.FillMissing{Mode: data.FillModeNull},
+			FillMissing: fillMissing{mode: null},
 		}
 		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
 		require.NoError(t, err)
@@ -504,7 +503,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 		query := &cloudWatchQuery{
 			Period:      60,
-			FillMissing: &data.FillMissing{Mode: data.FillModeValue, Value: 30},
+			FillMissing: fillMissing{mode: value, value: 30},
 		}
 		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
 		require.NoError(t, err)
@@ -565,7 +564,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 		query := &cloudWatchQuery{
 			Period:      60,
-			FillMissing: &data.FillMissing{Mode: 4},
+			FillMissing: fillMissing{mode: optOut},
 		}
 		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
 		require.NoError(t, err)
@@ -593,7 +592,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 
 		query := &cloudWatchQuery{
 			Period:      60,
-			FillMissing: &data.FillMissing{Mode: -1},
+			FillMissing: fillMissing{mode: -1},
 		}
 		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
 		require.NoError(t, err)
@@ -612,29 +611,44 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 }
 
-func Test_fillMissing(t *testing.T) {
+func Test_fillMissingValuesOrOptOut(t *testing.T) {
 	t.Run("fill mode previous value", func(t *testing.T) {
-		actualTimestamps, actualPoints := fillMissing(
-			&data.FillMissing{Mode: data.FillModePrevious},
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{mode: previous},
 			[]*time.Time{aws.Time(time.Unix(1, 1))},
 			time.Unix(2, 2),
 			[]*float64{aws.Float64(1)},
-			aws.Float64(2),
+			aws.Float64(5.5),
 		)
 
 		assert.Equal(t,
 			[]*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))},
 			actualTimestamps)
-		assert.Equal(t, []*float64{aws.Float64(1), aws.Float64(2)}, actualPoints)
+		assert.Equal(t, []*float64{aws.Float64(1), aws.Float64(5.5)}, actualPoints)
 	})
 
-	t.Run("fill mode null", func(t *testing.T) {
-		actualTimestamps, actualPoints := fillMissing(
-			&data.FillMissing{Mode: data.FillModeNull},
+	t.Run("fill mode previous value is nil", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{mode: previous},
 			[]*time.Time{aws.Time(time.Unix(1, 1))},
 			time.Unix(2, 2),
 			[]*float64{aws.Float64(1)},
-			aws.Float64(2),
+			nil,
+		)
+
+		assert.Equal(t,
+			[]*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))},
+			actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1), nil}, actualPoints)
+	})
+
+	t.Run("fill mode null", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{mode: null},
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(5.5),
 		)
 
 		assert.Equal(t,
@@ -644,12 +658,12 @@ func Test_fillMissing(t *testing.T) {
 	})
 
 	t.Run("fill mode value", func(t *testing.T) {
-		actualTimestamps, actualPoints := fillMissing(
-			&data.FillMissing{Mode: data.FillModeValue, Value: 3.3},
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{mode: value, value: 3.3},
 			[]*time.Time{aws.Time(time.Unix(1, 1))},
 			time.Unix(2, 2),
 			[]*float64{aws.Float64(1)},
-			aws.Float64(2),
+			aws.Float64(5.5),
 		)
 
 		assert.Equal(t,
@@ -659,12 +673,12 @@ func Test_fillMissing(t *testing.T) {
 	})
 
 	t.Run("fill mode opt out", func(t *testing.T) {
-		actualTimestamps, actualPoints := fillMissing(
-			&data.FillMissing{Mode: 4},
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{mode: optOut},
 			[]*time.Time{aws.Time(time.Unix(1, 1))},
 			time.Unix(2, 2),
 			[]*float64{aws.Float64(1)},
-			aws.Float64(2),
+			aws.Float64(5.5),
 		)
 
 		assert.Equal(t, []*time.Time{aws.Time(time.Unix(1, 1))}, actualTimestamps)
@@ -672,24 +686,24 @@ func Test_fillMissing(t *testing.T) {
 	})
 
 	t.Run("query.FillMissing omitted defaults to fill mode null", func(t *testing.T) {
-		actualTimestamps, actualPoints := fillMissing(
-			nil,
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{},
 			[]*time.Time{aws.Time(time.Unix(1, 1))},
 			time.Unix(2, 2),
 			[]*float64{aws.Float64(1)},
-			aws.Float64(2),
+			aws.Float64(5.5),
 		)
 
 		assert.Equal(t, []*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))}, actualTimestamps)
 		assert.Equal(t, []*float64{aws.Float64(1), nil}, actualPoints)
 	})
 	t.Run("unknown fill mode defaults to fill mode null", func(t *testing.T) {
-		actualTimestamps, actualPoints := fillMissing(
-			&data.FillMissing{Mode: -1},
+		actualTimestamps, actualPoints := fillMissingValuesOrOptOut(
+			fillMissing{mode: -1},
 			[]*time.Time{aws.Time(time.Unix(1, 1))},
 			time.Unix(2, 2),
 			[]*float64{aws.Float64(1)},
-			aws.Float64(2),
+			aws.Float64(5.5),
 		)
 
 		assert.Equal(t, []*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))}, actualTimestamps)

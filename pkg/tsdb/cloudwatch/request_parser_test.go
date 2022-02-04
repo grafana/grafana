@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -298,14 +297,14 @@ func TestRequestParser(t *testing.T) {
 	t.Run("parses FillMissing mode and value", func(t *testing.T) {
 		query := getBaseJsonQuery()
 		query.Set("fillMissing", map[string]interface{}{
-			"mode":  2,
+			"mode":  int(optOut),
 			"value": 1.0,
 		})
 
 		res, err := parseRequestQuery(query, "ref1", time.Now(), time.Now())
 		require.NoError(t, err)
 
-		assert.Equal(t, &data.FillMissing{Mode: 2, Value: 1.0}, res.FillMissing)
+		assert.Equal(t, fillMissing{mode: optOut, value: 1.0}, res.FillMissing)
 	})
 
 	t.Run("parses FillMissing as FillModeNull when unspecified", func(t *testing.T) {
@@ -314,7 +313,7 @@ func TestRequestParser(t *testing.T) {
 		res, err := parseRequestQuery(query, "ref1", time.Now(), time.Now())
 		require.NoError(t, err)
 
-		assert.Equal(t, &data.FillMissing{Mode: 1}, res.FillMissing)
+		assert.Equal(t, fillMissing{mode: null}, res.FillMissing)
 	})
 }
 

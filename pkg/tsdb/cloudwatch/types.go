@@ -54,3 +54,17 @@ const (
 	GMDApiModeMathExpression
 	GMDApiModeSQLExpression
 )
+
+type fillMissing struct {
+	mode  fillMode
+	value float64
+}
+
+type fillMode int
+
+const (
+	null     fillMode = iota // fills with null, the default behavior
+	previous                 // fills with the last seen value unless that does not exist, in which case it fills with null
+	value                    // fills with a specific value
+	optOut                   // does not fill
+)
