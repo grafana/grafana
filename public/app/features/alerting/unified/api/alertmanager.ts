@@ -1,22 +1,22 @@
-import { lastValueFrom } from 'rxjs';
 import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  AlertmanagerStatus,
+  ExternalAlertmanagersResponse,
+  Matcher,
+  Receiver,
   Silence,
   SilenceCreatePayload,
-  Matcher,
-  AlertmanagerStatus,
-  Receiver,
+  TestReceiversAlert,
   TestReceiversPayload,
   TestReceiversResult,
-  TestReceiversAlert,
-  ExternalAlertmanagersResponse,
 } from 'app/plugins/datasource/alertmanager/types';
+import { lastValueFrom } from 'rxjs';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { isFetchError } from '../utils/alertmanager';
 
 // "grafana" for grafana-managed, otherwise a datasource name
 export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
@@ -171,28 +171,52 @@ export async function testReceivers(
     receivers,
     alert,
   };
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<TestReceiversResult>({
-      method: 'POST',
-      data,
-      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/receivers/test`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
+  try {
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<TestReceiversResult>({
+        method: 'POST',
+        data,
+        url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/receivers/test`,
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+    );
 
-  // api returns 207 if one or more receivers has failed test. Collect errors in this case
-  if (result.status === 207) {
-    throw new Error(
-      result.data.receivers
-        .flatMap((receiver) =>
-          receiver.grafana_managed_receiver_configs
-            .filter((receiver) => receiver.status === 'failed')
-            .map((receiver) => receiver.error ?? 'Unknown error.')
-        )
-        .join('; ')
+    // api returns 207 if one or more receivers has failed test. Collect errors in this case
+    if (result.status === 207) {
+      throw new Error(getReceiverResultError(result.data));
+    }
+  } catch (error) {
+    // api returns 400 if all receivers failed and 408 if all timed out
+    if (isFetchError(error) && (error.status === 400 || error.status === 408)) {
+      if (isTestReceiversResult(error.data)) {
+        throw new Error(getReceiverResultError(error.data));
+      }
+    }
+
+    throw error;
+  }
+}
+
+function isTestReceiversResult(data: any): data is TestReceiversResult {
+  if (typeof data.receivers === 'object' && Array.isArray(data.receivers)) {
+    return data.receivers.every(
+      (receiver: any) =>
+        typeof receiver.name === 'string' && typeof receiver.grafana_managed_receiver_configs === 'object'
     );
   }
+
+  return false;
+}
+
+function getReceiverResultError(receiversResult: TestReceiversResult) {
+  return receiversResult.receivers
+    .flatMap((receiver) =>
+      receiver.grafana_managed_receiver_configs
+        .filter((receiver) => receiver.status === 'failed')
+        .map((receiver) => receiver.error ?? 'Unknown error.')
+    )
+    .join('; ');
 }
 
 export async function addAlertManagers(alertManagers: string[]): Promise<void> {
