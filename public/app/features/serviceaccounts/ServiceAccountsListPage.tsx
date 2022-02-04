@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
@@ -81,6 +81,7 @@ const getServiceAccountsAriaLabel = (name: string) => {
 const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
   const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
   const styles = useStyles2(getStyles);
+  console.log(serviceaccount);
 
   return (
     <tr key={serviceaccount.userId}>
@@ -134,7 +135,10 @@ const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemP
           title="tokens"
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          0
+          <span>
+            <Icon name={'key-skeleton-alt'}></Icon>
+          </span>
+          {serviceaccount.tokens}
         </a>
       </td>
     </tr>
