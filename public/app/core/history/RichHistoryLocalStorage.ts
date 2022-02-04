@@ -3,11 +3,8 @@ import { RichHistoryQuery } from '../../types';
 import store from '../store';
 import { DataQuery } from '@grafana/data';
 import { find, isEqual, omit } from 'lodash';
-import {
-  createRetentionPeriodBoundary,
-  LocalStorageConverter,
-  RICH_HISTORY_SETTING_KEYS,
-} from './richHistoryLocalStorageUtils';
+import { createRetentionPeriodBoundary, RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
+import { fromDTO, toDTO } from './localStorageConverter';
 
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
@@ -28,7 +25,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
    * Return all history entries, perform migration and clean up entries not matching retention policy.
    */
   async getRichHistory() {
-    return this.getRichHistoryDTO().map(LocalStorageConverter.fromDTO);
+    return this.getRichHistoryDTO().map(fromDTO);
   }
 
   private getRichHistoryDTO(): RichHistoryLocalStorageDTO[] {
@@ -44,7 +41,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       ...newRichHistoryQuery,
     };
 
-    const newRichHistoryQueryDTO = LocalStorageConverter.toDTO(richHistoryQuery);
+    const newRichHistoryQueryDTO = toDTO(richHistoryQuery);
     const currentRichHistoryDTOs = cleanUp(this.getRichHistoryDTO());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
@@ -125,7 +122,7 @@ function updateRichHistory(
   updateCallback(richHistoryDTO);
 
   store.setObject(RICH_HISTORY_KEY, richHistoryDTOs);
-  return LocalStorageConverter.fromDTO(richHistoryDTO);
+  return fromDTO(richHistoryDTO);
 }
 
 /**
