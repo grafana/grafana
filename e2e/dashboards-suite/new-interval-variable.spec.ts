@@ -14,7 +14,7 @@ describe('Variables - Interval', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
-    // Create a new "Interview" variable
+    // Create a new "Interval" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Interval{enter}');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
