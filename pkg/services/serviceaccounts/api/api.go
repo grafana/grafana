@@ -33,6 +33,7 @@ func NewServiceAccountsAPI(
 	store serviceaccounts.Store,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
+		cfg:            cfg,
 		service:        service,
 		accesscontrol:  accesscontrol,
 		RouterRegister: routerRegister,
