@@ -20,11 +20,7 @@ func TestProvisioningStore(t *testing.T) {
 			UID: "asdf",
 		}
 
-<<<<<<< HEAD
 		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
-=======
-		provenance, err := dbstore.GetProvenance(&rule)
->>>>>>> e2d3a70cd5 (Improved type safety for provisioned objects)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, provenance)
@@ -34,25 +30,14 @@ func TestProvisioningStore(t *testing.T) {
 		rule := models.AlertRule{
 			UID: "123",
 		}
-<<<<<<< HEAD
-<<<<<<< HEAD
 		err := dbstore.SetProvenance(context.Background(), &rule, models.ProvenanceFile)
 		require.NoError(t, err)
 
 		p, err := dbstore.GetProvenance(context.Background(), &rule)
-=======
-		err := dbstore.SetProvenance(&rule, models.File)
-=======
-		err := dbstore.SetProvenance(&rule, models.ProvenanceFile)
->>>>>>> 0f585c1af4 (Clean up provisioning model)
 		require.NoError(t, err)
-
-		p, err := dbstore.GetProvenance(&rule)
->>>>>>> e2d3a70cd5 (Improved type safety for provisioned objects)
 
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
-<<<<<<< HEAD
 	})
 
 	t.Run("Store does not get provenance of record with different org ID", func(t *testing.T) {
@@ -96,8 +81,6 @@ func TestProvisioningStore(t *testing.T) {
 		p, err = dbstore.GetProvenance(context.Background(), &ruleOrg3)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
-=======
->>>>>>> 0f585c1af4 (Clean up provisioning model)
 	})
 
 	t.Run("Store saves provenance type when transaction is applied", func(t *testing.T) {
@@ -110,7 +93,7 @@ func TestProvisioningStore(t *testing.T) {
 		err := xact.Execute(context.Background())
 		require.NoError(t, err)
 
-		provenance, err := dbstore.GetProvenance(&rule)
+		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, provenance)
 	})
@@ -123,7 +106,7 @@ func TestProvisioningStore(t *testing.T) {
 
 		dbstore.SetProvenanceTransactional(&rule, models.ProvenanceFile, xact)
 
-		provenance, err := dbstore.GetProvenance(&rule)
+		provenance, err := dbstore.GetProvenance(context.Background(), &rule)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, provenance)
 	})
