@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 )
 
 func loadGetMetricDataOutputsFromFile() ([]*cloudwatch.GetMetricDataOutput, error) {
@@ -430,72 +429,270 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
 	})
 
-	t.Run("FillMissing with previous value fill mode", func(t *testing.T) {
-		timestamp := time.Unix(0, 0)
+	t.Run("FillMissing with previous fill mode", func(t *testing.T) {
 		response := &queryRowResponse{
 			Labels: []string{"lb"},
 			Metrics: map[string]*cloudwatch.MetricDataResult{
 				"lb": {
-					Id:    aws.String("id1"),
-					Label: aws.String("lb"),
-					Timestamps: []*time.Time{
-						aws.Time(timestamp),
-						aws.Time(timestamp.Add(120 * time.Second)),
-					},
-					Values: []*float64{
-						aws.Float64(10),
-						aws.Float64(20),
-					},
-					StatusCode: aws.String("Complete"),
+					Timestamps: []*time.Time{aws.Time(time.Unix(0, 0)), aws.Time(time.Unix(120, 0))},
+					Values:     []*float64{aws.Float64(10), aws.Float64(20)},
 				},
 			},
 		}
 
 		query := &cloudWatchQuery{
-			RefId:      "refId1",
-			Region:     "us-east-1",
-			Namespace:  "AWS/ApplicationELB",
-			MetricName: "TargetResponseTime",
-			Dimensions: map[string][]string{
-				"LoadBalancer": {"lb"},
-				"TargetGroup":  {"tg"},
-			},
-			Statistic:        "Average",
-			Period:           60,
-			Alias:            "{{namespace}}_{{metric}}_{{stat}}",
-			MetricQueryType:  MetricQueryTypeSearch,
-			MetricEditorMode: MetricEditorModeBuilder,
-			FillMissing: &data.FillMissing{
-				Mode:  0,
-				Value: 0,
-			},
+			Period:      60,
+			FillMissing: &data.FillMissing{Mode: data.FillModePrevious},
 		}
 		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
 		require.NoError(t, err)
 
-		frame := frames[0]
-		assert.Equal(t, 3, frame.Fields[1].Len())
-		assert.EqualValues(t, 10, *frame.Fields[1].At(0).(*float64))
-		assert.EqualValues(t, 10, *frame.Fields[1].At(1).(*float64))
-		assert.EqualValues(t, 20, *frame.Fields[1].At(2).(*float64))
+		assert.Len(t, frames, 1)
+		assert.Equal(t, 3, frames[0].Fields[1].Len())
+
+		assert.Equal(t, time.Unix(0, 0), *frames[0].Fields[0].At(0).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(0).(*float64))
+
+		assert.Equal(t, time.Unix(60, 0), *frames[0].Fields[0].At(1).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(1).(*float64))
+
+		assert.Equal(t, time.Unix(120, 0), *frames[0].Fields[0].At(2).(*time.Time))
+		assert.EqualValues(t, 20, *frames[0].Fields[1].At(2).(*float64))
 	})
 
-	// TODO: add other fill mode tests for buildDataFrames
+	t.Run("FillMissing with null fill mode", func(t *testing.T) {
+		response := &queryRowResponse{
+			Labels: []string{"lb"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"lb": {
+					Timestamps: []*time.Time{aws.Time(time.Unix(0, 0)), aws.Time(time.Unix(120, 0))},
+					Values:     []*float64{aws.Float64(10), aws.Float64(20)},
+				},
+			},
+		}
+
+		query := &cloudWatchQuery{
+			Period:      60,
+			FillMissing: &data.FillMissing{Mode: data.FillModeNull},
+		}
+		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 1)
+		assert.Equal(t, 3, frames[0].Fields[1].Len())
+
+		assert.Equal(t, time.Unix(0, 0), *frames[0].Fields[0].At(0).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(0).(*float64))
+
+		assert.Equal(t, time.Unix(60, 0), *frames[0].Fields[0].At(1).(*time.Time))
+		assert.Nil(t, frames[0].Fields[1].At(1))
+
+		assert.Equal(t, time.Unix(120, 0), *frames[0].Fields[0].At(2).(*time.Time))
+		assert.EqualValues(t, 20, *frames[0].Fields[1].At(2).(*float64))
+	})
+
+	t.Run("FillMissing with value fill mode", func(t *testing.T) {
+		response := &queryRowResponse{
+			Labels: []string{"lb"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"lb": {
+					Timestamps: []*time.Time{aws.Time(time.Unix(0, 0)), aws.Time(time.Unix(120, 0))},
+					Values:     []*float64{aws.Float64(10), aws.Float64(20)},
+				},
+			},
+		}
+
+		query := &cloudWatchQuery{
+			Period:      60,
+			FillMissing: &data.FillMissing{Mode: data.FillModeValue, Value: 30},
+		}
+		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 1)
+		assert.Equal(t, 3, frames[0].Fields[1].Len())
+
+		assert.Equal(t, time.Unix(0, 0), *frames[0].Fields[0].At(0).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(0).(*float64))
+
+		assert.Equal(t, time.Unix(60, 0), *frames[0].Fields[0].At(1).(*time.Time))
+		assert.EqualValues(t, 30, *frames[0].Fields[1].At(1).(*float64))
+
+		assert.Equal(t, time.Unix(120, 0), *frames[0].Fields[0].At(2).(*time.Time))
+		assert.EqualValues(t, 20, *frames[0].Fields[1].At(2).(*float64))
+	})
+
+	t.Run("FillMissing omitted defaults to null fill mode", func(t *testing.T) {
+		response := &queryRowResponse{
+			Labels: []string{"lb"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"lb": {
+					Timestamps: []*time.Time{aws.Time(time.Unix(0, 0)), aws.Time(time.Unix(120, 0))},
+					Values:     []*float64{aws.Float64(10), aws.Float64(20)},
+				},
+			},
+		}
+
+		query := &cloudWatchQuery{
+			Period: 60,
+		}
+		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 1)
+		assert.Equal(t, 3, frames[0].Fields[1].Len())
+
+		assert.Equal(t, time.Unix(0, 0), *frames[0].Fields[0].At(0).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(0).(*float64))
+
+		assert.Equal(t, time.Unix(60, 0), *frames[0].Fields[0].At(1).(*time.Time))
+		assert.Nil(t, frames[0].Fields[1].At(1))
+
+		assert.Equal(t, time.Unix(120, 0), *frames[0].Fields[0].At(2).(*time.Time))
+		assert.EqualValues(t, 20, *frames[0].Fields[1].At(2).(*float64))
+	})
+
+	t.Run("FillMissing opt-out", func(t *testing.T) {
+		response := &queryRowResponse{
+			Labels: []string{"lb"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"lb": {
+					Timestamps: []*time.Time{aws.Time(time.Unix(0, 0)), aws.Time(time.Unix(120, 0))},
+					Values:     []*float64{aws.Float64(10), aws.Float64(20)},
+				},
+			},
+		}
+
+		query := &cloudWatchQuery{
+			Period:      60,
+			FillMissing: &data.FillMissing{Mode: 4},
+		}
+		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 1)
+		assert.Equal(t, 2, frames[0].Fields[1].Len())
+
+		assert.Equal(t, time.Unix(0, 0), *frames[0].Fields[0].At(0).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(0).(*float64))
+
+		assert.Equal(t, time.Unix(120, 0), *frames[0].Fields[0].At(1).(*time.Time))
+		assert.EqualValues(t, 20, *frames[0].Fields[1].At(1).(*float64))
+	})
+
+	t.Run("FillMissing unknown mode defaults to null fill mode", func(t *testing.T) {
+		response := &queryRowResponse{
+			Labels: []string{"lb"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"lb": {
+					Timestamps: []*time.Time{aws.Time(time.Unix(0, 0)), aws.Time(time.Unix(120, 0))},
+					Values:     []*float64{aws.Float64(10), aws.Float64(20)},
+				},
+			},
+		}
+
+		query := &cloudWatchQuery{
+			Period:      60,
+			FillMissing: &data.FillMissing{Mode: -1},
+		}
+		frames, err := buildDataFrames(time.Now(), time.Now(), *response, query)
+		require.NoError(t, err)
+
+		assert.Len(t, frames, 1)
+		assert.Equal(t, 3, frames[0].Fields[1].Len())
+
+		assert.Equal(t, time.Unix(0, 0), *frames[0].Fields[0].At(0).(*time.Time))
+		assert.EqualValues(t, 10, *frames[0].Fields[1].At(0).(*float64))
+
+		assert.Equal(t, time.Unix(60, 0), *frames[0].Fields[0].At(1).(*time.Time))
+		assert.Nil(t, frames[0].Fields[1].At(1))
+
+		assert.Equal(t, time.Unix(120, 0), *frames[0].Fields[0].At(2).(*time.Time))
+		assert.EqualValues(t, 20, *frames[0].Fields[1].At(2).(*float64))
+	})
 }
 
 func Test_fillMissing(t *testing.T) {
 	t.Run("fill mode previous value", func(t *testing.T) {
 		actualTimestamps, actualPoints := fillMissing(
-			&data.FillMissing{Mode: 0, Value: 0},
-			[]*time.Time{},
-			time.Unix(0, 0).Add(60*time.Second),
-			[]*float64{pointer.Float64(1)},
-			nil,
+			&data.FillMissing{Mode: data.FillModePrevious},
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(2),
 		)
 
-		_ = actualTimestamps
-		_ = actualPoints
+		assert.Equal(t,
+			[]*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))},
+			actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1), aws.Float64(2)}, actualPoints)
 	})
 
-	// TODO: add other fill mode tests for fillMissing
+	t.Run("fill mode null", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissing(
+			&data.FillMissing{Mode: data.FillModeNull},
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(2),
+		)
+
+		assert.Equal(t,
+			[]*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))},
+			actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1), nil}, actualPoints)
+	})
+
+	t.Run("fill mode value", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissing(
+			&data.FillMissing{Mode: data.FillModeValue, Value: 3.3},
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(2),
+		)
+
+		assert.Equal(t,
+			[]*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))},
+			actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1), aws.Float64(3.3)}, actualPoints)
+	})
+
+	t.Run("fill mode opt out", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissing(
+			&data.FillMissing{Mode: 4},
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(2),
+		)
+
+		assert.Equal(t, []*time.Time{aws.Time(time.Unix(1, 1))}, actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1)}, actualPoints)
+	})
+
+	t.Run("query.FillMissing omitted defaults to fill mode null", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissing(
+			nil,
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(2),
+		)
+
+		assert.Equal(t, []*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))}, actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1), nil}, actualPoints)
+	})
+	t.Run("unknown fill mode defaults to fill mode null", func(t *testing.T) {
+		actualTimestamps, actualPoints := fillMissing(
+			&data.FillMissing{Mode: -1},
+			[]*time.Time{aws.Time(time.Unix(1, 1))},
+			time.Unix(2, 2),
+			[]*float64{aws.Float64(1)},
+			aws.Float64(2),
+		)
+
+		assert.Equal(t, []*time.Time{aws.Time(time.Unix(1, 1)), aws.Time(time.Unix(2, 2))}, actualTimestamps)
+		assert.Equal(t, []*float64{aws.Float64(1), nil}, actualPoints)
+	})
 }
