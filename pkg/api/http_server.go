@@ -100,7 +100,7 @@ type HTTPServer struct {
 	pluginDashboardManager    plugins.PluginDashboardManager
 	pluginStaticRouteResolver plugins.StaticRouteResolver
 	pluginErrorResolver       plugins.ErrorResolver
-	SearchService             *search.SearchService
+	SearchService             search.Service
 	ShortURLService           shorturls.Service
 	QueryHistoryService       queryhistory.Service
 	Live                      *live.GrafanaLive
