@@ -1,10 +1,12 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { css } from '@emotion/css';
 import { LegendDisplayMode } from '@grafana/schema';
 import {
   CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
   getFieldDisplayName,
+  GrafanaTheme2,
   PanelProps,
   TimeRange,
   VizOrientation,
@@ -18,27 +20,20 @@ import {
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
+  useStyles2,
   useTheme2,
   VizLayout,
   VizLegend,
   VizTooltipContainer,
 } from '@grafana/ui';
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { useMountedState } from 'react-use';
-import { positionTooltip } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin';
 
 import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-
-export interface HoverEvent {
-  xIndex: number;
-  yIndex: number;
-  pageX: number;
-  pageY: number;
-}
+import { HoverEvent, setupConfig } from './config';
 
 const TOOLTIP_OFFSET = 10;
 
@@ -69,14 +64,13 @@ interface Props extends PanelProps<PanelOptions> {}
 
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
 
   let oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   let isToolTipOpen = useRef<boolean>(false);
 
   const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
-
-  const isMounted = useMountedState();
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
@@ -87,6 +81,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     setCoords(null);
     setShouldDisplayCloseButton(false);
   };
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
+
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const structureRef = useRef(10000);
@@ -116,7 +118,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
     if (!options.xTickLabelMaxLength) {
       const rotationAngle = options.xTickLabelRotation;
-      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an aproximation.
+      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an approximation.
       const maxHeightForValues = height / 2;
 
       return (
@@ -205,13 +207,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     });
   };
 
-  const onUPlotClick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
-
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
-  };
-
   return (
     <GraphNG
       theme={theme}
@@ -229,80 +224,15 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     >
       {(config, alignedFrame) => {
         if (oldConfig.current !== config) {
-          config.addHook('init', (u) => {
-            u.root.parentElement?.addEventListener('click', onUPlotClick);
+          oldConfig.current = setupConfig({
+            config,
+            onUPlotClick,
+            setFocusedSeriesIdx,
+            setFocusedPointIdx,
+            setCoords,
+            setHover,
+            isToolTipOpen,
           });
-
-          let rect: DOMRect;
-          // rect of .u-over (grid area)
-          config.addHook('syncRect', (u, r) => {
-            rect = r;
-          });
-
-          const tooltipInterpolator = config.getTooltipInterpolator();
-          if (tooltipInterpolator) {
-            config.addHook('setCursor', (u) => {
-              tooltipInterpolator(
-                setFocusedSeriesIdx,
-                setFocusedPointIdx,
-                (clear) => {
-                  if (clear && !isToolTipOpen.current) {
-                    setCoords(null);
-                    return;
-                  }
-
-                  if (!rect) {
-                    return;
-                  }
-
-                  const { x, y } = positionTooltip(u, rect);
-                  if (x !== undefined && y !== undefined && !isToolTipOpen.current) {
-                    setCoords({ x, y });
-                  }
-                },
-                u
-              );
-            });
-          }
-
-          config.addHook('setLegend', (u) => {
-            if (!isMounted()) {
-              return;
-            }
-            if (!isToolTipOpen.current) {
-              setFocusedPointIdx(u.legend.idx!);
-            }
-            if (u.cursor.idxs != null) {
-              for (let i = 0; i < u.cursor.idxs.length; i++) {
-                const sel = u.cursor.idxs[i];
-                if (sel != null) {
-                  const hover: HoverEvent = {
-                    xIndex: sel,
-                    yIndex: 0,
-                    pageX: rect.left + u.cursor.left!,
-                    pageY: rect.top + u.cursor.top!,
-                  };
-
-                  if (!isToolTipOpen.current || !hover) {
-                    setHover(hover);
-                  }
-
-                  return; // only show the first one
-                }
-              }
-            }
-          });
-
-          config.addHook('setSeries', (_, idx) => {
-            if (!isMounted()) {
-              return;
-            }
-            if (!isToolTipOpen.current) {
-              setFocusedSeriesIdx(idx);
-            }
-          });
-
-          oldConfig.current = config;
         }
 
         let seriesIdx = focusedSeriesIdx;
@@ -322,8 +252,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
               >
                 {shouldDisplayCloseButton && (
                   <>
-                    <CloseButton style={{ zIndex: 1 }} onClick={onCloseToolTip} />
-                    <div style={{ marginBottom: 15 }} />
+                    <CloseButton onClick={onCloseToolTip} />
+                    <div className={styles.closeButtonSpacer} />
                   </>
                 )}
                 <DataHoverView
@@ -340,3 +270,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     </GraphNG>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  closeButtonSpacer: css`
+    margin-bottom: 15px;
+  `,
+});
