@@ -56,21 +56,24 @@ interface GoToProps {
   url: string;
   label?: string;
   target?: string;
+  children?: React.ReactNode;
 }
 
-const GoTo: FC<GoToProps> = ({ url, label, target, children }) => {
+const GoTo = React.forwardRef<HTMLAnchorElement, GoToProps>(({ url, label, target, children }, ref) => {
   const absoluteUrl = url?.startsWith('http');
 
   return absoluteUrl ? (
-    <a aria-label={label} href={url} target={target}>
+    <a ref={ref} aria-label={label} href={url} target={target}>
       {children}
     </a>
   ) : (
-    <Link aria-label={label} to={url} target={target}>
+    <Link ref={ref} aria-label={label} to={url} target={target}>
       {children}
     </Link>
   );
-};
+});
+
+GoTo.displayName = 'GoTo';
 
 export const getStyle = () => css`
   cursor: pointer;
