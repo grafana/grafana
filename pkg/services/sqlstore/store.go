@@ -103,7 +103,7 @@ type Store interface {
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
-	GetDashboard(id, orgID int64, uid, slug string) (*models.Dashboard, error)
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error)
 	SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
