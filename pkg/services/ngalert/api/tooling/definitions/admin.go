@@ -1,6 +1,8 @@
 package definitions
 
-import v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+import (
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+)
 
 // swagger:route GET /api/v1/ngalert/alertmanagers configuration RouteGetAlertmanagers
 //
@@ -26,7 +28,7 @@ import v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 // swagger:route POST /api/v1/ngalert/admin_config configuration RoutePostNGalertConfig
 //
-// Creates or updates the NGalert configuration of the user's organization.
+// Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to "all".
 //
 //     Consumes:
 //     - application/json
@@ -52,14 +54,25 @@ type NGalertConfig struct {
 	Body PostableNGalertConfig
 }
 
+// swagger:enum AlertmanagersChoice
+type AlertmanagersChoice string
+
+const (
+	AllAlertmanagers      AlertmanagersChoice = "all"
+	InternalAlertmanager  AlertmanagersChoice = "internal"
+	ExternalAlertmanagers AlertmanagersChoice = "external"
+)
+
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers []string `json:"alertmanagers"`
+	Alertmanagers       []string            `json:"alertmanagers"`
+	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
-	Alertmanagers []string `json:"alertmanagers"`
+	Alertmanagers       []string            `json:"alertmanagers"`
+	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model

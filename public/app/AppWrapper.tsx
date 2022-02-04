@@ -37,6 +37,7 @@ export function addBodyRenderHook(fn: ComponentType) {
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
+
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   container = React.createRef<HTMLDivElement>();
 

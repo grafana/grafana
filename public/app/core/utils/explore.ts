@@ -245,10 +245,13 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
+  const queries = parsedSegments.filter(
+    (segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', '__panelsState')
+  );
 
-  const originPanelId = parsedSegments.filter((segment) => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, originPanelId };
+  const originPanelId = parsedSegments.find((segment) => isSegment(segment, 'originPanelId'));
+  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
+  return { datasource, queries, range, originPanelId, panelsState };
 }
 
 export function generateKey(index = 0): string {
@@ -355,11 +358,13 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSour
 };
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
-  return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any, fiscalYearStartMonth)!,
-    to: dateMath.parse(rawRange.to, true, timeZone as any, fiscalYearStartMonth)!,
-    raw: rawRange,
-  };
+  let range = rangeUtil.convertRawToRange(rawRange, timeZone, fiscalYearStartMonth);
+
+  if (range.to.isBefore(range.from)) {
+    range = rangeUtil.convertRawToRange({ from: range.raw.to, to: range.raw.from }, timeZone, fiscalYearStartMonth);
+  }
+
+  return range;
 };
 
 const parseRawTime = (value: string | DateTime): TimeFragment | null => {

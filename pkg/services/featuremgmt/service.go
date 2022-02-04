@@ -71,8 +71,6 @@ func ProvideManagerService(cfg *setting.Cfg, licensing models.Licensing) (*Featu
 }
 
 // ProvideToggles allows read-only access to the feature state
-func ProvideToggles(mgmt *FeatureManager) *FeatureToggles {
-	return &FeatureToggles{
-		manager: mgmt,
-	}
+func ProvideToggles(mgmt *FeatureManager) FeatureToggles {
+	return mgmt
 }

@@ -4,15 +4,16 @@ import {
   DataFrame,
   DataQuery,
   DataQueryRequest,
-  DataQueryResponse,
   DataSourceApi,
-  EventBusExtended,
   HistoryItem,
   LogsModel,
   PanelData,
   QueryHint,
   RawTimeRange,
   TimeRange,
+  EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -47,10 +48,10 @@ export interface ExploreState {
   richHistory: RichHistoryQuery[];
 
   /**
-   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
    * multiple errors when local storage is full.
    */
-  localStorageFull: boolean;
+  richHistoryStorageFull: boolean;
 
   /**
    * True if a warning message of hitting the exceeded number of items has been shown already.
@@ -173,6 +174,7 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {

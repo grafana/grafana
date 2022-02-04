@@ -570,7 +570,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 	}
 
 	t.Run("Azure authentication", func(t *testing.T) {
-		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
+		t.Run("should be disabled if no Azure credentials configured", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -579,32 +579,13 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
-			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
 			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
 		})
 
-		t.Run("should be enabled if enabled in JsonData without credentials configured", func(t *testing.T) {
+		t.Run("should be enabled if Azure credentials configured", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
 			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth": true,
-			})
-
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
-
-			opts, err := dsService.httpClientOptions(&ds)
-			require.NoError(t, err)
-
-			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
-			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
-		})
-
-		t.Run("should be enabled if enabled in JsonData with credentials configured", func(t *testing.T) {
-			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
-
-			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth": true,
 				"azureCredentials": map[string]interface{}{
 					"authType": "msi",
 				},
@@ -615,8 +596,6 @@ func TestService_HTTPClientOptions(t *testing.T) {
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
-
-			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
 
 			require.Contains(t, opts.CustomOptions, "_azureCredentials")
 			credentials := opts.CustomOptions["_azureCredentials"]
@@ -624,31 +603,10 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			assert.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
 		})
 
-		t.Run("should be disabled if disabled in JsonData even with credentials configured", func(t *testing.T) {
-			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
-
-			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth": false,
-				"azureCredentials": map[string]interface{}{
-					"authType": "msi",
-				},
-			})
-
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
-
-			opts, err := dsService.httpClientOptions(&ds)
-			require.NoError(t, err)
-
-			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
-			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
-		})
-
 		t.Run("should fail if credentials are invalid", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
 			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth":        true,
 				"azureCredentials": "invalid",
 			})
 

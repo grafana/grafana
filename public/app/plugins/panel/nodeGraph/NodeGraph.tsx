@@ -129,11 +129,10 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme), [
-    firstEdgesDataFrame,
-    firstNodesDataFrame,
-    theme,
-  ]);
+  const processed = useMemo(
+    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme),
+    [firstEdgesDataFrame, firstNodesDataFrame, theme]
+  );
 
   // This is used for navigation from grid to graph view. This node will be centered and briefly highlighted.
   const [focusedNodeId, setFocusedNodeId] = useState<string>();
@@ -189,7 +188,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
         </div>
       ) : null}
 
-      {dataFrames.length ? (
+      {dataFrames.length && processed.nodes.length ? (
         <svg
           ref={panRef}
           viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}

@@ -1,8 +1,10 @@
 package coreplugin
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -74,6 +76,16 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 
 func (cr *Registry) Get(pluginID string) backendplugin.PluginFactoryFunc {
 	return cr.store[pluginID]
+}
+
+func (cr *Registry) BackendFactoryProvider() func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	return func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+		if !p.IsCorePlugin() {
+			return nil
+		}
+
+		return cr.Get(p.ID)
+	}
 }
 
 func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {

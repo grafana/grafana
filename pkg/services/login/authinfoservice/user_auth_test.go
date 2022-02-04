@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package authinfoservice
 
 import (
@@ -11,7 +8,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
+	secretstore "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
@@ -21,8 +19,9 @@ import (
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, secretsService)
+	secretsService := secretsManager.SetupTestService(t, secretstore.ProvideSecretsStore(sqlStore))
+	authInfoStore := database.ProvideAuthInfoStore(sqlStore, bus.New(), secretsService)
+	srv := ProvideAuthInfoService(&OSSUserProtectionImpl{}, authInfoStore)
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
@@ -31,7 +30,7 @@ func TestUserAuth(t *testing.T) {
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
-			_, err := srv.SQLStore.CreateUser(context.Background(), cmd)
+			_, err := sqlStore.CreateUser(context.Background(), cmd)
 			require.Nil(t, err)
 		}
 
@@ -111,12 +110,11 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, user.Login, "loginuser1")
 
 			// remove user
-			srv.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				sess.Exec("DELETE FROM "+srv.SQLStore.Dialect.Quote("user")+" WHERE id=?", user.Id)
-				require.NoError(t, err)
-
-				return nil
+			err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				_, err := sess.Exec("DELETE FROM "+sqlStore.Dialect.Quote("user")+" WHERE id=?", user.Id)
+				return err
 			})
+			require.NoError(t, err)
 
 			// get via user_auth for deleted user
 			query = &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
@@ -152,7 +150,7 @@ func TestUserAuth(t *testing.T) {
 				AuthModule: query.AuthModule,
 				OAuthToken: token,
 			}
-			err = srv.UpdateAuthInfo(context.Background(), cmd)
+			err = srv.authInfoStore.UpdateAuthInfo(context.Background(), cmd)
 
 			require.Nil(t, err)
 
@@ -160,7 +158,7 @@ func TestUserAuth(t *testing.T) {
 				UserId: user.Id,
 			}
 
-			err = srv.GetAuthInfo(context.Background(), getAuthQuery)
+			err = srv.authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
 			require.Equal(t, token.AccessToken, getAuthQuery.Result.OAuthAccessToken)
@@ -188,20 +186,20 @@ func TestUserAuth(t *testing.T) {
 
 			// Calling srv.LookupAndUpdateQuery on an existing user will populate an entry in the user_auth table
 			// Make the first log-in during the past
-			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
 			user, err := srv.LookupAndUpdate(context.Background(), query)
-			getTime = time.Now
+			database.GetTime = time.Now
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
 
 			// Add a second auth module for this user
 			// Have this module's last log-in be more recent
-			getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
+			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
 			query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
 			user, err = srv.LookupAndUpdate(context.Background(), query)
-			getTime = time.Now
+			database.GetTime = time.Now
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
@@ -211,14 +209,14 @@ func TestUserAuth(t *testing.T) {
 				UserId: user.Id,
 			}
 
-			err = srv.GetAuthInfo(context.Background(), getAuthQuery)
+			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
 			require.Equal(t, getAuthQuery.Result.AuthModule, "test2")
 
 			// "log in" again with the first auth module
 			updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: user.Id, AuthModule: "test1", AuthId: "test1"}
-			err = srv.UpdateAuthInfo(context.Background(), updateAuthCmd)
+			err = authInfoStore.UpdateAuthInfo(context.Background(), updateAuthCmd)
 
 			require.Nil(t, err)
 
@@ -227,7 +225,7 @@ func TestUserAuth(t *testing.T) {
 				UserId: user.Id,
 			}
 
-			err = srv.GetAuthInfo(context.Background(), getAuthQuery)
+			err = authInfoStore.GetAuthInfo(context.Background(), getAuthQuery)
 
 			require.Nil(t, err)
 			require.Equal(t, getAuthQuery.Result.AuthModule, "test1")
@@ -238,19 +236,19 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			// Expect to pass since there's a matching login user
-			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: genericOAuthModule, AuthId: ""}
 			user, err := srv.LookupAndUpdate(context.Background(), query)
-			getTime = time.Now
+			database.GetTime = time.Now
 
 			require.Nil(t, err)
 			require.Equal(t, user.Login, login)
 
 			// Should throw a "user not found" error since there's no matching login user
-			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 			query = &models.GetUserByAuthInfoQuery{Login: "aloginuser", AuthModule: genericOAuthModule, AuthId: ""}
 			user, err = srv.LookupAndUpdate(context.Background(), query)
-			getTime = time.Now
+			database.GetTime = time.Now
 
 			require.NotNil(t, err)
 			require.Nil(t, user)

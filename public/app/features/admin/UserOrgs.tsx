@@ -20,6 +20,7 @@ import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 interface Props {
   orgs: UserOrg[];
@@ -133,7 +134,24 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   state = {
     currentRole: this.props.org.role,
     isChangingRole: false,
+    roleOptions: [],
+    builtInRoles: {},
   };
+
+  componentDidMount() {
+    if (contextSrv.licensedAccessControlEnabled()) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        fetchRoleOptions(this.props.org.orgId)
+          .then((roles) => this.setState({ roleOptions: roles }))
+          .catch((e) => console.error(e));
+      }
+      if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+        fetchRoleOptions(this.props.org.orgId)
+          .then((roles) => this.setState({ builtInRoles: roles }))
+          .catch((e) => console.error(e));
+      }
+    }
+  }
 
   onOrgRemove = () => {
     const { org } = this.props;
@@ -176,7 +194,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td className={labelClass}>
           <label htmlFor={inputId}>{org.name}</label>
         </td>
-        {contextSrv.accessControlEnabled() ? (
+        {contextSrv.licensedAccessControlEnabled() ? (
           <td>
             <div className={styles.rolePickerWrapper}>
               <div className={styles.rolePicker}>
@@ -184,6 +202,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   userId={user?.id || 0}
                   orgId={org.orgId}
                   builtInRole={org.role}
+                  roleOptions={this.state.roleOptions}
+                  builtInRoles={this.state.builtInRoles}
                   onBuiltinRoleChange={this.onBuiltinRoleChange}
                   builtinRolesDisabled={rolePickerDisabled}
                 />

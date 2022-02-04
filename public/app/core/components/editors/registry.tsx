@@ -5,11 +5,16 @@ import {
   FieldType,
   standardEditorsRegistry,
   StandardEditorsRegistryItem,
+  ThresholdsConfig,
+  ThresholdsFieldConfigSettings,
+  ThresholdsMode,
+  thresholdsOverrideProcessor,
   ValueMapping,
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
 } from '@grafana/data';
 import { ValueMappingsValueEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/mappings';
+import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
 
 /**
  * Returns collection of standard option editors definitions
@@ -29,7 +34,14 @@ export const getAllOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
-  return [...getStandardOptionEditors(), dashboardPicker, mappings];
+  const thresholds: StandardEditorsRegistryItem<ThresholdsConfig> = {
+    id: 'thresholds',
+    name: 'Thresholds',
+    description: 'Allows defining thresholds',
+    editor: ThresholdsValueEditor as any,
+  };
+
+  return [...getStandardOptionEditors(), dashboardPicker, mappings, thresholds];
 };
 
 /**
@@ -52,5 +64,25 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value?) => (value ? value.length : 0),
   };
 
-  return [...getStandardFieldConfigs(), mappings];
+  const thresholds: FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
+    id: 'thresholds',
+    path: 'thresholds',
+    name: 'Thresholds',
+    editor: standardEditorsRegistry.get('thresholds').editor as any,
+    override: standardEditorsRegistry.get('thresholds').editor as any,
+    process: thresholdsOverrideProcessor,
+    settings: {},
+    defaultValue: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
+    },
+    shouldApply: () => true,
+    category: ['Thresholds'],
+    getItemsCount: (value) => (value ? value.steps.length : 0),
+  };
+
+  return [...getStandardFieldConfigs(), mappings, thresholds];
 };

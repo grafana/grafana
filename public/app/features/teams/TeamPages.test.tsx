@@ -8,9 +8,12 @@ import { NavModel } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('@grafana/runtime/src/config', () => ({
-  ...((jest.requireActual('@grafana/runtime/src/config') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime/src/config') as unknown as object),
   config: {
-    featureToggles: { teamsync: true },
+    licenseInfo: {
+      enabledFeatures: { teamsync: true },
+    },
+    featureToggles: { accesscontrol: false },
   },
 }));
 

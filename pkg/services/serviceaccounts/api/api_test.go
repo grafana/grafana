@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	serviceaccountIDPath = "/api/org/serviceaccounts/%v"
+	serviceaccountIDPath = "/api/serviceaccounts/%v"
 )
 
 // test the accesscontrol endpoints
@@ -97,7 +97,7 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock, sqlStore *sqlstore.SQLStore) *web.Mux {
 	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(sqlStore))
-	a.RegisterAPIEndpoints(featuremgmt.WithToggles("service-accounts"))
+	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
 
 	m := web.New()
 	signedUser := &models.SignedInUser{

@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
@@ -103,6 +103,8 @@ type TProps = TExtractUiFindFromStateReturn & {
   theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
 };
 
 type State = {

@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/url"
 	"testing"
 
@@ -11,9 +12,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -102,6 +101,14 @@ func TestDiscordNotifier(t *testing.T) {
 			expInitError: `failed to validate receiver "discord_testing" of type "discord": could not find webhook url property in settings`,
 		},
 		{
+			name: "Invalid template returns error",
+			settings: `{
+				"url": "http://localhost",
+				"message": "{{ template \"invalid.template\" }}"
+			}`,
+			expMsgError: errors.New("template: :1:12: executing \"\" at <{{template \"invalid.template\"}}>: template \"invalid.template\" not defined"),
+		},
+		{
 			name: "Default config with one alert, use default discord username",
 			settings: `{
 				"url": "http://localhost",
@@ -143,18 +150,13 @@ func TestDiscordNotifier(t *testing.T) {
 				Settings: settingsJson,
 			}
 
-			dn, err := NewDiscordNotifier(m, tmpl)
+			webhookSender := mockNotificationService()
+			dn, err := NewDiscordNotifier(m, webhookSender, tmpl)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			body := ""
-			bus.AddHandler("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
-				body = webhook.Body
-				return nil
-			})
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
@@ -171,7 +173,7 @@ func TestDiscordNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), webhookSender.Webhook.Body)
 		})
 	}
 }

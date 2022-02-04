@@ -429,6 +429,9 @@ type Cfg struct {
 
 	// Unified Alerting
 	UnifiedAlerting UnifiedAlertingSettings
+
+	// Query history
+	QueryHistoryEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -472,7 +475,6 @@ func RedactedValue(key, value string) string {
 		"ACCOUNT_KEY",
 		"ENCRYPTION_KEY",
 		"VAULT_TOKEN",
-		"AWSKMS_.*_TOKEN",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -770,6 +772,8 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		return nil, err
 	}
 
+	cfg.Logger.Info(fmt.Sprintf("Starting %s", ApplicationName), "version", BuildVersion, "commit", BuildCommit, "branch", BuildBranch, "compiled", time.Unix(BuildStamp, 0))
+
 	return parsedFile, err
 }
 
@@ -940,6 +944,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	queryHistory := iniFile.Section("query_history")
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)

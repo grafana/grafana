@@ -12,18 +12,21 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
 
 	ac := &OSSAccessControlService{
-		features:      featuremgmt.WithToggles("accesscontrol"),
-		UsageStats:    &usagestats.UsageStatsMock{T: t},
-		Log:           log.New("accesscontrol"),
+		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
+		usageStats:    &usagestats.UsageStatsMock{T: t},
+		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
-		ScopeResolver: accesscontrol.NewScopeResolver(),
+		scopeResolver: accesscontrol.NewScopeResolver(),
+		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
 	}
 	return ac
 }
@@ -145,10 +148,12 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features := featuremgmt.WithToggles("accesscontrol", tt.enabled)
-
-			s := ProvideService(features, &usagestats.UsageStatsMock{T: t})
-			report, err := s.UsageStats.GetUsageReport(context.Background())
+			s := ProvideService(
+				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
+				&usagestats.UsageStatsMock{T: t},
+				database.ProvideService(sqlstore.InitTestDB(t)),
+			)
+			report, err := s.usageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
 			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
@@ -261,9 +266,9 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				features:   featuremgmt.WithToggles(),
-				UsageStats: &usagestats.UsageStatsMock{T: t},
-				Log:        log.New("accesscontrol-test"),
+				features:   featuremgmt.WithFeatures(),
+				usageStats: &usagestats.UsageStatsMock{T: t},
+				log:        log.New("accesscontrol-test"),
 			}
 
 			for i, run := range tc.runs {
@@ -379,12 +384,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := &OSSAccessControlService{
-				features:      featuremgmt.WithToggles("accesscontrol"),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-			}
+			ac := setupTestEnv(t)
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
@@ -459,14 +459,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 					removeRoleHelper(registration.Role.Name)
 				}
 			})
-
-			// Setup
-			ac := &OSSAccessControlService{
-				features:      featuremgmt.WithToggles("accesscontrol"),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-			}
+			ac := setupTestEnv(t)
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
@@ -541,7 +534,6 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			// Setup
 			ac := setupTestEnv(t)
-			ac.features = featuremgmt.WithToggles("accesscontrol")
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)

@@ -20,12 +20,12 @@ var (
 
 type ServiceAccountsService struct {
 	store    serviceaccounts.Store
-	features *featuremgmt.FeatureToggles
+	features featuremgmt.FeatureToggles
 	log      log.Logger
 }
 
 func ProvideServiceAccountsService(
-	features *featuremgmt.FeatureToggles,
+	features featuremgmt.FeatureToggles,
 	store *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl,
 	routeRegister routing.RouteRegister,
@@ -36,8 +36,10 @@ func ProvideServiceAccountsService(
 		log:      log.New("serviceaccounts"),
 	}
 
-	if err := RegisterRoles(ac); err != nil {
-		s.log.Error("Failed to register roles", "error", err)
+	if features.IsEnabled(featuremgmt.FlagServiceAccounts) {
+		if err := RegisterRoles(ac); err != nil {
+			s.log.Error("Failed to register roles", "error", err)
+		}
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
@@ -47,7 +49,7 @@ func ProvideServiceAccountsService(
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
-	if !sa.features.IsServiceAccountsEnabled() {
+	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil
 	}
@@ -55,15 +57,9 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saFo
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	if !sa.features.IsServiceAccountsEnabled() {
+	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
-}
-
-func (sa *ServiceAccountsService) Migrated(ctx context.Context, orgID int64) bool {
-	// TODO: implement migration logic
-	// change this to return true for development of service accounts page
-	return false
 }

@@ -3,6 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { expect } from 'test/lib/common';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { PanelModel } from './PanelModel';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -533,7 +534,7 @@ describe('given dashboard with row repeat', () => {
 });
 
 describe('given dashboard with row and panel repeat', () => {
-  let dashboard: any, dashboardJSON: any;
+  let dashboard: DashboardModel, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -605,11 +606,16 @@ describe('given dashboard with row and panel repeat', () => {
       },
       { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
     ];
+
+    let panelChangedEvents: DashboardPanelsChangedEvent[] = [];
     dashboard = getDashboardModel(dashboardJSON);
+    dashboard.events.subscribe(DashboardPanelsChangedEvent, (evt) => panelChangedEvents.push(evt));
     dashboard.processRepeats();
 
     const panelTypes = map(dashboard.panels, 'type');
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+    // Make sure only a single DashboardPanelsChangedEvent event is emitted when processing repeats
+    expect(panelChangedEvents.length).toBe(1);
   });
 
   it('should set scopedVars for each row', () => {

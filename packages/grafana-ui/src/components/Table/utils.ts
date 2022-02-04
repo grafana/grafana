@@ -14,6 +14,7 @@ import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem, GrafanaTableColumn } from './types';
 import { JSONViewCell } from './JSONViewCell';
+import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
 
@@ -130,6 +131,10 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+  }
+
+  if (field.type === FieldType.geo) {
+    return GeoCell;
   }
 
   // Default or Auto
