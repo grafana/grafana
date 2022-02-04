@@ -19,11 +19,6 @@ interface VariableOptionsUpdate {
   results: MetricFindValue[];
 }
 
-export interface QueryVariableEditorState {
-  VariableQueryEditor: VariableQueryEditorType;
-  dataSource: DataSourceApi | null;
-}
-
 export const initialQueryVariableModelState: QueryVariableModel = {
   ...initialVariableModelState,
   type: 'query',

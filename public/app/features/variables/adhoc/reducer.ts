@@ -8,10 +8,6 @@ export interface AdHocVariabelFilterUpdate {
   index: number;
   filter: AdHocVariableFilter;
 }
-export interface AdHocVariableEditorState {
-  infoText: string;
-  dataSources: Array<{ text: string; value: DataSourceRef | null }>;
-}
 
 export const initialAdHocVariableModelState: AdHocVariableModel = {
   ...initialVariableModelState,
