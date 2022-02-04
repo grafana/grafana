@@ -799,7 +799,7 @@ steps:
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -1328,7 +1328,7 @@ steps:
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -1920,7 +1920,7 @@ steps:
   depends_on:
   - package
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -1963,7 +1963,7 @@ steps:
   depends_on:
   - package-enterprise2
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -3084,7 +3084,7 @@ steps:
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -3613,7 +3613,7 @@ steps:
   depends_on:
   - package
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -3656,7 +3656,7 @@ steps:
   depends_on:
   - package-enterprise2
   environment:
-    GCP_GRAFANA_UPLOAD_KEY:
+    GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
@@ -4175,6 +4175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 8827ec8db592fe027ca9948ef53f5e0e67e38eeb4ebd8cd689b0d9d43ebe23b1
+hmac: cabadcdf9dcd2c73ccbca8036ebe14b14f8aa183c7fcce488351a000bdc2fff1
 
 ...
