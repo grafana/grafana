@@ -5,7 +5,7 @@ keywords = ["grafana", "fine-grained-access-control", "roles", "permissions", "f
 weight = 200
 +++
 
-# Manage user team assignments
+# Manage team role assignments
 
 There are two ways to assign roles directly to teams: in the UI using the role picker, and using the API.
 

@@ -787,7 +787,7 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 #### Required permissions
 
 `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
-For example, if a user does not have required permissions for creating users, they won't be able to assign a role to a team which will allow to do that. This is done to prevent escalation of privileges.
+For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.
 
 | Action          | Scope                |
 | --------------- | -------------------- |
@@ -842,7 +842,7 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 #### Required permissions
 
 `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
-For example, if a user does not have required permissions for creating users, they won't be able to unassign a role from a team which will allow to do that. This is done to prevent escalation of privileges.
+For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.```
 
 | Action             | Scope                |
 | ------------------ | -------------------- |
