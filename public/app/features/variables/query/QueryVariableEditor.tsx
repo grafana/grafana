@@ -22,7 +22,6 @@ import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 import { getQueryVariableState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor,
   extended: getQueryVariableState(state.templating.editor),
 });
 
@@ -114,7 +113,8 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   renderQueryEditor = () => {
-    const { editor, extended, variable } = this.props;
+    const { extended, variable } = this.props;
+
     if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
