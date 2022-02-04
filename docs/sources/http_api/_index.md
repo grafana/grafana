@@ -34,7 +34,7 @@ dashboards, creating users, and updating data sources.
 - [Short URL API]({{< relref "short_url.md" >}})
 - [Snapshot API]({{< relref "snapshot.md" >}})
 - [Team API]({{< relref "team.md" >}})
-- [User API]({{< relref "user.md" >}}
+- [User API]({{< relref "user.md" >}})
 
 ## Grafana Enterprise HTTP APIs
 
