@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"io"
 	"io/ioutil"
 	"time"
@@ -45,17 +46,19 @@ type ThumbService struct {
 	scheduleOptions crawlerScheduleOptions
 	renderer        dashRenderer
 	thumbnailRepo   thumbnailRepo
+	lockService     *serverlock.ServerLockService
 	features        featuremgmt.FeatureToggles
 }
 
 type crawlerScheduleOptions struct {
 	interval      time.Duration
+	ticker        time.Duration
 	maxDuration   time.Duration
 	crawlerMode   CrawlerMode
 	thumbnailKind models.ThumbnailKind
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) *ThumbService {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) *ThumbService {
 	/*	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}*/
@@ -65,8 +68,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rende
 		renderer:      newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo: thumbnailRepo,
 		features:      features,
+		lockService:   lockService,
 		scheduleOptions: crawlerScheduleOptions{
-			interval:      time.Second * 10,
+			ticker:        time.Second,
+			interval:      time.Hour * 12,
 			maxDuration:   time.Hour,
 			crawlerMode:   CrawlerModeThumbs,
 			thumbnailKind: models.ThumbnailKindDefault,
@@ -315,24 +320,30 @@ func (hs *ThumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 }
 
 func (hs *ThumbService) scheduledRun(parentCtx context.Context) {
-
 	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxDuration)
 	defer cancel()
-	hs.renderer.Start(crawlerCtx, rendering.AuthOpts{
-		OrgID:   0,
-		UserID:  0,
-		OrgRole: models.ROLE_ADMIN,
-	}, hs.scheduleOptions.crawlerMode, models.ThemeDark, models.ThumbnailKindDefault)
 
-	hs.renderer.Start(crawlerCtx, rendering.AuthOpts{
-		OrgID:   0,
-		UserID:  0,
-		OrgRole: models.ROLE_ADMIN,
-	}, hs.scheduleOptions.crawlerMode, models.ThemeLight, models.ThumbnailKindDefault)
+	err := hs.lockService.LockAndExecute(crawlerCtx, "dashboard-crawler", hs.scheduleOptions.interval, func(ctx context.Context) {
+		hs.renderer.Start(crawlerCtx, rendering.AuthOpts{
+			OrgID:   0,
+			UserID:  0,
+			OrgRole: models.ROLE_ADMIN,
+		}, hs.scheduleOptions.crawlerMode, models.ThemeDark, models.ThumbnailKindDefault)
+
+		hs.renderer.Start(crawlerCtx, rendering.AuthOpts{
+			OrgID:   0,
+			UserID:  0,
+			OrgRole: models.ROLE_ADMIN,
+		}, hs.scheduleOptions.crawlerMode, models.ThemeLight, models.ThumbnailKindDefault)
+	})
+
+	if err != nil {
+		tlog.Error("Error scheduling a run", "err", err)
+	}
 }
 
 func (hs *ThumbService) Run(ctx context.Context) error {
-	gc := time.NewTicker(hs.scheduleOptions.interval)
+	gc := time.NewTicker(hs.scheduleOptions.ticker)
 
 	for {
 		select {
