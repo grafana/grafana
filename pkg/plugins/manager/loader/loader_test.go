@@ -1128,8 +1128,8 @@ type fakeLogger struct {
 	log.Logger
 }
 
-func (fl fakeLogger) New(_ ...interface{}) log.MultiLoggers {
-	return log.MultiLoggers{}
+func (fl fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
+	return &log.ConcreteLogger{}
 }
 
 func (fl fakeLogger) Info(_ string, _ ...interface{}) {

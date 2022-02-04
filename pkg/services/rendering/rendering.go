@@ -37,6 +37,7 @@ type RenderingService struct {
 	inProgressCount int32
 	version         string
 	versionMutex    sync.RWMutex
+	capabilities    []Capability
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -80,6 +81,16 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			cache:     remoteCache,
 			log:       logger,
 			keyExpiry: 5 * time.Minute,
+		},
+		capabilities: []Capability{
+			{
+				name:             FullHeightImages,
+				semverConstraint: ">= 3.4.0",
+			},
+			{
+				name:             ScalingDownImages,
+				semverConstraint: ">= 3.4.0",
+			},
 		},
 		Cfg:                   cfg,
 		RemoteCacheService:    remoteCache,

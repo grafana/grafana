@@ -1,4 +1,4 @@
-import { MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
+import { FrameGeometrySourceMode, MapLayerOptions, MapLayerRegistryItem, PluginState } from '@grafana/data';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
@@ -31,11 +31,19 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           const layer = geomapLayerRegistry.getIfExists(value);
           if (layer) {
             console.log('Change layer type:', value, state);
-            state.onChange({
+            const opts = {
               ...options, // keep current shared options
               type: layer.id,
               config: { ...layer.defaultOptions }, // clone?
-            });
+            };
+            if (layer.showLocation) {
+              if (!opts.location?.mode) {
+                opts.location = { mode: FrameGeometrySourceMode.Auto };
+              } else {
+                delete opts.location;
+              }
+            }
+            state.onChange(opts);
             return;
           }
         }
@@ -76,7 +84,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       }
 
       if (layer.showLocation) {
-        addLocationFields('Location', 'location', builder, options.location);
+        addLocationFields('Location', 'location.', builder, options.location);
       }
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder);

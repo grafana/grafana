@@ -34,20 +34,20 @@ func (p *flatResourcePermission) Managed() bool {
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
-	ctx context.Context, orgID, userID int64,
+	ctx context.Context, orgID int64, user accesscontrol.User,
 	cmd accesscontrol.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	if userID == 0 {
+	if user.ID == 0 {
 		return nil, models.ErrUserNotFound
 	}
 
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedUserRoleName(userID), s.userAdder(sess, orgID, userID), cmd)
+		permission, err = s.setResourcePermission(sess, orgID, managedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
 		if err == nil && hook != nil {
-			return hook(sess, orgID, userID, cmd.ResourceID, cmd.Permission)
+			return hook(sess, orgID, user, cmd.ResourceID, cmd.Permission)
 		}
 
 		return err

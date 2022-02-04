@@ -1,4 +1,3 @@
-import { mocked } from 'ts-jest/utils';
 import { setBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GCOM_API_ROOT } from '../constants';
 import {
@@ -110,7 +109,7 @@ type UserAccessTestContext = {
 jest.mock('../permissions');
 
 export function mockUserPermissions(options: UserAccessTestContext): void {
-  const mock = mocked(permissions);
+  const mock = jest.mocked(permissions);
   mock.isDataSourceEditor.mockReturnValue(options.isDataSourceEditor);
   mock.isOrgAdmin.mockReturnValue(options.isOrgAdmin);
   mock.isGrafanaAdmin.mockReturnValue(options.isAdmin);

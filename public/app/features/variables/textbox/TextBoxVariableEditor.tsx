@@ -33,7 +33,7 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
         onBlur={onBlur}
         labelWidth={20}
         grow
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
       />
     </VerticalGroup>
   );

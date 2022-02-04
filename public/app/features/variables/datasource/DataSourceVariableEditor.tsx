@@ -15,6 +15,7 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
 import { VariableTextField } from '../editor/VariableTextField';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface OwnProps extends VariableEditorProps<DataSourceVariableModel> {}
 
@@ -84,6 +85,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
                 options={typeOptions}
                 onChange={this.onDataSourceTypeChanged}
                 labelWidth={10}
+                testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
               />
             </InlineFieldRow>
             <InlineFieldRow>

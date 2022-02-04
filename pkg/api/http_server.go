@@ -39,15 +39,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
@@ -102,11 +104,12 @@ type HTTPServer struct {
 	pluginErrorResolver       plugins.ErrorResolver
 	SearchService             *search.SearchService
 	ShortURLService           shorturls.Service
+	QueryHistoryService       queryhistory.Service
 	Live                      *live.GrafanaLive
 	LivePushGateway           *pushhttp.Gateway
 	ThumbService              thumbs.Service
 	ContextHandler            *contexthandler.ContextHandler
-	SQLStore                  *sqlstore.SQLStore
+	SQLStore                  sqlstore.Store
 	AlertEngine               *alerting.AlertEngine
 	LoadSchemaService         *schemaloader.SchemaLoaderService
 	AlertNG                   *ngalert.AlertNG
@@ -119,13 +122,16 @@ type HTTPServer struct {
 	DataSourcesService        *datasources.Service
 	cleanUpService            *cleanup.CleanUpService
 	tracer                    tracing.Tracer
-	updateChecker             *updatechecker.Service
+	grafanaUpdateChecker      *updatechecker.GrafanaService
+	pluginsUpdateChecker      *updatechecker.PluginsService
 	searchUsersService        searchusers.Service
+	ldapGroups                ldap.Groups
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
-	authInfoService           authinfoservice.Service
+	authInfoService           login.AuthInfoService
 	TeamPermissionsService    *resourcepermissions.Service
+	NotificationService       *notifications.NotificationService
 }
 
 type ServerOptions struct {
@@ -139,8 +145,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, thumbService thumbs.Service,
-	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
@@ -148,10 +154,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG, pluginRepo repository.Repository,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
-	encryptionService encryption.Internal, updateChecker *updatechecker.Service, searchUsersService searchusers.Service,
+	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
+	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
+	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
+	notificationService *notifications.NotificationService) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -172,12 +180,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStaticRouteResolver: pluginStaticRouteResolver,
 		pluginDashboardManager:    pluginDashboardManager,
 		pluginErrorResolver:       pluginErrorResolver,
-		updateChecker:             updateChecker,
+		grafanaUpdateChecker:      grafanaUpdateChecker,
+		pluginsUpdateChecker:      pluginsUpdateChecker,
 		SettingsProvider:          settingsProvider,
 		DataSourceCache:           dataSourceCache,
 		AuthTokenService:          userTokenService,
 		cleanUpService:            cleanUpService,
 		ShortURLService:           shortURLService,
+		QueryHistoryService:       queryHistoryService,
 		Features:                  features,
 		ThumbService:              thumbService,
 		RemoteCacheService:        remoteCache,
@@ -204,11 +214,13 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SecretsService:            secretsService,
 		DataSourcesService:        dataSourcesService,
 		searchUsersService:        searchUsersService,
+		ldapGroups:                ldapGroups,
 		teamGuardian:              teamGuardian,
 		queryDataService:          queryDataService,
 		serviceAccountsService:    serviceaccountsService,
 		authInfoService:           authInfoService,
 		TeamPermissionsService:    resourcePermissionServices.GetTeamService(),
+		NotificationService:       notificationService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -426,6 +438,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(middleware.RequestTracing(hs.tracer))
+	m.Use(middleware.RequestMetrics(hs.Features))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

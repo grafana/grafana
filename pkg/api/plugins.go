@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -74,13 +73,17 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Category:      pluginDef.Category,
 			Info:          pluginDef.Info,
 			Dependencies:  pluginDef.Dependencies,
-			LatestVersion: pluginDef.GrafanaComVersion,
-			HasUpdate:     pluginDef.GrafanaComHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavURL,
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
 			SignatureOrg:  pluginDef.SignatureOrg,
+		}
+
+		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
+		if exists {
+			listItem.LatestVersion = update
+			listItem.HasUpdate = true
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
@@ -127,8 +130,6 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		BaseUrl:       plugin.BaseURL,
 		Module:        plugin.Module,
 		DefaultNavUrl: plugin.DefaultNavURL,
-		LatestVersion: plugin.GrafanaComVersion,
-		HasUpdate:     plugin.GrafanaComHasUpdate,
 		State:         plugin.State,
 		Signature:     plugin.Signature,
 		SignatureType: plugin.SignatureType,
@@ -141,7 +142,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetPluginSettingById(c.Req.Context(), &query); err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return response.Error(500, "Failed to get login settings", nil)
 		}
@@ -149,6 +150,12 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Enabled = query.Result.Enabled
 		dto.Pinned = query.Result.Pinned
 		dto.JsonData = query.Result.JsonData
+	}
+
+	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
+	if exists {
+		dto.LatestVersion = update
+		dto.HasUpdate = true
 	}
 
 	return response.JSON(200, dto)
@@ -167,7 +174,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.UpdatePluginSetting(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 

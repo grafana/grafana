@@ -35,8 +35,8 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
 
-	if len(alertState.Results) > 0 {
-		nA["__value_string__"] = alertState.Results[0].EvaluationString
+	if alertState.LastEvaluationString != "" {
+		nA["__value_string__"] = alertState.LastEvaluationString
 	}
 
 	var urlStr string
