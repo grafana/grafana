@@ -1,6 +1,8 @@
 package thumbs
 
 import (
+	"context"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -54,13 +56,15 @@ type crawlStatus struct {
 type dashRenderer interface {
 
 	// Assumes you have already authenticated as admin
-	Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) (crawlStatus, error)
+	Start(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) error
 
 	// Assumes you have already authenticated as admin
 	Stop() (crawlStatus, error)
 
 	// Assumes you have already authenticated as admin
 	Status() (crawlStatus, error)
+
+	IsRunning() bool
 }
 
 type thumbnailRepo interface {

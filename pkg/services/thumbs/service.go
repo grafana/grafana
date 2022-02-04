@@ -1,10 +1,12 @@
 package thumbs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,6 +27,7 @@ var (
 )
 
 type Service interface {
+	Run(ctx context.Context) error
 	Enabled() bool
 	GetImage(c *models.ReqContext)
 
@@ -38,28 +41,44 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) Service {
-	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
+type ThumbService struct {
+	scheduleOptions crawlerScheduleOptions
+	renderer        dashRenderer
+	thumbnailRepo   thumbnailRepo
+	features        featuremgmt.FeatureToggles
+}
+
+type crawlerScheduleOptions struct {
+	interval      time.Duration
+	maxDuration   time.Duration
+	crawlerMode   CrawlerMode
+	thumbnailKind models.ThumbnailKind
+}
+
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) *ThumbService {
+	/*	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
-	}
+	}*/
 
 	thumbnailRepo := newThumbnailRepo(store)
-	return &thumbService{
+	return &ThumbService{
 		renderer:      newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo: thumbnailRepo,
+		features:      features,
+		scheduleOptions: crawlerScheduleOptions{
+			interval:      time.Second * 10,
+			maxDuration:   time.Hour,
+			crawlerMode:   CrawlerModeThumbs,
+			thumbnailKind: models.ThumbnailKindDefault,
+		},
 	}
 }
 
-type thumbService struct {
-	renderer      dashRenderer
-	thumbnailRepo thumbnailRepo
+func (hs *ThumbService) Enabled() bool {
+	return hs.features.IsEnabled(featuremgmt.FlagDashboardPreviews)
 }
 
-func (hs *thumbService) Enabled() bool {
-	return true
-}
-
-func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
+func (hs *ThumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
 	kind, err := models.ParseThumbnailKind(params[":kind"])
@@ -99,7 +118,7 @@ type updateThumbnailStateRequest struct {
 	State models.ThumbnailState `json:"state" binding:"Required"`
 }
 
-func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
+func (hs *ThumbService) UpdateThumbnailState(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -131,7 +150,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	c.JSON(200, map[string]string{"success": "true"})
 }
 
-func (hs *thumbService) GetImage(c *models.ReqContext) {
+func (hs *ThumbService) GetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -162,7 +181,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 }
 
 // Hack for now -- lets you upload images explicitly
-func (hs *thumbService) SetImage(c *models.ReqContext) {
+func (hs *ThumbService) SetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -217,7 +236,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 	c.JSON(200, map[string]int{"OK": len(fileBytes)})
 }
 
-func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
+func (hs *ThumbService) StartCrawler(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -230,14 +249,24 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	if cmd.Mode == "" {
 		cmd.Mode = CrawlerModeThumbs
 	}
-	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
+
+	if !hs.renderer.IsRunning() {
+		go hs.renderer.Start(context.Background(), rendering.AuthOpts{
+			OrgID:   c.OrgId,
+			UserID:  c.UserId,
+			OrgRole: c.OrgRole,
+		}, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
+	}
+
+	status, err := hs.renderer.Status()
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
-	return response.JSON(200, msg)
+
+	return response.JSON(200, status)
 }
 
-func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
+func (hs *ThumbService) StopCrawler(c *models.ReqContext) response.Response {
 	msg, err := hs.renderer.Stop()
 	if err != nil {
 		return response.Error(500, "error starting", err)
@@ -245,7 +274,7 @@ func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 	return response.JSON(200, msg)
 }
 
-func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
+func (hs *ThumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 	msg, err := hs.renderer.Status()
 	if err != nil {
 		return response.Error(500, "error starting", err)
@@ -254,7 +283,7 @@ func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
-func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
+func (hs *ThumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
 	dashboardID, err := hs.getDashboardId(c, uid)
 	if err != nil {
 		return 404
@@ -275,7 +304,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 	return 200 // found and OK
 }
 
-func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
+func (hs *ThumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
 	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
@@ -283,4 +312,37 @@ func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 	}
 
 	return query.Result.Id, nil
+}
+
+func (hs *ThumbService) scheduledRun(parentCtx context.Context) {
+
+	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxDuration)
+	defer cancel()
+	hs.renderer.Start(crawlerCtx, rendering.AuthOpts{
+		OrgID:   0,
+		UserID:  0,
+		OrgRole: models.ROLE_ADMIN,
+	}, hs.scheduleOptions.crawlerMode, models.ThemeDark, models.ThumbnailKindDefault)
+
+	hs.renderer.Start(crawlerCtx, rendering.AuthOpts{
+		OrgID:   0,
+		UserID:  0,
+		OrgRole: models.ROLE_ADMIN,
+	}, hs.scheduleOptions.crawlerMode, models.ThemeLight, models.ThumbnailKindDefault)
+}
+
+func (hs *ThumbService) Run(ctx context.Context) error {
+	gc := time.NewTicker(hs.scheduleOptions.interval)
+
+	for {
+		select {
+		case <-gc.C:
+			go hs.scheduledRun(ctx)
+		case <-ctx.Done():
+			tlog.Debug("Grafana is shutting down - stopping dashboard crawler")
+			gc.Stop()
+
+			return nil
+		}
+	}
 }
