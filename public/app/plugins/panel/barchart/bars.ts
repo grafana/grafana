@@ -76,7 +76,6 @@ interface ValueLabelArray {
  */
 interface ValueLabel {
   bbox?: Rect;
-  scaleFactor?: number;
   text: string;
   textMetrics?: TextMetrics;
   x?: number;
@@ -338,7 +337,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let labelOffset = LABEL_OFFSET_MAX;
     let labels: ValueLabelTable = {};
 
-    barRects.forEach((r, i) => {
+    barRects.forEach((r) => {
       const { didx, sidx } = r;
       const text = formatValue(sidx, rawValue(sidx, didx)! / (pctStacked ? alignedTotals![sidx][didx]! : 1));
       labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
@@ -350,8 +349,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
+    let autoFontSize = fontSize;
+    let scaleFactor = 1;
 
-    barRects.forEach((r, i) => {
+    barRects.forEach((r) => {
       const { didx, sidx } = r;
 
       if (hasAutoValueSize) {
@@ -362,14 +363,21 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           1
         );
 
-        // Retrieve the new font size and use it
-        // to calculate scaling ratio
-        let newSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
-        labels[didx][sidx].scaleFactor = fontSize / newSize;
+        // Save text metrics
         labels[didx][sidx].textMetrics = textMetrics;
 
+        // Retrieve the new font size and use it
+        // to calculate scaling ratio
+        autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+        scaleFactor = autoFontSize / fontSize;
+
+        // Take into account the fact that calculateFontSize
+        // uses 14px measurement so we need to adjust
+        // the scaleFactor in this instance
+        scaleFactor *= autoFontSize / 14;
+
         // Update the end font-size
-        fontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+        fontSize = autoFontSize;
 
         if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== VisibilityMode.Always) {
           return;
@@ -388,7 +396,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
 
-    barRects.forEach((r, i) => {
+    barRects.forEach((r) => {
       const { didx, sidx } = r;
       let value = rawValue(sidx, didx);
 
@@ -423,12 +431,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         } = labels[didx][sidx];
 
         // Construct final bounding box for the label text
-        let scaleFactor = labels[sidx][didx].scaleFactor ?? 1;
         labels[didx][sidx].x = x;
         labels[didx][sidx].y = y;
         labels[didx][sidx].bbox = {
           x: x,
-          y: y - textMetrics.actualBoundingBoxAscent,
+          y: y - textMetrics.actualBoundingBoxAscent - 2,
           w: textMetrics.width * scaleFactor,
           h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
         };
