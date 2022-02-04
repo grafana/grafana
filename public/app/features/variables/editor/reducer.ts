@@ -4,7 +4,7 @@ import { VariablePayload } from '../state/types';
 import { VariableQueryEditorType } from '../types';
 
 export interface AdHocVariableEditorState {
-  infoText: string;
+  infoText?: string;
   dataSources: Array<{ text: string; value: DataSourceRef | null }>;
 }
 
