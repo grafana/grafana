@@ -199,7 +199,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   ).
                 </div>
               }
-              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
+              testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
               grow
             />
             <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />
