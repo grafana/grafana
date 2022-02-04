@@ -23,6 +23,7 @@ func TestDatasourceLineageIsValid(t *testing.T) {
 	}
 
 	validRawDSJSON := []byte(`{
+		"uid": "DaSloth",
 		"name": "sloth",
 		"type": "slothStats",
 		"typeLogoUrl": "",
