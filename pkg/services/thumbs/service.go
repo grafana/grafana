@@ -42,7 +42,7 @@ type Service interface {
 	CrawlerStatus(c *models.ReqContext) response.Response
 }
 
-type ThumbService struct {
+type thumbService struct {
 	scheduleOptions            crawlerScheduleOptions
 	renderer                   dashRenderer
 	thumbnailRepo              thumbnailRepo
@@ -59,13 +59,13 @@ type crawlerScheduleOptions struct {
 	thumbnailKind    models.ThumbnailKind
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) *ThumbService {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) Service {
 	/*	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}*/
 
 	thumbnailRepo := newThumbnailRepo(store)
-	return &ThumbService{
+	return &thumbService{
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo:              thumbnailRepo,
 		features:                   features,
@@ -82,11 +82,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	}
 }
 
-func (hs *ThumbService) Enabled() bool {
+func (hs *thumbService) Enabled() bool {
 	return hs.features.IsEnabled(featuremgmt.FlagDashboardPreviews)
 }
 
-func (hs *ThumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
+func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
 	kind, err := models.ParseThumbnailKind(params[":kind"])
@@ -126,7 +126,7 @@ type updateThumbnailStateRequest struct {
 	State models.ThumbnailState `json:"state" binding:"Required"`
 }
 
-func (hs *ThumbService) UpdateThumbnailState(c *models.ReqContext) {
+func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -158,7 +158,7 @@ func (hs *ThumbService) UpdateThumbnailState(c *models.ReqContext) {
 	c.JSON(200, map[string]string{"success": "true"})
 }
 
-func (hs *ThumbService) GetImage(c *models.ReqContext) {
+func (hs *thumbService) GetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -189,7 +189,7 @@ func (hs *ThumbService) GetImage(c *models.ReqContext) {
 }
 
 // Hack for now -- lets you upload images explicitly
-func (hs *ThumbService) SetImage(c *models.ReqContext) {
+func (hs *thumbService) SetImage(c *models.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -244,7 +244,7 @@ func (hs *ThumbService) SetImage(c *models.ReqContext) {
 	c.JSON(200, map[string]int{"OK": len(fileBytes)})
 }
 
-func (hs *ThumbService) StartCrawler(c *models.ReqContext) response.Response {
+func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -272,7 +272,7 @@ func (hs *ThumbService) StartCrawler(c *models.ReqContext) response.Response {
 	return response.JSON(200, status)
 }
 
-func (hs *ThumbService) StopCrawler(c *models.ReqContext) response.Response {
+func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 	msg, err := hs.renderer.Stop()
 	if err != nil {
 		return response.Error(500, "error starting", err)
@@ -280,7 +280,7 @@ func (hs *ThumbService) StopCrawler(c *models.ReqContext) response.Response {
 	return response.JSON(200, msg)
 }
 
-func (hs *ThumbService) CrawlerStatus(c *models.ReqContext) response.Response {
+func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 	msg, err := hs.renderer.Status()
 	if err != nil {
 		return response.Error(500, "error starting", err)
@@ -289,7 +289,7 @@ func (hs *ThumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
-func (hs *ThumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
+func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
 	dashboardID, err := hs.getDashboardId(c, uid)
 	if err != nil {
 		return 404
@@ -310,7 +310,7 @@ func (hs *ThumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 	return 200 // found and OK
 }
 
-func (hs *ThumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
+func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgId}
 
 	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
@@ -320,7 +320,7 @@ func (hs *ThumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 	return query.Result.Id, nil
 }
 
-func (hs *ThumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind models.ThumbnailKind, authOpts rendering.AuthOpts) {
+func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind models.ThumbnailKind, authOpts rendering.AuthOpts) {
 	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxCrawlDuration)
 	defer cancel()
 
@@ -335,7 +335,7 @@ func (hs *ThumbService) runOnDemandCrawl(parentCtx context.Context, theme models
 	}
 }
 
-func (hs *ThumbService) runScheduledCrawl(parentCtx context.Context) {
+func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxCrawlDuration)
 	defer cancel()
 
@@ -358,7 +358,7 @@ func (hs *ThumbService) runScheduledCrawl(parentCtx context.Context) {
 	}
 }
 
-func (hs *ThumbService) Run(ctx context.Context) error {
+func (hs *thumbService) Run(ctx context.Context) error {
 	gc := time.NewTicker(hs.scheduleOptions.tickerInterval)
 
 	for {

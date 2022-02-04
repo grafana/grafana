@@ -102,7 +102,6 @@ var wireBasicSet = wire.NewSet(
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
 	thumbs.ProvideService,
-	wire.Bind(new(thumbs.Service), new(*thumbs.ThumbService)),
 	rendering.ProvideService,
 	wire.Bind(new(rendering.Service), new(*rendering.RenderingService)),
 	routing.ProvideRegister,
