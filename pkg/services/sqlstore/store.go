@@ -8,6 +8,7 @@ import (
 )
 
 type Store interface {
+	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error
 	DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error
 	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
 	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error

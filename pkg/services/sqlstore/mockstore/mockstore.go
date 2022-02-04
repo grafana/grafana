@@ -23,6 +23,10 @@ func NewSQLStoreMock() *SQLStoreMock {
 	return &SQLStoreMock{}
 }
 
+func (m *SQLStoreMock) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
 	return m.ExpectedError
 }
