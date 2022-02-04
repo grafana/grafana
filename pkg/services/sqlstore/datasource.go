@@ -271,6 +271,76 @@ func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateData
 	})
 }
 
+func (ss *SQLStore) UpdateDataSourceByUID(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
+		ds := &models.DataSource{
+			Id:                cmd.Id,
+			OrgId:             cmd.OrgId,
+			Name:              cmd.Name,
+			Type:              cmd.Type,
+			Access:            cmd.Access,
+			Url:               cmd.Url,
+			User:              cmd.User,
+			Password:          cmd.Password,
+			Database:          cmd.Database,
+			IsDefault:         cmd.IsDefault,
+			BasicAuth:         cmd.BasicAuth,
+			BasicAuthUser:     cmd.BasicAuthUser,
+			BasicAuthPassword: cmd.BasicAuthPassword,
+			WithCredentials:   cmd.WithCredentials,
+			JsonData:          cmd.JsonData,
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
+			Updated:           time.Now(),
+			ReadOnly:          cmd.ReadOnly,
+			Version:           cmd.Version + 1,
+			Uid:               cmd.Uid,
+		}
+
+		sess.UseBool("is_default")
+		sess.UseBool("basic_auth")
+		sess.UseBool("with_credentials")
+		sess.UseBool("read_only")
+		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
+		// plain text fields to SecureJsonData.
+		sess.MustCols("password")
+		sess.MustCols("basic_auth_password")
+		sess.MustCols("user")
+
+		var updateSession *xorm.Session
+		if cmd.Version != 0 {
+			// the reason we allow cmd.version > db.version is make it possible for people to force
+			// updates to datasources using the datasource.yaml file without knowing exactly what version
+			// a datasource have in the db.
+			updateSession = sess.Where("uid=? and org_id=? and version < ?", ds.Uid, ds.OrgId, ds.Version)
+		} else {
+			updateSession = sess.Where("uid=? and org_id=?", ds.Uid, ds.OrgId)
+		}
+
+		affected, err := updateSession.Update(ds)
+		if err != nil {
+			return err
+		}
+
+		if affected == 0 {
+			return models.ErrDataSourceUpdatingOldVersion
+		}
+
+		if ds.IsDefault {
+			rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND uid <> ?"
+			if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Uid); err != nil {
+				return err
+			}
+		}
+
+		cmd.Result = ds
+		return err
+	})
+}
+
 func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
