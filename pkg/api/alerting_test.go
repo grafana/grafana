@@ -59,7 +59,6 @@ func setUp(confs ...setUpConf) *HTTPServer {
 }
 
 func TestAlertingAPIEndpoint(t *testing.T) {
-
 	t.Run("When user is editor and not in the ACL", func(t *testing.T) {
 		hs := setUp()
 		cmd := dtos.PauseAlertCommand{
