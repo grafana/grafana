@@ -171,9 +171,10 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to delete a nonexistent user", func(t *testing.T) {
-		t.Skip()
 		adminDeleteUserScenario(t, "Should return user not found error", "/api/admin/users/42",
 			"/api/admin/users/:id", func(sc *scenarioContext) {
+				sc.sqlStore.(*mockstore.SQLStoreMock).ExpectedError = models.ErrUserNotFound
+				sc.authInfoService.ExpectedError = models.ErrUserNotFound
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 				userID := sc.sqlStore.(*mockstore.SQLStoreMock).LatestUserId
 
@@ -188,7 +189,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to create a user", func(t *testing.T) {
-		t.Skip()
 		t.Run("Without an organization", func(t *testing.T) {
 			createCmd := dtos.AdminCreateUserForm{
 				Login:    testLogin,
@@ -249,8 +249,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to create a user with an already existing email/login", func(t *testing.T) {
-		t.Skip()
-
 		createCmd := dtos.AdminCreateUserForm{
 			Login:    existingTestLogin,
 			Password: testPassword,
@@ -428,6 +426,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
+		sc.authInfoService = &mockAuthInfoService{}
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
