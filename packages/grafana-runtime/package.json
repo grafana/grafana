@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "8.4.0-pre",
+  "version": "8.5.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -22,9 +22,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "8.4.0-pre",
-    "@grafana/e2e-selectors": "8.4.0-pre",
-    "@grafana/ui": "8.4.0-pre",
+    "@grafana/data": "8.5.0-pre",
+    "@grafana/e2e-selectors": "8.5.0-pre",
+    "@grafana/ui": "8.5.0-pre",
     "@sentry/browser": "6.17.2",
     "history": "4.10.1",
     "lodash": "4.17.21",

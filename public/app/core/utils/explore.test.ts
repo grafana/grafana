@@ -11,6 +11,7 @@ import {
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRangeFromUrl,
+  getTimeRange,
 } from './explore';
 import store from 'app/core/store';
 import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
@@ -358,6 +359,19 @@ describe('getTimeRangeFromUrl', () => {
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+  });
+});
+
+describe('getTimeRange', () => {
+  describe('should flip from and to when from is after to', () => {
+    const rawRange = {
+      from: 'now',
+      to: 'now-6h',
+    };
+
+    const range = getTimeRange('utc', rawRange, 0);
+
+    expect(range.from.isBefore(range.to)).toBe(true);
   });
 });
 

@@ -50,6 +50,11 @@ export enum AccessControlAction {
   ActionServerStatsRead = 'server.stats:read',
 
   ActionTeamsCreate = 'teams:create',
+  ActionTeamsDelete = 'teams:delete',
+  ActionTeamsRead = 'teams:read',
+  ActionTeamsWrite = 'teams:write',
+  ActionTeamsPermissionsRead = 'teams.permissions:read',
+  ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
   ActionRolesList = 'roles:list',
   ActionBuiltinRolesList = 'roles.builtin:list',

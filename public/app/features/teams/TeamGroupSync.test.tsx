@@ -6,6 +6,7 @@ import { getMockTeamGroups } from './__mocks__/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    isReadOnly: false,
     groups: [] as TeamGroup[],
     loadTeamGroups: jest.fn(),
     addTeamGroup: jest.fn(),
