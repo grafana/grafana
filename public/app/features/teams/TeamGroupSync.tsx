@@ -23,13 +23,17 @@ const mapDispatchToProps = {
   removeTeamGroup,
 };
 
+interface OwnProps {
+  isReadOnly: boolean;
+}
+
 interface State {
   isAdding: boolean;
   newGroupId: string;
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-export type Props = ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
@@ -70,11 +74,12 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 
   renderGroup(group: TeamGroup) {
+    const { isReadOnly } = this.props;
     return (
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <Button size="sm" variant="destructive" onClick={() => this.onRemoveGroup(group)}>
+          <Button size="sm" variant="destructive" onClick={() => this.onRemoveGroup(group)} disabled={isReadOnly}>
             <Icon name="times" />
           </Button>
         </td>
@@ -84,7 +89,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
 
   render() {
     const { isAdding, newGroupId } = this.state;
-    const groups = this.props.groups;
+    const { groups, isReadOnly } = this.props;
 
     return (
       <div>
@@ -95,7 +100,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <Button className="pull-right" onClick={this.onToggleAdding}>
+            <Button className="pull-right" onClick={this.onToggleAdding} disabled={isReadOnly}>
               <Icon name="plus" /> Add group
             </Button>
           )}
@@ -113,11 +118,12 @@ export class TeamGroupSync extends PureComponent<Props, State> {
                   value={newGroupId}
                   onChange={this.onNewGroupIdChanged}
                   placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
+                  disabled={isReadOnly}
                 />
               </div>
 
               <div className="gf-form">
-                <Button type="submit" disabled={!this.isNewGroupValid()}>
+                <Button type="submit" disabled={isReadOnly || !this.isNewGroupValid()}>
                   Add group
                 </Button>
               </div>
@@ -135,6 +141,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             proTipLinkTitle="Learn more"
             proTipLink="http://docs.grafana.org/auth/enhanced_ldap/"
             proTipTarget="_blank"
+            buttonDisabled={isReadOnly}
           />
         )}
 

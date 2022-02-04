@@ -29,7 +29,6 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
-	bus.AddHandler("sql", HasEditPermissionInFolders)
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
@@ -40,6 +39,7 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.SearchDashboards)
 	bus.AddHandler("sql", ss.DeleteDashboard)
 	bus.AddHandler("sql", ss.GetDashboards)
+	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -487,7 +487,7 @@ func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDa
 }
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
-func HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return withDbSession(ctx, x, func(dbSession *DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
 			query.Result = true

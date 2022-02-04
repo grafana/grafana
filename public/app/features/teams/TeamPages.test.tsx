@@ -13,6 +13,7 @@ jest.mock('@grafana/runtime/src/config', () => ({
     licenseInfo: {
       enabledFeatures: { teamsync: true },
     },
+    featureToggles: { accesscontrol: false },
   },
 }));
 
