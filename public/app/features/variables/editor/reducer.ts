@@ -82,7 +82,7 @@ const variableEditorReducerSlice = createSlice({
       state: VariableEditorState,
       action: PayloadAction<{ propName: string; propValue: any }>
     ) => {
-      // @ts-ignore - ignoring poor typing here _just for now_
+      // @ts-ignore - temp ignoring the errors now the state type is more strict
       state.extended = {
         ...state.extended,
         [action.payload.propName]: action.payload.propValue,
