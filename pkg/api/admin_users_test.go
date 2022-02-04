@@ -197,13 +197,14 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to delete a nonexistent user", func(t *testing.T) {
 		adminDeleteUserScenario(t, "Should return user not found error", "/api/admin/users/42",
 			"/api/admin/users/:id", func(sc *scenarioContext) {
-				var userID int64
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteUserCommand) error {
-					userID = cmd.UserId
-					return models.ErrUserNotFound
-				})
+				// var userID int64
+				// bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteUserCommand) error {
+				// 	userID = cmd.UserId
+				// 	return models.ErrUserNotFound
+				// })
 
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+				userID := sc.sqlStore.(*mockstore.SQLStoreMock).LatestUserId
 
 				assert.Equal(t, 404, sc.resp.Code)
 
@@ -418,6 +419,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
+			authInfoService:  &mockAuthInfoService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -446,6 +448,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
+		sc.sqlStore = hs.SQLStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
