@@ -16,10 +16,6 @@ const props = {
 };
 
 describe('MetricSelect', () => {
-  it('renders without error', () => {
-    render(<MetricSelect {...props} />);
-  });
-
   it('shows all metric options', async () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
