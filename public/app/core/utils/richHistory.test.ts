@@ -89,12 +89,10 @@ describe('richHistory', () => {
       Date.now = jest.fn(() => 2);
       const { richHistory: newHistory } = await addToRichHistory(
         mock.storedHistory,
-        mock.testDatasourceId,
         mock.testDatasourceName,
         mock.testQueries,
         mock.testStarred,
         mock.testComment,
-        mock.testSessionName,
         true,
         true
       );
@@ -106,12 +104,10 @@ describe('richHistory', () => {
 
       const { richHistory } = await addToRichHistory(
         mock.storedHistory,
-        mock.testDatasourceId,
         mock.testDatasourceName,
         mock.testQueries,
         mock.testStarred,
         mock.testComment,
-        mock.testSessionName,
         true,
         true
       );
@@ -136,12 +132,10 @@ describe('richHistory', () => {
 
       const { richHistory: newHistory } = await addToRichHistory(
         mock.storedHistory,
-        mock.storedHistory[0].datasourceId,
         mock.storedHistory[0].datasourceName,
         [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
         mock.testStarred,
         mock.testComment,
-        mock.testSessionName,
         true,
         true
       );
@@ -158,12 +152,10 @@ describe('richHistory', () => {
 
       const { richHistory, limitExceeded } = await addToRichHistory(
         mock.storedHistory,
-        mock.testDatasourceId,
         mock.testDatasourceName,
         mock.testQueries,
         mock.testStarred,
         mock.testComment,
-        mock.testSessionName,
         true,
         true
       );
