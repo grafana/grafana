@@ -18,6 +18,7 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  queryPreview?: boolean;
   editorMode?: QueryEditorMode;
   /** Temporary until we have a parser */
   visualQuery?: PromVisualQuery;

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
@@ -13,6 +13,7 @@ import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
+import { QueryPreview } from './QueryPreview';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -28,24 +29,23 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onChangeViewModel = (updatedQuery: PromVisualQuery) => {
     setVisualQuery(updatedQuery);
-    onChange(promQueryModeller.getUpdatedSaveModel(query, updatedQuery));
+
+    onChange({
+      ...query,
+      expr: promQueryModeller.renderQuery(updatedQuery),
+      visualQuery: updatedQuery,
+      editorMode: QueryEditorMode.Builder,
+    });
   };
 
-  const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {
+  const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, instant: isEnabled, exemplar: false });
-    onRunQuery();
-  };
-
-  const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, exemplar: isEnabled });
+    onChange({ ...query, queryPreview: isEnabled });
     onRunQuery();
   };
 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-  const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
 
   return (
     <>
@@ -78,10 +78,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             />
           </>
         )}
-        <QueryHeaderSwitch label="Instant" value={query.instant} onChange={onInstantChange} />
-        {showExemplarSwitch && (
-          <QueryHeaderSwitch label="Exemplars" value={query.exemplar} onChange={onExemplarChange} />
-        )}
+        <QueryHeaderSwitch label="Preview" value={query.queryPreview} onChange={onQueryPreviewChange} />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
@@ -95,7 +92,8 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               onChange={onChangeViewModel}
               onRunQuery={props.onRunQuery}
             />
-            <PromQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} />
+            {query.queryPreview && <QueryPreview query={visualQuery} />}
+            <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
           </>
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}

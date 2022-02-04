@@ -80,15 +80,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => innerExpr,
       addOperationHandler: addNestedQueryHandler,
     },
-    {
-      id: PromOperationId.LegendFormat,
-      name: 'Legend format',
-      params: [{ name: 'Pattern', type: 'string' }],
-      defaultParams: [''],
-      category: PromVisualQueryOperationCategory.Options,
-      renderer: (model, def, innerExpr) => innerExpr,
-      addOperationHandler: defaultAddOperationHandler,
-    },
   ];
 
   return list;

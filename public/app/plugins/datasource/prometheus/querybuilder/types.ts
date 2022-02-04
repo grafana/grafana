@@ -18,7 +18,6 @@ export enum PromVisualQueryOperationCategory {
   RangeFunctions = 'Range functions',
   Functions = 'Functions',
   BinaryOps = 'Binary operations',
-  Options = 'Options',
 }
 
 export enum PromOperationId {
@@ -33,7 +32,6 @@ export enum PromOperationId {
   MultiplyBy = '__multiply_by',
   DivideBy = '__divide_by',
   NestedQuery = '__nested_query',
-  LegendFormat = '__legend_format',
 }
 
 export interface PromQueryPattern {

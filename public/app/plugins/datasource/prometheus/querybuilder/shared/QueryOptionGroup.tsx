@@ -72,6 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       paddingTop: theme.spacing(2),
       gap: theme.spacing(2),
+      flexWrap: 'wrap',
     }),
     toggle: css({
       color: theme.colors.text.secondary,
