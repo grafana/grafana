@@ -36,7 +36,12 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpdatedAction, stateSave } from './main';
+import {
+  richHistoryStorageFullAction,
+  richHistoryLimitExceededAction,
+  richHistoryUpdatedAction,
+  stateSave,
+} from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
@@ -305,7 +310,7 @@ export function modifyQueries(
   };
 }
 
-function handleHistory(
+async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
   history: Array<HistoryItem<DataQuery>>,
@@ -317,9 +322,9 @@ function handleHistory(
   const nextHistory = updateHistory(history, datasourceId, queries);
   const {
     richHistory: nextRichHistory,
-    localStorageFull,
+    richHistoryStorageFull,
     limitExceeded,
-  } = addToRichHistory(
+  } = await addToRichHistory(
     state.richHistory || [],
     datasourceId,
     datasource.name,
@@ -327,14 +332,14 @@ function handleHistory(
     false,
     '',
     '',
-    !state.localStorageFull,
+    !state.richHistoryStorageFull,
     !state.richHistoryLimitExceededWarningShown
   );
   dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
   dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
-  if (localStorageFull) {
-    dispatch(localStorageFullAction());
+  if (richHistoryStorageFull) {
+    dispatch(richHistoryStorageFullAction());
   }
   if (limitExceeded) {
     dispatch(richHistoryLimitExceededAction());
