@@ -26,9 +26,9 @@ import (
 )
 
 type Evaluator struct {
-	Cfg             *setting.Cfg
-	Log             log.Logger
-	DataSourceCache datasources.CacheService
+	cfg             *setting.Cfg
+	log             log.Logger
+	dataSourceCache datasources.CacheService
 	secretsService  secrets.Service
 }
 
@@ -38,9 +38,9 @@ func NewEvaluator(
 	datasourceCache datasources.CacheService,
 	secretsService secrets.Service) *Evaluator {
 	return &Evaluator{
-		Cfg:             cfg,
-		Log:             log,
-		DataSourceCache: datasourceCache,
+		cfg:             cfg,
+		log:             log,
+		dataSourceCache: datasourceCache,
 		secretsService:  secretsService,
 	}
 }
@@ -577,12 +577,12 @@ func (evalResults Results) AsDataFrame() data.Frame {
 
 // ConditionEval executes conditions and evaluates the result.
 func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, expressionService *expr.Service) (Results, error) {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.UnifiedAlerting.EvaluationTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
+	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult := executeCondition(alertExecCtx, condition, now, expressionService, e.DataSourceCache, e.secretsService)
+	execResult := executeCondition(alertExecCtx, condition, now, expressionService, e.dataSourceCache, e.secretsService)
 
 	evalResults := evaluateExecutionResult(execResult, now)
 	return evalResults, nil
@@ -590,12 +590,12 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, ex
 
 // QueriesAndExpressionsEval executes queries and expressions and returns the result.
 func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, expressionService *expr.Service) (*backend.QueryDataResponse, error) {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.Cfg.UnifiedAlerting.EvaluationTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), e.cfg.UnifiedAlerting.EvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
+	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.cfg.ExpressionsEnabled, Log: e.log}
 
-	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService, e.DataSourceCache, e.secretsService)
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, expressionService, e.dataSourceCache, e.secretsService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
