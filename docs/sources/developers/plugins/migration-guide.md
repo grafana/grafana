@@ -56,7 +56,7 @@ Removed due to being an internal component.
 
 IIn a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.  
 
-**Example:** How to import the service.
+**Example:** Import the service.
 
 ```ts
 // before
