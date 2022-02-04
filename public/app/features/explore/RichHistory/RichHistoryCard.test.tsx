@@ -1,13 +1,15 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { RichHistoryCard, Props } from './RichHistoryCard';
-import { ExploreId } from '../../../types/explore';
+import { ExploreId, RichHistoryQuery } from '../../../types/explore';
 import { DataSourceApi, DataQuery } from '@grafana/data';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     query: {
-      ts: 1,
+      id: '1',
+      createdAt: 1,
+      datasourceUid: 'Test datasource uid',
       datasourceName: 'Test datasource',
       starred: false,
       comment: '',
@@ -32,15 +34,17 @@ const setup = (propOverrides?: Partial<Props>) => {
   return wrapper;
 };
 
-const starredQueryWithComment = {
-  ts: 1,
+const starredQueryWithComment: RichHistoryQuery = {
+  id: '1',
+  createdAt: 1,
+  datasourceUid: 'Test datasource uid',
   datasourceName: 'Test datasource',
   starred: true,
   comment: 'test comment',
   queries: [
-    { query: 'query1', refId: 'A' },
-    { query: 'query2', refId: 'B' },
-    { query: 'query3', refId: 'C' },
+    { query: 'query1', refId: 'A' } as DataQuery,
+    { query: 'query2', refId: 'B' } as DataQuery,
+    { query: 'query3', refId: 'C' } as DataQuery,
   ],
 };
 
