@@ -187,8 +187,6 @@ func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 	return "", models.ErrDashboardFailedGenerateUniqueUid
 }
 
-// GetDashboard gets a dashboard.
-
 // GetDashboardByTitle gets a dashboard by its title.
 func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
 	if title == "" {
