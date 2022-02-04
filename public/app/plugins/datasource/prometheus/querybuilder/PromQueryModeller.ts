@@ -1,10 +1,8 @@
 import { FUNCTIONS } from '../promql';
-import { PromQuery } from '../types';
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
 import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
-import { QueryEditorMode } from './shared/types';
-import { PromOperationId, PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQuery> {
   constructor() {
@@ -24,7 +22,6 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       PromVisualQueryOperationCategory.RangeFunctions,
       PromVisualQueryOperationCategory.Functions,
       PromVisualQueryOperationCategory.BinaryOps,
-      PromVisualQueryOperationCategory.Options,
     ]);
   }
 
