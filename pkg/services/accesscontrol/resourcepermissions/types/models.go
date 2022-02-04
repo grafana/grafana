@@ -1,5 +1,7 @@
 package types
 
+import "github.com/grafana/grafana/pkg/services/accesscontrol"
+
 type SetResourcePermissionCommand struct {
 	Actions    []string
 	Resource   string
@@ -8,7 +10,7 @@ type SetResourcePermissionCommand struct {
 }
 
 type SetResourcePermissionsCommand struct {
-	UserID      int64
+	User        accesscontrol.User
 	TeamID      int64
 	BuiltinRole string
 

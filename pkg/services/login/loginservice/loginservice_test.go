@@ -46,7 +46,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 
 func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	buf := &bytes.Buffer{}
-	logger.AddLogger(log.NewLogfmtLogger(buf), "info", map[string]level.Option{})
+	logger.SetLogger(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
 
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
@@ -82,6 +82,10 @@ type authInfoServiceMock struct {
 
 func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	return a.user, a.err
+}
+
+func (a *authInfoServiceMock) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	return nil
 }
 
 func Test_teamSync(t *testing.T) {

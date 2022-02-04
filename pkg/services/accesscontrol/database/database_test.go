@@ -81,7 +81,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, user.Id, types.SetResourcePermissionCommand{
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.Id}, types.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:write"},
 					Resource:   "dashboards",
 					ResourceID: id,

@@ -460,7 +460,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getTimeRangeParams();
-    const url = `/api/v1/label/${key}/values`;
+    const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
     return await this.request(url, [], params);
   };
 
@@ -491,10 +491,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param withName
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getTimeRangeParams();
     const urlParams = {
       ...range,
-      'match[]': name,
+      'match[]': interpolatedName,
     };
     const url = `/api/v1/series`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
@@ -502,7 +503,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
     const cacheParams = new URLSearchParams({
-      'match[]': name,
+      'match[]': interpolatedName,
       start: roundSecToMin(parseInt(range.start, 10)).toString(),
       end: roundSecToMin(parseInt(range.end, 10)).toString(),
       withName: withName ? 'true' : 'false',

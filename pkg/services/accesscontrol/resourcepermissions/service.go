@@ -16,7 +16,8 @@ import (
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(
-		ctx context.Context, orgID, userID int64,
+		ctx context.Context, orgID int64,
+		user accesscontrol.User,
 		cmd types.SetResourcePermissionCommand,
 		hook types.UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
@@ -106,7 +107,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 	})
 }
 
-func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -116,11 +117,11 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, err
 	}
 
-	if err := s.validateUser(ctx, orgID, userID); err != nil {
+	if err := s.validateUser(ctx, orgID, user.ID); err != nil {
 		return nil, err
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, userID, types.SetResourcePermissionCommand{
+	return s.store.SetUserResourcePermission(ctx, orgID, user, types.SetResourcePermissionCommand{
 		Actions:    actions,
 		Permission: permission,
 		ResourceID: resourceID,
@@ -202,7 +203,7 @@ func (s *Service) SetPermissions(
 		}
 
 		dbCommands = append(dbCommands, types.SetResourcePermissionsCommand{
-			UserID:      cmd.UserID,
+			User:        accesscontrol.User{ID: cmd.UserID},
 			TeamID:      cmd.TeamID,
 			BuiltinRole: cmd.BuiltinRole,
 			SetResourcePermissionCommand: types.SetResourcePermissionCommand{

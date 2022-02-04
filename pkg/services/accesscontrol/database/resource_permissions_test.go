@@ -71,11 +71,11 @@ func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
 			for _, s := range test.seeds {
-				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, test.userID, s, nil)
+				_, err := store.SetUserResourcePermission(context.Background(), test.orgID, accesscontrol.User{ID: test.userID}, s, nil)
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetUserResourcePermission(context.Background(), test.userID, test.userID, types.SetResourcePermissionCommand{
+			added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, types.SetResourcePermissionCommand{
 				Actions:    test.actions,
 				Resource:   test.resource,
 				ResourceID: test.resourceID,
@@ -261,7 +261,7 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 			orgID: 1,
 			commands: []types.SetResourcePermissionsCommand{
 				{
-					UserID: 1,
+					User: accesscontrol.User{ID: 1},
 					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
 						Actions:    []string{"datasources:query"},
 						Resource:   "datasources",
@@ -302,7 +302,7 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 				} else {
 					assert.Len(t, permissions[i].Actions, len(c.Actions))
 					assert.Equal(t, c.TeamID, permissions[i].TeamId)
-					assert.Equal(t, c.UserID, permissions[i].UserId)
+					assert.Equal(t, c.User.ID, permissions[i].UserId)
 					assert.Equal(t, c.BuiltinRole, permissions[i].BuiltInRole)
 					assert.Equal(t, accesscontrol.GetResourceScope(c.Resource, c.ResourceID), permissions[i].Scope)
 				}
@@ -416,7 +416,7 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, u.Id, types.SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.Id}, types.SetResourcePermissionCommand{
 			Actions:    actions,
 			Resource:   resource,
 			ResourceID: resourceID,

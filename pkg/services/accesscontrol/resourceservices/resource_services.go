@@ -77,20 +77,20 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 		ReaderRoleName: "Team permission reader",
 		WriterRoleName: "Team permission writer",
 		RoleGroup:      "Teams",
-		OnSetUser: func(session *sqlstore.DBSession, orgID, userID int64, resourceID, permission string) error {
+		OnSetUser: func(session *sqlstore.DBSession, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err
 			}
 			switch permission {
 			case "Member":
-				return sqlstore.AddOrUpdateTeamMemberHook(session, userID, orgID, teamId, false, 0)
+				return sqlstore.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, 0)
 			case "Admin":
-				return sqlstore.AddOrUpdateTeamMemberHook(session, userID, orgID, teamId, false, models.PERMISSION_ADMIN)
+				return sqlstore.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, models.PERMISSION_ADMIN)
 			case "":
 				return sqlstore.RemoveTeamMemberHook(session, &models.RemoveTeamMemberCommand{
 					OrgId:  orgID,
-					UserId: userID,
+					UserId: user.ID,
 					TeamId: teamId,
 				})
 			default:

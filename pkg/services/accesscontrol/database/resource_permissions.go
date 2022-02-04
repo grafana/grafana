@@ -34,35 +34,35 @@ func (p *flatResourcePermission) Managed() bool {
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
-	ctx context.Context, orgID, userID int64,
+	ctx context.Context, orgID int64, user accesscontrol.User,
 	cmd types.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	if userID == 0 {
+	if user.ID == 0 {
 		return nil, models.ErrUserNotFound
 	}
 
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setUserResourcePermission(sess, orgID, userID, cmd, hook)
+		permission, err = s.setUserResourcePermission(sess, orgID, user, cmd, hook)
 		return err
 	})
 
 	return permission, err
 }
 func (s *AccessControlStore) setUserResourcePermission(
-	sess *sqlstore.DBSession, orgID, userID int64,
+	sess *sqlstore.DBSession, orgID int64, user accesscontrol.User,
 	cmd types.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, managedUserRoleName(userID), s.userAdder(sess, orgID, userID), cmd)
+	permission, err := s.setResourcePermission(sess, orgID, managedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	if hook != nil {
-		if err := hook(sess, orgID, userID, cmd.ResourceID, cmd.Permission); err != nil {
+		if err := hook(sess, orgID, user, cmd.ResourceID, cmd.Permission); err != nil {
 			return nil, err
 		}
 	}
@@ -163,8 +163,8 @@ func (s *AccessControlStore) SetResourcePermissions(
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		for _, cmd := range commands {
 			var p *accesscontrol.ResourcePermission
-			if cmd.UserID != 0 {
-				p, err = s.setUserResourcePermission(sess, orgID, cmd.UserID, cmd.SetResourcePermissionCommand, hooks.User)
+			if cmd.User.ID != 0 {
+				p, err = s.setUserResourcePermission(sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
 			} else if cmd.TeamID != 0 {
 				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
 			} else if models.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
