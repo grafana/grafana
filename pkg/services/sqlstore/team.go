@@ -484,7 +484,7 @@ func (ss *SQLStore) GetTeamMembersByUser(ctx context.Context, orgID, userID int6
 
 // GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
 func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
-	var acFilter *ac.SqlFilter
+	acFilter := &ac.SqlFilter{}
 	var err error
 
 	// With accesscontrol we filter out users based on the SignedInUser's permissions
