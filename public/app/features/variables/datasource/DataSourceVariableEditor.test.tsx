@@ -22,6 +22,10 @@ const props = {
 };
 
 describe('DataSourceVariableEditor', () => {
+  beforeEach(() => {
+    props.onPropChange.mockReset();
+  });
+
   it('has a data source select menu', () => {
     render(<DataSourceVariableEditor {...props} />);
 
