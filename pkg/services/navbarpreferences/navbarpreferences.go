@@ -40,7 +40,7 @@ func (n *NavbarPreferencesService) GetNavbarPreferences(c context.Context, signe
 	return n.getNavbarPreferences(c, signedInUser)
 }
 
-// CreateNavbarPreference create the navbar preference for a user
+// CreateNavbarPreference creates a navbar preference for a user and navItem
 func (n *NavbarPreferencesService) CreateNavbarPreference(c context.Context, signedInUser *models.SignedInUser, cmd CreateNavbarPreferenceCommand) (NavbarPreferenceDTO, error) {
 	return n.createNavbarPreference(c, signedInUser, cmd)
 }

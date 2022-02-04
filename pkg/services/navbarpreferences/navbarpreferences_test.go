@@ -107,10 +107,10 @@ func getCompareOptions() []cmp.Option {
 	}
 }
 
-func validateAndUnMarshalResponse(t *testing.T, resp response.Response) NavbarPreferenceResponse {
+func validateAndUnMarshalResponse(t *testing.T, resp response.Response, statusCode int) NavbarPreferenceResponse {
 	t.Helper()
 
-	require.Equal(t, 200, resp.Status())
+	require.Equal(t, statusCode, resp.Status())
 
 	var result = NavbarPreferenceResponse{}
 	err := json.Unmarshal(resp.Body(), &result)
