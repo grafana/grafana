@@ -201,7 +201,7 @@ function validateVariable(value: string) {
 
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields('text').should('be.visible').click();
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput()
+  e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2()
     .should('be.visible')
     .should('have.value', value);
 }
@@ -234,7 +234,7 @@ function changeQueryInput() {
 
   e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields('text').should('be.visible').click();
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput()
+  e2e.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2()
     .should('be.visible')
     .clear()
     .type('changed value')
