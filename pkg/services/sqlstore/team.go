@@ -469,13 +469,8 @@ func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool
 	return false, err
 }
 
-// GetTeamMembers return a list of members for the specified team
+// GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
 func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
-	return ss.getTeamMembers(ctx, query, nil)
-}
-
-// GetFilteredTeamMembers return a list of members for the specified team filtered based on the user's permissions
-func (ss *SQLStore) GetFilteredTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	var acFilter *ac.SqlFilter
 	var err error
 

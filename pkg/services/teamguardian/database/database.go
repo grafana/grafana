@@ -15,8 +15,8 @@ func ProvideTeamGuardianStore(sqlStore *sqlstore.SQLStore) *TeamGuardianStoreImp
 	return &TeamGuardianStoreImpl{sqlStore: sqlStore}
 }
 
-func (t *TeamGuardianStoreImpl) GetFilteredTeamMembers(ctx context.Context, query models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error) {
-	if err := t.sqlStore.GetFilteredTeamMembers(ctx, &query); err != nil {
+func (t *TeamGuardianStoreImpl) GetTeamMembers(ctx context.Context, query models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error) {
+	if err := t.sqlStore.GetTeamMembers(ctx, &query); err != nil {
 		return nil, err
 	}
 

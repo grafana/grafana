@@ -11,5 +11,5 @@ type TeamGuardian interface {
 }
 
 type Store interface {
-	GetFilteredTeamMembers(ctx context.Context, query models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error)
+	GetTeamMembers(ctx context.Context, query models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error)
 }

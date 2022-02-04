@@ -57,7 +57,6 @@ type Store interface {
 	IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
 	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
-	GetFilteredTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
 	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
 	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error
