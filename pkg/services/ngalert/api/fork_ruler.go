@@ -25,10 +25,6 @@ func NewForkedRuler(datasourceCache datasources.CacheService, lotex *LotexRuler,
 	}
 }
 
-func (f *ForkedRulerApi) forkRouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
-}
-
 func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, f.DatasourceCache)
 	if err != nil {
@@ -40,10 +36,6 @@ func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqCont
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
-}
-
-func (f *ForkedRulerApi) forkRouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
@@ -59,10 +51,6 @@ func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) 
 	}
 }
 
-func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetNamespaceRulesConfig(ctx)
-}
-
 func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, f.DatasourceCache)
 	if err != nil {
@@ -74,10 +62,6 @@ func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
-}
-
-func (f *ForkedRulerApi) forkRouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
@@ -93,10 +77,6 @@ func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) re
 	}
 }
 
-func (f *ForkedRulerApi) forkRouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetRulesConfig(ctx)
-}
-
 func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, f.DatasourceCache)
 	if err != nil {
@@ -108,15 +88,6 @@ func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) respons
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
-}
-
-func (f *ForkedRulerApi) forkRoutePostNameGrafanaRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
-	payloadType := conf.Type()
-	if payloadType != apimodels.GrafanaBackend {
-		return ErrResp(400, fmt.Errorf("unexpected backend type (%v) vs payload type (%v)", apimodels.GrafanaBackend, payloadType), "")
-	}
-
-	return f.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf)
 }
 
 func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
@@ -136,4 +107,32 @@ func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, co
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", backendType), "")
 	}
+}
+
+func (f *ForkedRulerApi) forkRouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) forkRouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
+}
+
+func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetNamespaceRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) forkRouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
+}
+
+func (f *ForkedRulerApi) forkRouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaRuler.RouteGetRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) forkRoutePostNameGrafanaRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
+	payloadType := conf.Type()
+	if payloadType != apimodels.GrafanaBackend {
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v) vs payload type (%v)", apimodels.GrafanaBackend, payloadType), "")
+	}
+	return f.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf)
 }

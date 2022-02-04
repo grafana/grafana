@@ -47,10 +47,6 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMStatus(ctx *models.ReqContext) res
 	return s.RouteGetAMStatus(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAMStatus(ctx *models.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteGetAMStatus(ctx)
-}
-
 func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, body apimodels.PostableSilence) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
@@ -58,10 +54,6 @@ func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, b
 	}
 
 	return s.RouteCreateSilence(ctx, body)
-}
-
-func (f *ForkedAlertmanagerApi) forkRouteCreateGrafanaSilence(ctx *models.ReqContext, body apimodels.PostableSilence) response.Response {
-	return f.GrafanaSvc.RouteCreateSilence(ctx, body)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
@@ -73,10 +65,6 @@ func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqCon
 	return s.RouteDeleteAlertingConfig(ctx)
 }
 
-func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteDeleteAlertingConfig(ctx)
-}
-
 func (f *ForkedAlertmanagerApi) forkRouteDeleteSilence(ctx *models.ReqContext) response.Response {
 	s, err := f.getService(ctx)
 	if err != nil {
@@ -84,10 +72,6 @@ func (f *ForkedAlertmanagerApi) forkRouteDeleteSilence(ctx *models.ReqContext) r
 	}
 
 	return s.RouteDeleteSilence(ctx)
-}
-
-func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteDeleteSilence(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
@@ -169,6 +153,22 @@ func (f *ForkedAlertmanagerApi) forkRoutePostTestReceivers(ctx *models.ReqContex
 	}
 
 	return s.RoutePostTestReceivers(ctx, body)
+}
+
+func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteDeleteSilence(ctx)
+}
+
+func (f *ForkedAlertmanagerApi) forkRouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteDeleteAlertingConfig(ctx)
+}
+
+func (f *ForkedAlertmanagerApi) forkRouteCreateGrafanaSilence(ctx *models.ReqContext, body apimodels.PostableSilence) response.Response {
+	return f.GrafanaSvc.RouteCreateSilence(ctx, body)
+}
+
+func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAMStatus(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteGetAMStatus(ctx)
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
