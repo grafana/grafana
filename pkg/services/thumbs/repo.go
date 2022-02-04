@@ -70,8 +70,10 @@ func (r *sqlThumbnailRepository) getThumbnail(meta models.DashboardThumbnailMeta
 	return r.store.GetThumbnail(query)
 }
 
-func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails() ([]*models.DashboardWithStaleThumbnail, error) {
+func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails(theme models.Theme, kind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error) {
 	return r.store.FindDashboardsWithStaleThumbnails(&models.FindDashboardsWithStaleThumbnailsCommand{
 		IncludeManuallyUploadedThumbnails: false,
+		Theme:                             theme,
+		Kind:                              kind,
 	})
 }
