@@ -23,21 +23,20 @@ import (
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
-		hs := &HTTPServer{Cfg: settings}
+		mockSQLStore := mockstore.NewSQLStoreMock()
+		hs := &HTTPServer{
+			Cfg:      settings,
+			SQLStore: mockSQLStore,
+		}
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
-			setUp := func() {
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					return models.ErrDashboardNotFound
-				})
-			}
-			mock := mockstore.NewSQLStoreMock()
+			mockSQLStore.ExpectedError = models.ErrDashboardNotFound
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					setUp()
+					// setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 404, sc.resp.Code)
-				}, mock)
+				}, mockSQLStore)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -51,7 +50,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 404, sc.resp.Code)
 				},
@@ -68,19 +66,15 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			getDashboardQueryResult := models.NewDashboard("Dash")
 
-			setUp := func() {
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-			mock := mockstore.NewSQLStoreMock()
+			mockSQLStore := mockstore.NewSQLStoreMock()
+			mockSQLStore.ExpectedDashboard = getDashboardQueryResult
+			mockSQLStore.ExpectedError = nil
+			hs.SQLStore = mockSQLStore
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
-				}, mock)
+				}, mockSQLStore)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -94,7 +88,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					setUp()
 					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 403, sc.resp.Code)
 				},
@@ -126,7 +119,9 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					return nil
 				})
 			}
-			mock := mockstore.NewSQLStoreMock()
+			mockSQLStore := mockstore.NewSQLStoreMock()
+			mockSQLStore.ExpectedDashboard = models.NewDashboard("Dash")
+			hs.SQLStore = mockSQLStore
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -141,7 +136,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Len(t, resp, 5)
 					assert.Equal(t, int64(2), resp[0].UserId)
 					assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
-				}, mock)
+				}, mockSQLStore)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -343,7 +338,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					return nil
 				})
 			}
-			mock := mockstore.NewSQLStoreMock()
+			mockSQLStore := mockstore.NewSQLStoreMock()
 			var resp []*models.DashboardAclInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -359,7 +354,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
 					assert.Equal(t, int64(4), resp[1].UserId)
 					assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
-				}, mock)
+				}, mockSQLStore)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{

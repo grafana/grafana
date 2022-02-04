@@ -11,10 +11,14 @@ import (
 type SQLStoreMock struct {
 	LastGetAlertsQuery *models.GetAlertsQuery
 
-	ExpectedUser          *models.User
-	ExpectedDatasource    *models.DataSource
-	ExpectedAlert         *models.Alert
-	ExpectedPluginSetting *models.PluginSetting
+	ExpectedUser                 *models.User
+	ExpectedDatasource           *models.DataSource
+	ExpectedAlert                *models.Alert
+	ExpectedPluginSetting        *models.PluginSetting
+	ExpectedDashboard            *models.Dashboard
+	ExpectedDashboards           []*models.Dashboard
+	ExpectedDashboardVersion     *models.DashboardVersion
+	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
 
 	ExpectedError error
 }
@@ -72,7 +76,7 @@ func (m *SQLStoreMock) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgComma
 }
 
 func (m *SQLStoreMock) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
-	return nil, m.ExpectedError
+	return &models.DashboardProvisioning{}, m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
@@ -197,6 +201,7 @@ func (m *SQLStoreMock) GetTeamById(ctx context.Context, query *models.GetTeamByI
 }
 
 func (m *SQLStoreMock) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+	query.Result = []*models.TeamDTO{}
 	return m.ExpectedError
 }
 
@@ -229,6 +234,7 @@ func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTr
 }
 
 func (m *SQLStoreMock) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
+	query.Result = &models.Preferences{}
 	return m.ExpectedError
 }
 
@@ -258,6 +264,7 @@ func (m *SQLStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *mode
 }
 
 func (m *SQLStoreMock) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
+	query.Result = false
 	return m.ExpectedError
 }
 
@@ -310,6 +317,7 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 }
 
 func (m *SQLStoreMock) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {
+	query.Result = m.ExpectedDashboardVersion
 	return m.ExpectedError
 }
 
@@ -330,6 +338,7 @@ func (m *SQLStoreMock) UpdateDashboardACLCtx(ctx context.Context, dashboardID in
 }
 
 func (m *SQLStoreMock) GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+	query.Result = m.ExpectedDashboardAclInfoList
 	return m.ExpectedError
 }
 
@@ -416,7 +425,17 @@ func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.D
 }
 
 func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	query.Result = m.ExpectedDashboard
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
+	query.Result = m.ExpectedDashboards
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+	return nil // TODO: Implement
 }
 
 func (m *SQLStoreMock) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
@@ -428,6 +447,8 @@ func (m *SQLStoreMock) SearchDashboards(ctx context.Context, query *search.FindP
 }
 
 func (m *SQLStoreMock) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	cmd.Id = m.ExpectedDashboard.Id
+	cmd.OrgId = m.ExpectedDashboard.OrgId
 	return m.ExpectedError
 }
 
