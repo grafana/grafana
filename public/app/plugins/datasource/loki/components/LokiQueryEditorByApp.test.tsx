@@ -5,17 +5,18 @@ import { noop } from 'lodash';
 import { LokiDatasource } from '../datasource';
 import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
 import { testIds as regularTestIds } from './LokiQueryEditor';
-import LokiQueryEditorByApp from './LokiQueryEditorByApp';
+import { testIds as exploreTestIds } from './LokiExploreQueryEditor';
+import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';
 
 function setup(app: CoreApp): RenderResult {
-  const dataSource = ({
+  const dataSource = {
     languageProvider: {
       start: () => Promise.resolve([]),
       getSyntax: () => {},
       getLabelKeys: () => [],
       metrics: [],
     },
-  } as unknown) as LokiDatasource;
+  } as unknown as LokiDatasource;
 
   return render(
     <LokiQueryEditorByApp
@@ -43,10 +44,10 @@ describe('LokiQueryEditorByApp', () => {
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
-  it('should render regular query editor for explore', () => {
+  it('should render expore query editor for explore', () => {
     const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
 
-    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(getByTestId(exploreTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 

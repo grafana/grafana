@@ -52,8 +52,16 @@ describe('LabelFilters', () => {
 function setup(labels: QueryBuilderLabelFilter[] = []) {
   const props = {
     onChange: jest.fn(),
-    onGetLabelNames: async () => ['foo', 'bar', 'baz'],
-    onGetLabelValues: async () => ['bar', 'qux', 'quux'],
+    onGetLabelNames: async () => [
+      { label: 'foo', value: 'foo' },
+      { label: 'bar', value: 'bar' },
+      { label: 'baz', value: 'baz' },
+    ],
+    onGetLabelValues: async () => [
+      { label: 'bar', value: 'bar' },
+      { label: 'qux', value: 'qux' },
+      { label: 'quux', value: 'quux' },
+    ],
   };
 
   render(<LabelFilters {...props} labelsFilters={labels} />);

@@ -91,7 +91,8 @@ export class LokiDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithLogsVolumeSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
-    DataSourceWithQueryExportSupport<LokiQuery> {
+    DataSourceWithQueryExportSupport<LokiQuery>
+{
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -752,6 +753,14 @@ export class LokiDatasource
     } else {
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 }
 

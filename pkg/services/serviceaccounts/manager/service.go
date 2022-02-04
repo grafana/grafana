@@ -36,8 +36,10 @@ func ProvideServiceAccountsService(
 		log:      log.New("serviceaccounts"),
 	}
 
-	if err := RegisterRoles(ac); err != nil {
-		s.log.Error("Failed to register roles", "error", err)
+	if features.IsEnabled(featuremgmt.FlagServiceAccounts) {
+		if err := RegisterRoles(ac); err != nil {
+			s.log.Error("Failed to register roles", "error", err)
+		}
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
@@ -60,10 +62,4 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 		return nil
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
-}
-
-func (sa *ServiceAccountsService) Migrated(ctx context.Context, orgID int64) bool {
-	// TODO: implement migration logic
-	// change this to return true for development of service accounts page
-	return false
 }

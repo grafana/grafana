@@ -24,6 +24,7 @@ type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
 	settings   setting.Provider
+	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	currentProviderID secrets.ProviderID
@@ -37,6 +38,7 @@ func ProvideSecretsService(
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	settings setting.Provider,
+	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
 	providers, err := kmsProvidersService.Provide()
@@ -45,8 +47,10 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption)
-	currentProviderID := readCurrentProviderID(settings)
+	enabled := features.IsEnabled(featuremgmt.FlagEnvelopeEncryption)
+	currentProviderID := normalizeProviderID(secrets.ProviderID(
+		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
+	))
 
 	if _, ok := providers[currentProviderID]; enabled && !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
@@ -66,6 +70,7 @@ func ProvideSecretsService(
 		providers:         providers,
 		currentProviderID: currentProviderID,
 		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		features:          features,
 		log:               logger,
 	}
 
@@ -74,13 +79,12 @@ func ProvideSecretsService(
 	return s, nil
 }
 
-func readCurrentProviderID(settings setting.Provider) secrets.ProviderID {
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
-	if currentProvider == kmsproviders.Legacy {
-		currentProvider = kmsproviders.Default
+func normalizeProviderID(id secrets.ProviderID) secrets.ProviderID {
+	if id == kmsproviders.Legacy {
+		return kmsproviders.Default
 	}
 
-	return secrets.ProviderID(currentProvider)
+	return id
 }
 
 func (s *SecretsService) registerUsageMetrics() {
@@ -89,7 +93,7 @@ func (s *SecretsService) registerUsageMetrics() {
 
 		// Enabled / disabled
 		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
-		if s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+		if s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
 
@@ -132,7 +136,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -175,7 +179,7 @@ func (s *SecretsService) keyName(scope string) string {
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
 	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
-	if !s.settings.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
@@ -326,7 +330,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 2. decrypt data key
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.providers[normalizeProviderID(dataKey.Provider)]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -347,6 +351,17 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 
 func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider {
 	return s.providers
+}
+
+func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
+	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
+	if err != nil {
+		return nil
+	}
+
+	// Invalidate cache
+	s.dataKeyCache = make(map[string]dataKeyCacheItem)
+	return err
 }
 
 // These variables are used to test the code

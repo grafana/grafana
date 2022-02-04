@@ -71,26 +71,25 @@ export const OpenTsdbDetails = (props: Props) => {
   );
 };
 
-const onSelectChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
-  newValue: SelectableValue
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: newValue.value,
-    },
-  });
-};
+const onSelectChangeHandler =
+  (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (newValue: SelectableValue) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: newValue.value,
+      },
+    });
+  };
 
-const onInputChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: SyntheticEvent<HTMLInputElement>
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.value,
-    },
-  });
-};
+const onInputChangeHandler =
+  (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.value,
+      },
+    });
+  };

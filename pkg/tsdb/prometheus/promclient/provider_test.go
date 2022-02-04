@@ -135,7 +135,7 @@ func setup(jsonData ...string) *testContext {
 		rawData = []byte(jsonData[0])
 	}
 
-	var jd promclient.JsonData
+	var jd map[string]interface{}
 	_ = json.Unmarshal(rawData, &jd)
 
 	settings := backend.DataSourceInstanceSettings{URL: "test-url", JSONData: rawData}

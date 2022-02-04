@@ -9,12 +9,11 @@ import (
 type Service interface {
 	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) (*models.User, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	Migrated(ctx context.Context, orgID int64) bool
 }
 
 type Store interface {
 	CreateServiceAccount(ctx context.Context, saForm *CreateServiceaccountForm) (*models.User, error)
-	ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error)
+	ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*models.OrgUserDTO, error)
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*models.OrgUserDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	UpgradeServiceAccounts(ctx context.Context) error

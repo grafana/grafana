@@ -91,7 +91,7 @@ export const DynamicTable = <T extends object>({
       {items.map((item, index) => {
         const isItemExpanded = isExpanded ? isExpanded(item) : expandedIds.includes(item.id);
         return (
-          <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
+          <div className={styles.row} key={`${item.id}-${index}`} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
             {renderPrefixCell && renderPrefixCell(item, index, items)}
             {isExpandable && (
               <div className={cx(styles.cell, styles.expandCell)}>

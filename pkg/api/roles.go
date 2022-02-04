@@ -231,7 +231,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Team writer",
 			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
 			Group:       "Teams",
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
 				{Action: accesscontrol.ActionTeamsDelete, Scope: accesscontrol.ScopeTeamsAll},
@@ -297,4 +297,23 @@ var orgsAccessEvaluator = accesscontrol.EvalPermission(ActionOrgsRead)
 var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(ActionOrgsRead),
 	accesscontrol.EvalPermission(ActionOrgsCreate),
+)
+
+// teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
+var teamsAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+	),
+)
+
+// teamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+var teamsEditAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+	),
 )
