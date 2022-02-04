@@ -11,10 +11,12 @@ import (
 type SQLStoreMock struct {
 	LastGetAlertsQuery *models.GetAlertsQuery
 
-	ExpectedUser       *models.User
-	ExpectedDatasource *models.DataSource
-	ExpectedAlert      *models.Alert
-	ExpectedError      error
+	ExpectedUser          *models.User
+	ExpectedDatasource    *models.DataSource
+	ExpectedAlert         *models.Alert
+	ExpectedPluginSetting *models.PluginSetting
+
+	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -239,6 +241,7 @@ func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*m
 }
 
 func (m *SQLStoreMock) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	query.Result = m.ExpectedPluginSetting
 	return m.ExpectedError
 }
 
