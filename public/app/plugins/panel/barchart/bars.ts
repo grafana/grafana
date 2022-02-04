@@ -430,12 +430,25 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           },
         } = labels[didx][sidx];
 
+        // Adjust bounding boxes based on text scale
+        // factor and orientation (which changes the baseline)
+        let xAdjust = 0,
+          yAdjust = 0;
+        if (isXHorizontal) {
+          // Adjust for baseline which is "top" in this case
+          xAdjust = (textMetrics.width * scaleFactor) / 2;
+          yAdjust = (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor;
+        } else {
+          // Adjust from the baseline which is "middle" in this case
+          yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
+        }
+
         // Construct final bounding box for the label text
         labels[didx][sidx].x = x;
         labels[didx][sidx].y = y;
         labels[didx][sidx].bbox = {
-          x: x,
-          y: y - textMetrics.actualBoundingBoxAscent - 2,
+          x: x - xAdjust,
+          y: y - yAdjust,
           w: textMetrics.width * scaleFactor,
           h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
         };
