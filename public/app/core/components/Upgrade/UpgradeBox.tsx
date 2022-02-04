@@ -9,9 +9,13 @@ export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
   text?: string;
   size?: ComponentSize;
   children?: ReactNode;
+  secondaryAction?: {
+    url: string;
+    text: string;
+  };
 }
 
-export const UpgradeBox = ({ text, className, children, size = 'md', ...htmlProps }: Props) => {
+export const UpgradeBox = ({ text, className, children, secondaryAction, size = 'md', ...htmlProps }: Props) => {
   const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
 
   return (
@@ -32,16 +36,18 @@ export const UpgradeBox = ({ text, className, children, size = 'md', ...htmlProp
           Upgrade to Pro
         </LinkButton>
 
-        <LinkButton
-          variant="link"
-          size={size}
-          className={cx(styles.button, styles.buttonSecondary)}
-          href="https://grafana.com/profile/org/subscription"
-          target="__blank"
-          rel="noopener noreferrer"
-        >
-          Learn more about Grafana Pro
-        </LinkButton>
+        {secondaryAction && (
+          <LinkButton
+            variant="link"
+            size={size}
+            className={cx(styles.button, styles.buttonSecondary)}
+            href={secondaryAction.url}
+            target="__blank"
+            rel="noopener noreferrer"
+          >
+            {secondaryAction.text}
+          </LinkButton>
+        )}
       </div>
     </div>
   );
