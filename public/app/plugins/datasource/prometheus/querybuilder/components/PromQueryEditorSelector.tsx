@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { CoreApp, GrafanaTheme2, LoadingState, SelectableValue } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
-import { FORMAT_OPTIONS, PromQueryEditor } from '../../components/PromQueryEditor';
+import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
@@ -12,6 +12,7 @@ import { QueryEditorMode } from '../shared/types';
 import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -42,15 +43,9 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     onRunQuery();
   };
 
-  const onChangeFormat = (value: SelectableValue<string>) => {
-    onChange({ ...query, format: value.value });
-    onRunQuery();
-  };
-
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
   const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
-  const formatOption = FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0];
 
   return (
     <>
@@ -87,26 +82,24 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         {showExemplarSwitch && (
           <QueryHeaderSwitch label="Exemplars" value={query.exemplar} onChange={onExemplarChange} />
         )}
-        <InlineSelect
-          value={formatOption}
-          label="Format"
-          allowCustomValue
-          onChange={onChangeFormat}
-          options={FORMAT_OPTIONS}
-        />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
-      {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
-      {editorMode === QueryEditorMode.Builder && (
-        <PromQueryBuilder
-          query={visualQuery}
-          datasource={props.datasource}
-          onChange={onChangeViewModel}
-          onRunQuery={props.onRunQuery}
-        />
-      )}
-      {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
+      <EditorRows>
+        {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
+        {editorMode === QueryEditorMode.Builder && (
+          <>
+            <PromQueryBuilder
+              query={visualQuery}
+              datasource={props.datasource}
+              onChange={onChangeViewModel}
+              onRunQuery={props.onRunQuery}
+            />
+            <PromQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} />
+          </>
+        )}
+        {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
+      </EditorRows>
     </>
   );
 });

@@ -3,7 +3,7 @@ import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
 import { LabelFilters } from '../shared/LabelFilters';
 import { OperationList } from '../shared/OperationList';
-import { EditorRows, EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/experimental';
 import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -71,7 +71,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
   };
 
   return (
-    <EditorRows>
+    <>
       <EditorRow>
         <MetricSelect query={query} onChange={onChange} onGetMetrics={onGetMetrics} />
         <LabelFilters
@@ -98,7 +98,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           <QueryPreview query={query} />
         </EditorRow>
       )}
-    </EditorRows>
+    </>
   );
 });
 
