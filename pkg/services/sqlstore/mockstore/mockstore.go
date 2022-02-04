@@ -408,8 +408,8 @@ func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.D
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboard(id int64, orgID int64, uid string, slug string) (*models.Dashboard, error) {
-	return nil, m.ExpectedError
+func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
