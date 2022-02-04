@@ -45,30 +45,7 @@ func (s storeDS) Get(ctx context.Context, uid string) (datasource.DataSource, er
 		return datasource.DataSource{}, err
 	}
 
-	ds := cmd.Result
-
-	jdMap := ds.JsonData.MustMap()
-	// if err != nil {
-	// 	return datasource.DataSource{}, err
-	// }
-
-	return datasource.DataSource{
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            string(ds.Access),
-		Url:               ds.Url,
-		Password:          ds.Password,
-		Database:          ds.Database,
-		User:              ds.User,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          jdMap,
-		// SecureJsonData: TODO,
-		UID: ds.Uid,
-	}, nil
+	return s.oldToNew(cmd.Result), nil
 }
 
 func (s storeDS) Insert(ctx context.Context, ds datasource.DataSource) error {
@@ -91,13 +68,61 @@ func (s storeDS) Insert(ctx context.Context, ds datasource.DataSource) error {
 		OrgId: 1, // hardcode for now, TODO
 	}
 	return s.ss.AddDataSource(ctx, cmd)
-
 }
 
 func (s storeDS) Update(ctx context.Context, ds datasource.DataSource) error {
-	return nil
+	cmd := &models.UpdateDataSourceCommand{
+		Name:              ds.Name,
+		Type:              ds.Type,
+		Access:            models.DsAccess(ds.Access),
+		Url:               ds.Url,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          simplejson.NewFromAny(ds.JsonData),
+		// SecureJsonData: TODO,
+		Uid:     ds.UID,
+		OrgId:   1, // hardcode for now, TODO
+		Version: ds.Version,
+		// TODO: sets updated timestamp
+	}
+	// Note: SQL version returns the modified ds with the version bumped
+	// and timestamps set
+	return s.ss.UpdateDataSourceByUID(ctx, cmd)
 }
 
 func (s storeDS) Delete(ctx context.Context, uid string) error {
-	return nil
+	return s.ss.DeleteDataSource(ctx, &models.DeleteDataSourceCommand{
+		UID:   uid,
+		OrgID: 1, // hardcode for now, TODO
+	})
+}
+
+// oldToNew doesn't need to be method, but keeps things bundled
+func (s storeDS) oldToNew(ds *models.DataSource) datasource.DataSource {
+	jdMap := ds.JsonData.MustMap()
+	return datasource.DataSource{
+		Name:              ds.Name,
+		Type:              ds.Type,
+		Access:            string(ds.Access),
+		Url:               ds.Url,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          jdMap,
+		// SecureJsonData: TODO,
+		UID:     ds.Uid,
+		Version: ds.Version,
+		// Note: Not mapped is created / updated time stamps
+	}
 }
