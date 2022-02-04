@@ -80,7 +80,11 @@ export function Modal(props: PropsWithChildren<Props>) {
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
-        <div className={cx(styles.modal, className)}>
+        {/*
+          tabIndex=-1 is needed here to support highlighting text within the modal when using FocusScope
+          see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+        */}
+        <div tabIndex={-1} className={cx(styles.modal, className)}>
           <div className={headerClass}>
             {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
             {typeof title !== 'string' && title}

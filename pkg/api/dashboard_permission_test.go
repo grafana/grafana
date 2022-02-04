@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,13 +31,13 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					return models.ErrDashboardNotFound
 				})
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 404, sc.resp.Code)
-				})
+				}, mock)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -73,13 +74,13 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					return nil
 				})
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					setUp()
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
+				}, mock)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -125,6 +126,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					return nil
 				})
 			}
+			mock := mockstore.NewSQLStoreMock()
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -139,7 +141,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Len(t, resp, 5)
 					assert.Equal(t, int64(2), resp[0].UserId)
 					assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
-				})
+				}, mock)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -341,7 +343,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					return nil
 				})
 			}
-
+			mock := mockstore.NewSQLStoreMock()
 			var resp []*models.DashboardAclInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -357,7 +359,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
 					assert.Equal(t, int64(4), resp[1].UserId)
 					assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
-				})
+				}, mock)
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{

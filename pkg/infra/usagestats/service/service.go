@@ -25,7 +25,7 @@ type UsageStats struct {
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
 
-	log log.MultiLoggers
+	log log.Logger
 
 	oauthProviders           map[string]bool
 	externalMetrics          []usagestats.MetricsFunc

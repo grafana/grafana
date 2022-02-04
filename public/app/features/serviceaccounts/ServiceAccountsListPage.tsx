@@ -32,7 +32,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-const ServiceAccountsListPage2: React.FC<Props> = ({ loadServiceAccounts, navModel, serviceAccounts, isLoading }) => {
+const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navModel, serviceAccounts, isLoading }) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -184,4 +184,4 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export default connector(ServiceAccountsListPage2);
+export default connector(ServiceAccountsListPage);

@@ -17,12 +17,6 @@ import (
 	"xorm.io/xorm"
 )
 
-type simpleSecret struct {
-	tableName       string
-	columnName      string
-	isBase64Encoded bool
-}
-
 func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id     int
@@ -76,10 +70,6 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 	return nil
 }
 
-type jsonSecret struct {
-	tableName string
-}
-
 func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id             int
@@ -118,8 +108,6 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 
 	return nil
 }
-
-type alertingSecret struct{}
 
 func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var results []struct {
@@ -179,7 +167,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
-	if !runner.SettingsProvider.IsFeatureToggleEnabled(featuremgmt.FlagEnvelopeEncryption) {
+	if !runner.Features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
 		return nil
 	}

@@ -726,6 +726,218 @@ Content-Type: application/json; charset=UTF-8
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
+## Create and remove team role assignments
+
+### List roles assigned to a team
+
+`GET /api/access-control/teams/:teamId/roles`
+
+Lists the roles that have been directly assigned to a given team.
+
+#### Required permissions
+
+| Action           | Scope                |
+| ---------------- | -------------------- |
+| teams.roles:list | teams:id:`<team ID>` |
+
+#### Example request
+
+```http
+GET /api/access-control/teams/1/roles
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+[
+    {
+        "version": 4,
+        "uid": "j08ZBi-nk",
+        "name": "fixed:licensing:reader",
+        "displayName": "Licensing reader",
+        "description": "Read licensing information and licensing reports.",
+        "group": "Licenses",
+        "updated": "2022-02-03T14:19:50+01:00",
+        "created": "0001-01-01T00:00:00Z",
+        "global": false
+    }
+]
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Set of assigned roles is returned.                                   |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Add a team role assignment
+
+`POST /api/access-control/teams/:teamId/roles`
+
+Assign a role to a specific team.
+
+For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-assignments" >}}).
+
+#### Required permissions
+
+`permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.
+
+| Action          | Scope                |
+| --------------- | -------------------- |
+| teams.roles:add | permissions:delegate |
+
+#### Example request
+
+```http
+POST /api/access-control/teams/1/roles
+Accept: application/json
+Content-Type: application/json
+
+{
+    "roleUid": "XvHQJq57z"
+}
+```
+
+#### JSON body schema
+
+| Field Name | Data Type | Required | Description      |
+| ---------- | --------- | -------- | ---------------- |
+| roleUid    | string    | Yes      | UID of the role. |
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "Role added to the team."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Role is assigned to a team.                                          |
+| 403  | Access denied.                                                       |
+| 404  | Role not found.                                                      |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+## Remove a user role assignment
+
+`DELETE /api/access-control/teams/:teams/roles/:roleUID`
+
+Revoke a role from a team.
+
+For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-assignments" >}}).
+
+#### Required permissions
+
+`permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.```
+
+| Action             | Scope                |
+| ------------------ | -------------------- |
+| teams.roles:remove | permissions:delegate |
+
+#### Example request
+
+```http
+DELETE /api/access-control/teams/1/roles/AFUXBHKnk
+Accept: application/json
+```
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "Role removed from team."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Role is unassigned.                                                  |
+| 403  | Access denied.                                                       |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+### Set team role assignments
+
+`PUT /api/access-control/teams/:teamId/roles`
+
+Update the team's role assignments to match the provided set of UIDs.
+This will remove any assigned roles that aren't in the request and add
+roles that are in the set but are not already assigned to the user.
+
+If you want to add or remove a single role, consider using
+[Add a team role assignment]({{< ref "#add-a-team-role-assignment" >}}) or
+[Remove a team role assignment]({{< ref "#remove-a-team-role-assignment" >}})
+instead.
+
+#### Required permissions
+
+`permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role to a team which will allow to do that. This is done to prevent escalation of privileges.
+
+| Action             | Scope                |
+| ------------------ | -------------------- |
+| teams.roles:add    | permissions:delegate |
+| teams.roles:remove | permissions:delegate |
+
+#### Example request
+
+```http
+PUT /api/access-control/teams/1/roles
+Accept: application/json
+Content-Type: application/json
+
+{
+    "roleUids": [
+        "ZiHQJq5nk",
+        "GzNQ1357k"
+    ]
+}
+```
+
+#### JSON body schema
+
+| Field Name | Date Type | Required | Description        |
+| ---------- | --------- | -------- | ------------------ |
+| roleUids   | list      | Yes      | List of role UIDs. |
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "Team roles have been updated."
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Roles have been assigned.                                            |
+| 403  | Access denied.                                                       |
+| 404  | Role not found.                                                      |
+| 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
 ## Create and remove built-in role assignments
 
 API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments.
