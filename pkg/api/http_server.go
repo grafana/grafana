@@ -44,8 +44,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -107,7 +107,7 @@ type HTTPServer struct {
 	LivePushGateway           *pushhttp.Gateway
 	ThumbService              thumbs.Service
 	ContextHandler            *contexthandler.ContextHandler
-	SQLStore                  *sqlstore.SQLStore
+	SQLStore                  sqlstore.Store
 	AlertEngine               *alerting.AlertEngine
 	LoadSchemaService         *schemaloader.SchemaLoaderService
 	AlertNG                   *ngalert.AlertNG
@@ -127,8 +127,9 @@ type HTTPServer struct {
 	teamGuardian              teamguardian.TeamGuardian
 	queryDataService          *query.Service
 	serviceAccountsService    serviceaccounts.Service
-	authInfoService           authinfoservice.Service
+	authInfoService           login.AuthInfoService
 	TeamPermissionsService    *resourcepermissions.Service
+	NotificationService       *notifications.NotificationService
 }
 
 type ServerOptions struct {
@@ -155,7 +156,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService *datasources.Service, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService authinfoservice.Service, resourcePermissionServices *resourceservices.ResourceServices) (*HTTPServer, error) {
+	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
+	notificationService *notifications.NotificationService) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -215,6 +217,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		serviceAccountsService:    serviceaccountsService,
 		authInfoService:           authInfoService,
 		TeamPermissionsService:    resourcePermissionServices.GetTeamService(),
+		NotificationService:       notificationService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -432,6 +435,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(middleware.RequestTracing(hs.tracer))
+	m.Use(middleware.RequestMetrics(hs.Features))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

@@ -15,6 +15,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   isValidLiveChannelAddress,
+  MutableDataFrame,
   parseLiveChannelAddress,
   toDataFrame,
 } from '@grafana/data';
@@ -70,7 +71,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           this.getAnnotations({
             range: request.range,
             rangeRaw: request.range.raw,
-            annotation: (target as unknown) as AnnotationQuery<GrafanaAnnotationQuery>,
+            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
@@ -149,7 +150,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       ],
     } as any).pipe(
       map((v) => {
-        const frame = v.data[0] ?? toDataFrame({});
+        const frame = v.data[0] ?? new MutableDataFrame();
         return new DataFrameView<FileElement>(frame);
       })
     );
@@ -161,7 +162,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
-    const annotation = (options.annotation as unknown) as AnnotationQuery<GrafanaAnnotationQuery>;
+    const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
     const params: any = {
       from: options.range.from.valueOf(),

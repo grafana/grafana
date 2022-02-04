@@ -43,7 +43,7 @@ export class TeamList extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchTeams();
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       this.fetchRoleOptions();
     }
   }
@@ -69,7 +69,11 @@ export class TeamList extends PureComponent<Props, State> {
     const { editorsCanAdmin, signedInUser } = this.props;
     const permission = team.permission;
     const teamUrl = `org/teams/edit/${team.id}`;
-    const canDelete = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
+    const canDelete = contextSrv.hasAccessInMetadata(
+      AccessControlAction.ActionTeamsDelete,
+      team,
+      isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser })
+    );
 
     return (
       <tr key={team.id}>
@@ -89,7 +93,7 @@ export class TeamList extends PureComponent<Props, State> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
-        {contextSrv.accessControlEnabled() && (
+        {contextSrv.licensedAccessControlEnabled() && (
           <td>
             <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
           </td>
@@ -155,7 +159,7 @@ export class TeamList extends PureComponent<Props, State> {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Members</th>
-                  {contextSrv.accessControlEnabled() && <th>Roles</th>}
+                  {contextSrv.licensedAccessControlEnabled() && <th>Roles</th>}
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>

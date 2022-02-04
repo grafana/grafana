@@ -126,14 +126,8 @@ export class BarGauge extends PureComponent<Props> {
 
   renderRetroBars(): ReactNode {
     const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
-    const {
-      valueHeight,
-      valueWidth,
-      maxBarHeight,
-      maxBarWidth,
-      wrapperWidth,
-      wrapperHeight,
-    } = calculateBarAndValueDimensions(this.props);
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
+      calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 

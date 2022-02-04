@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Services & Utils
 import store from 'app/core/store';
-import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
+import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
 
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
