@@ -192,25 +192,25 @@ export function RichHistoryCard(props: Props) {
           yesText: 'Delete',
           icon: 'trash-alt',
           onConfirm: () => {
-            updateRichHistory(query.ts, 'delete');
+            updateRichHistory(query.id, 'delete');
             dispatch(notifyApp(createSuccessNotification('Query deleted')));
           },
         })
       );
     } else {
-      updateRichHistory(query.ts, 'delete');
+      updateRichHistory(query.id, 'delete');
       dispatch(notifyApp(createSuccessNotification('Query deleted')));
     }
   };
 
   const onStarrQuery = () => {
-    updateRichHistory(query.ts, 'starred');
+    updateRichHistory(query.id, 'starred');
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
 
   const onUpdateComment = () => {
-    updateRichHistory(query.ts, 'comment', comment);
+    updateRichHistory(query.id, 'comment', comment);
     setActiveUpdateComment(false);
   };
 

@@ -1,12 +1,52 @@
 import { RichHistoryQuery } from '../../types';
-import { omit } from 'lodash';
+import { find, omit } from 'lodash';
 import { SortOrder } from '../utils/richHistoryTypes';
+import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings } from '@grafana/data';
 
 /**
  * Temporary place for local storage specific items that are still in use in richHistory.ts
  *
  * Should be migrated to RichHistoryLocalStorage.ts
  */
+
+export const LocalStorageConverter = {
+  fromDTO: (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
+    let datasource = find(
+      getDataSourceSrv().getList(),
+      (settings: DataSourceInstanceSettings) => settings.name === dto.datasourceName
+    );
+
+    return {
+      id: dto.ts.toString(),
+      createdAt: dto.ts,
+      datasourceName: dto.datasourceName,
+      datasourceUid: datasource?.uid || '', // will show as removed data source
+      starred: dto.starred,
+      comment: dto.comment,
+      queries: dto.queries,
+    };
+  },
+  toDTO: (richHistoryQuery: RichHistoryQuery): RichHistoryLocalStorageDTO => {
+    const datasource = find(
+      getDataSourceSrv().getList(),
+      (settings: DataSourceInstanceSettings) => settings.uid === richHistoryQuery.datasourceUid
+    );
+
+    if (!datasource) {
+      throw new Error('Datasource not found.');
+    }
+
+    return {
+      ts: richHistoryQuery.createdAt,
+      datasourceName: richHistoryQuery.datasourceName,
+      starred: richHistoryQuery.starred,
+      comment: richHistoryQuery.comment,
+      queries: richHistoryQuery.queries,
+    };
+  },
+};
 
 export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) => {
   const today = new Date();
@@ -23,7 +63,7 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
 export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
   const filter1 = createRetentionPeriodBoundary(timeFilter[0], true); // probably the vars should have a different name
   const filter2 = createRetentionPeriodBoundary(timeFilter[1], false);
-  return queries.filter((q) => q.ts < filter1 && q.ts > filter2);
+  return queries.filter((q) => q.createdAt < filter1 && q.createdAt > filter2);
 }
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
@@ -53,10 +93,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
   let sortFunc;
 
   if (sortOrder === SortOrder.Ascending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0;
   }
   if (sortOrder === SortOrder.Descending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
+      a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
   }
 
   if (sortOrder === SortOrder.DatasourceZA) {

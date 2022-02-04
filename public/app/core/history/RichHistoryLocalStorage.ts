@@ -3,10 +3,22 @@ import { RichHistoryQuery } from '../../types';
 import store from '../store';
 import { DataQuery } from '@grafana/data';
 import { isEqual, omit } from 'lodash';
-import { createRetentionPeriodBoundary, RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
+import {
+  createRetentionPeriodBoundary,
+  LocalStorageConverter,
+  RICH_HISTORY_SETTING_KEYS,
+} from './richHistoryLocalStorageUtils';
 
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
+
+export type RichHistoryLocalStorageDTO = {
+  ts: number;
+  datasourceName: string;
+  starred: boolean;
+  comment: string;
+  queries: DataQuery[];
+};
 
 /**
  * Local storage implementation for Rich History. It keeps all entries in browser's local storage.
@@ -16,21 +28,32 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
    * Return all history entries, perform migration and clean up entries not matching retention policy.
    */
   async getRichHistory() {
-    const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
-    const transformedRichHistory = migrateRichHistory(richHistory);
-    return transformedRichHistory;
+    return this.getRichHistoryDTO().map(LocalStorageConverter.fromDTO);
   }
 
-  async addToRichHistory(richHistoryQuery: RichHistoryQuery) {
-    const richHistory = cleanUp(await this.getRichHistory());
+  private getRichHistoryDTO(): RichHistoryLocalStorageDTO[] {
+    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
+    return migrateRichHistory(richHistory);
+  }
+
+  async addToRichHistory(newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>) {
+    const ts = Date.now();
+    const richHistoryQuery = {
+      id: ts.toString(),
+      createdAt: ts,
+      ...newRichHistoryQuery,
+    };
+
+    const newRichHistoryQueryDTO = LocalStorageConverter.toDTO(richHistoryQuery);
+    const currentRichHistoryDTOs = cleanUp(this.getRichHistoryDTO());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
      */
-    const newQueriesToCompare = richHistoryQuery.queries.map((q) => omit(q, ['key', 'refId']));
+    const newQueriesToCompare = newRichHistoryQueryDTO.queries.map((q) => omit(q, ['key', 'refId']));
     const lastQueriesToCompare =
-      richHistory.length > 0 &&
-      richHistory[0].queries.map((q) => {
+      currentRichHistoryDTOs.length > 0 &&
+      currentRichHistoryDTOs[0].queries.map((q) => {
         return omit(q, ['key', 'refId']);
       });
 
@@ -40,9 +63,9 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       throw error;
     }
 
-    const { queriesToKeep, limitExceeded } = checkLimits(richHistory);
+    const { queriesToKeep, limitExceeded } = checkLimits(currentRichHistoryDTOs);
 
-    const updatedHistory: RichHistoryQuery[] = [richHistoryQuery, ...queriesToKeep];
+    const updatedHistory: RichHistoryLocalStorageDTO[] = [newRichHistoryQueryDTO, ...queriesToKeep];
 
     try {
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
@@ -56,28 +79,33 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 
     if (limitExceeded) {
       return {
-        type: RichHistoryStorageWarning.LimitExceeded,
-        message: `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items have been removed.`,
+        warning: {
+          type: RichHistoryStorageWarning.LimitExceeded,
+          message: `Query history reached the limit of ${MAX_HISTORY_ITEMS}. Old, not-starred items have been removed.`,
+        },
+        richHistoryQuery,
       };
     }
 
-    return undefined;
+    return { richHistoryQuery };
   }
 
   async deleteAll() {
     store.delete(RICH_HISTORY_KEY);
   }
 
-  async deleteRichHistory(id: number) {
-    const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
-    const updatedHistory = richHistory.filter((query) => query.ts !== id);
+  async deleteRichHistory(id: string) {
+    const ts = parseInt(id, 10);
+    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
+    const updatedHistory = richHistory.filter((query) => query.ts !== ts);
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 
-  async updateStarred(id: number, starred: boolean) {
-    const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
+  async updateStarred(id: string, starred: boolean) {
+    const ts = parseInt(id, 10);
+    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
     const updatedHistory = richHistory.map((query) => {
-      if (query.ts === id) {
+      if (query.ts === ts) {
         query.starred = starred;
       }
       return query;
@@ -86,10 +114,11 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
   }
 
-  async updateComment(id: number, comment: string) {
-    const richHistory: RichHistoryQuery[] = store.getObject(RICH_HISTORY_KEY, []);
+  async updateComment(id: string, comment: string) {
+    const ts = parseInt(id, 10);
+    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
     const updatedHistory = richHistory.map((query) => {
-      if (query.ts === id) {
+      if (query.ts === ts) {
         query.comment = comment;
       }
       return query;
@@ -101,7 +130,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 /**
  * Removes entries that do not match retention policy criteria.
  */
-function cleanUp(richHistory: RichHistoryQuery[]): RichHistoryQuery[] {
+function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
@@ -115,7 +144,10 @@ function cleanUp(richHistory: RichHistoryQuery[]): RichHistoryQuery[] {
  * Ensures the entry can be added. Throws an error if current limit has been hit.
  * Returns queries that should be saved back giving space for one extra query.
  */
-function checkLimits(queriesToKeep: RichHistoryQuery[]): { queriesToKeep: RichHistoryQuery[]; limitExceeded: boolean } {
+function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
+  queriesToKeep: RichHistoryLocalStorageDTO[];
+  limitExceeded: boolean;
+} {
   // remove oldest non-starred items to give space for the recent query
   let limitExceeded = false;
   let current = queriesToKeep.length - 1;
@@ -130,7 +162,7 @@ function checkLimits(queriesToKeep: RichHistoryQuery[]): { queriesToKeep: RichHi
   return { queriesToKeep, limitExceeded };
 }
 
-function migrateRichHistory(richHistory: RichHistoryQuery[]) {
+function migrateRichHistory(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
   const transformedRichHistory = richHistory.map((query) => {
     const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
     return { ...query, queries: transformedQueries };
@@ -139,7 +171,7 @@ function migrateRichHistory(richHistory: RichHistoryQuery[]) {
   return transformedRichHistory;
 }
 
-function createDataQuery(query: RichHistoryQuery, individualQuery: DataQuery | string, index: number) {
+function createDataQuery(query: RichHistoryLocalStorageDTO, individualQuery: DataQuery | string, index: number) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ';
   if (typeof individualQuery === 'object') {
     // the current format

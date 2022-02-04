@@ -202,7 +202,9 @@ export interface QueryTransaction {
 }
 
 export type RichHistoryQuery = {
-  ts: number;
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
   starred: boolean;
   comment: string;
