@@ -60,9 +60,9 @@ type crawlerScheduleOptions struct {
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) Service {
-	/*	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
+	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
-	}*/
+	}
 
 	thumbnailRepo := newThumbnailRepo(store)
 	return &thumbService{
@@ -73,7 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		crawlLockServiceActionName: "dashboard-crawler",
 
 		scheduleOptions: crawlerScheduleOptions{
-			tickerInterval:   time.Second,
+			tickerInterval:   time.Hour,
 			crawlInterval:    time.Hour * 12,
 			maxCrawlDuration: time.Hour,
 			crawlerMode:      CrawlerModeThumbs,
