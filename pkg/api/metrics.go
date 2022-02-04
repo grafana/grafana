@@ -3,17 +3,15 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
@@ -48,13 +46,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 
 func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) error {
 	if dashboardId == "" || panelId == "" {
-		// TODO: make a real error with a status code
 		return models.ErrDashboardOrPanelIdentifierNotSet
 	}
 
 	id, err := strconv.ParseInt(dashboardId, 10, 64)
 	if err != nil {
-		return err //response.Error(http.StatusBadRequest, "id is invalid", err)
+		return models.ErrDashboardIdentifierInvalid
 	}
 
 	query := models.GetDashboardQuery{
@@ -76,32 +73,28 @@ func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) er
 	// for this yet, but would most likely be a bug and return an error from
 	// bus.Dispatch
 	if query.Result == nil {
-		// TODO: make a real error with a status code
-		return errors.New("missing result from dashboard query")
+		panic("missing result from dashboard query with no error")
 	}
 
 	dashboard := query.Result
 
 	// dashboard saved but no panels
 	if dashboard.Data == nil {
-		// TODO: make a real error with a status code
-		return errors.New("dashboard has no panels")
+		return models.ErrDashboardCorrupt
 	}
 
 	pId, err := strconv.ParseInt(panelId, 10, 64)
 	if err != nil {
-		return err //response.Error(http.StatusBadRequest, "id is invalid", err)
+		return models.ErrDashboardPanelIdentifierInvalid
 	}
 
-	// FIXME: This is ugly and probably expensive.
+	// FIXME: parse the dashboard JSON in a more performant/structured way.
 	panels := dashboard.Data.Get("panels")
 	for i := 0; ; i++ {
 		panel, ok := panels.CheckGetIndex(i)
 		if !ok {
 			break
 		}
-		panelJson, _ := panel.MarshalJSON()
-		fmt.Printf("Panel %d Id: %d (== %d? %v) from %s\n", i, panel.Get("id").MustInt64(-1), pId, pId == panel.Get("id").MustInt64(-1), string(panelJson))
 
 		if panel.Get("id").MustInt64(-1) == pId {
 			return nil
@@ -115,12 +108,11 @@ func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) er
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
-	reqDTO := dtos.MetricRequest{}
-
 	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
-		// validated queries is not enabled
-		return response.Error(http.StatusBadRequest, "Validated queries feature is disabled", nil)
+		return response.Respond(http.StatusNotFound, "404 page not found\n")
 	}
+
+	reqDTO := dtos.MetricRequest{}
 
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -132,8 +124,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 
 	// 404 if dashboard or panel not found
 	if err := checkDashboardAndPanel(c.Req.Context(), dashboardId, panelId); err != nil {
-		// TODO: return the status code from the error like so:
-		c.Logger.Debug("Failed to find dashboard or panel for validated query", "err", err)
+		c.Logger.Warn("Failed to find dashboard or panel for validated query", "err", err)
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
 			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)

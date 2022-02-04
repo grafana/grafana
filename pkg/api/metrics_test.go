@@ -3,10 +3,11 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"golang.org/x/oauth2"
 
@@ -241,7 +242,14 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			t,
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.Equal(t, "{\"error\":\"Unique identifier needed to be able to get a dashboard panel\",\"message\":\"Unique identifier needed to be able to get a dashboard panel\"}", response.Body.String())
+		assert.JSONEq(
+			t,
+			fmt.Sprintf(
+				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
+				models.ErrDashboardOrPanelIdentifierNotSet,
+			),
+			response.Body.String(),
+		)
 	})
 
 	t.Run("Cannot query when ValidatedQueries is disabled", func(t *testing.T) {
@@ -250,13 +258,17 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			"/api/dashboards/id//panels//query",
+			"/api/dashboards/id/1/panels/1/query",
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
 
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.Equal(t, "{\"message\":\"Validated queries feature is disabled\"}", response.Body.String())
+		assert.Equal(t, http.StatusNotFound, response.Code)
+		assert.Equal(
+			t,
+			"404 page not found\n",
+			response.Body.String(),
+		)
 	})
 }
 
@@ -304,6 +316,76 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			dashboardQueryResult: nil,
 			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
 		},
+		{
+			name:                 "Cannot query without a valid panel ID",
+			dashboardId:          "1",
+			panelId:              "",
+			dashboardQueryResult: nil,
+			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
+		},
+		{
+			name:                 "Cannot query without a valid dashboard ID",
+			dashboardId:          "",
+			panelId:              "2",
+			dashboardQueryResult: nil,
+			expectedError:        models.ErrDashboardOrPanelIdentifierNotSet,
+		},
+		{
+			name:        "Fails when the dashboard does not exist",
+			dashboardId: "1",
+			panelId:     "2",
+			dashboardQueryResult: &dashboardQueryResult{
+				result: nil,
+				err:    models.ErrDashboardNotFound,
+			},
+			expectedError: models.ErrDashboardNotFound,
+		},
+		{
+			name:        "Fails when the dashboard does not exist",
+			dashboardId: "1",
+			panelId:     "3",
+			dashboardQueryResult: &dashboardQueryResult{
+				result: &models.Dashboard{
+					Id:    1,
+					OrgId: testOrgID,
+					Data:  dashboardJson,
+				},
+			},
+			expectedError: models.ErrDashboardPanelNotFound,
+		},
+		{
+			name:        "Fails when the dashboard contents are nil",
+			dashboardId: "1",
+			panelId:     "3",
+			dashboardQueryResult: &dashboardQueryResult{
+				result: &models.Dashboard{
+					Id:    1,
+					OrgId: testOrgID,
+					Data:  nil,
+				},
+			},
+			expectedError: models.ErrDashboardCorrupt,
+		},
+		{
+			name:                 "Fails when the dashboard identifier is invalid",
+			dashboardId:          "potato",
+			panelId:              "2",
+			dashboardQueryResult: nil,
+			expectedError:        models.ErrDashboardIdentifierInvalid,
+		},
+		{
+			name:        "Fails when the panel identifier is invalid",
+			dashboardId: "1",
+			panelId:     "foob",
+			dashboardQueryResult: &dashboardQueryResult{
+				result: &models.Dashboard{
+					Id:    1,
+					OrgId: testOrgID,
+					Data:  dashboardJson,
+				},
+			},
+			expectedError: models.ErrDashboardPanelIdentifierInvalid,
+		},
 	}
 
 	for _, test := range tests {
@@ -323,68 +405,4 @@ func TestAPIEndpoint_Metrics_checkDashboardAndPanel(t *testing.T) {
 			assert.Equal(t, test.expectedError, checkDashboardAndPanel(context.Background(), test.dashboardId, test.panelId))
 		})
 	}
-
-	//// TODO add happy path test
-	//t.Run("Cannot query without a valid dashboard ID", func(t *testing.T) {
-	//	response := callAPI(
-	//		sc.server,
-	//		http.MethodPost,
-	//		fmt.Sprintf("/api/dashboards/id//panels/%s/query", "1"),
-	//		strings.NewReader(queryDatasourceInput),
-	//		t,
-	//	)
-	//	assert.Equal(t, http.StatusBadRequest, response.Code)
-	//})
-
-	//t.Run("Cannot query without a valid panel ID", func(t *testing.T) {
-	//	response := callAPI(
-	//		sc.server,
-	//		http.MethodPost,
-	//		fmt.Sprintf("/api/dashboards/id/%s/panels//query", "1"),
-	//		strings.NewReader(queryDatasourceInput),
-	//		t,
-	//	)
-	//	assert.Equal(t, http.StatusBadRequest, response.Code)
-	//})
-
-	//t.Run("Get 404 when dashboardId does not exist", func(t *testing.T) {
-	//	defer bus.ClearBusHandlers()
-
-	//	// stub 404 response
-	//	bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-	//		//query.Result = &models.DataSource{}
-	//		return models.ErrDataSourceNotFound
-	//	})
-
-	//	response := callAPI(
-	//		sc.server,
-	//		http.MethodPost,
-	//		fmt.Sprintf("/api/dashboards/id/%s/panels/%s/query", "1", "A"),
-	//		strings.NewReader(queryDatasourceInput),
-	//		t,
-	//	)
-	//	assert.Equal(t, http.StatusNotFound, response.Code)
-	//})
-
-	//t.Run("Get 404 when panelId does not exist", func(t *testing.T) {
-	//	defer bus.ClearBusHandlers()
-
-	//	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
-	//		query.Result = &models.Dashboard{
-	//			Id:    1,
-	//			OrgId: testOrgID,
-	//			Data:  dashboardJson,
-	//		}
-	//		return nil
-	//	})
-
-	//	response := callAPI(
-	//		sc.server,
-	//		http.MethodPost,
-	//		fmt.Sprintf("/api/dashboards/id/%s/panels/%s/query", "1", "x"),
-	//		strings.NewReader(queryDatasourceInput),
-	//		t,
-	//	)
-	//	assert.Equal(t, http.StatusNotFound, response.Code)
-	//})
 }
