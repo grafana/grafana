@@ -50,7 +50,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			Uid:   savedDash.Uid,
 		}
 
-		err = GetDashboard(context.Background(), &dashCmd)
+		err = sqlStore.GetDashboard(context.Background(), &dashCmd)
 		require.Nil(t, err)
 		eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 		require.Equal(t, true, eq)

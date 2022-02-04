@@ -25,6 +25,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -231,7 +232,7 @@ func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQue
 	return refIDs, nil
 }
 
-func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, cfg *setting.Cfg, log log.Logger) response.Response {
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, secretsService secrets.Service, cfg *setting.Cfg, log log.Logger) response.Response {
 	evalCond := ngmodels.Condition{
 		Condition: cmd.Condition,
 		OrgID:     c.SignedInUser.OrgId,
@@ -246,7 +247,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: cfg, Log: log, DataSourceCache: datasourceCache}
+	evaluator := eval.NewEvaluator(cfg, log, datasourceCache, secretsService)
 	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
