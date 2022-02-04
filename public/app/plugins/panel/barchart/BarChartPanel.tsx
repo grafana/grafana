@@ -1,4 +1,4 @@
-import React, { createRef, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { LegendDisplayMode } from '@grafana/schema';
 import {
   CartesianCoords2D,
@@ -24,7 +24,6 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { useOverlay } from '@react-aria/overlays';
 import { useMountedState } from 'react-use';
 import { positionTooltip } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin';
 
@@ -32,6 +31,7 @@ import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 export interface HoverEvent {
   xIndex: number;
@@ -72,20 +72,21 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   const { eventBus } = usePanelContext();
 
   let oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+  let isToolTipOpen = useRef<boolean>(false);
 
   const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
-  const [isToolTipOpen, setIsToolTipOpen] = useState<boolean>(false);
+
   const isMounted = useMountedState();
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
 
   const onCloseToolTip = () => {
-    setIsToolTipOpen(false);
+    isToolTipOpen.current = false;
+    setCoords(null);
+    setShouldDisplayCloseButton(false);
   };
-  const ref = createRef<HTMLElement>();
-  const { overlayProps } = useOverlay({ onClose: onCloseToolTip, isDismissable: true, isOpen: isToolTipOpen }, ref);
-
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const structureRef = useRef(10000);
@@ -204,6 +205,13 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     });
   };
 
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
+
   return (
     <GraphNG
       theme={theme}
@@ -221,6 +229,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     >
       {(config, alignedFrame) => {
         if (oldConfig.current !== config) {
+          config.addHook('init', (u) => {
+            u.root.parentElement?.addEventListener('click', onUPlotClick);
+          });
+
           let rect: DOMRect;
           // rect of .u-over (grid area)
           config.addHook('syncRect', (u, r) => {
@@ -234,7 +246,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
                 setFocusedSeriesIdx,
                 setFocusedPointIdx,
                 (clear) => {
-                  if (clear) {
+                  if (clear && !isToolTipOpen.current) {
                     setCoords(null);
                     return;
                   }
@@ -244,7 +256,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
                   }
 
                   const { x, y } = positionTooltip(u, rect);
-                  if (x !== undefined && y !== undefined) {
+                  if (x !== undefined && y !== undefined && !isToolTipOpen.current) {
                     setCoords({ x, y });
                   }
                 },
@@ -257,7 +269,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
             if (!isMounted()) {
               return;
             }
-            setFocusedPointIdx(u.legend.idx!);
+            if (!isToolTipOpen.current) {
+              setFocusedPointIdx(u.legend.idx!);
+            }
             if (u.cursor.idxs != null) {
               for (let i = 0; i < u.cursor.idxs.length; i++) {
                 const sel = u.cursor.idxs[i];
@@ -268,15 +282,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
                     pageX: rect.left + u.cursor.left!,
                     pageY: rect.top + u.cursor.top!,
                   };
-                  setHover(hover);
+
+                  if (!isToolTipOpen.current || !hover) {
+                    setHover(hover);
+                  }
 
                   return; // only show the first one
                 }
               }
-            }
-
-            if (!isToolTipOpen) {
-              setHover(undefined);
             }
           });
 
@@ -284,7 +297,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
             if (!isMounted()) {
               return;
             }
-            setFocusedSeriesIdx(idx);
+            if (!isToolTipOpen.current) {
+              setFocusedSeriesIdx(idx);
+            }
           });
 
           oldConfig.current = config;
@@ -305,14 +320,18 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                 allowPointerEvents
               >
-                <section ref={ref} {...overlayProps}>
-                  <DataHoverView
-                    data={info.aligned}
-                    rowIndex={focusedPointIdx}
-                    columnIndex={seriesIdx}
-                    sortOrder={options.tooltip.sort}
-                  />
-                </section>
+                {shouldDisplayCloseButton && (
+                  <>
+                    <CloseButton style={{ zIndex: 1 }} onClick={onCloseToolTip} />
+                    <div style={{ marginBottom: 15 }} />
+                  </>
+                )}
+                <DataHoverView
+                  data={info.aligned}
+                  rowIndex={focusedPointIdx}
+                  columnIndex={seriesIdx}
+                  sortOrder={options.tooltip.sort}
+                />
               </VizTooltipContainer>
             )}
           </Portal>
