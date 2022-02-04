@@ -194,10 +194,10 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
-	// t.Run(fmt.Sprintf("on 4th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-	// 	tick := advanceClock(t, mockedClock)
-	// 	assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
-	// })
+	t.Run(fmt.Sprintf("on 4th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
+		tick := advanceClock(t, mockedClock)
+		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
+	})
 
 	key := alerts[0].GetKey()
 	err := dbstore.DeleteAlertRuleByUID(alerts[0].OrgID, alerts[0].UID)
