@@ -585,6 +585,6 @@ func (m *SQLStoreMock) ExpireOldUserInvites(ctx context.Context, cmd *models.Exp
 	return m.ExpectedError
 }
 
-func (m SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
+func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
 	return m.ExpectedError
 }
