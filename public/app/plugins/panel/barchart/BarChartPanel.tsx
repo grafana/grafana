@@ -26,6 +26,7 @@ import {
   VizLegend,
   VizTooltipContainer,
 } from '@grafana/ui';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
 
 import { PanelOptions } from './models.gen';
@@ -131,6 +132,35 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     }
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
+  if (!info.viz?.fields.length) {
+    return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
+  }
+
+  const renderTooltip = (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+    const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
+    if (field) {
+      const disp = getFieldDisplayName(field, alignedFrame);
+      seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
+    }
+
+    return (
+      <>
+        {shouldDisplayCloseButton && (
+          <>
+            <CloseButton onClick={onCloseToolTip} />
+            <div className={styles.closeButtonSpacer} />
+          </>
+        )}
+        <DataHoverView
+          data={info.aligned}
+          rowIndex={datapointIdx}
+          columnIndex={seriesIdx}
+          sortOrder={options.tooltip.sort}
+        />
+      </>
+    );
+  };
+
   const renderLegend = (config: UPlotConfigBuilder) => {
     const { legend } = options;
     if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
@@ -235,13 +265,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
           });
         }
 
-        let seriesIdx = focusedSeriesIdx;
-        const field = seriesIdx == null ? null : alignedFrame.fields[seriesIdx];
-        if (field) {
-          const disp = getFieldDisplayName(field, alignedFrame);
-          seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
-        }
-
         return (
           <Portal>
             {hover && coords && (
@@ -250,18 +273,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                 allowPointerEvents
               >
-                {shouldDisplayCloseButton && (
-                  <>
-                    <CloseButton onClick={onCloseToolTip} />
-                    <div className={styles.closeButtonSpacer} />
-                  </>
-                )}
-                <DataHoverView
-                  data={info.aligned}
-                  rowIndex={focusedPointIdx}
-                  columnIndex={seriesIdx}
-                  sortOrder={options.tooltip.sort}
-                />
+                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>
             )}
           </Portal>
