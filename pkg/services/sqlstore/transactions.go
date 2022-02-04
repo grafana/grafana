@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mattn/go-sqlite3"
@@ -41,30 +42,21 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 		return err
 	}
 
-	commitTransaction := true
+	if !sess.transactionOpen && !isNew {
+		// this should not happen because the only place that creates reusable session begins a new transaction.
+		return fmt.Errorf("cannot reuse existing session that did not start transaction")
+	}
 
 	if isNew { // if this call initiated the session, it should be responsible for closing it.
 		defer sess.Close()
-	} else {
-		if !sess.transactionOpen {
-			tsclogger.Info("opening transaction for existing session")
-			if err = sess.Session.Begin(); err != nil {
-				return err
-			}
-			sess.transactionOpen = true
-			defer func() {
-				sess.transactionOpen = false
-			}()
-		} else {
-			tsclogger.Info("reusing existing transaction")
-			commitTransaction = false
-		}
 	}
 
 	err = callback(sess)
 
-	if !commitTransaction {
-		return nil
+	if !isNew {
+		tsclogger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
+		// Do not commit the transaction if the session was reused.
+		return err
 	}
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
