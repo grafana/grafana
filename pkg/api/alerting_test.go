@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -81,6 +82,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			})
 	})
 
+	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts",
 		models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
@@ -102,7 +104,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 
 			require.Nil(t, searchQuery)
 			assert.NotNil(t, getAlertsQuery)
-		})
+		}, mock)
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET",
 		"/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery",
@@ -140,7 +142,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			assert.Equal(t, int64(2), getAlertsQuery.DashboardIDs[1])
 			assert.Equal(t, int64(5), getAlertsQuery.Limit)
 			assert.Equal(t, "alertQuery", getAlertsQuery.Query)
-		})
+		}, mock)
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/alert-notifications/1",
 		"/alert-notifications/:notificationId", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -149,7 +151,7 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			sc.handlerFunc = GetAlertNotificationByID
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
-		})
+		}, mock)
 }
 
 func callPauseAlert(sc *scenarioContext) {

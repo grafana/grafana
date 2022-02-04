@@ -169,8 +169,7 @@ describe('loki result transformer', () => {
       expect(data.get(0)).toEqual({
         ts: '2020-02-12T15:05:14.265Z',
         tsNs: '1581519914265798400',
-        line:
-          't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
+        line: 't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
         labels: { filename: '/var/log/grafana/grafana.log' },
         id: '07f0607c-04ee-51bd-8a0c-fc0f85d37489',
       });
@@ -216,20 +215,20 @@ describe('loki result transformer', () => {
 
   describe('createMetricLabel', () => {
     it('should create correct label based on passed variables', () => {
-      const label = ResultTransformer.createMetricLabel({}, ({
+      const label = ResultTransformer.createMetricLabel({}, {
         scopedVars: { testLabel: { selected: true, text: 'label1', value: 'label1' } },
         legendFormat: '{{$testLabel}}',
-      } as unknown) as TransformerOptions);
+      } as unknown as TransformerOptions);
       expect(label).toBe('label1');
     });
   });
 
   describe('lokiResultsToTableModel', () => {
     it('should correctly set the type of the label column to be a string', () => {
-      const lokiResultWithIntLabel = ([
+      const lokiResultWithIntLabel = [
         { metric: { test: 1 }, value: [1610367143, 10] },
         { metric: { test: 2 }, value: [1610367144, 20] },
-      ] as unknown) as LokiMatrixResult[];
+      ] as unknown as LokiMatrixResult[];
 
       const table = ResultTransformer.lokiResultsToTableModel(lokiResultWithIntLabel, 1, 'A', {});
       expect(table.columns[0].type).toBe('time');
@@ -291,8 +290,6 @@ describe('enhanceDataFrame', () => {
      * NOTE on time parameters:
      * - Input time series data has timestamps in sec (like Prometheus)
      * - Output time series has timestamps in ms (as expected for the chart lib)
-     * - Start/end parameters are in ns (as expected for Loki)
-     * - Step is in sec (like in Prometheus)
      */
     const data: Array<[number, string]> = [
       [1, '1'],
@@ -301,12 +298,10 @@ describe('enhanceDataFrame', () => {
     ];
 
     it('returns data as is if step, start, and end align', () => {
-      const options: Partial<TransformerOptions> = { start: 1 * 1e9, end: 4 * 1e9, step: 1 };
-      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
+      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data);
       expect(result).toEqual([
         [1, 1000],
         [0, 2000],
-        [null, 3000],
         [1, 4000],
       ]);
     });

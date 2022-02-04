@@ -12,46 +12,37 @@ import (
 )
 
 type State struct {
-	AlertRuleUID       string
-	OrgID              int64
-	CacheId            string
-	State              eval.State
-	Resolved           bool
-	Results            []Evaluation
-	StartsAt           time.Time
-	EndsAt             time.Time
-	LastEvaluationTime time.Time
-	EvaluationDuration time.Duration
-	LastSentAt         time.Time
-	Annotations        map[string]string
-	Labels             data.Labels
-	Error              error
+	AlertRuleUID         string
+	OrgID                int64
+	CacheId              string
+	State                eval.State
+	Resolved             bool
+	Results              []Evaluation
+	LastEvaluationString string
+	StartsAt             time.Time
+	EndsAt               time.Time
+	LastEvaluationTime   time.Time
+	EvaluationDuration   time.Duration
+	LastSentAt           time.Time
+	Annotations          map[string]string
+	Labels               data.Labels
+	Error                error
 }
 
 type Evaluation struct {
-	EvaluationTime   time.Time
-	EvaluationState  eval.State
-	EvaluationString string
+	EvaluationTime  time.Time
+	EvaluationState eval.State
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
 	// in classic conditions do not have a RefID.
-	Values map[string]EvaluationValue
-}
-
-// EvaluationValue contains the labels and value for a RefID in an evaluation.
-type EvaluationValue struct {
-	Labels data.Labels
-	Value  *float64
+	Values map[string]*float64
 }
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
-func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]EvaluationValue {
-	result := make(map[string]EvaluationValue, len(m))
+func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float64 {
+	result := make(map[string]*float64, len(m))
 	for k, v := range m {
-		result[k] = EvaluationValue{
-			Labels: v.Labels,
-			Value:  v.Value,
-		}
+		result[k] = v.Value
 	}
 	return result
 }
@@ -161,7 +152,7 @@ func (a *State) Equals(b *State) bool {
 }
 
 func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
-	numBuckets := 2 * (int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds)
+	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
 	if numBuckets == 0 {
 		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
 	}
