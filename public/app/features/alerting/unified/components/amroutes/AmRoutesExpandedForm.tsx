@@ -82,6 +82,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                                 onChange={(value) => onChange(value?.value)}
                                 options={matcherFieldOptions}
                                 aria-label="Operator"
+                                menuShouldPortal
                               />
                             )}
                             defaultValue={field.operator}
