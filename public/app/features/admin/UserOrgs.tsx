@@ -141,7 +141,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   componentDidMount() {
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        fetchRoleOptions(this.props.org.orgId).then((roles) => this.setState({ roleOptions: roles }));
+        fetchRoleOptions(this.props.org.orgId).then((roles) => this.setState({ roleOptions: roles })).catch(err => console.error(err));
       }
       if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
         fetchRoleOptions(this.props.org.orgId).then((roles) => this.setState({ builtInRoles: roles }));
