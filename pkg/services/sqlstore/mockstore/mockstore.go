@@ -10,6 +10,7 @@ import (
 
 type SQLStoreMock struct {
 	LastGetAlertsQuery *models.GetAlertsQuery
+	LatestUserId       int64
 
 	ExpectedUser          *models.User
 	ExpectedDatasource    *models.DataSource
@@ -156,11 +157,17 @@ func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSig
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
+	m.LatestUserId = cmd.UserId
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
+	m.LatestUserId = cmd.UserId
 	return m.ExpectedError
 }
 
