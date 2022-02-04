@@ -13,7 +13,6 @@ interface ServiceAccountCreatePageProps {
 }
 interface ServiceAccountDTO {
   name: string;
-  password: string;
   email?: string;
   login?: string;
 }
