@@ -9,7 +9,6 @@ const setup = (propOverrides?: Partial<Props>) => {
     query: {
       ts: 1,
       datasourceName: 'Test datasource',
-      datasourceId: 'datasource 1',
       starred: false,
       comment: '',
       queries: [
@@ -17,7 +16,6 @@ const setup = (propOverrides?: Partial<Props>) => {
         { expr: 'query2', refId: 'B' } as DataQuery,
         { expr: 'query3', refId: 'C' } as DataQuery,
       ],
-      sessionName: '',
     },
     dsImg: '/app/img',
     isRemoved: false,
@@ -37,7 +35,6 @@ const setup = (propOverrides?: Partial<Props>) => {
 const starredQueryWithComment = {
   ts: 1,
   datasourceName: 'Test datasource',
-  datasourceId: 'datasource 1',
   starred: true,
   comment: 'test comment',
   queries: [
@@ -45,7 +42,6 @@ const starredQueryWithComment = {
     { query: 'query2', refId: 'B' },
     { query: 'query3', refId: 'C' },
   ],
-  sessionName: '',
 };
 
 describe('RichHistoryCard', () => {

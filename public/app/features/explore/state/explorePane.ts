@@ -183,7 +183,7 @@ export function initializeExplore(
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
 
-    const richHistory = getRichHistory();
+    const richHistory = await getRichHistory();
     dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }

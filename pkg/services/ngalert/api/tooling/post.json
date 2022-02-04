@@ -3484,6 +3484,454 @@
   "version": "1.1.0"
  },
  "paths": {
+  "/api/alertmanager/grafana/api/v2/alerts": {
+   "get": {
+    "description": "get alertmanager alerts",
+    "operationId": "RouteGetGrafanaAMAlerts",
+    "parameters": [
+     {
+      "default": true,
+      "description": "Show active alerts",
+      "in": "query",
+      "name": "active",
+      "type": "boolean",
+      "x-go-name": "Active"
+     },
+     {
+      "default": true,
+      "description": "Show silenced alerts",
+      "in": "query",
+      "name": "silenced",
+      "type": "boolean",
+      "x-go-name": "Silenced"
+     },
+     {
+      "default": true,
+      "description": "Show inhibited alerts",
+      "in": "query",
+      "name": "inhibited",
+      "type": "boolean",
+      "x-go-name": "Inhibited"
+     },
+     {
+      "description": "A list of matchers to filter alerts by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "filter",
+      "type": "array",
+      "x-go-name": "Matchers"
+     },
+     {
+      "description": "A regex matching receivers to filter alerts by",
+      "in": "query",
+      "name": "receiver",
+      "type": "string",
+      "x-go-name": "Receivers"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "gettableAlerts",
+      "schema": {
+       "$ref": "#/definitions/gettableAlerts"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "create alertmanager alerts",
+    "operationId": "RoutePostGrafanaAMAlerts",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "PostableAlerts",
+      "schema": {
+       "items": {
+        "$ref": "#/definitions/postableAlert"
+       },
+       "type": "array"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/alerts/groups": {
+   "get": {
+    "description": "get alertmanager alerts",
+    "operationId": "RouteGetGrafanaAMAlertGroups",
+    "parameters": [
+     {
+      "default": true,
+      "description": "Show active alerts",
+      "in": "query",
+      "name": "active",
+      "type": "boolean",
+      "x-go-name": "Active"
+     },
+     {
+      "default": true,
+      "description": "Show silenced alerts",
+      "in": "query",
+      "name": "silenced",
+      "type": "boolean",
+      "x-go-name": "Silenced"
+     },
+     {
+      "default": true,
+      "description": "Show inhibited alerts",
+      "in": "query",
+      "name": "inhibited",
+      "type": "boolean",
+      "x-go-name": "Inhibited"
+     },
+     {
+      "description": "A list of matchers to filter alerts by",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "filter",
+      "type": "array",
+      "x-go-name": "Matchers"
+     },
+     {
+      "description": "A regex matching receivers to filter alerts by",
+      "in": "query",
+      "name": "receiver",
+      "type": "string",
+      "x-go-name": "Receivers"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "alertGroups",
+      "schema": {
+       "$ref": "#/definitions/alertGroups"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/silence/{SilenceId}": {
+   "delete": {
+    "description": "delete silence",
+    "operationId": "RouteDeleteGrafanaSilence",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "get": {
+    "description": "get silence",
+    "operationId": "RouteGetGrafanaSilence",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "gettableSilence",
+      "schema": {
+       "$ref": "#/definitions/gettableSilence"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/silences": {
+   "get": {
+    "description": "get silences",
+    "operationId": "RouteGetGrafanaSilences",
+    "parameters": [
+     {
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "filter",
+      "type": "array",
+      "x-go-name": "Filter"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "gettableSilences",
+      "schema": {
+       "$ref": "#/definitions/gettableSilences"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "create silence",
+    "operationId": "RouteCreateGrafanaSilence",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Silence",
+      "schema": {
+       "$ref": "#/definitions/postableSilence"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "gettableSilence",
+      "schema": {
+       "$ref": "#/definitions/gettableSilence"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/api/v2/status": {
+   "get": {
+    "description": "get alertmanager status and configuration",
+    "operationId": "RouteGetGrafanaAMStatus",
+    "responses": {
+     "200": {
+      "description": "GettableStatus",
+      "schema": {
+       "$ref": "#/definitions/GettableStatus"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/config/api/v1/alerts": {
+   "delete": {
+    "description": "deletes the Alerting config for a tenant",
+    "operationId": "RouteDeleteGrafanaAlertingConfig",
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "get": {
+    "description": "gets an Alerting config",
+    "operationId": "RouteGetGrafanaAlertingConfig",
+    "responses": {
+     "200": {
+      "description": "GettableUserConfig",
+      "schema": {
+       "$ref": "#/definitions/GettableUserConfig"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   },
+   "post": {
+    "description": "sets an Alerting config",
+    "operationId": "RoutePostGrafanaAlertingConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableUserConfig"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/config/api/v1/receivers/test": {
+   "post": {
+    "operationId": "RoutePostTestGrafanaReceivers",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestReceiversConfigBodyParams"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "207": {
+      "description": "MultiStatus",
+      "schema": {
+       "$ref": "#/definitions/MultiStatus"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
+     "404": {
+      "description": "AlertManagerNotFound",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotFound"
+      }
+     },
+     "408": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     },
+     "409": {
+      "description": "AlertManagerNotReady",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotReady"
+      }
+     }
+    },
+    "summary": "Test Grafana managed receivers without saving them.",
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
   "/api/alertmanager/{Recipient}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
@@ -3531,11 +3979,12 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3571,11 +4020,12 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3644,11 +4094,12 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3682,11 +4133,12 @@
       "type": "string"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3718,11 +4170,12 @@
       "type": "string"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3759,11 +4212,12 @@
       "x-go-name": "Filter"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3796,11 +4250,12 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3828,11 +4283,12 @@
     "operationId": "RouteGetAMStatus",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3860,11 +4316,12 @@
     "operationId": "RouteDeleteAlertingConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3890,11 +4347,12 @@
     "operationId": "RouteGetAlertingConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3927,11 +4385,12 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -3965,11 +4424,12 @@
       }
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -4022,17 +4482,65 @@
     ]
    }
   },
+  "/api/prometheus/grafana/api/v1/alerts": {
+   "get": {
+    "description": "gets the current alerts",
+    "operationId": "RouteGetGrafanaAlertStatuses",
+    "responses": {
+     "200": {
+      "description": "AlertResponse",
+      "schema": {
+       "$ref": "#/definitions/AlertResponse"
+      }
+     }
+    },
+    "tags": [
+     "prometheus"
+    ]
+   }
+  },
+  "/api/prometheus/grafana/api/v1/rules": {
+   "get": {
+    "description": "gets the evaluation statuses of all rules",
+    "operationId": "RouteGetGrafanaRuleStatuses",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "RuleResponse",
+      "schema": {
+       "$ref": "#/definitions/RuleResponse"
+      }
+     }
+    },
+    "tags": [
+     "prometheus"
+    ]
+   }
+  },
   "/api/prometheus/{Recipient}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -4065,11 +4573,12 @@
       "type": "integer"
      },
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      }
     ],
     "responses": {
@@ -4085,17 +4594,199 @@
     ]
    }
   },
+  "/api/ruler/grafana/api/v1/rules": {
+   "get": {
+    "description": "List rule groups",
+    "operationId": "RouteGetGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "NamespaceConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/api/v1/rules/{Namespace}": {
+   "delete": {
+    "description": "Delete namespace",
+    "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   },
+   "get": {
+    "description": "Get rule groups by namespace",
+    "operationId": "RouteGetNamespaceGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "NamespaceConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceConfigResponse"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "description": "Creates or updates a rule group",
+    "operationId": "RoutePostNameGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableRuleGroupConfig"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}": {
+   "delete": {
+    "description": "Delete rule group",
+    "operationId": "RouteDeleteGrafanaRuleGroupConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Groupname",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   },
+   "get": {
+    "description": "Get rule group",
+    "operationId": "RouteGetGrafanaRuleGroupConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Groupname",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "RuleGroupConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/RuleGroupConfigResponse"
+      }
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
   "/api/ruler/{Recipient}/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "query",
@@ -4131,11 +4822,12 @@
     "operationId": "RouteDeleteNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -4161,11 +4853,12 @@
     "operationId": "RouteGetNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -4198,11 +4891,12 @@
     "operationId": "RoutePostNameRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -4237,11 +4931,12 @@
     "operationId": "RouteDeleteRuleGroupConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -4273,11 +4968,12 @@
     "operationId": "RouteGetRulegGroupConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "path",
@@ -4449,20 +5145,53 @@
     ]
    }
   },
+  "/api/v1/rule/test/grafana": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test a rule against Grafana ruler",
+    "operationId": "RouteTestRuleGrafanaConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestRulePayload"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "TestRuleResponse",
+      "schema": {
+       "$ref": "#/definitions/TestRuleResponse"
+      }
+     }
+    },
+    "tags": [
+     "testing"
+    ]
+   }
+  },
   "/api/v1/rule/test/{Recipient}": {
    "post": {
     "consumes": [
      "application/json"
     ],
-    "description": "Test rule",
+    "description": "Test a rule against external data source ruler",
     "operationId": "RouteTestRuleConfig",
     "parameters": [
      {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "description": "Recipient should be the numeric datasource id",
+      "format": "int64",
       "in": "path",
       "name": "Recipient",
       "required": true,
-      "type": "string"
+      "type": "integer"
      },
      {
       "in": "body",

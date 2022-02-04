@@ -1,6 +1,6 @@
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-import { queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
+import { checkForPathSeparator, queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 describe('rule-editor', () => {
@@ -189,5 +189,19 @@ describe('rule-editor', () => {
     it('should not rewire refs with partial variable match', () => {
       expect(updateMathExpressionRefs('$A3 + $B', 'A', 'C')).toBe('$A3 + $B');
     });
+  });
+});
+
+describe('checkForPathSeparator', () => {
+  it('should not allow strings with /', () => {
+    expect(checkForPathSeparator('foo / bar')).not.toBe(true);
+    expect(typeof checkForPathSeparator('foo / bar')).toBe('string');
+  });
+  it('should not allow strings with \\', () => {
+    expect(checkForPathSeparator('foo \\ bar')).not.toBe(true);
+    expect(typeof checkForPathSeparator('foo \\ bar')).toBe('string');
+  });
+  it('should allow anything without / or \\', () => {
+    expect(checkForPathSeparator('foo bar')).toBe(true);
   });
 });
