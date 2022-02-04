@@ -109,7 +109,7 @@ getLocationSrv.update({
 locationService.partial({ value: 1 });
 ```
 
-**Example:** How to update the search/query parameter for the current route and add replacing it in the navigation history.
+**Example:** Update the search or query parameter for the current route and add replacing it in the navigation history.
 
 ```ts
 // before
