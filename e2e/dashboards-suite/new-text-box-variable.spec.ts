@@ -7,7 +7,7 @@ describe('Variables - Text box', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
-    // Create a new "Custom" variable
+    // Create a new "text box" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().type('Text box{enter}');
@@ -19,7 +19,7 @@ describe('Variables - Text box', () => {
 
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
+    e2e.components.BackButton.backArrow().click({ force: true });
     e2e().get('#VariableUnderTest').clear().type('dog-cat').blur();
 
     // Assert it was rendered

@@ -3,7 +3,7 @@ import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 
 describe('Variables - Constant', () => {
-  it('can add a new text box variable', () => {
+  it('can add a new constant variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
@@ -19,7 +19,7 @@ describe('Variables - Constant', () => {
 
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
+    e2e.components.BackButton.backArrow().click({ force: true });
     e2e.components.RefreshPicker.runButtonV2().click();
 
     // Assert it was rendered

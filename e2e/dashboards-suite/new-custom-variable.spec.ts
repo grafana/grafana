@@ -50,7 +50,7 @@ describe('Variables - Custom', () => {
 
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
+    e2e.components.BackButton.backArrow().click({ force: true });
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('One').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('Two').click();
 
