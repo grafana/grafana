@@ -13,10 +13,10 @@ import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
 import { VariableTextField } from '../editor/VariableTextField';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDatasourceVariableState } from '../editor/selectors';
+import { getDatasourceVariableEditorState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  extended: getDatasourceVariableState(state.templating.editor),
+  extended: getDatasourceVariableEditorState(state.templating.editor),
 });
 
 const mapDispatchToProps = {

@@ -13,7 +13,7 @@ import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 import { hasOngoingTransaction } from '../utils';
-import { getQueryVariableState } from '../editor/selectors';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -66,7 +66,7 @@ export const changeQueryVariableDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const extendedEditorState = getQueryVariableState(getState().templating.editor);
+      const extendedEditorState = getQueryVariableEditorState(getState().templating.editor);
       const previousDatasource = extendedEditorState?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {

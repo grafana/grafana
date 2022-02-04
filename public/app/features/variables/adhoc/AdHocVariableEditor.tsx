@@ -9,10 +9,10 @@ import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { StoreState } from 'app/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
-import { getAdhocVariableState } from '../editor/selectors';
+import { getAdhocVariableEditorState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  extended: getAdhocVariableState(state.templating.editor),
+  extended: getAdhocVariableEditorState(state.templating.editor),
 });
 
 const mapDispatchToProps = {

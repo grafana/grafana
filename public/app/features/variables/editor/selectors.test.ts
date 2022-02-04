@@ -1,4 +1,8 @@
-import { getAdhocVariableState, getDatasourceVariableState, getQueryVariableState } from './selectors';
+import {
+  getAdhocVariableEditorState,
+  getDatasourceVariableEditorState,
+  getQueryVariableEditorState,
+} from './selectors';
 import {
   AdHocVariableEditorState,
   DataSourceVariableEditorState,
@@ -42,44 +46,44 @@ const queryVariableState = {
   extended: queryExtended,
 };
 
-describe('getAdhocVariableState', () => {
+describe('getAdhocVariableEditorState', () => {
   it('returns the extended properties for adhoc variable state', () => {
-    expect(getAdhocVariableState(adhocVariableState)).toBe(adhocExtended);
+    expect(getAdhocVariableEditorState(adhocVariableState)).toBe(adhocExtended);
   });
 
   it('returns null for datasource variable state', () => {
-    expect(getAdhocVariableState(datasourceVariableState)).toBeNull();
+    expect(getAdhocVariableEditorState(datasourceVariableState)).toBeNull();
   });
 
   it('returns null for query variable state', () => {
-    expect(getAdhocVariableState(queryVariableState)).toBeNull();
+    expect(getAdhocVariableEditorState(queryVariableState)).toBeNull();
   });
 });
 
-describe('getDatasourceVariableState', () => {
+describe('getDatasourceVariableEditorState', () => {
   it('returns the extended properties for datasource variable state', () => {
-    expect(getDatasourceVariableState(datasourceVariableState)).toBe(datasourceExtended);
+    expect(getDatasourceVariableEditorState(datasourceVariableState)).toBe(datasourceExtended);
   });
 
   it('returns null for adhoc variable state', () => {
-    expect(getDatasourceVariableState(adhocVariableState)).toBeNull();
+    expect(getDatasourceVariableEditorState(adhocVariableState)).toBeNull();
   });
 
   it('returns null for query variable state', () => {
-    expect(getDatasourceVariableState(queryVariableState)).toBeNull();
+    expect(getDatasourceVariableEditorState(queryVariableState)).toBeNull();
   });
 });
 
-describe('getQueryVariableState', () => {
+describe('getQueryVariableEditorState', () => {
   it('returns the extended properties for query variable state', () => {
-    expect(getQueryVariableState(queryVariableState)).toBe(queryExtended);
+    expect(getQueryVariableEditorState(queryVariableState)).toBe(queryExtended);
   });
 
   it('returns null for adhoc variable state', () => {
-    expect(getQueryVariableState(adhocVariableState)).toBeNull();
+    expect(getQueryVariableEditorState(adhocVariableState)).toBeNull();
   });
 
   it('returns null for datasource variable state', () => {
-    expect(getQueryVariableState(datasourceVariableState)).toBeNull();
+    expect(getQueryVariableEditorState(datasourceVariableState)).toBeNull();
   });
 });

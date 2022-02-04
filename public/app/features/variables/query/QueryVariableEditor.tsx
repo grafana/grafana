@@ -19,10 +19,10 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
-import { getQueryVariableState } from '../editor/selectors';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  extended: getQueryVariableState(state.templating.editor),
+  extended: getQueryVariableEditorState(state.templating.editor),
 });
 
 const mapDispatchToProps = {
