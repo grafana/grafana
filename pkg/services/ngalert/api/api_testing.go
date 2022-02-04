@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -25,6 +26,7 @@ type TestingApiSrv struct {
 	ExpressionService *expr.Service
 	DatasourceCache   datasources.CacheService
 	log               log.Logger
+	secretsService    secrets.Service
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
@@ -33,7 +35,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
 			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 		}
-		return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.Cfg, srv.log)
+		return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.secretsService, srv.Cfg, srv.log)
 	}
 
 	if body.Type() != apimodels.LoTexRulerBackend {
@@ -86,7 +88,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evaluator := eval.Evaluator{Cfg: srv.Cfg, Log: srv.log, DataSourceCache: srv.DatasourceCache}
+	evaluator := eval.NewEvaluator(srv.Cfg, srv.log, srv.DatasourceCache, srv.secretsService)
 	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
