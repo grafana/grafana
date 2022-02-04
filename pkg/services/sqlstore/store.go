@@ -147,4 +147,5 @@ type Store interface {
 	GetTempUsersQuery(ctx context.Context, query *models.GetTempUsersQuery) error
 	GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error
 	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
+	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 }

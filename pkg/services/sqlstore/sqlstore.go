@@ -82,11 +82,11 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
-func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
+func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.Bus, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
-		Bus:                         bus,
+		Bus:                         b,
 		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
@@ -132,6 +132,8 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addTeamQueryAndCommandHandlers()
 	ss.addDashboardProvisioningQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
+
+	bus.AddHandler("sql", ss.GetDBHealthQuery)
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
