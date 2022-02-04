@@ -54,7 +54,7 @@ Removed due to being an internal component.
 
 #### LocationService replaces getLocationSrv
 
-A while back we migrated to use a new routing system. At the same time we introduced a new service for managing locations, navigation etc. and we are now making that service the primary one to use.
+IIn a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.  
 
 **Example:** How to import the service.
 
