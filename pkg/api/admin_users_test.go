@@ -28,6 +28,15 @@ const (
 	existingTestLogin = "existing@example.com"
 )
 
+type mockAuthInfoService struct{}
+
+func (m *mockAuthInfoService) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+	return nil, nil
+}
+func (m *mockAuthInfoService) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	return nil
+}
+
 func TestAdminAPIEndpoint(t *testing.T) {
 	const role = models.ROLE_ADMIN
 
@@ -291,8 +300,9 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := &HTTPServer{
-			Cfg:      setting.NewCfg(),
-			SQLStore: sqlStore,
+			Cfg:             setting.NewCfg(),
+			SQLStore:        sqlStore,
+			authInfoService: &mockAuthInfoService{},
 		}
 
 		sc := setupScenarioContext(t, url)
