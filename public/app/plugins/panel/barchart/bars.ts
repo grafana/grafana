@@ -61,17 +61,25 @@ export interface BarsOptions {
  * @internal
  */
 interface ValueLabelTable {
-  [index: number]: ValueLabel[];
+  [index: number]: ValueLabelArray;
+}
+
+/**
+ * @internal
+ */
+interface ValueLabelArray {
+  [index: number]: ValueLabel;
 }
 
 /**
  * @internal
  */
 interface ValueLabel {
-  x: number;
-  y: number;
-  bbox: Rect;
+  bbox?: Rect;
   text: string;
+  textMetrics?: TextMetrics;
+  x?: number;
+  y?: number;
 }
 
 /**
@@ -325,36 +333,45 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       return;
     }
     // pre-cache formatted labels
-    let texts = Array(barRects.length);
+    // let texts = Array(barRects.length);
     let labelOffset = LABEL_OFFSET_MAX;
+    let labels: ValueLabelTable = {};
 
     barRects.forEach((r, i) => {
-      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx)! / (pctStacked ? alignedTotals![r.sidx][r.didx]! : 1));
+      const { didx, sidx } = r;
+      const text = formatValue(sidx, rawValue(sidx, didx)! / (pctStacked ? alignedTotals![sidx][didx]! : 1));
       labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
+
+      if (labels[didx] === undefined) {
+        labels[didx] = {};
+      }
+      labels[didx][sidx] = { text: text };
     });
 
     let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
 
-    if (hasAutoValueSize) {
-      for (let i = 0; i < barRects.length; i++) {
-        fontSize = Math.round(
-          Math.min(
-            fontSize,
-            VALUE_MAX_FONT_SIZE,
-            calculateFontSize(
-              texts[i],
-              hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
-              vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
-              1
-            )
-          )
+    barRects.forEach((r, i) => {
+      const { didx, sidx } = r;
+
+      if (hasAutoValueSize) {
+        const { fontSize: calculatedSize, textMetrics } = calculateFontSize(
+          labels[didx][sidx].text,
+          hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
+          vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
+          1
         );
+
+        labels[didx][sidx].textMetrics = textMetrics;
+        fontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
 
         if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== VisibilityMode.Always) {
           return;
         }
+      } else {
+        const text = labels[didx][sidx].text;
+        labels[didx][sidx].textMetrics = measureText(text, fontSize);
       }
-    }
+    });
 
     u.ctx.save();
 
@@ -363,11 +380,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
-    let labels: ValueLabelTable = {};
 
     barRects.forEach((r, i) => {
-      let value = rawValue(r.sidx, r.didx);
-      let text = texts[i];
+      const { didx, sidx } = r;
+      let value = rawValue(sidx, didx);
 
       if (value != null) {
         let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
@@ -388,41 +404,42 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           u.bbox.top +
           (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift);
 
-        // Retrieve metrics for the text and calculate
-        // bounding boxes for auto-showing of value labels
-        const textMetrics = measureText(text, fontSize);
-
-        if (labels[r.didx] === undefined) {
-          labels[r.didx] = [];
-        }
-
-        labels[r.didx].push({
-          text: text,
-          x: x,
-          y: y,
-          bbox: {
-            x: x,
-            y: y - textMetrics.actualBoundingBoxAscent / 2,
-            w: textMetrics.width,
-            h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+        // Retrieve textMetrics with necessary default values
+        // These _shouldn't_ be undefined at this point
+        // but they _could_ be.
+        const {
+          textMetrics = {
+            width: 1,
+            actualBoundingBoxAscent: 1,
+            actualBoundingBoxDescent: 1,
           },
-        });
+        } = labels[didx][sidx];
+
+        labels[didx][sidx].x = x;
+        labels[didx][sidx].y = y;
+        labels[didx][sidx].bbox = {
+          x: x,
+          y: y - textMetrics.actualBoundingBoxAscent,
+          w: textMetrics.width,
+          h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+        };
       }
     });
 
     for (const didx in labels) {
-      for (let i = 0; i < labels[didx].length; i++) {
-        const { text, x, y, bbox } = labels[didx][i];
+      for (const sidx in labels[didx]) {
+        const { text, x = 0, y = 0, bbox = { x: 0, y: 0, w: 1, h: 1 } } = labels[didx][sidx];
 
         if (showValue === VisibilityMode.Always) {
           u.ctx.fillText(text, x, y);
         } else if (showValue === VisibilityMode.Auto) {
           let intersectsLabel = false;
 
-          for (let j = 0; j < labels[didx].length; j++) {
-            const o: Rect = labels[didx][j].bbox;
+          // Test for any collisions
+          for (const subsidx in labels[didx]) {
+            const r = labels[didx][subsidx].bbox;
 
-            if (i !== j && intersects(bbox, o)) {
+            if (r !== undefined && sidx !== subsidx && intersects(bbox, r)) {
               intersectsLabel = true;
             }
           }

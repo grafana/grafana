@@ -219,7 +219,7 @@ export class WideNoChartLayout extends BigValueLayout {
         this.maxTextWidth * valueWidthPercent,
         this.maxTextHeight,
         LINE_HEIGHT
-      );
+      ).fontSize;
     }
 
     if (this.titleToAlignTo?.length) {
@@ -230,7 +230,7 @@ export class WideNoChartLayout extends BigValueLayout {
         this.maxTextHeight,
         LINE_HEIGHT,
         MAX_TITLE_SIZE
-      );
+      ).fontSize;
 
       // make sure it's a bit smaller than valueFontSize
       this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
@@ -282,7 +282,7 @@ export class WideWithChartLayout extends BigValueLayout {
         this.maxTextHeight * textHeightPercent,
         LINE_HEIGHT,
         MAX_TITLE_SIZE
-      );
+      ).fontSize;
     }
 
     if (this.valueToAlignTo.length) {
@@ -291,7 +291,7 @@ export class WideWithChartLayout extends BigValueLayout {
         this.maxTextWidth * valueWidthPercent,
         this.maxTextHeight * chartHeightPercent,
         LINE_HEIGHT
-      );
+      ).fontSize;
     }
   }
 
@@ -334,7 +334,7 @@ export class StackedWithChartLayout extends BigValueLayout {
         height * titleHeightPercent,
         LINE_HEIGHT,
         MAX_TITLE_SIZE
-      );
+      ).fontSize;
     }
     titleHeight = this.titleFontSize * LINE_HEIGHT;
 
@@ -344,7 +344,7 @@ export class StackedWithChartLayout extends BigValueLayout {
         this.maxTextWidth,
         this.maxTextHeight - this.chartHeight - titleHeight,
         LINE_HEIGHT
-      );
+      ).fontSize;
     }
 
     // make title fontsize it's a bit smaller than valueFontSize
@@ -385,7 +385,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
         height * titleHeightPercent,
         LINE_HEIGHT,
         MAX_TITLE_SIZE
-      );
+      ).fontSize;
 
       titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
@@ -396,7 +396,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
         this.maxTextWidth,
         this.maxTextHeight - titleHeight,
         LINE_HEIGHT
-      );
+      ).fontSize;
     }
 
     // make title fontsize it's a bit smaller than valueFontSize
