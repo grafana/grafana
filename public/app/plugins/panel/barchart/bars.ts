@@ -76,6 +76,7 @@ interface ValueLabelArray {
  */
 interface ValueLabel {
   bbox?: Rect;
+  scaleFactor?: number;
   text: string;
   textMetrics?: TextMetrics;
   x?: number;
@@ -361,7 +362,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           1
         );
 
+        // Retrieve the new font size and use it
+        // to calculate scaling ratio
+        let newSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+        labels[didx][sidx].scaleFactor = fontSize / newSize;
         labels[didx][sidx].textMetrics = textMetrics;
+
+        // Update the end font-size
         fontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
 
         if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== VisibilityMode.Always) {
@@ -415,13 +422,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           },
         } = labels[didx][sidx];
 
+        // Construct final bounding box for the label text
+        let scaleFactor = labels[sidx][didx].scaleFactor ?? 1;
         labels[didx][sidx].x = x;
         labels[didx][sidx].y = y;
         labels[didx][sidx].bbox = {
           x: x,
           y: y - textMetrics.actualBoundingBoxAscent,
-          w: textMetrics.width,
-          h: textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent,
+          w: textMetrics.width * scaleFactor,
+          h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
         };
       }
     });
