@@ -25,12 +25,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
    * Return all history entries, perform migration and clean up entries not matching retention policy.
    */
   async getRichHistory() {
-    return this.getRichHistoryDTO().map(fromDTO);
-  }
-
-  private getRichHistoryDTO(): RichHistoryLocalStorageDTO[] {
-    const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
-    return migrateRichHistory(richHistory);
+    return getRichHistoryDTOs().map(fromDTO);
   }
 
   async addToRichHistory(newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>) {
@@ -42,7 +37,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     };
 
     const newRichHistoryQueryDTO = toDTO(richHistoryQuery);
-    const currentRichHistoryDTOs = cleanUp(this.getRichHistoryDTO());
+    const currentRichHistoryDTOs = cleanUp(getRichHistoryDTOs());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
      * which can be different) don't save it in rich history.
@@ -158,6 +153,11 @@ function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
   }
 
   return { queriesToKeep, limitExceeded };
+}
+
+function getRichHistoryDTOs(): RichHistoryLocalStorageDTO[] {
+  const richHistory: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
+  return migrateRichHistory(richHistory);
 }
 
 function migrateRichHistory(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
