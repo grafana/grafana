@@ -35,7 +35,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedError: models.ErrLastGrafanaAdmin,
 		}
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
@@ -60,7 +60,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to logout a non-existing user from all devices", func(t *testing.T) {
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedError: models.ErrUserNotFound,
 		}
 		adminLogoutUserScenario(t, "Should return not found when calling POST on", "/api/admin/users/200/logout",
@@ -72,7 +72,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedError: models.ErrUserNotFound,
 		}
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
@@ -83,7 +83,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin gets auth tokens for a non-existing user", func(t *testing.T) {
-		mock := mockstore.SQLStoreMock{
+		mock := &mockstore.SQLStoreMock{
 			ExpectedError: models.ErrUserNotFound,
 		}
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",

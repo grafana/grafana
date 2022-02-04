@@ -395,14 +395,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
 			alertNotifications.Get("/", routing.Wrap(hs.GetAlertNotifications))
-			alertNotifications.Post("/test", routing.Wrap(NotificationTest))
-			alertNotifications.Post("/", routing.Wrap(CreateAlertNotification))
+			alertNotifications.Post("/test", routing.Wrap(hs.NotificationTest))
+			alertNotifications.Post("/", routing.Wrap(hs.CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", routing.Wrap(hs.UpdateAlertNotification))
-			alertNotifications.Get("/:notificationId", routing.Wrap(GetAlertNotificationByID))
-			alertNotifications.Delete("/:notificationId", routing.Wrap(DeleteAlertNotification))
-			alertNotifications.Get("/uid/:uid", routing.Wrap(GetAlertNotificationByUID))
+			alertNotifications.Get("/:notificationId", routing.Wrap(hs.GetAlertNotificationByID))
+			alertNotifications.Delete("/:notificationId", routing.Wrap(hs.DeleteAlertNotification))
+			alertNotifications.Get("/uid/:uid", routing.Wrap(hs.GetAlertNotificationByUID))
 			alertNotifications.Put("/uid/:uid", routing.Wrap(hs.UpdateAlertNotificationByUID))
-			alertNotifications.Delete("/uid/:uid", routing.Wrap(DeleteAlertNotificationByUID))
+			alertNotifications.Delete("/uid/:uid", routing.Wrap(hs.DeleteAlertNotificationByUID))
 		}, reqEditorRole)
 
 		// alert notifications without requirement of user to be org editor
