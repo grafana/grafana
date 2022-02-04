@@ -79,7 +79,7 @@ func (r *simpleCrawler) broadcastStatus() {
 	}
 }
 
-func (r *simpleCrawler) Start(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
+func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
 	if r.IsRunning() {
 		tlog.Info("Already running")
 		return nil
