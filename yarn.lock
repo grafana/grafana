@@ -4042,6 +4042,7 @@ __metadata:
     "@monaco-editor/react": 4.3.1
     "@popperjs/core": 2.11.2
     "@react-aria/button": 3.3.4
+    "@react-aria/dialog": 3.1.4
     "@react-aria/focus": 3.5.0
     "@react-aria/menu": 3.3.0
     "@react-aria/overlays": 3.7.3
@@ -6520,7 +6521,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:3.5.0, @react-aria/focus@npm:^3.5.0":
+"@react-aria/dialog@npm:3.1.4":
+  version: 3.1.4
+  resolution: "@react-aria/dialog@npm:3.1.4"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/focus": ^3.4.1
+    "@react-aria/utils": ^3.8.2
+    "@react-stately/overlays": ^3.1.3
+    "@react-types/dialog": ^3.3.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 968328a9b22e545ea79084cca2714f3bc7954c02eb0dc7cab78a1094d4c5dbd19520a0cc28e3dcbb7cb8dd7c505d6b9cb77fbb0fb4735fdf2e99908d481af3ab
+  languageName: node
+  linkType: hard
+
+"@react-aria/focus@npm:3.5.0, @react-aria/focus@npm:^3.4.1, @react-aria/focus@npm:^3.5.0":
   version: 3.5.0
   resolution: "@react-aria/focus@npm:3.5.0"
   dependencies:
@@ -6832,6 +6848,18 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: e9d4371fff8e4e9460346f7cc715df8f10051860b8b3f4bf0773267f653e6541ce50ca6548822742e43972682c9c0ff9d72ecb364ee62779e07dac85086157c5
+  languageName: node
+  linkType: hard
+
+"@react-types/dialog@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "@react-types/dialog@npm:3.3.1"
+  dependencies:
+    "@react-types/overlays": ^3.5.1
+    "@react-types/shared": ^3.8.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 6b0260e7018f26387c1d16585a048af5617f8b146d42d28439f0d4fd0fb041b1f004ca1a0a021a4e07a200a0045e34da8b2e0a3ff235272426b6815994e1c291
   languageName: node
   linkType: hard
 
@@ -19664,6 +19692,7 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.4
     "@popperjs/core": 2.11.2
     "@react-aria/button": 3.3.4
+    "@react-aria/dialog": 3.1.4
     "@react-aria/focus": 3.5.0
     "@react-aria/interactions": 3.7.0
     "@react-aria/menu": 3.3.0
