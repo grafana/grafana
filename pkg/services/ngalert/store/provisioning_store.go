@@ -29,7 +29,7 @@ type ProvisioningStore interface {
 
 // GetProvenance gets the provenance status for a provisionable object.
 func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
-	recordType := o.ResourceTypeID()
+	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 	orgID := o.ResourceOrgID()
 
@@ -54,7 +54,7 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (mo
 
 // SetProvenance changes the provenance status for a provisionable object.
 func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
-	recordType := o.ResourceTypeID()
+	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 	orgID := o.ResourceOrgID()
 

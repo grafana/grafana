@@ -10,7 +10,7 @@ const (
 
 // Provisionable represents a resource that can be created through a provisioning mechanism, such as Terraform or config file.
 type Provisionable interface {
-	ResourceTypeID() string
+	ResourceType() string
 	ResourceID() string
 	ResourceOrgID() int64
 }

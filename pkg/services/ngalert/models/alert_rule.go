@@ -105,7 +105,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 	return nil
 }
 
-func (alertRule *AlertRule) ResourceTypeID() string {
+func (alertRule *AlertRule) ResourceType() string {
 	return "alertRule"
 }
 
