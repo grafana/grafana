@@ -358,11 +358,13 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSour
 };
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
-  return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any, fiscalYearStartMonth)!,
-    to: dateMath.parse(rawRange.to, true, timeZone as any, fiscalYearStartMonth)!,
-    raw: rawRange,
-  };
+  let range = rangeUtil.convertRawToRange(rawRange, timeZone, fiscalYearStartMonth);
+
+  if (range.to.isBefore(range.from)) {
+    range = rangeUtil.convertRawToRange({ from: range.raw.to, to: range.raw.from }, timeZone, fiscalYearStartMonth);
+  }
+
+  return range;
 };
 
 const parseRawTime = (value: string | DateTime): TimeFragment | null => {

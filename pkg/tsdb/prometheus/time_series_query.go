@@ -47,7 +47,7 @@ const (
 	ExemplarQueryType TimeSeriesQueryType = "exemplar"
 )
 
-func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery, fillNulls bool) (*backend.QueryDataResponse, error) {
+func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*PrometheusQuery) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -101,7 +101,7 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 			}
 		}
 
-		frames, err := parseTimeSeriesResponse(response, query, fillNulls)
+		frames, err := parseTimeSeriesResponse(response, query)
 		if err != nil {
 			return &result, err
 		}
@@ -128,12 +128,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		return &result, err
 	}
 
-	fillNulls := true
-	if req.Headers["FromAlert"] == "true" {
-		fillNulls = false
-	}
-
-	return s.runQueries(ctx, client, queries, fillNulls)
+	return s.runQueries(ctx, client, queries)
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -207,7 +202,7 @@ func (s *Service) parseTimeSeriesQuery(queryContext *backend.QueryDataRequest, d
 	return qs, nil
 }
 
-func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery, fillNulls bool) (data.Frames, error) {
+func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *PrometheusQuery) (data.Frames, error) {
 	var (
 		frames     = data.Frames{}
 		nextFrames = data.Frames{}
@@ -219,11 +214,7 @@ func parseTimeSeriesResponse(value map[TimeSeriesQueryType]interface{}, query *P
 
 		switch v := value.(type) {
 		case model.Matrix:
-			if fillNulls {
-				nextFrames = matrixToDataFramesWithNullFill(v, query, nextFrames)
-			} else {
-				nextFrames = matrixToDataFrames(v, query, nextFrames)
-			}
+			nextFrames = matrixToDataFrames(v, query, nextFrames)
 		case model.Vector:
 			nextFrames = vectorToDataFrames(v, query, nextFrames)
 		case *model.Scalar:
@@ -317,56 +308,6 @@ func interpolateVariables(model *QueryModel, interval time.Duration, timeRange t
 	return expr
 }
 
-func matrixToDataFramesWithNullFill(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
-	for _, v := range matrix {
-		tags := make(map[string]string, len(v.Metric))
-		for k, v := range v.Metric {
-			tags[string(k)] = string(v)
-		}
-
-		baseTimestamp := alignTimeRange(query.Start, query.Step, query.UtcOffsetSec).UnixMilli()
-		endTimestamp := alignTimeRange(query.End, query.Step, query.UtcOffsetSec).UnixMilli()
-		// For each step we create 1 data point. This results in range / step + 1 data points.
-		datapointsCount := int((endTimestamp-baseTimestamp)/query.Step.Milliseconds()) + 1
-
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, datapointsCount)
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, datapointsCount)
-		idx := 0
-
-		for _, pair := range v.Values {
-			timestamp := int64(pair.Timestamp)
-			value := float64(pair.Value)
-
-			for t := baseTimestamp; t < timestamp; t += query.Step.Milliseconds() {
-				timeField.Set(idx, time.Unix(0, t*1000000).UTC())
-				idx++
-			}
-
-			timeField.Set(idx, time.Unix(pair.Timestamp.Unix(), 0).UTC())
-			if !math.IsNaN(value) {
-				valueField.Set(idx, &value)
-			}
-			baseTimestamp = timestamp + query.Step.Milliseconds()
-			idx++
-		}
-
-		for t := baseTimestamp; t <= endTimestamp; t += query.Step.Milliseconds() {
-			timeField.Set(idx, time.Unix(0, t*1000000).UTC())
-			idx++
-		}
-
-		name := formatLegend(v.Metric, query)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
-		valueField.Labels = tags
-
-		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
-	}
-
-	return frames
-}
-
 func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data.Frames) data.Frames {
 	for _, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
@@ -387,6 +328,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 
 		name := formatLegend(v.Metric, query)
 		timeField.Name = data.TimeSeriesTimeFieldName
+		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
 		valueField.Labels = tags
