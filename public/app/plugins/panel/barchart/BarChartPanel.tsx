@@ -1,9 +1,12 @@
-import React, { useMemo, useRef } from 'react';
-import { TooltipDisplayMode, StackingMode, LegendDisplayMode } from '@grafana/schema';
+import React, { useMemo, useRef, useState } from 'react';
+import { css } from '@emotion/css';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
+  CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
   getFieldDisplayName,
+  GrafanaTheme2,
   PanelProps,
   TimeRange,
   VizOrientation,
@@ -13,20 +16,27 @@ import {
   GraphNGProps,
   measureText,
   PlotLegend,
-  TooltipPlugin,
+  Portal,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
   usePanelContext,
+  useStyles2,
   useTheme2,
   VizLayout,
   VizLegend,
+  VizTooltipContainer,
 } from '@grafana/ui';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+
 import { PanelOptions } from './models.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
-import { PanelDataErrorView } from '@grafana/runtime';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
-import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { HoverEvent, setupConfig } from './config';
+
+const TOOLTIP_OFFSET = 10;
 
 /**
  * @alpha
@@ -55,7 +65,30 @@ interface Props extends PanelProps<PanelOptions> {}
 
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone, id }) => {
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
+
+  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+  const isToolTipOpen = useRef<boolean>(false);
+
+  const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
+  const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
+  const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setCoords(null);
+    setShouldDisplayCloseButton(false);
+  };
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
 
   const frame0Ref = useRef<DataFrame>();
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
@@ -86,7 +119,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     // If no max length is set, limit the number of characters to a length where it will use a maximum of half of the height of the viz.
     if (!options.xTickLabelMaxLength) {
       const rotationAngle = options.xTickLabelRotation;
-      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an aproximation.
+      const textSize = measureText('M', UPLOT_AXIS_FONT_SIZE).width; // M is usually the widest character so let's use that as an approximation.
       const maxHeightForValues = height / 2;
 
       return (
@@ -98,14 +131,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       return options.xTickLabelMaxLength;
     }
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
-
-  // Force 'multi' tooltip setting or stacking mode
-  const tooltip = useMemo(() => {
-    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
-      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
-    }
-    return options.tooltip;
-  }, [options.tooltip, options.stacking]);
 
   if (!info.viz?.fields.length) {
     return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
@@ -119,12 +144,20 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     }
 
     return (
-      <DataHoverView
-        data={info.aligned}
-        rowIndex={datapointIdx}
-        columnIndex={seriesIdx}
-        sortOrder={options.tooltip.sort}
-      />
+      <>
+        {shouldDisplayCloseButton && (
+          <>
+            <CloseButton onClick={onCloseToolTip} />
+            <div className={styles.closeButtonSpacer} />
+          </>
+        )}
+        <DataHoverView
+          data={info.aligned}
+          rowIndex={datapointIdx}
+          columnIndex={seriesIdx}
+          sortOrder={options.tooltip.sort}
+        />
+      </>
     );
   };
 
@@ -220,16 +253,38 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
     >
       {(config, alignedFrame) => {
+        if (oldConfig.current !== config) {
+          oldConfig.current = setupConfig({
+            config,
+            onUPlotClick,
+            setFocusedSeriesIdx,
+            setFocusedPointIdx,
+            setCoords,
+            setHover,
+            isToolTipOpen,
+          });
+        }
+
         return (
-          <TooltipPlugin
-            data={alignedFrame}
-            config={config}
-            mode={tooltip.mode}
-            timeZone={timeZone}
-            renderTooltip={renderTooltip}
-          />
+          <Portal>
+            {hover && coords && (
+              <VizTooltipContainer
+                position={{ x: coords.x, y: coords.y }}
+                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                allowPointerEvents
+              >
+                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+              </VizTooltipContainer>
+            )}
+          </Portal>
         );
       }}
     </GraphNG>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  closeButtonSpacer: css`
+    margin-bottom: 15px;
+  `,
+});
