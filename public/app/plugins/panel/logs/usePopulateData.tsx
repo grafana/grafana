@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cloneDeep } from 'lodash';
-import { DEFAULT_ID, DEFAULT_TS_NS, DEFAULT_LINE, DEFAULT_TS } from './constants';
-import { ArrayVector } from '../../../../../packages/grafana-data';
+import { DEFAULT_ID, DEFAULT_TS_NS, DEFAULT_LINE, DEFAULT_TS, DEFAULT_TRACEID, DEFAULT_SPANID } from './constants';
 
 interface Props {
   data: any;
@@ -9,11 +8,9 @@ interface Props {
 
 interface ExternalLog {
   msg: string;
+  traceId?: string;
+  spanId?: string;
   timestamp: number;
-}
-
-interface Field {
-  values: ArrayVector;
 }
 
 const usePopulateData = ({ data }: Props) => {
@@ -23,32 +20,26 @@ const usePopulateData = ({ data }: Props) => {
   const addMessageToData = (data: any, log: ExternalLog) => {
     data.series = data.series || [];
 
-    const lastFrame = data.series.length - 1;
-    const index = lastFrame < 0 ? 0 : lastFrame;
+    const frame: any = {
+      fields: [
+        DEFAULT_TS(new Date(log.timestamp).toISOString()),
+        DEFAULT_LINE(log),
+        DEFAULT_ID(log.timestamp),
+        DEFAULT_TS_NS(log.timestamp),
+      ],
+      length: 1,
+      refId: 'A',
+    };
 
-    data.series[index] = data.series[index] || {};
+    if (log.traceId) {
+      frame.fields.push(DEFAULT_TRACEID(log.traceId));
+    }
 
-    const series = data.series[index];
-    series.fields = series.fields || [];
+    if (log.spanId) {
+      frame.fields.push(DEFAULT_SPANID(log.spanId));
+    }
 
-    const fields = series.fields;
-
-    fields[0] = fields[0] || DEFAULT_TS;
-    fields[1] = fields[1] || DEFAULT_LINE;
-    fields[2] = fields[2] || DEFAULT_ID;
-    fields[3] = fields[3] || DEFAULT_TS_NS;
-
-    const ts = fields[0] as Field;
-    const line = fields[1] as Field;
-    const id = fields[2] as Field;
-    const tsNs = fields[3] as Field;
-
-    ts.values.add(new Date(log.timestamp).toISOString());
-    line.values.add(log.msg);
-    id.values.add(log.timestamp);
-    tsNs.values.add(log.timestamp);
-
-    series.length = series.length ? series.length + 1 : 1;
+    data.series.push(frame);
 
     return data;
   };
@@ -64,19 +55,22 @@ const usePopulateData = ({ data }: Props) => {
 
   useEffect(() => {
     const postMessage = ({ data }: any) => {
-      let msg = '';
+      let payload: { msg: string; traceId?: string; spanId?: string };
       try {
-        msg = JSON.parse(data || '{}');
+        payload = JSON.parse(data || '{}');
       } catch (e) {
-        msg = data || '';
+        payload = { msg: data || '' };
       }
+
       const logs: ExternalLog[] = [...externalLogs];
       const newLog: ExternalLog = {
-        msg,
+        ...payload,
         timestamp: Date.now(),
       };
       logs.push(newLog);
+
       setExternalLogs(logs);
+
       const clonedData = cloneDeep(newData);
       const updatedData = addMessageToData(clonedData, newLog);
       setNewData(updatedData);
