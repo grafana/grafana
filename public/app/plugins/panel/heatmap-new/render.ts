@@ -34,9 +34,9 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         arc
       ) => {
         let d = u.data[seriesIdx];
-        const xs = (d[0] as unknown) as number[];
-        const ys = (d[1] as unknown) as number[];
-        const counts = (d[2] as unknown) as number[];
+        const xs = d[0] as unknown as number[];
+        const ys = d[1] as unknown as number[];
+        const counts = d[2] as unknown as number[];
         const dlen = xs.length;
 
         // fill colors are mapped from interpolating densities / counts along some gradient
@@ -115,7 +115,7 @@ export function heatmapPaths(opts: PathbuilderOpts) {
 }
 
 export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) => {
-  let counts = (u.data[seriesIdx][2] as unknown) as number[];
+  let counts = u.data[seriesIdx][2] as unknown as number[];
   let maxCount = counts.length > 65535 ? Math.max(...new Set(counts)) : Math.max(...counts);
   let cols = palette.length;
 

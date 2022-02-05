@@ -55,6 +55,8 @@ describe('Heatmap Migrations', () => {
             "show": true,
             "yHistogram": true,
           },
+          "yAxisLabels": "auto",
+          "yAxisReverse": false,
         },
       }
     `);

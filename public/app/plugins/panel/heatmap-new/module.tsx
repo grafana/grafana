@@ -72,58 +72,58 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       },
     });
 
-    if (opts.color.mode === HeatmapColorMode.Opacity) {
-      builder.addColorPicker({
-        path: `color.fill`,
-        name: 'Color',
-        description: 'NOTE: not used yet!',
-        defaultValue: defaultPanelOptions.color.fill,
-        category,
-      });
+    builder.addColorPicker({
+      path: `color.fill`,
+      name: 'Color',
+      defaultValue: defaultPanelOptions.color.fill,
+      category,
+      showIf: (opts) => opts.color.mode === HeatmapColorMode.Opacity,
+    });
 
-      builder.addRadio({
-        path: `color.scale`,
-        name: 'Scale',
-        description: '',
-        defaultValue: defaultPanelOptions.color.scale,
-        category,
-        settings: {
-          options: [
-            { label: 'Exponential', value: HeatmapColorScale.Exponential },
-            { label: 'Linear', value: HeatmapColorScale.Linear },
-          ],
-        },
-      });
+    builder.addRadio({
+      path: `color.scale`,
+      name: 'Scale',
+      description: '',
+      defaultValue: defaultPanelOptions.color.scale,
+      category,
+      settings: {
+        options: [
+          { label: 'Exponential', value: HeatmapColorScale.Exponential },
+          { label: 'Linear', value: HeatmapColorScale.Linear },
+        ],
+      },
+      showIf: (opts) => opts.color.mode === HeatmapColorMode.Opacity,
+    });
 
-      if (opts.color.scale === HeatmapColorScale.Exponential) {
-        builder.addSliderInput({
-          path: 'color.exponent',
-          name: 'Exponent',
-          defaultValue: defaultPanelOptions.color.exponent,
-          category,
-          settings: {
-            min: 0.1, // 1 for on/off?
-            max: 2,
-            step: 0.1,
-          },
-        });
-      }
-    } else {
-      builder.addSelect({
-        path: `color.scheme`,
-        name: 'Scheme',
-        description: '',
-        defaultValue: defaultPanelOptions.color.scheme,
-        category,
-        settings: {
-          options: colorSchemes.map((scheme) => ({
-            value: scheme.name,
-            label: scheme.name,
-            //description: 'Set a geometry field based on the results of other fields',
-          })),
-        },
-      });
-    }
+    builder.addSliderInput({
+      path: 'color.exponent',
+      name: 'Exponent',
+      defaultValue: defaultPanelOptions.color.exponent,
+      category,
+      settings: {
+        min: 0.1, // 1 for on/off?
+        max: 2,
+        step: 0.1,
+      },
+      showIf: (opts) =>
+        opts.color.mode === HeatmapColorMode.Opacity && opts.color.scale === HeatmapColorScale.Exponential,
+    });
+
+    builder.addSelect({
+      path: `color.scheme`,
+      name: 'Scheme',
+      description: '',
+      defaultValue: defaultPanelOptions.color.scheme,
+      category,
+      settings: {
+        options: colorSchemes.map((scheme) => ({
+          value: scheme.name,
+          label: scheme.name,
+          //description: 'Set a geometry field based on the results of other fields',
+        })),
+      },
+      showIf: (opts) => opts.color.mode !== HeatmapColorMode.Opacity,
+    });
 
     builder.addSliderInput({
       path: 'color.steps',
@@ -203,14 +203,13 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       category,
     });
 
-    if (opts.tooltip.show) {
-      builder.addBooleanSwitch({
-        path: 'tooltip.yHistogram',
-        name: 'Show histogram (Y axis)',
-        defaultValue: defaultPanelOptions.tooltip.yHistogram,
-        category,
-      });
-    }
+    builder.addBooleanSwitch({
+      path: 'tooltip.yHistogram',
+      name: 'Show histogram (Y axis)',
+      defaultValue: defaultPanelOptions.tooltip.yHistogram,
+      category,
+      showIf: (opts) => opts.tooltip.show,
+    });
 
     // custom legend?
     commonOptionsBuilder.addLegendOptions(builder);

@@ -65,7 +65,7 @@ export const defaultPanelOptions: PanelOptions = {
   color: {
     mode: HeatmapColorMode.Scheme,
     scheme: 'Oranges',
-    fill: 'red-dark',
+    fill: 'dark-orange',
     scale: HeatmapColorScale.Exponential,
     exponent: 0.5,
     steps: 64,
