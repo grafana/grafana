@@ -68,8 +68,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   const styles = useStyles2(getStyles);
   const { eventBus } = usePanelContext();
 
-  let oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
-  let isToolTipOpen = useRef<boolean>(false);
+  const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
+  const isToolTipOpen = useRef<boolean>(false);
 
   const [hover, setHover] = useState<HoverEvent | undefined>(undefined);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);

@@ -20,6 +20,8 @@ type SetupConfigParams = {
   isToolTipOpen: MutableRefObject<boolean>;
 };
 
+// This applies config hooks to setup tooltip listener. Ideally this could happen in the same `prepConfig` function
+// however the GraphNG structures do not allow access to the `setHover` callback
 export const setupConfig = ({
   config,
   onUPlotClick,
