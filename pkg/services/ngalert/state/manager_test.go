@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -438,16 +439,6 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.Pending,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]*float64),
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(20 * time.Second),
-							EvaluationState: eval.NoData,
-							Values:          make(map[string]*float64),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
 							Values:          make(map[string]*float64),
@@ -528,16 +519,6 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					State: eval.NoData,
 					Results: []state.Evaluation{
-						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]*float64),
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.Alerting,
-							Values:          make(map[string]*float64),
-						},
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
 							EvaluationState: eval.Alerting,
@@ -1337,11 +1318,6 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.Alerting,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-							Values:          make(map[string]*float64),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
 							Values:          make(map[string]*float64),
@@ -1429,11 +1405,6 @@ func TestProcessEvalResults(t *testing.T) {
 					State: eval.NoData,
 					Results: []state.Evaluation{
 						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-							Values:          make(map[string]*float64),
-						},
-						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
 							EvaluationState: eval.Alerting,
 							Values:          make(map[string]*float64),
@@ -1510,7 +1481,8 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{})
+		ss := mockstore.NewSQLStoreMock()
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{}, ss)
 		t.Run(tc.desc, func(t *testing.T) {
 			fakeAnnoRepo := schedule.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
@@ -1617,7 +1589,8 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
+		sqlStore := mockstore.NewSQLStoreMock()
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, sqlStore)
 		st.Warm()
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 

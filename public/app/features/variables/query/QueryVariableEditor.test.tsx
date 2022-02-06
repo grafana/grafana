@@ -106,7 +106,7 @@ describe('QueryVariableEditor', () => {
 const getQueryField = () =>
   screen.getByRole('textbox', { name: /variable editor form default variable query editor textarea/i });
 
-const getRegExField = () => screen.getByRole('textbox', { name: /variable editor form query regex field/i });
+const getRegExField = () => screen.getByLabelText('Regex');
 
 const fieldAccessors: Record<string, () => HTMLElement> = {
   query: getQueryField,

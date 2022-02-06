@@ -161,7 +161,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 
 		if plugin.IsApp() {
-			setDefaultNavURL(plugin, l.cfg.AppSubURL)
+			setDefaultNavURL(plugin)
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
@@ -255,17 +255,22 @@ func setImages(p *plugins.Plugin) {
 	}
 }
 
-func setDefaultNavURL(p *plugins.Plugin, appSubURL string) {
+func setDefaultNavURL(p *plugins.Plugin) {
 	// slugify pages
 	for _, include := range p.Includes {
 		if include.Slug == "" {
 			include.Slug = slug.Make(include.Name)
 		}
-		if include.Type == "page" && include.DefaultNav {
-			p.DefaultNavURL = appSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
+
+		if !include.DefaultNav {
+			continue
 		}
-		if include.Type == "dashboard" && include.DefaultNav {
-			p.DefaultNavURL = appSubURL + "/dashboard/db/" + include.Slug
+
+		if include.Type == "page" {
+			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
+		}
+		if include.Type == "dashboard" {
+			p.DefaultNavURL = path.Join("/dashboard/db/", include.Slug)
 		}
 	}
 }

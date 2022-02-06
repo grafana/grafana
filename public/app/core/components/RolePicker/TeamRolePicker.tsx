@@ -1,38 +1,29 @@
 import React, { FC, useState } from 'react';
 import { useAsync } from 'react-use';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role } from 'app/types';
+import { Role } from 'app/types';
 import { RolePicker } from './RolePicker';
-import { fetchRoleOptions, fetchTeamRoles, updateTeamRoles } from './api';
+import { fetchTeamRoles, updateTeamRoles } from './api';
 
 export interface Props {
   teamId: number;
   orgId?: number;
-  getRoleOptions?: () => Promise<Role[]>;
+  roleOptions: Role[];
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
 }
 
-export const TeamRolePicker: FC<Props> = ({ teamId, orgId, getRoleOptions, disabled, builtinRolesDisabled }) => {
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled }) => {
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
 
   const { loading } = useAsync(async () => {
     try {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        let options = await (getRoleOptions ? getRoleOptions() : fetchRoleOptions(orgId));
-        setRoleOptions(options.filter((option) => !option.name?.startsWith('managed:')));
-      } else {
-        setRoleOptions([]);
-      }
-
       const teamRoles = await fetchTeamRoles(teamId, orgId);
       setAppliedRoles(teamRoles);
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
     }
-  }, [getRoleOptions, orgId, teamId]);
+  }, [orgId, teamId]);
 
   return (
     <RolePicker

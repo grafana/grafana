@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -1021,7 +1022,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		C:                       mockedClock,
 		BaseInterval:            time.Second,
 		MaxAttempts:             1,
-		Evaluator:               eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
+		Evaluator:               eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, secretsService),
 		RuleStore:               rs,
 		InstanceStore:           is,
 		AdminConfigStore:        acs,
@@ -1030,7 +1031,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Metrics:                 m.GetSchedulerMetrics(),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is)
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock())
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",

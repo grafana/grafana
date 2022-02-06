@@ -133,18 +133,14 @@ func (e *State) unarySeries(s Series, op string) (Series, error) {
 	for i := 0; i < s.Len(); i++ {
 		t, f := s.GetPoint(i)
 		if f == nil {
-			if err := newSeries.SetPoint(i, t, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, nil)
 			continue
 		}
 		newF, err := unaryOp(op, *f)
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.SetPoint(i, t, &newF); err != nil {
-			return newSeries, err
-		}
+		newSeries.SetPoint(i, t, &newF)
 	}
 	return newSeries, nil
 }
@@ -437,9 +433,7 @@ func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVa
 		nF := math.NaN()
 		t, f := s.GetPoint(i)
 		if f == nil || scalarVal == nil {
-			if err := newSeries.SetPoint(i, t, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, nil)
 			continue
 		}
 		if seriesFirst {
@@ -450,9 +444,7 @@ func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVa
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.SetPoint(i, t, &nF); err != nil {
-			return newSeries, err
-		}
+		newSeries.SetPoint(i, t, &nF)
 	}
 	return newSeries, nil
 }
@@ -475,18 +467,14 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 			continue
 		}
 		if aF == nil || bF == nil {
-			if err := newSeries.AppendPoint(aIdx, aTime, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.AppendPoint(aTime, nil)
 			continue
 		}
 		nF, err := binaryOp(op, *aF, *bF)
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.AppendPoint(aIdx, aTime, &nF); err != nil {
-			return newSeries, err
-		}
+		newSeries.AppendPoint(aTime, &nF)
 	}
 	return newSeries, nil
 }

@@ -987,6 +987,14 @@ export class PrometheusDatasource
       interval: this.templateSrv.replace(target.interval, variables),
     };
   }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
 }
 
 /**

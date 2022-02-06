@@ -285,7 +285,7 @@ def get_oss_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -308,7 +308,7 @@ def get_oss_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode),
+                'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
                 'oss-test-{}'.format(ver_mode),
                 'oss-integration-tests-{}'.format(ver_mode)
             ]
