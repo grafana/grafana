@@ -265,7 +265,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 	}
 
 	if query.Result == nil {
-		return response.Error(404, "Alert notification not found", nil)
+		return response.Error(404, "Alert notification not found", models.ErrAlertNotificationNotFound)
 	}
 
 	return response.JSON(200, dtos.NewAlertNotification(query.Result))
@@ -286,7 +286,7 @@ func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.R
 	}
 
 	if query.Result == nil {
-		return response.Error(404, "Alert notification not found", nil)
+		return response.Error(404, "Alert notification not found", models.ErrAlertNotificationNotFound)
 	}
 
 	return response.JSON(200, dtos.NewAlertNotification(query.Result))
