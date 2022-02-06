@@ -11,7 +11,7 @@ COPY plugins-bundled plugins-bundled
 
 RUN yarn install
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
 COPY public public
 COPY tools tools
 COPY scripts scripts
