@@ -65,6 +65,7 @@ type PluginDTO struct {
 
 	// temporary
 	backend.StreamHandler
+	backend.CollectMetricsHandler
 }
 
 func (p PluginDTO) SupportsStreaming() bool {

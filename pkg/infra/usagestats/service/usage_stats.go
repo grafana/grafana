@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
@@ -116,6 +117,12 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	if err := uss.Bus.Dispatch(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return report, err
+	}
+
+	// send usage stats exposed by plugins in CollectMetrics
+	customPluginStats := uss.customPluginStats(ctx)
+	for k, v := range customPluginStats {
+		metrics[k] = v
 	}
 
 	// send counters for each data source
@@ -377,4 +384,42 @@ func (uss *UsageStats) panelCount(ctx context.Context) int {
 
 func (uss *UsageStats) dataSourceCount(ctx context.Context) int {
 	return len(uss.pluginStore.Plugins(ctx, plugins.DataSource))
+}
+
+// supportsCustomMetrics prevents reporting of custom metrics if the plugin is not maintained by Grafana Labs.
+func (uss *UsageStats) supportsCustomStats(p plugins.PluginDTO) bool {
+	if !p.Signature.IsInternal() && !p.Signature.IsValid() {
+		return false
+	}
+	if p.SignatureType != plugins.GrafanaSignature {
+		return false
+	}
+	if p.SignatureOrg != "Grafana Labs" {
+		return false
+	}
+	return true
+}
+
+// customPluginStats uses CollectMetrics to get usage stats that have been defined by a plugin.
+func (uss *UsageStats) customPluginStats(ctx context.Context) map[string]interface{} {
+	stats := make(map[string]interface{})
+	for _, p := range uss.pluginStore.Plugins(ctx, plugins.DataSource, plugins.App) {
+		if !uss.supportsCustomStats(p) {
+			continue
+		}
+		res, err := p.CollectMetrics(ctx)
+		if err != nil {
+			backend.Logger.Debug("unable to fetch plugin metrics for usage stats", "plugin", p.ID, "error", err)
+			continue
+		}
+		s, err := res.ToUsageStats(p.ID), nil
+		if err != nil {
+			backend.Logger.Debug("failed to collect plugin usage stats", "plugin", p.ID, "error", err)
+			continue
+		}
+		for k, v := range s {
+			stats[k] = v
+		}
+	}
+	return stats
 }
