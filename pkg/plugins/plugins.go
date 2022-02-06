@@ -319,20 +319,21 @@ func (p *Plugin) ToDTO() PluginDTO {
 	c, _ := p.Client()
 
 	return PluginDTO{
-		JSONData:        p.JSONData,
-		PluginDir:       p.PluginDir,
-		Class:           p.Class,
-		IncludedInAppID: p.IncludedInAppID,
-		DefaultNavURL:   p.DefaultNavURL,
-		Pinned:          p.Pinned,
-		Signature:       p.Signature,
-		SignatureType:   p.SignatureType,
-		SignatureOrg:    p.SignatureOrg,
-		SignedFiles:     p.SignedFiles,
-		SignatureError:  p.SignatureError,
-		Module:          p.Module,
-		BaseURL:         p.BaseURL,
-		StreamHandler:   c,
+		JSONData:              p.JSONData,
+		PluginDir:             p.PluginDir,
+		Class:                 p.Class,
+		IncludedInAppID:       p.IncludedInAppID,
+		DefaultNavURL:         p.DefaultNavURL,
+		Pinned:                p.Pinned,
+		Signature:             p.Signature,
+		SignatureType:         p.SignatureType,
+		SignatureOrg:          p.SignatureOrg,
+		SignedFiles:           p.SignedFiles,
+		SignatureError:        p.SignatureError,
+		Module:                p.Module,
+		BaseURL:               p.BaseURL,
+		StreamHandler:         c,
+		CollectMetricsHandler: c,
 	}
 }
 

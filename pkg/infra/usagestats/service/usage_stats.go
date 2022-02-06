@@ -404,7 +404,7 @@ func (uss *UsageStats) supportsCustomStats(p plugins.PluginDTO) bool {
 func (uss *UsageStats) customPluginStats(ctx context.Context) map[string]interface{} {
 	stats := make(map[string]interface{})
 	for _, p := range uss.pluginStore.Plugins(ctx, plugins.DataSource, plugins.App) {
-		if !uss.supportsCustomStats(p) {
+		if !uss.supportsCustomStats(p) || p.CollectMetricsHandler == nil {
 			continue
 		}
 		res, err := p.CollectMetrics(ctx)
