@@ -161,6 +161,7 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	sqlStore             sqlstore.Store
+	authInfoService      *mockAuthInfoService
 }
 
 func (sc *scenarioContext) exec() {

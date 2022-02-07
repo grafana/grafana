@@ -248,6 +248,7 @@
     "@opentelemetry/semantic-conventions": "1.0.1",
     "@popperjs/core": "2.11.2",
     "@react-aria/button": "3.3.4",
+    "@react-aria/dialog": "3.1.4",
     "@react-aria/focus": "3.5.0",
     "@react-aria/interactions": "3.7.0",
     "@react-aria/menu": "3.3.0",

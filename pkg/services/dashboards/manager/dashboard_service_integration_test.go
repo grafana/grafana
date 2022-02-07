@@ -80,13 +80,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 					res := callSaveWithResult(t, cmd, sc.sqlStore)
 					require.NotNil(t, res)
 
-					dash, err := sc.sqlStore.GetDashboard(0, otherOrgId, sc.savedDashInFolder.Uid, "")
+					err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+						OrgId: otherOrgId,
+						Uid:   sc.savedDashInFolder.Uid,
+					})
 					require.NoError(t, err)
-
-					assert.NotEqual(t, sc.savedDashInFolder.Id, dash.Id)
-					assert.Equal(t, res.Id, dash.Id)
-					assert.Equal(t, otherOrgId, dash.OrgId)
-					assert.Equal(t, sc.savedDashInFolder.Uid, dash.Uid)
 				})
 		})
 
@@ -322,10 +320,12 @@ func TestIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
+
 						require.NoError(t, err)
-						assert.Equal(t, res.Id, dash.Id)
-						assert.Equal(t, int64(0), dash.FolderId)
 					})
 
 				permissionScenario(t, "When creating a dashboard in other folder with same name as dashboard in General folder",
@@ -345,9 +345,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						assert.NotEqual(t, sc.savedDashInGeneralFolder.Id, res.Id)
 
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, sc.savedFolder.Id, dash.FolderId)
 					})
 
 				permissionScenario(t, "When creating a folder with same name as dashboard in other folder",
@@ -368,10 +370,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						assert.NotEqual(t, sc.savedDashInGeneralFolder.Id, res.Id)
 						assert.True(t, res.IsFolder)
 
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, int64(0), dash.FolderId)
-						assert.True(t, dash.IsFolder)
 					})
 
 				permissionScenario(t, "When saving a dashboard without id and uid and unique title in folder",
@@ -389,10 +392,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						assert.Greater(t, res.Id, int64(0))
 						assert.NotEmpty(t, res.Uid)
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, res.Id, dash.Id)
-						assert.Equal(t, res.Uid, dash.Uid)
 					})
 
 				permissionScenario(t, "When saving a dashboard when dashboard id is zero ", canSave,
@@ -409,9 +413,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, res.Id, dash.Id)
 					})
 
 				permissionScenario(t, "When saving a dashboard in non-existing folder", canSave,
@@ -461,11 +467,12 @@ func TestIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInGeneralFolder.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    sc.savedDashInGeneralFolder.Id,
+							OrgId: cmd.OrgId,
+						})
+
 						require.NoError(t, err)
-						assert.Equal(t, "Updated title", dash.Title)
-						assert.Equal(t, sc.savedFolder.Id, dash.FolderId)
-						assert.Greater(t, dash.Version, sc.savedDashInGeneralFolder.Version)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by uid without current version", canSave,
@@ -500,11 +507,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInFolder.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    sc.savedDashInFolder.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, "Updated title", dash.Title)
-						assert.Equal(t, int64(0), dash.FolderId)
-						assert.Greater(t, dash.Version, sc.savedDashInFolder.Version)
 					})
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in other folder",
@@ -574,11 +581,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInGeneralFolder.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    sc.savedDashInGeneralFolder.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, "Updated title", dash.Title)
-						assert.Equal(t, sc.savedFolder.Id, dash.FolderId)
-						assert.Greater(t, dash.Version, sc.savedDashInGeneralFolder.Version)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by uid without current version", canSave,
@@ -596,11 +603,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						res := callSaveWithResult(t, cmd, sc.sqlStore)
 						require.NotNil(t, res)
 
-						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInFolder.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    sc.savedDashInFolder.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, "Updated title", dash.Title)
-						assert.Equal(t, int64(0), dash.FolderId)
-						assert.Greater(t, dash.Version, sc.savedDashInFolder.Version)
 					})
 
 				permissionScenario(t, "When updating uid for existing dashboard using id", canSave,
@@ -620,10 +627,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						assert.Equal(t, sc.savedDashInFolder.Id, res.Id)
 						assert.Equal(t, "new-uid", res.Uid)
 
-						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInFolder.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    sc.savedDashInFolder.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, "new-uid", dash.Uid)
-						assert.Greater(t, dash.Version, sc.savedDashInFolder.Version)
 					})
 
 				permissionScenario(t, "When updating uid to an existing uid for existing dashboard using id", canSave,
@@ -659,10 +667,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						assert.Equal(t, sc.savedDashInFolder.Id, res.Id)
 						assert.Equal(t, sc.savedDashInFolder.Uid, res.Uid)
 
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, res.Id, dash.Id)
-						assert.Equal(t, res.Uid, dash.Uid)
 					})
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in General folder", canSave,
@@ -682,10 +691,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 						assert.Equal(t, sc.savedDashInGeneralFolder.Id, res.Id)
 						assert.Equal(t, sc.savedDashInGeneralFolder.Uid, res.Uid)
 
-						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						err := sc.sqlStore.GetDashboard(context.Background(), &models.GetDashboardQuery{
+							Id:    res.Id,
+							OrgId: cmd.OrgId,
+						})
 						require.NoError(t, err)
-						assert.Equal(t, res.Id, dash.Id)
-						assert.Equal(t, res.Uid, dash.Uid)
 					})
 
 				permissionScenario(t, "When updating existing folder to a dashboard using id", canSave,

@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,10 +24,11 @@ var (
 )
 
 type scenarioContext struct {
-	ctx        *web.Context
-	service    *QueryHistoryService
-	reqContext *models.ReqContext
-	sqlStore   *sqlstore.SQLStore
+	ctx           *web.Context
+	service       *QueryHistoryService
+	reqContext    *models.ReqContext
+	sqlStore      *sqlstore.SQLStore
+	initialResult QueryHistoryResponse
 }
 
 func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
@@ -71,7 +74,36 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	})
 }
 
+func testScenarioWithQueryInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	t.Helper()
+
+	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
+		command := CreateQueryInQueryHistoryCommand{
+			DatasourceUID: "NCzh67i",
+			Queries: simplejson.NewFromAny(map[string]interface{}{
+				"expr": "test",
+			}),
+		}
+		sc.reqContext.Req.Body = mockRequestBody(command)
+		resp := sc.service.createHandler(sc.reqContext)
+		sc.initialResult = validateAndUnMarshalResponse(t, resp)
+		fn(t, sc)
+	})
+}
+
 func mockRequestBody(v interface{}) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
+}
+
+func validateAndUnMarshalResponse(t *testing.T, resp response.Response) QueryHistoryResponse {
+	t.Helper()
+
+	require.Equal(t, 200, resp.Status())
+
+	var result = QueryHistoryResponse{}
+	err := json.Unmarshal(resp.Body(), &result)
+	require.NoError(t, err)
+
+	return result
 }
