@@ -324,8 +324,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: !config.verifyEmailEnabled
         ? () => <Redirect to="/signup" />
         : SafeDynamicImport(
-          () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
-        ),
+            () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
+          ),
       pageClass: 'login-page sidemenu-hidden',
     },
     {

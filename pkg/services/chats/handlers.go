@@ -164,7 +164,6 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *mo
 }
 
 func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetMessagesCmd) ([]*MessageDto, error) {
-	fmt.Println(cmd.ContentTypeId)
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
 		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {

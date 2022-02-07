@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -12,6 +14,7 @@ import (
 func createSqlStorage(t *testing.T) Storage {
 	t.Helper()
 	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagLiveChats).IsEnabled
 	return &sqlStorage{
 		sql: sqlStore,
 	}
