@@ -79,7 +79,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 }
 
 func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true, Features: featuremgmt.WithFeatures()})
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.Bus, engine *xorm.Engine,

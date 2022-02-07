@@ -383,19 +383,25 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	})
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		// query navbar_preference table for any preferences
-		navbarPref, err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
+		return hs.setNavPreferences(c, navTree)
+	}
 
-		if err != nil {
-			return nil, err
-		}
+	return navTree, nil
+}
 
-		for _, navItem := range navTree {
-			// override with preference if exists
-			for _, pref := range navbarPref {
-				if navItem.Id == pref.NavItemID {
-					navItem.HideFromNavbar = pref.HideFromNavbar
-				}
+func (hs *HTTPServer) setNavPreferences(c *models.ReqContext, navTree []*dtos.NavLink) ([]*dtos.NavLink, error) {
+	// query navbar_preference table for any preferences
+	navbarPref, err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, navItem := range navTree {
+		// override with preference if exists
+		for _, pref := range navbarPref {
+			if navItem.Id == pref.NavItemID {
+				navItem.HideFromNavbar = pref.HideFromNavbar
 			}
 		}
 	}
