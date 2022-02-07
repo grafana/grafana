@@ -5,7 +5,7 @@ import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/sha
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { EditorRow, EditorRows } from '@grafana/experimental';
 import { QueryPreview } from './QueryPreview';
 
@@ -20,6 +20,11 @@ export interface Props {
 export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
+  };
+
+  const withTemplateVariableOptions = async (optionsPromise: Promise<string[]>): Promise<SelectableValue[]> => {
+    const options = await optionsPromise;
+    return [...datasource.getVariables(), ...options].map((value) => ({ label: value, value }));
   };
 
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<any> => {
@@ -46,15 +51,20 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
 
     const expr = lokiQueryModeller.renderLabels(labelsToConsider);
     const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    return result[forLabel.label] ?? [];
+    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
+    return result[forLabelInterpolated] ?? [];
   };
 
   return (
     <EditorRows>
       <EditorRow>
         <LabelFilters
-          onGetLabelNames={onGetLabelNames}
-          onGetLabelValues={onGetLabelValues}
+          onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
+            withTemplateVariableOptions(onGetLabelNames(forLabel))
+          }
+          onGetLabelValues={(forLabel: Partial<QueryBuilderLabelFilter>) =>
+            withTemplateVariableOptions(onGetLabelValues(forLabel))
+          }
           labelsFilters={query.labels}
           onChange={onChangeLabels}
         />

@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.7'
+grabpl_version = 'v2.8.8'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -317,8 +317,10 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode):
+    src_dir = ''
     if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+        bucket = "$${PRERELEASE_BUCKET}"
+        src_dir = " --src-dir artifacts/static-assets"
     else:
         bucket = "grafana-static-assets"
 
@@ -337,11 +339,11 @@ def upload_cdn_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
+            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
 
@@ -650,7 +652,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
     }
 
 
-def e2e_tests_server_step(edition, port=3001):
+def grafana_server_step(edition, port=3001):
     package_file_pfx = ''
     if edition == 'enterprise2':
         package_file_pfx = 'grafana' + enterprise2_suffix(edition)
@@ -659,9 +661,9 @@ def e2e_tests_server_step(edition, port=3001):
 
     environment = {
         'PORT': port,
+        'ARCH': 'linux-amd64'
     }
     if package_file_pfx:
-        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
         environment['RUNDIR'] = 'scripts/grafana-server/tmp-{}'.format(package_file_pfx)
 
     return {
@@ -669,7 +671,9 @@ def e2e_tests_server_step(edition, port=3001):
         'image': build_image,
         'detach': True,
         'depends_on': [
-            'package' + enterprise2_suffix(edition),
+            'build-plugins',
+            'build-backend',
+            'build-frontend',
         ],
         'environment': environment,
         'commands': [
@@ -685,7 +689,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
         'image': 'cypress/included:9.3.1',
         'depends_on': [
-            'package',
+            'grafana-server',
         ],
         'environment': {
             'HOST': 'grafana-server' + enterprise2_suffix(edition),
@@ -921,7 +925,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
         'commands': [cmd, ],

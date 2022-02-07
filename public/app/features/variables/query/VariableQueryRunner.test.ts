@@ -65,9 +65,9 @@ function getTestContext(variable?: QueryVariableModel) {
     getTarget: jest.fn().mockReturnValue({ refId: 'A', query: 'A query' }),
     runRequest: jest.fn().mockReturnValue(of({ series: [], state: LoadingState.Done })),
   };
-  const queryRunners = ({
+  const queryRunners = {
     getRunnerForDatasource: jest.fn().mockReturnValue(queryRunner),
-  } as unknown) as QueryRunners;
+  } as unknown as QueryRunners;
   const getVariable = jest.fn().mockReturnValue(variable);
   const runRequest = jest.fn().mockReturnValue(of({}));
   const runner = new VariableQueryRunner({
@@ -100,16 +100,8 @@ function getTestContext(variable?: QueryVariableModel) {
 describe('VariableQueryRunner', () => {
   describe('happy case', () => {
     it('then it should work as expected', (done) => {
-      const {
-        identifier,
-        runner,
-        datasource,
-        getState,
-        getVariable,
-        queryRunners,
-        queryRunner,
-        dispatch,
-      } = getTestContext();
+      const { identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
+        getTestContext();
 
       expectOnResults({
         identifier,
@@ -149,16 +141,8 @@ describe('VariableQueryRunner', () => {
   describe('error cases', () => {
     describe('queryRunners.getRunnerForDatasource throws', () => {
       it('then it should work as expected', (done) => {
-        const {
-          identifier,
-          runner,
-          datasource,
-          getState,
-          getVariable,
-          queryRunners,
-          queryRunner,
-          dispatch,
-        } = getTestContext();
+        const { identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
+          getTestContext();
 
         queryRunners.getRunnerForDatasource = jest.fn().mockImplementation(() => {
           throw new Error('getRunnerForDatasource error');
@@ -192,16 +176,8 @@ describe('VariableQueryRunner', () => {
 
     describe('runRequest throws', () => {
       it('then it should work as expected', (done) => {
-        const {
-          identifier,
-          runner,
-          datasource,
-          getState,
-          getVariable,
-          queryRunners,
-          queryRunner,
-          dispatch,
-        } = getTestContext();
+        const { identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
+          getTestContext();
 
         queryRunner.runRequest = jest.fn().mockReturnValue(throwError(new Error('runRequest error')));
 

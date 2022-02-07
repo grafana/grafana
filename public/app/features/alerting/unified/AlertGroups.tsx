@@ -27,8 +27,11 @@ const AlertGroups = () => {
   const styles = useStyles2(getStyles);
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  const { loading, error, result: results = [] } =
-    alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+  const {
+    loading,
+    error,
+    result: results = [],
+  } = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
   const groupedAlerts = useGroupedAlerts(results, groupBy);
   const filteredAlertGroups = useFilteredAmGroups(groupedAlerts);

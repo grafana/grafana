@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,6 +48,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 		License:  &licensing.OSSLicensingService{},
 		SQLStore: sqlStore,
 	}
+	mock := mockstore.NewSQLStoreMock()
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
 		"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
@@ -61,7 +63,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 			assert.Len(t, resp, 3)
-		})
+		}, mock)
 
 	t.Run("Given there is two hidden users", func(t *testing.T) {
 		settings.HiddenUsers = map[string]struct{}{
@@ -86,7 +88,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, "loginuser0", resp[0].Login)
 				assert.Equal(t, "loginuser1", resp[1].Login)
 				assert.Equal(t, "loginuser2", resp[2].Login)
-			})
+			}, mock)
 	})
 }
 
