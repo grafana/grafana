@@ -1,6 +1,6 @@
 import { logger } from '@percona/platform-core';
 import { FormApi } from 'final-form';
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -16,28 +16,28 @@ export const useDatabaseVersions = (
   setLoadingDatabaseVersions: (loading: boolean) => void,
   setDatabaseVersions: (versions: SelectableValue[]) => void
 ) => {
-  const getDatabaseVersions = useCallback(async () => {
-    try {
-      const dbClusterService = newDBClusterService(databaseType.value);
-
-      setLoadingDatabaseVersions(true);
-
-      const databaseVersions = await (
-        await dbClusterService.getDatabaseVersions(kubernetesCluster.value)
-      ).filter(({ disabled }) => !disabled);
-
-      setDatabaseVersions(databaseVersions);
-      form.change(AddDBClusterFields.databaseVersion, findDefaultDatabaseVersion(databaseVersions));
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setLoadingDatabaseVersions(false);
-    }
-  }, [databaseType.value, form, kubernetesCluster.value, setDatabaseVersions, setLoadingDatabaseVersions]);
-
   useEffect(() => {
+    const getDatabaseVersions = async () => {
+      try {
+        const dbClusterService = newDBClusterService(databaseType.value);
+
+        setLoadingDatabaseVersions(true);
+
+        const databaseVersions = await (
+          await dbClusterService.getDatabaseVersions(kubernetesCluster.value)
+        ).filter(({ disabled }) => !disabled);
+
+        setDatabaseVersions(databaseVersions);
+        form.change(AddDBClusterFields.databaseVersion, findDefaultDatabaseVersion(databaseVersions));
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setLoadingDatabaseVersions(false);
+      }
+    };
+
     if (!isOptionEmpty(databaseType) && !isOptionEmpty(kubernetesCluster)) {
       getDatabaseVersions();
     }
-  }, [databaseType, kubernetesCluster, getDatabaseVersions]);
+  }, [databaseType, kubernetesCluster, setLoadingDatabaseVersions, setDatabaseVersions, form]);
 };
