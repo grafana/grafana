@@ -429,11 +429,6 @@ func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashbo
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
-	query.Result = m.ExpectedDashboards
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	return nil // TODO: Implement
 }

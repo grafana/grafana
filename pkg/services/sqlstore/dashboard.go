@@ -38,7 +38,6 @@ func init() {
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboard)
 	bus.AddHandler("sql", ss.GetDashboardUIDById)
-	bus.AddHandler("sql", ss.GetDashboardsBySlug)
 	bus.AddHandler("sql", ss.GetDashboardTags)
 	bus.AddHandler("sql", ss.SearchDashboards)
 	bus.AddHandler("sql", ss.DeleteDashboard)
@@ -598,17 +597,6 @@ func GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByI
 	}
 
 	query.Result = slug.Slug
-	return nil
-}
-
-func (ss *SQLStore) GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
-	var dashboards []*models.Dashboard
-
-	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
-		return err
-	}
-
-	query.Result = dashboards
 	return nil
 }
 
