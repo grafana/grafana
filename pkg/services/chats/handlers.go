@@ -8,6 +8,12 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/annotations"
+
+	"github.com/grafana/grafana/pkg/services/guardian"
+
+	"github.com/grafana/grafana/pkg/bus"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -75,21 +81,66 @@ type SendMessageCmd struct {
 
 var ErrPermissionDenied = errors.New("permission denied")
 
-func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cmd SendMessageCmd) (*MessageDto, error) {
+func getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
+	query := models.GetDashboardQuery{Uid: uid, OrgId: orgID}
+	if err := bus.Dispatch(ctx, &query); err != nil {
+		return nil, err
+	}
+	return query.Result, nil
+}
+
+func getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashboard, error) {
+	query := models.GetDashboardQuery{Id: id, OrgId: orgID}
+	if err := bus.Dispatch(ctx, &query); err != nil {
+		return nil, err
+	}
+	return query.Result, nil
+}
+
+func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd SendMessageCmd) (*MessageDto, error) {
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
 		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
 			return nil, ErrPermissionDenied
 		}
-	case ContentTypeDashboard, ContentTypeAnnotation:
-		return nil, ErrPermissionDenied
+	case ContentTypeDashboard:
+		dash, err := getDashboardByUid(ctx, orgId, cmd.ObjectId)
+		if err != nil {
+			return nil, err
+		}
+		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		if ok, err := guard.CanEdit(); err != nil || !ok {
+			return nil, ErrPermissionDenied
+		}
+	case ContentTypeAnnotation:
+		repo := annotations.GetRepository()
+		annotationID, err := strconv.ParseInt(cmd.ObjectId, 10, 64)
+		if err != nil {
+			return nil, ErrPermissionDenied
+		}
+		items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
+		if err != nil || len(items) != 1 {
+			return nil, ErrPermissionDenied
+		}
+		dashboardID := items[0].DashboardId
+		if dashboardID == 0 {
+			return nil, ErrPermissionDenied
+		}
+		dash, err := getDashboardById(ctx, orgId, dashboardID)
+		if err != nil {
+			return nil, err
+		}
+		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		if ok, err := guard.CanEdit(); err != nil || !ok {
+			return nil, ErrPermissionDenied
+		}
 	default:
 		return nil, ErrPermissionDenied
 	}
 
 	userMap := map[int64]*models.UserSearchHitDTO{}
-	if userId > 0 {
-		q := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter([]int64{userId})}, Page: 0, Limit: 1}
+	if signedInUser.UserId > 0 {
+		q := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter([]int64{signedInUser.UserId})}, Page: 0, Limit: 1}
 		if err := s.bus.Dispatch(ctx, q); err != nil {
 			return nil, err
 		}
@@ -98,7 +149,7 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cm
 		}
 	}
 
-	m, err := s.storage.CreateMessage(ctx, orgId, cmd.ContentTypeId, cmd.ObjectId, userId, cmd.Content)
+	m, err := s.storage.CreateMessage(ctx, orgId, cmd.ContentTypeId, cmd.ObjectId, signedInUser.UserId, cmd.Content)
 	if err != nil {
 		return nil, err
 	}
@@ -112,14 +163,44 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cm
 	return mDto, nil
 }
 
-func (s *Service) GetMessages(ctx context.Context, orgId int64, _ int64, cmd GetMessagesCmd) ([]*MessageDto, error) {
+func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetMessagesCmd) ([]*MessageDto, error) {
+	fmt.Println(cmd.ContentTypeId)
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
 		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
 			return nil, ErrPermissionDenied
 		}
-	case ContentTypeDashboard, ContentTypeAnnotation:
-		return nil, ErrPermissionDenied
+	case ContentTypeDashboard:
+		dash, err := getDashboardByUid(ctx, orgId, cmd.ObjectId)
+		if err != nil {
+			return nil, err
+		}
+		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		if ok, err := guard.CanView(); err != nil || !ok {
+			return nil, ErrPermissionDenied
+		}
+	case ContentTypeAnnotation:
+		repo := annotations.GetRepository()
+		annotationID, err := strconv.ParseInt(cmd.ObjectId, 10, 64)
+		if err != nil {
+			return nil, ErrPermissionDenied
+		}
+		items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
+		if err != nil || len(items) != 1 {
+			return nil, ErrPermissionDenied
+		}
+		dashboardID := items[0].DashboardId
+		if dashboardID == 0 {
+			return nil, ErrPermissionDenied
+		}
+		dash, err := getDashboardById(ctx, orgId, dashboardID)
+		if err != nil {
+			return nil, err
+		}
+		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		if ok, err := guard.CanView(); err != nil || !ok {
+			return nil, ErrPermissionDenied
+		}
 	default:
 		return nil, ErrPermissionDenied
 	}

@@ -16,7 +16,7 @@ func (hs *HTTPServer) chatGetMessages(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	messages, err := hs.chatsService.GetMessages(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, cmd)
+	messages, err := hs.chatsService.GetMessages(c.Req.Context(), c.OrgId, c.SignedInUser, cmd)
 	if err != nil {
 		if errors.Is(err, chats.ErrPermissionDenied) {
 			return response.Error(http.StatusForbidden, "permission denied", err)
@@ -36,7 +36,7 @@ func (hs *HTTPServer) chatSendMessage(c *models.ReqContext) response.Response {
 	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(models.ROLE_ADMIN) {
 		return response.Error(http.StatusForbidden, "admin role required", nil)
 	}
-	message, err := hs.chatsService.SendMessage(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, cmd)
+	message, err := hs.chatsService.SendMessage(c.Req.Context(), c.OrgId, c.SignedInUser, cmd)
 	if err != nil {
 		if errors.Is(err, chats.ErrPermissionDenied) {
 			return response.Error(http.StatusForbidden, "permission denied", err)

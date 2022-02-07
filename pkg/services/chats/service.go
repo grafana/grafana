@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -30,9 +32,8 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, liv
 			sql: store,
 		},
 	}
-	if os.Getenv("GF_CHAT_FAKE") != "" {
+	if os.Getenv("GF_FAKE_ORG_CHAT") != "" {
 		go s.fakeChat(context.Background(), ContentTypeOrg, "1")
-		go s.fakeChat(context.Background(), ContentTypeDashboard, "PbAqqAtnz")
 	}
 	return s
 }
@@ -74,7 +75,7 @@ func (s *Service) fakeChat(ctx context.Context, contentTypeID int, objectID stri
 			} else {
 				content = gofakeit.HackerPhrase()
 			}
-			_, _ = s.SendMessage(ctx, 1, getRandUser(), SendMessageCmd{
+			_, _ = s.SendMessage(ctx, 1, &models.SignedInUser{UserId: getRandUser(), OrgRole: models.ROLE_ADMIN}, SendMessageCmd{
 				ContentTypeId: contentTypeID,
 				ObjectId:      objectID,
 				Content:       content,
@@ -82,7 +83,7 @@ func (s *Service) fakeChat(ctx context.Context, contentTypeID int, objectID stri
 			if needPlusOne {
 				time.Sleep(2 * time.Second)
 				content = "> " + content + "\n\n" + plusOneReactions[rand.Intn(len(plusOneReactions))] + " " + gofakeit.Emoji()
-				_, _ = s.SendMessage(ctx, 1, getRandUser(), SendMessageCmd{
+				_, _ = s.SendMessage(ctx, 1, &models.SignedInUser{UserId: getRandUser(), OrgRole: models.ROLE_ADMIN}, SendMessageCmd{
 					ContentTypeId: contentTypeID,
 					ObjectId:      objectID,
 					Content:       content,
