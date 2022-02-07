@@ -13,19 +13,16 @@ var (
 			Description: "encrypt secrets",
 			State:       FeatureStateBeta,
 		},
-
 		{
 			Name:        "httpclientprovider_azure_auth",
 			Description: "use http client for azure auth",
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "service-accounts",
-			Description:     "support service accounts",
-			State:           FeatureStateBeta,
-			RequiresLicense: true,
+			Name:        "service-accounts",
+			Description: "support service accounts",
+			State:       FeatureStateBeta,
 		},
-
 		{
 			Name:        "database_metrics",
 			Description: "Add prometheus metrics for database tables",
@@ -76,6 +73,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "lokiBackendMode",
+			Description:  "Loki datasource works as backend datasource",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "fullRangeLogsVolume",
 			Description:  "Show full range logs volume in explore",
 			State:        FeatureStateBeta,
@@ -117,6 +120,11 @@ var (
 			Name:        "lokiLive",
 			Description: "support websocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "featureHighlights",
+			Description: "Highlight Enterprise features",
+			State:       FeatureStateStable,
 		},
 	}
 )

@@ -10,9 +10,10 @@ interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
 }
 
 const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onQueryChange }) => {
-  const dimensionFilters = useMemo(() => query.azureMonitor?.dimensionFilters ?? [], [
-    query.azureMonitor?.dimensionFilters,
-  ]);
+  const dimensionFilters = useMemo(
+    () => query.azureMonitor?.dimensionFilters ?? [],
+    [query.azureMonitor?.dimensionFilters]
+  );
 
   const addFilter = () => {
     onQueryChange(appendDimensionFilter(query));

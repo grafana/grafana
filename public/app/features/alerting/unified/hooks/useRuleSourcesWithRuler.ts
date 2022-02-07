@@ -16,7 +16,8 @@ export function useRulesSourcesWithRuler(): DataSourceInstanceSettings[] {
       .forEach((ds) => dispatch(checkIfLotexSupportsEditingRulesAction(ds.name)));
   }, [dispatch, checkEditingRequests]);
 
-  return useMemo(() => getRulesDataSources().filter((ds) => checkEditingRequests[ds.name]?.result), [
-    checkEditingRequests,
-  ]);
+  return useMemo(
+    () => getRulesDataSources().filter((ds) => checkEditingRequests[ds.name]?.result),
+    [checkEditingRequests]
+  );
 }

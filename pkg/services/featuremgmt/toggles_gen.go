@@ -55,6 +55,10 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
+	// FlagLokiBackendMode
+	// Loki datasource works as backend datasource
+	FlagLokiBackendMode = "lokiBackendMode"
+
 	// FlagFullRangeLogsVolume
 	// Show full range logs volume in explore
 	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
@@ -86,4 +90,8 @@ const (
 	// FlagLokiLive
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
+
+	// FlagFeatureHighlights
+	// Highlight Enterprise features
+	FlagFeatureHighlights = "featureHighlights"
 )

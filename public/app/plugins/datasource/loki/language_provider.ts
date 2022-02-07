@@ -396,15 +396,16 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param name
    */
   fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
+    const interpolatedMatch = this.datasource.interpolateString(match);
     const url = '/loki/api/v1/series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
-    const cacheKey = this.generateCacheKey(url, start, end, match);
+    const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
     let value = this.seriesCache.get(cacheKey);
     if (!value) {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.seriesCache.set(cacheKey, {});
-      const params = { 'match[]': match, start, end };
+      const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);
       value = values;
@@ -442,11 +443,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string): Promise<string[]> {
-    const url = `/loki/api/v1/label/${key}/values`;
+    const interpolatedKey = this.datasource.interpolateString(key);
+    const url = `/loki/api/v1/label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
 
-    const cacheKey = this.generateCacheKey(url, start, end, key);
+    const cacheKey = this.generateCacheKey(url, start, end, interpolatedKey);
     const params = { start, end };
 
     let labelValues = this.labelsCache.get(cacheKey);
