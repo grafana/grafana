@@ -83,9 +83,16 @@ export function buildVisualQueryFromString(expr: string): Context {
   return context;
 }
 
+interface ParsingError {
+  text: string;
+  from: number;
+  to: number;
+  parentType?: string;
+}
+
 interface Context {
   query: PromVisualQuery;
-  errors: string[];
+  errors: ParsingError[];
 }
 
 /**
@@ -125,6 +132,23 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    // This is used for error type for some reason
+    case '⚠': {
+      if (isIntervalVariableError(node)) {
+        break;
+      }
+      context.errors.push({
+        text: getString(expr, node),
+        // TODO: this are positions in the string with the replaced variables. Means it cannot be used to show exact
+        //  placement of the error for the user. We need some translation table to positions before the variable
+        //  replace.
+        from: node.from,
+        to: node.to,
+        parentType: node.parent?.name,
+      });
+      break;
+    }
+
     default: {
       // Any other nodes we just ignore and go to it's children. This should be fine as there are lot's of wrapper
       // nodes that can be skipped.
@@ -137,6 +161,10 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
     }
   }
+}
+
+function isIntervalVariableError(node: SyntaxNode) {
+  return node.prevSibling?.name === 'Expr' && node.prevSibling?.firstChild?.name === 'VectorSelector';
 }
 
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
