@@ -765,7 +765,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: copy-packages-for-docker
 - commands:
-  - ./bin/grabpl build-docker --edition oss --shouldSave
+  - ./bin/grabpl build-docker --edition oss
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -777,7 +777,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl build-docker --edition oss --shouldSave --ubuntu
+  - ./bin/grabpl build-docker --edition oss --ubuntu
   depends_on:
   - copy-packages-for-docker
   environment:
@@ -4216,6 +4216,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 329c62a9e2df1a13853b75c4d656e9f96a35f9440fffa5b01106c86541f3e0d2
+hmac: 9b993df3f473d6b6b825c65cff8068a3b5be458a0a03ec43010fc3e73052f500
 
 ...
