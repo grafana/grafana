@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const failedToDeleteMsg = "Failed to delete API key"
+
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -65,7 +67,9 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	// Force affected service account to be the one referenced in the URL
 	cmd.ServiceAccountId = &saID
+	cmd.OrgId = c.OrgId
 
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
@@ -79,7 +83,6 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 			return response.Error(400, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
-	cmd.OrgId = c.OrgId
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {
@@ -131,7 +134,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 
 	// confirm API key belongs to service account. TODO: refactor get & delete to single call
 	cmdGet := &models.GetApiKeyByIdQuery{ApiKeyId: tokenID}
-	if err = bus.Dispatch(c.Req.Context(), cmdGet); err != nil || *cmdGet.Result.ServiceAccountId != saID {
+	if err = bus.Dispatch(c.Req.Context(), cmdGet); err != nil {
 		status := 404
 		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
 			status = 500
@@ -139,19 +142,24 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 			err = models.ErrApiKeyNotFound
 		}
 
-		return response.Error(status, "Failed to delete API key", err)
+		return response.Error(status, failedToDeleteMsg, err)
+	}
+
+	// verify service account ID matches the URL
+	if *cmdGet.Result.ServiceAccountId != saID {
+		return response.Error(404, failedToDeleteMsg, err)
 	}
 
 	cmdDel := &models.DeleteApiKeyCommand{Id: tokenID, OrgId: c.OrgId}
 	if err = bus.Dispatch(c.Req.Context(), cmdDel); err != nil {
-		var status int
-		if errors.Is(err, models.ErrApiKeyNotFound) {
-			status = 404
-		} else {
+		status := 404
+		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
 			status = 500
+		} else {
+			err = models.ErrApiKeyNotFound
 		}
 
-		return response.Error(status, "Failed to delete API key", err)
+		return response.Error(status, failedToDeleteMsg, err)
 	}
 
 	return response.Success("API key deleted")
