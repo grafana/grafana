@@ -35,7 +35,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = sqlstore.InitTestDB(t)
-		mock := mockstore.SQLStoreMock{}
+		mock := &mockstore.SQLStoreMock{}
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
 			require.NoError(t, err)

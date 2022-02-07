@@ -55,6 +55,9 @@ class WrapperUnconnected extends PureComponent<Props> {
 
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
+    getRichHistory().then((richHistory) => {
+      this.props.richHistoryUpdatedAction({ richHistory });
+    });
   }
 
   componentDidUpdate(prevProps: Props) {

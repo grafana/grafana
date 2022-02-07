@@ -116,26 +116,31 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 }
 
 //nolint:gosimple
-func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, serviceAccountID int64) ([]*models.ApiKey, error) {
 	result := make([]*models.ApiKey, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
 		sess = dbSession.Limit(100, 0).
 			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccount, time.Now().Unix()).
+			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccountID, time.Now().Unix()).
 			Asc("name")
 
 		return sess.Find(&result)
 	})
 	return result, err
 }
-func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*models.OrgUserDTO, error) {
 	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
+	if serviceAccountID > 0 {
+		query.UserID = serviceAccountID
+	}
+
 	err := s.sqlStore.GetOrgUsers(ctx, &query)
 	if err != nil {
 		return nil, err
 	}
+
 	return query.Result, err
 }
 
