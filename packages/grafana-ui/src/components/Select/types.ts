@@ -23,6 +23,7 @@ export interface SelectCommonProps<T> {
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
+  formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
@@ -127,3 +128,5 @@ export interface SelectableOptGroup<T = any> {
 export type SelectOptions<T = any> =
   | SelectableValue<T>
   | Array<SelectableValue<T> | SelectableOptGroup<T> | Array<SelectableOptGroup<T>>>;
+
+export type FormatOptionLabelMeta<T> = { context: string; inputValue: string; selectValue: Array<SelectableValue<T>> };

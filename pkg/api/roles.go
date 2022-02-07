@@ -298,3 +298,22 @@ var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(ActionOrgsRead),
 	accesscontrol.EvalPermission(ActionOrgsCreate),
 )
+
+// teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
+var teamsAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+	),
+)
+
+// teamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+var teamsEditAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+	),
+)

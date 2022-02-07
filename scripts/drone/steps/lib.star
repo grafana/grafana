@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.8.7'
+grabpl_version = 'v2.8.8'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -317,8 +317,10 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode):
+    src_dir = ''
     if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+        bucket = "$${PRERELEASE_BUCKET}"
+        src_dir = " --src-dir artifacts/static-assets"
     else:
         bucket = "grafana-static-assets"
 
@@ -337,11 +339,11 @@ def upload_cdn_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
+            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
 
@@ -923,7 +925,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
         'commands': [cmd, ],

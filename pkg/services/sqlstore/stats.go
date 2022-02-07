@@ -13,9 +13,12 @@ func init() {
 	bus.AddHandler("sql", GetSystemStats)
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
-	bus.AddHandler("sql", GetAdminStats)
 	bus.AddHandler("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandler("sql", GetSystemUserCountStats)
+}
+
+func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.GetAdminStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30
@@ -141,7 +144,7 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 	) AS ` + statName + `, `
 }
 
-func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
 	now := time.Now()
 	activeEndDate := now.Add(-activeUserTimeLimit)
 	dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)

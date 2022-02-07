@@ -13,7 +13,7 @@ import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;
 
-const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
+export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },

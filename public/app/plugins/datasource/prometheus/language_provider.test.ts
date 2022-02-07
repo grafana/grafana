@@ -11,6 +11,7 @@ describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
     getTimeRangeParams: () => ({ start: '0', end: '1' }),
+    interpolateString: (string: string) => string,
   } as any as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -76,6 +77,41 @@ describe('Language completion provider', () => {
         {},
         { end: '1', 'match[]': '{job="grafana"}', start: '0' }
       );
+    });
+  });
+
+  describe('fetchSeriesLabels', () => {
+    it('should interpolate variable in series', () => {
+      const languageProvider = new LanguageProvider({
+        ...datasource,
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as PrometheusDatasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeriesLabels('$metric');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/series', [], {
+        end: '1',
+        'match[]': 'interpolated-metric',
+        start: '0',
+      });
+    });
+  });
+
+  describe('fetchLabelValues', () => {
+    it('should interpolate variable in series', () => {
+      const languageProvider = new LanguageProvider({
+        ...datasource,
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as PrometheusDatasource);
+      const fetchLabelValues = languageProvider.fetchLabelValues;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchLabelValues('$job');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/api/v1/label/interpolated-job/values', [], {
+        end: '1',
+        start: '0',
+      });
     });
   });
 
@@ -266,6 +302,7 @@ describe('Language completion provider', () => {
       const datasources: PrometheusDatasource = {
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
+        interpolateString: (string: string) => string,
       } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
@@ -299,6 +336,7 @@ describe('Language completion provider', () => {
           },
         }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
+        interpolateString: (string: string) => string,
       } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
@@ -536,6 +574,7 @@ describe('Language completion provider', () => {
       const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
+        interpolateString: (string: string) => string,
       } as any as PrometheusDatasource;
 
       const instance = new LanguageProvider(datasource);
@@ -586,6 +625,7 @@ describe('Language completion provider', () => {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
         getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: false,
+        interpolateString: (string: string) => string,
       } as any as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
 

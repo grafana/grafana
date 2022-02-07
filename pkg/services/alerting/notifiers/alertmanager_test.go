@@ -68,7 +68,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 		am := &AlertmanagerNotifier{log: log.New("test.logger")}
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil)
 
 		evalContext.Rule.State = tc.newState
 
@@ -92,7 +92,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -106,7 +106,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 			require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewAlertmanagerNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 			require.NoError(t, err)
