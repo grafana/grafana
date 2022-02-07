@@ -8,10 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type OrgListResponse []struct {
+	OrgId    int64
+	Response error
+}
 type SQLStoreMock struct {
-	LastGetAlertsQuery *models.GetAlertsQuery
-	LatestUserId       int64
-
+	LastGetAlertsQuery           *models.GetAlertsQuery
+	LatestUserId                 int64
 	ExpectedUser                 *models.User
 	ExpectedDatasource           *models.DataSource
 	ExpectedAlert                *models.Alert
@@ -20,8 +23,9 @@ type SQLStoreMock struct {
 	ExpectedDashboards           []*models.Dashboard
 	ExpectedDashboardVersion     *models.DashboardVersion
 	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
-
-	ExpectedError error
+	ExpectedUserOrgList          []*models.UserOrgDTO
+	ExpectedOrgListResponse      OrgListResponse
+	ExpectedError                error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -150,6 +154,7 @@ func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUser
 }
 
 func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
+	query.Result = m.ExpectedUserOrgList
 	return m.ExpectedError
 }
 
@@ -424,7 +429,9 @@ func (m *SQLStoreMock) SearchOrgUsers(ctx context.Context, query *models.SearchO
 }
 
 func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-	return m.ExpectedError
+	testData := m.ExpectedOrgListResponse[0]
+	m.ExpectedOrgListResponse = m.ExpectedOrgListResponse[1:]
+	return testData.Response
 }
 
 func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
