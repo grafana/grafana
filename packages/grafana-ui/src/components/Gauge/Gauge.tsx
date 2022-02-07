@@ -115,8 +115,7 @@ export class Gauge extends PureComponent<Props> {
     const valueWidth =
       valueWidthBase -
       ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0) + (showThresholdLabels ? 10 : 0)) * 2 + 10);
-    const fontSize =
-      this.props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7).fontSize;
+    const fontSize = this.props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
     const thresholdLabelFontSize = Math.max(fontSize / 2.5, 12);
 
     let min = field.min ?? GAUGE_DEFAULT_MINIMUM;

@@ -2,7 +2,7 @@ import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, measureText, PlotTooltipInterpolator } from '@grafana/ui';
+import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import {
   StackingMode,
   VisibilityMode,
@@ -99,6 +99,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
+  let labelQt: Quadtree;
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -352,41 +353,43 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let autoFontSize = fontSize;
     let scaleFactor = 1;
 
-    barRects.forEach((r) => {
-      const { didx, sidx } = r;
+    if (showValue === VisibilityMode.Auto) {
+      barRects.forEach((r) => {
+        const { didx, sidx } = r;
 
-      if (hasAutoValueSize) {
-        const { fontSize: calculatedSize, textMetrics } = calculateFontSize(
-          labels[didx][sidx].text,
-          hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
-          vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
-          1
-        );
+        if (hasAutoValueSize) {
+          const { fontSize: calculatedSize, textMetrics } = calculateFontSizeWithMetrics(
+            labels[didx][sidx].text,
+            hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
+            vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
+            1
+          );
 
-        // Save text metrics
-        labels[didx][sidx].textMetrics = textMetrics;
+          // Save text metrics
+          labels[didx][sidx].textMetrics = textMetrics;
 
-        // Retrieve the new font size and use it
-        // to calculate scaling ratio
-        autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
-        scaleFactor = autoFontSize / fontSize;
+          // Retrieve the new font size and use it
+          // to calculate scaling ratio
+          autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+          scaleFactor = autoFontSize / fontSize;
 
-        // Take into account the fact that calculateFontSize
-        // uses 14px measurement so we need to adjust
-        // the scaleFactor in this instance
-        scaleFactor *= autoFontSize / 14;
+          // Take into account the fact that calculateFontSize
+          // uses 14px measurement so we need to adjust
+          // the scaleFactor in this instance
+          scaleFactor *= autoFontSize / 14;
 
-        // Update the end font-size
-        fontSize = autoFontSize;
+          // Update the end font-size
+          fontSize = autoFontSize;
 
-        if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== VisibilityMode.Always) {
-          return;
+          if (fontSize < VALUE_MIN_FONT_SIZE) {
+            return;
+          }
+        } else {
+          const text = labels[didx][sidx].text;
+          labels[didx][sidx].textMetrics = measureText(text, fontSize);
         }
-      } else {
-        const text = labels[didx][sidx].text;
-        labels[didx][sidx].textMetrics = measureText(text, fontSize);
-      }
-    });
+      });
+    }
 
     u.ctx.save();
 
@@ -555,5 +558,29 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     draw,
     interpolateTooltip,
     prepData,
+  };
+}
+
+/**
+ * @internal
+ */
+function calculateFontSizeWithMetrics(
+  text: string,
+  width: number,
+  height: number,
+  lineHeight: number,
+  maxSize?: number
+) {
+  // calculate width in 14px
+  const textSize = measureText(text, 14);
+  // how much bigger than 14px can we make it while staying within our width constraints
+  const fontSizeBasedOnWidth = (width / (textSize.width + 2)) * 14;
+  const fontSizeBasedOnHeight = height / lineHeight;
+
+  // final fontSize
+  const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
+  return {
+    fontSize: Math.min(optimalSize, maxSize ?? optimalSize),
+    textMetrics: textSize,
   };
 }

@@ -629,13 +629,12 @@ function getValueStyles(
   const formattedValueString = formattedValueToString(value);
 
   if (isVertical(orientation)) {
-    styles.fontSize =
-      text?.valueSize ?? calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT).fontSize;
+    styles.fontSize = text?.valueSize ?? calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `center`;
   } else {
     styles.fontSize =
       text?.valueSize ??
-      calculateFontSize(formattedValueString, textWidth - VALUE_LEFT_PADDING * 2, height, VALUE_LINE_HEIGHT).fontSize;
+      calculateFontSize(formattedValueString, textWidth - VALUE_LEFT_PADDING * 2, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `flex-end`;
     styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
