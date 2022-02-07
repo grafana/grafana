@@ -88,4 +88,26 @@ func TestReuseSessionWithTransaction(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, outerSession.IsClosed())
 	})
+
+	t.Run("fails if reuses session without transaction", func(t *testing.T) {
+		require.NoError(t, ss.WithDbSession(context.Background(), func(outerSession *DBSession) error {
+			require.NotNil(t, outerSession)
+			require.NotNil(t, outerSession.DB()) // init the session
+			require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
+
+			ctx := context.WithValue(context.Background(), ContextSessionKey{}, outerSession)
+
+			require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
+				require.Equal(t, outerSession, sess)
+				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
+
+			require.Error(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				require.FailNow(t, "WithTransactionalDbSession should not be able to reuse session that did not open the transaction ")
+				return nil
+			}))
+			return nil
+		}))
+	})
 }
