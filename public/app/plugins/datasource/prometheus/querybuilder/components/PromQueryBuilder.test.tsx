@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, getByRole, getByText } from '@testing-library/react';
+import { render, screen, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PrometheusDatasource } from '../../datasource';
@@ -68,24 +68,24 @@ describe('PromQueryBuilder', () => {
   });
 
   it('tries to load metrics without labels', async () => {
-    const { languageProvider } = setup();
-    openMetricSelect();
+    const { languageProvider, container } = setup();
+    openMetricSelect(container);
     expect(languageProvider.getLabelValues).toBeCalledWith('__name__');
   });
 
   it('tries to load metrics with labels', async () => {
-    const { languageProvider } = setup({
+    const { languageProvider, container } = setup({
       ...defaultQuery,
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
-    openMetricSelect();
+    openMetricSelect(container);
     expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true);
   });
 
   it('tries to load variables in metric field', async () => {
-    const { datasource } = setup();
+    const { datasource, container } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
-    openMetricSelect();
+    openMetricSelect(container);
     expect(datasource.getVariables).toBeCalled();
   });
 
@@ -142,19 +142,15 @@ function setup(query: PromVisualQuery = defaultQuery) {
     onChange: () => {},
   };
 
-  render(<PromQueryBuilder {...props} query={query} />);
-  return { languageProvider, datasource };
+  const { container } = render(<PromQueryBuilder {...props} query={query} />);
+  return { languageProvider, datasource, container };
 }
 
-function getMetricSelect() {
-  const metricSelect = screen.getAllByText('random_metric')[0].parentElement!;
-  // We need to return specifically input element otherwise clicks don't seem to work
-  return getByRole(metricSelect, 'combobox');
-}
-
-function openMetricSelect() {
-  const select = getMetricSelect();
-  userEvent.click(select);
+function openMetricSelect(container: HTMLElement) {
+  const select = container.querySelector('#prometheus-metric-select');
+  if (select) {
+    userEvent.click(select);
+  }
 }
 
 function openLabelNameSelect(index = 0) {
