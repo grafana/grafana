@@ -3,7 +3,6 @@ load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', '
 grabpl_version = 'v2.8.8'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
-grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
@@ -731,8 +730,11 @@ def copy_packages_for_docker_step():
     }
 
 
-def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    cmd = './bin/grabpl build-docker --edition {} --shouldSave'.format(edition)
+def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
+    cmd = './bin/grabpl build-docker --edition {}'.format(edition)
+    if publish:
+        cmd += ' --shouldSave'
+
     ubuntu_sfx = ''
     if ubuntu:
         ubuntu_sfx = '-ubuntu'
@@ -757,29 +759,6 @@ def package_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publ
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
         },
-    }
-
-def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publish=False):
-    ubuntu_sfx = ''
-    if ubuntu:
-        ubuntu_sfx = '-ubuntu'
-
-    settings = {
-        'dry_run': not publish,
-        'edition': edition,
-        'ubuntu': ubuntu,
-    }
-
-    if publish:
-        settings['username'] = from_secret('docker_user')
-        settings['password'] = from_secret('docker_password')
-    if archs:
-        settings['archs'] = ','.join(archs)
-    return {
-        'name': 'build-docker-images' + ubuntu_sfx,
-        'image': grafana_docker_image,
-        'depends_on': ['copy-packages-for-docker'],
-        'settings': settings,
     }
 
 

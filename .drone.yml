@@ -309,15 +309,20 @@ steps:
   - package
   image: grafana/build-container:1.4.9
   name: copy-packages-for-docker
-- depends_on:
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - ./bin/grabpl build-docker --edition oss -archs amd64
+  depends_on:
   - copy-packages-for-docker
-  image: grafana/drone-grafana-docker:0.3.2
-  name: build-docker-images
-  settings:
-    archs: amd64
-    dry_run: true
-    edition: oss
-    ubuntu: false
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: package-docker-images
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 trigger:
   event:
   - pull_request
@@ -761,30 +766,34 @@ steps:
   - package
   image: grafana/build-container:1.4.9
   name: copy-packages-for-docker
-- depends_on:
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - ./bin/grabpl build-docker --edition oss --shouldSave
+  depends_on:
   - copy-packages-for-docker
-  image: grafana/drone-grafana-docker:0.3.2
-  name: build-docker-images
-  settings:
-    dry_run: false
-    edition: oss
-    password:
-      from_secret: docker_password
-    ubuntu: false
-    username:
-      from_secret: docker_user
-- depends_on:
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: package-docker-images
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - ./bin/grabpl build-docker --edition oss --shouldSave --ubuntu
+  depends_on:
   - copy-packages-for-docker
-  image: grafana/drone-grafana-docker:0.3.2
-  name: build-docker-images-ubuntu
-  settings:
-    dry_run: false
-    edition: oss
-    password:
-      from_secret: docker_password
-    ubuntu: true
-    username:
-      from_secret: docker_user
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: package-docker-images-ubuntu
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - ./scripts/circle-release-canary-packages.sh
   depends_on:
@@ -4194,6 +4203,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b697c1d027af3dec4cb90c9b5f0ccd15359a3af60685338f258c74efd0e45aa5
+hmac: fe4a207e1e7b4d08462e494f2a45ccf822082fb774f860d3cde06831cf3d3974
 
 ...

@@ -23,7 +23,7 @@ load(
     'e2e_tests_artifacts',
     'build_storybook_step',
     'copy_packages_for_docker_step',
-    'package_docker_images_step',
+    'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -224,8 +224,8 @@ def get_steps(edition, ver_mode):
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         copy_packages_for_docker_step(),
-        package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
-        package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True),
         grafana_server_step(edition=edition),
     ])
 
