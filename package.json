@@ -308,7 +308,7 @@
     "memoize-one": "6.0.0",
     "moment": "2.29.1",
     "moment-timezone": "0.5.34",
-    "monaco-editor": "^0.31.1",
+    "monaco-editor": "0.32.1",
     "monaco-promql": "^1.7.2",
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
