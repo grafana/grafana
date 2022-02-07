@@ -90,4 +90,8 @@ const (
 	// FlagFeatureHighlights
 	// Highlight Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
+
+	// FlagLiveChats
+	// Enable Live chats feature
+	FlagLiveChats = "liveChats"
 )

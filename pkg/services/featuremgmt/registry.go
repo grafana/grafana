@@ -121,5 +121,10 @@ var (
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
 		},
+		{
+			Name:        "liveChats",
+			Description: "Enable Live chats feature",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
