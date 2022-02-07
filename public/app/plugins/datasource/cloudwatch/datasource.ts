@@ -192,9 +192,7 @@ export class CloudWatchDatasource
         });
       },
       queryParams,
-      {
-        timeoutFunc: timeoutFunc,
-      }
+      timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
