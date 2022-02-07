@@ -14,14 +14,14 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
+import { stylesFactory } from '@grafana/ui';
+
 import NewWindowIcon from '../common/NewWindowIcon';
 import { TraceSpanReference } from '../types/trace';
 import { UITooltip, UIDropdown, UIMenuItem, UIMenu, TooltipPlacement } from '../uiElementsContext';
-
 import ReferenceLink from '../url/ReferenceLink';
-import { createStyle } from '../Theme';
 
-export const getStyles = createStyle(() => {
+export const getStyles = stylesFactory(() => {
   return {
     MultiParent: css`
       padding: 0 5px;

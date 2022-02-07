@@ -114,6 +114,7 @@ export const getAvailableIcons = () =>
     'list-ui-alt',
     'list-ul',
     'lock',
+    'map-marker',
     'message',
     'minus',
     'minus-circle',
@@ -133,6 +134,7 @@ export const getAvailableIcons = () =>
     'presentation-play',
     'process',
     'question-circle',
+    'record-audio',
     'repeat',
     'rocket',
     'save',
@@ -186,6 +188,8 @@ export function getFieldTypeIcon(field?: Field): IconName {
         return 'toggle-on';
       case FieldType.trace:
         return 'info-circle';
+      case FieldType.geo:
+        return 'map-marker';
       case FieldType.other:
         return 'brackets-curly';
     }

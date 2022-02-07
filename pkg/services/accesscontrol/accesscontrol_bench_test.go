@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func setupTestEnv(b *testing.B, resourceCount, permissionPerResource int) ([]*Permission, map[string]bool) {
@@ -31,10 +30,8 @@ func benchGetMetadata(b *testing.B, resourceCount, permissionPerResource int) {
 	b.ResetTimer()
 
 	var metadata map[string]Metadata
-	var err error
 	for n := 0; n < b.N; n++ {
-		metadata, err = GetResourcesMetadata(context.Background(), permissions, "resources", ids)
-		require.NoError(b, err)
+		metadata = GetResourcesMetadata(context.Background(), permissions, "resources", ids)
 		assert.Len(b, metadata, resourceCount)
 		for _, resourceMetadata := range metadata {
 			assert.Len(b, resourceMetadata, permissionPerResource)
@@ -53,7 +50,7 @@ func BenchmarkGetResourcesMetadata_10_1000000(b *testing.B) {
 	benchGetMetadata(b, 10, 1000000)
 } // ~3.89s/op
 
-// Lots of resources (worst case)
+// Lots of resources
 func BenchmarkGetResourcesMetadata_1000_10(b *testing.B)   { benchGetMetadata(b, 1000, 10) }   // ~0,0023s/op
 func BenchmarkGetResourcesMetadata_10000_10(b *testing.B)  { benchGetMetadata(b, 10000, 10) }  // ~0.021s/op
 func BenchmarkGetResourcesMetadata_100000_10(b *testing.B) { benchGetMetadata(b, 100000, 10) } // ~0.22s/op

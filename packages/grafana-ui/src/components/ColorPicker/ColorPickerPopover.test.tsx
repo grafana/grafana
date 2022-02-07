@@ -9,7 +9,7 @@ describe('ColorPickerPopover', () => {
 
   it('should be tabbable', () => {
     render(<ColorPickerPopover color={'red'} onChange={() => {}} />);
-    const color = screen.getByRole('button', { name: 'super-light-red color' });
+    const color = screen.getByRole('button', { name: 'dark-red color' });
     const customTab = screen.getByRole('button', { name: 'Custom' });
 
     act(() => {

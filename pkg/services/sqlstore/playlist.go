@@ -8,12 +8,12 @@ import (
 )
 
 func (ss *SQLStore) addPlaylistQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.CreatePlaylist)
-	bus.AddHandlerCtx("sql", ss.UpdatePlaylist)
-	bus.AddHandlerCtx("sql", ss.DeletePlaylist)
-	bus.AddHandlerCtx("sql", ss.SearchPlaylists)
-	bus.AddHandlerCtx("sql", ss.GetPlaylist)
-	bus.AddHandlerCtx("sql", ss.GetPlaylistItem)
+	bus.AddHandler("sql", ss.CreatePlaylist)
+	bus.AddHandler("sql", ss.UpdatePlaylist)
+	bus.AddHandler("sql", ss.DeletePlaylist)
+	bus.AddHandler("sql", ss.SearchPlaylists)
+	bus.AddHandler("sql", ss.GetPlaylist)
+	bus.AddHandler("sql", ss.GetPlaylistItem)
 }
 
 func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {

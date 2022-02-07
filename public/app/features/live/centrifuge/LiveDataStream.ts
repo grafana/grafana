@@ -2,7 +2,6 @@ import type { LiveDataStreamOptions, StreamingFrameOptions } from '@grafana/runt
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 import {
   DataFrameJSON,
-  dataFrameToJSON,
   DataQueryError,
   Field,
   isLiveChannelMessageEvent,
@@ -17,52 +16,54 @@ import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service
 import { getStreamingFrameOptions, StreamingDataFrame } from '../data/StreamingDataFrame';
 import { StreamingResponseDataType } from '../data/utils';
 
-const bufferIfNot = (canEmitObservable: Observable<boolean>) => <T>(source: Observable<T>): Observable<T[]> => {
-  return new Observable((subscriber: Subscriber<T[]>) => {
-    let buffer: T[] = [];
-    let canEmit = true;
+const bufferIfNot =
+  (canEmitObservable: Observable<boolean>) =>
+  <T>(source: Observable<T>): Observable<T[]> => {
+    return new Observable((subscriber: Subscriber<T[]>) => {
+      let buffer: T[] = [];
+      let canEmit = true;
 
-    const emitBuffer = () => {
-      subscriber.next(buffer);
-      buffer = [];
-    };
+      const emitBuffer = () => {
+        subscriber.next(buffer);
+        buffer = [];
+      };
 
-    const canEmitSub = canEmitObservable.subscribe({
-      next: (val) => {
-        canEmit = val;
+      const canEmitSub = canEmitObservable.subscribe({
+        next: (val) => {
+          canEmit = val;
 
-        if (canEmit && buffer.length) {
-          emitBuffer();
-        }
-      },
-    });
-
-    const sourceSub = source.subscribe({
-      next(value) {
-        if (canEmit) {
-          if (!buffer.length) {
-            subscriber.next([value]);
-          } else {
+          if (canEmit && buffer.length) {
             emitBuffer();
           }
-        } else {
-          buffer.push(value);
-        }
-      },
-      error(error) {
-        subscriber.error(error);
-      },
-      complete() {
-        subscriber.complete();
-      },
-    });
+        },
+      });
 
-    return () => {
-      sourceSub.unsubscribe();
-      canEmitSub.unsubscribe();
-    };
-  });
-};
+      const sourceSub = source.subscribe({
+        next(value) {
+          if (canEmit) {
+            if (!buffer.length) {
+              subscriber.next([value]);
+            } else {
+              emitBuffer();
+            }
+          } else {
+            buffer.push(value);
+          }
+        },
+        error(error) {
+          subscriber.error(error);
+        },
+        complete() {
+          subscriber.complete();
+        },
+      });
+
+      return () => {
+        sourceSub.unsubscribe();
+        canEmitSub.unsubscribe();
+      };
+    });
+  };
 
 export type DataStreamHandlerDeps<T> = {
   channelId: LiveChannelId;
@@ -209,7 +210,7 @@ export class LiveDataStream<T = unknown> {
   private prepareInternalStreamForNewSubscription = (options: LiveDataStreamOptions): void => {
     if (!this.frameBuffer.hasAtLeastOnePacket() && options.frame) {
       // will skip initial frames from subsequent subscribers
-      this.process(dataFrameToJSON(options.frame));
+      this.process(options.frame);
     }
   };
 

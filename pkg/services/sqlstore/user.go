@@ -18,22 +18,22 @@ import (
 )
 
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandlerCtx(ss.GetSignedInUserWithCacheCtx)
+	ss.Bus.AddHandler(ss.GetSignedInUserWithCacheCtx)
 
-	bus.AddHandlerCtx("sql", GetUserById)
-	bus.AddHandlerCtx("sql", UpdateUser)
-	bus.AddHandlerCtx("sql", ChangeUserPassword)
-	bus.AddHandlerCtx("sql", ss.GetUserByLogin)
-	bus.AddHandlerCtx("sql", ss.GetUserByEmail)
-	bus.AddHandlerCtx("sql", SetUsingOrg)
-	bus.AddHandlerCtx("sql", UpdateUserLastSeenAt)
-	bus.AddHandlerCtx("sql", ss.GetUserProfile)
-	bus.AddHandlerCtx("sql", SearchUsers)
-	bus.AddHandlerCtx("sql", GetUserOrgList)
-	bus.AddHandlerCtx("sql", DisableUser)
-	bus.AddHandlerCtx("sql", BatchDisableUsers)
-	bus.AddHandlerCtx("sql", DeleteUser)
-	bus.AddHandlerCtx("sql", SetUserHelpFlag)
+	bus.AddHandler("sql", ss.GetUserById)
+	bus.AddHandler("sql", ss.UpdateUser)
+	bus.AddHandler("sql", ss.ChangeUserPassword)
+	bus.AddHandler("sql", ss.GetUserByLogin)
+	bus.AddHandler("sql", ss.GetUserByEmail)
+	bus.AddHandler("sql", ss.SetUsingOrg)
+	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
+	bus.AddHandler("sql", ss.GetUserProfile)
+	bus.AddHandler("sql", SearchUsers)
+	bus.AddHandler("sql", ss.GetUserOrgList)
+	bus.AddHandler("sql", ss.DisableUser)
+	bus.AddHandler("sql", ss.BatchDisableUsers)
+	bus.AddHandler("sql", ss.DeleteUser)
+	bus.AddHandler("sql", ss.SetUserHelpFlag)
 }
 
 func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
@@ -87,7 +87,7 @@ func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (
 	return ss.getOrCreateOrg(sess, orgName)
 }
 
-// createUser creates a user in the database.
+// createUser creates a user in the database
 func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
 	var user models.User
 	var orgID int64 = -1
@@ -320,7 +320,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 	return user, err
 }
 
-func GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
+func (ss SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
 	return withDbSession(ctx, x, func(sess *DBSession) error {
 		user := new(models.User)
 		has, err := sess.ID(query.Id).Get(user)
@@ -392,8 +392,8 @@ func (ss *SQLStore) GetUserByEmail(ctx context.Context, query *models.GetUserByE
 	})
 }
 
-func UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
@@ -418,8 +418,8 @@ func UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error {
 	})
 }
 
-func ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
@@ -430,8 +430,8 @@ func ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordComma
 	})
 }
 
-func UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Id:         cmd.UserId,
 			LastSeenAt: time.Now(),
@@ -442,9 +442,9 @@ func UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtC
 	})
 }
 
-func SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+func (ss *SQLStore) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
-	if err := GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
+	if err := ss.GetUserOrgList(ctx, getOrgsForUserCmd); err != nil {
 		return err
 	}
 
@@ -458,7 +458,7 @@ func SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return fmt.Errorf("user does not belong to org")
 	}
 
-	return inTransaction(func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
 	})
 }
@@ -522,7 +522,7 @@ func (o byOrgName) Less(i, j int) bool {
 	return o[i].Name < o[j].Name
 }
 
-func GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
+func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
 	query.Result = make([]*models.UserOrgDTO, 0)
 	sess := x.Table("org_user")
 	sess.Join("INNER", "org", "org_user.org_id=org.id")
@@ -546,7 +546,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return nil
 	}
 
-	err := GetSignedInUser(ctx, query)
+	err := ss.GetSignedInUser(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -556,7 +556,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 	return nil
 }
 
-func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	orgId := "u.org_id"
 	if query.OrgId > 0 {
 		orgId = strconv.FormatInt(query.OrgId, 10)
@@ -603,7 +603,7 @@ func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) er
 	}
 
 	getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-	err = GetTeamsByUser(ctx, getTeamsByUserQuery)
+	err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return err
 	}
@@ -721,7 +721,7 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 	return err
 }
 
-func DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
+func (ss *SQLStore) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
 	user := models.User{}
 	sess := x.Table("user")
 
@@ -738,8 +738,8 @@ func DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
 	return err
 }
 
-func BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		userIds := cmd.UserIds
 
 		if len(userIds) == 0 {
@@ -763,8 +763,8 @@ func BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand
 	})
 }
 
-func DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		return deleteUserInTransaction(sess, cmd)
 	})
 }
@@ -835,8 +835,8 @@ func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	})
 }
 
-func SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := models.User{
 			Id:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,

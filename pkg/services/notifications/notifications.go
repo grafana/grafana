@@ -17,29 +17,46 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type WebhookSender interface {
+	SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error
+}
+type EmailSender interface {
+	SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error
+	SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error
+}
+type Service interface {
+	WebhookSender
+	EmailSender
+}
+
+type Store interface {
+	GetUserByLogin(context.Context, *models.GetUserByLoginQuery) error
+}
+
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
 		log:          log.New("notifications"),
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
+		mailer:       mailer,
 	}
 
-	ns.Bus.AddHandlerCtx(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandlerCtx(ns.validateResetPasswordCode)
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandler)
+	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
+	ns.Bus.AddHandler(ns.ValidateResetPasswordCode)
+	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
 
-	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
-	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
+	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
+	ns.Bus.AddHandler(ns.SendWebhookSync)
 
-	ns.Bus.AddEventListenerCtx(ns.signUpStartedHandler)
-	ns.Bus.AddEventListenerCtx(ns.signUpCompletedHandler)
+	ns.Bus.AddEventListener(ns.signUpStartedHandler)
+	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -70,6 +87,7 @@ type NotificationService struct {
 
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
+	mailer       Mailer
 	log          log.Logger
 }
 
@@ -117,7 +135,7 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	return ""
 }
 
-func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
 	message, err := ns.buildEmailMessage(&models.SendEmailCommand{
 		Data:          cmd.Data,
 		Info:          cmd.Info,
@@ -125,6 +143,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
 		EmbeddedFiles: cmd.EmbeddedFiles,
+		AttachedFiles: cmd.AttachedFiles,
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
 	})
@@ -137,7 +156,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 	return err
 }
 
-func (ns *NotificationService) sendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
+func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
 	message, err := ns.buildEmailMessage(cmd)
 
 	if err != nil {
@@ -148,12 +167,12 @@ func (ns *NotificationService) sendEmailCommandHandler(ctx context.Context, cmd 
 	return nil
 }
 
-func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
+func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
 	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
 	if err != nil {
 		return err
 	}
-	return ns.sendEmailCommandHandler(ctx, &models.SendEmailCommand{
+	return ns.SendEmailCommandHandler(ctx, &models.SendEmailCommand{
 		To:       []string{cmd.User.Email},
 		Template: tmplResetPassword,
 		Data: map[string]interface{}{
@@ -163,18 +182,20 @@ func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery) error {
+type GetUserByLoginFunc = func(c context.Context, login string) (*models.User, error)
+
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
 		return models.ErrInvalidEmailCode
 	}
 
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
+	user, err := userByLogin(ctx, login)
+	if err != nil {
 		return err
 	}
 
-	validEmailCode, err := validateUserEmailCode(ns.Cfg, userQuery.Result, query.Code)
+	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
 	if err != nil {
 		return err
 	}
@@ -182,7 +203,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 		return models.ErrInvalidEmailCode
 	}
 
-	query.Result = userQuery.Result
+	query.Result = user
 	return nil
 }
 
@@ -197,7 +218,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 		return nil
 	}
 
-	err := ns.sendEmailCommandHandler(ctx, &models.SendEmailCommand{
+	err := ns.SendEmailCommandHandler(ctx, &models.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplSignUpStarted,
 		Data: map[string]interface{}{
@@ -212,7 +233,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 	}
 
 	emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
-	return bus.DispatchCtx(ctx, &emailSentCmd)
+	return bus.Dispatch(ctx, &emailSentCmd)
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {
@@ -220,7 +241,7 @@ func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *
 		return nil
 	}
 
-	return ns.sendEmailCommandHandler(ctx, &models.SendEmailCommand{
+	return ns.SendEmailCommandHandler(ctx, &models.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{

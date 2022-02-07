@@ -3,15 +3,16 @@ package manager
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -87,6 +88,8 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, reports.Metrics["stats.encryption.envelope_encryption_enabled.count"])
+		assert.Equal(t, 1, reports.Metrics["stats.encryption.current_provider.secretKey.count"])
+		assert.Equal(t, 1, reports.Metrics["stats.encryption.providers.secretKey.count"])
 	})
 }
 
@@ -159,7 +162,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 func TestSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		svc := SetupTestService(t, database.ProvideSecretsStore(sqlstore.InitTestDB(t)))
-		assert.Equal(t, "secretKey", svc.currentProvider)
+		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
@@ -175,15 +178,16 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		providerID := "fakeProvider.v1"
+		features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
+		providerID := secrets.ProviderID("fakeProvider.v1")
 		settings := &setting.OSSImpl{
 			Cfg: &setting.Cfg{
-				Raw:            raw,
-				FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true},
+				Raw:                    raw,
+				IsFeatureToggleEnabled: features.IsEnabled,
 			},
 		}
 		encr := ossencryption.ProvideService()
-		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings))
+		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 
 		svcEncrypt, err := ProvideSecretsService(
@@ -191,11 +195,12 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 
-		assert.Equal(t, providerID, svcEncrypt.currentProvider)
+		assert.Equal(t, providerID, svcEncrypt.currentProviderID)
 		assert.Equal(t, 2, len(svcEncrypt.GetProviders()))
 
 		encrypted, _ := svcEncrypt.Encrypt(context.Background(), []byte{}, secrets.WithoutScope())
@@ -208,6 +213,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
@@ -244,7 +250,7 @@ func newFakeKMS(kms osskmsproviders.Service) fakeKMS {
 	}
 }
 
-func (f *fakeKMS) Provide() (map[string]secrets.Provider, error) {
+func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 	providers, err := f.kms.Provide()
 	if err != nil {
 		return providers, err
@@ -252,4 +258,103 @@ func (f *fakeKMS) Provide() (map[string]secrets.Provider, error) {
 
 	providers["fakeProvider.v1"] = f.fake
 	return providers, nil
+}
+
+func TestSecretsService_Run(t *testing.T) {
+	ctx := context.Background()
+	sql := sqlstore.InitTestDB(t)
+	store := database.ProvideSecretsStore(sql)
+	svc := SetupTestService(t, store)
+
+	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
+		defer cancel()
+
+		err := svc.Run(ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should trigger cache clean up", func(t *testing.T) {
+		// Encrypt to ensure there's a data encryption key generated
+		_, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		require.NoError(t, err)
+
+		// Data encryption key cache should contain one element
+		require.Len(t, svc.dataKeyCache, 1)
+
+		// Execute background process after key's TTL, to force
+		// clean up process, during a hundred milliseconds with
+		// gc ticker configured on every nanosecond, to ensure
+		// the ticker is triggered.
+		gcInterval = time.Nanosecond
+
+		t.Cleanup(func() { now = time.Now })
+		now = func() time.Time { return time.Now().Add(dekTTL) }
+
+		ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+		defer cancel()
+
+		err = svc.Run(ctx)
+		require.NoError(t, err)
+
+		// Then, once the ticker has been triggered,
+		// the cleanup process should have happened,
+		// therefore the cache should be empty.
+		require.Len(t, svc.dataKeyCache, 0)
+	})
+
+	t.Run("should update data key expiry after every use", func(t *testing.T) {
+		// Encrypt to generate data encryption key
+		withoutScope := secrets.WithoutScope()
+		_, err := svc.Encrypt(ctx, []byte("grafana"), withoutScope)
+		require.NoError(t, err)
+
+		// New call to Encrypt one minute later should update cache entry's expiry
+		t.Cleanup(func() { now = time.Now })
+		now = func() time.Time { return time.Now().Add(time.Minute) }
+		_, err = svc.Encrypt(ctx, []byte("grafana"), withoutScope)
+		require.NoError(t, err)
+
+		dataKeyID := svc.keyName(withoutScope())
+		assert.True(t, svc.dataKeyCache[dataKeyID].expiry.After(time.Now().Add(dekTTL)))
+	})
+}
+
+func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
+	ctx := context.Background()
+	sql := sqlstore.InitTestDB(t)
+	store := database.ProvideSecretsStore(sql)
+	svc := SetupTestService(t, store)
+
+	// Encrypt to generate data encryption key
+	withoutScope := secrets.WithoutScope()
+	ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), withoutScope)
+	require.NoError(t, err)
+
+	t.Run("existing key should be re-encrypted", func(t *testing.T) {
+		prevDataKeys, err := store.GetAllDataKeys(ctx)
+		require.NoError(t, err)
+		require.Len(t, prevDataKeys, 1)
+
+		err = svc.ReEncryptDataKeys(ctx)
+		require.NoError(t, err)
+
+		reEncryptedDataKeys, err := store.GetAllDataKeys(ctx)
+		require.NoError(t, err)
+		require.Len(t, reEncryptedDataKeys, 1)
+
+		assert.NotEqual(t, prevDataKeys[0].EncryptedData, reEncryptedDataKeys[0].EncryptedData)
+	})
+
+	t.Run("data keys cache should be invalidated", func(t *testing.T) {
+		// Decrypt to ensure data key is cached
+		_, err := svc.Decrypt(ctx, ciphertext)
+		require.NoError(t, err)
+		require.NotEmpty(t, svc.dataKeyCache)
+
+		err = svc.ReEncryptDataKeys(ctx)
+		require.NoError(t, err)
+
+		assert.Empty(t, svc.dataKeyCache)
+	})
 }

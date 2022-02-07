@@ -143,7 +143,8 @@ export function runRequest(
     }),
     // handle errors
     catchError((err) => {
-      console.error('runRequest.catchError', err);
+      const errLog = typeof err === 'string' ? err : JSON.stringify(err);
+      console.error('runRequest.catchError', errLog);
       return of({
         ...state.panelData,
         state: LoadingState.Error,

@@ -1,11 +1,12 @@
-import React, { FC, FormEvent } from 'react';
+import React, { FC, ChangeEvent, FormEvent } from 'react';
 import { css } from '@emotion/css';
-import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox, InlineSwitch } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { DashboardQuery, SearchLayout } from '../types';
+import { config } from '@grafana/runtime';
 
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },
@@ -16,25 +17,30 @@ const searchSrv = new SearchSrv();
 
 interface Props {
   onLayoutChange: (layout: SearchLayout) => void;
+  onShowPreviewsChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
+  showPreviews?: boolean;
 }
 
 export const ActionRow: FC<Props> = ({
   onLayoutChange,
+  onShowPreviewsChange,
   onSortChange,
   onStarredFilterChange = () => {},
   onTagFilterChange,
   query,
   showStarredFilter,
   hideLayout,
+  showPreviews,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const previewsEnabled = config.featureToggles.dashboardPreviews;
 
   return (
     <div className={styles.actionRow}>
@@ -44,6 +50,16 @@ export const ActionRow: FC<Props> = ({
             <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />
           ) : null}
           <SortPicker onChange={onSortChange} value={query.sort?.value} />
+          {previewsEnabled && (
+            <InlineSwitch
+              id="search-show-previews"
+              label="Show previews"
+              showLabel
+              value={showPreviews}
+              onChange={onShowPreviewsChange}
+              transparent
+            />
+          )}
         </HorizontalGroup>
       </div>
       <HorizontalGroup spacing="md" width="auto">

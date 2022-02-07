@@ -24,7 +24,7 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 var loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
-	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
+	if err := bus.Dispatch(ctx, &userQuery); err != nil {
 		return err
 	}
 

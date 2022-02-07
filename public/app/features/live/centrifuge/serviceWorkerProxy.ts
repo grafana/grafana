@@ -28,6 +28,14 @@ export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
     );
   };
 
+  /**
+   * Query over websocket
+   */
+  getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
+    const optionsAsPlainSerializableObject = JSON.parse(JSON.stringify(options));
+    return this.centrifugeWorker.getQueryData(optionsAsPlainSerializableObject);
+  };
+
   getPresence: CentrifugeSrv['getPresence'] = (address) => {
     return this.centrifugeWorker.getPresence(address);
   };

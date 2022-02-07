@@ -15,7 +15,7 @@ export interface PanelContext {
   eventBus: EventBus;
 
   /** Dashboard panels sync */
-  sync?: DashboardCursorSync;
+  sync?: () => DashboardCursorSync;
 
   /** Information on what the outer container is */
   app?: CoreApp | 'string';

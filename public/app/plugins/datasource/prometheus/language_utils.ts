@@ -215,8 +215,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
     type: 'counter',
-    help:
-      'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+    help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
   return { ...baseMetadata, ...summaryMetadata, ...syntheticMetadata };
@@ -274,7 +273,7 @@ const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLike
   string
 >;
 
-export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
+export function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
   const expr = labelBasedQuery.labelMatchers
     .map((selector: AbstractLabelMatcher) => {
       const operator = ToPromLikeMap[selector.operator];
@@ -287,9 +286,13 @@ export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
     .filter((e: string) => e !== '')
     .join(', ');
 
+  return expr ? `{${expr}}` : '';
+}
+
+export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
   return {
     refId: labelBasedQuery.refId,
-    expr: expr ? `{${expr}}` : '',
+    expr: toPromLikeExpr(labelBasedQuery),
     range: true,
   };
 }

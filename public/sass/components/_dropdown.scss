@@ -316,7 +316,7 @@
 .dropdown-menu.dropdown-menu--new {
   li a,
   li button {
-    padding: $spacer/2 $spacer;
+    padding: calc($spacer/2) $spacer;
     border-left: 2px solid $side-menu-bg;
     background: $side-menu-bg;
 

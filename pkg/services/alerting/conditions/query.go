@@ -13,7 +13,6 @@ import (
 	gocontext "context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -140,7 +139,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		OrgId: context.Rule.OrgID,
 	}
 
-	if err := bus.DispatchCtx(context.Ctx, getDsInfo); err != nil {
+	if err := context.Store.GetDataSource(context.Ctx, getDsInfo); err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 

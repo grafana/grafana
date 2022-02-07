@@ -43,7 +43,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
-	if err := bus.DispatchCtx(context.Background(), &userQuery); err != nil {
+	if err := bus.Dispatch(context.Background(), &userQuery); err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
@@ -57,7 +57,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.DispatchCtx(context.Background(), &cmd); err != nil {
+	if err := bus.Dispatch(context.Background(), &cmd); err != nil {
 		return errutil.Wrapf(err, "failed to update user password")
 	}
 

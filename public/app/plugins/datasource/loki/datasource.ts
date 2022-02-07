@@ -49,6 +49,7 @@ import { addParsedLabelToQuery, queryHasPipeParser } from './query_utils';
 import {
   LokiOptions,
   LokiQuery,
+  LokiQueryType,
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
@@ -90,7 +91,8 @@ export class LokiDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithLogsVolumeSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
-    DataSourceWithQueryExportSupport<LokiQuery> {
+    DataSourceWithQueryExportSupport<LokiQuery>
+{
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -172,7 +174,7 @@ export class LokiDatasource
       });
 
     for (const target of filteredTargets) {
-      if (target.instant) {
+      if (target.instant || target.queryType === LokiQueryType.Instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
@@ -647,6 +649,7 @@ export class LokiDatasource
       maxLines,
       instant,
       stepInterval,
+      queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
     const { data } = instant
       ? await lastValueFrom(this.runInstantQuery(query, options as any))
@@ -750,6 +753,14 @@ export class LokiDatasource
     } else {
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
+  }
+
+  interpolateString(string: string) {
+    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getVariables(): string[] {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 }
 

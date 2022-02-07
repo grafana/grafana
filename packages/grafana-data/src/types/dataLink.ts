@@ -1,5 +1,6 @@
 import { DataQuery } from './query';
 import { InterpolateFunction } from './panel';
+import { ExplorePanelsState } from './explore';
 
 /**
  * Callback info for DataLink click events
@@ -44,6 +45,7 @@ export interface InternalDataLink<T extends DataQuery = any> {
   query: T;
   datasourceUid: string;
   datasourceName: string;
+  panelsState?: ExplorePanelsState;
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;

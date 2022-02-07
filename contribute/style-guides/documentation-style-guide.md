@@ -119,7 +119,7 @@ If that is the case, then use the following format for headings:
 - Assume all graphics will be exclusively viewed on the web.
 - Maximum image size is 3840px X 2160px.
 - Screenshots should be readable, but not too large.
-- _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/documentation-markdown-guide.md#images).
+- _Do not_ use image shortcodes. Follow the guidance in [Markdown style guide](../documentation/documentation-markdown-guide.md#Images).
 - Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 - When you name a file, follow the [file naming conventions](#file-naming-conventions). Example: image-name-7-3.png
 

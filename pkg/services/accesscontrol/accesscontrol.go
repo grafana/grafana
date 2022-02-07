@@ -20,9 +20,13 @@ type AccessControl interface {
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
-	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
+
+	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// specific scope prefix (ex: datasources:name:)
+	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
 }
 
 type PermissionsProvider interface {
@@ -33,26 +37,16 @@ type ResourcePermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
-	SetUserPermission(ctx context.Context, orgID, userID int64, resourceID string, actions []string) (*ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
-	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, actions []string) (*ResourcePermission, error)
+	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*ResourcePermission, error)
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
-	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, actions []string) (*ResourcePermission, error)
-	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
-	MapActions(permission ResourcePermission) string
-	// MapPermission will map a friendly named permission to it's corresponding actions configured in PermissionsToAction map.
-	MapPermission(permission string) []string
+	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
 }
 
-type ResourcePermissionsStore interface {
-	// SetUserResourcePermission sets permission for managed user role on a resource
-	SetUserResourcePermission(ctx context.Context, orgID, userID int64, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
-	// SetTeamResourcePermission sets permission for managed team role on a resource
-	SetTeamResourcePermission(ctx context.Context, orgID, teamID int64, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
-	// SetBuiltinResourcePermission sets permissions for managed builtin role on a resource
-	SetBuiltInResourcePermission(ctx context.Context, orgID int64, builtinRole string, cmd SetResourcePermissionCommand) (*ResourcePermission, error)
-	// GetResourcesPermissions will return all permission for all supplied resource ids
-	GetResourcesPermissions(ctx context.Context, orgID int64, query GetResourcesPermissionsQuery) ([]ResourcePermission, error)
+type User struct {
+	ID         int64
+	IsExternal bool
 }
 
 // Metadata contains user accesses for a given resource
@@ -146,7 +140,7 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) (map[string]Metadata, error) {
+func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) map[string]Metadata {
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
@@ -171,5 +165,5 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 		}
 	}
 
-	return result, nil
+	return result
 }

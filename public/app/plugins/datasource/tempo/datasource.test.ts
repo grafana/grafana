@@ -16,6 +16,15 @@ import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './dat
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  it('returns empty response when traceId is empty', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceId', query: '' } as Partial<TempoQuery>] } as any),
+      { defaultValue: 'empty' }
+    );
+    expect(response).toBe('empty');
+  });
+
   it('parses json fields from backend', async () => {
     setupBackendSrv(
       new MutableDataFrame({
@@ -34,7 +43,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -97,7 +106,10 @@ describe('Tempo data source', () => {
     expect(response.data).toHaveLength(2);
     expect(response.data[0].name).toBe('Nodes');
     expect(response.data[0].fields[0].values.length).toBe(3);
+
+    // Test Links
     expect(response.data[0].fields[0].config.links.length).toBeGreaterThan(0);
+    expect(response.data[0].fields[0].config.links).toEqual(serviceGraphLinks);
 
     expect(response.data[1].name).toBe('Edges');
     expect(response.data[1].fields[0].values.length).toBe(2);
@@ -166,6 +178,24 @@ describe('Tempo data source', () => {
     expect(builtQuery).toStrictEqual({
       tags: '',
       limit: DEFAULT_LIMIT,
+    });
+  });
+
+  it('should include time range if provided', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      search: '',
+    };
+    const timeRange = { startTime: 0, endTime: 1000 };
+    const builtQuery = ds.buildSearchQuery(tempoQuery, timeRange);
+    expect(builtQuery).toStrictEqual({
+      tags: '',
+      limit: DEFAULT_LIMIT,
+      start: timeRange.startTime,
+      end: timeRange.endTime,
     });
   });
 
@@ -310,3 +340,39 @@ const mockInvalidJson = {
     },
   ],
 };
+
+const serviceGraphLinks = [
+  {
+    url: '',
+    title: 'Request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Request histogram',
+    internal: {
+      query: {
+        expr: 'histogram_quantile(0.9, rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__interval]))',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+  {
+    url: '',
+    title: 'Failed request rate',
+    internal: {
+      query: {
+        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__interval])',
+      },
+      datasourceUid: 'prom',
+      datasourceName: 'Prometheus',
+    },
+  },
+];

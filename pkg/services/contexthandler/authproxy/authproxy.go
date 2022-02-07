@@ -248,7 +248,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
-	if err := bus.DispatchCtx(auth.ctx.Req.Context(), upsert); err != nil {
+	if err := bus.Dispatch(auth.ctx.Req.Context(), upsert); err != nil {
 		return 0, err
 	}
 
@@ -305,7 +305,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		ExternalUser:  extUser,
 	}
 
-	err := bus.DispatchCtx(auth.ctx.Req.Context(), upsert)
+	err := bus.Dispatch(auth.ctx.Req.Context(), upsert)
 	if err != nil {
 		return 0, err
 	}
@@ -334,7 +334,7 @@ func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, erro
 		UserId: userID,
 	}
 
-	if err := bus.DispatchCtx(context.Background(), query); err != nil {
+	if err := bus.Dispatch(context.Background(), query); err != nil {
 		return nil, err
 	}
 

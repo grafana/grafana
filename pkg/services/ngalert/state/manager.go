@@ -96,16 +96,16 @@ func (st *Manager) Warm() {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
 			stateForEntry := &State{
-				AlertRuleUID:       entry.RuleUID,
-				OrgID:              entry.RuleOrgID,
-				CacheId:            cacheId,
-				Labels:             lbs,
-				State:              translateInstanceState(entry.CurrentState),
-				Results:            []Evaluation{},
-				StartsAt:           entry.CurrentStateSince,
-				EndsAt:             entry.CurrentStateEnd,
-				LastEvaluationTime: entry.LastEvalTime,
-				Annotations:        ruleForEntry.Annotations,
+				AlertRuleUID:         entry.RuleUID,
+				OrgID:                entry.RuleOrgID,
+				CacheId:              cacheId,
+				Labels:               lbs,
+				State:                translateInstanceState(entry.CurrentState),
+				LastEvaluationString: "",
+				StartsAt:             entry.CurrentStateSince,
+				EndsAt:               entry.CurrentStateEnd,
+				LastEvaluationTime:   entry.LastEvalTime,
+				Annotations:          ruleForEntry.Annotations,
 			}
 			states = append(states, stateForEntry)
 		}
@@ -116,8 +116,8 @@ func (st *Manager) Warm() {
 	}
 }
 
-func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *State {
-	return st.cache.getOrCreate(alertRule, result)
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+	return st.cache.getOrCreate(ctx, alertRule, result)
 }
 
 func (st *Manager) set(entry *State) {
@@ -153,16 +153,16 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	currentState := st.getOrCreate(alertRule, result)
+	currentState := st.getOrCreate(ctx, alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
-		EvaluationTime:   result.EvaluatedAt,
-		EvaluationState:  result.State,
-		EvaluationString: result.EvaluationString,
-		Values:           NewEvaluationValues(result.Values),
+		EvaluationTime:  result.EvaluatedAt,
+		EvaluationState: result.State,
+		Values:          NewEvaluationValues(result.Values),
 	})
+	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State
 

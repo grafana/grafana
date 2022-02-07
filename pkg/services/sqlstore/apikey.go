@@ -11,11 +11,11 @@ import (
 )
 
 func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
-	bus.AddHandlerCtx("sql", ss.GetAPIKeys)
-	bus.AddHandlerCtx("sql", ss.GetApiKeyById)
-	bus.AddHandlerCtx("sql", ss.GetApiKeyByName)
-	bus.AddHandlerCtx("sql", ss.DeleteApiKey)
-	bus.AddHandlerCtx("sql", ss.AddAPIKey)
+	bus.AddHandler("sql", ss.GetAPIKeys)
+	bus.AddHandler("sql", ss.GetApiKeyById)
+	bus.AddHandler("sql", ss.GetApiKeyByName)
+	bus.AddHandler("sql", ss.DeleteApiKey)
+	bus.AddHandler("sql", ss.AddAPIKey)
 }
 
 // GetAPIKeys queries the database based

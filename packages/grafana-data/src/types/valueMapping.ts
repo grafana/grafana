@@ -14,6 +14,7 @@ export enum MappingType {
 export interface ValueMappingResult {
   text?: string;
   color?: string;
+  icon?: string;
   index?: number;
 }
 

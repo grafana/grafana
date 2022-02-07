@@ -324,7 +324,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.DispatchCtx(ctx, cmd)
+	return bus.Dispatch(ctx, cmd)
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (
@@ -353,7 +353,7 @@ func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDa
 // and provisioned dashboards are left behind but not deleted.
 func (dr *dashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.DispatchCtx(ctx, cmd)
+	return bus.Dispatch(ctx, cmd)
 }
 
 type FakeDashboardService struct {

@@ -1,5 +1,6 @@
 import {
   DataFrameJSON,
+  dataFrameToJSON,
   DataQueryResponse,
   FieldType,
   LiveChannelAddress,
@@ -127,17 +128,16 @@ describe('LiveDataStream', () => {
     expect(valuesCollection.complete).toEqual(state.complete);
   };
 
-  const expectResponse = <T extends StreamingResponseDataType>(state: LoadingState) => (
-    res: DataQueryResponse,
-    streamingDataType: T
-  ) => {
-    expect(res.state).toEqual(state);
+  const expectResponse =
+    <T extends StreamingResponseDataType>(state: LoadingState) =>
+    (res: DataQueryResponse, streamingDataType: T) => {
+      expect(res.state).toEqual(state);
 
-    expect(res.data).toHaveLength(1);
+      expect(res.data).toHaveLength(1);
 
-    const firstData = res.data[0];
-    expect(isStreamingResponseData(firstData, streamingDataType)).toEqual(true);
-  };
+      const firstData = res.data[0];
+      expect(isStreamingResponseData(firstData, streamingDataType)).toEqual(true);
+    };
 
   const expectStreamingResponse = expectResponse(LoadingState.Streaming);
   const expectErrorResponse = expectResponse(LoadingState.Error);
@@ -472,7 +472,7 @@ describe('LiveDataStream', () => {
       const liveDataStream = new LiveDataStream(deps);
       const valuesCollection = new ValuesCollection<DataQueryResponse>();
 
-      const initialFrame = StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema2());
+      const initialFrame = dataFrameJsons.schema2();
       const observable = liveDataStream.get(
         { ...liveDataStreamOptions.withTimeBFilter, frame: initialFrame },
         subscriptionKey
@@ -512,7 +512,7 @@ describe('LiveDataStream', () => {
         liveDataStream.get(
           {
             ...liveDataStreamOptions.withTimeBFilter,
-            frame: StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema1()),
+            frame: dataFrameToJSON(StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema1())),
           },
           subscriptionKey
         )
@@ -524,7 +524,7 @@ describe('LiveDataStream', () => {
         liveDataStream.get(
           {
             ...liveDataStreamOptions.withTimeBFilter,
-            frame: StreamingDataFrame.fromDataFrameJSON(dataFrameJsons.schema2()),
+            frame: dataFrameJsons.schema2(),
           },
           subscriptionKey
         )

@@ -75,15 +75,15 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, err)
 
 			query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
-			err = GetDashboards(context.Background(), query)
+			err = sqlStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 			require.NotNil(t, query.Result)
 
 			deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-			require.Nil(t, DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
+			require.Nil(t, sqlStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
 			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
-			err = GetDashboards(context.Background(), query)
+			err = sqlStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -117,7 +117,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				OrgId: 1,
 			}
 
-			require.Nil(t, DeleteDashboard(context.Background(), deleteCmd))
+			require.Nil(t, sqlStore.DeleteDashboard(context.Background(), deleteCmd))
 
 			data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
 			require.Nil(t, err)

@@ -21,7 +21,6 @@ describe('SentryEchoBackend', () => {
   const buildInfo: BuildInfo = {
     version: '1.0',
     commit: 'abcd123',
-    isEnterprise: false,
     env: 'production',
     edition: GrafanaEdition.OpenSource,
     latestVersion: 'ba',
@@ -86,8 +85,8 @@ describe('SentryEchoBackend', () => {
     backend.transports = [{ sendEvent: jest.fn() }, { sendEvent: jest.fn() }];
     const event: SentryEchoEvent = {
       type: EchoEventType.Sentry,
-      payload: ({ foo: 'bar' } as unknown) as SentryEvent,
-      meta: ({} as unknown) as EchoMeta,
+      payload: { foo: 'bar' } as unknown as SentryEvent,
+      meta: {} as unknown as EchoMeta,
     };
     backend.addEvent(event);
     backend.transports.forEach((transport) => {

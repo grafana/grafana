@@ -1,4 +1,5 @@
-import { getHighlighterExpressionsFromQuery } from './query_utils';
+import { LokiQuery, LokiQueryType } from './types';
+import { getHighlighterExpressionsFromQuery, getNormalizedLokiQuery } from './query_utils';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {
@@ -59,5 +60,41 @@ describe('getHighlighterExpressionsFromQuery', () => {
 
   it('does not remove backslash escaping if regex filter operator and backticks are used', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |~ `\\w+`')).toEqual(['\\w+']);
+  });
+});
+
+describe('getNormalizedLokiQuery', () => {
+  function expectNormalized(inputProps: Object, outputQueryType: LokiQueryType) {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', ...inputProps };
+    const output = getNormalizedLokiQuery(input);
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: outputQueryType });
+  }
+
+  it('handles no props case', () => {
+    expectNormalized({}, LokiQueryType.Range);
+  });
+
+  it('handles old-style instant case', () => {
+    expectNormalized({ instant: true, range: false }, LokiQueryType.Instant);
+  });
+
+  it('handles old-style range case', () => {
+    expectNormalized({ instant: false, range: true }, LokiQueryType.Range);
+  });
+
+  it('handles new+old style instant', () => {
+    expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Range }, LokiQueryType.Range);
+  });
+
+  it('handles new+old style range', () => {
+    expectNormalized({ instant: false, range: true, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
+  });
+
+  it('handles new<>old conflict (new wins), range', () => {
+    expectNormalized({ instant: false, range: true, queryType: LokiQueryType.Range }, LokiQueryType.Range);
+  });
+
+  it('handles new<>old conflict (new wins), instant', () => {
+    expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
   });
 });

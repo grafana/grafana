@@ -283,7 +283,7 @@ func setupDeleteHandlers(t *testing.T, fakeStore *fakeDashboardStore, provisione
 	}
 
 	result := &Result{}
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 		require.Equal(t, cmd.Id, int64(1))
 		require.Equal(t, cmd.OrgId, int64(1))
 		result.deleteWasCalled = true

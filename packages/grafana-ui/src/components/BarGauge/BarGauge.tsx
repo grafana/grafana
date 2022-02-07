@@ -126,14 +126,8 @@ export class BarGauge extends PureComponent<Props> {
 
   renderRetroBars(): ReactNode {
     const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
-    const {
-      valueHeight,
-      valueWidth,
-      maxBarHeight,
-      maxBarWidth,
-      wrapperWidth,
-      wrapperHeight,
-    } = calculateBarAndValueDimensions(this.props);
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
+      calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
@@ -486,6 +480,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     // adjust so that filled in bar is at the bottom
     emptyBar.bottom = '-3px';
 
+    //adjust empty region to always have same width as colored bar
+    emptyBar.width = `${valueWidth}px`;
+
     if (isBasic) {
       // Basic styles
       barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
@@ -508,6 +505,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
+
+    //adjust empty region to always have same height as colored bar
+    emptyBar.height = `${valueHeight}px`;
 
     if (isBasic) {
       // Basic styles

@@ -32,7 +32,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 	for _, app := range cfg.Apps {
 		if app.OrgID == 0 && app.OrgName != "" {
 			getOrgQuery := &models.GetOrgByNameQuery{Name: app.OrgName}
-			if err := bus.DispatchCtx(ctx, getOrgQuery); err != nil {
+			if err := bus.Dispatch(ctx, getOrgQuery); err != nil {
 				return err
 			}
 			app.OrgID = getOrgQuery.Result.Id
@@ -41,7 +41,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		}
 
 		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
-		err := bus.DispatchCtx(ctx, query)
+		err := bus.Dispatch(ctx, query)
 		if err != nil {
 			if !errors.Is(err, models.ErrPluginSettingNotFound) {
 				return err
@@ -60,7 +60,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJsonData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}
-		if err := bus.DispatchCtx(ctx, cmd); err != nil {
+		if err := bus.Dispatch(ctx, cmd); err != nil {
 			return err
 		}
 	}

@@ -524,13 +524,16 @@ describe('Streaming JSON', () => {
       },
       {
         maxLength: 4,
+        displayNameFormat: '{{__name__}}: {{sensor}}',
       }
     );
 
     stream.push({
       data: {
         values: [
-          ['sensor=A', 'sensor=B'],
+          // A = influxStyle, B = prometheus style labels
+          // key must be constatnt for join to work
+          ['sensor=A', '{sensor="B"}'],
           [100, 100],
           [10, 15],
           [1, 2],
@@ -541,7 +544,7 @@ describe('Streaming JSON', () => {
     stream.push({
       data: {
         values: [
-          ['sensor=B', 'sensor=C'],
+          ['{sensor="B"}', 'sensor=C'],
           [200, 200],
           [20, 25],
           [3, 4],
@@ -655,19 +658,20 @@ describe('Streaming JSON', () => {
       },
     });
 
+    // names are based on legend format
     expect(stream.fields.map((f) => getFieldDisplayName(f, stream, [stream]))).toMatchInlineSnapshot(`
       Array [
-        "time",
-        "speed A",
-        "light A",
-        "speed B",
-        "light B",
-        "speed C",
-        "light C",
-        "speed 4",
-        "light 4",
+        "time: sensor",
+        "speed: A",
+        "light: A",
+        "speed: B",
+        "light: B",
+        "speed: C",
+        "light: C",
+        "speed: sensor",
+        "light: sensor",
       ]
-    `); // speed+light 4  ¯\_(ツ)_/¯ better than undefined labels
+    `);
   });
 
   describe('keep track of packets', () => {

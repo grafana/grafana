@@ -1,10 +1,14 @@
-import { BackendSrv, GrafanaLiveSrv } from '@grafana/runtime';
+import { BackendSrv, GrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
 import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
 
-import { toLiveChannelId } from '@grafana/data';
+import { DataFrame, toLiveChannelId } from '@grafana/data';
 import { StreamingDataFrame } from './data/StreamingDataFrame';
 import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';
-import { map } from 'rxjs';
+import { from, map, of, switchMap } from 'rxjs';
+import {
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+} from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 type GrafanaLiveServiceDeps = {
   centrifugeSrv: CentrifugeSrv;
@@ -62,6 +66,26 @@ export class GrafanaLiveService implements GrafanaLiveSrv {
    */
   getStream: GrafanaLiveSrv['getStream'] = (address) => {
     return this.deps.centrifugeSrv.getStream(address);
+  };
+
+  /**
+   * Execute a query over the live websocket and potentially subscribe to a live channel.
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getQueryData: GrafanaLiveSrv['getQueryData'] = (options) => {
+    return from(this.deps.centrifugeSrv.getQueryData(options)).pipe(
+      switchMap((rawResponse) => {
+        const parsedResponse = toDataQueryResponse(rawResponse, options.request.targets);
+
+        const isSubscribable =
+          parsedResponse.data?.length && parsedResponse.data.find((f: DataFrame) => f.meta?.channel);
+
+        return isSubscribable
+          ? toStreamingDataResponse(parsedResponse, options.request, standardStreamOptionsProvider)
+          : of(parsedResponse);
+      })
+    );
   };
 
   /**

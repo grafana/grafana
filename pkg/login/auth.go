@@ -26,7 +26,7 @@ var (
 var loginLogger = log.New("login")
 
 func Init() {
-	bus.AddHandlerCtx("auth", authenticateUser)
+	bus.AddHandler("auth", authenticateUser)
 }
 
 // authenticateUser authenticates the user via username & password

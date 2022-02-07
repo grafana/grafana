@@ -37,6 +37,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onLayoutChange: noop,
     query: searchQuery,
     onSortChange: noop,
+    onShowPreviewsChange: noop,
     editable: true,
   };
 

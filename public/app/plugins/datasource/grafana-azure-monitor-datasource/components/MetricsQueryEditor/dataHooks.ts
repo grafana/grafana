@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
@@ -57,7 +58,10 @@ export const updateSubscriptions = (
   const { subscription } = query;
 
   // Return early if subscriptions havent loaded, or if the query already has a subscription
-  if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
+  if (
+    !subscriptionOptions.length ||
+    (subscription && (hasOption(subscriptionOptions, subscription) || subscription.includes('$')))
+  ) {
     return;
   }
 
@@ -257,9 +261,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
 
   // Update the query state in response to the meta data changing
   useEffect(() => {
-    const aggregationIsValid = aggregation && metricMetadata.supportedAggTypes.includes(aggregation);
-
-    const newAggregation = aggregationIsValid ? aggregation : metricMetadata.primaryAggType;
+    const newAggregation = aggregation || metricMetadata.primaryAggType;
     const newTimeGrain = timeGrain || 'auto';
 
     if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {

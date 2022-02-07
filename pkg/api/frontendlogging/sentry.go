@@ -7,8 +7,9 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/inconshreveable/log15"
 )
+
+type CtxVector []interface{}
 
 var logger = log.New("frontendlogging")
 
@@ -65,31 +66,28 @@ func (exception *FrontendSentryException) FmtStacktraces(store *SourceMapStore) 
 	return strings.Join(stacktraces, "\n\n")
 }
 
-func addEventContextToLogContext(rootPrefix string, logCtx log15.Ctx, eventCtx map[string]interface{}) {
+func addEventContextToLogContext(rootPrefix string, logCtx *CtxVector, eventCtx map[string]interface{}) {
 	for key, element := range eventCtx {
 		prefix := fmt.Sprintf("%s_%s", rootPrefix, key)
 		switch v := element.(type) {
 		case map[string]interface{}:
 			addEventContextToLogContext(prefix, logCtx, v)
 		default:
-			logCtx[prefix] = fmt.Sprintf("%v", v)
+			*logCtx = append(*logCtx, prefix, fmt.Sprintf("%v", v))
 		}
 	}
 }
 
-func (event *FrontendSentryEvent) ToLogContext(store *SourceMapStore) log15.Ctx {
-	var ctx = make(log15.Ctx)
-	ctx["url"] = event.Request.URL
-	ctx["user_agent"] = event.Request.Headers["User-Agent"]
-	ctx["event_id"] = event.EventID
-	ctx["original_timestamp"] = event.Timestamp
+func (event *FrontendSentryEvent) ToLogContext(store *SourceMapStore) []interface{} {
+	var ctx = CtxVector{"url", event.Request.URL, "user_agent", event.Request.Headers["User-Agent"],
+		"event_id", event.EventID, "original_timestamp", event.Timestamp}
+
 	if event.Exception != nil {
-		ctx["stacktrace"] = event.Exception.FmtStacktraces(store)
+		ctx = append(ctx, "stacktrace", event.Exception.FmtStacktraces(store))
 	}
-	addEventContextToLogContext("context", ctx, event.Contexts)
+	addEventContextToLogContext("context", &ctx, event.Contexts)
 	if len(event.User.Email) > 0 {
-		ctx["user_email"] = event.User.Email
-		ctx["user_id"] = event.User.ID
+		ctx = append(ctx, "user_email", event.User.Email, "user_id", event.User.ID)
 	}
 
 	return ctx

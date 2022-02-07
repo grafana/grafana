@@ -114,7 +114,7 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
-	if err := p.Bus.DispatchCtx(ctx, &query); err != nil {
+	if err := p.Bus.Dispatch(ctx, &query); err != nil {
 		return nil, err
 	}
 

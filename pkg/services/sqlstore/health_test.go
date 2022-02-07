@@ -12,9 +12,9 @@ import (
 )
 
 func TestGetDBHealthQuery(t *testing.T) {
-	InitTestDB(t)
+	store := InitTestDB(t)
 
 	query := models.GetDBHealthQuery{}
-	err := GetDBHealthQuery(context.Background(), &query)
+	err := store.GetDBHealthQuery(context.Background(), &query)
 	require.NoError(t, err)
 }

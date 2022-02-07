@@ -14,9 +14,9 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'install_cypress_step',
-    'e2e_tests_server_step',
+    'grafana_server_step',
     'e2e_tests_step',
+    'e2e_tests_artifacts',
     'build_storybook_step',
     'build_frontend_docs_step',
     'copy_packages_for_docker_step',
@@ -99,12 +99,12 @@ def get_steps(edition, is_downstream=False):
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
-        install_cypress_step(),
-        e2e_tests_server_step(edition=edition),
+        grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
         e2e_tests_step('panels-suite', edition=edition),
         e2e_tests_step('various-suite', edition=edition),
+        e2e_tests_artifacts(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         store_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
@@ -180,7 +180,7 @@ def main_pipelines(edition):
         ),
         pipeline(
             name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + integration_test_steps,
+            steps=[download_grabpl_step()] + integration_test_steps,
             volumes=volumes,
         ),
         pipeline(

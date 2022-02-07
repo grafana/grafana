@@ -20,7 +20,7 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 ## Community Contributions
 
-Grafana 8.3 includes many community contributions including the ability to interpolate variables in tags ([#42318](https://github.com/grafana/grafana/pull/42318)), fly-out sub-menu support ([#41647](https://github.com/grafana/grafana/pull/42318)), the addition of AWS RoboMaker & AWS Global Accelerator metrics to the AWS CloudWatch data source ([#41450](https://github.com/grafana/grafana/pull/41450), [#41236](https://github.com/grafana/grafana/pull/41236)), as well as updates to the news panel ([#41193](https://github.com/grafana/grafana/pull/41193)), the plugin catalog ([#40917](https://github.com/grafana/grafana/pull/40917)), and many more. The Grafana Labs team is deeply grateful for all those who take the time to contribute and participate in the development of Grafana.
+Grafana 8.3 includes many community contributions including the ability to interpolate variables in tags ([#42318](https://github.com/grafana/grafana/pull/42318)), fly-out sub-menu support ([#41647](https://github.com/grafana/grafana/pull/41647)), the addition of AWS RoboMaker & AWS Global Accelerator metrics to the AWS CloudWatch data source ([#41450](https://github.com/grafana/grafana/pull/41450), [#41236](https://github.com/grafana/grafana/pull/41236)), as well as updates to the news panel ([#41193](https://github.com/grafana/grafana/pull/41193)), the plugin catalog ([#40917](https://github.com/grafana/grafana/pull/40917)), and many more. The Grafana Labs team is deeply grateful for all those who take the time to contribute and participate in the development of Grafana.
 
 ## Accessibility
 

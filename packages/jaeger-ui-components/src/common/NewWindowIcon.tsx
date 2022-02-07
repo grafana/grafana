@@ -16,17 +16,16 @@ import React from 'react';
 import cx from 'classnames';
 import IoAndroidOpen from 'react-icons/lib/io/android-open';
 import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
-import { createStyle } from '../Theme';
-
-export const getStyles = createStyle(() => {
+export const getStyles = () => {
   return {
     NewWindowIconLarge: css`
       label: NewWindowIconLarge;
       font-size: 1.5em;
     `,
   };
-});
+};
 
 type Props = {
   isLarge?: boolean;
@@ -35,7 +34,7 @@ type Props = {
 
 export default function NewWindowIcon(props: Props) {
   const { isLarge, className, ...rest } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const cls = cx({ [styles.NewWindowIconLarge]: isLarge }, className);
   return <IoAndroidOpen className={cls} {...rest} />;
 }

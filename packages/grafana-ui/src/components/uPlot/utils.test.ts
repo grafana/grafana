@@ -296,6 +296,132 @@ describe('preparePlotData', () => {
       `);
     });
 
+    describe('ignores nullish-only stacks', () => {
+      test('single stacking group', () => {
+        const df = new MutableDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+            {
+              name: 'a',
+              values: [-10, null, 10],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'b',
+              values: [10, null, null],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'c',
+              values: [20, undefined, 20],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+          ],
+        });
+
+        expect(preparePlotData([df])).toMatchInlineSnapshot(`
+          Array [
+            Array [
+              9997,
+              9998,
+              9999,
+            ],
+            Array [
+              -10,
+              null,
+              10,
+            ],
+            Array [
+              0,
+              null,
+              10,
+            ],
+            Array [
+              20,
+              null,
+              30,
+            ],
+          ]
+        `);
+      });
+      test('multiple stacking groups', () => {
+        const df = new MutableDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+            {
+              name: 'a',
+              values: [-10, undefined, 10],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'b',
+              values: [10, undefined, 10],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'c',
+              values: [20, undefined, 20],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+            },
+            {
+              name: 'd',
+              values: [1, 2, null],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
+            },
+            {
+              name: 'e',
+              values: [1, 2, null],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
+            },
+            {
+              name: 'f',
+              values: [1, 2, null],
+              config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
+            },
+          ],
+        });
+
+        expect(preparePlotData([df])).toMatchInlineSnapshot(`
+          Array [
+            Array [
+              9997,
+              9998,
+              9999,
+            ],
+            Array [
+              -10,
+              null,
+              10,
+            ],
+            Array [
+              0,
+              null,
+              20,
+            ],
+            Array [
+              20,
+              null,
+              40,
+            ],
+            Array [
+              1,
+              2,
+              null,
+            ],
+            Array [
+              2,
+              4,
+              null,
+            ],
+            Array [
+              3,
+              6,
+              null,
+            ],
+          ]
+        `);
+      });
+    });
     describe('with legend sorted', () => {
       it('should affect when single group', () => {
         const df = new MutableDataFrame({
@@ -323,53 +449,53 @@ describe('preparePlotData', () => {
         });
 
         expect(preparePlotData([df], undefined, { sortBy: 'Max', sortDesc: false } as any)).toMatchInlineSnapshot(`
-        Array [
-          Array [
-            9997,
-            9998,
-            9999,
-          ],
-          Array [
-            0,
-            30,
-            20,
-          ],
-          Array [
-            10,
-            10,
-            10,
-          ],
-          Array [
-            20,
-            50,
-            40,
-          ],
-        ]
-      `);
+                  Array [
+                    Array [
+                      9997,
+                      9998,
+                      9999,
+                    ],
+                    Array [
+                      0,
+                      30,
+                      20,
+                    ],
+                    Array [
+                      10,
+                      10,
+                      10,
+                    ],
+                    Array [
+                      20,
+                      50,
+                      40,
+                    ],
+                  ]
+              `);
         expect(preparePlotData([df], undefined, { sortBy: 'Max', sortDesc: true } as any)).toMatchInlineSnapshot(`
-        Array [
-          Array [
-            9997,
-            9998,
-            9999,
-          ],
-          Array [
-            -10,
-            20,
-            10,
-          ],
-          Array [
-            20,
-            50,
-            40,
-          ],
-          Array [
-            10,
-            40,
-            30,
-          ],
-        ]
-      `);
+                  Array [
+                    Array [
+                      9997,
+                      9998,
+                      9999,
+                    ],
+                    Array [
+                      -10,
+                      20,
+                      10,
+                    ],
+                    Array [
+                      20,
+                      50,
+                      40,
+                    ],
+                    Array [
+                      10,
+                      40,
+                      30,
+                    ],
+                  ]
+              `);
       });
     });
   });

@@ -42,9 +42,9 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		},
 	}
 
-	s.Bus.AddHandlerCtx(s.GetPluginSettingById)
-	s.Bus.AddHandlerCtx(s.UpdatePluginSetting)
-	s.Bus.AddHandlerCtx(s.UpdatePluginSettingVersion)
+	s.Bus.AddHandler(s.GetPluginSettingById)
+	s.Bus.AddHandler(s.UpdatePluginSetting)
+	s.Bus.AddHandler(s.UpdatePluginSettingVersion)
 
 	return s
 }

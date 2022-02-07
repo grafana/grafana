@@ -2,6 +2,7 @@ import React, { createRef, FC } from 'react';
 import { VirtualElement } from '@popperjs/core';
 import { Popover } from './Popover';
 import { PopoverController, UsingPopperProps } from './PopoverController';
+import { closePopover } from '../../utils/closePopover';
 
 export interface TooltipProps extends UsingPopperProps {
   theme?: 'info' | 'error' | 'info-alt';
@@ -16,19 +17,6 @@ export type PopoverContent = string | React.ReactElement<any> | ((props: Popover
 export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<HTMLElement | VirtualElement>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
-  const closePopover = (event: React.KeyboardEvent<HTMLDivElement>, hidePopper: () => void) => {
-    if (event.key === 'Tab' || event.altKey || event.ctrlKey || event.metaKey) {
-      return;
-    }
-
-    event.stopPropagation();
-
-    if (event.key === 'Escape') {
-      hidePopper();
-    }
-
-    return;
-  };
 
   return (
     <PopoverController {...controllerProps}>

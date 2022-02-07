@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,10 +35,12 @@ type EvalContext struct {
 	RequestValidator models.PluginRequestValidator
 
 	Ctx context.Context
+
+	Store AlertStore
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
 	return &EvalContext{
 		Ctx:              alertCtx,
 		StartTime:        time.Now(),
@@ -49,6 +50,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
+		Store:            sqlStore,
 	}
 }
 
@@ -108,7 +110,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := bus.DispatchCtx(c.Ctx, uidQuery); err != nil {
+	if err := c.Store.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 

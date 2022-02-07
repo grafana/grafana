@@ -28,7 +28,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 			return nil
 		})
@@ -47,7 +47,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const salt = "Salt"
 		const orgID int64 = 2
 
-		bus.AddHandlerCtx("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
+		bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
 			t.Log("Handling LoginUserQuery")
 			encoded, err := util.EncodePassword(password, salt)
 			if err != nil {
@@ -60,7 +60,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			t.Log("Handling GetSignedInUserQuery")
 			query.Result = &models.SignedInUser{OrgId: orgID, UserId: id}
 			return nil
@@ -80,7 +80,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		login.Init()
 
-		bus.AddHandlerCtx("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
+		bus.AddHandler("user-query", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 			encoded, err := util.EncodePassword(password, salt)
 			if err != nil {
 				return err
@@ -93,7 +93,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{UserId: query.UserId}
 			return nil
 		})
@@ -119,7 +119,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
-		bus.AddHandlerCtx("user-query", func(ctx context.Context, loginUserQuery *models.GetUserByLoginQuery) error {
+		bus.AddHandler("user-query", func(ctx context.Context, loginUserQuery *models.GetUserByLoginQuery) error {
 			return nil
 		})
 

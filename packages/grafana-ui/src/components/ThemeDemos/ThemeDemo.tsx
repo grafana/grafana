@@ -190,18 +190,17 @@ export const ThemeDemo = () => {
                   Disabled
                 </Button>
               </HorizontalGroup>
-              <Card heading="Button inside card">
+              <Card>
+                <Card.Heading>Button inside card</Card.Heading>
                 <Card.Actions>
-                  <>
-                    {allButtonVariants.map((variant) => (
-                      <Button variant={variant} key={variant}>
-                        {variant}
-                      </Button>
-                    ))}
-                    <Button variant="primary" disabled>
-                      Disabled
+                  {allButtonVariants.map((variant) => (
+                    <Button variant={variant} key={variant}>
+                      {variant}
                     </Button>
-                  </>
+                  ))}
+                  <Button variant="primary" disabled>
+                    Disabled
+                  </Button>
                 </Card.Actions>
               </Card>
             </VerticalGroup>

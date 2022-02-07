@@ -18,6 +18,8 @@ import { intervalBuilder } from '../shared/testing/builders';
 import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/actions';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { variablesInitTransaction } from '../state/transactionReducer';
+import { afterEach, beforeEach } from '../../../../test/lib/common';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
@@ -43,8 +45,9 @@ describe('interval actions', () => {
 
   describe('when updateOptions is dispatched but something throws', () => {
     silenceConsoleOutput();
-    it('then an notifyApp action should be dispatched', async () => {
-      const timeSrvMock = ({
+    const originalTimeSrv = getTimeSrv();
+    beforeEach(() => {
+      const timeSrvMock = {
         timeRange: jest.fn().mockReturnValue({
           from: dateTime(new Date()).subtract(1, 'days').toDate(),
           to: new Date(),
@@ -53,9 +56,15 @@ describe('interval actions', () => {
             to: 'now',
           },
         }),
-      } as unknown) as TimeSrv;
-      const originalTimeSrv = getTimeSrv();
+      } as unknown as TimeSrv;
       setTimeSrv(timeSrvMock);
+    });
+
+    afterEach(() => {
+      setTimeSrv(originalTimeSrv);
+    });
+
+    it('then an notifyApp action should be dispatched', async () => {
       const interval = intervalBuilder()
         .withId('0')
         .withQuery('1s,1m,1h,1d')
@@ -66,6 +75,7 @@ describe('interval actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
@@ -91,8 +101,26 @@ describe('interval actions', () => {
 
         return dispatchedActions.length === expectedNumberOfActions;
       });
+    });
 
-      setTimeSrv(originalTimeSrv);
+    describe('but there is no ongoing transaction', () => {
+      it('then no actions are dispatched', async () => {
+        const interval = intervalBuilder()
+          .withId('0')
+          .withQuery('1s,1m,1h,1d')
+          .withAuto(true)
+          .withAutoMin('1xyz') // illegal interval string
+          .build();
+
+        const tester = await reduxTester<RootReducerType>()
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval }))
+          )
+          .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
+
+        tester.thenNoActionsWhereDispatched();
+      });
     });
   });
 
@@ -104,7 +132,7 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn(),
           getTimeSrv: () => {
-            return ({
+            return {
               timeRange: jest.fn().mockReturnValue({
                 from: '2001-01-01',
                 to: '2001-01-02',
@@ -113,11 +141,11 @@ describe('interval actions', () => {
                   to: '2001-01-02',
                 },
               }),
-            } as unknown) as TimeSrv;
+            } as unknown as TimeSrv;
           },
-          templateSrv: ({
+          templateSrv: {
             setGrafanaVariable: jest.fn(),
-          } as unknown) as TemplateSrv,
+          } as unknown as TemplateSrv,
         };
 
         await reduxTester<RootReducerType>()
@@ -155,13 +183,13 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
           getTimeSrv: () => {
-            return ({
+            return {
               timeRange: timeRangeMock,
-            } as unknown) as TimeSrv;
+            } as unknown as TimeSrv;
           },
-          templateSrv: ({
+          templateSrv: {
             setGrafanaVariable: setGrafanaVariableMock,
-          } as unknown) as TemplateSrv,
+          } as unknown as TemplateSrv,
         };
 
         await reduxTester<RootReducerType>()

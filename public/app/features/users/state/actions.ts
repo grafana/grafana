@@ -3,11 +3,11 @@ import { getBackendSrv } from '@grafana/runtime';
 import { OrgUser } from 'app/types';
 import { inviteesLoaded, usersLoaded } from './reducers';
 import { contextSrv } from 'app/core/core';
-import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch) => {
-    const users = await getBackendSrv().get(addAccessControlQueryParam('/api/org/users'));
+    const users = await getBackendSrv().get('/api/org/users', accessControlQueryParam());
     dispatch(usersLoaded(users));
   };
 }

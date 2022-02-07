@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -41,7 +42,7 @@ func TestMetrics(t *testing.T) {
 		setupSomeDataSourcePlugins(t, uss)
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{
 				Dashboards:                1,
 				Datasources:               2,
@@ -86,7 +87,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceStatsQuery *models.GetDataSourceStatsQuery
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{
 				{
 					Type:  models.DS_ES,
@@ -110,7 +111,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getESDatasSourcesQuery *models.GetDataSourcesByTypeQuery
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{
 				{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -133,7 +134,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{
 				{
 					Type:   models.DS_ES,
@@ -181,7 +182,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{
 				{
 					Type:  "slack",
@@ -403,7 +404,7 @@ func TestMetrics(t *testing.T) {
 		uss.Cfg.MetricsEndpointEnabled = true
 		uss.Cfg.MetricsEndpointDisableTotalStats = false
 		getSystemStatsWasCalled := false
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			getSystemStatsWasCalled = true
 			return nil
@@ -464,27 +465,27 @@ func TestMetrics(t *testing.T) {
 		uss := createService(t, setting.Cfg{})
 		metricName := "stats.test_metric.count"
 
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{}
 			return nil
 		})
 
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{}
 			return nil
 		})
@@ -619,5 +620,6 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 		kvStore:         kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:             log.New("infra.usagestats"),
 		startTime:       time.Now().Add(-1 * time.Minute),
+		RouteRegister:   routing.NewRouteRegister(),
 	}
 }

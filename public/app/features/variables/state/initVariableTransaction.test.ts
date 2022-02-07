@@ -15,7 +15,6 @@ import { toVariablePayload } from './types';
 import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
 import { cleanEditorState, initialVariableEditorState } from '../editor/reducer';
 import {
-  TransactionStatus,
   variablesClearTransaction,
   variablesCompleteTransaction,
   variablesInitTransaction,
@@ -26,7 +25,7 @@ import { createAdHocVariableAdapter } from '../adhoc/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { DataSourceRef, LoadingState } from '@grafana/data/src';
 import { setDataSourceSrv } from '@grafana/runtime/src';
-import { VariableModel } from '../types';
+import { TransactionStatus, VariableModel } from '../types';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 import { setVariableQueryRunner } from '../query/VariableQueryRunner';
 import { createDataSourceOptions } from '../datasource/reducer';
@@ -48,6 +47,7 @@ function getTestContext(variables?: VariableModel[]) {
     get: jest.fn().mockResolvedValue({}),
     getList: jest.fn().mockReturnValue([]),
     getInstanceSettings: getInstanceSettingsMock,
+    reload: jest.fn(),
   });
   const variableQueryRunner: any = {
     cancelRequest: jest.fn(),
@@ -91,7 +91,7 @@ describe('initVariablesTransaction', () => {
 
     describe('and there are variables that have data source that need to be migrated', () => {
       it('then correct actions are dispatched', async () => {
-        const legacyDs = ('${ds}' as unknown) as DataSourceRef;
+        const legacyDs = '${ds}' as unknown as DataSourceRef;
         const ds = datasourceBuilder().withId('ds').withName('ds').withQuery('prom').build();
         const query = queryBuilder().withId('query').withName('query').withDatasource(legacyDs).build();
         const adhoc = adHocBuilder().withId('adhoc').withName('adhoc').withDatasource(legacyDs).build();
@@ -153,14 +153,14 @@ describe('initVariablesTransaction', () => {
       const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
 
       const tester = await reduxTester<RootReducerType>({
-        preloadedState: ({
+        preloadedState: {
           templating: {
             transaction: transactionState,
             variables: {},
             optionsPicker: { ...initialState },
             editor: { ...initialVariableEditorState },
           },
-        } as unknown) as RootReducerType,
+        } as unknown as RootReducerType,
       })
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));

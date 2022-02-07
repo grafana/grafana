@@ -1,6 +1,7 @@
 package managedstream
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 
@@ -34,14 +35,14 @@ func (c *MemoryFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMe
 	return info, nil
 }
 
-func (c *MemoryFrameCache) GetFrame(orgID int64, channel string) (json.RawMessage, bool, error) {
+func (c *MemoryFrameCache) GetFrame(ctx context.Context, orgID int64, channel string) (json.RawMessage, bool, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	cachedFrame, ok := c.frames[orgID][channel]
 	return cachedFrame.Bytes(data.IncludeAll), ok, nil
 }
 
-func (c *MemoryFrameCache) Update(orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
+func (c *MemoryFrameCache) Update(ctx context.Context, orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if _, ok := c.frames[orgID]; !ok {

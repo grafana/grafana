@@ -1,19 +1,19 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func SendResetPasswordEmail(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Response {
 	form := dtos.SendResetPasswordEmailForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -27,27 +27,33 @@ func SendResetPasswordEmail(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
+	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(200, "Email sent", err)
 	}
 
 	emailCmd := models.SendResetPasswordEmailCommand{User: userQuery.Result}
-	if err := bus.DispatchCtx(c.Req.Context(), &emailCmd); err != nil {
+	if err := hs.NotificationService.SendResetPasswordEmail(c.Req.Context(), &emailCmd); err != nil {
 		return response.Error(500, "Failed to send email", err)
 	}
 
 	return response.Success("Email sent")
 }
 
-func ResetPassword(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 	form := dtos.ResetUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+	getUserByLogin := func(ctx context.Context, login string) (*models.User, error) {
+		userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
+		err := hs.SQLStore.GetUserByLogin(ctx, &userQuery)
+		return userQuery.Result, err
+	}
+
+	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
 		if errors.Is(err, models.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}
@@ -66,7 +72,7 @@ func ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 

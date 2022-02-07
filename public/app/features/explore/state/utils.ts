@@ -9,16 +9,12 @@ import {
   PanelData,
 } from '@grafana/data';
 
-import { ExploreItemState } from 'app/types/explore';
+import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
-import {
-  clearQueryKeys,
-  ExploreGraphStyle,
-  lastUsedDatasourceKeyForOrgId,
-  toGraphStyle,
-} from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
 import { toRawTimeRange } from '../utils/time';
+import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -63,11 +59,12 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  eventBridge: (null as unknown) as EventBusExtended,
+  eventBridge: null as unknown as EventBusExtended,
   cache: [],
   logsVolumeDataProvider: undefined,
   logsVolumeData: undefined,
   graphStyle: loadGraphStyle(),
+  panelsState: {},
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -106,6 +103,17 @@ export async function loadAndInitDatasource(
   return { history, instance };
 }
 
+// recursively walks an object, removing keys where the value is undefined
+// if the resulting object is empty, returns undefined
+function pruneObject(obj: object): object | undefined {
+  let pruned = mapValues(obj, (value) => (isObject(value) ? pruneObject(value) : value));
+  pruned = omitBy<typeof pruned>(pruned, isEmpty);
+  if (isEmpty(pruned)) {
+    return undefined;
+  }
+  return pruned;
+}
+
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
@@ -113,6 +121,8 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     datasource: pane.datasourceInstance?.name || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
+    // don't include panelsState in the url unless a piece of state is actually set
+    panelsState: pruneObject(pane.panelsState),
   };
 }
 

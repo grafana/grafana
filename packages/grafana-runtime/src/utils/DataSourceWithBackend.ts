@@ -11,6 +11,7 @@ import {
   parseLiveChannelAddress,
   getDataSourceRef,
   DataSourceRef,
+  dataFrameToJSON,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -21,6 +22,7 @@ import {
   StreamingFrameOptions,
   StreamingFrameAction,
 } from '../services';
+import { config } from '../config';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -155,6 +157,13 @@ class DataSourceWithBackend<
       body.to = range.to.valueOf().toString();
     }
 
+    if (config.featureToggles.queryOverLive) {
+      return getGrafanaLiveSrv().getQueryData({
+        request,
+        body,
+      });
+    }
+
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',
@@ -271,7 +280,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
         live.getDataStream({
           addr,
           buffer: getter(req, frame),
-          frame,
+          frame: dataFrameToJSON(f),
         })
       );
     } else {

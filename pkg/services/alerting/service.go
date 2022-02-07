@@ -6,37 +6,40 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AlertNotificationService struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Internal
+	Bus                 bus.Bus
+	SQLStore            *sqlstore.SQLStore
+	EncryptionService   encryption.Internal
+	NotificationService *notifications.NotificationService
 }
 
 func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Internal,
-) *AlertNotificationService {
+	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		Bus:                 bus,
+		SQLStore:            store,
+		EncryptionService:   encryptionService,
+		NotificationService: notificationService,
 	}
 
-	s.Bus.AddHandlerCtx(s.GetAlertNotifications)
-	s.Bus.AddHandlerCtx(s.CreateAlertNotificationCommand)
-	s.Bus.AddHandlerCtx(s.UpdateAlertNotification)
-	s.Bus.AddHandlerCtx(s.DeleteAlertNotification)
-	s.Bus.AddHandlerCtx(s.GetAllAlertNotifications)
-	s.Bus.AddHandlerCtx(s.GetOrCreateAlertNotificationState)
-	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToCompleteCommand)
-	s.Bus.AddHandlerCtx(s.SetAlertNotificationStateToPendingCommand)
-	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUid)
-	s.Bus.AddHandlerCtx(s.UpdateAlertNotificationWithUid)
-	s.Bus.AddHandlerCtx(s.DeleteAlertNotificationWithUid)
-	s.Bus.AddHandlerCtx(s.GetAlertNotificationsWithUidToSend)
-	s.Bus.AddHandlerCtx(s.HandleNotificationTestCommand)
+	s.Bus.AddHandler(s.GetAlertNotifications)
+	s.Bus.AddHandler(s.CreateAlertNotificationCommand)
+	s.Bus.AddHandler(s.UpdateAlertNotification)
+	s.Bus.AddHandler(s.DeleteAlertNotification)
+	s.Bus.AddHandler(s.GetAllAlertNotifications)
+	s.Bus.AddHandler(s.GetOrCreateAlertNotificationState)
+	s.Bus.AddHandler(s.SetAlertNotificationStateToCompleteCommand)
+	s.Bus.AddHandler(s.SetAlertNotificationStateToPendingCommand)
+	s.Bus.AddHandler(s.GetAlertNotificationsWithUid)
+	s.Bus.AddHandler(s.UpdateAlertNotificationWithUid)
+	s.Bus.AddHandler(s.DeleteAlertNotificationWithUid)
+	s.Bus.AddHandler(s.GetAlertNotificationsWithUidToSend)
+	s.Bus.AddHandler(s.HandleNotificationTestCommand)
 
 	return s
 }
@@ -153,7 +156,7 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 		return nil, err
 	}
 
-	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
+	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue, s.NotificationService)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return nil, err

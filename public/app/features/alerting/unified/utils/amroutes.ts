@@ -66,6 +66,7 @@ export const emptyRoute: FormAmRoute = {
   groupIntervalValueType: timeOptions[0].value,
   repeatIntervalValue: '',
   repeatIntervalValueType: timeOptions[0].value,
+  muteTimeIntervals: [],
 };
 
 //returns route, and a record mapping id to existing route route
@@ -114,6 +115,7 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
       repeatIntervalValue,
       repeatIntervalValueType,
       routes: formRoutes,
+      muteTimeIntervals: route.mute_time_intervals ?? [],
     },
     id2route,
   ];
@@ -146,6 +148,7 @@ export const formAmRouteToAmRoute = (
     routes: formAmRoute.routes.map((subRoute) =>
       formAmRouteToAmRoute(alertManagerSourceName, subRoute, id2ExistingRoute)
     ),
+    mute_time_intervals: formAmRoute.muteTimeIntervals,
   };
 
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {

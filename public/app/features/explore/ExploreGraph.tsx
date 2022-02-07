@@ -16,7 +16,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
   Icon,
   PanelContext,
@@ -26,7 +26,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { ExploreGraphStyle } from 'app/core/utils/explore';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 import { identity } from 'lodash';
@@ -34,6 +33,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { ExploreGraphStyle } from '../../types';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -165,7 +165,7 @@ export function ExploreGraph({
         timeZone={timeZone}
         options={
           {
-            tooltip: { mode: tooltipDisplayMode },
+            tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
             legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
           } as TimeSeriesOptions
         }

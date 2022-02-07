@@ -1,5 +1,4 @@
 import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   clearDashboard,
   fetchDashboard,
@@ -16,7 +15,7 @@ import {
 import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getDataSourceSrv, locationService, getBackendSrv } from '@grafana/runtime';
 import { DashboardSearchHit } from '../../search/types';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
@@ -139,7 +138,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: dataSource.name,
+        value: dataSource.uid,
       });
     });
 
@@ -195,7 +194,7 @@ export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
 }
 
 async function moveDashboard(uid: string, toFolder: FolderInfo) {
-  const fullDash: DashboardDTO = await getBackendSrv().getDashboardByUid(uid);
+  const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
 
   if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
     return { alreadyInFolder: true };
@@ -287,7 +286,7 @@ export function createFolder(payload: any) {
 }
 
 export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
-  return getBackendSrv().search({ query, type: 'dash-folder', permission });
+  return getBackendSrv().get('/api/search', { query, type: 'dash-folder', permission });
 }
 
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {

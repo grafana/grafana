@@ -45,7 +45,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 
 	for _, ds := range cfg.Datasources {
 		cmd := &models.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
-		err := bus.DispatchCtx(ctx, cmd)
+		err := bus.Dispatch(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
 			return err
 		}
@@ -53,13 +53,13 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.Uid)
-			if err := bus.DispatchCtx(ctx, insertCmd); err != nil {
+			if err := bus.Dispatch(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
 			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.Uid)
-			if err := bus.DispatchCtx(ctx, updateCmd); err != nil {
+			if err := bus.Dispatch(ctx, updateCmd); err != nil {
 				return err
 			}
 		}
@@ -86,7 +86,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
 		cmd := &models.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
-		if err := bus.DispatchCtx(ctx, cmd); err != nil {
+		if err := bus.Dispatch(ctx, cmd); err != nil {
 			return err
 		}
 

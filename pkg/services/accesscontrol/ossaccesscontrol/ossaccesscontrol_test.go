@@ -12,21 +12,21 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
 
-	cfg := setting.NewCfg()
-	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-
 	ac := &OSSAccessControlService{
-		Cfg:           cfg,
-		UsageStats:    &usagestats.UsageStatsMock{T: t},
-		Log:           log.New("accesscontrol"),
+		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
+		usageStats:    &usagestats.UsageStatsMock{T: t},
+		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		scopeResolver: accesscontrol.NewScopeResolver(),
+		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
 	}
 	return ac
 }
@@ -148,13 +148,12 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			if tt.enabled {
-				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-			}
-
-			s := ProvideService(cfg, &usagestats.UsageStatsMock{T: t})
-			report, err := s.UsageStats.GetUsageReport(context.Background())
+			s := ProvideService(
+				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
+				&usagestats.UsageStatsMock{T: t},
+				database.ProvideService(sqlstore.InitTestDB(t)),
+			)
+			report, err := s.usageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 
 			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
@@ -267,9 +266,9 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
-				Cfg:        setting.NewCfg(),
-				UsageStats: &usagestats.UsageStatsMock{T: t},
-				Log:        log.New("accesscontrol-test"),
+				features:   featuremgmt.WithFeatures(),
+				usageStats: &usagestats.UsageStatsMock{T: t},
+				log:        log.New("accesscontrol-test"),
 			}
 
 			for i, run := range tc.runs {
@@ -385,13 +384,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := &OSSAccessControlService{
-				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-			}
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac := setupTestEnv(t)
 
 			// Test
 			err := ac.DeclareFixedRoles(tt.registrations...)
@@ -459,9 +452,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		cfg := setting.NewCfg()
-		cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-
 		t.Run(tt.name, func(t *testing.T) {
 			// Remove any inserted role after the test case has been run
 			t.Cleanup(func() {
@@ -469,15 +459,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 					removeRoleHelper(registration.Role.Name)
 				}
 			})
-
-			// Setup
-			ac := &OSSAccessControlService{
-				Cfg:           setting.NewCfg(),
-				UsageStats:    &usagestats.UsageStatsMock{T: t},
-				Log:           log.New("accesscontrol-test"),
-				registrations: accesscontrol.RegistrationList{},
-			}
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			ac := setupTestEnv(t)
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
@@ -552,7 +534,6 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			// Setup
 			ac := setupTestEnv(t)
-			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)
@@ -573,6 +554,89 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
 			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+		})
+	}
+}
+
+func TestOSSAccessControlService_Evaluate(t *testing.T) {
+	testUser := models.SignedInUser{
+		UserId:  2,
+		OrgId:   3,
+		OrgName: "TestOrg",
+		OrgRole: models.ROLE_VIEWER,
+		Login:   "testUser",
+		Name:    "Test User",
+		Email:   "testuser@example.org",
+	}
+	registration := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			UID:         "fixed:test:test",
+			Name:        "fixed:test:test",
+			Description: "Test role",
+			Permissions: []accesscontrol.Permission{},
+		},
+		Grants: []string{"Viewer"},
+	}
+	userLoginScopeSolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if initialScope == "users:login:testUser" {
+			return "users:id:2", nil
+		}
+		return initialScope, nil
+	}
+
+	tests := []struct {
+		name       string
+		user       models.SignedInUser
+		rawPerm    accesscontrol.Permission
+		evaluator  accesscontrol.Evaluator
+		wantAccess bool
+		wantErr    bool
+	}{
+		{
+			name:       "Should translate users:self",
+			user:       testUser,
+			rawPerm:    accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
+			evaluator:  accesscontrol.EvalPermission("users:read", "users:id:2"),
+			wantAccess: true,
+			wantErr:    false,
+		},
+		{
+			name:       "Should translate users:login:testUser",
+			user:       testUser,
+			rawPerm:    accesscontrol.Permission{Action: "users:read", Scope: "users:id:2"},
+			evaluator:  accesscontrol.EvalPermission("users:read", "users:login:testUser"),
+			wantAccess: true,
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Remove any inserted role after the test case has been run
+			t.Cleanup(func() {
+				removeRoleHelper(registration.Role.Name)
+			})
+
+			// Setup
+			ac := setupTestEnv(t)
+			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)
+
+			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
+			err := ac.DeclareFixedRoles(registration)
+			require.NoError(t, err)
+
+			err = ac.RegisterFixedRoles()
+			require.NoError(t, err)
+
+			// Test
+			hasAccess, err := ac.Evaluate(context.TODO(), &tt.user, tt.evaluator)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.wantAccess, hasAccess)
 		})
 	}
 }

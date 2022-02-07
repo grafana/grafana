@@ -62,6 +62,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
                 key={`${child.url}-${index}`}
                 icon={child.icon as IconName}
                 href={child.url}
+                suffix={child.tabSuffix}
               />
             )
           );

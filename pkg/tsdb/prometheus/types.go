@@ -11,8 +11,10 @@ type DatasourceInfo struct {
 	URL          string
 	TimeInterval string
 
-	promClient apiv1.API
+	getClient clientGetter
 }
+
+type clientGetter func(map[string]string) (apiv1.API, error)
 
 type PrometheusQuery struct {
 	Expr          string

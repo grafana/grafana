@@ -16,18 +16,18 @@ import * as React from 'react';
 import cx from 'classnames';
 import IoAndroidLocate from 'react-icons/lib/io/android-locate';
 import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
 import * as markers from './TracePageSearchBar.markers';
 import UiFindInput from '../common/UiFindInput';
 import { TNil } from '../types';
 
 import { UIButton, UIInputGroup } from '../uiElementsContext';
-import { createStyle } from '../Theme';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 // eslint-disable-next-line no-duplicate-imports
 import { memo } from 'react';
 
-export const getStyles = createStyle(() => {
+export const getStyles = () => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
@@ -58,7 +58,7 @@ export const getStyles = createStyle(() => {
       padding: 1px 8px 4px;
     `,
   };
-});
+};
 
 type TracePageSearchBarProps = {
   textFilter: string | TNil;
@@ -86,7 +86,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     searchValue,
     hideSearchButtons,
   } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const count = textFilter ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
 

@@ -21,7 +21,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		Settings: settingsJSON,
 	}
 
-	_, err = NewSensuGoNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+	_, err = NewSensuGoNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 	require.Error(t, err)
 
 	json = `
@@ -42,7 +42,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		Settings: settingsJSON,
 	}
 
-	not, err := NewSensuGoNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+	not, err := NewSensuGoNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 	require.NoError(t, err)
 	sensuGoNotifier := not.(*SensuGoNotifier)
 

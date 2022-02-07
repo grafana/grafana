@@ -5,6 +5,7 @@ import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 import { upperFirst } from 'lodash';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { css } from '@emotion/css';
+import { reverseMap } from '../../utils/reverseMap';
 
 interface NamedColorsGroupProps {
   hue: ThemeVizHue;
@@ -26,7 +27,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
     <div className={styles.colorRow}>
       <div className={styles.colorLabel}>{label}</div>
       <div {...otherProps} className={styles.swatchRow}>
-        {hue.shades.map((shade) => (
+        {reverseMap(hue.shades, (shade) => (
           <ColorSwatch
             key={shade.name}
             aria-label={shade.name}
@@ -65,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(1)};
       align-items: center;
       justify-content: space-around;
-      flex-direction: row-reverse;
+      flex-direction: row;
     `,
   };
 };

@@ -7,7 +7,6 @@ import {
   LegacyForms,
   MultiSelect,
   QueryField,
-  Select,
   SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
@@ -31,6 +30,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
+import QueryHeader from './QueryHeader';
 
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
@@ -54,8 +54,6 @@ interface State {
   selectedLogGroups: Array<SelectableValue<string>>;
   availableLogGroups: Array<SelectableValue<string>>;
   loadingLogGroups: boolean;
-  regions: Array<SelectableValue<string>>;
-  selectedRegion: SelectableValue<string>;
   invalidLogGroups: boolean;
   hint:
     | {
@@ -76,15 +74,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         label: logGroup,
       })) ?? [],
     availableLogGroups: [],
-    regions: [],
     invalidLogGroups: false,
-    selectedRegion: (this.props.query as CloudWatchLogsQuery).region
-      ? {
-          label: (this.props.query as CloudWatchLogsQuery).region,
-          value: (this.props.query as CloudWatchLogsQuery).region,
-          text: (this.props.query as CloudWatchLogsQuery).region,
-        }
-      : { label: 'default', value: 'default', text: 'default' },
     loadingLogGroups: false,
     hint: undefined,
   };
@@ -165,7 +155,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   onLogGroupSearchDebounced = debounce(this.onLogGroupSearch, 300);
 
   componentDidMount = () => {
-    const { datasource, query, onChange } = this.props;
+    const { query, onChange } = this.props;
 
     this.setState({
       loadingLogGroups: true,
@@ -191,25 +181,18 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           };
         });
       });
-
-    datasource.getRegions().then((regions) => {
-      this.setState({
-        regions,
-      });
-    });
   };
 
   onChangeQuery = (value: string) => {
     // Send text change to parent
     const { query, onChange } = this.props;
-    const { selectedLogGroups, selectedRegion } = this.state;
+    const { selectedLogGroups } = this.state;
 
     if (onChange) {
       const nextQuery = {
         ...query,
         expression: value,
         logGroupNames: selectedLogGroups?.map((logGroupName) => logGroupName.value!) ?? [],
-        region: selectedRegion.value ?? 'default',
         statsGroups: getStatsGroups(value),
       };
       onChange(nextQuery);
@@ -234,22 +217,17 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     this.setSelectedLogGroups(selectedLogGroups);
   };
 
-  setSelectedRegion = async (v: SelectableValue<string>) => {
+  onRegionChange = async (v: string) => {
     this.setState({
-      selectedRegion: v,
       loadingLogGroups: true,
     });
-
-    const logGroups = await this.fetchLogGroupOptions(v.value!);
-
+    const logGroups = await this.fetchLogGroupOptions(v);
     this.setState((state) => {
       const selectedLogGroups = intersectionBy(state.selectedLogGroups, logGroups, 'value');
-
       const { onChange, query } = this.props;
       if (onChange) {
         const nextQuery = {
           ...query,
-          region: v.value ?? 'default',
           logGroupNames: selectedLogGroups.map((group) => group.value!),
         };
 
@@ -307,16 +285,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   render() {
-    const { ExtraFieldElement, data, query, datasource, allowCustomValue } = this.props;
-    const {
-      selectedLogGroups,
-      availableLogGroups,
-      regions,
-      selectedRegion,
-      loadingLogGroups,
-      hint,
-      invalidLogGroups,
-    } = this.state;
+    const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource, allowCustomValue } = this.props;
+    const { selectedLogGroups, availableLogGroups, loadingLogGroups, hint, invalidLogGroups } = this.state;
 
     const showError = data && data.error && data.error.refId === query.refId;
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
@@ -325,29 +295,22 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     return (
       <>
+        <QueryHeader
+          query={query}
+          onRunQuery={onRunQuery}
+          datasource={datasource}
+          onChange={onChange}
+          sqlCodeEditorIsDirty={false}
+          onRegionChange={this.onRegionChange}
+        />
         <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
-          <LegacyForms.FormField
-            label="Region"
-            labelWidth={4}
-            inputEl={
-              <Select
-                menuShouldPortal
-                options={regions}
-                value={selectedRegion}
-                onChange={(v) => this.setSelectedRegion(v)}
-                width={18}
-                placeholder="Choose Region"
-                maxMenuHeight={500}
-              />
-            }
-          />
-
           <LegacyForms.FormField
             label="Log Groups"
             labelWidth={6}
             className="flex-grow-1"
             inputEl={
               <MultiSelect
+                aria-label="Log Groups"
                 menuShouldPortal
                 allowCustomValue={allowCustomValue}
                 options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
@@ -369,7 +332,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 isLoading={loadingLogGroups}
                 onOpenMenu={this.onOpenLogGroupMenu}
                 onInputChange={(value, actionMeta) => {
-                  this.onLogGroupSearchDebounced(value, selectedRegion.value ?? 'default', actionMeta);
+                  this.onLogGroupSearchDebounced(value, query.region, actionMeta);
                 }}
               />
             }

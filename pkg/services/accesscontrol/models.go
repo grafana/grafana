@@ -176,9 +176,10 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID  int64 `json:"-"`
-	UserID int64 `json:"userId"`
-	Roles  []string
+	OrgID   int64 `json:"-"`
+	UserID  int64 `json:"userId"`
+	Roles   []string
+	Actions []string
 }
 
 // ScopeParams holds the parameters used to fill in scope templates
@@ -237,6 +238,7 @@ type SetResourcePermissionCommand struct {
 	Actions    []string
 	Resource   string
 	ResourceID string
+	Permission string
 }
 
 type GetResourcesPermissionsQuery struct {
@@ -310,6 +312,22 @@ const (
 	ActionLicensingUpdate      = "licensing:update"
 	ActionLicensingDelete      = "licensing:delete"
 	ActionLicensingReportsRead = "licensing.reports:read"
+
+	// Team related actions
+	ActionTeamsCreate           = "teams:create"
+	ActionTeamsDelete           = "teams:delete"
+	ActionTeamsRead             = "teams:read"
+	ActionTeamsWrite            = "teams:write"
+	ActionTeamsPermissionsRead  = "teams.permissions:read"
+	ActionTeamsPermissionsWrite = "teams.permissions:write"
+
+	// Team related scopes
+	ScopeTeamsAll = "teams:*"
+)
+
+var (
+	// Team scope
+	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

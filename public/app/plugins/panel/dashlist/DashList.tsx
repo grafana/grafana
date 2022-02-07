@@ -11,7 +11,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { getStyles } from './styles';
-import { PanelOptions } from './models.gen';
+import { PanelLayout, PanelOptions } from './models.gen';
+import { SearchCard } from 'app/features/search/components/SearchCard';
 
 type Dashboard = DashboardSearchHit & { isSearchResult?: boolean; isRecent?: boolean };
 
@@ -105,7 +106,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     ];
   }, [dashboards]);
 
-  const { showStarred, showRecentlyViewed, showHeadings, showSearch } = props.options;
+  const { showStarred, showRecentlyViewed, showHeadings, showSearch, layout } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
     {
@@ -152,6 +153,16 @@ export function DashList(props: PanelProps<PanelOptions>) {
     </ul>
   );
 
+  const renderPreviews = (dashboards: Dashboard[]) => (
+    <ul className={css.gridContainer}>
+      {dashboards.map((dash) => (
+        <li key={dash.uid}>
+          <SearchCard item={dash} />
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       {dashboardGroups.map(
@@ -159,7 +170,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
           show && (
             <div className={css.dashlistSection} key={`dash-group-${i}`}>
               {showHeadings && <h6 className={css.dashlistSectionHeader}>{header}</h6>}
-              {renderList(dashboards)}
+              {layout === PanelLayout.Previews ? renderPreviews(dashboards) : renderList(dashboards)}
             </div>
           )
       )}
