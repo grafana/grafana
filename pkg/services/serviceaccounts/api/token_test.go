@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -23,10 +25,29 @@ import (
 )
 
 const (
-	serviceaccountIDTokensPath = "/api/serviceaccounts/%v/tokens" // #nosec G101
+	serviceaccountIDTokensPath       = "/api/serviceaccounts/%v/tokens"    // #nosec G101
+	serviceaccountIDTokensDetailPath = "/api/serviceaccounts/%v/tokens/%v" // #nosec G101
 )
 
-func TestServiceAccountsAPI_AddSAToken(t *testing.T) {
+func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64) *models.ApiKey {
+	key, err := apikeygen.New(orgID, keyName)
+	require.NoError(t, err)
+	cmd := models.AddApiKeyCommand{
+		Name:             keyName,
+		Role:             "Viewer",
+		OrgId:            orgID,
+		Key:              key.HashedKey,
+		SecondsToLive:    0,
+		ServiceAccountId: &saID,
+		Result:           &models.ApiKey{},
+	}
+	err = bus.Dispatch(context.Background(), &cmd)
+	require.NoError(t, err)
+
+	return cmd.Result
+}
+
+func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	store := sqlstore.InitTestDB(t)
 	svcmock := tests.ServiceAccountMock{}
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
@@ -126,6 +147,91 @@ func TestServiceAccountsAPI_AddSAToken(t *testing.T) {
 
 				assert.Equal(t, sa.Id, *query.Result.ServiceAccountId)
 				assert.Equal(t, sa.OrgId, query.Result.OrgId)
+			}
+		})
+	}
+}
+
+func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
+	store := sqlstore.InitTestDB(t)
+	svcmock := tests.ServiceAccountMock{}
+	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
+
+	type testCreateSAToken struct {
+		desc         string
+		keyName      string
+		expectedCode int
+		acmock       *accesscontrolmock.Mock
+	}
+
+	testCases := []testCreateSAToken{
+		{
+			desc:    "should be ok to delete serviceaccount token with scope id permissions",
+			keyName: "Test1",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:    "should be ok to delete serviceaccount token with scope all permissions",
+			keyName: "Test2",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:    "should be forbidden to delete serviceaccount token if wrong scoped",
+			keyName: "Test3",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:10"}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
+		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
+		require.NoError(t, err)
+		recorder := httptest.NewRecorder()
+		server.ServeHTTP(recorder, req)
+		return recorder
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			token := createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id)
+
+			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.Id, token.Id)
+			bodyString := ""
+			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
+
+			actualCode := actual.Code
+			actualBody := map[string]interface{}{}
+
+			_ = json.Unmarshal(actual.Body.Bytes(), &actualBody)
+			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
+
+			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgId}
+			err := store.GetApiKeyByName(context.Background(), &query)
+			if actualCode == http.StatusOK {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
