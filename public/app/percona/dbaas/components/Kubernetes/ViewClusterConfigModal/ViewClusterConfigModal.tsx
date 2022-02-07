@@ -23,7 +23,7 @@ export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
   const [kubeconfig, setKubeconfig] = useState('');
   const [loading, setLoading] = useState(false);
   const [generateToken] = useCancelToken();
-  const outputRef = useRef<HTMLPreElement>(null);
+  const outputRef = useRef<HTMLPreElement | null>(null);
 
   const copyToClipboard = useCallback(() => {
     appEvents.emit(AppEvents.alertSuccess, [Messages.successfulCopyMessage]);
@@ -68,7 +68,7 @@ export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
         </ClipboardButton>
       </HorizontalGroup>
       <Overlay isPending={loading} className={styles.overlay}>
-        <pre ref={outputRef}>{kubeconfig}</pre>
+        <pre ref={(pre) => (outputRef.current = pre)}>{kubeconfig}</pre>
       </Overlay>
       <HorizontalGroup justify="flex-end" spacing="md">
         <Button variant="destructive" size="md" onClick={() => setVisible(false)} data-testid="delete-dbcluster-button">
