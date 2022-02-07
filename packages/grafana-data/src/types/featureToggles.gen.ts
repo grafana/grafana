@@ -29,6 +29,7 @@ export interface FeatureToggles {
   tempoSearch?: boolean;
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
+  lokiBackendMode?: boolean;
   fullRangeLogsVolume?: boolean;
   accesscontrol?: boolean;
   prometheus_azure_auth?: boolean;
