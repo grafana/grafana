@@ -44,7 +44,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -131,7 +130,6 @@ type HTTPServer struct {
 	authInfoService           login.AuthInfoService
 	TeamPermissionsService    *resourcepermissions.Service
 	NotificationService       *notifications.NotificationService
-	MultiLDAPService          multildap.IMultiLDAP
 }
 
 type ServerOptions struct {

@@ -205,7 +205,8 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		IpAddress:  c.Req.RemoteAddr,
 		Cfg:        hs.Cfg,
 	}
-	_, err := hs.MultiLDAPService.Login(authQuery)
+
+	err := login.AuthenticateUserFunc(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
