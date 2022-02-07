@@ -34,12 +34,10 @@ export { SortOrder };
 
 export async function addToRichHistory(
   richHistory: RichHistoryQuery[],
-  datasourceId: string,
   datasourceName: string | null,
   queries: DataQuery[],
   starred: boolean,
   comment: string | null,
-  sessionName: string,
   showQuotaExceededError: boolean,
   showLimitExceededWarning: boolean
 ): Promise<{ richHistory: RichHistoryQuery[]; richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
@@ -51,11 +49,9 @@ export async function addToRichHistory(
     const newRichHistory: RichHistoryQuery = {
       queries: newQueriesToSave,
       ts,
-      datasourceId,
       datasourceName: datasourceName ?? '',
       starred,
       comment: comment ?? '',
-      sessionName,
     };
 
     let richHistoryStorageFull = false;
