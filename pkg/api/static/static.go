@@ -53,7 +53,7 @@ type StaticOptions struct {
 	// FileSystem is the interface for supporting any implementation of file system.
 	FileSystem http.FileSystem
 	// Exclude paths from being served
-	Exlude []string
+	Exclude []string
 }
 
 // FIXME: to be deleted.
@@ -123,7 +123,7 @@ func staticHandler(ctx *web.Context, log log.Logger, opt StaticOptions) bool {
 	}
 
 	file := ctx.Req.URL.Path
-	for _, p := range opt.Exlude {
+	for _, p := range opt.Exclude {
 		if file == p {
 			return false
 		}

@@ -577,7 +577,7 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 			SkipLogging: true,
 			Prefix:      prefix,
 			AddHeaders:  headers,
-			Exlude:      exclude,
+			Exclude:     exclude,
 		},
 	))
 }
