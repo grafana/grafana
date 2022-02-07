@@ -151,7 +151,7 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 	}, nil
 }
 
-// if the v2 endpoint exists it will give a 400
+// if the v2 endpoint exists it will give a 400 rather than 404/500
 func is400(client *http.Client, url *url.URL) bool {
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
@@ -161,7 +161,8 @@ func is400(client *http.Client, url *url.URL) bool {
 	if err != nil {
 		return false
 	}
-	defer rsp.Body.Close()
-
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
 	return rsp.StatusCode == 400 // will be true
 }
