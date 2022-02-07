@@ -461,6 +461,8 @@ var testSQLStoreMutex sync.Mutex
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
+	// Features to turn on.
+	Features []string
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -500,7 +502,14 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+		cfg.IsFeatureToggleEnabled = func(key string) bool {
+			for _, f := range opts[0].Features {
+				if f == key {
+					return true
+				}
+			}
+			return false
+		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
