@@ -748,8 +748,6 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         'image': 'google/cloud-sdk',
         'depends_on': ['copy-packages-for-docker'],
         'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
             cmd
         ],
         'volumes': [{
