@@ -21,7 +21,7 @@ type ApiKey struct {
 	Created          time.Time
 	Updated          time.Time
 	Expires          *int64
-	ServiceAccountId int64
+	ServiceAccountId *int64
 }
 
 // ---------------------
@@ -32,7 +32,7 @@ type AddApiKeyCommand struct {
 	OrgId            int64    `json:"-"`
 	Key              string   `json:"-"`
 	SecondsToLive    int64    `json:"secondsToLive"`
-	ServiceAccountId int64    `json:"-"`
+	ServiceAccountId *int64   `json:"-"`
 	Result           *ApiKey  `json:"-"`
 }
 
