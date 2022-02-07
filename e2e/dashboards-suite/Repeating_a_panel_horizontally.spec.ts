@@ -40,7 +40,8 @@ describe('Repeating a panel horizontally', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('horizontal').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
-    e2e.pages.Dashboard.DashNav.navV2().click();
+    // blur the dropdown
+    e2e().get('body').click();
 
     const panelsShown = ['Panel Title 1', 'Panel Title 3'];
     const panelsNotShown = ['Panel Title 2'];

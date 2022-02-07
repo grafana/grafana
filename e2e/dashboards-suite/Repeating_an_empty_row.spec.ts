@@ -36,7 +36,8 @@ describe('Repeating empty rows', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('row').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
-    e2e.pages.Dashboard.DashNav.navV2().click();
+    // blur the dropdown
+    e2e().get('body').click();
 
     const rowsShown = ['Row title 1', 'Row title 3'];
     const rowsNotShown = ['Row title 2'];
