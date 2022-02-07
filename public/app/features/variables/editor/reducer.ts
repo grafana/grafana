@@ -1,13 +1,30 @@
+import { DataSourceApi, DataSourceRef } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { VariablePayload } from '../state/types';
+import { VariableQueryEditorType } from '../types';
 
-type VariableEditorExtension<ExtendedProps extends {} = {}> = { [P in keyof ExtendedProps]: ExtendedProps[P] };
-export interface VariableEditorState<ExtendedProps extends {} = {}> {
+export interface AdHocVariableEditorState {
+  infoText?: string;
+  dataSources: Array<{ text: string; value: DataSourceRef | null }>;
+}
+
+export interface DataSourceVariableEditorState {
+  dataSourceTypes: Array<{ text: string; value: string }>;
+}
+
+export interface QueryVariableEditorState {
+  VariableQueryEditor: VariableQueryEditorType;
+  dataSource: DataSourceApi | null;
+}
+
+type VariableEditorExtension = AdHocVariableEditorState | DataSourceVariableEditorState | QueryVariableEditorState;
+
+export interface VariableEditorState {
   id: string;
   name: string;
   errors: Record<string, string>;
   isValid: boolean;
-  extended: VariableEditorExtension<ExtendedProps> | null;
+  extended: VariableEditorExtension | null;
 }
 
 export const initialVariableEditorState: VariableEditorState = {
@@ -65,6 +82,7 @@ const variableEditorReducerSlice = createSlice({
       state: VariableEditorState,
       action: PayloadAction<{ propName: string; propValue: any }>
     ) => {
+      // @ts-ignore - temp ignoring the errors now the state type is more strict
       state.extended = {
         ...state.extended,
         [action.payload.propName]: action.payload.propValue,
