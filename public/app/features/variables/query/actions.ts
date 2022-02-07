@@ -6,19 +6,14 @@ import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
 import { getVariable } from '../state/selectors';
-import {
-  addVariableEditorError,
-  changeVariableEditorExtended,
-  removeVariableEditorError,
-  VariableEditorState,
-} from '../editor/reducer';
+import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
-import { QueryVariableEditorState } from './reducer';
 import { hasOngoingTransaction } from '../utils';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -71,8 +66,8 @@ export const changeQueryVariableDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const editorState = getState().templating.editor as VariableEditorState<QueryVariableEditorState>;
-      const previousDatasource = editorState.extended?.dataSource;
+      const extendedEditorState = getQueryVariableEditorState(getState().templating.editor);
+      const previousDatasource = extendedEditorState?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {
         dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })));
