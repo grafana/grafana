@@ -118,7 +118,7 @@ Updates a comment of query in the query history that matches the specified uid.
 
 Query parameters:
 
-- **comment** – New comment that will be added to specified query.
+- **comment** – New comment that will be added to the specified query.
 
 **Example Request**:
 
