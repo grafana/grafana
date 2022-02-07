@@ -1,7 +1,7 @@
 SWAGGER_CODEGEN_TAG ?= latest
 
 create-client-dir:
-	mkdir ../clients
+	mkdir -p ../clients
 
 client-go: create-client-dir
 	docker run --rm \

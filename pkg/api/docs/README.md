@@ -1,6 +1,6 @@
 # Generate Go client
 
-The following command generates a Go client under: `pkg/clients`
+The following command generates a Go client under: `pkg/api/clients/go`
 
 ```bash
 $ make client-go
@@ -12,8 +12,8 @@ For more details you can refer to [here](https://openapi-generator.tech/docs/tem
 
 # Generate Python client
 
-The following command generates a Python client under: `pkg/clients`
+The following command generates a Python client under: `pkg/api/clients/`
 
 ```bash
-$ make python-go
+$ make client-python
 ```
