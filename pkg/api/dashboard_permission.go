@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,7 +23,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -72,7 +74,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -147,7 +149,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 		resourceID := strconv.FormatInt(dashID, 10)
 		permissions := item.Permission.String()
 		if item.UserID != 0 {
-			_, err := svc.SetUserPermission(ctx, orgID, item.UserID, resourceID, permissions)
+			_, err := svc.SetUserPermission(ctx, orgID, accesscontrol.User{ID: item.UserID}, resourceID, permissions)
 			if err != nil {
 				return err
 			}
@@ -183,7 +185,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 		if shouldRemove {
 			resourceID := strconv.FormatInt(dashID, 10)
 			if o.UserId != 0 {
-				_, err := svc.SetUserPermission(ctx, orgID, o.UserId, resourceID, "")
+				_, err := svc.SetUserPermission(ctx, orgID, accesscontrol.User{ID: o.UserId}, resourceID, "")
 				if err != nil {
 					return err
 				}

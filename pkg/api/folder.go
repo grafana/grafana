@@ -49,7 +49,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -66,7 +66,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
@@ -86,7 +86,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, dashSvc dashboards.FolderService) error {
@@ -129,7 +129,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, cmd.Result))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -154,7 +154,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	})
 }
 
-func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func (hs *HTTPServer) toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -163,10 +163,10 @@ func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *mode
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
 	if folder.CreatedBy > 0 {
-		creator = getUserLogin(ctx, folder.CreatedBy)
+		creator = hs.getUserLogin(ctx, folder.CreatedBy)
 	}
 	if folder.UpdatedBy > 0 {
-		updater = getUserLogin(ctx, folder.UpdatedBy)
+		updater = hs.getUserLogin(ctx, folder.UpdatedBy)
 	}
 
 	return dtos.Folder{

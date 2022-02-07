@@ -73,6 +73,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "lokiBackendMode",
+			Description:  "Loki datasource works as backend datasource",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "fullRangeLogsVolume",
 			Description:  "Show full range logs volume in explore",
 			State:        FeatureStateBeta,

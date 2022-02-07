@@ -10,16 +10,25 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
+//
+// sets an Alerting config
+//
+//     Responses:
+//       201: Ack
+//       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
@@ -27,6 +36,14 @@ import (
 //
 //     Responses:
 //       201: Ack
+//       400: ValidationError
+
+// swagger:route GET /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteGetGrafanaAlertingConfig
+//
+// gets an Alerting config
+//
+//     Responses:
+//       200: GettableUserConfig
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
@@ -37,12 +54,28 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
+// swagger:route DELETE /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
+//
+// deletes the Alerting config for a tenant
+//
+//     Responses:
+//       200: Ack
+//       400: ValidationError
+
 // swagger:route DELETE /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant
 //
 //     Responses:
 //       200: Ack
+//       400: ValidationError
+
+// swagger:route GET /api/alertmanager/grafana/api/v2/status alertmanager RouteGetGrafanaAMStatus
+//
+// get alertmanager status and configuration
+//
+//     Responses:
+//       200: GettableStatus
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
@@ -53,12 +86,28 @@ import (
 //       200: GettableStatus
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/alerts alertmanager RouteGetGrafanaAMAlerts
+//
+// get alertmanager alerts
+//
+//     Responses:
+//       200: gettableAlerts
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
 //
 // get alertmanager alerts
 //
 //     Responses:
 //       200: gettableAlerts
+//       400: ValidationError
+
+// swagger:route POST /api/alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
+//
+// create alertmanager alerts
+//
+//     Responses:
+//       200: Ack
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
@@ -69,6 +118,14 @@ import (
 //       200: Ack
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/alerts/groups alertmanager RouteGetGrafanaAMAlertGroups
+//
+// get alertmanager alerts
+//
+//     Responses:
+//       200: alertGroups
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
 //
 // get alertmanager alerts
@@ -76,6 +133,20 @@ import (
 //     Responses:
 //       200: alertGroups
 //       400: ValidationError
+
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
+//
+// Test Grafana managed receivers without saving them.
+//
+//     Responses:
+//
+//       200: Ack
+//       207: MultiStatus
+//       400: ValidationError
+//       403: PermissionDenied
+//       404: AlertManagerNotFound
+//       408: Failure
+//       409: AlertManagerNotReady
 
 // swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
 //
@@ -91,12 +162,28 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
+//
+// get silences
+//
+//     Responses:
+//       200: gettableSilences
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
 //
 // get silences
 //
 //     Responses:
 //       200: gettableSilences
+//       400: ValidationError
+
+// swagger:route POST /api/alertmanager/grafana/api/v2/silences alertmanager RouteCreateGrafanaSilence
+//
+// create silence
+//
+//     Responses:
+//       201: gettableSilence
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
@@ -107,12 +194,28 @@ import (
 //       201: gettableSilence
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/grafana/api/v2/silence/{SilenceId} alertmanager RouteGetGrafanaSilence
+//
+// get silence
+//
+//     Responses:
+//       200: gettableSilence
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
 //
 // get silence
 //
 //     Responses:
 //       200: gettableSilence
+//       400: ValidationError
+
+// swagger:route DELETE /api/alertmanager/grafana/api/v2/silence/{SilenceId} alertmanager RouteDeleteGrafanaSilence
+//
+// delete silence
+//
+//     Responses:
+//       200: Ack
 //       400: ValidationError
 
 // swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
@@ -135,7 +238,7 @@ type AlertManagerNotReady struct{}
 // swagger:model
 type MultiStatus struct{}
 
-// swagger:parameters RoutePostTestReceivers
+// swagger:parameters RoutePostTestReceivers RoutePostTestGrafanaReceivers
 type TestReceiversConfigParams struct {
 	// in:body
 	Body TestReceiversConfigBodyParams
@@ -176,25 +279,25 @@ type TestReceiverConfigResult struct {
 	Error  string `json:"error,omitempty"`
 }
 
-// swagger:parameters RouteCreateSilence
+// swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
 type CreateSilenceParams struct {
 	// in:body
 	Silence PostableSilence
 }
 
-// swagger:parameters RouteGetSilence RouteDeleteSilence
+// swagger:parameters RouteGetSilence RouteDeleteSilence RouteGetGrafanaSilence RouteDeleteGrafanaSilence
 type GetDeleteSilenceParams struct {
 	// in:path
 	SilenceId string
 }
 
-// swagger:parameters RouteGetSilences
+// swagger:parameters RouteGetSilences RouteGetGrafanaSilences
 type GetSilencesParams struct {
 	// in:query
 	Filter []string `json:"filter"`
 }
 
-// swagger:parameters RouteGetRuleStatuses
+// swagger:parameters RouteGetRuleStatuses RouteGetGrafanaRuleStatuses
 type GetRuleStatusesParams struct {
 	// in: query
 	DashboardUID string
@@ -299,7 +402,7 @@ type AlertGroup = amv2.AlertGroup
 // swagger:model receiver
 type Receiver = amv2.Receiver
 
-// swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
+// swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
 
 	// Show active alerts
@@ -331,13 +434,13 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts
+// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
-// swagger:parameters RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
 	Body PostableUserConfig
@@ -352,10 +455,9 @@ type BodyAlertingConfig struct {
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceReference struct {
-	// Recipient should be "grafana" for requests to be handled by grafana
-	// and the numeric datasource id for requests to be forwarded to a datasource
+	// Recipient should be the numeric datasource id
 	// in:path
-	Recipient string
+	Recipient int
 }
 
 // swagger:model

@@ -8,4 +8,5 @@ import (
 
 type AuthInfoService interface {
 	LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error)
+	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
 }

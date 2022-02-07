@@ -56,7 +56,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 	t.Run("Get admin stats should not result in error", func(t *testing.T) {
 		query := models.GetAdminStatsQuery{}
-		err := GetAdminStats(context.Background(), &query)
+		err := sqlStore.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 }

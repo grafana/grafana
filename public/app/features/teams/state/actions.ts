@@ -4,17 +4,21 @@ import { TeamMember, ThunkResult } from 'app/types';
 import { updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { teamGroupsLoaded, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 export function loadTeams(): ThunkResult<void> {
   return async (dispatch) => {
-    const response = await getBackendSrv().get('/api/teams/search', { perpage: 1000, page: 1 });
+    const response = await getBackendSrv().get(
+      '/api/teams/search',
+      accessControlQueryParam({ perpage: 1000, page: 1 })
+    );
     dispatch(teamsLoaded(response.teams));
   };
 }
 
 export function loadTeam(id: number): ThunkResult<void> {
   return async (dispatch) => {
-    const response = await getBackendSrv().get(`/api/teams/${id}`);
+    const response = await getBackendSrv().get(`/api/teams/${id}`, accessControlQueryParam());
     dispatch(teamLoaded(response));
     dispatch(updateNavIndex(buildNavModel(response)));
   };

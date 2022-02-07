@@ -16,7 +16,8 @@ import (
 type Store interface {
 	// SetUserResourcePermission sets permission for managed user role on a resource
 	SetUserResourcePermission(
-		ctx context.Context, orgID, userID int64,
+		ctx context.Context, orgID int64,
+		user accesscontrol.User,
 		cmd accesscontrol.SetResourcePermissionCommand,
 		hook types.UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
@@ -100,7 +101,7 @@ func (s *Service) GetPermissions(ctx context.Context, orgID int64, resourceID st
 	})
 }
 
-func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	if !s.options.Assignments.Users {
 		return nil, ErrInvalidAssignment
 	}
@@ -114,11 +115,11 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID, userID int64, re
 		return nil, err
 	}
 
-	if err := s.validateUser(ctx, orgID, userID); err != nil {
+	if err := s.validateUser(ctx, orgID, user.ID); err != nil {
 		return nil, err
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, userID, accesscontrol.SetResourcePermissionCommand{
+	return s.store.SetUserResourcePermission(ctx, orgID, user, accesscontrol.SetResourcePermissionCommand{
 		Actions:    actions,
 		Permission: permission,
 		ResourceID: resourceID,
