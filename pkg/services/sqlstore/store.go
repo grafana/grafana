@@ -8,6 +8,7 @@ import (
 )
 
 type Store interface {
+	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error
 	DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error
 	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
 	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
@@ -40,6 +41,7 @@ type Store interface {
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
+	DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error
 	BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error
 	DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error
 	UpdateUserPermissions(userID int64, isAdmin bool) error
@@ -103,7 +105,7 @@ type Store interface {
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
-	GetDashboard(id, orgID int64, uid, slug string) (*models.Dashboard, error)
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error)
 	SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error

@@ -10,15 +10,22 @@ import (
 
 type SQLStoreMock struct {
 	LastGetAlertsQuery *models.GetAlertsQuery
+	LatestUserId       int64
 
-	ExpectedUser       *models.User
-	ExpectedDatasource *models.DataSource
-	ExpectedAlert      *models.Alert
-	ExpectedError      error
+	ExpectedUser          *models.User
+	ExpectedDatasource    *models.DataSource
+	ExpectedAlert         *models.Alert
+	ExpectedPluginSetting *models.PluginSetting
+
+	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
 	return &SQLStoreMock{}
+}
+
+func (m *SQLStoreMock) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
@@ -150,11 +157,17 @@ func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSig
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
+	m.LatestUserId = cmd.UserId
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
+	m.LatestUserId = cmd.UserId
 	return m.ExpectedError
 }
 
@@ -239,6 +252,7 @@ func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*m
 }
 
 func (m *SQLStoreMock) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	query.Result = m.ExpectedPluginSetting
 	return m.ExpectedError
 }
 
@@ -408,8 +422,8 @@ func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.D
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboard(id int64, orgID int64, uid string, slug string) (*models.Dashboard, error) {
-	return nil, m.ExpectedError
+func (m *SQLStoreMock) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {

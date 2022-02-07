@@ -29,15 +29,15 @@ type TestingApiSrv struct {
 	secretsService    secrets.Service
 }
 
+func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
+		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+	}
+	return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.secretsService, srv.Cfg, srv.log)
+}
+
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	recipient := web.Params(c.Req)[":Recipient"]
-	if recipient == apimodels.GrafanaBackend.String() {
-		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
-			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
-		}
-		return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.secretsService, srv.Cfg, srv.log)
-	}
-
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 	}
