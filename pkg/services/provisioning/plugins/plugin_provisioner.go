@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -12,6 +11,8 @@ import (
 
 type Store interface {
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
+	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
+	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 }
 
 // Provision scans a directory for provisioning config files
@@ -47,7 +48,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 		}
 
 		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
-		err := bus.Dispatch(ctx, query)
+		err := ap.store.GetPluginSettingById(ctx, query)
 		if err != nil {
 			if !errors.Is(err, models.ErrPluginSettingNotFound) {
 				return err
@@ -66,7 +67,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJsonData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}
-		if err := bus.Dispatch(ctx, cmd); err != nil {
+		if err := ap.store.UpdatePluginSetting(ctx, cmd); err != nil {
 			return err
 		}
 	}
