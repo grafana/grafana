@@ -42,11 +42,11 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 		}))
 
 		origHandler := frontendLogger.GetLogger()
-		frontendLogger.SetLogger(level.NewFilter(newfrontendLogger, level.AllowInfo()))
+		frontendLogger.Swap(level.NewFilter(newfrontendLogger, level.AllowInfo()))
 		sourceMapReads := []SourceMapReadRecord{}
 
 		t.Cleanup(func() {
-			frontendLogger.SetLogger(origHandler)
+			frontendLogger.Swap(origHandler)
 		})
 
 		sc := setupScenarioContext(t, "/log")

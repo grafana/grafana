@@ -27,9 +27,10 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceaccountForm) (user *models.User, err error) {
 	// create a new service account - "user" with empty permissions
+	generatedLogin := "Service-Account-" + uuid.New().String()
 	cmd := models.CreateUserCommand{
-		Login:            "Service-Account-" + uuid.New().String(),
-		Name:             sa.Name + "-Service-Account-" + uuid.New().String(),
+		Login:            generatedLogin,
+		Name:             sa.Name,
 		OrgId:            sa.OrgID,
 		IsServiceAccount: true,
 	}
@@ -130,6 +131,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	})
 	return result, err
 }
+
 func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*models.OrgUserDTO, error) {
 	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
 	if serviceAccountID > 0 {

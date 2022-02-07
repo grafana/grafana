@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -25,6 +26,7 @@ type ServiceAccountsService struct {
 }
 
 func ProvideServiceAccountsService(
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	store *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl,
@@ -42,7 +44,7 @@ func ProvideServiceAccountsService(
 		}
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, store)
 	serviceaccountsAPI.RegisterAPIEndpoints(features)
 
 	return s, nil

@@ -53,8 +53,6 @@ class WrapperUnconnected extends PureComponent<Props> {
       locationService.partial({ from: undefined, to: undefined }, true);
     }
 
-    const richHistory = getRichHistory();
-    this.props.richHistoryUpdatedAction({ richHistory });
     getRichHistory().then((richHistory) => {
       this.props.richHistoryUpdatedAction({ richHistory });
     });
