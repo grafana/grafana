@@ -10,10 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -21,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -409,7 +407,7 @@ func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.S
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(dash.Id, 10)
 		svc := hs.permissionServices.GetDashboardService()
-		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, c.UserId, resourceID, models.PERMISSION_ADMIN.String())
+		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: c.UserId}, resourceID, models.PERMISSION_ADMIN.String())
 		if err != nil {
 			return err
 		}

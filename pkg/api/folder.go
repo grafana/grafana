@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
@@ -93,7 +93,7 @@ func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, 
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(folderID, 10)
 		svc := hs.permissionServices.GetFolderService()
-		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, c.UserId, resourceID, models.PERMISSION_ADMIN.String())
+		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: c.UserId}, resourceID, models.PERMISSION_ADMIN.String())
 		if err != nil {
 			return err
 		}
