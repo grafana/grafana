@@ -759,6 +759,40 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         },
     }
 
+def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
+    if mode == 'security':
+        mode = '--{} '.format(mode)
+    else:
+        mode = ''
+
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)
+
+    deps = []
+    if ver_mode == 'release':
+        deps = ['fetch-images-{}'.format(edition)]
+        cmd += ' --version-tag ${{TAG}}'
+    elif ver_mode == 'main':
+        if not ubuntu:
+            deps = ['build-docker-images-ubuntu']
+        else:
+            deps = ['build-docker-images']
+
+    return {
+        'name': 'publish-images-{}'.format(docker_repo),
+        'image': 'google/cloud-sdk',
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'DOCKER_USER': from_secret('docker_username'),
+            'DOCKER_PASSWORD': from_secret('docker_password'),
+        },
+        'commands': [cmd],
+        'depends_on': deps,
+        'volumes': [{
+            'name': 'docker',
+            'path': '/var/run/docker.sock'
+        }],
+    }
+
 
 def postgres_integration_tests_step(edition, ver_mode):
     deps = []

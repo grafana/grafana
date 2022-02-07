@@ -36,7 +36,8 @@ load(
     'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
-    'ensure_cuetsified_step'
+    'ensure_cuetsified_step',
+    'publish_images_step'
 )
 
 load(
@@ -117,27 +118,6 @@ def release_npm_packages_step():
         ],
     }
 
-def publish_images_step(edition, mode, docker_repo):
-    if mode == 'security':
-        mode = '--{} '.format(mode)
-    else:
-        mode = ''
-    return {
-        'name': 'publish-images-{}'.format(docker_repo),
-        'image': 'google/cloud-sdk',
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-            'DOCKER_USER': from_secret('docker_username'),
-            'DOCKER_PASSWORD': from_secret('docker_password'),
-        },
-        'commands': ['./bin/grabpl artifacts docker publish {}--version-tag ${{TAG}} --dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)],
-        'depends_on': ['fetch-images-{}'.format(edition)],
-        'volumes': [{
-            'name': 'docker',
-            'path': '/var/run/docker.sock'
-        }],
-    }
-
 def fetch_images_step(edition):
     return {
         'name': 'fetch-images-{}'.format(edition),
@@ -159,10 +139,10 @@ def publish_image_steps(version, mode, docker_repo, additional_docker_repo=""):
     steps = [
         download_grabpl_step(),
         fetch_images_step(version),
-        publish_images_step(version, mode, docker_repo),
+        publish_images_step(version, 'release', mode, docker_repo),
     ]
     if additional_docker_repo != "":
-        steps.extend([publish_images_step(version, mode, additional_docker_repo)])
+        steps.extend([publish_images_step(version, 'release', mode, additional_docker_repo)])
 
     return steps
 

@@ -21,6 +21,7 @@ load(
     'build_frontend_docs_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
+    'publish_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -113,6 +114,8 @@ def get_steps(edition, is_downstream=False):
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', ubuntu=False),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', ubuntu=True)
     ])
 
     if include_enterprise2:
