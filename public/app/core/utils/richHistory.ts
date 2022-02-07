@@ -46,23 +46,21 @@ export async function addToRichHistory(
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
   if (newQueriesToSave.length > 0) {
-    const newRichHistory = {
-      datasourceUid: datasourceUid,
-      datasourceName: datasourceName ?? '',
-      queries: newQueriesToSave,
-      starred,
-      comment: comment ?? '',
-    };
-
     let richHistoryStorageFull = false;
     let limitExceeded = false;
     let warning: RichHistoryStorageWarningDetails | undefined;
-    let richHistoryQuery: RichHistoryQuery;
+    let newRichHistory: RichHistoryQuery;
 
     try {
-      const result = await getRichHistoryStorage().addToRichHistory(newRichHistory);
+      const result = await getRichHistoryStorage().addToRichHistory({
+        datasourceUid: datasourceUid,
+        datasourceName: datasourceName ?? '',
+        queries: newQueriesToSave,
+        starred,
+        comment: comment ?? '',
+      });
       warning = result.warning;
-      richHistoryQuery = result.richHistoryQuery;
+      newRichHistory = result.richHistoryQuery;
     } catch (error) {
       if (error.name === RichHistoryServiceError.StorageFull) {
         richHistoryStorageFull = true;
@@ -81,7 +79,7 @@ export async function addToRichHistory(
     }
 
     // Saving successful - add new entry.
-    return { richHistory: [richHistoryQuery, ...richHistory], richHistoryStorageFull, limitExceeded };
+    return { richHistory: [newRichHistory, ...richHistory], richHistoryStorageFull, limitExceeded };
   }
 
   // Nothing to save

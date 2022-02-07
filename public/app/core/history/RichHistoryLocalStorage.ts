@@ -10,6 +10,7 @@ export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
 
 export type RichHistoryLocalStorageDTO = {
+  // works as an unique identifier
   ts: number;
   datasourceName: string;
   starred: boolean;

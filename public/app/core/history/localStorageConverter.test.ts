@@ -38,7 +38,7 @@ describe('LocalStorage converted', () => {
     expect(toDTO(validRichHistory)).toMatchObject(validDTO);
   });
 
-  it('throws an error when data source fro RichHistory does not exist', () => {
+  it('throws an error when data source for RichHistory does not exist to avoid saving invalid items', () => {
     const invalidRichHistory = { ...validRichHistory, datasourceUid: 'invalid' };
     expect(() => {
       toDTO(invalidRichHistory);
@@ -49,7 +49,7 @@ describe('LocalStorage converted', () => {
     expect(fromDTO(validDTO)).toMatchObject(validRichHistory);
   });
 
-  it('uses empty uid when datasource does not exist for a DTO', () => {
+  it('uses empty uid when datasource does not exist for a DTO to fail gracefully for queries from removed datasources', () => {
     const invalidDto = { ...validDTO, datasourceName: 'removed' };
     expect(fromDTO(invalidDto)).toMatchObject({
       ...validRichHistory,
