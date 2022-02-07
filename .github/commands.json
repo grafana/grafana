@@ -116,6 +116,22 @@
   },
   {
     "type":"label",
+    "name":"datasource/Graphite",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/112"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/OpenTSDB",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/112"
+    }
+  },
+  {
+    "type":"label",
     "name":"datasource/OpenSearch",
     "action":"addToProject",
     "addToProject":{
@@ -141,6 +157,22 @@
   {
     "type":"label",
     "name":"datasource/Elasticsearch",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/110"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Jaeger",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/110"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Zipkin",
     "action":"addToProject",
     "addToProject":{
       "url":"https://github.com/orgs/grafana/projects/110"
