@@ -1,5 +1,5 @@
-import React, { FC, useState } from 'react';
-import { useAsync } from 'react-use';
+import React, { FC, useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
 import { contextSrv } from 'app/core/core';
 import { Role, OrgRole, AccessControlAction } from 'app/types';
 import { RolePicker } from './RolePicker';
@@ -26,23 +26,21 @@ export const UserRolePicker: FC<Props> = ({
   disabled,
   builtinRolesDisabled,
 }) => {
-  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
-
-  const getUserRoles = async () => {
+  const [{ loading, value: appliedRoles }, getUserRoles] = useAsyncFn(async () => {
     try {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
-        const userRoles = await fetchUserRoles(userId, orgId);
-        setAppliedRoles(userRoles);
-      } else {
-        setAppliedRoles([]);
+        return await fetchUserRoles(userId, orgId);
       }
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
     }
-  };
+    return [];
+  }, [orgId, userId]);
 
-  const { loading } = useAsync(getUserRoles, [orgId, userId]);
+  useEffect(() => {
+    getUserRoles();
+  }, [orgId, userId, getUserRoles]);
 
   const onRolesChange = async (roles: string[]) => {
     await updateUserRoles(roles, userId, orgId);
@@ -55,7 +53,7 @@ export const UserRolePicker: FC<Props> = ({
       onRolesChange={onRolesChange}
       onBuiltinRoleChange={onBuiltinRoleChange}
       roleOptions={roleOptions}
-      appliedRoles={appliedRoles}
+      appliedRoles={appliedRoles || []}
       builtInRoles={builtInRoles}
       isLoading={loading}
       disabled={disabled}

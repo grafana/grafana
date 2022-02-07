@@ -1,5 +1,5 @@
-import React, { FC, useState } from 'react';
-import { useAsync } from 'react-use';
+import React, { FC, useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
 import { Role } from 'app/types';
 import { RolePicker } from './RolePicker';
 import { fetchTeamRoles, updateTeamRoles } from './api';
@@ -13,19 +13,19 @@ export interface Props {
 }
 
 export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled }) => {
-  const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
-
-  const getTeamRoles = async () => {
+  const [{ loading, value: appliedRoles }, getTeamRoles] = useAsyncFn(async () => {
     try {
-      const teamRoles = await fetchTeamRoles(teamId, orgId);
-      setAppliedRoles(teamRoles);
+      return await fetchTeamRoles(teamId, orgId);
     } catch (e) {
       // TODO handle error
       console.error('Error loading options');
     }
-  };
+    return [];
+  }, [orgId, teamId]);
 
-  const { loading } = useAsync(getTeamRoles, [orgId, teamId]);
+  useEffect(() => {
+    getTeamRoles();
+  }, [orgId, teamId, getTeamRoles]);
 
   const onRolesChange = async (roles: string[]) => {
     await updateTeamRoles(roles, teamId, orgId);
@@ -36,7 +36,7 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled
     <RolePicker
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
-      appliedRoles={appliedRoles}
+      appliedRoles={appliedRoles || []}
       isLoading={loading}
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
