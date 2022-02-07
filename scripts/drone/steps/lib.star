@@ -770,7 +770,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
     deps = []
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
-        cmd += ' --version-tag ${{TAG}}'
+        cmd += ' --version-tag ${TAG}'
     elif ver_mode == 'main':
         if not ubuntu:
             deps = ['build-docker-images-ubuntu']

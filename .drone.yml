@@ -2448,7 +2448,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana --base alpine --base
-    ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${{TAG}}
+    ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -2465,7 +2465,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss --base alpine
-    --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${{TAG}}
+    --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -2526,7 +2526,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-enterprise --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${{TAG}}
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -2587,7 +2587,7 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana --base
-    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${{TAG}}
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -2605,7 +2605,7 @@ steps:
 - commands:
   - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana-oss
     --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
-    ${{TAG}}
+    ${TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -2667,7 +2667,7 @@ steps:
 - commands:
   - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana-enterprise
     --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7 --version-tag
-    ${{TAG}}
+    ${TAG}
   depends_on:
   - fetch-images-enterprise
   environment:
@@ -4216,6 +4216,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ddbc454246d296c8066bb35945ff95ddb1ae2ad37c587ab5ba05a294b8f1bd4e
+hmac: 329c62a9e2df1a13853b75c4d656e9f96a35f9440fffa5b01106c86541f3e0d2
 
 ...
