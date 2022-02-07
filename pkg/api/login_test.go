@@ -680,12 +680,6 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-
-			// bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-			// 	query.User = c.authUser
-			// 	query.AuthModule = c.authModule
-			// 	return c.authErr
-			// })
 			hs.MultiLDAPService.(*multildap.MultiLDAPmock).UserInfo = c.authUser
 			hs.MultiLDAPService.(*multildap.MultiLDAPmock).AuthModule = c.authModule
 			hs.MultiLDAPService.(*multildap.MultiLDAPmock).ExpectedErr = c.authErr
