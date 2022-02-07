@@ -27,6 +27,7 @@ type SQLStoreMock struct {
 	ExpectedOrgListResponse      OrgListResponse
 	ExpectedDashboardSnapshot    *models.DashboardSnapshot
 	ExpectedTeamsByUser          []*models.TeamDTO
+	ExpectedSearchOrgList        []*models.OrgDTO
 	ExpectedError                error
 }
 
@@ -626,5 +627,10 @@ func (m *SQLStoreMock) ExpireOldUserInvites(ctx context.Context, cmd *models.Exp
 }
 
 func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
+	query.Result = m.ExpectedSearchOrgList
 	return m.ExpectedError
 }
