@@ -13,8 +13,6 @@ interface ServiceAccountCreatePageProps {
 }
 interface ServiceAccountDTO {
   name: string;
-  email?: string;
-  login?: string;
 }
 
 const createServiceAccount = async (sa: ServiceAccountDTO) => getBackendSrv().post('/api/serviceaccounts/', sa);
@@ -39,20 +37,12 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
             return (
               <>
                 <Field
-                  label="Name"
+                  label="Display name"
                   required
                   invalid={!!errors.name}
-                  error={errors.name ? 'Name is required' : undefined}
+                  error={errors.name ? 'Display name is required' : undefined}
                 >
-                  <Input id="name-input" {...register('name', { required: true })} />
-                </Field>
-
-                <Field label="Email">
-                  <Input id="email-input" {...register('email')} />
-                </Field>
-
-                <Field label="Username">
-                  <Input id="username-input" {...register('login')} />
+                  <Input id="display-name-input" {...register('name', { required: true })} />
                 </Field>
                 <Button type="submit">Create Service account</Button>
               </>

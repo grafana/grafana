@@ -59,7 +59,7 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
                 <thead>
                   <tr>
                     <th></th>
-                    <th>Account</th>
+                    <th>Display name</th>
                     <th>ID</th>
                     <th>Roles</th>
                     <th>Tokens</th>
@@ -106,20 +106,20 @@ const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemP
         <a
           className="ellipsis"
           href={editUrl}
-          title={serviceaccount.login}
+          title={serviceaccount.name}
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          {serviceaccount.login}
+          {serviceaccount.name}
         </a>
       </td>
       <td className="link-td max-width-10">
         <a
           className="ellipsis"
           href={editUrl}
-          title={serviceaccount.name}
+          title={serviceaccount.login}
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          {serviceaccount.name}
+          {serviceaccount.login}
         </a>
       </td>
       <td className={cx('link-td', styles.iconRow)}>
