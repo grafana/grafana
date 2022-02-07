@@ -256,9 +256,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
+			keysRoute.Get("/", routing.Wrap(hs.GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
+			keysRoute.Delete("/:id", routing.Wrap(hs.DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences
@@ -340,11 +340,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
-			dashboardRoute.Get("/tags", GetDashboardTags)
+			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", routing.Wrap(GetDashboardVersion))
+				dashIdRoute.Get("/versions", routing.Wrap(hs.GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", routing.Wrap(hs.GetDashboardVersion))
 				dashIdRoute.Post("/restore", routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
@@ -462,7 +462,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabled(featuremgmt.FlagShowFeatureFlagsInUI) {
 			adminRoute.Get("/settings/features", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Features.HandleGetSettings)
 		}
-		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
+		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts))
 
 		if hs.ThumbService != nil {
@@ -487,11 +487,11 @@ func (hs *HTTPServer) registerRoutes() {
 		userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
-		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(AdminUpdateUserPassword))
+		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
 		adminUserRoute.Put("/:id/permissions", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(AdminDeleteUser))
+		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
 		adminUserRoute.Post("/:id/disable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
-		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(AdminEnableUser))
+		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
 		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
 		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
 
