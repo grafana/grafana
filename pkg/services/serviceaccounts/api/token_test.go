@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	serviceaccountIDTokensPath = "/api/serviceaccounts/%v/tokens"
+	serviceaccountIDTokensPath = "/api/serviceaccounts/%v/tokens" // #nosec G101
 )
 
 func TestServiceAccountsAPI_AddSAToken(t *testing.T) {
