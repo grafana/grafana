@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -27,21 +26,25 @@ const (
 )
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
-	mock := mockstore.NewSQLStoreMock()
+	mockSQLStore := mockstore.NewSQLStoreMock()
+	mockDatasourcePermissionService := newMockDatasourcePermissionService()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		mock.ExpectedDatasources = []*models.DataSource{
+		ds := []*models.DataSource{
 			{Name: "mmm"},
 			{Name: "ZZZ"},
 			{Name: "BBB"},
 			{Name: "aaa"},
 		}
+		mockSQLStore.ExpectedDatasources = ds
+		mockDatasourcePermissionService.dsResult = ds
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Cfg:         setting.NewCfg(),
-			pluginStore: &fakePluginStore{},
-			SQLStore:    mock,
+			Cfg:                         setting.NewCfg(),
+			pluginStore:                 &fakePluginStore{},
+			SQLStore:                    mockSQLStore,
+			DatasourcePermissionService: mockDatasourcePermissionService,
 		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
@@ -54,7 +57,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		assert.Equal(t, "BBB", respJSON[1]["name"])
 		assert.Equal(t, "mmm", respJSON[2]["name"])
 		assert.Equal(t, "ZZZ", respJSON[3]["name"])
-	}, mock)
+	}, mockSQLStore)
 
 	loggedInUserScenario(t, "Should be able to save a data source when calling DELETE on non-existing",
 		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
@@ -66,7 +69,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
-		}, mock)
+		}, mockSQLStore)
 }
 
 // Adding data sources with invalid URLs should lead to an error.
@@ -121,7 +124,6 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 // Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
-	defer bus.ClearBusHandlers()
 	hs := &HTTPServer{
 		SQLStore: mockstore.NewSQLStoreMock(),
 	}
@@ -144,8 +146,6 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 
 // Updating data sources with URLs not specifying protocol should work.
 func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
-	defer bus.ClearBusHandlers()
-
 	const name = "Test"
 	const url = "localhost:5432"
 
@@ -206,6 +206,10 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 
 	sqlStore := mockstore.NewSQLStoreMock()
 	sqlStore.ExpectedDatasource = &testDatasource
+	permissionStore := newMockDatasourcePermissionService()
+	permissionStore.dsResult = []*models.DataSource{
+		&testDatasource,
+	}
 
 	updateDatasourceBody := func() io.Reader {
 		s, _ := json.Marshal(models.UpdateDataSourceCommand{
@@ -266,6 +270,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodPost,
 				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesCreate}},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -290,6 +295,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -353,6 +359,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -376,6 +383,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -399,6 +407,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -422,6 +431,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -445,6 +455,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -454,6 +465,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodGet,
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -468,6 +480,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -477,6 +490,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				method:       http.MethodGet,
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
 			},
+			expectedDS: &testDatasource,
 		},
 	}
 
@@ -485,12 +499,16 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			cfg := setting.NewCfg()
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 
+			// mock sqlStore and datasource permission service
 			sqlStore.ExpectedError = test.expectedSQLError
-			if test.expectedDS != nil {
-				sqlStore.ExpectedDatasource = test.expectedDS
+			sqlStore.ExpectedDatasource = test.expectedDS
+			permissionStore.dsResult = []*models.DataSource{test.expectedDS}
+			if test.expectedDS == nil {
+				permissionStore.dsResult = nil
 			}
 			sc.sqlStore = sqlStore
 			hs.SQLStore = sqlStore
+			hs.DatasourcePermissionService = permissionStore
 
 			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {
