@@ -117,6 +117,41 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
+
+		// SHOW TAG VALUES metricFindQuery
+		response2 := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu",
+							"values": [
+								["values", "cpu-total"],
+								["values", "cpu0"],
+								["values", "cpu1"]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query2 := &Query{RawQuery: "SHOW TAG VALUES"}
+		newField2 := data.NewField("value", nil, []string{
+			"cpu-total", "cpu0", "cpu1",
+		})
+		testFrame2 := data.NewFrame("cpu",
+			newField2,
+		)
+
+		result2 := parser.Parse(prepare(response2), query2)
+
+		frame2 := result2.Responses["metricFindQuery"]
+		if diff := cmp.Diff(testFrame2, frame2.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
