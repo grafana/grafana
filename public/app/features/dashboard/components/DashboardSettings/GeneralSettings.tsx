@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { useDispatch } from 'react-redux';
+
 import { TimeZone } from '@grafana/data';
-import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
+import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
+
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import {
+  updateTimeZoneDashboard as updateTimeZone,
+  updateWeekStartDashboard as updateWeekStart,
+} from 'app/features/dashboard/state/actions';
+
 import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
-import { TimePickerSettings } from './TimePickerSettings';
-
-import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 import { PreviewSettings } from './PreviewSettings';
-import { config } from '@grafana/runtime';
-
-interface OwnProps {
-  dashboard: DashboardModel;
-}
-
-export type Props = OwnProps & ConnectedProps<typeof connector>;
+import { TimePickerSettings } from './TimePickerSettings';
 
 const GRAPH_TOOLTIP_OPTIONS = [
   { value: 0, label: 'Default' },
@@ -24,8 +23,18 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
+const EDITABLE_OPTIONS = [
+  { label: 'Editable', value: true },
+  { label: 'Read-only', value: false },
+];
+
+export interface Props {
+  dashboard: DashboardModel;
+}
+
+export function GeneralSettings({ dashboard }: Props) {
   const [renderCounter, setRenderCounter] = useState(0);
+  const dispatch = useDispatch();
 
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
@@ -63,13 +72,13 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
   const onTimeZoneChange = (timeZone: TimeZone) => {
     dashboard.timezone = timeZone;
     setRenderCounter(renderCounter + 1);
-    updateTimeZone(timeZone);
+    dispatch(updateTimeZone(timeZone));
   };
 
   const onWeekStartChange = (weekStart: string) => {
     dashboard.weekStart = weekStart;
     setRenderCounter(renderCounter + 1);
-    updateWeekStart(weekStart);
+    dispatch(updateWeekStart(weekStart));
   };
 
   const onTagsChange = (tags: string[]) => {
@@ -81,11 +90,6 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     dashboard.editable = value;
     setRenderCounter(renderCounter + 1);
   };
-
-  const editableOptions = [
-    { label: 'Editable', value: true },
-    { label: 'Read-only', value: false },
-  ];
 
   return (
     <div style={{ maxWidth: '600px' }}>
@@ -118,7 +122,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
           label="Editable"
           description="Set to read-only to disable all editing. Reload the dashboard for changes to take effect"
         >
-          <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
+          <RadioButtonGroup value={dashboard.editable} options={EDITABLE_OPTIONS} onChange={onEditableChange} />
         </Field>
       </div>
 
@@ -154,12 +158,3 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     </div>
   );
 }
-
-const mapDispatchToProps = {
-  updateTimeZone: updateTimeZoneDashboard,
-  updateWeekStart: updateWeekStartDashboard,
-};
-
-const connector = connect(null, mapDispatchToProps);
-
-export const GeneralSettings = connector(GeneralSettingsUnconnected);
