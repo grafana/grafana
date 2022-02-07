@@ -149,7 +149,6 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
     if (!this.chatContainer) {
       return;
     }
-    console.log(this.chatContainer.scrollHeight);
     this.chatContainer.parentNode.scrollTop = this.chatContainer.scrollHeight;
   };
 

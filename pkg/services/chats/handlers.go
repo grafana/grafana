@@ -3,11 +3,12 @@ package chats
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -72,7 +73,20 @@ type SendMessageCmd struct {
 	Content       string `json:"content"`
 }
 
+var ErrPermissionDenied = errors.New("permission denied")
+
 func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cmd SendMessageCmd) (*MessageDto, error) {
+	switch cmd.ContentTypeId {
+	case ContentTypeOrg:
+		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
+			return nil, ErrPermissionDenied
+		}
+	case ContentTypeDashboard, ContentTypeAnnotation:
+		return nil, ErrPermissionDenied
+	default:
+		return nil, ErrPermissionDenied
+	}
+
 	userMap := map[int64]*models.UserSearchHitDTO{}
 	if userId > 0 {
 		q := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter([]int64{userId})}, Page: 0, Limit: 1}
@@ -84,7 +98,6 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cm
 		}
 	}
 
-	// TODO: check user access to chat.
 	m, err := s.storage.CreateMessage(ctx, orgId, cmd.ContentTypeId, cmd.ObjectId, userId, cmd.Content)
 	if err != nil {
 		return nil, err
@@ -100,7 +113,17 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cm
 }
 
 func (s *Service) GetMessages(ctx context.Context, orgId int64, _ int64, cmd GetMessagesCmd) ([]*MessageDto, error) {
-	// TODO: check user access to chat.
+	switch cmd.ContentTypeId {
+	case ContentTypeOrg:
+		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
+			return nil, ErrPermissionDenied
+		}
+	case ContentTypeDashboard, ContentTypeAnnotation:
+		return nil, ErrPermissionDenied
+	default:
+		return nil, ErrPermissionDenied
+	}
+
 	messages, err := s.storage.GetMessages(ctx, orgId, cmd.ContentTypeId, cmd.ObjectId, GetMessagesFilter{})
 	if err != nil {
 		return nil, err

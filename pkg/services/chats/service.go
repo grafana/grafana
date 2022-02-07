@@ -31,7 +31,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, liv
 		},
 	}
 	if os.Getenv("GF_CHAT_FAKE") != "" {
-		go s.fakeChat(context.Background(), ContentTypeTeam, "all")
+		go s.fakeChat(context.Background(), ContentTypeOrg, "1")
 		go s.fakeChat(context.Background(), ContentTypeDashboard, "PbAqqAtnz")
 	}
 	return s

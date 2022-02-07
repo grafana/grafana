@@ -84,7 +84,7 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
           </HorizontalGroup>
         </>
         <div className={styles.chatWrapper}>
-          <Chat contentTypeId={5} objectId={annotation.id.toString()} />
+          <Chat contentTypeId={3} objectId={annotation.id.toString()} />
         </div>
       </div>
     </div>
