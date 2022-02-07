@@ -1,14 +1,12 @@
 import React from 'react';
-import { Switch, Select } from '@grafana/ui';
-import { CloudWatchMetricsQuery } from '../../types';
-import { CloudWatchDatasource } from '../../datasource';
-import EditorRows from '../ui/EditorRows';
-import EditorRow from '../ui/EditorRow';
-import EditorFieldGroup from '../ui/EditorFieldGroup';
-import EditorField from '../ui/EditorField';
-import { appendTemplateVariables, toOption } from '../../utils/utils';
-import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { Select, Switch } from '@grafana/ui';
 import { Dimensions } from '..';
+import { CloudWatchDatasource } from '../../datasource';
+import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
+import { CloudWatchMetricsQuery } from '../../types';
+import { appendTemplateVariables, toOption } from '../../utils/utils';
+import { SelectableValue } from '@grafana/data';
 
 export type Props = {
   query: CloudWatchMetricsQuery;
@@ -35,25 +33,45 @@ export function MetricStatEditor({
     onRunQuery();
   };
 
+  const onNamespaceChange = async (query: CloudWatchMetricsQuery) => {
+    const validatedQuery = await validateMetricName(query);
+    onQueryChange(validatedQuery);
+  };
+
+  const validateMetricName = async (query: CloudWatchMetricsQuery) => {
+    let { metricName, namespace, region } = query;
+    if (!metricName) {
+      return query;
+    }
+    await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
+      if (!result.find((metric) => metric.value === metricName)) {
+        metricName = '';
+      }
+    });
+    return { ...query, metricName };
+  };
+
   return (
     <EditorRows>
       <EditorRow>
         <EditorFieldGroup>
           <EditorField label="Namespace" width={26}>
             <Select
+              aria-label="Namespace"
               value={query.namespace}
               allowCustomValue
               options={namespaces}
               onChange={({ value: namespace }) => {
                 if (namespace) {
-                  onQueryChange({ ...query, namespace });
+                  onNamespaceChange({ ...query, namespace });
                 }
               }}
             />
           </EditorField>
           <EditorField label="Metric name" width={16}>
             <Select
-              value={query.metricName}
+              aria-label="Metric name"
+              value={query.metricName || null}
               allowCustomValue
               options={metrics}
               onChange={({ value: metricName }) => {

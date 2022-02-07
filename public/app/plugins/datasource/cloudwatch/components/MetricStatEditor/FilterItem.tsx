@@ -1,15 +1,13 @@
 import React, { FunctionComponent, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
-import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
-
 import { useAsyncFn } from 'react-use';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { InputGroup, AccessoryButton } from '@grafana/experimental';
+import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchMetricsQuery, Dimensions } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 import { DimensionFilterCondition } from './Dimensions';
-import InputGroup from '../ui/InputGroup';
-import AccessoryButton from '../ui/AccessoryButton';
 
 export interface Props {
   query: CloudWatchMetricsQuery;
@@ -40,10 +38,10 @@ export const FilterItem: FunctionComponent<Props> = ({
   onChange,
   onDelete,
 }) => {
-  const dimensionsExcludingCurrentKey = useMemo(() => excludeCurrentKey(dimensions ?? {}, filter.key), [
-    dimensions,
-    filter,
-  ]);
+  const dimensionsExcludingCurrentKey = useMemo(
+    () => excludeCurrentKey(dimensions ?? {}, filter.key),
+    [dimensions, filter]
+  );
 
   const loadDimensionValues = async () => {
     if (!filter.key) {
@@ -68,6 +66,7 @@ export const FilterItem: FunctionComponent<Props> = ({
     <div data-testid="cloudwatch-dimensions-filter-item">
       <InputGroup>
         <Select
+          aria-label="Dimensions filter key"
           inputId="cloudwatch-dimensions-filter-item-key"
           width="auto"
           value={filter.key ? toOption(filter.key) : null}
@@ -83,6 +82,7 @@ export const FilterItem: FunctionComponent<Props> = ({
         <span className={cx(styles.root)}>=</span>
 
         <Select
+          aria-label="Dimensions filter value"
           inputId="cloudwatch-dimensions-filter-item-value"
           onOpenMenu={loadOptions}
           width="auto"

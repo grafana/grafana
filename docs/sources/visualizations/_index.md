@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/panels/visualizations/"]
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
 
-> **Note:** If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied. For more information, see the [add a panel]({{< relref "../pangit cels/add-a-panel.md" >}}) documentation.
+> **Note:** If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied. For more information, see the [add a panel]({{< relref "../panels/working-with-panels/add-panel.md" >}}) documentation.
 
 - Graphs & charts
   - [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.
@@ -30,7 +30,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
 - Widgets
   - [Dashboard list]({{< relref "./dashboard-list-panel.md" >}}) can list dashboards.
   - [Alert list]({{< relref "./alert-list-panel.md" >}}) can list alerts.
-  - [Text panel]({{< relref "./alert-list-panel.md" >}}) can show markdown and html.
+  - [Text panel]({{< relref "./text-panel.md" >}}) can show markdown and html.
   - [News panel]({{< relref "./news-panel.md" >}}) can show RSS feeds.
 
 ## Get more

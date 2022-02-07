@@ -1,14 +1,16 @@
 package loginservice
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/go-kit/log"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
-	log "github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,20 +22,20 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
 
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
 	})
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return nil
 	})
 
@@ -43,11 +45,8 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 }
 
 func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
-	logs := []string{}
-	logger.SetHandler(log.FuncHandler(func(r *log.Record) error {
-		logs = append(logs, r.Msg)
-		return nil
-	}))
+	buf := &bytes.Buffer{}
+	logger.SetLogger(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
 
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
@@ -55,26 +54,25 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	bus.ClearBusHandlers()
 	defer bus.ClearBusHandlers()
-	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
 		q.Result = createUserOrgDTO()
-
 		return nil
 	})
 
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
 		testData := remResp[0]
 		remResp = remResp[1:]
 
 		require.Equal(t, testData.orgId, cmd.OrgId)
 		return testData.response
 	})
-	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 		return nil
 	})
 
 	err := syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
-	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
+	assert.Contains(t, buf.String(), models.ErrLastOrgAdmin.Error())
 }
 
 type authInfoServiceMock struct {
@@ -84,6 +82,10 @@ type authInfoServiceMock struct {
 
 func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	return a.user, a.err
+}
+
+func (a *authInfoServiceMock) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+	return nil
 }
 
 func Test_teamSync(t *testing.T) {

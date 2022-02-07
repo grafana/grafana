@@ -13,7 +13,7 @@ import {
   storeLogsVolumeDataProviderAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { interval, Observable, of } from 'rxjs';
+import { EMPTY, interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
@@ -63,6 +63,7 @@ const defaultInitialState = {
       eventBridge: { emit: () => {} } as any,
       queries: [{ expr: 'test' }] as any[],
       range: testRange,
+      history: [],
       refreshInterval: {
         label: 'Off',
         value: 0,
@@ -90,16 +91,25 @@ function setupQueryResponse(state: StoreState) {
 
 describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
-    setTimeSrv({
-      init() {},
-    } as any);
-    const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
       ...(defaultInitialState as any),
     });
     setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
+  });
+
+  it('should set state to done if query completes without emitting', async () => {
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
+      ...(defaultInitialState as any),
+    });
+    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    await dispatch(runQueries(ExploreId.left));
+    await new Promise((resolve) => setTimeout(() => resolve(''), 500));
+    expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
   });
 });
 
@@ -208,9 +218,9 @@ describe('reducer', () => {
   describe('query rows', () => {
     it('adds a new query row', () => {
       reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, ({
+        .givenReducer(queryReducer, {
           queries: [],
-        } as unknown) as ExploreItemState)
+        } as unknown as ExploreItemState)
         .whenActionIsDispatched(
           addQueryRowAction({
             exploreId: ExploreId.left,
@@ -218,10 +228,10 @@ describe('reducer', () => {
             index: 0,
           })
         )
-        .thenStateShouldEqual(({
+        .thenStateShouldEqual({
           queries: [{ refId: 'A', key: 'mockKey' }],
           queryKeys: ['mockKey-0'],
-        } as unknown) as ExploreItemState);
+        } as unknown as ExploreItemState);
     });
   });
 
@@ -325,7 +335,7 @@ describe('reducer', () => {
     beforeEach(() => {
       unsubscribes = [];
       mockLogsVolumeDataProvider = () => {
-        return ({
+        return {
           subscribe: () => {
             const unsubscribe = jest.fn();
             unsubscribes.push(unsubscribe);
@@ -333,7 +343,7 @@ describe('reducer', () => {
               unsubscribe,
             };
           },
-        } as unknown) as Observable<DataQueryResponse>;
+        } as unknown as Observable<DataQueryResponse>;
       };
 
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({

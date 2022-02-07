@@ -1,18 +1,19 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
-import { Branding } from 'app/core/components/Branding/Branding';
-import config from 'app/core/config';
-import { KioskMode } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { NavBarSection } from './NavBarSection';
-import NavBarItem from './NavBarItem';
 import { NavBarMenu } from './NavBarMenu';
+import NavBarItem from './NavBarItem';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { Branding } from '../Branding/Branding';
+import { connect, ConnectedProps } from 'react-redux';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -22,9 +23,20 @@ const searchItem: NavModelItem = {
   id: SEARCH_ITEM_ID,
   onClick: onOpenSearch,
   text: 'Search dashboards',
+  icon: 'search',
 };
 
-export const NavBarNext: FC = React.memo(() => {
+const mapStateToProps = (state: StoreState) => ({
+  navBarTree: state.navBarTree,
+});
+
+const mapDispatchToProps = {};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export interface Props extends ConnectedProps<typeof connector> {}
+
+export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
@@ -34,7 +46,7 @@ export const NavBarNext: FC = React.memo(() => {
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
-  const navTree: NavModelItem[] = cloneDeep(config.bootData.navTree);
+  const navTree = cloneDeep(navBarTree);
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
   const configItems = enrichConfigItems(
@@ -56,20 +68,10 @@ export const NavBarNext: FC = React.memo(() => {
       </div>
 
       <NavBarSection>
-        <NavBarItem
-          onClick={() => setMenuOpen(!menuOpen)}
-          label="Main menu"
-          className={styles.grafanaLogo}
-          showMenu={false}
-        >
+        <NavBarItemWithoutMenu label="Main menu" className={styles.grafanaLogo} onClick={() => setMenuOpen(!menuOpen)}>
           <Branding.MenuLogo />
-        </NavBarItem>
-        <NavBarItem
-          className={styles.search}
-          isActive={activeItem === searchItem}
-          label={searchItem.text}
-          onClick={searchItem.onClick}
-        >
+        </NavBarItemWithoutMenu>
+        <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
           <Icon name="search" size="xl" />
         </NavBarItem>
       </NavBarSection>
@@ -79,10 +81,7 @@ export const NavBarNext: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            label={link.text}
-            menuItems={link.children}
-            target={link.target}
-            url={link.url}
+            link={{ ...link, subTitle: undefined, onClick: undefined }}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -93,16 +92,7 @@ export const NavBarNext: FC = React.memo(() => {
       {pluginItems.length > 0 && (
         <NavBarSection>
           {pluginItems.map((link, index) => (
-            <NavBarItem
-              key={`${link.id}-${index}`}
-              isActive={isMatchOrChildMatch(link, activeItem)}
-              label={link.text}
-              menuItems={link.children}
-              menuSubTitle={link.subTitle}
-              onClick={link.onClick}
-              target={link.target}
-              url={link.url}
-            >
+            <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
               {link.icon && <Icon name={link.icon as IconName} size="xl" />}
               {link.img && <img src={link.img} alt={`${link.text} logo`} />}
             </NavBarItem>
@@ -117,13 +107,8 @@ export const NavBarNext: FC = React.memo(() => {
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
-            label={link.text}
-            menuItems={link.children}
-            menuSubTitle={link.subTitle}
-            onClick={link.onClick}
             reverseMenuDirection
-            target={link.target}
-            url={link.url}
+            link={link}
           >
             {link.icon && <Icon name={link.icon as IconName} size="xl" />}
             {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -143,7 +128,9 @@ export const NavBarNext: FC = React.memo(() => {
   );
 });
 
-NavBarNext.displayName = 'NavBar';
+NavBarNextUnconnected.displayName = 'NavBarNext';
+
+export const NavBarNext = connector(NavBarNextUnconnected);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   search: css`

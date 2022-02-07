@@ -1,44 +1,15 @@
-import {
-  OptionsWithLegend,
-  OptionsWithTextFormatting,
-  OptionsWithTooltip,
-  AxisConfig,
-  VisibilityMode,
-  GraphGradientMode,
-  HideableFieldConfig,
-  StackingMode,
-} from '@grafana/schema';
-import { VizOrientation } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data';
 
-/**
- * @alpha
- */
-export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithTextFormatting {
-  orientation: VizOrientation;
-  stacking: StackingMode;
-  showValue: VisibilityMode;
-  barWidth: number;
-  groupWidth: number;
-  xTickLabelRotation: number;
-  xTickLabelMaxLength: number;
-  rawValue: (seriesIdx: number, valueIdx: number) => number;
+export interface BarChartDisplayValues {
+  /** When the data can not display, this will be returned */
+  warn?: string;
+
+  /** All fields joined */
+  aligned: DataFrame;
+
+  /** The fields we can display, first field is X axis */
+  viz: DataFrame;
+
+  /** Potentialy color by a field value */
+  colorByField?: Field;
 }
-
-/**
- * @alpha
- */
-export interface BarChartFieldConfig extends AxisConfig, HideableFieldConfig {
-  lineWidth?: number; // 0
-  fillOpacity?: number; // 100
-  gradientMode?: GraphGradientMode;
-}
-
-/**
- * @alpha
- */
-export const defaultBarChartFieldConfig: BarChartFieldConfig = {
-  lineWidth: 1,
-  fillOpacity: 80,
-  gradientMode: GraphGradientMode.None,
-  axisSoftMin: 0,
-};

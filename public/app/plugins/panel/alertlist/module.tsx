@@ -3,9 +3,9 @@ import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AlertList } from './AlertList';
 import { UnifiedAlertList } from './UnifiedAlertList';
-import { AlertListOptions, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
+import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
-import { config } from '@grafana/runtime';
+import { config, DataSourcePicker } from '@grafana/runtime';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
 import {
   ALL_FOLDER,
@@ -13,6 +13,7 @@ import {
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 import { AlertListSuggestionsSupplier } from './suggestions';
+import { GroupBy } from './GroupByWithLoading';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;
@@ -151,15 +152,48 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder
+    .addRadio({
+      path: 'groupMode',
+      name: 'Group mode',
+      description: 'How alert instances should be grouped',
+      defaultValue: GroupMode.Default,
+      settings: {
+        options: [
+          { value: GroupMode.Default, label: 'Default grouping' },
+          { value: GroupMode.Custom, label: 'Custom grouping' },
+        ],
+      },
+      category: ['Options'],
+    })
+    .addCustomEditor({
+      path: 'groupBy',
+      name: 'Group by',
+      description: 'Filter alerts using label querying',
+      id: 'groupBy',
+      defaultValue: [],
+      showIf: (options) => options.groupMode === GroupMode.Custom,
+      category: ['Options'],
+      editor: (props) => {
+        return (
+          <GroupBy
+            id={props.id ?? 'groupBy'}
+            defaultValue={props.value.map((value: string) => ({ label: value, value }))}
+            onChange={props.onChange}
+          />
+        );
+      },
+    })
     .addNumberInput({
       name: 'Max items',
       path: 'maxItems',
+      description: 'Maximum alerts to display',
       defaultValue: 20,
       category: ['Options'],
     })
     .addSelect({
       name: 'Sort order',
       path: 'sortOrder',
+      description: 'Sort order of alerts and alert instances',
       settings: {
         options: [
           { label: 'Alphabetical (asc)', value: SortOrder.AlphaAsc },
@@ -175,24 +209,28 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addBooleanSwitch({
       path: 'dashboardAlerts',
       name: 'Alerts from this dashboard',
-      defaultValue: false,
-      category: ['Options'],
-    })
-    .addBooleanSwitch({
-      path: 'showInstances',
-      name: 'Show alert instances',
+      description: 'Show alerts from this dashboard',
       defaultValue: false,
       category: ['Options'],
     })
     .addTextInput({
       path: 'alertName',
       name: 'Alert name',
+      description: 'Filter for alerts containing this text',
+      defaultValue: '',
+      category: ['Filter'],
+    })
+    .addTextInput({
+      path: 'alertInstanceLabelFilter',
+      name: 'Alert instance label',
+      description: 'Filter alert instances using label querying, ex: {severity="critical", instance=~"cluster-us-.+"}',
       defaultValue: '',
       category: ['Filter'],
     })
     .addCustomEditor({
       path: 'folder',
       name: 'Folder',
+      description: 'Filter for alerts in the selected folder',
       id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
@@ -208,23 +246,61 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       },
       category: ['Filter'],
     })
+    .addCustomEditor({
+      path: 'datasource',
+      name: 'Datasource',
+      description: 'Filter alerts from selected datasource',
+      id: 'datasource',
+      defaultValue: null,
+      editor: function RenderDatasourcePicker(props) {
+        return (
+          <DataSourcePicker
+            {...props}
+            type={['prometheus', 'loki', 'grafana']}
+            noDefault
+            current={props.value}
+            onChange={(ds) => props.onChange(ds.name)}
+            onClear={() => props.onChange('')}
+          />
+        );
+      },
+      category: ['Filter'],
+    })
     .addBooleanSwitch({
       path: 'stateFilter.firing',
-      name: 'Alerting',
+      name: 'Alerting / Firing',
       defaultValue: true,
-      category: ['State filter'],
+      category: ['Alert state filter'],
     })
     .addBooleanSwitch({
       path: 'stateFilter.pending',
       name: 'Pending',
       defaultValue: true,
-      category: ['State filter'],
+      category: ['Alert state filter'],
     })
     .addBooleanSwitch({
       path: 'stateFilter.inactive',
       name: 'Inactive',
       defaultValue: false,
-      category: ['State filter'],
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.noData',
+      name: 'No Data',
+      defaultValue: false,
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.normal',
+      name: 'Normal',
+      defaultValue: false,
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.error',
+      name: 'Error',
+      defaultValue: true,
+      category: ['Alert state filter'],
     });
 });
 

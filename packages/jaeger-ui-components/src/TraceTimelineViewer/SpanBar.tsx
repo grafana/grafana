@@ -17,14 +17,16 @@ import { css } from '@emotion/css';
 import { groupBy as _groupBy } from 'lodash';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';
-import { autoColor, createStyle, Theme } from '../Theme';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { autoColor } from '../Theme';
 import { TraceSpan } from '../types/trace';
 import { TNil } from '../types';
 import { UIPopover } from '../uiElementsContext';
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       label: wrapper;
@@ -86,7 +88,7 @@ const getStyles = createStyle((theme: Theme) => {
       }
     `,
   };
-});
+};
 
 type TCommonProps = {
   color: string;
@@ -105,7 +107,6 @@ type TCommonProps = {
   span: TraceSpan;
   className?: string;
   labelClassName?: string;
-  theme: Theme;
 };
 
 type TInnerProps = {
@@ -136,7 +137,6 @@ function SpanBar(props: TInnerProps) {
     rpc,
     traceStartTime,
     span,
-    theme,
     className,
     labelClassName,
   } = props;
@@ -146,7 +146,7 @@ function SpanBar(props: TInnerProps) {
     // round to the nearest 0.2%
     return toPercent(Math.round(posPercent * 500) / 500);
   });
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div

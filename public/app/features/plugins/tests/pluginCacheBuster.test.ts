@@ -1,4 +1,5 @@
 import { invalidatePluginInCache, locateWithCache, registerPluginInCache } from '../pluginCacheBuster';
+import * as pluginSettings from '../pluginSettings';
 
 describe('PluginCacheBuster', () => {
   const now = 12345;
@@ -34,6 +35,20 @@ describe('PluginCacheBuster', () => {
 
     const url = `${address}?_cache=${encodeURI(String(now))}`;
     expect(locateWithCache({ address }, now)).toBe(url);
+  });
+
+  it('should also clear plugin settings cache', () => {
+    const slug = 'bubble-chart-3';
+    const version = 'v1.0.0';
+    const path = resolvePath(slug);
+
+    const clearPluginSettingsCacheSpy = jest.spyOn(pluginSettings, 'clearPluginSettingsCache');
+
+    registerPluginInCache({ path, version });
+    invalidatePluginInCache(slug);
+
+    expect(clearPluginSettingsCacheSpy).toBeCalledTimes(1);
+    expect(clearPluginSettingsCacheSpy).toBeCalledWith('bubble-chart-3');
   });
 });
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
@@ -15,7 +14,7 @@ func (rs *RenderingService) startPlugin(ctx context.Context) error {
 
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	// gives plugin some additional time to timeout and return possible errors.
-	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
 	filePath, err := rs.getNewFilePath(RenderPNG)
@@ -62,7 +61,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 
 func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
 	// gives plugin some additional time to timeout and return possible errors.
-	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
 
 	filePath, err := rs.getNewFilePath(RenderCSV)

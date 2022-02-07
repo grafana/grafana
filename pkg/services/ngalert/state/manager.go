@@ -31,9 +31,11 @@ type Manager struct {
 
 	ruleStore     store.RuleStore
 	instanceStore store.InstanceStore
+	sqlStore      sqlstore.Store
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore,
+	instanceStore store.InstanceStore, sqlStore sqlstore.Store) *Manager {
 	manager := &Manager{
 		cache:         newCache(logger, metrics, externalURL),
 		quit:          make(chan struct{}),
@@ -42,6 +44,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		metrics:       metrics,
 		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
+		sqlStore:      sqlStore,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -96,16 +99,16 @@ func (st *Manager) Warm() {
 				st.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
 			stateForEntry := &State{
-				AlertRuleUID:       entry.RuleUID,
-				OrgID:              entry.RuleOrgID,
-				CacheId:            cacheId,
-				Labels:             lbs,
-				State:              translateInstanceState(entry.CurrentState),
-				Results:            []Evaluation{},
-				StartsAt:           entry.CurrentStateSince,
-				EndsAt:             entry.CurrentStateEnd,
-				LastEvaluationTime: entry.LastEvalTime,
-				Annotations:        ruleForEntry.Annotations,
+				AlertRuleUID:         entry.RuleUID,
+				OrgID:                entry.RuleOrgID,
+				CacheId:              cacheId,
+				Labels:               lbs,
+				State:                translateInstanceState(entry.CurrentState),
+				LastEvaluationString: "",
+				StartsAt:             entry.CurrentStateSince,
+				EndsAt:               entry.CurrentStateEnd,
+				LastEvaluationTime:   entry.LastEvalTime,
+				Annotations:          ruleForEntry.Annotations,
 			}
 			states = append(states, stateForEntry)
 		}
@@ -116,8 +119,8 @@ func (st *Manager) Warm() {
 	}
 }
 
-func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *State {
-	return st.cache.getOrCreate(alertRule, result)
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+	return st.cache.getOrCreate(ctx, alertRule, result)
 }
 
 func (st *Manager) set(entry *State) {
@@ -153,16 +156,16 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	currentState := st.getOrCreate(alertRule, result)
+	currentState := st.getOrCreate(ctx, alertRule, result)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
-		EvaluationTime:   result.EvaluatedAt,
-		EvaluationState:  result.State,
-		EvaluationString: result.EvaluationString,
-		Values:           NewEvaluationValues(result.Values),
+		EvaluationTime:  result.EvaluatedAt,
+		EvaluationState: result.State,
+		Values:          NewEvaluationValues(result.Values),
 	})
+	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State
 
@@ -262,7 +265,7 @@ func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, al
 			OrgId: alertRule.OrgID,
 		}
 
-		err = sqlstore.GetDashboard(ctx, query)
+		err = st.sqlStore.GetDashboard(ctx, query)
 		if err != nil {
 			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 			return

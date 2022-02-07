@@ -1346,7 +1346,7 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": "hue",
-            "fillOpacity": 25,
+            "fillOpacity": 0,
             "hideFrom": {
               "graph": false,
               "legend": false,

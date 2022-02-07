@@ -27,26 +27,53 @@ export const ActionIcon: FC<Props> = ({
   tooltipPlacement = 'top',
   ...rest
 }) => {
+  const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
   const iconEl = (
-    <Icon role="button" className={cx(useStyles(getStyle), className)} onClick={onClick} name={icon} {...rest} />
+    <Icon
+      role="button"
+      className={cx(useStyles(getStyle), className)}
+      onClick={onClick}
+      name={icon}
+      {...rest}
+      aria-label={ariaLabel}
+    />
   );
 
-  const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
-      {(() => {
-        if (to) {
-          return (
-            <Link aria-label={ariaLabel} to={to} target={target}>
-              {iconEl}
-            </Link>
-          );
-        }
-        return iconEl;
-      })()}
+      {to ? (
+        <GoTo url={to} label={ariaLabel} target={target}>
+          {iconEl}
+        </GoTo>
+      ) : (
+        iconEl
+      )}
     </Tooltip>
   );
 };
+
+interface GoToProps {
+  url: string;
+  label?: string;
+  target?: string;
+  children?: React.ReactNode;
+}
+
+const GoTo = React.forwardRef<HTMLAnchorElement, GoToProps>(({ url, label, target, children }, ref) => {
+  const absoluteUrl = url?.startsWith('http');
+
+  return absoluteUrl ? (
+    <a ref={ref} aria-label={label} href={url} target={target}>
+      {children}
+    </a>
+  ) : (
+    <Link ref={ref} aria-label={label} to={url} target={target}>
+      {children}
+    </Link>
+  );
+});
+
+GoTo.displayName = 'GoTo';
 
 export const getStyle = () => css`
   cursor: pointer;

@@ -21,9 +21,13 @@ The following checklist/summary should give you a quick overview of what to ask/
 
 Before actually merging a pull request there's a couple of things to take into consideration.
 
+### Status checks
+
+Before you can merge a pull request, it must have a review approval, and all the required status checks must pass.
+
 ### Format the pull request title
 
-Make sure that the pull request title is properly formatted according to `<Area>: <Summary>` and try to make the summary short and understandable for the community as a whole.
+The pull request title should be formatted according to `<Area>: <Summary>`. Keep the summary short and understandable for the community as a whole.
 
 All commits in a pull request are squashed when merged and the pull request title will be the default subject line of the squashed commit message. It's also used for [changelog/release notes](#include-in-changelog-and-release-notes).
 
@@ -31,9 +35,9 @@ See [formatting guidelines](create-pull-request.md#formatting-guidelines) for mo
 
 ### Assign a milestone
 
-It's recommended to add a milestone to every pull request. This makes it easier to track what changes did go into a certain release. Without this you're basically left with going through git commits which could be a lot harder.
+A milestone **should** be added to every pull request. Several things in the Grafana release process requires at least pull requests to be in a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
 
-There's also various tooling built that in some cases requires a pull request to be assigned a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
+This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through git commits which is not an efficient process.
 
 ### Include in changelog and release notes?
 
@@ -81,7 +85,20 @@ In case the pull request introduces a breaking change you should document this. 
 
 ### Should the pull request be backported?
 
+An active decision of backporting needs to be taken for every pull request. There's a pull request check named **Backport Check** that will enforce this. By adding/removing labels on the pull request the check will be re-evaluated.
+
+#### No backport
+
+If you don't want to backport you need to add a label named **no-backport** to the pull request.
+
+#### Backport
+
 If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](.github/bot.md#backport-pr) for detailed instructions.
+
+The general rule of thumb regarding what changes goes into what release is:
+
+- bug fixes should be released in patch releases, e.g. v8.1.3, if the bug was introduced in the same major/minor or lower patch version.
+- new features should go into the next major/minor version, e.g. v8.0.0, v8.2.0.
 
 Some examples when backport is required:
 

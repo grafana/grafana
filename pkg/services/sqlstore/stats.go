@@ -10,12 +10,15 @@ import (
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetSystemStats)
-	bus.AddHandlerCtx("sql", GetDataSourceStats)
-	bus.AddHandlerCtx("sql", GetDataSourceAccessStats)
-	bus.AddHandlerCtx("sql", GetAdminStats)
-	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
-	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
+	bus.AddHandler("sql", GetSystemStats)
+	bus.AddHandler("sql", GetDataSourceStats)
+	bus.AddHandler("sql", GetDataSourceAccessStats)
+	bus.AddHandler("sql", GetAlertNotifiersUsageStats)
+	bus.AddHandler("sql", GetSystemUserCountStats)
+}
+
+func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.GetAdminStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30
@@ -93,6 +96,7 @@ func GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) erro
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `) AS api_keys,`)
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
 
@@ -140,7 +144,7 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 	) AS ` + statName + `, `
 }
 
-func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
 	now := time.Now()
 	activeEndDate := now.Add(-activeUserTimeLimit)
 	dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)

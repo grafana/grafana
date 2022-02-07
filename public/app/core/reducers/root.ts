@@ -17,6 +17,7 @@ import templatingReducers from 'app/features/variables/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
+import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
 
 const rootReducers = {
   ...sharedReducers,
@@ -28,6 +29,7 @@ const rootReducers = {
   ...exploreReducers,
   ...dataSourcesReducers,
   ...usersReducers,
+  ...serviceAccountsReducer,
   ...userReducers,
   ...organizationReducers,
   ...ldapReducers,

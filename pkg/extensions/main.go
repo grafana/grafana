@@ -4,6 +4,7 @@ import (
 	// Upgrade ldapsync from cron to cron.v3 and
 	// remove the cron (v1) dependency
 
+	_ "cloud.google.com/go/kms/apiv1"
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	_ "github.com/Azure/go-autorest/autorest"
 	_ "github.com/beevik/etree"
@@ -21,7 +22,7 @@ import (
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
-	_ "github.com/timberio/go-datemath"
+	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
 	_ "gopkg.in/square/go-jose.v2"
 )

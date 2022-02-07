@@ -15,7 +15,9 @@ export interface NewApiKey {
 }
 
 export interface ApiKeysState {
+  includeExpired: boolean;
   keys: ApiKey[];
+  keysIncludingExpired: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
 }

@@ -21,6 +21,16 @@ describe('check if feature matches style rule', () => {
     expect(
       checkFeatureMatchesStyleRule(
         {
+          operation: ComparisonOperation.EQ,
+          property: 'number',
+          value: '3',
+        },
+        feature
+      )
+    ).toEqual(true);
+    expect(
+      checkFeatureMatchesStyleRule(
+        {
           operation: ComparisonOperation.LT,
           property: 'number',
           value: 2,

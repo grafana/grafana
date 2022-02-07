@@ -7,7 +7,7 @@ import {
   GrafanaTheme2,
   isBooleanUnit,
 } from '@grafana/data';
-import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
+import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 
 /**
  * Returns null if there are no graphable fields
@@ -46,11 +46,6 @@ export function prepareGraphableFields(series: DataFrame[], theme: GrafanaTheme2
               })
             ),
           };
-
-          if (copy.config.custom?.stacking?.mode === StackingMode.Percent) {
-            copy.config.unit = 'percentunit';
-            copy.display = getDisplayProcessor({ field: copy, theme });
-          }
 
           fields.push(copy);
           break; // ok

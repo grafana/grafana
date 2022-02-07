@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type clientV2 struct {
+type ClientV2 struct {
 	grpcplugin.DiagnosticsClient
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
@@ -52,7 +52,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		return nil, err
 	}
 
-	c := clientV2{}
+	c := ClientV2{}
 	if rawDiagnostics != nil {
 		if diagnosticsClient, ok := rawDiagnostics.(grpcplugin.DiagnosticsClient); ok {
 			c.DiagnosticsClient = diagnosticsClient
@@ -92,7 +92,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	return &c, nil
 }
 
-func (c *clientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (c *ClientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
 	if c.DiagnosticsClient == nil {
 		return &backend.CollectMetricsResult{}, nil
 	}
@@ -109,7 +109,7 @@ func (c *clientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsR
 	return backend.FromProto().CollectMetricsResponse(protoResp), nil
 }
 
-func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if c.DiagnosticsClient == nil {
 		return nil, backendplugin.ErrMethodNotImplemented
 	}
@@ -130,7 +130,7 @@ func (c *clientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 	return backend.FromProto().CheckHealthResponse(protoResp), nil
 }
 
-func (c *clientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if c.DataClient == nil {
 		return nil, backendplugin.ErrMethodNotImplemented
 	}
@@ -149,7 +149,7 @@ func (c *clientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	return backend.FromProto().QueryDataResponse(protoResp)
 }
 
-func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if c.ResourceClient == nil {
 		return backendplugin.ErrMethodNotImplemented
 	}
@@ -184,7 +184,7 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 	}
 }
 
-func (c *clientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (c *ClientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if c.StreamClient == nil {
 		return nil, backendplugin.ErrMethodNotImplemented
 	}
@@ -195,7 +195,7 @@ func (c *clientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeSt
 	return backend.FromProto().SubscribeStreamResponse(protoResp), nil
 }
 
-func (c *clientV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (c *ClientV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if c.StreamClient == nil {
 		return nil, backendplugin.ErrMethodNotImplemented
 	}
@@ -206,7 +206,7 @@ func (c *clientV2) PublishStream(ctx context.Context, req *backend.PublishStream
 	return backend.FromProto().PublishStreamResponse(protoResp), nil
 }
 
-func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if c.StreamClient == nil {
 		return backendplugin.ErrMethodNotImplemented
 	}

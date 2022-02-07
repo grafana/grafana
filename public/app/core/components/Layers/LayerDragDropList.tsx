@@ -50,6 +50,7 @@ export const LayerDragDropList = <T extends LayerElement>({
               // reverse order
               const rows: any = [];
               const lastLayerIndex = excludeBaseLayer ? 1 : 0;
+              const shouldRenderDragIconLengthThreshold = excludeBaseLayer ? 2 : 1;
               for (let i = layers.length - 1; i >= lastLayerIndex; i--) {
                 const element = layers[i];
                 const uid = element.getName();
@@ -91,7 +92,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                               onClick={() => onDelete(element)}
                               surface="header"
                             />
-                            {layers.length > 2 && (
+                            {layers.length > shouldRenderDragIconLengthThreshold && (
                               <Icon
                                 title="Drag and drop to reorder"
                                 name="draggabledots"

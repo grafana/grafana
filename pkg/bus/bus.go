@@ -7,8 +7,9 @@ import (
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // HandlerFunc defines a handler function interface.
@@ -27,9 +28,9 @@ type TransactionManager interface {
 
 // Bus type defines the bus interface structure
 type Bus interface {
-	DispatchCtx(ctx context.Context, msg Msg) error
+	Dispatch(ctx context.Context, msg Msg) error
 
-	PublishCtx(ctx context.Context, msg Msg) error
+	Publish(ctx context.Context, msg Msg) error
 
 	// InTransaction starts a transaction and store it in the context.
 	// The caller can then pass a function with multiple DispatchCtx calls that
@@ -37,9 +38,9 @@ type Bus interface {
 	// callback returns an error.
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 
-	AddHandlerCtx(handler HandlerFunc)
+	AddHandler(handler HandlerFunc)
 
-	AddEventListenerCtx(handler HandlerFunc)
+	AddEventListener(handler HandlerFunc)
 
 	// SetTransactionManager allows the user to replace the internal
 	// noop TransactionManager that is responsible for managing
@@ -55,9 +56,11 @@ type InProcBus struct {
 	listeners        map[string][]HandlerFunc
 	listenersWithCtx map[string][]HandlerFunc
 	txMng            TransactionManager
+	tracer           tracing.Tracer
 }
 
-func ProvideBus() *InProcBus {
+func ProvideBus(tracer tracing.Tracer) *InProcBus {
+	globalBus.tracer = tracer
 	return globalBus
 }
 
@@ -71,7 +74,7 @@ var globalBus = New()
 
 // New initialize the bus
 func New() *InProcBus {
-	return &InProcBus{
+	bus := &InProcBus{
 		logger:           log.New("bus"),
 		handlers:         make(map[string]HandlerFunc),
 		handlersWithCtx:  make(map[string]HandlerFunc),
@@ -79,6 +82,8 @@ func New() *InProcBus {
 		listenersWithCtx: make(map[string][]HandlerFunc),
 		txMng:            &noopTransactionManager{},
 	}
+	bus.tracer = tracing.InitializeForBus()
+	return bus
 }
 
 // Want to get rid of global bus
@@ -92,13 +97,13 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 }
 
 // DispatchCtx function dispatch a message to the bus context.
-func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
+func (b *InProcBus) Dispatch(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
-	defer span.Finish()
+	ctx, span := b.tracer.Start(ctx, "bus - "+msgName)
+	defer span.End()
 
-	span.SetTag("msg", msgName)
+	span.SetAttributes("msg", msgName, attribute.Key("msg").String(msgName))
 
 	withCtx := true
 	var handler = b.handlersWithCtx[msgName]
@@ -114,7 +119,7 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	if withCtx {
 		params = append(params, reflect.ValueOf(ctx))
 	} else if setting.Env == setting.Dev {
-		b.logger.Warn("DispatchCtx called with message handler registered using AddHandler and should be changed to use AddHandlerCtx", "msgName", msgName)
+		b.logger.Warn("DispatchCtx called with message handler registered using AddHandler and should be changed to use AddHandler", "msgName", msgName)
 	}
 	params = append(params, reflect.ValueOf(msg))
 
@@ -127,7 +132,7 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 }
 
 // PublishCtx function publish a message to the bus listener.
-func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
+func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
 	var params = []reflect.Value{}
@@ -148,11 +153,10 @@ func (b *InProcBus) PublishCtx(ctx context.Context, msg Msg) error {
 			return err
 		}
 	}
+	_, span := b.tracer.Start(ctx, "bus - "+msgName)
+	defer span.End()
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
-	defer span.Finish()
-
-	span.SetTag("msg", msgName)
+	span.SetAttributes("msg", msgName, attribute.Key("msg").String(msgName))
 
 	return nil
 }
@@ -172,7 +176,7 @@ func callListeners(listeners []HandlerFunc, params []reflect.Value) error {
 	return nil
 }
 
-func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
+func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
 	b.handlersWithCtx[queryTypeName] = handler
@@ -183,7 +187,7 @@ func (b *InProcBus) GetHandlerCtx(name string) HandlerFunc {
 	return b.handlersWithCtx[name]
 }
 
-func (b *InProcBus) AddEventListenerCtx(handler HandlerFunc) {
+func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	eventName := handlerType.In(1).Elem().Name()
 	_, exists := b.listenersWithCtx[eventName]
@@ -193,24 +197,24 @@ func (b *InProcBus) AddEventListenerCtx(handler HandlerFunc) {
 	b.listenersWithCtx[eventName] = append(b.listenersWithCtx[eventName], handler)
 }
 
-// AddHandlerCtx attaches a handler function to the global bus context.
+// AddHandler attaches a handler function to the global bus context.
 // Package level function.
-func AddHandlerCtx(implName string, handler HandlerFunc) {
-	globalBus.AddHandlerCtx(handler)
+func AddHandler(implName string, handler HandlerFunc) {
+	globalBus.AddHandler(handler)
 }
 
 // AddEventListenerCtx attaches a handler function to the event listener.
 // Package level function.
-func AddEventListenerCtx(handler HandlerFunc) {
-	globalBus.AddEventListenerCtx(handler)
+func AddEventListener(handler HandlerFunc) {
+	globalBus.AddEventListener(handler)
 }
 
-func DispatchCtx(ctx context.Context, msg Msg) error {
-	return globalBus.DispatchCtx(ctx, msg)
+func Dispatch(ctx context.Context, msg Msg) error {
+	return globalBus.Dispatch(ctx, msg)
 }
 
-func PublishCtx(ctx context.Context, msg Msg) error {
-	return globalBus.PublishCtx(ctx, msg)
+func Publish(ctx context.Context, msg Msg) error {
+	return globalBus.Publish(ctx, msg)
 }
 
 func GetHandlerCtx(name string) HandlerFunc {

@@ -1991,7 +1991,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillOpacity": 29,
+            "fillOpacity": 0,
             "gradientMode": {
               "label": "None",
               "value": "none"

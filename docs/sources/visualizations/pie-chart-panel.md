@@ -24,7 +24,7 @@ Choose how much information to show.
 
 ### Calculation
 
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to the [Calculation list]({{< relref "../panels/calculations-list.md" >}}).
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to the [Calculation list]({{< relref "../panels/reference-calculation-types.md" >}}).
 
 ### Limit
 

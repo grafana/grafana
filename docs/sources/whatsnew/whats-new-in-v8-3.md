@@ -20,7 +20,7 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 ## Community Contributions
 
-Grafana 8.3 includes many community contributions including the ability to interpolate variables in tags ([#42318](https://github.com/grafana/grafana/pull/42318)), fly-out sub-menu support ([#41647](https://github.com/grafana/grafana/pull/42318)), the addition of AWS RoboMaker & AWS Global Accelerator metrics to the AWS CloudWatch data source ([#41450](https://github.com/grafana/grafana/pull/41450), [#41236](https://github.com/grafana/grafana/pull/41236)), as well as updates to the news panel ([#41193](https://github.com/grafana/grafana/pull/41193)), the plugin catalog ([#40917](https://github.com/grafana/grafana/pull/40917)), and many more. The Grafana Labs team is deeply grateful for all those who take the time to contribute and participate in the development of Grafana.
+Grafana 8.3 includes many community contributions including the ability to interpolate variables in tags ([#42318](https://github.com/grafana/grafana/pull/42318)), fly-out sub-menu support ([#41647](https://github.com/grafana/grafana/pull/41647)), the addition of AWS RoboMaker & AWS Global Accelerator metrics to the AWS CloudWatch data source ([#41450](https://github.com/grafana/grafana/pull/41450), [#41236](https://github.com/grafana/grafana/pull/41236)), as well as updates to the news panel ([#41193](https://github.com/grafana/grafana/pull/41193)), the plugin catalog ([#40917](https://github.com/grafana/grafana/pull/40917)), and many more. The Grafana Labs team is deeply grateful for all those who take the time to contribute and participate in the development of Grafana.
 
 ## Accessibility
 
@@ -38,7 +38,7 @@ Grafana will now make suggestions for visualization types based on the current d
 
 Grafana 8.3 includes a new Candlestick panel that is so much more. Beyond candlesticks and open, high, low, close, behaviors, it includes customizable up/down colors, bar color determined by intra-period or inter-period movement of the data, volume histogram with matching colors, and the ability to detach or create a separate volume histogram to allow for more flexible dashboard design. The candlestick panel is based upon our time series panel meaning it also has support for additional data with the same configuration options and styles.
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick_panel_8_3.png" max-width="1200px" caption="Candlestick panel" >}}
+{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick panel" >}}
 
 ### Geomap updates
 
@@ -60,7 +60,7 @@ You can use Metrics Insights in the AWS CloudWatch plugin. Using this new featur
 
 The example below demonstrates using the new Metrics Insight capability to view the top 5 instances with the highest average CPU Utilization, ordered by maximum, in descending order. The code editor has built-in autocompletion support that gives suggestions throughout the composition of the query.
 
-{{< figure src="/static/img/docs/cloudwatch/metric-insights.gif" max-width="1200px" caption="Grafana Alerting" >}}
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.gif" max-width="1200px" caption="Grafana Alerting" >}}
 
 # Grafana Enterprise
 

@@ -1,7 +1,8 @@
 import React, { FC, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { Button, LinkButton, List, PluginSignatureBadge, FilterInput } from '@grafana/ui';
+import { DataSourcePluginMeta, GrafanaTheme2, NavModel } from '@grafana/data';
+import { Card, LinkButton, List, PluginSignatureBadge, FilterInput, useStyles2 } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
@@ -9,7 +10,6 @@ import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
-import { Card } from 'app/core/components/Card/Card';
 import { PluginsErrorsInfo } from '../plugins/components/PluginsErrorsInfo';
 
 function mapStateToProps(state: StoreState) {
@@ -45,7 +45,7 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.setDataSourceTypeSearchQuery(value);
   };
 
-  renderPlugins(plugins: DataSourcePluginMeta[]) {
+  renderPlugins(plugins: DataSourcePluginMeta[], id?: string) {
     if (!plugins || !plugins.length) {
       return null;
     }
@@ -53,6 +53,11 @@ class NewDataSourcePage extends PureComponent<Props> {
     return (
       <List
         items={plugins}
+        className={css`
+          > li {
+            margin-bottom: 2px;
+          }
+        `}
         getItemKey={(item) => item.id.toString()}
         renderItem={(item) => (
           <DataSourceTypeCard
@@ -61,6 +66,7 @@ class NewDataSourcePage extends PureComponent<Props> {
             onLearnMoreClick={this.onLearnMoreClick}
           />
         )}
+        aria-labelledby={id}
       />
     );
   }
@@ -76,8 +82,10 @@ class NewDataSourcePage extends PureComponent<Props> {
       <>
         {categories.map((category) => (
           <div className="add-data-source-category" key={category.id}>
-            <div className="add-data-source-category__header">{category.title}</div>
-            {this.renderPlugins(category.plugins)}
+            <div className="add-data-source-category__header" id={category.id}>
+              {category.title}
+            </div>
+            {this.renderPlugins(category.plugins, category.id)}
           </div>
         ))}
         <div className="add-data-source-more">
@@ -131,36 +139,90 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = (props) => {
   // find first plugin info link
   const learnMoreLink = plugin.info?.links?.length > 0 ? plugin.info.links[0] : null;
 
+  const styles = useStyles2(getStyles);
+
   return (
-    <Card
-      title={plugin.name}
-      description={plugin.info.description}
-      ariaLabel={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
-      logoUrl={plugin.info.logos.small}
-      actions={
-        <>
-          {learnMoreLink && (
-            <LinkButton
-              variant="secondary"
-              href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
-              target="_blank"
-              rel="noopener"
-              onClick={onLearnMoreClick}
-              icon="external-link-alt"
-            >
-              {learnMoreLink.name}
-            </LinkButton>
-          )}
-          {!isPhantom && <Button disabled={plugin.unlicensed}>Select</Button>}
-        </>
-      }
-      labels={!isPhantom && <PluginSignatureBadge status={plugin.signature} />}
-      className={isPhantom ? 'add-data-source-item--phantom' : ''}
-      onClick={onClick}
-      aria-label={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
-    />
+    <Card className={cx(styles.card, 'card-parent')} onClick={onClick}>
+      <Card.Heading
+        className={styles.heading}
+        aria-label={selectors.pages.AddDataSource.dataSourcePluginsV2(plugin.name)}
+      >
+        {plugin.name}
+      </Card.Heading>
+      <Card.Figure align="center" className={styles.figure}>
+        <img className={styles.logo} src={plugin.info.logos.small} alt="" />
+      </Card.Figure>
+      <Card.Description className={styles.description}>{plugin.info.description}</Card.Description>
+      {!isPhantom && (
+        <Card.Meta className={styles.meta}>
+          <PluginSignatureBadge status={plugin.signature} />
+        </Card.Meta>
+      )}
+      <Card.Actions className={styles.actions}>
+        {learnMoreLink && (
+          <LinkButton
+            variant="secondary"
+            href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
+            target="_blank"
+            rel="noopener"
+            onClick={onLearnMoreClick}
+            icon="external-link-alt"
+            aria-label={`${plugin.name}, learn more.`}
+          >
+            {learnMoreLink.name}
+          </LinkButton>
+        )}
+      </Card.Actions>
+    </Card>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    heading: css({
+      fontSize: theme.v1.typography.heading.h5,
+      fontWeight: 'inherit',
+    }),
+    figure: css({
+      width: 'inherit',
+      marginRight: '0px',
+      '> img': {
+        width: theme.spacing(7),
+      },
+    }),
+    meta: css({
+      marginTop: '6px',
+      position: 'relative',
+    }),
+    description: css({
+      margin: '0px',
+      fontSize: theme.typography.size.sm,
+    }),
+    actions: css({
+      position: 'relative',
+      alignSelf: 'center',
+      marginTop: '0px',
+      opacity: 0,
+
+      '.card-parent:hover &, .card-parent:focus-within &': {
+        opacity: 1,
+      },
+    }),
+    card: css({
+      gridTemplateAreas: `
+      "Figure   Heading   Actions"
+      "Figure Description Actions"
+      "Figure    Meta     Actions"
+      "Figure     -       Actions"`,
+    }),
+    logo: css({
+      marginRight: theme.v1.spacing.lg,
+      marginLeft: theme.v1.spacing.sm,
+      width: theme.spacing(7),
+      maxHeight: theme.spacing(7),
+    }),
+  };
+}
 
 export function getNavModel(): NavModel {
   const main = {

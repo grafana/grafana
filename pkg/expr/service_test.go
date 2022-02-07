@@ -38,19 +38,25 @@ func TestService(t *testing.T) {
 		secretsService: secretsService,
 	}
 
-	bus.AddHandlerCtx("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
-		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test", JsonData: simplejson.New()}
+	bus.AddHandler("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
+		query.Result = &models.DataSource{Uid: "1", OrgId: 1, Type: "test", JsonData: simplejson.New()}
 		return nil
 	})
 
 	queries := []Query{
 		{
 			RefID: "A",
-			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			DataSource: &models.DataSource{
+				OrgId: 1,
+				Uid:   "test",
+				Type:  "test",
+			},
+			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
 		},
 		{
-			RefID: "B",
-			JSON:  json.RawMessage(`{ "datasource": "__expr__", "datasourceId": -100, "type": "math", "expression": "$A * 2" }`),
+			RefID:      "B",
+			DataSource: DataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
 		},
 	}
 

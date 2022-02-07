@@ -7,10 +7,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardFolderDataAccess(t *testing.T) {
@@ -326,7 +327,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := HasEditPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -392,7 +393,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := HasEditPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -460,7 +461,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := HasEditPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -484,7 +485,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := HasEditPermissionInFolders(context.Background(), query)
+						err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 						require.NoError(t, err)
 						require.True(t, query.Result)
 					})
@@ -500,11 +501,28 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := HasEditPermissionInFolders(context.Background(), query)
+						err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 						require.NoError(t, err)
 						require.True(t, query.Result)
 					})
 				})
+			})
+		})
+
+		t.Run("Given dashboard and folder with the same title", func(t *testing.T) {
+			var orgId int64 = 1
+			title := "Very Unique Name"
+			var sqlStore *SQLStore
+			var folder1, folder2 *models.Dashboard
+			sqlStore = InitTestDB(t)
+			folder2 = insertTestDashboard(t, sqlStore, "TEST", orgId, 0, true, "prod")
+			_ = insertTestDashboard(t, sqlStore, title, orgId, folder2.Id, false, "prod")
+			folder1 = insertTestDashboard(t, sqlStore, title, orgId, 0, true, "prod")
+
+			t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
+				result, err := sqlStore.GetFolderByTitle(orgId, title)
+				require.NoError(t, err)
+				require.Equal(t, folder1.Id, result.Id)
 			})
 		})
 	})

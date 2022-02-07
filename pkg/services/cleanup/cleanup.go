@@ -47,7 +47,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			defer cancelFn()
 
 			srv.cleanUpTmpFiles()
-			srv.deleteExpiredSnapshots()
+			srv.deleteExpiredSnapshots(ctx)
 			srv.deleteExpiredDashboardVersions(ctx)
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
 			srv.expireOldUserInvites(ctx)
@@ -125,9 +125,9 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 	return filemtime.Add(srv.Cfg.TempDataLifetime).Before(now)
 }
 
-func (srv *CleanUpService) deleteExpiredSnapshots() {
+func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	cmd := models.DeleteExpiredSnapshotsCommand{}
-	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
+	if err := bus.Dispatch(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
@@ -136,7 +136,7 @@ func (srv *CleanUpService) deleteExpiredSnapshots() {
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
 	cmd := models.DeleteExpiredVersionsCommand{}
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := bus.Dispatch(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
@@ -151,7 +151,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
 	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := bus.Dispatch(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
@@ -164,7 +164,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
-	if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+	if err := bus.Dispatch(ctx, &cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)

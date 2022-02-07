@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -24,24 +26,25 @@ type TestingApiSrv struct {
 	ExpressionService *expr.Service
 	DatasourceCache   datasources.CacheService
 	log               log.Logger
+	secretsService    secrets.Service
+}
+
+func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
+		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
+	}
+	return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.secretsService, srv.Cfg, srv.log)
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	recipient := web.Params(c.Req)[":Recipient"]
-	if recipient == apimodels.GrafanaBackend.String() {
-		if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
-			return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
-		}
-		return conditionEval(c, *body.GrafanaManagedCondition, srv.DatasourceCache, srv.ExpressionService, srv.Cfg, srv.log)
-	}
-
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 	}
 
 	var path string
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		ds, err := srv.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+		ds, err := srv.DatasourceCache.GetDatasource(context.Background(), datasourceID, c.SignedInUser, c.SkipCache)
 		if err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
 		}
@@ -81,11 +84,11 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		now = timeNow()
 	}
 
-	if _, err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+	if _, err := validateQueriesAndExpressions(c.Req.Context(), cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evaluator := eval.Evaluator{Cfg: srv.Cfg, Log: srv.log}
+	evaluator := eval.NewEvaluator(srv.Cfg, srv.log, srv.DatasourceCache, srv.secretsService)
 	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.ExpressionService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")

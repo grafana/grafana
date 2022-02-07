@@ -97,6 +97,8 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
   }
 );
 
+ToolbarButton.displayName = 'ToolbarButton';
+
 function getButtonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
   return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
 }

@@ -30,6 +30,7 @@ import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
@@ -192,7 +193,7 @@ const getDefaultExpression = (refId: string): AlertQuery => {
     type: ExpressionQueryType.classic,
     datasource: {
       uid: ExpressionDatasourceUID,
-      type: 'grafana-expression',
+      type: ExpressionDatasourceRef.type,
     },
     conditions: [
       {

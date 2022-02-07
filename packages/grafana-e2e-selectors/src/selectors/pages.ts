@@ -29,7 +29,9 @@ export const Pages = {
   },
   AddDataSource: {
     url: '/datasources/new',
+    /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
@@ -108,20 +110,28 @@ export const Pages = {
              */
             modeLabelEdit: 'Variable editor Header mode Edit',
             generalNameInput: 'Variable editor Form Name field',
+            generalNameInputV2: 'data-testid Variable editor Form Name field',
             generalTypeSelect: 'Variable editor Form Type select',
+            generalTypeSelectV2: 'data-testid Variable editor Form Type select',
             generalLabelInput: 'Variable editor Form Label field',
+            generalLabelInputV2: 'data-testid Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
+            generalHideSelectV2: 'data-testid Variable editor Form Hide select',
             selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
+            selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
+            queryOptionsRefreshSelectV2: 'data-testid Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
+            queryOptionsRegExInputV2: 'data-testid Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
+            queryOptionsSortSelectV2: 'data-testid Variable editor Form Query Sort select',
             queryOptionsQueryInput: 'Variable editor Form Default Variable Query Editor textarea',
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
@@ -129,9 +139,20 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+            constantOptionsQueryInputV2: 'data-testid Variable editor Form Constant Query field',
+          },
+          DatasourceVariable: {
+            datasourceSelect: 'data-testid datasource variable datasource type',
           },
           TextBoxVariable: {
             textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
+            textBoxOptionsQueryInputV2: 'data-testid Variable editor Form TextBox Query field',
+          },
+          CustomVariable: {
+            customValueInput: 'data-testid custom-variable-input',
+          },
+          IntervalVariable: {
+            intervalsValueInput: 'data-testid interval variable intervals input',
           },
         },
       },

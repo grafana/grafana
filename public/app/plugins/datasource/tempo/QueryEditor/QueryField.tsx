@@ -86,6 +86,16 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
+  onClearResults = () => {
+    // Run clear query to clear results
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({
+      ...query,
+      queryType: 'clear',
+    });
+    onRunQuery();
+  };
+
   render() {
     const { query, onChange, datasource } = this.props;
     // Find query field from linked datasource
@@ -123,24 +133,32 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             <RadioButtonGroup<TempoQueryType>
               options={queryTypeOptions}
               value={query.queryType}
-              onChange={(v) =>
+              onChange={(v) => {
+                this.onClearResults();
+
                 onChange({
                   ...query,
                   queryType: v,
-                })
-              }
+                });
+              }}
               size="md"
             />
           </InlineField>
-
-          {query.queryType === 'nativeSearch' && (
-            <p>
-              <Badge icon="rocket" text="Beta" color="blue" />
-              &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the time
-              range picker. We are actively working on full backend search. Look for improvements in the near future!
-            </p>
-          )}
         </InlineFieldRow>
+        {query.queryType === 'nativeSearch' && (
+          <p style={{ maxWidth: '65ch' }}>
+            <Badge icon="rocket" text="Beta" color="blue" />
+            {config.featureToggles.tempoBackendSearch ? (
+              <>&nbsp;Tempo search is currently in beta.</>
+            ) : (
+              <>
+                &nbsp;Tempo search is currently in beta and is designed to return recent traces only. It ignores the
+                time range picker. We are actively working on full backend search. Look for improvements in the near
+                future!
+              </>
+            )}
+          </p>
+        )}
         {query.queryType === 'search' && (
           <SearchSection
             linkedDatasourceUid={logsDatasourceUid}

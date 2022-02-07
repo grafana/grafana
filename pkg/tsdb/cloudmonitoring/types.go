@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
+		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
 		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
 		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text string) error
@@ -192,6 +193,7 @@ type timeSeries struct {
 
 type metricDescriptorResponse struct {
 	Descriptors []metricDescriptor `json:"metricDescriptors"`
+	Token       string             `json:"nextPageToken"`
 }
 type metricDescriptor struct {
 	ValueType        string `json:"valueType"`
@@ -206,6 +208,7 @@ type metricDescriptor struct {
 
 type projectResponse struct {
 	Projects []projectDescription `json:"projects"`
+	Token    string               `json:"nextPageToken"`
 }
 
 type projectDescription struct {
@@ -215,6 +218,7 @@ type projectDescription struct {
 
 type serviceResponse struct {
 	Services []serviceDescription `json:"services"`
+	Token    string               `json:"nextPageToken"`
 }
 type serviceDescription struct {
 	Name        string `json:"name"`
@@ -222,7 +226,8 @@ type serviceDescription struct {
 }
 
 type sloResponse struct {
-	SLOs []sloDescription `json:"serviceLevelObjectives"`
+	SLOs  []sloDescription `json:"serviceLevelObjectives"`
+	Token string           `json:"nextPageToken"`
 }
 
 type sloDescription struct {

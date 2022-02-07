@@ -5,7 +5,6 @@ import { Icon } from '../Icon/Icon';
 import { stylesFactory, useTheme2 } from '../../themes';
 
 export interface FieldValidationMessageProps {
-  children: string;
   /** Override component style */
   className?: string;
   horizontal?: boolean;

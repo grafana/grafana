@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -41,29 +39,23 @@ var (
 	logger                            = log.New("tsdb.grafana")
 )
 
-func ProvideService(cfg *setting.Cfg, registrar plugins.CoreBackendRegistrar) *Service {
-	return newService(cfg.StaticRootPath, registrar)
+func ProvideService(cfg *setting.Cfg) *Service {
+	return newService(cfg)
 }
 
-func newService(staticRootPath string, registrar plugins.CoreBackendRegistrar) *Service {
+func newService(cfg *setting.Cfg) *Service {
 	s := &Service{
-		staticRootPath: staticRootPath,
+		staticRootPath: cfg.StaticRootPath,
 		roots: []string{
 			"testdata",
 			"img/icons",
 			"img/bg",
 			"gazetteer",
+			"maps",
 			"upload", // does not exist yet
 		},
 	}
 
-	if err := registrar.LoadAndRegister("grafana", coreplugin.New(backend.ServeOpts{
-		CheckHealthHandler: s,
-		QueryDataHandler:   s,
-	})); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-		return nil
-	}
 	return s
 }
 

@@ -87,8 +87,7 @@ describe('datasource', () => {
       expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
-          url:
-            "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
+          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
         },
       ]);
     });
@@ -132,21 +131,26 @@ describe('datasource', () => {
         };
       });
 
-      it('should not allow queries that dont have `matchExact` or dimensions', async () => {
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeFalsy();
+      it('should not allow builder queries that dont have namespace, metric or statistic', async () => {
+        expect(datasource.filterMetricQuery({ ...baseQuery, statistic: undefined })).toBeFalsy();
+        expect(datasource.filterMetricQuery({ ...baseQuery, metricName: undefined })).toBeFalsy();
+        expect(datasource.filterMetricQuery({ ...baseQuery, namespace: '' })).toBeFalsy();
       });
 
-      it('should allow queries that have `matchExact`', async () => {
-        baseQuery.matchExact = false;
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeTruthy();
+      it('should allow builder queries that have namespace, metric or statistic', async () => {
+        expect(datasource.filterMetricQuery(baseQuery)).toBeTruthy();
       });
 
-      it('should allow queries that have dimensions', async () => {
-        baseQuery.dimensions = { instanceId: ['xyz'] };
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeTruthy();
+      it('should not allow code queries that dont have an expression', async () => {
+        expect(
+          datasource.filterMetricQuery({ ...baseQuery, expression: undefined, metricEditorMode: MetricEditorMode.Code })
+        ).toBeFalsy();
+      });
+
+      it('should allow code queries that have an expression', async () => {
+        expect(
+          datasource.filterMetricQuery({ ...baseQuery, expression: 'x * 2', metricEditorMode: MetricEditorMode.Code })
+        ).toBeTruthy();
       });
     });
 

@@ -38,6 +38,18 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 {{< figure src="/static/img/docs/explore/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
 
+### Service Graph
+
+This is a configuration for the Service Graph feature.
+
+-- **Data source -** Prometheus instance where the Service Graph data is stored.
+
+### Search
+
+This is a configuration for Tempo search.
+
+-- **Hide search -** Optionally, hide the search query option in Explore in cases where search is not configured in the Tempo instance.
+
 ### Node Graph
 
 This is a configuration for the beta Node Graph visualization. The Node Graph is shown after the trace view is loaded and is disabled by default.
@@ -103,6 +115,67 @@ Here is an example JSON:
 }
 ```
 
+## Service Graph
+
+A service graph is a visual representation of the relationships between services. Each node on the graph represents a service such as an API or database. With this graph, customers can easily detect performance issues, increases in error, fault, or throttle rates in any of their services, and dive deep into corresponding traces and root causes.
+
+![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
+
+To display the service graph:
+
+- [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) to generate service graph data
+- Link a Prometheus datasource in the Tempo datasource settings.
+- Navigate to [Explore]({{< relref "../explore/_index.md" >}})
+- Select the Tempo datasource
+- Select the **Service Graph** query type and run the query
+- Optionally, filter by service name
+
+You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
+
+Each service in the graph is represented as a circle. Numbers on the inside shows average time per request and request per second.
+
+The color of each circle represents the percentage of requests in each of the following states:
+
+- green = success
+- red = fault
+- yellow = errors
+- purple = throttled responses
+
+Click on the service to see a context menu with additional links for quick navigation to other relevant information.
+
 ## Linking Trace ID from logs
 
 You can link to Tempo trace from logs in Loki or Elastic by configuring an internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) or [Data links]({{< relref "elasticsearch.md#data-links" >}}) section in the [Elastic data source]({{< relref "elasticsearch.md" >}}) for configuration instructions.
+
+## Provision the Tempo data source
+
+You can modify the Grafana configuration files to provision the Tempo data source. Read more about how it works and all the settings you can set for data sources on the [provisioning]({{< relref "../administration/provisioning/#datasources" >}}) topic.
+
+Here is an example config:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    # Access mode - proxy (server in the UI) or direct (browser in the UI).
+    access: proxy
+    url: http://localhost:3200
+    jsonData:
+      httpMethod: GET
+      tracesToLogs:
+        datasourceUid: 'loki'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: false
+        filterBySpanID: false
+        lokiSearch: true
+      serviceMap:
+        datasourceUid: 'prometheus'
+      search:
+        hide: false
+      nodeGraph:
+        enabled: true
+```

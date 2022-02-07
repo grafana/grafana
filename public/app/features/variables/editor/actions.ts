@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getEditorVariables, getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
+import { getEditorVariables, getNewVariableIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -64,45 +64,44 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
   };
 };
 
-export const completeChangeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => (
-  dispatch,
-  getState
-) => {
-  const originalVariable = getVariable(identifier.id, getState());
-  if (originalVariable.name === newName) {
-    dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
-    return;
-  }
-  const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
-  const global = originalVariable.global;
-  const index = originalVariable.index;
-  const renamedIdentifier = toVariableIdentifier(model);
+export const completeChangeVariableName =
+  (identifier: VariableIdentifier, newName: string): ThunkResult<void> =>
+  (dispatch, getState) => {
+    const originalVariable = getVariable(identifier.id, getState());
+    if (originalVariable.name === newName) {
+      dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+      return;
+    }
+    const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
+    const global = originalVariable.global;
+    const index = originalVariable.index;
+    const renamedIdentifier = toVariableIdentifier(model);
 
-  dispatch(addVariable(toVariablePayload(renamedIdentifier, { global, index, model })));
-  dispatch(changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName })));
-  dispatch(switchToEditMode(renamedIdentifier));
-  dispatch(removeVariable(toVariablePayload(identifier, { reIndex: false })));
-};
+    dispatch(addVariable(toVariablePayload(renamedIdentifier, { global, index, model })));
+    dispatch(changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName })));
+    dispatch(switchToEditMode(renamedIdentifier));
+    dispatch(removeVariable(toVariablePayload(identifier, { reIndex: false })));
+  };
 
-export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void> => (dispatch, getState) => {
-  const id = getNextAvailableId(type, getVariables(getState()));
-  const identifier = { type, id };
-  const global = false;
-  const index = getNewVariabelIndex(getState());
-  const model = cloneDeep(variableAdapters.get(type).initialState);
-  model.id = id;
-  model.name = id;
-  dispatch(
-    addVariable(
-      toVariablePayload<AddVariable>(identifier, { global, model, index })
-    )
-  );
-  dispatch(setIdInEditor({ id: identifier.id }));
-};
+export const switchToNewMode =
+  (type: VariableType = 'query'): ThunkResult<void> =>
+  (dispatch, getState) => {
+    const id = getNextAvailableId(type, getVariables(getState()));
+    const identifier = { type, id };
+    const global = false;
+    const index = getNewVariableIndex(getState());
+    const model = cloneDeep(variableAdapters.get(type).initialState);
+    model.id = id;
+    model.name = id;
+    dispatch(addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })));
+    dispatch(setIdInEditor({ id: identifier.id }));
+  };
 
-export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch) => {
-  dispatch(setIdInEditor({ id: identifier.id }));
-};
+export const switchToEditMode =
+  (identifier: VariableIdentifier): ThunkResult<void> =>
+  (dispatch) => {
+    dispatch(setIdInEditor({ id: identifier.id }));
+  };
 
 export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) => {
   dispatch(clearIdInEditor());

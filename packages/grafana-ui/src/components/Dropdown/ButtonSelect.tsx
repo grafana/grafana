@@ -1,4 +1,4 @@
-import React, { useState, HTMLAttributes } from 'react';
+import React, { HTMLAttributes } from 'react';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
@@ -8,6 +8,9 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
 import { FocusScope } from '@react-aria/focus';
+import { useMenuTriggerState } from '@react-stately/menu';
+import { useMenuTrigger } from '@react-aria/menu';
+import { useButton } from '@react-aria/button';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -25,49 +28,40 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
  */
 const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, ...restProps } = props;
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
+  const state = useMenuTriggerState({});
 
-  const onCloseMenu = () => {
-    setIsOpen(false);
-  };
-
-  const onToggle = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    setIsOpen(!isOpen);
-  };
-
-  const onArrowKeyDown = (event: React.KeyboardEvent) => {
-    event.stopPropagation();
-    if (event.key === 'ArrowDown' || event.key === 'Enter') {
-      setIsOpen(!isOpen);
-    }
-  };
+  const ref = React.useRef(null);
+  const { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
+  const { buttonProps } = useButton(menuTriggerProps, ref);
 
   const onChangeInternal = (item: SelectableValue<T>) => {
     onChange(item);
-    setIsOpen(false);
+    state.close();
   };
 
   return (
     <ButtonGroup className={styles.wrapper}>
       <ToolbarButton
         className={className}
-        isOpen={isOpen}
-        onClick={onToggle}
-        onKeyDown={onArrowKeyDown}
+        isOpen={state.isOpen}
         narrow={narrow}
         variant={variant}
+        ref={ref}
+        {...buttonProps}
         {...restProps}
       >
         {value?.label || value?.value}
       </ToolbarButton>
-      {isOpen && (
+      {state.isOpen && (
         <div className={styles.menuWrapper}>
-          <ClickOutsideWrapper onClick={onCloseMenu} parent={document} includeButtonPress={false}>
+          <ClickOutsideWrapper onClick={state.close} parent={document} includeButtonPress={false}>
             <FocusScope contain autoFocus restoreFocus>
-              <Menu onClose={onCloseMenu}>
+              {/*
+                tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
+                see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+              */}
+              <Menu tabIndex={-1} onClose={state.close} {...menuProps}>
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}

@@ -60,7 +60,6 @@ const ui = {
     matcherName: byPlaceholderText('label'),
     matcherValue: byPlaceholderText('value'),
     comment: byPlaceholderText('Details about the silence'),
-    createdBy: byPlaceholderText('User'),
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
@@ -174,9 +173,10 @@ describe('Silence edit', () => {
   it(
     'prefills the matchers field with matchers params',
     async () => {
-      renderSilences(
-        `${baseUrlPath}?matchers=${encodeURIComponent('foo=bar,bar=~ba.+,hello!=world,cluster!~us-central.*')}`
-      );
+      const matchersParams = ['foo=bar', 'bar=~ba.+', 'hello!=world', 'cluster!~us-central.*'];
+      const matchersQueryString = matchersParams.map((matcher) => `matcher=${encodeURIComponent(matcher)}`).join('&');
+
+      renderSilences(`${baseUrlPath}?${matchersQueryString}`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
       const matchers = ui.editor.matchersField.queryAll();
@@ -209,6 +209,7 @@ describe('Silence edit', () => {
 
       const start = new Date();
       const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      const now = dateTime().format('YYYY-MM-DD HH:mm');
 
       const startDateString = dateTime(start).format('YYYY-MM-DD');
       const endDateString = dateTime(end).format('YYYY-MM-DD');
@@ -246,17 +247,13 @@ describe('Silence edit', () => {
       userEvent.tab();
       userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
 
-      userEvent.type(ui.editor.comment.get(), 'Test');
-      userEvent.type(ui.editor.createdBy.get(), 'Homer Simpson');
-
       userEvent.click(ui.editor.submit.get());
 
       await waitFor(() =>
         expect(mocks.api.createOrUpdateSilence).toHaveBeenCalledWith(
           'grafana',
           expect.objectContaining({
-            comment: 'Test',
-            createdBy: 'Homer Simpson',
+            comment: `created ${now}`,
             matchers: [
               { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
               { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },

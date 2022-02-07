@@ -22,7 +22,6 @@ const SilencedAlertsTable: FC<Props> = ({ silencedAlerts }) => {
           <col className={styles.colState} />
           <col />
           <col className={styles.colName} />
-          <col />
         </colgroup>
         <thead>
           <tr>
@@ -30,7 +29,6 @@ const SilencedAlertsTable: FC<Props> = ({ silencedAlerts }) => {
             <th>State</th>
             <th></th>
             <th>Alert name</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>

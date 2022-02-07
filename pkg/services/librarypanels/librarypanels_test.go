@@ -1462,7 +1462,7 @@ func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, 
 		})
 	}
 
-	err := sqlStore.UpdateDashboardACL(folderID, aclItems)
+	err := sqlStore.UpdateDashboardACL(context.Background(), folderID, aclItems)
 	require.NoError(t, err)
 }
 
@@ -1547,6 +1547,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Name:  "User In DB",
 			Login: userInDbName,
 		}
+
 		_, err := sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 

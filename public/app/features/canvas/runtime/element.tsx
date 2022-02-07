@@ -13,12 +13,13 @@ import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { GroupState } from './group';
 import { LayerElement } from 'app/core/components/Layers/types';
+import { Scene } from './scene';
 
 let counter = 0;
 
 export class ElementState implements LayerElement {
+  // UID necessary for moveable to work (for now)
   readonly UID = counter++;
-
   revId = 0;
   sizeStyle: CSSProperties = {};
   dataStyle: CSSProperties = {};
@@ -36,17 +37,34 @@ export class ElementState implements LayerElement {
   placement: Placement;
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
+    const fallbackName = `Element ${Date.now()}`;
     if (!options) {
-      this.options = { type: item.id, name: `Element ${this.UID}` };
+      this.options = { type: item.id, name: fallbackName };
     }
     this.anchor = options.anchor ?? {};
     this.placement = options.placement ?? {};
     options.anchor = this.anchor;
     options.placement = this.placement;
 
+    const scene = this.getScene();
     if (!options.name) {
-      options.name = `Element ${this.UID}`;
+      const newName = scene?.getNextElementName();
+      options.name = newName ?? fallbackName;
     }
+    scene?.byName.set(options.name, this);
+  }
+
+  private getScene(): Scene | undefined {
+    let trav = this.parent;
+    while (trav) {
+      if (trav.isRoot()) {
+        return trav.scene;
+        break;
+      }
+      trav = trav.parent;
+    }
+
+    return undefined;
   }
 
   getName() {
@@ -106,8 +124,6 @@ export class ElementState implements LayerElement {
 
     this.options.anchor = this.anchor;
     this.options.placement = this.placement;
-
-    // console.log('validate', this.UID, this.item.id, this.placement, this.anchor);
   }
 
   // The parent size, need to set our own size based on offsets
@@ -191,6 +207,10 @@ export class ElementState implements LayerElement {
       this.item = canvasElementRegistry.getIfExists(options.type) ?? notFoundItem;
     }
 
+    // rename handling
+    const oldName = this.options.name;
+    const newName = options.name;
+
     this.revId++;
     this.options = { ...options };
     let trav = this.parent;
@@ -201,6 +221,12 @@ export class ElementState implements LayerElement {
       }
       trav.revId++;
       trav = trav.parent;
+    }
+
+    const scene = this.getScene();
+    if (oldName !== newName && scene) {
+      scene.byName.delete(oldName);
+      scene.byName.set(newName, this);
     }
   }
 

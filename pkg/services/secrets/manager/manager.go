@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
 
@@ -22,12 +24,13 @@ type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
 	settings   setting.Provider
+	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
-	currentProvider string
-	providers       map[string]secrets.Provider
-	dataKeyCache    map[string]dataKeyCacheItem
-	log             log.Logger
+	currentProviderID secrets.ProviderID
+	providers         map[secrets.ProviderID]secrets.Provider
+	dataKeyCache      map[string]dataKeyCacheItem
+	log               log.Logger
 }
 
 func ProvideSecretsService(
@@ -35,6 +38,7 @@ func ProvideSecretsService(
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
 	settings setting.Provider,
+	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
 	providers, err := kmsProvidersService.Provide()
@@ -43,28 +47,31 @@ func ProvideSecretsService(
 	}
 
 	logger := log.New("secrets")
-	enabled := settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle)
-	currentProvider := settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default)
+	enabled := features.IsEnabled(featuremgmt.FlagEnvelopeEncryption)
+	currentProviderID := normalizeProviderID(secrets.ProviderID(
+		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
+	))
 
-	if _, ok := providers[currentProvider]; enabled && !ok {
-		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProvider)
+	if _, ok := providers[currentProviderID]; enabled && !ok {
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
-	if !enabled && currentProvider != kmsproviders.Default {
+	if !enabled && currentProviderID != kmsproviders.Default {
 		logger.Warn("Changing encryption provider requires enabling envelope encryption feature")
 	}
 
-	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProvider)
+	logger.Debug("Envelope encryption state", "enabled", enabled, "current provider", currentProviderID)
 
 	s := &SecretsService{
-		store:           store,
-		enc:             enc,
-		settings:        settings,
-		usageStats:      usageStats,
-		providers:       providers,
-		currentProvider: currentProvider,
-		dataKeyCache:    make(map[string]dataKeyCacheItem),
-		log:             logger,
+		store:             store,
+		enc:               enc,
+		settings:          settings,
+		usageStats:        usageStats,
+		providers:         providers,
+		currentProviderID: currentProviderID,
+		dataKeyCache:      make(map[string]dataKeyCacheItem),
+		features:          features,
+		log:               logger,
 	}
 
 	s.registerUsageMetrics()
@@ -72,15 +79,47 @@ func ProvideSecretsService(
 	return s, nil
 }
 
+func normalizeProviderID(id secrets.ProviderID) secrets.ProviderID {
+	if id == kmsproviders.Legacy {
+		return kmsproviders.Default
+	}
+
+	return id
+}
+
 func (s *SecretsService) registerUsageMetrics() {
 	s.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		enabled := 0
-		if s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
-			enabled = 1
+		usageMetrics := make(map[string]interface{})
+
+		// Enabled / disabled
+		usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 0
+		if s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
+			usageMetrics["stats.encryption.envelope_encryption_enabled.count"] = 1
 		}
-		return map[string]interface{}{
-			"stats.encryption.envelope_encryption_enabled.count": enabled,
-		}, nil
+
+		// Current provider
+		kind, err := s.currentProviderID.Kind()
+		if err != nil {
+			return nil, err
+		}
+		usageMetrics[fmt.Sprintf("stats.encryption.current_provider.%s.count", kind)] = 1
+
+		// Count by kind
+		countByKind := make(map[string]int)
+		for id := range s.providers {
+			kind, err := id.Kind()
+			if err != nil {
+				return nil, err
+			}
+
+			countByKind[kind]++
+		}
+
+		for kind, count := range countByKind {
+			usageMetrics[fmt.Sprintf(`stats.encryption.providers.%s.count`, kind)] = count
+		}
+
+		return usageMetrics, nil
 	})
 }
 
@@ -97,13 +136,13 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 
 func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if envelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	scope := opt()
-	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.currentProvider)
+	keyName := s.keyName(scope)
 
 	dataKey, err := s.dataKey(ctx, keyName)
 	if err != nil {
@@ -134,13 +173,17 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 	return blob, nil
 }
 
+func (s *SecretsService) keyName(scope string) string {
+	return fmt.Sprintf("%s/%s@%s", now().Format("2006-01-02"), scope, s.currentProviderID)
+}
+
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	// Use legacy encryption service if secrets.EnvelopeEncryptionFeatureToggle toggle is off
-	if !s.settings.IsFeatureToggleEnabled(secrets.EnvelopeEncryptionFeatureToggle) {
+	// Use legacy encryption service if featuremgmt.FlagEnvelopeEncryption toggle is off
+	if !s.features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
 	}
 
-	// If encryption secrets.EnvelopeEncryptionFeatureToggle toggle is on, use envelope encryption
+	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
@@ -233,9 +276,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	if err != nil {
 		return nil, err
 	}
-	provider, exists := s.providers[s.currentProvider]
+	provider, exists := s.providers[s.currentProviderID]
 	if !exists {
-		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProvider)
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProviderID)
 	}
 
 	// 2. Encrypt it
@@ -248,7 +291,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	dek := secrets.DataKey{
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
-		Provider:      s.currentProvider,
+		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
 		Scope:         scope,
 	}
@@ -265,7 +308,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 
 	// 4. Cache its unencrypted value and return it
 	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
+		expiry:  now().Add(dekTTL),
 		dataKey: dataKey,
 	}
 
@@ -275,11 +318,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 // dataKey looks up DEK in cache or database, and decrypts it
 func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, error) {
 	if item, exists := s.dataKeyCache[name]; exists {
-		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
-			delete(s.dataKeyCache, name)
-		} else {
-			return item.dataKey, nil
-		}
+		item.expiry = now().Add(dekTTL)
+		s.dataKeyCache[name] = item
+		return item.dataKey, nil
 	}
 
 	// 1. get encrypted data key from database
@@ -289,7 +330,7 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 	}
 
 	// 2. decrypt data key
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.providers[normalizeProviderID(dataKey.Provider)]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -301,13 +342,72 @@ func (s *SecretsService) dataKey(ctx context.Context, name string) ([]byte, erro
 
 	// 3. cache data key
 	s.dataKeyCache[name] = dataKeyCacheItem{
-		expiry:  time.Now().Add(15 * time.Minute),
+		expiry:  now().Add(dekTTL),
 		dataKey: decrypted,
 	}
 
 	return decrypted, nil
 }
 
-func (s *SecretsService) GetProviders() map[string]secrets.Provider {
+func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider {
 	return s.providers
+}
+
+func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
+	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
+	if err != nil {
+		return nil
+	}
+
+	// Invalidate cache
+	s.dataKeyCache = make(map[string]dataKeyCacheItem)
+	return err
+}
+
+// These variables are used to test the code
+// responsible for periodically cleaning up
+// data encryption keys cache.
+var (
+	now        = time.Now
+	dekTTL     = 15 * time.Minute
+	gcInterval = time.Minute
+)
+
+func (s *SecretsService) Run(ctx context.Context) error {
+	gc := time.NewTicker(gcInterval)
+	grp, gCtx := errgroup.WithContext(ctx)
+
+	for _, p := range s.providers {
+		if svc, ok := p.(secrets.BackgroundProvider); ok {
+			grp.Go(func() error {
+				return svc.Run(gCtx)
+			})
+		}
+	}
+
+	for {
+		select {
+		case <-gc.C:
+			s.log.Debug("removing expired data encryption keys from cache...")
+			s.removeExpiredItems()
+			s.log.Debug("done removing expired data encryption keys from cache")
+		case <-gCtx.Done():
+			s.log.Debug("grafana is shutting down; stopping...")
+			gc.Stop()
+
+			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+
+			return nil
+		}
+	}
+}
+
+func (s *SecretsService) removeExpiredItems() {
+	for id, dek := range s.dataKeyCache {
+		if dek.expiry.Before(now()) {
+			delete(s.dataKeyCache, id)
+		}
+	}
 }

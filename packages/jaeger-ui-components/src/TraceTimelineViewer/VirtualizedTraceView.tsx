@@ -17,6 +17,9 @@ import { css } from '@emotion/css';
 
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
@@ -36,13 +39,11 @@ import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../typ
 import TTraceTimeline from '../types/TTraceTimeline';
 import { PEER_SERVICE } from '../constants/tag-keys';
 
-import { createStyle, Theme, withTheme } from '../Theme';
-
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle(() => {
+const getStyles = stylesFactory(() => {
   return {
     rowsWrapper: css`
       width: 100%;
@@ -82,9 +83,11 @@ type TVirtualizedTraceViewOwnProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
+  theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -171,6 +174,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     setTrace(trace, uiFind);
   }
 
+  componentDidMount() {
+    this.scrollToSpan(this.props.focusedSpanId);
+  }
+
   shouldComponentUpdate(nextProps: VirtualizedTraceViewProps) {
     // If any prop updates, VirtualizedTraceViewImpl should update.
     const nextPropKeys = Object.keys(nextProps) as Array<keyof VirtualizedTraceViewProps>;
@@ -199,6 +206,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       setTrace,
       trace: nextTrace,
       uiFind,
+      focusedSpanId,
     } = this.props;
 
     if (trace !== nextTrace) {
@@ -212,6 +220,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (shouldScrollToFirstUiFindMatch) {
       scrollToFirstVisibleSpan();
       clearShouldScrollToFirstUiFindMatch();
+    }
+
+    if (focusedSpanId !== prevProps.focusedSpanId) {
+      this.scrollToSpan(focusedSpanId);
     }
   }
 
@@ -322,6 +334,16 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
   };
 
+  scrollToSpan = (spanID?: string) => {
+    if (spanID == null) {
+      return;
+    }
+    const i = this.getRowStates().findIndex((row) => row.span.spanID === spanID);
+    if (i >= 0) {
+      this.listView?.scrollToIndex(i);
+    }
+  };
+
   renderSpanBarRow(span: TraceSpan, spanIndex: number, key: string, style: React.CSSProperties, attrs: {}) {
     const { spanID } = span;
     const { serviceName } = span.process;
@@ -339,6 +361,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       removeHoverIndentGuideId,
       theme,
       createSpanLink,
+      focusedSpanId,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -348,6 +371,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
+    const isFocused = spanID === focusedSpanId;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
     // Check for direct child "server" span if the span is a "client" span.
@@ -388,6 +412,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           isChildrenExpanded={!isCollapsed}
           isDetailExpanded={isDetailExpanded}
           isMatchingFilter={isMatchingFilter}
+          isFocused={isFocused}
           numTicks={NUM_TICKS}
           onDetailToggled={detailToggle}
           onChildrenToggled={childrenToggle}
@@ -429,6 +454,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       linksGetter,
       theme,
       createSpanLink,
+      focusedSpanId,
+      createFocusSpanLink,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -458,6 +485,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
+          focusedSpanId={focusedSpanId}
+          createFocusSpanLink={createFocusSpanLink}
         />
       </div>
     );
@@ -486,4 +515,4 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 }
 
-export default withTheme(UnthemedVirtualizedTraceView);
+export default withTheme2(UnthemedVirtualizedTraceView);

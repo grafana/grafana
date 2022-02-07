@@ -1,6 +1,4 @@
 import { cloneDeep } from 'lodash';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { getDataSourceRef } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
@@ -10,7 +8,6 @@ import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer'
 import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
 import * as urlParser from './urlParser';
-import { isAdHoc, isLegacyAdHocDataSource } from '../guard';
 
 const noop = async () => {};
 
@@ -37,25 +34,6 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     getValueForUrl: (variable) => {
       const filters = variable?.filters ?? [];
       return urlParser.toUrl(filters);
-    },
-    beforeAdding: (model) => {
-      if (!isAdHoc(model)) {
-        return model;
-      }
-
-      if (!isLegacyAdHocDataSource(model.datasource)) {
-        return model;
-      }
-
-      const ds = getDataSourceSrv().getInstanceSettings(model.datasource);
-      if (!ds) {
-        return model;
-      }
-
-      const clone = cloneDeep(model);
-      clone.datasource = getDataSourceRef(ds);
-
-      return { ...clone };
     },
   };
 };

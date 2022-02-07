@@ -5,8 +5,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-var (
-	role = accesscontrol.RoleRegistration{
+func RegisterRoles(ac accesscontrol.AccessControl) error {
+	role := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     3,
 			Name:        "fixed:serviceaccounts:writer",
@@ -29,4 +29,10 @@ var (
 		},
 		Grants: []string{"Admin"},
 	}
-)
+
+	if err := ac.DeclareFixedRoles(role); err != nil {
+		return err
+	}
+
+	return nil
+}

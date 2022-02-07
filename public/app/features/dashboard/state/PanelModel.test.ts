@@ -55,7 +55,7 @@ describe('PanelModel', () => {
       {
         id: 'table',
       },
-      (null as unknown) as ComponentClass<PanelProps>, // react
+      null as unknown as ComponentClass<PanelProps>, // react
       {} // angular
     );
 
@@ -232,6 +232,18 @@ describe('PanelModel', () => {
         const extra = { aaa: { text: '???', value: 'XXX' } };
         const out = model.replaceVariables('hello $aaa and $bbb', extra);
         expect(out).toBe('hello XXX and BBB');
+      });
+
+      it('Can use request scoped vars', () => {
+        model.getQueryRunner().getLastRequest = () => {
+          return {
+            scopedVars: {
+              __interval: { text: '10m', value: '10m' },
+            },
+          };
+        };
+        const out = model.replaceVariables('hello $__interval');
+        expect(out).toBe('hello 10m');
       });
     });
 

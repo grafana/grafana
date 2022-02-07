@@ -10,6 +10,9 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockResolvedValue([]),
     post: postMock,
   }),
+  config: {
+    appSubUrl: '/subUrl',
+  },
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -17,12 +20,6 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1 },
   },
 }));
-
-jest.mock('app/core/config', () => {
-  return {
-    appSubUrl: '/subUrl',
-  };
-});
 
 let wrapper;
 let orgSwitcher: OrgSwitcher;

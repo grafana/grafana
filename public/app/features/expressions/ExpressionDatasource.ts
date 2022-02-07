@@ -36,7 +36,7 @@ export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,
   uid: ExpressionDatasourceUID,
   name: ExpressionDatasourceRef.type,
-  type: 'grafana-expression',
+  type: ExpressionDatasourceRef.type,
   access: 'proxy',
   meta: {
     baseUrl: '',

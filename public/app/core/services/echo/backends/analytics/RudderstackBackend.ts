@@ -1,18 +1,27 @@
 import $ from 'jquery';
-import { EchoBackend, EchoEventType, isInteractionEvent, isPageviewEvent, PageviewEchoEvent } from '@grafana/runtime';
+import {
+  EchoBackend,
+  EchoEventType,
+  isExperimentViewEvent,
+  isInteractionEvent,
+  isPageviewEvent,
+  PageviewEchoEvent,
+} from '@grafana/runtime';
 import { User } from '../sentry/types';
 
 export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
   user?: User;
+  sdkUrl?: string;
+  configUrl?: string;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
-  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction];
+  supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor(public options: RudderstackBackendOptions) {
-    const url = `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
+    const url = options.sdkUrl || `https://cdn.rudderlabs.com/v1/rudder-analytics.min.js`;
 
     $.ajax({
       url,
@@ -45,7 +54,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       })(method);
     }
 
-    (rds as any).load(options.writeKey, options.dataPlaneUrl);
+    (rds as any).load(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
       (rds as any).identify(options.user.email, {
@@ -66,6 +75,14 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     if (isInteractionEvent(e)) {
       (window as any).rudderanalytics.track(e.payload.interactionName, e.payload.properties);
+    }
+
+    if (isExperimentViewEvent(e)) {
+      (window as any).rudderanalytics.track('experiment_viewed', {
+        experiment_id: e.payload.experimentId,
+        experiment_group: e.payload.experimentGroup,
+        experiment_variant: e.payload.experimentVariant,
+      });
     }
   };
 

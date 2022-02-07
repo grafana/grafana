@@ -5,8 +5,9 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from './reducers';
 import { getTemplatingRootReducer } from './helpers';
 import { addVariable, setCurrentVariableValue } from './sharedReducer';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariableIdentifier, toVariablePayload } from './types';
+import { toVariableIdentifier, toVariablePayload } from './types';
 import { setOptionFromUrl } from './actions';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 
 variableAdapters.setInit(() => [createCustomVariableAdapter()]);
 

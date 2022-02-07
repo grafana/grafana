@@ -564,26 +564,21 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
-    let vars = this.scopedVars;
-
-    if (extraVars) {
-      vars = vars ? { ...vars, ...extraVars } : extraVars;
-    }
+    const lastRequest = this.getQueryRunner().getLastRequest();
+    const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
 
     const allVariablesParams = getVariablesUrlParams(vars);
     const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
     const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
 
-    vars = {
-      ...vars,
-      [DataLinkBuiltInVars.keepTime]: {
-        text: timeRangeUrl,
-        value: timeRangeUrl,
-      },
-      [DataLinkBuiltInVars.includeVars]: {
-        text: variablesQuery,
-        value: variablesQuery,
-      },
+    vars[DataLinkBuiltInVars.keepTime] = {
+      text: timeRangeUrl,
+      value: timeRangeUrl,
+    };
+
+    vars[DataLinkBuiltInVars.includeVars] = {
+      text: variablesQuery,
+      value: variablesQuery,
     };
 
     return getTemplateSrv().replace(value, vars, format);
@@ -602,7 +597,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * If you need the raw title without interpolation use title property instead.
    * */
   getDisplayTitle(): string {
-    return this.replaceVariables(this.title, {}, 'text');
+    return this.replaceVariables(this.title, undefined, 'text');
   }
 }
 

@@ -14,7 +14,7 @@ import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePick
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 import { locationService } from '@grafana/runtime';
-import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
+import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 
@@ -39,6 +39,10 @@ export class TimeSrv {
 
     appEvents.subscribe(ShiftTimeEvent, (e) => {
       this.shiftTime(e.payload);
+    });
+
+    appEvents.subscribe(AbsoluteTimeEvent, () => {
+      this.makeAbsoluteTime();
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -346,6 +350,16 @@ export class TimeSrv {
       from: toUtc(from),
       to: toUtc(to),
     });
+  }
+
+  makeAbsoluteTime() {
+    const params = locationService.getSearch();
+    if (params.get('left')) {
+      return; // explore handles this;
+    }
+
+    const { from, to } = this.timeRange();
+    this.setTime({ from, to });
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now

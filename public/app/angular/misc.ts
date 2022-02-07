@@ -1,8 +1,5 @@
 import angular from 'angular';
-import Clipboard from 'clipboard';
 import coreModule from './core_module';
-import { appEvents } from 'app/core/core';
-import { AppEvents } from '@grafana/data';
 
 /** @ngInject */
 function tip($compile: any) {
@@ -19,31 +16,6 @@ function tip($compile: any) {
         elem.text().replace(/[\'\"\\{}<>&]/g, (m: string) => '&amp;#' + m.charCodeAt(0) + ';') +
         '\'"></i>';
       elem.replaceWith($compile(angular.element(_t))(scope));
-    },
-  };
-}
-
-function clipboardButton() {
-  return {
-    scope: {
-      getText: '&clipboardButton',
-    },
-    link: (scope: any, elem: any) => {
-      scope.clipboard = new Clipboard(elem[0], {
-        text: () => {
-          return scope.getText();
-        },
-      });
-
-      scope.clipboard.on('success', () => {
-        appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-      });
-
-      scope.$on('$destroy', () => {
-        if (scope.clipboard) {
-          scope.clipboard.destroy();
-        }
-      });
     },
   };
 }
@@ -209,7 +181,6 @@ function gfDropdown($parse: any, $compile: any, $timeout: any) {
 }
 
 coreModule.directive('tip', tip);
-coreModule.directive('clipboardButton', clipboardButton);
 coreModule.directive('compile', compile);
 coreModule.directive('watchChange', watchChange);
 coreModule.directive('editorOptBool', editorOptBool);

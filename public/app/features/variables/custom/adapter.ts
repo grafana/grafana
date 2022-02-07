@@ -6,9 +6,10 @@ import { VariableAdapter } from '../adapters';
 import { customVariableReducer, initialCustomVariableModelState } from './reducer';
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
-import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
+import { toVariableIdentifier } from '../state/types';
 import { isAllVariable } from '../utils';
 import { optionPickerFactory } from '../pickers';
+import { ALL_VARIABLE_TEXT } from '../constants';
 
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {

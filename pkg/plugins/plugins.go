@@ -32,10 +32,6 @@ type Plugin struct {
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
-
 	// SystemJS fields
 	Module  string
 	BaseURL string
@@ -63,10 +59,6 @@ type PluginDTO struct {
 	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
-
 	// SystemJS fields
 	Module  string
 	BaseURL string
@@ -80,7 +72,7 @@ func (p PluginDTO) SupportsStreaming() bool {
 }
 
 func (p PluginDTO) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p PluginDTO) IsCorePlugin() bool {
@@ -142,6 +134,17 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer)
 	Executable string `json:"executable,omitempty"`
+}
+
+func (d JSONData) DashboardIncludes() []*Includes {
+	result := []*Includes{}
+	for _, include := range d.Includes {
+		if include.Type == TypeDashboard {
+			result = append(result, include)
+		}
+	}
+
+	return result
 }
 
 // Route describes a plugin route that is defined in
@@ -315,22 +318,20 @@ func (p *Plugin) ToDTO() PluginDTO {
 	c, _ := p.Client()
 
 	return PluginDTO{
-		JSONData:            p.JSONData,
-		PluginDir:           p.PluginDir,
-		Class:               p.Class,
-		IncludedInAppID:     p.IncludedInAppID,
-		DefaultNavURL:       p.DefaultNavURL,
-		Pinned:              p.Pinned,
-		Signature:           p.Signature,
-		SignatureType:       p.SignatureType,
-		SignatureOrg:        p.SignatureOrg,
-		SignedFiles:         p.SignedFiles,
-		SignatureError:      p.SignatureError,
-		GrafanaComVersion:   p.GrafanaComVersion,
-		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
-		Module:              p.Module,
-		BaseURL:             p.BaseURL,
-		StreamHandler:       c,
+		JSONData:        p.JSONData,
+		PluginDir:       p.PluginDir,
+		Class:           p.Class,
+		IncludedInAppID: p.IncludedInAppID,
+		DefaultNavURL:   p.DefaultNavURL,
+		Pinned:          p.Pinned,
+		Signature:       p.Signature,
+		SignatureType:   p.SignatureType,
+		SignatureOrg:    p.SignatureOrg,
+		SignedFiles:     p.SignedFiles,
+		SignatureError:  p.SignatureError,
+		Module:          p.Module,
+		BaseURL:         p.BaseURL,
+		StreamHandler:   c,
 	}
 }
 

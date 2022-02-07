@@ -9,7 +9,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
-  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   FieldCache,
@@ -36,6 +35,7 @@ import {
   textUtil,
   TimeRange,
   toDataFrame,
+  toUtc,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
@@ -367,7 +367,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
-      const time = dateTime(ts);
+      const time = toUtc(ts);
       const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
@@ -680,6 +680,8 @@ export function queryLogsVolume<T extends DataQuery>(
           rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
         },
         error: (error) => {
+          const errorMessage = error.data?.message || error.statusText || error.message;
+          console.error('Log volume query failed with error: ', errorMessage);
           observer.next({
             state: LoadingState.Error,
             error: error,

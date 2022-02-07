@@ -16,18 +16,19 @@ import * as React from 'react';
 import jsonMarkup from 'json-markup';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import CopyIcon from '../../common/CopyIcon';
-
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
+import { autoColor } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
 const copyIconClassName = 'copyIcon';
 
-export const getStyles = createStyle((theme: Theme) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     KeyValueTable: css`
       label: KeyValueTable;
@@ -71,7 +72,7 @@ export const getStyles = createStyle((theme: Theme) => {
       font-weight: bold;
     `,
   };
-});
+};
 
 const jsonObjectOrArrayStartRegex = /^(\[|\{)/;
 
@@ -88,7 +89,7 @@ function parseIfComplexJson(value: any) {
 }
 
 export const LinkValue = (props: { href: string; title?: string; children: React.ReactNode }) => {
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   return (
     <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer">
       {props.children} <UIIcon className={styles.linkIcon} type="export" />
@@ -118,7 +119,7 @@ type KeyValuesTableProps = {
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter } = props;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-test-id="KeyValueTable">
       <table className={uWidth100}>

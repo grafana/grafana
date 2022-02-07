@@ -1,13 +1,11 @@
-import { SelectableValue, toOption } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React from 'react';
+import { SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 import { ASC, DESC, STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
-import AccessoryButton from '../ui/AccessoryButton';
-import EditorField from '../ui/EditorField';
-import EditorFieldGroup from '../ui/EditorFieldGroup';
 import { setOrderBy, setSql } from './utils';
 
 interface SQLBuilderSelectRowProps {
@@ -31,6 +29,7 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
       <EditorField label="Order by" optional width={16}>
         <>
           <Select
+            aria-label="Order by"
             onChange={({ value }) => value && onQueryChange(setOrderBy(query, value))}
             options={appendTemplateVariables(datasource, STATISTICS.map(toOption))}
             value={orderBy ? toOption(orderBy) : null}
@@ -49,6 +48,7 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
 
       <EditorField label="Direction" width={16}>
         <Select
+          aria-label="Direction"
           inputId="cloudwatch-sql-order-by-direction"
           disabled={!orderBy}
           value={orderByDirection ? toOption(orderByDirection) : orderByDirections[0]}

@@ -1,4 +1,11 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -9,13 +16,15 @@ import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../.
 import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { polyStyle } from '../../style/markers';
 import { StyleEditor } from './StyleEditor';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -35,8 +44,9 @@ const defaultOptions: GeoJSONMapperConfig = {
 };
 
 interface StyleCheckerState {
-  poly: Style | Style[];
-  point: Style | Style[];
+  state: StyleConfigState;
+  poly?: Style | Style[];
+  point?: Style | Style[];
   rule?: FeatureRuleConfig;
 }
 
@@ -48,6 +58,8 @@ export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
     value: '',
   },
 };
+
+let publicGeoJSONFiles: Array<SelectableValue<string>> | undefined = undefined;
 
 export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   id: 'geojson',
@@ -84,8 +96,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         if (r.style) {
           const s = await getStyleConfigState(r.style);
           styles.push({
-            point: s.maker(s.base),
-            poly: polyStyle(s.base),
+            state: s,
             rule: r.check,
           });
         }
@@ -94,8 +105,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     if (true) {
       const s = await getStyleConfigState(config.style);
       styles.push({
-        point: s.maker(s.base),
-        poly: polyStyle(s.base),
+        state: s,
       });
     }
 
@@ -108,7 +118,33 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           if (check.rule && !checkFeatureMatchesStyleRule(check.rule, feature)) {
             continue;
           }
-          return isPoint ? check.point : check.poly;
+
+          // Support dynamic values
+          if (check.state.fields) {
+            const values = { ...check.state.base };
+            const { text } = check.state.fields;
+
+            if (text) {
+              values.text = `${feature.get(text)}`;
+            }
+            if (isPoint) {
+              return check.state.maker(values);
+            }
+            return polyStyle(values);
+          }
+
+          // Lazy create the style object
+          if (isPoint) {
+            if (!check.point) {
+              check.point = check.state.maker(check.state.base);
+            }
+            return check.point;
+          }
+
+          if (!check.poly) {
+            check.poly = polyStyle(check.state.base);
+          }
+          return check.poly;
         }
         return undefined; // unreachable
       },
@@ -126,16 +162,16 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           rxjsmap((v) => getLayerPropertyInfo(v))
         );
 
+        if (!publicGeoJSONFiles) {
+          initGeojsonFiles();
+        }
+
         builder
           .addSelect({
             path: 'config.src',
             name: 'GeoJSON URL',
             settings: {
-              options: [
-                { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
-                { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
-                { label: 'public/gazetteer/airports.geojson', value: 'public/gazetteer/airports.geojson' },
-              ],
+              options: publicGeoJSONFiles ?? [],
               allowCustomValue: true,
             },
             defaultValue: defaultOptions.src,
@@ -143,7 +179,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           .addCustomEditor({
             id: 'config.style',
             path: 'config.style',
-            name: 'Default Style',
+            name: 'Default style',
             description: 'The style to apply when no rules above match',
             editor: StyleEditor,
             settings: {
@@ -155,7 +191,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           .addCustomEditor({
             id: 'config.rules',
             path: 'config.rules',
-            name: 'Style Rules',
+            name: 'Style rules',
             description: 'Apply styles based on feature properties',
             editor: GeomapStyleRulesEditor,
             settings: {
@@ -169,3 +205,28 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   },
   defaultOptions,
 };
+
+// This will find all geojson files in the maps and gazetteer folders
+async function initGeojsonFiles() {
+  if (publicGeoJSONFiles) {
+    return;
+  }
+  publicGeoJSONFiles = [];
+
+  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  for (let folder of ['maps', 'gazetteer']) {
+    ds.listFiles(folder).subscribe({
+      next: (frame) => {
+        frame.forEach((item) => {
+          if (item.name.endsWith('.geojson')) {
+            const value = `public/${folder}/${item.name}`;
+            publicGeoJSONFiles!.push({
+              value,
+              label: value,
+            });
+          }
+        });
+      },
+    });
+  }
+}

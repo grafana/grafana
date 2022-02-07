@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { OrgRole } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
@@ -13,14 +13,7 @@ interface Props {
 
 const options = Object.keys(OrgRole).map((key) => ({ label: key, value: key }));
 
-export const OrgRolePicker: FC<Props> = ({
-  value,
-  onChange,
-  'aria-label': ariaLabel,
-  inputId,
-  autoFocus,
-  ...restProps
-}) => {
+export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputId, autoFocus, ...restProps }: Props) {
   return (
     <Select
       menuShouldPortal
@@ -34,4 +27,4 @@ export const OrgRolePicker: FC<Props> = ({
       {...restProps}
     />
   );
-};
+}

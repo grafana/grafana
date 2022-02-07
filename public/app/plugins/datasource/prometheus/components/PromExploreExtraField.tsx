@@ -121,6 +121,8 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
   }
 );
 
+PromExploreExtraField.displayName = 'PromExploreExtraField';
+
 export const testIds = {
   extraFieldEditor: 'prom-editor-extra-field',
   stepField: 'prom-editor-extra-field-step',

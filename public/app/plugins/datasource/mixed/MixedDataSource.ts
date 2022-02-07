@@ -26,7 +26,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter((t) => {
-      return t.datasource?.type !== MIXED_DATASOURCE_NAME;
+      return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {

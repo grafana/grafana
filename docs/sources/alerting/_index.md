@@ -15,10 +15,11 @@ Grafana 8.0 introduced new and improved alerting that centralizes alerting infor
 
 Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature.
 
-| Release     | Cloud         | Enterprise | OSS                              |
-| ----------- | ------------- | ---------- | -------------------------------- |
-| Grafana 8.2 | On by default | Opt-in     | Opt-in                           |
-| Grafana 8.3 | On by default | Opt-in     | On by default for new installs\* |
+| Release                  | Cloud         | Enterprise    | OSS                              |
+| ------------------------ | ------------- | ------------- | -------------------------------- |
+| Grafana 8.2              | On by default | Opt-in        | Opt-in                           |
+| Grafana 8.3              | On by default | Opt-in        | On by default for new installs\* |
+| Grafana 9.0 (unreleased) | On by default | On by default | On by default                    |
 
 > **Note:** New installs include existing installs which do not have any alerts configured.
 

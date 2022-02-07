@@ -1,0 +1,32 @@
+{
+  "locales": [
+    "en",
+    "fr",
+    "es",
+    "pseudo-LOCALE"
+  ],
+  "catalogs": [
+    {
+      "path": "public/locales/{locale}/messages",
+      "include": [
+        "public/app"
+      ],
+      "exclude": [
+        "**/*.d.ts",
+        "**/*.test.ts",
+        "**/node_modules/**",
+        "public/app/plugins"
+      ]
+    }
+  ],
+  "fallbackLocales": {
+    "pseudo-LOCALE": "en",
+    "default": "en"
+  },
+  "pseudoLocale": "pseudo-LOCALE",
+  "sourceLocale": "en",
+  "format": "po",
+  "formatOptions": {
+    "lineNumbers": false
+  }
+}

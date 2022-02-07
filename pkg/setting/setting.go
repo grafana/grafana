@@ -143,6 +143,8 @@ var (
 	GoogleTagManagerId      string
 	RudderstackDataPlaneUrl string
 	RudderstackWriteKey     string
+	RudderstackSdkUrl       string
+	RudderstackConfigUrl    string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -317,6 +319,7 @@ type Cfg struct {
 	JWTAuthCacheTTL      time.Duration
 	JWTAuthKeyFile       string
 	JWTAuthJWKSetFile    string
+	JWTAuthAutoSignUp    bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -339,8 +342,10 @@ type Cfg struct {
 
 	ApiKeyMaxSecondsToLive int64
 
-	// Use to enable new features which may still be in alpha/beta stage.
-	FeatureToggles       map[string]bool
+	// Check if a feature toggle is enabled
+	// @deprecated
+	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
+
 	AnonymousEnabled     bool
 	AnonymousOrgName     string
 	AnonymousOrgRole     string
@@ -424,32 +429,9 @@ type Cfg struct {
 
 	// Unified Alerting
 	UnifiedAlerting UnifiedAlertingSettings
-}
 
-// IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
-func (cfg Cfg) IsLiveConfigEnabled() bool {
-	return cfg.FeatureToggles["live-config"]
-}
-
-// IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
-func (cfg Cfg) IsTrimDefaultsEnabled() bool {
-	return cfg.FeatureToggles["trimDefaults"]
-}
-
-// IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
-func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
-	return cfg.FeatureToggles["database_metrics"]
-}
-
-// IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
-// This feature toggle will be removed in Grafana 8.x but gives the operator
-// some graceperiod to update all the monitoring tools.
-func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
-	return cfg.FeatureToggles["disable_http_request_histogram"]
-}
-
-func (cfg Cfg) IsNewNavigationEnabled() bool {
-	return cfg.FeatureToggles["newNavigation"]
+	// Query history
+	QueryHistoryEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -493,7 +475,6 @@ func RedactedValue(key, value string) string {
 		"ACCOUNT_KEY",
 		"ENCRYPTION_KEY",
 		"VAULT_TOKEN",
-		"AWSKMS_.*_TOKEN",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -791,6 +772,8 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		return nil, err
 	}
 
+	cfg.Logger.Info(fmt.Sprintf("Starting %s", ApplicationName), "version", BuildVersion, "commit", BuildCommit, "branch", BuildBranch, "compiled", time.Unix(BuildStamp, 0))
+
 	return parsedFile, err
 }
 
@@ -945,6 +928,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
+	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
+	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(cfg.ReportingDistributor) >= 100 {
@@ -959,6 +944,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	queryHistory := iniFile.Section("query_history")
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(false)
 
 	panelsSection := iniFile.Section("panels")
 	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
@@ -1295,6 +1283,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
@@ -1400,17 +1389,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
-	return nil
-}
-
-func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
-	// Read and populate feature toggles list
-	featureTogglesSection := iniFile.Section("feature_toggles")
-	cfg.FeatureToggles = make(map[string]bool)
-	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
-	for _, feature := range util.SplitString(featuresTogglesStr) {
-		cfg.FeatureToggles[feature] = true
-	}
 	return nil
 }
 

@@ -3,7 +3,7 @@ import { StoreState, ThunkResult } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
-import { getNewVariabelIndex, getVariable } from '../state/selectors';
+import { getNewVariableIndex, getVariable } from '../state/selectors';
 import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import {
   AdHocVariabelFilterUpdate,
@@ -110,7 +110,7 @@ export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResul
 };
 
 export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
-  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: false });
+  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
   const selectable = dataSources.reduce(
     (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
       if (ds.meta.mixed) {
@@ -144,14 +144,10 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
     };
 
     const global = false;
-    const index = getNewVariabelIndex(getState());
+    const index = getNewVariableIndex(getState());
     const identifier: VariableIdentifier = { type: 'adhoc', id: model.id };
 
-    dispatch(
-      addVariable(
-        toVariablePayload<AddVariable>(identifier, { global, model, index })
-      )
-    );
+    dispatch(addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })));
   };
 };
 

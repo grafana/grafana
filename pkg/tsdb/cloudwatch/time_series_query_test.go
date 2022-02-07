@@ -19,7 +19,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
+	executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 	now := time.Now()
 
 	origNewCWClient := NewCWClient
@@ -54,7 +54,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -121,7 +121,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.TODO(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -2),
 		}}}})
@@ -129,7 +129,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time equals start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.TODO(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -1),
 		}}}})

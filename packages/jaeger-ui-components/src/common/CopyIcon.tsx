@@ -16,11 +16,11 @@ import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import copy from 'copy-to-clipboard';
+import { stylesFactory } from '@grafana/ui';
 
 import { UITooltip, TooltipPlacement, UIButton } from '../uiElementsContext';
-import { createStyle } from '../Theme';
 
-const getStyles = createStyle(() => {
+const getStyles = stylesFactory(() => {
   return {
     CopyIcon: css`
       background-color: transparent;

@@ -97,7 +97,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const { onEditorDidMount } = this.props;
     this.getEditorValue = () => editor.getValue();
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, this.onSave);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
     const languagePromise = this.loadCustomLanguage();
 
     if (onEditorDidMount) {

@@ -87,9 +87,9 @@ func TestAccountDataAccess(t *testing.T) {
 
 				q1 := models.GetUserOrgListQuery{UserId: ac1.Id}
 				q2 := models.GetUserOrgListQuery{UserId: ac2.Id}
-				err = GetUserOrgList(context.Background(), &q1)
+				err = sqlStore.GetUserOrgList(context.Background(), &q1)
 				require.NoError(t, err)
-				err = GetUserOrgList(context.Background(), &q2)
+				err = sqlStore.GetUserOrgList(context.Background(), &q2)
 				require.NoError(t, err)
 
 				require.Equal(t, q1.Result[0].OrgId, q2.Result[0].OrgId)
@@ -195,7 +195,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Can get logged in user projection", func(t *testing.T) {
 					query := models.GetSignedInUserQuery{UserId: ac2.Id}
-					err := GetSignedInUser(context.Background(), &query)
+					err := sqlStore.GetSignedInUser(context.Background(), &query)
 
 					require.NoError(t, err)
 					require.Equal(t, query.Result.Email, "ac2@test.com")
@@ -209,7 +209,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Can get user organizations", func(t *testing.T) {
 					query := models.GetUserOrgListQuery{UserId: ac2.Id}
-					err := GetUserOrgList(context.Background(), &query)
+					err := sqlStore.GetUserOrgList(context.Background(), &query)
 
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
@@ -251,12 +251,12 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Can set using org", func(t *testing.T) {
 					cmd := models.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
-					err := SetUsingOrg(context.Background(), &cmd)
+					err := sqlStore.SetUsingOrg(context.Background(), &cmd)
 					require.NoError(t, err)
 
 					t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
 						query := models.GetSignedInUserQuery{UserId: ac2.Id}
-						err := GetSignedInUser(context.Background(), &query)
+						err := sqlStore.GetSignedInUser(context.Background(), &query)
 
 						require.NoError(t, err)
 						require.Equal(t, query.Result.OrgId, ac1.OrgId)
@@ -273,7 +273,7 @@ func TestAccountDataAccess(t *testing.T) {
 						require.NoError(t, err)
 
 						query := models.GetSignedInUserQuery{UserId: ac2.Id}
-						err = GetSignedInUser(context.Background(), &query)
+						err = sqlStore.GetSignedInUser(context.Background(), &query)
 
 						require.NoError(t, err)
 						require.Equal(t, query.Result.OrgId, ac2.OrgId)
@@ -282,7 +282,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
 					// make sure ac2 has no org
-					err := DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgId})
+					err := sqlStore.DeleteOrg(context.Background(), &models.DeleteOrgCommand{Id: ac2.OrgId})
 					require.NoError(t, err)
 
 					// remove ac2 user from ac1 org
@@ -291,7 +291,7 @@ func TestAccountDataAccess(t *testing.T) {
 					require.NoError(t, err)
 					require.True(t, remCmd.UserWasDeleted)
 
-					err = GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.Id})
+					err = sqlStore.GetSignedInUser(context.Background(), &models.GetSignedInUserQuery{UserId: ac2.Id})
 					require.Equal(t, err, models.ErrUserNotFound)
 				})
 
@@ -381,5 +381,5 @@ func testHelperUpdateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID 
 		item.Updated = time.Now()
 		itemPtrs = append(itemPtrs, &item)
 	}
-	return sqlStore.UpdateDashboardACL(dashboardID, itemPtrs)
+	return sqlStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
 }

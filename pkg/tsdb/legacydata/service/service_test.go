@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -35,7 +36,7 @@ func TestHandleRequest(t *testing.T) {
 			return backend.NewQueryDataResponse(), nil
 		}
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.New(), nil, secretsService)
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 		s := ProvideService(client, nil, dsService)
 
 		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}

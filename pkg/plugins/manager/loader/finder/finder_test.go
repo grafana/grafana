@@ -2,12 +2,16 @@ package finder
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFinder_Find(t *testing.T) {
@@ -51,7 +55,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := New(tc.cfg)
+			f := New()
 			pluginPaths, err := f.Find(tc.pluginDirs)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
@@ -64,4 +68,60 @@ func TestFinder_Find(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
+	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
+		origWalk := walk
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
+			return walkFn(path, nil, os.ErrNotExist)
+		}
+		t.Cleanup(func() {
+			walk = origWalk
+		})
+
+		finder := &Finder{
+			log: log.New(),
+		}
+
+		paths, err := finder.getAbsPluginJSONPaths("test")
+		require.NoError(t, err)
+		require.Empty(t, paths)
+	})
+
+	t.Run("When scanning a folder that lacks permission shouldn't return an error", func(t *testing.T) {
+		origWalk := walk
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
+			return walkFn(path, nil, os.ErrPermission)
+		}
+		t.Cleanup(func() {
+			walk = origWalk
+		})
+
+		finder := &Finder{
+			log: log.New(),
+		}
+
+		paths, err := finder.getAbsPluginJSONPaths("test")
+		require.NoError(t, err)
+		require.Empty(t, paths)
+	})
+
+	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
+		origWalk := walk
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
+			return walkFn(path, nil, fmt.Errorf("random error"))
+		}
+		t.Cleanup(func() {
+			walk = origWalk
+		})
+
+		finder := &Finder{
+			log: log.New(),
+		}
+
+		paths, err := finder.getAbsPluginJSONPaths("test")
+		require.Error(t, err)
+		require.Empty(t, paths)
+	})
 }

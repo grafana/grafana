@@ -13,6 +13,7 @@ export interface RadioButtonGroupProps<T> {
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
   onChange?: (value: T) => void;
+  onClick?: (value: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;
   className?: string;
@@ -23,6 +24,7 @@ export function RadioButtonGroup<T>({
   options,
   value,
   onChange,
+  onClick,
   disabled,
   disabledOptions,
   size = 'md',
@@ -39,6 +41,16 @@ export function RadioButtonGroup<T>({
       };
     },
     [onChange]
+  );
+  const handleOnClick = useCallback(
+    (option: SelectableValue) => {
+      return () => {
+        if (onClick) {
+          onClick(option.value);
+        }
+      };
+    },
+    [onClick]
   );
   const id = uniqueId('radiogroup-');
   const groupName = useRef(id);
@@ -63,6 +75,7 @@ export function RadioButtonGroup<T>({
             key={`o.label-${i}`}
             aria-label={o.ariaLabel}
             onChange={handleOnChange(o)}
+            onClick={handleOnClick(o)}
             id={`option-${o.value}-${id}`}
             name={groupName.current}
             description={o.description}

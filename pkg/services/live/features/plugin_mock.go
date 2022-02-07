@@ -5,6 +5,7 @@
 package features
 
 import (
+	"context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -36,7 +37,7 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(arg0 *models.SignedInUser, arg1, arg2 string) (backend.PluginContext, bool, error) {
+func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *models.SignedInUser, arg1, arg2 string) (backend.PluginContext, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2)
 	ret0, _ := ret[0].(backend.PluginContext)
@@ -46,7 +47,7 @@ func (m *MockPluginContextGetter) GetPluginContext(arg0 *models.SignedInUser, ar
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(ctx context.Context, arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2)
 }

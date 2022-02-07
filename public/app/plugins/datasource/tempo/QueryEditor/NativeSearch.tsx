@@ -128,6 +128,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         <InlineFieldRow>
           <InlineField label="Service Name" labelWidth={14} grow>
             <Select
+              inputId="service"
               menuShouldPortal
               options={autocomplete.serviceNameOptions}
               value={query.serviceName || ''}
@@ -147,6 +148,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         <InlineFieldRow>
           <InlineField label="Span Name" labelWidth={14} grow>
             <Select
+              inputId="spanName"
               menuShouldPortal
               options={autocomplete.spanNameOptions}
               value={query.spanName || ''}
@@ -187,6 +189,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         <InlineFieldRow>
           <InlineField label="Min Duration" invalid={!!inputErrors.minDuration} labelWidth={14} grow>
             <Input
+              id="minDuration"
               value={query.minDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
@@ -209,6 +212,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         <InlineFieldRow>
           <InlineField label="Max Duration" invalid={!!inputErrors.maxDuration} labelWidth={14} grow>
             <Input
+              id="maxDuration"
               value={query.maxDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
@@ -237,6 +241,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             tooltip="Maximum numbers of returned results"
           >
             <Input
+              id="limit"
               value={query.limit || ''}
               type="number"
               onChange={(v) => {

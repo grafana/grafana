@@ -128,10 +128,22 @@ export interface LiveChannelPresenceStatus {
 /**
  * @alpha -- experimental
  */
+export type LiveChannelId = string;
+
+/**
+ * @alpha -- experimental
+ */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
   namespace: string; // depends on the scope
   path: string;
+
+  /**
+   * Additional metadata passed to a channel.  The backend will propigate this JSON object to
+   * each OnSubscribe and RunStream calls.  This value should be constant across multiple requests
+   * to the same channel path
+   */
+  data?: any;
 }
 
 /**
@@ -167,7 +179,7 @@ export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is Li
  *
  * @alpha -- experimental
  */
-export function toLiveChannelId(addr: LiveChannelAddress): string {
+export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
   if (!addr.scope) {
     return '';
   }

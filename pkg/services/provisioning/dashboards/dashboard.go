@@ -84,7 +84,7 @@ func (provider *Provisioner) CleanUpOrphanedDashboards(ctx context.Context) {
 		currentReaders[index] = reader.Cfg.Name
 	}
 
-	if err := bus.DispatchCtx(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+	if err := bus.Dispatch(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
 		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
 	}
 }

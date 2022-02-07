@@ -17,5 +17,5 @@ export const Alias: FunctionComponent<Props> = ({ value = '', onChange }) => {
     propagateOnChange(e.target.value);
   };
 
-  return <Input type="text" value={alias} onChange={onChange} />;
+  return <Input type="text" value={alias} onChange={onChange} aria-label="Optional alias" />;
 };

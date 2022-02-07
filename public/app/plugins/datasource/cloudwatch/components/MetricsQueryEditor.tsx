@@ -1,22 +1,18 @@
-import React, { PureComponent, ChangeEvent } from 'react';
-
+import React, { ChangeEvent, PureComponent } from 'react';
 import { QueryEditorProps } from '@grafana/data';
+import { EditorField, EditorRow, Space } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
-import {
-  CloudWatchQuery,
-  CloudWatchMetricsQuery,
-  CloudWatchJsonData,
-  MetricQueryType,
-  MetricEditorMode,
-} from '../types';
 import { CloudWatchDatasource } from '../datasource';
-import { Alias, MetricStatEditor, MathExpressionQueryField, SQLBuilderEditor, SQLCodeEditor } from './';
-
-import EditorRow from './ui/EditorRow';
-import EditorField from './ui/EditorField';
-import { Space } from './ui/Space';
-import QueryHeader from './QueryHeader';
 import { isMetricsQuery } from '../guards';
+import {
+  CloudWatchJsonData,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from '../types';
+import { Alias, MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
+import QueryHeader from './QueryHeader';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
@@ -106,6 +102,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
                 onRunQuery={onRunQuery}
                 expression={query.expression ?? ''}
                 onChange={(expression) => this.props.onChange({ ...query, expression })}
+                datasource={datasource}
               ></MathExpressionQueryField>
             )}
           </>
@@ -148,6 +145,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
           >
             <Input
+              id={`${query.refId}-cloudwatch-metric-query-editor-id`}
               onBlur={onRunQuery}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 this.onChange({ ...metricsQuery, id: event.target.value })
@@ -160,6 +158,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
 
           <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
             <Input
+              id={`${query.refId}-cloudwatch-metric-query-editor-period`}
               value={query.period || ''}
               placeholder="auto"
               onBlur={onRunQuery}

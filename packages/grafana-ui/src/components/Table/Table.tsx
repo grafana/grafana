@@ -127,7 +127,30 @@ export const Table: FC<Props> = memo((props: Props) => {
     footerValues,
     showTypeIcons,
   } = props;
+
   const tableStyles = useStyles2(getTableStyles);
+  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+
+  const footerHeight = useMemo(() => {
+    const EXTENDED_ROW_HEIGHT = 33;
+    let length = 0;
+
+    if (!footerValues) {
+      return 0;
+    }
+
+    for (const fv of footerValues) {
+      if (Array.isArray(fv) && fv.length > length) {
+        length = fv.length;
+      }
+    }
+
+    if (length > 1) {
+      return EXTENDED_ROW_HEIGHT * length;
+    }
+
+    return EXTENDED_ROW_HEIGHT;
+  }, [footerValues]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -142,12 +165,10 @@ export const Table: FC<Props> = memo((props: Props) => {
   }, [data]);
 
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footerValues), [
-    data,
-    width,
-    columnMinWidth,
-    footerValues,
-  ]);
+  const memoizedColumns = useMemo(
+    () => getColumns(data, width, columnMinWidth, footerValues),
+    [data, width, columnMinWidth, footerValues]
+  );
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -175,8 +196,6 @@ export const Table: FC<Props> = memo((props: Props) => {
     useResizeColumns
   );
 
-  const { fields } = data;
-
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
       const row = rows[rowIndex];
@@ -186,7 +205,6 @@ export const Table: FC<Props> = memo((props: Props) => {
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
-              field={fields[index]}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
@@ -197,10 +215,10 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [fields, onCellFilterAdded, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, prepareRow, rows, tableStyles]
   );
 
-  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const listHeight = height - (headerHeight + footerHeight);
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
@@ -209,7 +227,7 @@ export const Table: FC<Props> = memo((props: Props) => {
           {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {rows.length > 0 ? (
             <FixedSizeList
-              height={height - headerHeight}
+              height={listHeight}
               itemCount={rows.length}
               itemSize={tableStyles.rowHeight}
               width={'100%'}
@@ -222,7 +240,14 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          <FooterRow footerValues={footerValues} footerGroups={footerGroups} totalColumnsWidth={totalColumnsWidth} />
+          {footerValues && (
+            <FooterRow
+              height={footerHeight}
+              footerValues={footerValues}
+              footerGroups={footerGroups}
+              totalColumnsWidth={totalColumnsWidth}
+            />
+          )}
         </div>
       </CustomScrollbar>
     </div>

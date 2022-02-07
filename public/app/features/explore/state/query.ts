@@ -7,6 +7,9 @@ import {
   DataQueryResponse,
   DataSourceApi,
   hasLogsVolumeSupport,
+  hasQueryExportSupport,
+  hasQueryImportSupport,
+  HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
@@ -25,15 +28,20 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 import { addToRichHistory } from 'app/core/utils/richHistory';
-import { ExploreItemState, ExplorePanelData, ThunkResult } from 'app/types';
-import { ExploreId, QueryOptions } from 'app/types/explore';
+import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
+import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpdatedAction, stateSave } from './main';
+import {
+  richHistoryStorageFullAction,
+  richHistoryLimitExceededAction,
+  richHistoryUpdatedAction,
+  stateSave,
+} from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
@@ -264,6 +272,9 @@ export const importQueries = (
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
       // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
+    } else if (hasQueryExportSupport(sourceDataSource) && hasQueryImportSupport(targetDataSource)) {
+      const abstractQueries = await sourceDataSource.exportToAbstractQueries(queries);
+      importedQueries = await targetDataSource.importFromAbstractQueries(abstractQueries);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
@@ -299,6 +310,40 @@ export function modifyQueries(
   };
 }
 
+async function handleHistory(
+  dispatch: ThunkDispatch,
+  state: ExploreState,
+  history: Array<HistoryItem<DataQuery>>,
+  datasource: DataSourceApi,
+  queries: DataQuery[],
+  exploreId: ExploreId
+) {
+  const datasourceId = datasource.meta.id;
+  const nextHistory = updateHistory(history, datasourceId, queries);
+  const {
+    richHistory: nextRichHistory,
+    richHistoryStorageFull,
+    limitExceeded,
+  } = await addToRichHistory(
+    state.richHistory || [],
+    datasource.name,
+    queries,
+    false,
+    '',
+    !state.richHistoryStorageFull,
+    !state.richHistoryLimitExceededWarningShown
+  );
+  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+  dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+
+  if (richHistoryStorageFull) {
+    dispatch(richHistoryStorageFullAction());
+  }
+  if (limitExceeded) {
+    dispatch(richHistoryLimitExceededAction());
+  }
+}
+
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
@@ -315,7 +360,6 @@ export const runQueries = (
       dispatch(clearCache(exploreId));
     }
 
-    const { richHistory } = getState().explore;
     const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
@@ -325,7 +369,6 @@ export const runQueries = (
       scanning,
       queryResponse,
       querySubscription,
-      history,
       refreshInterval,
       absoluteRange,
       cache,
@@ -337,6 +380,12 @@ export const runQueries = (
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
     }));
+
+    if (datasourceInstance != null) {
+      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+    }
+
+    dispatch(stateSave({ replace: options?.replaceUrl }));
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
@@ -373,8 +422,6 @@ export const runQueries = (
 
       stopQueryState(querySubscription);
 
-      const datasourceId = datasourceInstance?.meta.id;
-
       const queryOptions: QueryOptions = {
         minInterval,
         // maxDataPoints is used in:
@@ -387,11 +434,9 @@ export const runQueries = (
         liveStreaming: live,
       };
 
-      const datasourceName = datasourceInstance.name;
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
 
-      let querySaved = false;
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
       newQuerySub = runRequest(datasourceInstance, transaction.request)
@@ -411,36 +456,8 @@ export const runQueries = (
             )
           )
         )
-        .subscribe(
-          (data) => {
-            if (data.state !== LoadingState.Loading && !data.error && !querySaved) {
-              // Side-effect: Saving history in localstorage
-              const nextHistory = updateHistory(history, datasourceId, queries);
-              const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
-                richHistory || [],
-                datasourceId,
-                datasourceName,
-                queries,
-                false,
-                '',
-                '',
-                !getState().explore.localStorageFull,
-                !getState().explore.richHistoryLimitExceededWarningShown
-              );
-              dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-              dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
-              if (localStorageFull) {
-                dispatch(localStorageFullAction());
-              }
-              if (limitExceeded) {
-                dispatch(richHistoryLimitExceededAction());
-              }
-
-              // We save queries to the URL here so that only successfully run queries change the URL.
-              dispatch(stateSave({ replace: options?.replaceUrl }));
-              querySaved = true;
-            }
-
+        .subscribe({
+          next(data) {
             dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
             // Keep scanning for results if this was the last scanning transaction
@@ -455,12 +472,20 @@ export const runQueries = (
               }
             }
           },
-          (error) => {
+          error(error) {
             dispatch(notifyApp(createErrorNotification('Query processing error', error)));
             dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
             console.error(error);
-          }
-        );
+          },
+          complete() {
+            // In case we don't get any response at all but the observable completed, make sure we stop loading state.
+            // This is for cases when some queries are noop like running first query after load but we don't have any
+            // actual query input.
+            if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
+              dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+            }
+          },
+        });
 
       if (live) {
         dispatch(

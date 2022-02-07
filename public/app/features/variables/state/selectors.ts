@@ -12,7 +12,7 @@ export const getVariable = <T extends VariableModel = VariableModel>(
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
     }
-    return (undefined as unknown) as T;
+    return undefined as unknown as T;
   }
 
   return state.templating.variables[id] as T;
@@ -29,12 +29,12 @@ export const getVariableWithName = (name: string, state: StoreState = getState()
 };
 
 export const getVariables = (state: StoreState = getState()): VariableModel[] => {
-  const filter = (variable: VariableModel) => {
-    return variable.type !== 'system';
-  };
-
-  return getFilteredVariables(filter, state);
+  return getFilteredVariables(defaultVariablesFilter, state);
 };
+
+export function defaultVariablesFilter(variable: VariableModel): boolean {
+  return variable.type !== 'system';
+}
 
 export const getSubMenuVariables = memoizeOne((variables: Record<string, VariableModel>): VariableModel[] => {
   return getVariables(getState());
@@ -46,9 +46,14 @@ export const getEditorVariables = (state: StoreState): VariableModel[] => {
 
 export type GetVariables = typeof getVariables;
 
-export const getNewVariabelIndex = (state: StoreState = getState()): number => {
-  return Object.values(state.templating.variables).length;
-};
+export function getNewVariableIndex(state: StoreState = getState()): number {
+  return getNextVariableIndex(Object.values(state.templating.variables));
+}
+
+export function getNextVariableIndex(variables: VariableModel[]): number {
+  const sorted = variables.filter(defaultVariablesFilter).sort((v1, v2) => v1.index - v2.index);
+  return sorted.length > 0 ? sorted[sorted.length - 1].index + 1 : 0;
+}
 
 export function getVariablesIsDirty(state: StoreState = getState()): boolean {
   return state.templating.transaction.isDirty;

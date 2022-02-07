@@ -130,7 +130,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     expect(screen.getByText('CPUUtilization')).toBeInTheDocument();
   });
 
-  describe('ORDER BY', async () => {
+  describe('ORDER BY', () => {
     it('should display it correctly when its specified', async () => {
       const query = makeSQLQuery({
         orderBy: {

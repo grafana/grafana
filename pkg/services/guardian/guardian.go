@@ -204,7 +204,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	}
 
 	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := bus.DispatchCtx(g.ctx, &query); err != nil {
+	if err := bus.Dispatch(g.ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -254,8 +254,8 @@ func (g *dashboardGuardianImpl) getTeams(ctx context.Context) ([]*models.TeamDTO
 	}
 
 	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
-	// TODO: Use bus.DispatchCtx(g.Ctx, &query) when GetTeamsByUserQuery supports context.
-	err := bus.DispatchCtx(ctx, &query)
+	// TODO: Use bus.Dispatch(g.Ctx, &query) when GetTeamsByUserQuery supports context.
+	err := bus.Dispatch(ctx, &query)
 
 	g.teams = query.Result
 	return query.Result, err

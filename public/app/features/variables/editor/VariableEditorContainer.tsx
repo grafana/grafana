@@ -50,8 +50,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
     this.props.switchToEditMode(identifier);
   };
 
-  onNewVariable = (event: MouseEvent) => {
-    event.preventDefault();
+  onNewVariable = () => {
     this.props.switchToNewMode();
   };
 
@@ -60,7 +59,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
   };
 
   onDuplicateVariable = (identifier: VariableIdentifier) => {
-    this.props.duplicateVariable(toVariablePayload(identifier, { newId: (undefined as unknown) as string }));
+    this.props.duplicateVariable(toVariablePayload(identifier, { newId: undefined as unknown as string }));
   };
 
   onRemoveVariable = (identifier: VariableIdentifier) => {
@@ -104,20 +103,19 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
         </div>
 
         {!variableToEdit && (
-          <>
-            <VariableEditorList
-              dashboard={this.props.dashboard}
-              variables={this.props.variables}
-              onAddClick={this.onNewVariable}
-              onEditClick={this.onEditVariable}
-              onChangeVariableOrder={this.onChangeVariableOrder}
-              onDuplicateVariable={this.onDuplicateVariable}
-              onRemoveVariable={this.onRemoveVariable}
-              usages={this.props.usages}
-              usagesNetwork={this.props.usagesNetwork}
-            />
-            <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
-          </>
+          <VariableEditorList
+            variables={this.props.variables}
+            onAdd={this.onNewVariable}
+            onEdit={this.onEditVariable}
+            onChangeOrder={this.onChangeVariableOrder}
+            onDuplicate={this.onDuplicateVariable}
+            onDelete={this.onRemoveVariable}
+            usages={this.props.usages}
+            usagesNetwork={this.props.usagesNetwork}
+          />
+        )}
+        {!variableToEdit && this.props.variables.length > 0 && (
+          <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}
       </div>

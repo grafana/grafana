@@ -81,6 +81,19 @@ export const grafanaNotifiersMock: NotifierDTO[] = [
         validationRule: '',
         secure: false,
       },
+      {
+        element: 'textarea',
+        inputType: '',
+        label: 'Message',
+        description: '',
+        placeholder: '{{ template "default.message" . }}',
+        propertyName: 'message',
+        selectOptions: null,
+        showWhen: { field: '', is: '' },
+        required: false,
+        validationRule: '',
+        secure: false,
+      },
     ],
   },
   {
@@ -309,8 +322,7 @@ export const grafanaNotifiersMock: NotifierDTO[] = [
     name: 'Threema Gateway',
     heading: 'Threema Gateway settings',
     description: 'Sends notifications to Threema using Threema Gateway (Basic IDs)',
-    info:
-      'Notifications can be configured for any Threema Gateway ID of type "Basic". End-to-End IDs are not currently supported.The Threema Gateway ID can be set up at https://gateway.threema.ch/.',
+    info: 'Notifications can be configured for any Threema Gateway ID of type "Basic". End-to-End IDs are not currently supported.The Threema Gateway ID can be set up at https://gateway.threema.ch/.',
     options: [
       {
         element: 'input',

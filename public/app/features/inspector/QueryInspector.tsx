@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
-import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
+import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { AppEvents, DataFrame } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -294,16 +293,15 @@ export class QueryInspector extends PureComponent<Props, State> {
           )}
 
           {haveData && (
-            <CopyToClipboard
-              text={this.getTextForClipboard}
-              onSuccess={this.onClipboardSuccess}
-              elType="div"
+            <ClipboardButton
+              getText={this.getTextForClipboard}
+              onClipboardCopy={this.onClipboardSuccess}
               className={styles.toolbarItem}
+              icon="copy"
+              variant="secondary"
             >
-              <Button icon="copy" variant="secondary">
-                Copy to clipboard
-              </Button>
-            </CopyToClipboard>
+              Copy to clipboard
+            </ClipboardButton>
           )}
           <div className="flex-grow-1" />
         </div>

@@ -15,11 +15,11 @@
 import React from 'react';
 import cx from 'classnames';
 import { css, keyframes } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
-import { createStyle } from '../Theme';
 import { UIIcon } from '../uiElementsContext';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   const LoadingIndicatorColorAnim = keyframes`
     /*
     rgb(0, 128, 128) == teal
@@ -52,7 +52,7 @@ const getStyles = createStyle(() => {
       font-size: 0.7em;
     `,
   };
-});
+};
 
 type LoadingIndicatorProps = {
   centered?: boolean;
@@ -62,7 +62,7 @@ type LoadingIndicatorProps = {
 
 export default function LoadingIndicator(props: LoadingIndicatorProps) {
   const { centered, className, small, ...rest } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const cls = cx(styles.LoadingIndicator, {
     [styles.LoadingIndicatorCentered]: centered,
     [styles.LoadingIndicatorSmall]: small,

@@ -34,7 +34,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		pathSet[file] = struct{}{}
 
 		// Check if the template file already exists and if it has changed
-		// We can safeily ignore gosec here and we've previously checked the filename is clean
+		// We can safely ignore gosec here as we've previously checked the filename is clean
 		// nolint:gosec
 		if tmpl, err := ioutil.ReadFile(file); err == nil && string(tmpl) == content {
 			// Templates file is the same we have, no-op and continue.
@@ -43,10 +43,11 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 			return nil, false, err
 		}
 
+		// We can safely ignore gosec here as we've previously checked the filename is clean
+		// nolint:gosec
 		if err := ioutil.WriteFile(file, []byte(content), 0644); err != nil {
 			return nil, false, fmt.Errorf("unable to create Alertmanager template file %q: %s", file, err)
 		}
-		// nolint:gosec
 
 		templatesChanged = true
 	}

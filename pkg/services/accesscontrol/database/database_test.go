@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -20,6 +19,7 @@ type getUserPermissionsTestCase struct {
 	userPermissions    []string
 	teamPermissions    []string
 	builtinPermissions []string
+	actions            []string
 	expected           int
 }
 
@@ -52,6 +52,26 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			builtinPermissions: []string{"5", "6"},
 			expected:           5,
 		},
+		{
+			desc:               "Should filter on actions",
+			orgID:              1,
+			role:               "",
+			userPermissions:    []string{"1", "2", "10"},
+			teamPermissions:    []string{"100", "2"},
+			builtinPermissions: []string{"5", "6"},
+			expected:           3,
+			actions:            []string{"dashboards:write"},
+		},
+		{
+			desc:               "Should return no permission when passing empty slice of actions",
+			orgID:              1,
+			role:               "Viewer",
+			userPermissions:    []string{"1", "2", "10"},
+			teamPermissions:    []string{"100", "2"},
+			builtinPermissions: []string{"5", "6"},
+			expected:           0,
+			actions:            []string{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -60,29 +80,29 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermissions(context.Background(), tt.orgID, user.Id, accesscontrol.SetResourcePermissionsCommand{
-					Actions:    []string{"dashboards:read"},
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.Id}, accesscontrol.SetResourcePermissionCommand{
+					Actions:    []string{"dashboards:write"},
 					Resource:   "dashboards",
 					ResourceID: id,
-				})
+				}, nil)
 				require.NoError(t, err)
 			}
 
 			for _, id := range tt.teamPermissions {
-				_, err := store.SetTeamResourcePermissions(context.Background(), tt.orgID, team.Id, accesscontrol.SetResourcePermissionsCommand{
+				_, err := store.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
-				})
+				}, nil)
 				require.NoError(t, err)
 			}
 
 			for _, id := range tt.builtinPermissions {
-				_, err := store.SetBuiltinResourcePermissions(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionsCommand{
+				_, err := store.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
-				})
+				}, nil)
 				require.NoError(t, err)
 			}
 
@@ -97,9 +117,10 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
-				OrgID:  tt.orgID,
-				UserID: user.Id,
-				Roles:  roles,
+				OrgID:   tt.orgID,
+				UserID:  user.Id,
+				Roles:   roles,
+				Actions: tt.actions,
 			})
 
 			require.NoError(t, err)

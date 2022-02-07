@@ -82,7 +82,15 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       iconOnly: !children,
     });
 
-    const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
+    const linkButtonStyles = cx(
+      styles.button,
+      {
+        [css(styles.disabled, {
+          pointerEvents: 'none',
+        })]: disabled,
+      },
+      className
+    );
 
     deprecatedPropWarning(
       variant === 'link',
@@ -228,7 +236,6 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
     boxShadow: 'none',
-    pointerEvents: 'none',
     color: theme.colors.text.disabled,
     transition: 'none',
   };

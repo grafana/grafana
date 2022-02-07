@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -39,23 +42,11 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID         string `json:"refId"`
-	Query         map[string]interface{}
-	QueryType     string
-	TimeRange     TimeRange
-	DatasourceUID string // Gets populated from Either DatasourceUID or Datasource.UID
-}
-
-func (rn *rawNode) IsExpressionQuery() bool {
-	if IsDataSource(rn.DatasourceUID) {
-		return true
-	}
-	if v, ok := rn.Query["datasourceId"]; ok {
-		if v == OldDatasourceUID {
-			return true
-		}
-	}
-	return false
+	RefID      string `json:"refId"`
+	Query      map[string]interface{}
+	QueryType  string
+	TimeRange  TimeRange
+	DataSource *models.DataSource
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -146,9 +137,8 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query         json.RawMessage
-	datasourceID  int64
-	datasourceUID string
+	query      json.RawMessage
+	datasource *models.DataSource
 
 	orgID      int64
 	queryType  string
@@ -181,18 +171,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		maxDP:      defaultMaxDP,
 		timeRange:  rn.TimeRange,
 		request:    *req,
-	}
-
-	// support old datasourceId property
-	rawDsID, ok := rn.Query["datasourceId"]
-	if ok {
-		floatDsID, ok := rawDsID.(float64)
-		if !ok {
-			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-		}
-		dsNode.datasourceID = int64(floatDsID)
-	} else {
-		dsNode.datasourceUID = rn.DatasourceUID
+		datasource: rn.DataSource,
 	}
 
 	var floatIntervalMS float64
@@ -218,12 +197,14 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
+	if err != nil {
+		return mathexp.Results{}, errutil.Wrap("failed to convert datasource instance settings", err)
+	}
 	pc := backend.PluginContext{
-		OrgID: dn.orgID,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID:  dn.datasourceID,
-			UID: dn.datasourceUID,
-		},
+		OrgID:                      dn.orgID,
+		DataSourceInstanceSettings: dsInstanceSettings,
+		PluginID:                   dn.datasource.Type,
 	}
 
 	q := []backend.DataQuery{
@@ -240,12 +221,11 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		},
 	}
 
-	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 		Headers:       dn.request.Headers,
 	})
-
 	if err != nil {
 		return mathexp.Results{}, err
 	}
@@ -274,8 +254,16 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			}
 		}
 
+		dataSource := dn.datasource.Type
 		for _, frame := range qr.Frames {
 			logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
+			// the WideToMany() function to error out, which results in unhealthy alerts.
+			// This check should be removed once inconsistencies in data source responses are solved.
+			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == models.DS_INFLUXDB {
+				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
+				continue
+			}
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err
