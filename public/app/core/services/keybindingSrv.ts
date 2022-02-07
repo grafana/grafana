@@ -323,6 +323,24 @@ export class KeybindingSrv {
       window.location.href = window.location.href + newUrlParam;
     });
   }
+
+  setupExploreBindings() {
+    this.bind('t z', () => {
+      appEvents.publish(new ZoomOutEvent(2));
+    });
+
+    this.bind('ctrl+z', () => {
+      appEvents.publish(new ZoomOutEvent(2));
+    });
+
+    this.bind('t left', () => {
+      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Left));
+    });
+
+    this.bind('t right', () => {
+      appEvents.publish(new ShiftTimeEvent(ShiftTimeEventPayload.Right));
+    });
+  }
 }
 
 export const keybindingSrv = new KeybindingSrv();

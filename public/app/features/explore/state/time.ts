@@ -101,6 +101,9 @@ export const updateTime = (config: {
         time: range.raw,
         refresh: false,
         timeZone,
+        timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
+          dispatch(updateTime({ exploreId: exploreId, rawRange: rawTimeRange }));
+        },
       })
     );
 
