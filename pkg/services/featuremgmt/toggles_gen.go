@@ -55,6 +55,10 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
+	// FlagLokiBackendMode
+	// Loki datasource works as backend datasource
+	FlagLokiBackendMode = "lokiBackendMode"
+
 	// FlagFullRangeLogsVolume
 	// Show full range logs volume in explore
 	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
