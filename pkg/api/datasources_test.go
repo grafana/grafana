@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,20 +30,15 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	mock := mockstore.NewSQLStoreMock()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
-			assert.Equal(t, testOrgID, query.OrgId)
-			query.Result = []*models.DataSource{
-				{Name: "mmm"},
-				{Name: "ZZZ"},
-				{Name: "BBB"},
-				{Name: "aaa"},
-			}
-			return nil
-		})
+		mock.ExpectedDatasources = []*models.DataSource{
+			{Name: "mmm"},
+			{Name: "ZZZ"},
+			{Name: "BBB"},
+			{Name: "aaa"},
+		}
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Bus:         bus.GetBus(),
 			Cfg:         setting.NewCfg(),
 			pluginStore: &fakePluginStore{},
 			SQLStore:    mock,
@@ -66,7 +60,6 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		"/api/datasources/name/12345", "/api/datasources/name/:name", func(sc *scenarioContext) {
 			// handler func being tested
 			hs := &HTTPServer{
-				Bus:         bus.GetBus(),
 				Cfg:         setting.NewCfg(),
 				pluginStore: &fakePluginStore{},
 			}
@@ -78,9 +71,10 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 // Adding data sources with invalid URLs should lead to an error.
 func TestAddDataSource_InvalidURL(t *testing.T) {
-	defer bus.ClearBusHandlers()
-
 	sc := setupScenarioContext(t, "/api/datasources")
+	hs := &HTTPServer{
+		SQLStore: mockstore.NewSQLStoreMock(),
+	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(models.AddDataSourceCommand{
@@ -89,7 +83,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
-		return AddDataSource(c)
+		return hs.AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -99,19 +93,14 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 
 // Adding data sources with URLs not specifying protocol should work.
 func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
-	defer bus.ClearBusHandlers()
-
 	const name = "Test"
 	const url = "localhost:5432"
 
-	// Stub handler
-	bus.AddHandler("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-		assert.Equal(t, name, cmd.Name)
-		assert.Equal(t, url, cmd.Url)
-
-		cmd.Result = &models.DataSource{}
-		return nil
-	})
+	mockSQLStore := mockstore.NewSQLStoreMock()
+	mockSQLStore.ExpectedDatasource = &models.DataSource{}
+	hs := &HTTPServer{
+		SQLStore: mockSQLStore,
+	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
@@ -122,7 +111,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
-		return AddDataSource(c)
+		return hs.AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -133,7 +122,9 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 // Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	defer bus.ClearBusHandlers()
-
+	hs := &HTTPServer{
+		SQLStore: mockstore.NewSQLStoreMock(),
+	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -143,7 +134,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
-		return AddDataSource(c)
+		return hs.AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -158,14 +149,12 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const name = "Test"
 	const url = "localhost:5432"
 
+	mockSQLStore := mockstore.NewSQLStoreMock()
+	hs := &HTTPServer{
+		SQLStore: mockSQLStore,
+	}
 	// Stub handler
-	bus.AddHandler("sql", func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-		assert.Equal(t, name, cmd.Name)
-		assert.Equal(t, url, cmd.Url)
-
-		cmd.Result = &models.DataSource{}
-		return nil
-	})
+	mockSQLStore.ExpectedDatasource = &models.DataSource{}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -176,7 +165,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 			Access: "direct",
 			Type:   "test",
 		})
-		return AddDataSource(c)
+		return hs.AddDataSource(c)
 	}))
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
@@ -204,44 +193,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		Access:   "Proxy",
 		ReadOnly: true,
 	}
-	getDatasourceStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
-		result := testDatasource
-		result.Id = query.Id
-		result.OrgId = query.OrgId
-		query.Result = &result
-		return nil
-	}
-	getDatasourcesStub := func(ctx context.Context, cmd *models.GetDataSourcesQuery) error {
-		cmd.Result = []*models.DataSource{}
-		return nil
-	}
-	addDatasourceStub := func(ctx context.Context, cmd *models.AddDataSourceCommand) error {
-		cmd.Result = &testDatasource
-		return nil
-	}
-	updateDatasourceStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
-		cmd.Result = &testDatasource
-		return nil
-	}
-	updateDatasourceReadOnlyStub := func(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
-		cmd.Result = &testDatasourceReadOnly
-		return nil
-	}
 
-	getDatasourceNotFoundStub := func(ctx context.Context, cmd *models.GetDataSourceQuery) error {
-		cmd.Result = nil
-		return models.ErrDataSourceNotFound
-	}
-
-	getDatasourceReadOnlyStub := func(ctx context.Context, query *models.GetDataSourceQuery) error {
-		query.Result = &testDatasourceReadOnly
-		return nil
-	}
-
-	deleteDatasourceStub := func(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-		cmd.DeletedDatasourcesCount = 1
-		return nil
-	}
 	addDatasourceBody := func() io.Reader {
 		s, _ := json.Marshal(models.AddDataSourceCommand{
 			Name:   "test",
@@ -251,6 +203,10 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		})
 		return bytes.NewReader(s)
 	}
+
+	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore.ExpectedDatasource = &testDatasource
+
 	updateDatasourceBody := func() io.Reader {
 		s, _ := json.Marshal(models.UpdateDataSourceCommand{
 			Name:   "test",
@@ -261,14 +217,14 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		return bytes.NewReader(s)
 	}
 	type acTestCaseWithHandler struct {
-		busStubs []bus.HandlerFunc
-		body     func() io.Reader
+		body func() io.Reader
 		accessControlTestCase
+		expectedDS       *models.DataSource
+		expectedSQLError error
 	}
 	tests := []acTestCaseWithHandler{
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceNotFoundStub, updateDatasourceStub},
-			body:     updateDatasourceBody,
+			body: updateDatasourceBody,
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusNotFound,
 				desc:         "DatasourcesPut should return 404 if datasource not found",
@@ -281,9 +237,9 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedSQLError: models.ErrDataSourceNotFound,
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourcesStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesGet should return 200 for user with correct permissions",
@@ -302,8 +258,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{addDatasourceStub},
-			body:     addDatasourceBody,
+			body: addDatasourceBody,
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesPost should return 200 for user with correct permissions",
@@ -322,8 +277,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub, updateDatasourceStub},
-			body:     updateDatasourceBody,
+			body: updateDatasourceBody,
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesPut should return 200 for user with correct permissions",
@@ -347,8 +301,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceReadOnlyStub, updateDatasourceReadOnlyStub},
-			body:     updateDatasourceBody,
+			body: updateDatasourceBody,
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusForbidden,
 				desc:         "DatasourcesPut should return 403 for read only datasource",
@@ -361,9 +314,9 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasourceReadOnly,
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesDeleteByID should return 200 for user with correct permissions",
@@ -376,6 +329,7 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 					},
 				},
 			},
+			expectedDS: &testDatasource,
 		},
 		{
 			accessControlTestCase: accessControlTestCase{
@@ -387,7 +341,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesDeleteByUID should return 200 for user with correct permissions",
@@ -411,7 +364,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesDeleteByName should return 200 for user with correct permissions",
@@ -435,7 +387,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesGetByID should return 200 for user with correct permissions",
@@ -459,7 +410,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesGetByUID should return 200 for user with correct permissions",
@@ -483,7 +433,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesGetByName should return 200 for user with correct permissions",
@@ -507,7 +456,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStubs: []bus.HandlerFunc{getDatasourceStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesGetIdByName should return 200 for user with correct permissions",
@@ -534,13 +482,15 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			t.Cleanup(bus.ClearBusHandlers)
-			for i, handler := range test.busStubs {
-				bus.AddHandler(fmt.Sprintf("test_handler_%v", i), handler)
-			}
-
 			cfg := setting.NewCfg()
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+
+			sqlStore.ExpectedError = test.expectedSQLError
+			if test.expectedDS != nil {
+				sqlStore.ExpectedDatasource = test.expectedDS
+			}
+			sc.sqlStore = sqlStore
+			hs.SQLStore = sqlStore
 
 			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {
