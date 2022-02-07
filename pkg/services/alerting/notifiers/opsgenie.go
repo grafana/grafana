@@ -3,7 +3,7 @@ package notifiers
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -75,6 +75,14 @@ func init() {
 				Description:  "Send the notification tags to Opsgenie as either Extra Properties, Tags or both",
 				PropertyName: "sendTagsAs",
 			},
+			{
+				Label:        "Override alias prefix",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "AlertId",
+				Description:  "In case multiple instances of grafana are connected to a single OpsGenie account, the alias prefix is a unique identifier for each instance (a-zA-Z0-9).",
+				PropertyName: "aliasPrefix",
+			},
 		},
 	})
 }
@@ -103,6 +111,14 @@ func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 		}
 	}
 
+	aliasPrefix := model.Settings.Get("aliasPrefix").MustString()
+	re := regexp.MustCompile("^[a-zA-Z0-9]+$")
+	if aliasPrefix != "" && !re.MatchString(aliasPrefix) {
+		return nil, alerting.ValidationError{
+			Reason: fmt.Sprintf("Invalid value for aliasPrefix: %q", aliasPrefix),
+		}
+	}
+
 	return &OpsGenieNotifier{
 		NotifierBase:     NewNotifierBase(model, ns),
 		APIKey:           apiKey,
@@ -110,6 +126,7 @@ func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 		AutoClose:        autoClose,
 		OverridePriority: overridePriority,
 		SendTagsAs:       sendTagsAs,
+		AliasPrefix:      aliasPrefix,
 		log:              log.New("alerting.notifier.opsgenie"),
 	}, nil
 }
@@ -123,6 +140,7 @@ type OpsGenieNotifier struct {
 	AutoClose        bool
 	OverridePriority bool
 	SendTagsAs       string
+	AliasPrefix      string
 	log              log.Logger
 }
 
@@ -156,10 +174,15 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
+	aliasPrefix := "alertId"
+	if on.AliasPrefix != "" {
+		aliasPrefix = on.AliasPrefix
+	}
+
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message", evalContext.Rule.Name)
 	bodyJSON.Set("source", "Grafana")
-	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
+	bodyJSON.Set("alias", fmt.Sprintf("%s-%d", aliasPrefix, evalContext.Rule.ID))
 	bodyJSON.Set("description", fmt.Sprintf("%s - %s\n%s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message, customData))
 
 	details := simplejson.New()
@@ -215,12 +238,17 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error {
 	on.log.Info("Closing OpsGenie alert", "ruleId", evalContext.Rule.ID, "notification", on.Name)
 
+	aliasPrefix := "alertId"
+	if on.AliasPrefix != "" {
+		aliasPrefix = on.AliasPrefix
+	}
+
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("source", "Grafana")
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", on.APIUrl, evalContext.Rule.ID),
+		Url:        fmt.Sprintf("%s/%s-%d/close?identifierType=alias", on.APIUrl, aliasPrefix, evalContext.Rule.ID),
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
