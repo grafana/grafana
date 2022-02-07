@@ -47,8 +47,6 @@ const bugQuery: PromVisualQuery = {
 describe('PromQueryBuilder', () => {
   it('shows empty just with metric selected', async () => {
     setup();
-    // One should be select another query preview
-    expect(screen.getAllByText('random_metric').length).toBe(2);
     // Add label
     expect(screen.getByLabelText('Add')).toBeInTheDocument();
     expect(screen.getByLabelText('Add operation')).toBeInTheDocument();
@@ -67,9 +65,6 @@ describe('PromQueryBuilder', () => {
     expect(screen.getByText('Binary operations')).toBeInTheDocument();
     expect(screen.getByText('Operator')).toBeInTheDocument();
     expect(screen.getByText('Vector matches')).toBeInTheDocument();
-    expect(screen.getByLabelText('selector').textContent).toBe(
-      'sum by(instance, job) (rate(random_metric{instance="localhost:9090"}[$__rate_interval])) / sum by(app) (metric2{foo="bar"})'
-    );
   });
 
   it('tries to load metrics without labels', async () => {

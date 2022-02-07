@@ -71,8 +71,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
-
-	return response.JSON(http.StatusCreated, user)
+	result := models.UserIdDTO{
+		Message: "Service account created",
+		Id:      user.Id,
+	}
+	return response.JSON(http.StatusCreated, result)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
