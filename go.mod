@@ -252,8 +252,6 @@ require (
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )
 
-require github.com/brianvoe/gofakeit/v6 v6.10.0
-
 require cloud.google.com/go/kms v1.1.0
 
 require (
