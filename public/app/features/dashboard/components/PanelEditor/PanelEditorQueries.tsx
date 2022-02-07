@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { PanelModel } from '../../state';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 import { DataQuery } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -47,9 +47,9 @@ export class PanelEditorQueries extends PureComponent<Props> {
   };
 
   onOpenQueryInspector = () => {
-    getLocationSrv().update({
-      query: { inspect: this.props.panel.id, inspectTab: 'query' },
-      partial: true,
+    locationService.partial({
+      inspect: this.props.panel.id,
+      inspectTab: 'query',
     });
   };
 
