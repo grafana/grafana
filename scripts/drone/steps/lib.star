@@ -317,8 +317,10 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode):
+    src_dir = ''
     if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+        bucket = "$${PRERELEASE_BUCKET}"
+        src_dir = " --src-dir artifacts/static-assets"
     else:
         bucket = "grafana-static-assets"
 
@@ -341,7 +343,7 @@ def upload_cdn_step(edition, ver_mode):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
+            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
 

@@ -812,7 +812,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
   depends_on:
   - grafana-server
   environment:
@@ -1319,7 +1319,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --src-bucket "$${PRERELEASE_BUCKET}" --src-dir
+    artifacts/static-assets
   depends_on:
   - grafana-server
   environment:
@@ -1916,7 +1917,8 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "$${PRERELEASE_BUCKET}"
+    --src-dir artifacts/static-assets
   depends_on:
   - package
   environment:
@@ -1959,7 +1961,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "$${PRERELEASE_BUCKET}/artifacts/static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "$${PRERELEASE_BUCKET}"
+    --src-dir artifacts/static-assets
   depends_on:
   - package-enterprise2
   environment:
@@ -3080,7 +3083,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
   depends_on:
   - grafana-server
   environment:
@@ -3614,7 +3617,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "grafana-static-assets"
   depends_on:
   - package
   environment:
@@ -3657,7 +3660,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "grafana-static-assets"
   depends_on:
   - package-enterprise2
   environment:
@@ -4191,6 +4194,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b260e8637e70cf3bd268764e25f3b45ede5583d3d90da25512448106deaf71a7
+hmac: b697c1d027af3dec4cb90c9b5f0ccd15359a3af60685338f258c74efd0e45aa5
 
 ...
