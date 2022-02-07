@@ -48,7 +48,6 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 		return sess, false, nil
 	}
 
-	sessionLogger.Debug("creating a new session", "transaction", beginTran)
 	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
 	if beginTran {
 		err := newSess.Begin()
