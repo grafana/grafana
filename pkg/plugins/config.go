@@ -24,7 +24,6 @@ type Cfg struct {
 	CheckForUpdates bool
 
 	BuildVersion string // TODO Remove
-	AppSubURL    string // TODO Remove
 }
 
 func NewCfg() *Cfg {
@@ -51,7 +50,6 @@ func FromGrafanaCfg(grafanaCfg *setting.Cfg) *Cfg {
 	cfg.CheckForUpdates = grafanaCfg.CheckForUpdates
 
 	cfg.BuildVersion = grafanaCfg.BuildVersion
-	cfg.AppSubURL = grafanaCfg.AppSubURL
 
 	return cfg
 }

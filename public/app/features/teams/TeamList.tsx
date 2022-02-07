@@ -43,7 +43,7 @@ export class TeamList extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchTeams();
-    if (contextSrv.licensedAccessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       this.fetchRoleOptions();
     }
   }
@@ -95,7 +95,7 @@ export class TeamList extends PureComponent<Props, State> {
         </td>
         {contextSrv.licensedAccessControlEnabled() && (
           <td>
-            <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
+            <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />
           </td>
         )}
         <td className="text-right">

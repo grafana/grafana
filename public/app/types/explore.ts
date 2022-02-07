@@ -48,10 +48,10 @@ export interface ExploreState {
   richHistory: RichHistoryQuery[];
 
   /**
-   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
    * multiple errors when local storage is full.
    */
-  localStorageFull: boolean;
+  richHistoryStorageFull: boolean;
 
   /**
    * True if a warning message of hitting the exceeded number of items has been shown already.
@@ -204,12 +204,9 @@ export interface QueryTransaction {
 export type RichHistoryQuery = {
   ts: number;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
   queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
 };
 
 export interface ExplorePanelData extends PanelData {

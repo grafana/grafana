@@ -7,14 +7,28 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+// swagger:route Post /api/v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
+//
+// Test a rule against Grafana ruler
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: TestRuleResponse
 
 // swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
 //
-// Test rule
+// Test a rule against external data source ruler
 //
 //     Consumes:
 //     - application/json
@@ -44,7 +58,7 @@ type TestReceiverRequest struct {
 	Body ExtendedReceiver
 }
 
-// swagger:parameters RouteTestRuleConfig
+// swagger:parameters RouteTestRuleConfig RouteTestRuleGrafanaConfig
 type TestRuleRequest struct {
 	// in:body
 	Body TestRulePayload
