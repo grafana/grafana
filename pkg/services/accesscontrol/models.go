@@ -235,17 +235,10 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 }
 
 type SetResourcePermissionCommand struct {
-	Actions    []string
-	Resource   string
-	ResourceID string
-	Permission string
-}
-
-type GetResourcesPermissionsQuery struct {
-	Actions     []string
-	Resource    string
-	ResourceIDs []string
-	OnlyManaged bool
+	UserID      int64
+	TeamID      int64
+	BuiltinRole string
+	Permission  string
 }
 
 type SQLFilter struct {
