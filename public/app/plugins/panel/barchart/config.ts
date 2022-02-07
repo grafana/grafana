@@ -33,7 +33,7 @@ export const setupConfig = ({
 }: SetupConfigParams): UPlotConfigBuilder => {
   config.addHook('init', (u) => {
     u.root.parentElement?.addEventListener('click', onUPlotClick);
-    u.over?.addEventListener('mouseleave', () => {
+    u.over.addEventListener('mouseleave', () => {
       if (!isToolTipOpen.current) {
         setCoords(null);
       }
