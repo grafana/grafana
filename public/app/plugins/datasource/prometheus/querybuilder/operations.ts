@@ -51,7 +51,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createRangeFunction(PromOperationId.Irate),
     createRangeFunction(PromOperationId.Increase),
     createRangeFunction(PromOperationId.Delta),
-    // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
+    // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
     // both the operator and the operand in a single input
     {
       id: PromOperationId.MultiplyBy,
@@ -80,9 +80,79 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => innerExpr,
       addOperationHandler: addNestedQueryHandler,
     },
+    createUncategorizedFunction(PromOperationId.Abs, 'Absolute Value'),
+    createUncategorizedFunction(PromOperationId.Absent, 'Absent'),
+    createUncategorizedFunction(PromOperationId.AbsentOverTime, 'Absent over time'),
+    createUncategorizedFunction(PromOperationId.Acos, 'Arc Cosine'),
+    createUncategorizedFunction(PromOperationId.Acosh, 'Inverse Arc Cosine'),
+    createUncategorizedFunction(PromOperationId.Asin, 'Arc Sine'),
+    createUncategorizedFunction(PromOperationId.Asinh, 'Inverse Arc Sine'),
+    createUncategorizedFunction(PromOperationId.Atan, 'Arc Tangent'),
+    createUncategorizedFunction(PromOperationId.Atanh, 'Inverse Arc Tangent'),
+    createUncategorizedFunction(PromOperationId.BottomK, 'Bottom (K)'),
+    createUncategorizedFunction(PromOperationId.Ceil, 'Ceiling'),
+    createUncategorizedFunction(PromOperationId.Clamp, 'Clamp'),
+    createUncategorizedFunction(PromOperationId.ClampMax, 'Clamp Maximum'),
+    createUncategorizedFunction(PromOperationId.ClampMin, 'Clamp Minimum'),
+    createUncategorizedFunction(PromOperationId.Cos, 'Cosine'),
+    createUncategorizedFunction(PromOperationId.Cosh, 'Inverse Cosine'),
+    createUncategorizedFunction(PromOperationId.CountScalar, 'Count Scalar'),
+    createUncategorizedFunction(PromOperationId.CountValues, 'Count Values'),
+    createUncategorizedFunction(PromOperationId.DayOfMonth, 'Day of the Month'),
+    createUncategorizedFunction(PromOperationId.DayOfWeek, 'Day of the Week'),
+    createUncategorizedFunction(PromOperationId.DaysInMonth, 'Days in Month'),
+    createUncategorizedFunction(PromOperationId.Deg, 'Degrees'),
+    createUncategorizedFunction(PromOperationId.Deriv, 'Derivative'),
+    createUncategorizedFunction(PromOperationId.DropCommonLabels, 'Drop Common Labels'),
+    createUncategorizedFunction(PromOperationId.Exp, 'Exponent'),
+    createUncategorizedFunction(PromOperationId.Floor, 'Floor'),
+    createUncategorizedFunction(PromOperationId.Group, 'Group'),
+    createUncategorizedFunction(PromOperationId.HoltWinters, 'Holt Winters (Predictive)'),
+    createUncategorizedFunction(PromOperationId.Hour, 'Hour'),
+    createUncategorizedFunction(PromOperationId.Idelta, 'Idelta'),
+    createUncategorizedFunction(PromOperationId.LabelJoin, 'Join Labels'),
+    createUncategorizedFunction(PromOperationId.Last, 'Last'),
+    createUncategorizedFunction(PromOperationId.Log10, 'Log(10)'),
+    createUncategorizedFunction(PromOperationId.Log2, 'Log(2)'),
+    createUncategorizedFunction(PromOperationId.Minute, 'Minute'),
+    createUncategorizedFunction(PromOperationId.Month, 'Month'),
+    createUncategorizedFunction(PromOperationId.Pi, 'PI'),
+    createUncategorizedFunction(PromOperationId.PredictLinear, 'PredictLinear'),
+    createUncategorizedFunction(PromOperationId.Present, 'Present'),
+    createUncategorizedFunction(PromOperationId.Quantile, 'Quantile'),
+    createUncategorizedFunction(PromOperationId.QuantileOverTime, 'Quantile over time'),
+    createUncategorizedFunction(PromOperationId.Rad, 'Radians'),
+    createUncategorizedFunction(PromOperationId.Resets, 'Resets'),
+    createUncategorizedFunction(PromOperationId.Round, 'Round'),
+    createUncategorizedFunction(PromOperationId.Scalar, 'Scalar'),
+    createUncategorizedFunction(PromOperationId.Sgn, 'Sgn'),
+    createUncategorizedFunction(PromOperationId.Sin, 'Sine'),
+    createUncategorizedFunction(PromOperationId.Sinh, 'Inverse Sine'),
+    createUncategorizedFunction(PromOperationId.Sort, 'Sort'),
+    createUncategorizedFunction(PromOperationId.SortDesc, 'Sort by description'),
+    createUncategorizedFunction(PromOperationId.Sqrt, 'Square root'),
+    createUncategorizedFunction(PromOperationId.Stddev, 'Standard deviation'),
+    createUncategorizedFunction(PromOperationId.Tan, 'Tangent'),
+    createUncategorizedFunction(PromOperationId.Tanh, 'Inverse Tangent'),
+    createUncategorizedFunction(PromOperationId.Time, 'Time'),
+    createUncategorizedFunction(PromOperationId.Timestamp, 'Timestamp'),
+    createUncategorizedFunction(PromOperationId.Vector, 'Vector'),
+    createUncategorizedFunction(PromOperationId.Year, 'Year'),
   ];
 
   return list;
+}
+
+function createUncategorizedFunction(id: PromOperationId, name: string): QueryBuilderOperationDef {
+  return {
+    id,
+    name,
+    params: [],
+    defaultParams: [],
+    category: PromVisualQueryOperationCategory.Uncategorized,
+    renderer: functionRendererLeft,
+    addOperationHandler: defaultAddOperationHandler,
+  };
 }
 
 function createRangeFunction(name: string): QueryBuilderOperationDef {
