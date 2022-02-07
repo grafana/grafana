@@ -2,12 +2,14 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -103,6 +105,20 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	return response.Success("Team deleted")
 }
 
+func (hs *HTTPServer) getTeamsAccessControlMetadata(c *models.ReqContext, teamIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
+	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	if err != nil || len(userPermissions) == 0 {
+		hs.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
+		return nil, err
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "teams", teamIDs), nil
+}
+
 // GET /api/teams/search
 func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
@@ -134,14 +150,40 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to search Teams", err)
 	}
 
+	teamIDs := map[string]bool{}
 	for _, team := range query.Result.Teams {
 		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+		teamIDs[strconv.FormatInt(team.Id, 10)] = true
+	}
+
+	metadata, err := hs.getTeamsAccessControlMetadata(c, teamIDs)
+	if err == nil && len(metadata) != 0 {
+		for _, team := range query.Result.Teams {
+			team.AccessControl = metadata[strconv.FormatInt(team.Id, 10)]
+		}
 	}
 
 	query.Result.Page = page
 	query.Result.PerPage = perPage
 
 	return response.JSON(200, query.Result)
+}
+
+func (hs *HTTPServer) getTeamAccessControlMetadata(c *models.ReqContext, teamID int64) (accesscontrol.Metadata, error) {
+	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	if err != nil || len(userPermissions) == 0 {
+		hs.log.Warn("could not fetch accesscontrol metadata", "team", teamID, "error", err)
+		return nil, err
+	}
+
+	key := fmt.Sprintf("%d", teamID)
+	teamIDs := map[string]bool{key: true}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "teams", teamIDs)[key], nil
 }
 
 // GET /api/teams/:teamId
@@ -164,6 +206,9 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 
 		return response.Error(500, "Failed to get Team", err)
 	}
+
+	metadata, _ := hs.getTeamAccessControlMetadata(c, query.Result.Id)
+	query.Result.AccessControl = metadata
 
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
 	return response.JSON(200, &query.Result)

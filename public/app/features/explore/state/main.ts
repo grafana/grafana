@@ -20,7 +20,7 @@ export interface SyncTimesPayload {
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-export const localStorageFullAction = createAction('explore/localStorageFullAction');
+export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 
 /**
@@ -158,7 +158,7 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
-  localStorageFull: false,
+  richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
 };
 
@@ -214,10 +214,10 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (localStorageFullAction.match(action)) {
+  if (richHistoryStorageFullAction.match(action)) {
     return {
       ...state,
-      localStorageFull: true,
+      richHistoryStorageFull: true,
     };
   }
 

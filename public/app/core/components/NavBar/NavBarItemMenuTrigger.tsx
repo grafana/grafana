@@ -7,6 +7,7 @@ import { useMenuTriggerState } from '@react-stately/menu';
 import { useMenuTrigger } from '@react-aria/menu';
 import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useButton } from '@react-aria/button';
+import { useDialog } from '@react-aria/dialog';
 import { DismissButton, useOverlay } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
 
@@ -130,6 +131,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   }
 
   const overlayRef = React.useRef(null);
+  const { dialogProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
       onClose: () => state.close(),
@@ -155,7 +157,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           }}
         >
           <FocusScope restoreFocus>
-            <div {...overlayProps} ref={overlayRef}>
+            <div {...overlayProps} {...dialogProps} ref={overlayRef}>
               <DismissButton onDismiss={() => state.close()} />
               {menu}
               <DismissButton onDismiss={() => state.close()} />

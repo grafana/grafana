@@ -75,7 +75,7 @@ type schedule struct {
 
 	log log.Logger
 
-	evaluator eval.Evaluator
+	evaluator *eval.Evaluator
 
 	ruleStore         store.RuleStore
 	instanceStore     store.InstanceStore
@@ -108,7 +108,7 @@ type SchedulerCfg struct {
 	EvalAppliedFunc         func(models.AlertRuleKey, time.Time)
 	MaxAttempts             int64
 	StopAppliedFunc         func(models.AlertRuleKey)
-	Evaluator               eval.Evaluator
+	Evaluator               *eval.Evaluator
 	RuleStore               store.RuleStore
 	OrgStore                store.OrgStore
 	InstanceStore           store.InstanceStore
