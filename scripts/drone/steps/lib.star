@@ -767,15 +767,11 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
 
     cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)
 
-    deps = []
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
         cmd += ' --version-tag ${TAG}'
-    elif ver_mode == 'main':
-        if not ubuntu:
-            deps = ['build-docker-images-ubuntu']
-        else:
-            deps = ['build-docker-images']
+    else:
+        deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
     return {
         'name': 'publish-images-{}'.format(docker_repo),

@@ -792,6 +792,7 @@ steps:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana --base alpine --base
     ubuntu --arch amd64 --arch arm64 --arch armv7
   depends_on:
+  - build-docker-images
   - build-docker-images-ubuntu
   environment:
     DOCKER_PASSWORD:
@@ -810,6 +811,7 @@ steps:
     --base ubuntu --arch amd64 --arch arm64 --arch armv7
   depends_on:
   - build-docker-images
+  - build-docker-images-ubuntu
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -4216,6 +4218,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9b993df3f473d6b6b825c65cff8068a3b5be458a0a03ec43010fc3e73052f500
+hmac: ddd1967a9868b85193b07a56640974514a63377341786ceee41868759387db61
 
 ...
