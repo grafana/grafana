@@ -95,6 +95,8 @@ interface Context {
   errors: ParsingError[];
 }
 
+const ErrorName = '⚠';
+
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
  * handled here does not necessarily needs to be of type == Expr.
@@ -114,6 +116,10 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     case 'LabelMatcher': {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
+      const err = node.getChild(ErrorName);
+      if (err) {
+        context.errors.push(makeError(expr, err));
+      }
       break;
     }
 
@@ -133,19 +139,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     // This is used for error type for some reason
-    case '⚠': {
+    case ErrorName: {
       if (isIntervalVariableError(node)) {
         break;
       }
-      context.errors.push({
-        text: getString(expr, node),
-        // TODO: this are positions in the string with the replaced variables. Means it cannot be used to show exact
-        //  placement of the error for the user. We need some translation table to positions before the variable
-        //  replace.
-        from: node.from,
-        to: node.to,
-        parentType: node.parent?.name,
-      });
+      context.errors.push(makeError(expr, node));
       break;
     }
 
@@ -161,6 +159,18 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       }
     }
   }
+}
+
+function makeError(expr: string, node: SyntaxNode) {
+  return {
+    text: getString(expr, node),
+    // TODO: this are positions in the string with the replaced variables. Means it cannot be used to show exact
+    //  placement of the error for the user. We need some translation table to positions before the variable
+    //  replace.
+    from: node.from,
+    to: node.to,
+    parentType: node.parent?.name,
+  };
 }
 
 function isIntervalVariableError(node: SyntaxNode) {

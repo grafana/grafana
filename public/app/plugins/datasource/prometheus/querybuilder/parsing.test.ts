@@ -284,6 +284,24 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('fails to parse malformed query 2', () => {
+    expect(buildVisualQueryFromString('ewafweaf{afea=afe}')).toEqual({
+      errors: [
+        {
+          text: 'afe}',
+          from: 14,
+          to: 18,
+          parentType: 'LabelMatcher',
+        },
+      ],
+      query: {
+        metric: 'ewafweaf',
+        labels: [{ label: 'afea', op: '=', value: '' }],
+        operations: [],
+      },
+    });
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
