@@ -57,14 +57,6 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
   });
 
-  it('searches on words split with _', async () => {
-    render(<MetricSelect {...props} />);
-    await openMetricSelect();
-    const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more_metric');
-    await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
-  });
-
   it('highlihts matching string', async () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
@@ -77,7 +69,7 @@ describe('MetricSelect', () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more_metric');
+    userEvent.type(input, 'more metric');
     await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(2));
   });
 

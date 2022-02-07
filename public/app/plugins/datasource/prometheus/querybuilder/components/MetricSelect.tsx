@@ -6,7 +6,8 @@ import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { css } from '@emotion/css';
 import Highlighter from 'react-highlight-words';
 
-const searchRegex = / |_/g;
+// We are matching words split with space
+const splitSeparator = ' ';
 
 export interface Props {
   query: PromVisualQuery;
@@ -26,7 +27,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     if (!label) {
       return false;
     }
-    const searchWords = searchQuery.split(searchRegex);
+    const searchWords = searchQuery.split(splitSeparator);
     return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
   }, []);
 
@@ -39,7 +40,7 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
 
       return (
         <Highlighter
-          searchWords={meta.inputValue.split(searchRegex)}
+          searchWords={meta.inputValue.split(splitSeparator)}
           textToHighlight={option.label ?? ''}
           highlightClassName={styles.hightlight}
         />
