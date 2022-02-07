@@ -407,27 +407,23 @@ func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.S
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(dash.Id, 10)
 		svc := hs.permissionServices.GetDashboardService()
-		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: c.UserId}, resourceID, models.PERMISSION_ADMIN.String())
+
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{UserID: c.UserId, Permission: models.PERMISSION_ADMIN.String()},
+		}
+
+		if !inFolder {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(models.ROLE_ADMIN), Permission: models.PERMISSION_ADMIN.String()},
+				{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
+			}...)
+		}
+		_, err := svc.SetPermissions(c.Req.Context(), c.OrgId, resourceID, permissions...)
 		if err != nil {
 			return err
 		}
 
-		if !inFolder {
-			_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_ADMIN), resourceID, models.PERMISSION_ADMIN.String())
-			if err != nil {
-				return err
-			}
-
-			_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_EDITOR), resourceID, models.PERMISSION_EDIT.String())
-			if err != nil {
-				return err
-			}
-
-			_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_VIEWER), resourceID, models.PERMISSION_VIEW.String())
-			if err != nil {
-				return err
-			}
-		}
 	} else if hs.Cfg.EditorsCanAdmin {
 		if err := dashSvc.MakeUserAdmin(c.Req.Context(), cmd.OrgId, cmd.UserId, dash.Id, !inFolder); err != nil {
 			return err
