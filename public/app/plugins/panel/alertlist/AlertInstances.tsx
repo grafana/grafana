@@ -1,66 +1,46 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { Alert, PromRuleWithLocation } from 'app/types/unified-alerting';
+import { Alert } from 'app/types/unified-alerting';
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { css } from '@emotion/css';
-import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { UnifiedAlertListOptions } from './types';
+import { GroupMode, UnifiedAlertListOptions } from './types';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { filterAlerts } from './util';
 
 interface Props {
-  ruleWithLocation: PromRuleWithLocation;
+  alerts: Alert[];
   options: PanelProps<UnifiedAlertListOptions>['options'];
 }
 
-export const AlertInstances = ({ ruleWithLocation, options }: Props) => {
-  const { rule } = ruleWithLocation;
-  const [displayInstances, setDisplayInstances] = useState<boolean>(options.showInstances);
+export const AlertInstances: FC<Props> = ({ alerts, options }) => {
+  // when custom grouping is enabled, we will always uncollapse the list of alert instances
+  const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
+  const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    setDisplayInstances(options.showInstances);
-  }, [options.showInstances]);
+  const toggleDisplayInstances = useCallback(() => {
+    setDisplayInstances((display) => !display);
+  }, []);
 
-  const alerts = useMemo(
-    (): Alert[] => (displayInstances ? filterAlerts(options, sortAlerts(options.sortOrder, rule.alerts)) : []),
-    [rule, options, displayInstances]
+  const filteredAlerts = useMemo(
+    (): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [],
+    [alerts, options]
   );
 
   return (
     <div>
-      {rule.state !== PromAlertingRuleState.Inactive && (
-        <div className={styles.instance} onClick={() => setDisplayInstances(!displayInstances)}>
+      {options.groupMode === GroupMode.Default && (
+        <div className={styles.instance} onClick={() => toggleDisplayInstances()}>
           <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />
-          <span>{`${rule.alerts.length} ${pluralize('instance', rule.alerts.length)}`}</span>
+          <span>{`${filteredAlerts.length} ${pluralize('instance', filteredAlerts.length)}`}</span>
         </div>
       )}
-
-      {!!alerts.length && <AlertInstancesTable instances={alerts} />}
+      {displayInstances && <AlertInstancesTable instances={filteredAlerts} />}
     </div>
   );
 };
-
-function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
-  const hasAlertState = Object.values(options.stateFilter).some((value) => value);
-  let filteredAlerts = [...alerts];
-  if (hasAlertState) {
-    filteredAlerts = filteredAlerts.filter((alert) => {
-      return (
-        (options.stateFilter.firing &&
-          (alert.state === GrafanaAlertState.Alerting || alert.state === PromAlertingRuleState.Firing)) ||
-        (options.stateFilter.pending &&
-          (alert.state === GrafanaAlertState.Pending || alert.state === PromAlertingRuleState.Pending)) ||
-        (options.stateFilter.noData && alert.state === GrafanaAlertState.NoData) ||
-        (options.stateFilter.normal && alert.state === GrafanaAlertState.Normal) ||
-        (options.stateFilter.error && alert.state === GrafanaAlertState.Error) ||
-        (options.stateFilter.inactive && alert.state === PromAlertingRuleState.Inactive)
-      );
-    });
-  }
-  return filteredAlerts;
-}
 
 const getStyles = (_: GrafanaTheme2) => ({
   instance: css`

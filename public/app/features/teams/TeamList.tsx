@@ -43,7 +43,7 @@ export class TeamList extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchTeams();
-    if (contextSrv.licensedAccessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       this.fetchRoleOptions();
     }
   }
@@ -74,6 +74,7 @@ export class TeamList extends PureComponent<Props, State> {
       team,
       isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser })
     );
+    const canSeeRolePicker = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
 
     return (
       <tr key={team.id}>
@@ -93,12 +94,11 @@ export class TeamList extends PureComponent<Props, State> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
-        {contextSrv.licensedAccessControlEnabled() &&
-          contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && (
-            <td>
-              <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
-            </td>
-          )}
+        {contextSrv.licensedAccessControlEnabled() && canSeeRolePicker && (
+          <td>
+            <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />
+          </td>
+        )}
         <td className="text-right">
           <DeleteButton
             aria-label="Delete team"
@@ -139,6 +139,8 @@ export class TeamList extends PureComponent<Props, State> {
     const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
     const totalPages = Math.ceil(teams.length / pageLimit);
+
+    console.log('can read roles: ', canReadRoles);
 
     return (
       <>
