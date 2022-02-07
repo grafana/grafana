@@ -4,7 +4,7 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer, RootReducerType } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
+import { QueryVariableModel, VariableHide, VariableQueryEditorType, VariableRefresh, VariableSort } from '../types';
 import { toVariablePayload } from '../state/types';
 import {
   addVariable,
@@ -240,7 +240,7 @@ describe('query actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
       const testMetricSource = { name: 'test', value: 'test', meta: {} };
-      const editor = {};
+      const editor = {} as VariableQueryEditorType; // PR TODO: get proper mock
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -253,16 +253,9 @@ describe('query actions', () => {
         .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(setDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
-        );
-        expect(setEditor).toEqual(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+      );
     });
   });
 
@@ -270,7 +263,7 @@ describe('query actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
       const testMetricSource = { name: 'test', value: null as unknown as string, meta: {} };
-      const editor = {};
+      const editor = {} as VariableQueryEditorType; // PR TODO: get proper mock
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -283,23 +276,16 @@ describe('query actions', () => {
         .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(setDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
-        );
-        expect(setEditor).toEqual(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+      );
     });
   });
 
   describe('when initQueryVariableEditor is dispatched and no metric sources was found', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
-      const editor = {};
+      const editor = {} as VariableQueryEditorType; // PR TODO: get proper mock
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -312,43 +298,16 @@ describe('query actions', () => {
         .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(setDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
-        );
-        expect(setEditor).toEqual(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }));
-        return actions.length === expectedNumberOfActions;
-      });
-    });
-  });
-
-  describe('when initQueryVariableEditor is dispatched and variable dont have datasource', () => {
-    it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ datasource: undefined });
-
-      const tester = await reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenActionIsDispatched(variablesInitTransaction({ uid: 'a uid' }))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
-
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [setDatasource] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(setDatasource).toEqual(changeVariableEditorExtended({ propName: 'dataSource', propValue: undefined }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+      );
     });
   });
 
   describe('when changeQueryVariableDataSource is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ datasource: { uid: 'other' } });
-      const editor = {};
+      const editor = {} as VariableQueryEditorType; // PR TODO: get proper mock
 
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
@@ -363,25 +322,15 @@ describe('query actions', () => {
           true
         );
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [updateDatasource, updateEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
-        );
-        expect(updateEditor).toEqual(
-          changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+      );
     });
 
     describe('and data source type changed', () => {
       it('then correct actions are dispatched', async () => {
         const variable = createVariable({ datasource: { uid: 'other' } });
-        const editor = {};
+        const editor = {} as VariableQueryEditorType; // PR TODO: get proper mock
         const preloadedState: any = { templating: { editor: { extended: { dataSource: { type: 'previous' } } } } };
 
         mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -399,22 +348,10 @@ describe('query actions', () => {
             true
           );
 
-        tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-          const [changeVariable, updateDatasource, updateEditor] = actions;
-          const expectedNumberOfActions = 3;
-
-          expect(changeVariable).toEqual(
-            changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: '' }))
-          );
-          expect(updateDatasource).toEqual(
-            changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
-          );
-          expect(updateEditor).toEqual(
-            changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
-          );
-
-          return actions.length === expectedNumberOfActions;
-        });
+        tester.thenDispatchedActionsShouldEqual(
+          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: '' })),
+          changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+        );
       });
     });
   });
@@ -437,19 +374,9 @@ describe('query actions', () => {
           true
         );
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [updateDatasource, updateEditor] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateDatasource).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
-        );
-        expect(updateEditor).toEqual(
-          changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
-        );
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+      );
     });
   });
 

@@ -374,16 +374,13 @@ describe('adhoc actions', () => {
         { text: 'elasticsearch-v7', value: { uid: 'elasticsearch-v7', type: 'elasticsearch-v7' } },
       ];
 
-      tester.thenDispatchedActionsShouldEqual(
-        changeVariableEditorExtended({ propName: 'dataSources', propValue: expectedDatasources })
-      );
+      tester.thenDispatchedActionsShouldEqual(changeVariableEditorExtended({ dataSources: expectedDatasources }));
     });
   });
 
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = { uid: 'mysql' };
-      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource({ uid: 'influxdb' }).build();
 
       getDatasource.mockRestore();
@@ -396,11 +393,9 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText }),
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
         changeVariableEditorExtended({
-          propName: 'infoText',
-          propValue: 'This data source does not support ad hoc filters yet.',
+          infoText: 'This data source does not support ad hoc filters yet.',
         })
       );
     });
@@ -424,8 +419,8 @@ describe('adhoc actions', () => {
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText }),
-        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
+        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
+        changeVariableEditorExtended({ infoText: loadingText })
       );
     });
   });

@@ -49,8 +49,7 @@ export const initDataSourceVariableEditor =
 
     dispatch(
       changeVariableEditorExtended({
-        propName: 'dataSourceTypes',
-        propValue: dataSourceTypes,
+        dataSourceTypes: dataSourceTypes,
       })
     );
   };
