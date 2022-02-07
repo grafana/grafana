@@ -55,7 +55,7 @@
     "@types/braintree__sanitize-url": "4.1.0",
     "@types/jest": "27.4.0",
     "@types/jquery": "3.5.13",
-    "@types/lodash": "4.14.178",
+    "@types/lodash": "4.14.149",
     "@types/marked": "4.0.2",
     "@types/node": "16.11.22",
     "@types/papaparse": "5.3.2",

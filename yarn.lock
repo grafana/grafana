@@ -3808,7 +3808,7 @@ __metadata:
     "@types/d3-interpolate": ^1.4.0
     "@types/jest": 27.4.0
     "@types/jquery": 3.5.13
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/marked": 4.0.2
     "@types/node": 16.11.22
     "@types/papaparse": 5.3.2
@@ -3962,7 +3962,7 @@ __metadata:
     "@types/angular": 1.8.4
     "@types/history": 4.7.11
     "@types/jest": 27.4.0
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/react": 17.0.39
     "@types/react-dom": 17.0.11
     "@types/systemjs": ^0.20.6
@@ -4184,7 +4184,7 @@ __metadata:
     "@types/is-hotkey": 0.1.7
     "@types/jest": 27.4.0
     "@types/jquery": 3.5.13
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/mock-raf": 1.0.3
     "@types/node": 16.11.22
     "@types/prismjs": 1.26.0
@@ -4198,7 +4198,7 @@ __metadata:
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.4
     "@types/react-window": 1.8.5
-    "@types/slate": 0.47.11
+    "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
     "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
@@ -4362,7 +4362,7 @@ __metadata:
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/prop-types": ^15
     "@types/react": 17.0.39
     "@types/react-icons": 2.2.7
@@ -9977,10 +9977,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.9":
-  version: 1.6.9
-  resolution: "@types/mousetrap@npm:1.6.9"
-  checksum: 9362f0aadf4b66deb39e506159248592ec422583fe8c1b3e6e98a6ba193828b4221b50b832829333089e577729d967423165c692a995b1deafa85934b2b63125
+"@types/mousetrap@npm:1.6.3":
+  version: 1.6.3
+  resolution: "@types/mousetrap@npm:1.6.3"
+  checksum: ac2fc9d55ecee6aae6724d76750dfff14f7145fcc1823db9f4644d321c443081e01b66f14f75b52b4611d40c0d581889b52ef1ffaab80df4ea11a43cbbb5fd74
   languageName: node
   linkType: hard
 
@@ -10513,13 +10513,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/slate@npm:0.47.11":
-  version: 0.47.11
-  resolution: "@types/slate@npm:0.47.11"
+"@types/slate@npm:0.47.2":
+  version: 0.47.2
+  resolution: "@types/slate@npm:0.47.2"
   dependencies:
     "@types/react": "*"
     immutable: ^3.8.2
-  checksum: 57efee2f8cc5c90583b256f332e764f7977ade9aff596513d68f44958b3914763ff0a2e4f4fdf1726bebd4815cc2e16a81f052432450cae52373af5582889cb8
+  checksum: c92350f1ef366b5907356a7f3b7bd41dda548dc1002cc2bd79f6b0ff1356d3189c124a54b363ddbe22cbdeb2a75f9d1b67d4f5b2a1bb6b89b714ecf7cf0c49c2
   languageName: node
   linkType: hard
 
@@ -20008,10 +20008,10 @@ __metadata:
     "@types/jquery": 3.5.13
     "@types/jsurl": ^1.2.28
     "@types/lingui__macro": ^3
-    "@types/lodash": 4.14.178
+    "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
-    "@types/mousetrap": 1.6.9
+    "@types/mousetrap": 1.6.3
     "@types/node": 16.11.22
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
@@ -20032,7 +20032,7 @@ __metadata:
     "@types/redux-mock-store": 1.0.3
     "@types/reselect": 2.2.0
     "@types/semver": 7.3.9
-    "@types/slate": 0.47.11
+    "@types/slate": 0.47.2
     "@types/slate-plain-serializer": 0.7.2
     "@types/testing-library__jest-dom": 5.14.2
     "@types/testing-library__react-hooks": ^3.2.0
