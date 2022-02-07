@@ -90,7 +90,7 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, userId int64, cm
 	userMap := map[int64]*models.UserSearchHitDTO{}
 	if userId > 0 {
 		q := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter([]int64{userId})}, Page: 0, Limit: 1}
-		if err := s.bus.DispatchCtx(ctx, q); err != nil {
+		if err := s.bus.Dispatch(ctx, q); err != nil {
 			return nil, err
 		}
 		for _, u := range q.Result.Users {
@@ -138,7 +138,7 @@ func (s *Service) GetMessages(ctx context.Context, orgId int64, _ int64, cmd Get
 	}
 
 	query := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter(userIds)}, Page: 0, Limit: len(userIds)}
-	if err := s.bus.DispatchCtx(ctx, query); err != nil {
+	if err := s.bus.Dispatch(ctx, query); err != nil {
 		return nil, err
 	}
 

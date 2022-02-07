@@ -253,6 +253,7 @@ require (
 )
 
 require github.com/brianvoe/gofakeit/v6 v6.10.0
+
 require cloud.google.com/go/kms v1.1.0
 
 require (
