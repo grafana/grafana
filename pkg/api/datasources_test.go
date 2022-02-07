@@ -41,10 +41,10 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Cfg:                         setting.NewCfg(),
-			pluginStore:                 &fakePluginStore{},
-			SQLStore:                    mockSQLStore,
-			DatasourcePermissionService: mockDatasourcePermissionService,
+			Cfg:                          setting.NewCfg(),
+			pluginStore:                  &fakePluginStore{},
+			SQLStore:                     mockSQLStore,
+			DatasourcePermissionsService: mockDatasourcePermissionService,
 		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
@@ -206,8 +206,8 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 
 	sqlStore := mockstore.NewSQLStoreMock()
 	sqlStore.ExpectedDatasource = &testDatasource
-	permissionStore := newMockDatasourcePermissionService()
-	permissionStore.dsResult = []*models.DataSource{
+	dsPermissionService := newMockDatasourcePermissionService()
+	dsPermissionService.dsResult = []*models.DataSource{
 		&testDatasource,
 	}
 
@@ -502,13 +502,13 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// mock sqlStore and datasource permission service
 			sqlStore.ExpectedError = test.expectedSQLError
 			sqlStore.ExpectedDatasource = test.expectedDS
-			permissionStore.dsResult = []*models.DataSource{test.expectedDS}
+			dsPermissionService.dsResult = []*models.DataSource{test.expectedDS}
 			if test.expectedDS == nil {
-				permissionStore.dsResult = nil
+				dsPermissionService.dsResult = nil
 			}
 			sc.sqlStore = sqlStore
 			hs.SQLStore = sqlStore
-			hs.DatasourcePermissionService = permissionStore
+			hs.DatasourcePermissionsService = dsPermissionService
 
 			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {

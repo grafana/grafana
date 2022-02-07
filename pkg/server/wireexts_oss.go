@@ -73,6 +73,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
+	api.ProvideDatasourcePermissionsService,
+	wire.Bind(new(api.DatasourcePermissionsService), new(*api.DatasourcePermissionsServiceImpl)),
 )
 
 var wireExtsSet = wire.NewSet(

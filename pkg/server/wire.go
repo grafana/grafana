@@ -199,8 +199,6 @@ var wireBasicSet = wire.NewSet(
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboards.ProvideService,
-	api.ProvideDatasourcePermissionService,
-	wire.Bind(new(api.DatasourcePermissionService), new(*api.DatasourcePermissionServiceImpl)),
 )
 
 var wireSet = wire.NewSet(

@@ -6,17 +6,17 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type DatasourcePermissionService interface {
+type DatasourcePermissionsService interface {
 	FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error
 }
 
 // dummy method
-func (hs *DatasourcePermissionServiceImpl) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
+func (hs *DatasourcePermissionsServiceImpl) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
 	return nil
 }
 
-type DatasourcePermissionServiceImpl struct{}
+type DatasourcePermissionsServiceImpl struct{}
 
-func ProvideDatasourcePermissionService() *DatasourcePermissionServiceImpl {
-	return &DatasourcePermissionServiceImpl{}
+func ProvideDatasourcePermissionsService() *DatasourcePermissionsServiceImpl {
+	return &DatasourcePermissionsServiceImpl{}
 }
