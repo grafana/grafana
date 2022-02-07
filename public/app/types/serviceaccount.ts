@@ -1,5 +1,5 @@
 import { WithAccessControlMetadata } from '@grafana/data';
-import { OrgRole } from '.';
+import { ApiKey, OrgRole } from '.';
 
 export interface OrgServiceAccount {
   serviceAccountId: number;
@@ -38,7 +38,7 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
 
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
-  isLoading: boolean;
+  tokens: ApiKey[];
 }
 
 export interface ServiceAccountsState {

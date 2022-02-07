@@ -1,31 +1,52 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { getTimeZone, NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
-import { StoreState, ServiceAccountDTO } from 'app/types';
+import { StoreState, ServiceAccountDTO, ApiKey } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { loadServiceAccount } from './state/actions';
+import { loadServiceAccount, loadServiceAccountTokens } from './state/actions';
+import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
   serviceAccount?: ServiceAccountDTO;
+  tokens: ApiKey[];
+}
+
+interface State {
   isLoading: boolean;
 }
 
-export class ServiceAccountPage extends PureComponent<Props> {
+export class ServiceAccountPage extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      isLoading: false,
+    };
+  }
+
   async componentDidMount() {
+    await this.fetchServiceAccount();
+  }
+
+  async fetchServiceAccount() {
     const { match } = this.props;
-    this.props.loadServiceAccount(parseInt(match.params.id, 10));
+    this.setState({ isLoading: true });
+    await this.props.loadServiceAccount(parseInt(match.params.id, 10));
+    await this.props.loadServiceAccountTokens();
+
+    this.setState({ isLoading: false });
   }
 
   render() {
-    const { navModel, serviceAccount, isLoading } = this.props;
+    const { navModel, serviceAccount, timeZone, tokens } = this.props;
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
+        <Page.Contents isLoading={this.state.isLoading}>
           {serviceAccount && (
             <>
               <ServiceAccountProfile
@@ -43,6 +64,13 @@ export class ServiceAccountPage extends PureComponent<Props> {
                   console.log(`not implemented`);
                 }}
               />
+              <ServiceAccountTokensTable
+                apiKeys={tokens}
+                timeZone={timeZone}
+                onDelete={() => {
+                  console.log(`not implemented`);
+                }}
+              />
             </>
           )}
         </Page.Contents>
@@ -55,11 +83,13 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'serviceaccounts'),
     serviceAccount: state.serviceAccountProfile.serviceAccount,
-    isLoading: state.serviceAccountProfile.isLoading,
+    timeZone: getTimeZone(state.user),
+    tokens: state.serviceAccountProfile.tokens,
   };
 }
 const mapDispatchToProps = {
   loadServiceAccount,
+  loadServiceAccountTokens,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
