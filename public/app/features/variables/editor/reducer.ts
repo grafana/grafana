@@ -78,14 +78,10 @@ const variableEditorReducerSlice = createSlice({
       delete state.errors[action.payload.errorProp];
       state.isValid = Object.keys(state.errors).length === 0;
     },
-    changeVariableEditorExtended: (
-      state: VariableEditorState,
-      action: PayloadAction<{ propName: string; propValue: any }>
-    ) => {
-      // @ts-ignore - temp ignoring the errors now the state type is more strict
+    changeVariableEditorExtended: (state: VariableEditorState, action: PayloadAction<VariableEditorExtension>) => {
       state.extended = {
         ...state.extended,
-        [action.payload.propName]: action.payload.propValue,
+        ...action.payload,
       };
     },
     cleanEditorState: () => initialVariableEditorState,
