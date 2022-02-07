@@ -45,12 +45,10 @@ type ServiceAccountDTO struct {
 
 type ServiceAccountProfileDTO struct {
 	Id            int64           `json:"id"`
-	Email         string          `json:"email"`
 	Name          string          `json:"name"`
 	Login         string          `json:"login"`
 	OrgId         int64           `json:"orgId"`
 	IsDisabled    bool            `json:"isDisabled"`
-	AuthLabels    []string        `json:"authLabels"`
 	UpdatedAt     time.Time       `json:"updatedAt"`
 	CreatedAt     time.Time       `json:"createdAt"`
 	AvatarUrl     string          `json:"avatarUrl"`

@@ -25,6 +25,11 @@ type ServiceAccountsAPI struct {
 	store          serviceaccounts.Store
 }
 
+type serviceAccountIdDTO struct {
+	Id      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
 func NewServiceAccountsAPI(
 	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
@@ -71,8 +76,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
-
-	return response.JSON(http.StatusCreated, user)
+	sa := &serviceAccountIdDTO{
+		Id:      user.Id,
+		Message: "Service account created",
+	}
+	return response.JSON(http.StatusCreated, sa)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
