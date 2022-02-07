@@ -60,7 +60,6 @@ type CreateUserCommand struct {
 	Email            string
 	Login            string
 	Name             string
-	DisplayName      string
 	Company          string
 	OrgId            int64
 	OrgName          string
