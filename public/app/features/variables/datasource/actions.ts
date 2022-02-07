@@ -47,9 +47,5 @@ export const initDataSourceVariableEditor =
 
     dataSourceTypes.unshift({ text: '', value: '' });
 
-    dispatch(
-      changeVariableEditorExtended({
-        dataSourceTypes: dataSourceTypes,
-      })
-    );
+    dispatch(changeVariableEditorExtended({ dataSourceTypes }));
   };
