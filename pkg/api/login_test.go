@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -164,6 +164,7 @@ func TestLoginViewRedirect(t *testing.T) {
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
+		MultiLDAPService: &multildap.MultiLDAPmock{ID: 10},
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -339,6 +340,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		MultiLDAPService: &multildap.MultiLDAPmock{UserInfo: &models.User{Id: 42, Email: ""}},
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -346,14 +348,6 @@ func TestLoginPostRedirect(t *testing.T) {
 		c.Req.Header.Set("Content-Type", "application/json")
 		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
 		return hs.LoginPost(c)
-	})
-
-	bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-		query.User = &models.User{
-			Id:    42,
-			Email: "",
-		}
-		return nil
 	})
 
 	redirectCases := []redirectCase{
@@ -441,6 +435,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	for _, c := range redirectCases {
 		hs.Cfg.AppURL = c.appURL
 		hs.Cfg.AppSubURL = c.appSubURL
+
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
 			if len(hs.Cfg.AppSubURL) > 0 {
@@ -613,12 +608,17 @@ func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *models.ReqCo
 func TestLoginPostRunLokingHook(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	hookService := &hooks.HooksService{}
+	testUser := &models.User{
+		Id:    42,
+		Email: "",
+	}
 	hs := &HTTPServer{
 		log:              log.New("test"),
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		HooksService:     hookService,
+		MultiLDAPService: &multildap.MultiLDAPmock{UserInfo: testUser},
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -630,11 +630,6 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	testHook := loginHookTest{}
 	hookService.AddLoginHook(testHook.LoginHook)
-
-	testUser := &models.User{
-		Id:    42,
-		Email: "",
-	}
 
 	testCases := []struct {
 		desc       string
@@ -685,12 +680,15 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-			bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-				query.User = c.authUser
-				query.AuthModule = c.authModule
-				return c.authErr
-			})
 
+			// bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
+			// 	query.User = c.authUser
+			// 	query.AuthModule = c.authModule
+			// 	return c.authErr
+			// })
+			hs.MultiLDAPService.(*multildap.MultiLDAPmock).UserInfo = c.authUser
+			hs.MultiLDAPService.(*multildap.MultiLDAPmock).AuthModule = c.authModule
+			hs.MultiLDAPService.(*multildap.MultiLDAPmock).ExpectedErr = c.authErr
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
