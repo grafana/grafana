@@ -93,11 +93,12 @@ export class TeamList extends PureComponent<Props, State> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
-        {contextSrv.licensedAccessControlEnabled() && (
-          <td>
-            <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
-          </td>
-        )}
+        {contextSrv.licensedAccessControlEnabled() &&
+          contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && (
+            <td>
+              <TeamRolePicker teamId={team.id} getRoleOptions={async () => this.state.roleOptions} />
+            </td>
+          )}
         <td className="text-right">
           <DeleteButton
             aria-label="Delete team"
@@ -134,6 +135,7 @@ export class TeamList extends PureComponent<Props, State> {
     const { teams, searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage } = this.props;
     const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
     const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
+    const canReadRoles = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
     const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
     const totalPages = Math.ceil(teams.length / pageLimit);
@@ -159,7 +161,7 @@ export class TeamList extends PureComponent<Props, State> {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Members</th>
-                  {contextSrv.licensedAccessControlEnabled() && <th>Roles</th>}
+                  {contextSrv.licensedAccessControlEnabled() && canReadRoles && <th>Roles</th>}
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>
