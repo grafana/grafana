@@ -13,8 +13,7 @@ import (
 
 func createSqlStorage(t *testing.T) Storage {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t)
-	sqlStore.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagLiveChats).IsEnabled
+	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{Features: []string{featuremgmt.FlagLiveChats}})
 	return &sqlStorage{
 		sql: sqlStore,
 	}
