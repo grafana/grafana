@@ -69,13 +69,19 @@ export const changeQueryVariableDataSource = (
       const extendedEditorState = getQueryVariableEditorState(getState().templating.editor);
       const previousDatasource = extendedEditorState?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
+
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {
         dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })));
       }
-      dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);
-      dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
+
+      dispatch(
+        changeVariableEditorExtended({
+          dataSource: dataSource,
+          VariableQueryEditor: VariableQueryEditor,
+        })
+      );
     } catch (err) {
       console.error(err);
     }

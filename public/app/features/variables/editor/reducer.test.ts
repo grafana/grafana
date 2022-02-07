@@ -181,15 +181,15 @@ describe('variableEditorReducer', () => {
 
   describe('when changeVariableEditorExtended is dispatched', () => {
     it('then state should be correct', () => {
-      const payload = { propName: 'someProp', propValue: [{}] };
+      const payload = { dataSourceTypes: [] };
+
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
         .whenActionIsDispatched(changeVariableEditorExtended(payload))
         .thenStateShouldEqual({
           ...initialVariableEditorState,
           extended: {
-            // @ts-ignore - temp ignoring this, we'll fix it soon
-            someProp: [{}],
+            dataSourceTypes: [],
           },
         });
     });
