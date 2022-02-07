@@ -28,7 +28,7 @@ export const UserRolePicker: FC<Props> = ({
 }) => {
   const [appliedRoles, setAppliedRoles] = useState<Role[]>([]);
 
-  const { loading } = useAsync(async () => {
+  const getUserRoles = async () => {
     try {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
         const userRoles = await fetchUserRoles(userId, orgId);
@@ -40,12 +40,19 @@ export const UserRolePicker: FC<Props> = ({
       // TODO handle error
       console.error('Error loading options');
     }
-  }, [orgId, userId]);
+  };
+
+  const { loading } = useAsync(getUserRoles, [orgId, userId]);
+
+  const onRolesChange = async (roles: string[]) => {
+    await updateUserRoles(roles, userId, orgId);
+    await getUserRoles();
+  };
 
   return (
     <RolePicker
       builtInRole={builtInRole}
-      onRolesChange={(roles) => updateUserRoles(roles, userId, orgId)}
+      onRolesChange={onRolesChange}
       onBuiltinRoleChange={onBuiltinRoleChange}
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
