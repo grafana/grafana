@@ -19,8 +19,6 @@ type ServiceAccount struct {
 }
 
 type CreateServiceaccountForm struct {
-	OrgID       int64  `json:"-"`
-	Name        string `json:"name" binding:"Required"`
-	DisplayName string `json:"displayName"`
-	Description string `json:"description"`
+	OrgID int64  `json:"-"`
+	Name  string `json:"name" binding:"Required"`
 }
