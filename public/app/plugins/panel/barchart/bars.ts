@@ -85,6 +85,30 @@ interface ValueLabel {
 /**
  * @internal
  */
+function calculateFontSizeWithMetrics(
+  text: string,
+  width: number,
+  height: number,
+  lineHeight: number,
+  maxSize?: number
+) {
+  // calculate width in 14px
+  const textSize = measureText(text, 14);
+  // how much bigger than 14px can we make it while staying within our width constraints
+  const fontSizeBasedOnWidth = (width / (textSize.width + 2)) * 14;
+  const fontSizeBasedOnHeight = height / lineHeight;
+
+  // final fontSize
+  const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
+  return {
+    fontSize: Math.min(optimalSize, maxSize ?? optimalSize),
+    textMetrics: textSize,
+  };
+}
+
+/**
+ * @internal
+ */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const { xOri, xDir: dir, rawValue, getColor, formatValue, fillOpacity = 1, showValue, xSpacing = 0 } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
@@ -99,7 +123,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   }
 
   let qt: Quadtree;
-  let labelQt: Quadtree;
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -558,29 +581,5 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     draw,
     interpolateTooltip,
     prepData,
-  };
-}
-
-/**
- * @internal
- */
-function calculateFontSizeWithMetrics(
-  text: string,
-  width: number,
-  height: number,
-  lineHeight: number,
-  maxSize?: number
-) {
-  // calculate width in 14px
-  const textSize = measureText(text, 14);
-  // how much bigger than 14px can we make it while staying within our width constraints
-  const fontSizeBasedOnWidth = (width / (textSize.width + 2)) * 14;
-  const fontSizeBasedOnHeight = height / lineHeight;
-
-  // final fontSize
-  const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
-  return {
-    fontSize: Math.min(optimalSize, maxSize ?? optimalSize),
-    textMetrics: textSize,
   };
 }
