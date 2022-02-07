@@ -45,13 +45,7 @@ func (n *NavbarPreferencesService) createNavbarPreference(c context.Context, sig
 		return nil
 	})
 
-	preferenceDTO := NavbarPreferenceDTO{
-		ID:             preference.ID,
-		OrgID:          preference.OrgID,
-		UserID:         preference.UserID,
-		NavItemID:      preference.NavItemID,
-		HideFromNavbar: preference.HideFromNavbar,
-	}
+	preferenceDTO := NavbarPreferenceDTO(preference)
 
 	return preferenceDTO, err
 }
