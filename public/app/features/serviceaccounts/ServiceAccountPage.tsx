@@ -6,7 +6,7 @@ import Page from 'app/core/components/Page/Page';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
 import { StoreState, ServiceAccountDTO, ApiKey } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { loadServiceAccount, loadServiceAccountTokens } from './state/actions';
+import { loadServiceAccount, loadServiceAccountTokens, deleteServiceAccountToken } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
@@ -41,6 +41,10 @@ export class ServiceAccountPage extends PureComponent<Props, State> {
     this.setState({ isLoading: false });
   }
 
+  onDeleteServiceAccountToken = (key: ApiKey) => {
+    this.props.deleteServiceAccountToken(key.id!);
+  };
+
   render() {
     const { navModel, serviceAccount, timeZone, tokens } = this.props;
 
@@ -67,9 +71,7 @@ export class ServiceAccountPage extends PureComponent<Props, State> {
               <ServiceAccountTokensTable
                 apiKeys={tokens}
                 timeZone={timeZone}
-                onDelete={() => {
-                  console.log(`not implemented`);
-                }}
+                onDelete={this.onDeleteServiceAccountToken}
               />
             </>
           )}
@@ -90,6 +92,7 @@ function mapStateToProps(state: StoreState) {
 const mapDispatchToProps = {
   loadServiceAccount,
   loadServiceAccountTokens,
+  deleteServiceAccountToken,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
