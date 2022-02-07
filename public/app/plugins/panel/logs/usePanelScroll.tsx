@@ -32,8 +32,8 @@ const usePanelScroll = ({ isAscending, messages }: Props) => {
 
     if (isAscending && scrollbar) {
       if (newLogHeight < scrollbar.scrollHeight) {
-        // if the scrollbar is present, we check if the user is scrolled at the bottom.
-        // if he is, then we automatically scroll once a new log comes in, otherwise
+        // If the scrollbar is present, we check if the user is scrolled at the bottom.
+        // If he is, then we automatically scroll once a new log comes in, otherwise
         // we keep the scroll position
         if (scrollbar.scrollHeight - prevScrollPosition.current === newLogHeight) {
           scrollbar.scrollTo(0, scrollbar.scrollHeight);
