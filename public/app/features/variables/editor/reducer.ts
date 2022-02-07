@@ -3,10 +3,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { VariablePayload } from '../state/types';
 import { VariableQueryEditorType } from '../types';
 
-// PR TODO: dataSources cannot be optional because it's used as the discriminator
 export interface AdHocVariableEditorState {
   infoText?: string;
-  dataSources?: Array<{ text: string; value: DataSourceRef | null }>;
+  dataSources: Array<{ text: string; value: DataSourceRef | null }>;
 }
 
 export interface DataSourceVariableEditorState {

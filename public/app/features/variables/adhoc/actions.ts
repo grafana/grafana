@@ -17,6 +17,7 @@ import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 import { DataSourceRef, getDataSourceRef } from '@grafana/data';
+import { getAdhocVariableEditorState } from '../editor/selectors';
 
 export interface AdHocTableOptions {
   datasource: DataSourceRef;
@@ -84,6 +85,7 @@ export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): T
 export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { editor } = getState().templating;
+    const extended = getAdhocVariableEditorState(editor);
     const variable = getVariable(editor.id, getState());
     dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })));
 
@@ -94,7 +96,12 @@ export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResul
       ? 'Ad hoc filters are applied automatically to all queries that target this data source'
       : 'This data source does not support ad hoc filters yet.';
 
-    dispatch(changeVariableEditorExtended({ infoText: message }));
+    dispatch(
+      changeVariableEditorExtended({
+        infoText: message,
+        dataSources: extended?.dataSources ?? [],
+      })
+    );
   };
 };
 
