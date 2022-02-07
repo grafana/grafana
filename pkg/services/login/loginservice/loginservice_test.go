@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,59 +19,46 @@ import (
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
-	remResp := createResponseWithOneErrLastOrgAdminItem()
+	authInfoMock := &authInfoServiceMock{}
 
-	bus.ClearBusHandlers()
-	defer bus.ClearBusHandlers()
-	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
-		q.Result = createUserOrgDTO()
+	store := &mockstore.SQLStoreMock{
+		ExpectedUserOrgList:     createUserOrgDTO(),
+		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
+	}
 
-		return nil
-	})
+	login := Implementation{
+		Bus:             bus.New(),
+		QuotaService:    &quota.QuotaService{},
+		AuthInfoService: authInfoMock,
+		SQLStore:        store,
+	}
 
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-		testData := remResp[0]
-		remResp = remResp[1:]
-
-		require.Equal(t, testData.orgId, cmd.OrgId)
-		return testData.response
-	})
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-		return nil
-	})
-
-	err := syncOrgRoles(context.Background(), &user, &externalUser)
-	require.Empty(t, remResp)
+	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
 }
 
 func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	buf := &bytes.Buffer{}
-	logger.SetLogger(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
+	logger.Swap(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
 
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
-	remResp := createResponseWithOneErrLastOrgAdminItem()
 
-	bus.ClearBusHandlers()
-	defer bus.ClearBusHandlers()
-	bus.AddHandler("test", func(ctx context.Context, q *models.GetUserOrgListQuery) error {
-		q.Result = createUserOrgDTO()
-		return nil
-	})
+	authInfoMock := &authInfoServiceMock{}
 
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-		testData := remResp[0]
-		remResp = remResp[1:]
+	store := &mockstore.SQLStoreMock{
+		ExpectedUserOrgList:     createUserOrgDTO(),
+		ExpectedOrgListResponse: createResponseWithOneErrLastOrgAdminItem(),
+	}
 
-		require.Equal(t, testData.orgId, cmd.OrgId)
-		return testData.response
-	})
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-		return nil
-	})
+	login := Implementation{
+		Bus:             bus.New(),
+		QuotaService:    &quota.QuotaService{},
+		AuthInfoService: authInfoMock,
+		SQLStore:        store,
+	}
 
-	err := syncOrgRoles(context.Background(), &user, &externalUser)
+	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
 	assert.Contains(t, buf.String(), models.ErrLastOrgAdmin.Error())
 }
@@ -88,11 +76,18 @@ func (a *authInfoServiceMock) GetAuthInfo(ctx context.Context, query *models.Get
 	return nil
 }
 
+func (a *authInfoServiceMock) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+	return nil
+}
+
+func (a *authInfoServiceMock) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	return nil
+}
+
 func Test_teamSync(t *testing.T) {
-	b := bus.New()
 	authInfoMock := &authInfoServiceMock{}
 	login := Implementation{
-		Bus:             b,
+		Bus:             bus.New(),
 		QuotaService:    &quota.QuotaService{},
 		AuthInfoService: authInfoMock,
 	}
@@ -181,21 +176,15 @@ func createSimpleExternalUser() models.ExternalUserInfo {
 	return externalUser
 }
 
-func createResponseWithOneErrLastOrgAdminItem() []struct {
-	orgId    int64
-	response error
-} {
-	remResp := []struct {
-		orgId    int64
-		response error
-	}{
+func createResponseWithOneErrLastOrgAdminItem() mockstore.OrgListResponse {
+	remResp := mockstore.OrgListResponse{
 		{
-			orgId:    10,
-			response: models.ErrLastOrgAdmin,
+			OrgId:    10,
+			Response: models.ErrLastOrgAdmin,
 		},
 		{
-			orgId:    11,
-			response: nil,
+			OrgId:    11,
+			Response: nil,
 		},
 	}
 	return remResp
