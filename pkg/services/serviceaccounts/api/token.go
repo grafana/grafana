@@ -44,7 +44,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 }
 
 // CreateNewToken adds an API key to a service account
-func (api *ServiceAccountsAPI) CreateNewToken(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
