@@ -22,7 +22,7 @@
     "/access-control/builtin-roles": {
       "get": {
         "description": "You need to have a permission with action `roles.builtin:list` with scope `roles:*`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get all built-in role assignments.",
         "operationId": "listBuiltinRoles",
         "responses": {
@@ -39,7 +39,7 @@
       },
       "post": {
         "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Create a built-in role assignment.",
         "operationId": "addBuiltinRole",
         "parameters": [
@@ -72,7 +72,7 @@
     "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
       "delete": {
         "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Remove a built-in role assignment.",
         "operationId": "removeBuiltinRole",
         "parameters": [
@@ -120,7 +120,7 @@
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:list` and scope `roles:*`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get all roles.",
         "operationId": "getAllRoles",
         "responses": {
@@ -137,7 +137,7 @@
       },
       "post": {
         "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
         "operationId": "createRoleWithPermissions",
         "parameters": [
@@ -170,7 +170,7 @@
     "/access-control/roles/{roleUID}": {
       "get": {
         "description": "Get a role for the given UID.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get a role.",
         "operationId": "getRole",
         "parameters": [
@@ -196,7 +196,7 @@
       },
       "put": {
         "description": "You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Update a custom role.",
         "operationId": "updateRoleWithPermissions",
         "parameters": [
@@ -237,7 +237,7 @@
       },
       "delete": {
         "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
         "parameters": [
@@ -268,7 +268,7 @@
     "/access-control/status": {
       "get": {
         "description": "Returns an indicator to check if fine-grained access control is enabled or not.\n\nYou need to have a permission with action `status:accesscontrol` and scope `services:accesscontrol`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get status.",
         "operationId": "getAccessControlStatus",
         "responses": {
@@ -290,7 +290,7 @@
     "/access-control/teams/{teamId}/roles": {
       "get": {
         "description": "You need to have a permission with action `teams.roles:list` and scope `teams:id:\u003cteam ID\u003e`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get team roles.",
         "operationId": "listTeamRoles",
         "parameters": [
@@ -320,7 +320,7 @@
       },
       "put": {
         "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:delegate` for each.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
         "parameters": [
@@ -353,7 +353,7 @@
       },
       "post": {
         "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:delegate`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
         "parameters": [
@@ -397,7 +397,7 @@
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
         "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:delegate`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
         "parameters": [
@@ -439,7 +439,7 @@
     "/access-control/users/{user_id}/roles": {
       "get": {
         "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "List roles assigned to a user.",
         "operationId": "listUserRoles",
         "parameters": [
@@ -469,7 +469,7 @@
       },
       "put": {
         "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:delegate` for each. `permission:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
         "parameters": [
@@ -502,18 +502,10 @@
       },
       "post": {
         "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
         "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
           {
             "x-go-name": "Body",
             "name": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -543,18 +543,10 @@
     "/access-control/users/{user_id}/roles/{roleUID}": {
       "delete": {
         "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": ["accesscontrol", "enterprise"],
+        "tags": ["access_control", "enterprise"],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",
         "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
           {
             "type": "string",
             "x-go-name": "RoleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -592,7 +592,7 @@
     "/admin/ldap-sync-status": {
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
-        "tags": ["ldapdebug"],
+        "tags": ["ldap_debug"],
         "summary": "Available to grafana admins.",
         "operationId": "getLDAPSyncStatus",
         "responses": {
@@ -777,7 +777,7 @@
     },
     "/admin/provisioning/access-control/reload": {
       "post": {
-        "tags": ["accessControlProvisioning", "enterprise"],
+        "tags": ["access_control_provisioning", "enterprise"],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "operationId": "adminProvisioningReloadAccessControl",
         "responses": {
@@ -1462,7 +1462,7 @@
     "/alert-notifications": {
       "get": {
         "description": "Returns all notification channels that the authenticated user has permission to view.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Get all notification channels.",
         "operationId": "getAlertNotificationChannels",
         "responses": {
@@ -1482,7 +1482,7 @@
       },
       "post": {
         "description": "You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/latest/alerting/old-alerting/notifications/#list-of-supported-notifiers) on the alert notifiers page.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Create notification channel.",
         "operationId": "createAlertNotificationChannel",
         "parameters": [
@@ -1518,7 +1518,7 @@
     "/alert-notifications/lookup": {
       "get": {
         "description": "Returns all notification channels, but with less detailed information. Accessible by any authenticated user and is mainly used by providing alert notification channels in Grafana UI when configuring alert rule.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Get all notification channels (lookup)",
         "operationId": "lookupAlertNotificationChannels",
         "responses": {
@@ -1540,7 +1540,7 @@
     "/alert-notifications/test": {
       "post": {
         "description": "Sends a test notification to the channel.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Test notification channel.",
         "operationId": "notificationChannelTest",
         "parameters": [
@@ -1579,7 +1579,7 @@
     "/alert-notifications/uid/{notification_channel_uid}": {
       "get": {
         "description": "Returns the notification channel given the notification channel UID.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Get notification channel by UID",
         "operationId": "getAlertNotificationChannelByUID",
         "parameters": [
@@ -1611,7 +1611,7 @@
       },
       "put": {
         "description": "Updates an existing notification channel identified by uid.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Update notification channel by UID.",
         "operationId": "updateAlertNotificationChannelBYUID",
         "parameters": [
@@ -1652,7 +1652,7 @@
       },
       "delete": {
         "description": "Deletes an existing notification channel identified by UID.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Delete alert notification by UID.",
         "operationId": "deleteAlertNotificationChannelByUID",
         "parameters": [
@@ -1686,7 +1686,7 @@
     "/alert-notifications/{notification_channel_id}": {
       "get": {
         "description": "Returns the notification channel given the notification channel ID.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Get notification channel by ID.",
         "operationId": "getAlertNotificationChannelByID",
         "parameters": [
@@ -1719,7 +1719,7 @@
       },
       "put": {
         "description": "Updates an existing notification channel identified by ID.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Update notification channel by ID.",
         "operationId": "updateAlertNotificationChannel",
         "parameters": [
@@ -1761,7 +1761,7 @@
       },
       "delete": {
         "description": "Deletes an existing notification channel identified by ID.",
-        "tags": ["legacy_notification_channels"],
+        "tags": ["legacy_alerts_notification_channels"],
         "summary": "Delete alert notification by ID.",
         "operationId": "deleteAlertNotificationChannel",
         "parameters": [
@@ -2309,7 +2309,7 @@
     },
     "/alerts": {
       "get": {
-        "tags": ["legacy_alerting"],
+        "tags": ["legacy_alerts"],
         "summary": "Get legacy alerts.",
         "operationId": "getAlerts",
         "parameters": [
@@ -2399,7 +2399,7 @@
     },
     "/alerts/states-for-dashboard": {
       "get": {
-        "tags": ["legacy_alerting"],
+        "tags": ["legacy_alerts"],
         "summary": "Get alert states for a dashboard.",
         "operationId": "getDashboardStates",
         "parameters": [
@@ -2427,7 +2427,7 @@
     },
     "/alerts/test": {
       "post": {
-        "tags": ["legacy_alerting"],
+        "tags": ["legacy_alerts"],
         "summary": "Test alert.",
         "operationId": "testAlert",
         "parameters": [
@@ -2462,7 +2462,7 @@
     "/alerts/{alert_id}": {
       "get": {
         "description": "“evalMatches” data in the response is cached in the db when and only when the state of the alert changes (e.g. transitioning from “ok” to “alerting” state).\nIf data from one server triggers the alert first and, before that server is seen leaving alerting state, a second server also enters a state that would trigger the alert, the second server will not be visible in “evalMatches” data.",
-        "tags": ["legacy_alerting"],
+        "tags": ["legacy_alerts"],
         "summary": "Get alert by ID.",
         "operationId": "getAlertByID",
         "parameters": [
@@ -2489,7 +2489,7 @@
     },
     "/alerts/{alert_id}/pause": {
       "post": {
-        "tags": ["legacy_alerting"],
+        "tags": ["legacy_alerts"],
         "summary": "Pause/unpause alert by id.",
         "operationId": "pauseAlert",
         "parameters": [
@@ -2883,7 +2883,7 @@
     "/auth/keys": {
       "get": {
         "description": "Will return auth keys.",
-        "tags": ["apikeys"],
+        "tags": ["api_keys"],
         "summary": "Get auth keys.",
         "operationId": "getAPIkeys",
         "parameters": [
@@ -2916,7 +2916,7 @@
       },
       "post": {
         "description": "Will return details of the created API key",
-        "tags": ["apikeys"],
+        "tags": ["api_keys"],
         "summary": "Creates an API key.",
         "operationId": "addAPIkey",
         "parameters": [
@@ -2953,7 +2953,7 @@
     },
     "/auth/keys/{id}": {
       "delete": {
-        "tags": ["apikeys"],
+        "tags": ["api_keys"],
         "summary": "Delete API key.",
         "operationId": "deleteAPIkey",
         "parameters": [
@@ -2987,7 +2987,7 @@
     },
     "/dashboard/snapshots": {
       "get": {
-        "tags": ["snapshot"],
+        "tags": ["snapshots"],
         "summary": "List snapshots.",
         "operationId": "getSnapshots",
         "parameters": [
@@ -3944,7 +3944,7 @@
     "/datasources/{datasource_id}/disable-permissions": {
       "post": {
         "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["dspermissions", "enterprise"],
+        "tags": ["datasource_permissions", "enterprise"],
         "summary": "Disable permissions for a data source.",
         "operationId": "disablePermissions",
         "parameters": [
@@ -3981,7 +3981,7 @@
     "/datasources/{datasource_id}/enable-permissions": {
       "post": {
         "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["dspermissions", "enterprise"],
+        "tags": ["datasource_permissions", "enterprise"],
         "summary": "Enable permissions for a data source.",
         "operationId": "enablePermissions",
         "parameters": [
@@ -4018,7 +4018,7 @@
     "/datasources/{datasource_id}/permissions": {
       "get": {
         "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["dspermissions", "enterprise"],
+        "tags": ["datasource_permissions", "enterprise"],
         "summary": "Get permissions for a data source.",
         "operationId": "getPermissions",
         "parameters": [
@@ -4052,21 +4052,21 @@
     "/datasources/{datasource_id}/permissions/{permissionId}": {
       "delete": {
         "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
-        "tags": ["dspermissions", "enterprise"],
+        "tags": ["datasource_permissions", "enterprise"],
         "summary": "Remove permission for a data source.",
         "operationId": "deletePermissions",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -4899,7 +4899,7 @@
     "/org": {
       "get": {
         "description": "Get current Organization",
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "operationId": "getOrg",
         "responses": {
           "200": {
@@ -4917,7 +4917,7 @@
         }
       },
       "put": {
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Update current Organization.",
         "operationId": "updateOrg",
         "parameters": [
@@ -4952,7 +4952,7 @@
     },
     "/org/address": {
       "put": {
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Update current Organization's address.",
         "operationId": "updateOrgAddress",
         "parameters": [
@@ -5099,7 +5099,7 @@
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Get all users within the current organization.",
         "operationId": "getOrgUsers",
         "responses": {
@@ -5119,7 +5119,7 @@
       },
       "post": {
         "description": "Adds a global user to the current organization.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:add` with scope `users:*`.",
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Add a new user to the current organization",
         "operationId": "addOrgUser",
         "parameters": [
@@ -5152,7 +5152,7 @@
     "/org/users/lookup": {
       "get": {
         "description": "Returns all org users within the current organization, but with less detailed information.\nAccessible to users with org admin role, admin in any folder or admin of any team.\nMainly used by Grafana UI for providing list of users when adding team members and when editing folder/dashboard permissions.",
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Get all users within the current organization (lookup)",
         "operationId": "lookupOrgUsers",
         "parameters": [
@@ -5189,7 +5189,7 @@
     "/org/users/{user_id}": {
       "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:remove` with scope `users:*`.",
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Delete user in current organization",
         "operationId": "deleteOrgUser",
         "parameters": [
@@ -5222,7 +5222,7 @@
       },
       "patch": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users.role:update` with scope `users:*`.",
-        "tags": ["org"],
+        "tags": ["current_org_details"],
         "summary": "Updates the given user",
         "operationId": "updateOrgUser",
         "parameters": [
@@ -5912,7 +5912,7 @@
     },
     "/recording-rules": {
       "get": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Get all recording rules.",
         "operationId": "listRecordingRules",
         "responses": {
@@ -5934,7 +5934,7 @@
         }
       },
       "put": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Update a recording rule.",
         "operationId": "updateRecordingRule",
         "parameters": [
@@ -5967,7 +5967,7 @@
         }
       },
       "post": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Create a new recording rule.",
         "operationId": "createRecordingRule",
         "parameters": [
@@ -6002,7 +6002,7 @@
     },
     "/recording-rules/test": {
       "post": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Test a recording rule.",
         "operationId": "testCreateRecordingRule",
         "parameters": [
@@ -6040,7 +6040,7 @@
     },
     "/recording-rules/writer": {
       "get": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Get the write target.",
         "operationId": "getRecordingRuleWriteTarget",
         "responses": {
@@ -6062,7 +6062,7 @@
         }
       },
       "post": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Create a new write target.",
         "operationId": "createRecordingRuleWriteTarget",
         "parameters": [
@@ -6098,7 +6098,7 @@
         }
       },
       "delete": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Delete the write target.",
         "operationId": "deleteRecordingRuleWriteTarget",
         "responses": {
@@ -6122,7 +6122,7 @@
     },
     "/recording-rules/{recordingRuleID}": {
       "delete": {
-        "tags": ["recording-rules", "enterprise"],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Delete a recording rule.",
         "operationId": "deleteRecordingRule",
         "parameters": [
@@ -6157,7 +6157,7 @@
     "/reports": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "List reports.",
         "operationId": "getReports",
         "responses": {
@@ -6177,7 +6177,7 @@
       },
       "post": {
         "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports.admin:create`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Create a report.",
         "operationId": "createReport",
         "parameters": [
@@ -6216,7 +6216,7 @@
     "/reports/email": {
       "post": {
         "description": "Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client’s timeout to at least 60 seconds. Available to org admins only and with a valid license.\n\nOnly available in Grafana Enterprise v7.0+.\nThis API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.\n\nYou need to have a permission with action `reports:send`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Send a report.",
         "operationId": "sendReport",
         "parameters": [
@@ -6256,7 +6256,7 @@
       "get": {
         "description": "Available to all users and with a valid license.",
         "produces": ["application/pdf"],
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Render report for dashboard.",
         "operationId": "renderReportPDF",
         "parameters": [
@@ -6287,7 +6287,7 @@
     "/reports/settings": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:read`x.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Get settings.",
         "operationId": "getReportSettings",
         "responses": {
@@ -6307,7 +6307,7 @@
       },
       "post": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:write`xx.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Save settings.",
         "operationId": "saveReportSettings",
         "parameters": [
@@ -6343,7 +6343,7 @@
     "/reports/test-email": {
       "post": {
         "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports:send`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Send test report via email.",
         "operationId": "sendTestEmail",
         "parameters": [
@@ -6382,7 +6382,7 @@
     "/reports/{reportID}": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Get a report.",
         "operationId": "getReport",
         "parameters": [
@@ -6418,7 +6418,7 @@
       },
       "put": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Update a report.",
         "operationId": "updateReport",
         "parameters": [
@@ -6463,7 +6463,7 @@
       },
       "delete": {
         "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
-        "tags": ["report", "enterprise"],
+        "tags": ["reports", "enterprise"],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
         "parameters": [
@@ -6899,7 +6899,7 @@
     },
     "/snapshot/shared-options": {
       "get": {
-        "tags": ["snapshot"],
+        "tags": ["snapshots"],
         "summary": "Get snapshot sharing settings.",
         "operationId": "getSnapshotSharingOptions",
         "responses": {
@@ -6915,7 +6915,7 @@
     "/snapshots": {
       "post": {
         "description": "Snapshot public mode should be enabled or authentication is required.",
-        "tags": ["snapshot"],
+        "tags": ["snapshots"],
         "summary": "When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.",
         "operationId": "createSnapshot",
         "parameters": [
@@ -6948,7 +6948,7 @@
     "/snapshots-delete/{deleteKey}": {
       "get": {
         "description": "Snapshot public mode should be enabled or authentication is required.",
-        "tags": ["snapshot"],
+        "tags": ["snapshots"],
         "summary": "Delete Snapshot by deleteKey.",
         "operationId": "deleteSnapshotByDeleteKey",
         "parameters": [
@@ -6981,7 +6981,7 @@
     },
     "/snapshots/{key}": {
       "get": {
-        "tags": ["snapshot"],
+        "tags": ["snapshots"],
         "summary": "Get Snapshot by Key.",
         "operationId": "getSnapshotByKey",
         "parameters": [
@@ -7006,7 +7006,7 @@
         }
       },
       "delete": {
-        "tags": ["snapshot"],
+        "tags": ["snapshots"],
         "summary": "Delete Snapshot by Key.",
         "operationId": "deleteSnapshotByKey",
         "parameters": [
@@ -7124,7 +7124,7 @@
     },
     "/teams/{teamId}/groups": {
       "get": {
-        "tags": ["teamgroupsync", "enterprise"],
+        "tags": ["sync_team_groups", "enterprise"],
         "summary": "Get External Groups.",
         "operationId": "getTeamGroupsApi",
         "parameters": [
@@ -7159,18 +7159,10 @@
         }
       },
       "post": {
-        "tags": ["teamgroupsync", "enterprise"],
+        "tags": ["sync_team_groups", "enterprise"],
         "summary": "Add External Group.",
         "operationId": "addTeamGroupApi",
         "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
           {
             "x-go-name": "Body",
             "name": "body",
@@ -7179,6 +7171,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -7205,23 +7205,23 @@
     },
     "/teams/{teamId}/groups/{groupId}": {
       "delete": {
-        "tags": ["teamgroupsync", "enterprise"],
+        "tags": ["sync_team_groups", "enterprise"],
         "summary": "Remove External Group.",
         "operationId": "removeTeamGroupApi",
         "parameters": [
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -7612,7 +7612,7 @@
     },
     "/user": {
       "get": {
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Get signed in User.",
         "operationId": "getSignedInUser",
         "responses": {
@@ -7634,7 +7634,7 @@
         }
       },
       "put": {
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Update signed in User.",
         "operationId": "updateSignedInUser",
         "parameters": [
@@ -7668,7 +7668,7 @@
     "/user/auth-tokens": {
       "get": {
         "description": "Return a list of all auth tokens (devices) that the actual user currently have logged in from.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Auth tokens of the actual User.",
         "operationId": "getSignedInUserAuthTokens",
         "responses": {
@@ -7689,7 +7689,7 @@
     },
     "/user/helpflags/clear": {
       "get": {
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Clear user help flag.",
         "operationId": "clearHelpFlags",
         "responses": {
@@ -7710,7 +7710,7 @@
     },
     "/user/helpflags/{flag_id}": {
       "put": {
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Set user help flag.",
         "operationId": "setHelpFlag",
         "parameters": [
@@ -7746,7 +7746,7 @@
           }
         ],
         "description": "Return a list of all organizations of the current user.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Organizations of the actual User.",
         "operationId": "getSignedInUserOrgList",
         "responses": {
@@ -7773,7 +7773,7 @@
           }
         ],
         "description": "Changes the password for the user.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Change Password.",
         "operationId": "changeUserPassword",
         "parameters": [
@@ -7858,7 +7858,7 @@
     },
     "/user/quotas": {
       "get": {
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Fetch user quota.",
         "operationId": "getUserQuotas",
         "responses": {
@@ -7883,7 +7883,7 @@
     "/user/revoke-auth-token": {
       "post": {
         "description": "Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Revoke an auth token of the actual User.",
         "operationId": "revokeSignedINAuthTokenCmd",
         "parameters": [
@@ -7919,7 +7919,7 @@
     "/user/stars/dashboard/{dashboard_id}": {
       "post": {
         "description": "Stars the given Dashboard for the actual user.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Star a dashboard.",
         "operationId": "starDashboard",
         "parameters": [
@@ -7951,7 +7951,7 @@
       },
       "delete": {
         "description": "Deletes the starring of the given Dashboard for the actual user.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Unstar a dashboard.",
         "operationId": "unstarDashboard",
         "parameters": [
@@ -7985,7 +7985,7 @@
     "/user/teams": {
       "get": {
         "description": "Return a list of all teams that the current user is member of.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Teams that the actual User is member of.",
         "operationId": "getSignedInUserTeamList",
         "responses": {
@@ -8007,7 +8007,7 @@
     "/user/using/{org_id}": {
       "post": {
         "description": "Switch user context to the given organization.",
-        "tags": ["user"],
+        "tags": ["signed_in_user"],
         "summary": "Switch user context for signed in user.",
         "operationId": "userSetUsingOrg",
         "parameters": [
@@ -8342,7 +8342,7 @@
       "post": {
         "consumes": ["application/json"],
         "tags": ["configuration"],
-        "summary": "Creates or updates the NGalert configuration of the user's organization.",
+        "summary": "Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to \"all\".",
         "operationId": "RoutePostNGalertConfig",
         "parameters": [
           {
@@ -11432,6 +11432,7 @@
         "exec_err_state": {
           "type": "string",
           "enum": ["Alerting"],
+          "x-go-enum-desc": "Alerting AlertingErrState",
           "x-go-name": "ExecErrState"
         },
         "id": {
@@ -11456,6 +11457,7 @@
         "no_data_state": {
           "type": "string",
           "enum": ["Alerting", "NoData", "OK"],
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
           "x-go-name": "NoDataState"
         },
         "orgId": {
@@ -11497,6 +11499,12 @@
             "type": "string"
           },
           "x-go-name": "Alertmanagers"
+        },
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": ["all", "internal", "external"],
+          "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+          "x-go-name": "AlertmanagersChoice"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -13262,11 +13270,13 @@
         "exec_err_state": {
           "type": "string",
           "enum": ["Alerting"],
+          "x-go-enum-desc": "Alerting AlertingErrState",
           "x-go-name": "ExecErrState"
         },
         "no_data_state": {
           "type": "string",
           "enum": ["Alerting", "NoData", "OK"],
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
           "x-go-name": "NoDataState"
         },
         "title": {
@@ -13289,6 +13299,12 @@
             "type": "string"
           },
           "x-go-name": "Alertmanagers"
+        },
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": ["all", "internal", "external"],
+          "x-go-enum-desc": "all AllAlertmanagers\ninternal InternalAlertmanager\nexternal ExternalAlertmanagers",
+          "x-go-name": "AlertmanagersChoice"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -15931,6 +15947,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": ["alerts", "labels", "receiver"],
       "properties": {
@@ -15948,16 +15965,15 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
-      }
+      },
+      "x-go-name": "AlertGroups",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -16113,13 +16129,15 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      }
+      },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -16162,9 +16180,7 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilences": {
       "description": "GettableSilences gettable silences",
@@ -16328,6 +16344,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16336,9 +16353,7 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "silence": {
       "description": "Silence silence",
@@ -17460,11 +17475,11 @@
     },
     {
       "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
-      "name": "legacy_alerting"
+      "name": "legacy_alerts"
     },
     {
       "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
-      "name": "legacy_notification_channels"
+      "name": "legacy_alerts_notification_channels"
     },
     {
       "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be global annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
@@ -17480,7 +17495,7 @@
     },
     {
       "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "org"
+      "name": "current_org_details"
     },
     {
       "description": "This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.",
@@ -17488,7 +17503,7 @@
     },
     {
       "description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "dspermissions"
+      "name": "datasource_permissions"
     },
     {
       "description": "These are only available in Grafana Enterprise",
@@ -17496,7 +17511,7 @@
     },
     {
       "description": "The API can be used to create, update, get and list roles, and create or remove built-in role assignments. To use the API, you would need to enable fine-grained access control.\nThis only available in Grafana Enterprise.\nThe API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic auth.",
-      "name": "accesscontrol"
+      "name": "access_control"
     },
     {
       "description": "Licensing is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
@@ -17504,7 +17519,23 @@
     },
     {
       "description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "report"
+      "name": "reports"
+    },
+    {
+      "description": "Grafana Alerting Alertmanager-like endpoints",
+      "name": "alertmanager"
+    },
+    {
+      "description": "Grafana Alerting endpoints for managing rules",
+      "name": "ruler"
+    },
+    {
+      "description": "Grafana Alerting testing endpoints",
+      "name": "testing"
+    },
+    {
+      "description": "Grafana Alerting Prometheus-like endpoints",
+      "name": "prometheus"
     }
   ]
 }

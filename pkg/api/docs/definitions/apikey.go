@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// swagger:route GET /auth/keys apikeys getAPIkeys
+// swagger:route GET /auth/keys api_keys getAPIkeys
 //
 // Get auth keys.
 //
@@ -18,7 +18,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /auth/keys apikeys addAPIkey
+// swagger:route POST /auth/keys api_keys addAPIkey
 //
 // Creates an API key.
 //
@@ -33,7 +33,7 @@ import (
 // 409: dublicateAPIkeyError
 // 500: internalServerError
 
-// swagger:route DELETE /auth/keys/{id} apikeys deleteAPIkey
+// swagger:route DELETE /auth/keys/{id} api_keys deleteAPIkey
 //
 // Delete API key.
 //

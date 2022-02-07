@@ -2,7 +2,7 @@ package definitions
 
 import "github.com/grafana/grafana/pkg/models"
 
-// swagger:route GET /user user getSignedInUser
+// swagger:route GET /user signed_in_user getSignedInUser
 //
 // Get signed in User.
 //
@@ -13,7 +13,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route PUT /user user updateSignedInUser
+// swagger:route PUT /user signed_in_user updateSignedInUser
 //
 // Update signed in User.
 //
@@ -23,7 +23,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route POST /user/using/{org_id} user userSetUsingOrg
+// swagger:route POST /user/using/{org_id} signed_in_user userSetUsingOrg
 //
 // Switch user context for signed in user.
 //
@@ -36,7 +36,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /user/orgs user getSignedInUserOrgList
+// swagger:route GET /user/orgs signed_in_user getSignedInUserOrgList
 //
 // Organizations of the actual User.
 //
@@ -51,7 +51,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /user/teams user getSignedInUserTeamList
+// swagger:route GET /user/teams signed_in_user getSignedInUserTeamList
 //
 // Teams that the actual User is member of.
 //
@@ -63,7 +63,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route POST /user/stars/dashboard/{dashboard_id} user starDashboard
+// swagger:route POST /user/stars/dashboard/{dashboard_id} signed_in_user starDashboard
 //
 // Star a dashboard.
 //
@@ -76,7 +76,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route DELETE /user/stars/dashboard/{dashboard_id} user unstarDashboard
+// swagger:route DELETE /user/stars/dashboard/{dashboard_id} signed_in_user unstarDashboard
 //
 // Unstar a dashboard.
 //
@@ -89,7 +89,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route PUT /user/password user changeUserPassword
+// swagger:route PUT /user/password signed_in_user changeUserPassword
 //
 // Change Password.
 //
@@ -105,7 +105,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /user/quotas user getUserQuotas
+// swagger:route GET /user/quotas signed_in_user getUserQuotas
 //
 // Fetch user quota.
 //
@@ -116,7 +116,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route PUT /user/helpflags/{flag_id} user setHelpFlag
+// swagger:route PUT /user/helpflags/{flag_id} signed_in_user setHelpFlag
 //
 // Set user help flag.
 //
@@ -126,7 +126,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /user/helpflags/clear user clearHelpFlags
+// swagger:route GET /user/helpflags/clear signed_in_user clearHelpFlags
 //
 // Clear user help flag.
 //
@@ -136,7 +136,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /user/auth-tokens user getSignedInUserAuthTokens
+// swagger:route GET /user/auth-tokens signed_in_user getSignedInUserAuthTokens
 //
 // Auth tokens of the actual User.
 //
@@ -148,7 +148,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route POST /user/revoke-auth-token user revokeSignedINAuthTokenCmd
+// swagger:route POST /user/revoke-auth-token signed_in_user revokeSignedINAuthTokenCmd
 //
 // Revoke an auth token of the actual User.
 //

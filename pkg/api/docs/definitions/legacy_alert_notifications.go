@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// swagger:route GET /alert-notifications legacy_notification_channels getAlertNotificationChannels
+// swagger:route GET /alert-notifications legacy_alerts_notification_channels getAlertNotificationChannels
 //
 // Get all notification channels.
 //
@@ -17,7 +17,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /alert-notifications/lookup legacy_notification_channels lookupAlertNotificationChannels
+// swagger:route GET /alert-notifications/lookup legacy_alerts_notification_channels lookupAlertNotificationChannels
 //
 // Get all notification channels (lookup)
 //
@@ -29,7 +29,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route POST /alert-notifications/test legacy_notification_channels notificationChannelTest
+// swagger:route POST /alert-notifications/test legacy_alerts_notification_channels notificationChannelTest
 //
 // Test notification channel.
 //
@@ -43,7 +43,7 @@ import (
 // 412: SMTPNotEnabledError
 // 500: internalServerError
 
-// swagger:route POST /alert-notifications legacy_notification_channels createAlertNotificationChannel
+// swagger:route POST /alert-notifications legacy_alerts_notification_channels createAlertNotificationChannel
 //
 // Create notification channel.
 //
@@ -56,7 +56,7 @@ import (
 // 409: conflictError
 // 500: internalServerError
 
-// swagger:route PUT /alert-notifications/{notification_channel_id} legacy_notification_channels updateAlertNotificationChannel
+// swagger:route PUT /alert-notifications/{notification_channel_id} legacy_alerts_notification_channels updateAlertNotificationChannel
 //
 // Update notification channel by ID.
 //
@@ -69,7 +69,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /alert-notifications/{notification_channel_id} legacy_notification_channels getAlertNotificationChannelByID
+// swagger:route GET /alert-notifications/{notification_channel_id} legacy_alerts_notification_channels getAlertNotificationChannelByID
 //
 // Get notification channel by ID.
 //
@@ -82,7 +82,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route DELETE /alert-notifications/{notification_channel_id} legacy_notification_channels deleteAlertNotificationChannel
+// swagger:route DELETE /alert-notifications/{notification_channel_id} legacy_alerts_notification_channels deleteAlertNotificationChannel
 //
 // Delete alert notification by ID.
 //
@@ -95,7 +95,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /alert-notifications/uid/{notification_channel_uid} legacy_notification_channels getAlertNotificationChannelByUID
+// swagger:route GET /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels getAlertNotificationChannelByUID
 //
 // Get notification channel by UID
 //
@@ -108,7 +108,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route PUT /alert-notifications/uid/{notification_channel_uid} legacy_notification_channels updateAlertNotificationChannelBYUID
+// swagger:route PUT /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels updateAlertNotificationChannelBYUID
 //
 // Update notification channel by UID.
 //
@@ -121,7 +121,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route DELETE /alert-notifications/uid/{notification_channel_uid} legacy_notification_channels deleteAlertNotificationChannelByUID
+// swagger:route DELETE /alert-notifications/uid/{notification_channel_uid} legacy_alerts_notification_channels deleteAlertNotificationChannelByUID
 //
 // Delete alert notification by UID.
 //

@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// swagger:route GET /org org getOrg
+// swagger:route GET /org current_org_details getOrg
 //
 // Get current Organization
 //
@@ -15,7 +15,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /org/users org getOrgUsers
+// swagger:route GET /org/users current_org_details getOrgUsers
 //
 // Get all users within the current organization.
 //
@@ -29,7 +29,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /org/users/lookup org lookupOrgUsers
+// swagger:route GET /org/users/lookup current_org_details lookupOrgUsers
 //
 // Get all users within the current organization (lookup)
 //
@@ -43,7 +43,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route PATCH /org/users/{user_id} org updateOrgUser
+// swagger:route PATCH /org/users/{user_id} current_org_details updateOrgUser
 //
 // Updates the given user
 //
@@ -57,7 +57,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route DELETE /org/users/{user_id} org deleteOrgUser
+// swagger:route DELETE /org/users/{user_id} current_org_details deleteOrgUser
 //
 // Delete user in current organization
 //
@@ -71,7 +71,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route PUT /org org updateOrg
+// swagger:route PUT /org current_org_details updateOrg
 //
 // Update current Organization.
 //
@@ -82,7 +82,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route PUT /org/address org updateOrgAddress
+// swagger:route PUT /org/address current_org_details updateOrgAddress
 //
 // Update current Organization's address.
 //
@@ -93,7 +93,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route POST /org/users org addOrgUser
+// swagger:route POST /org/users current_org_details addOrgUser
 //
 // Add a new user to the current organization
 //

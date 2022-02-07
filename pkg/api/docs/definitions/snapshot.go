@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// swagger:route POST /snapshots snapshot createSnapshot
+// swagger:route POST /snapshots snapshots createSnapshot
 //
 // When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.
 //
@@ -16,7 +16,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /dashboard/snapshots snapshot getSnapshots
+// swagger:route GET /dashboard/snapshots snapshots getSnapshots
 //
 // List snapshots.
 //
@@ -24,7 +24,7 @@ import (
 // 200: getSnapshotsResponse
 // 500: internalServerError
 
-// swagger:route GET /snapshots/{key} snapshot getSnapshotByKey
+// swagger:route GET /snapshots/{key} snapshots getSnapshotByKey
 //
 // Get Snapshot by Key.
 //
@@ -33,7 +33,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route DELETE /snapshots/{key} snapshot deleteSnapshotByKey
+// swagger:route DELETE /snapshots/{key} snapshots deleteSnapshotByKey
 //
 // Delete Snapshot by Key.
 //
@@ -43,7 +43,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /snapshots-delete/{deleteKey} snapshot deleteSnapshotByDeleteKey
+// swagger:route GET /snapshots-delete/{deleteKey} snapshots deleteSnapshotByDeleteKey
 //
 // Delete Snapshot by deleteKey.
 //
@@ -56,7 +56,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /snapshot/shared-options snapshot getSnapshotSharingOptions
+// swagger:route GET /snapshot/shared-options snapshots getSnapshotSharingOptions
 //
 // Get snapshot sharing settings.
 //

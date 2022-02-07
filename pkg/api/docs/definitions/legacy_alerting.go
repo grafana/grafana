@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// swagger:route GET /alerts legacy_alerting getAlerts
+// swagger:route GET /alerts legacy_alerts getAlerts
 //
 // Get legacy alerts.
 //
@@ -14,7 +14,7 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:route GET /alerts/{alert_id} legacy_alerting getAlertByID
+// swagger:route GET /alerts/{alert_id} legacy_alerts getAlertByID
 //
 // Get alert by ID.
 //
@@ -26,7 +26,7 @@ import (
 // 401: unauthorisedError
 // 500: internalServerError
 
-// swagger:route POST /alerts/{alert_id}/pause legacy_alerting pauseAlert
+// swagger:route POST /alerts/{alert_id}/pause legacy_alerts pauseAlert
 //
 // Pause/unpause alert by id.
 //
@@ -37,7 +37,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /alerts/test legacy_alerting testAlert
+// swagger:route POST /alerts/test legacy_alerts testAlert
 //
 // Test alert.
 //
@@ -48,7 +48,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 
-// swagger:route GET /alerts/states-for-dashboard legacy_alerting getDashboardStates
+// swagger:route GET /alerts/states-for-dashboard legacy_alerts getDashboardStates
 //
 // Get alert states for a dashboard.
 //
