@@ -10,13 +10,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+type Store interface {
+	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
+}
+
 // Provision scans a directory for provisioning config files
 // and provisions the app in those files.
-func Provision(ctx context.Context, configDirectory string, pluginStore plugins.Store) error {
+func Provision(ctx context.Context, configDirectory string, store Store, pluginStore plugins.Store) error {
 	logger := log.New("provisioning.plugins")
 	ap := PluginProvisioner{
 		log:         logger,
 		cfgProvider: newConfigReader(logger, pluginStore),
+		store:       store,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -26,13 +31,14 @@ func Provision(ctx context.Context, configDirectory string, pluginStore plugins.
 type PluginProvisioner struct {
 	log         log.Logger
 	cfgProvider configReader
+	store       Store
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
 	for _, app := range cfg.Apps {
 		if app.OrgID == 0 && app.OrgName != "" {
 			getOrgQuery := &models.GetOrgByNameQuery{Name: app.OrgName}
-			if err := bus.Dispatch(ctx, getOrgQuery); err != nil {
+			if err := ap.store.GetOrgByNameHandler(ctx, getOrgQuery); err != nil {
 				return err
 			}
 			app.OrgID = getOrgQuery.Result.Id

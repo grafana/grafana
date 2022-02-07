@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,7 +59,9 @@ func TestPluginProvisioner(t *testing.T) {
 			},
 		}
 		reader := &testConfigReader{result: cfg}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
+		store := mockstore.NewSQLStoreMock()
+		store.ExpectedOrg = &models.Org{Id: 4}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
