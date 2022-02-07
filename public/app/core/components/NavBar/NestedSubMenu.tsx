@@ -13,12 +13,10 @@ export const NestedSubMenu: FC<Props> = ({ items = [] }) => {
     <ul className={styles.menu}>
       {items.map((item) => (
         <li key={item.id}>
-          <span>
+          <Link href={item.url || '#'} target={item.target} data-testid={`left-menu-${item.id}`}>
             {item.icon && <Icon name={item.icon as IconName} className={styles.icon} />}
-            <Link href={item.url || '#'} target={item.target}>
-              {item.text}
-            </Link>
-          </span>
+            {item.text}
+          </Link>
           {!!item.children?.length && (
             <>
               <span style={{ marginLeft: 'auto' }}>{<Icon name={'angle-right'} />}</span>
@@ -52,7 +50,8 @@ const getStyles = ({ colors, components, spacing, zIndex }: GrafanaTheme2) => {
         align-items: center;
         text-align: left;
 
-        & > span:first-child {
+        & > a {
+          width: 100%;
           padding: 5px 12px 5px 10px;
           white-space: nowrap;
         }

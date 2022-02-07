@@ -61,6 +61,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: flex;
     `,
     link: css`
+      width: 100%;
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
       display: block;
