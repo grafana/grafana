@@ -482,6 +482,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evalContext)
 		evalAppliedChan := make(chan time.Time)
 
+		ctx := context.Background()
 		sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
@@ -504,7 +505,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		// Now update the rule
 		newRule := *rule
 		newRule.Version++
-		ruleStore.putRule(context.TODO(), &newRule)
+		ruleStore.putRule(ctx, &newRule)
 
 		// and call with new version
 		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
@@ -681,6 +682,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan struct{})
 
+			ctx := context.Background()
 			sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 			sch.senders[orgID] = s
 
@@ -728,7 +730,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			wg.Wait()
 			newRule := rule
 			newRule.Version++
-			ruleStore.putRule(context.TODO(), &newRule)
+			ruleStore.putRule(ctx, &newRule)
 			wg.Add(1)
 			updateChan <- struct{}{}
 			wg.Wait()
