@@ -72,6 +72,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
   const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
   const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
+  const wrapperStyle = cx(styles.wrapper, isContentVisible && styles.wrapperExpanded);
 
   const rowHeader = (
     <div className={styles.header}>
@@ -105,7 +106,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
           const dragHandleProps = { ...provided.dragHandleProps, role: 'group' }; // replace the role="button" because it causes https://dequeuniversity.com/rules/axe/4.3/nested-interactive?application=msftAI
           return (
             <>
-              <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
+              <div ref={provided.innerRef} className={wrapperStyle} {...provided.draggableProps}>
                 <div {...dragHandleProps}>{rowHeader}</div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
               </div>
@@ -117,7 +118,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={wrapperStyle}>
       {rowHeader}
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
@@ -128,6 +129,10 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.md};
+    `,
+    wrapperExpanded: css`
+      border: 1px solid ${theme.colors.border2};
+      border-radius: ${theme.border.radius.sm};
     `,
     header: css`
       label: Header;
@@ -180,8 +185,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       text-overflow: ellipsis;
     `,
     content: css`
-      margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.lg};
+      padding: ${theme.spacing.sm};
     `,
     disabled: css`
       color: ${theme.colors.textWeak};
