@@ -319,7 +319,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images
+  name: build-docker-images
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -776,7 +776,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images
+  name: build-docker-images
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -790,7 +790,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images-ubuntu
+  name: build-docker-images-ubuntu
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1220,7 +1220,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images
+  name: build-docker-images
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1234,7 +1234,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images-ubuntu
+  name: build-docker-images-ubuntu
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1826,7 +1826,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images
+  name: build-docker-images
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1840,7 +1840,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images-ubuntu
+  name: build-docker-images-ubuntu
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -2984,7 +2984,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images
+  name: build-docker-images
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -2998,7 +2998,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images-ubuntu
+  name: build-docker-images-ubuntu
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3517,7 +3517,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images
+  name: build-docker-images
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3531,7 +3531,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: package-docker-images-ubuntu
+  name: build-docker-images-ubuntu
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -4203,6 +4203,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: fe4a207e1e7b4d08462e494f2a45ccf822082fb774f860d3cde06831cf3d3974
+hmac: a4e0284691393c89e8b54c4de3cc1cf619401cd743785d53468cd6fd50bd3139
 
 ...

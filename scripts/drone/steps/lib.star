@@ -744,7 +744,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         cmd += ' -archs {}'.format(','.join(archs))
 
     return {
-        'name': 'package-docker-images' + ubuntu_sfx,
+        'name': 'build-docker-images' + ubuntu_sfx,
         'image': 'google/cloud-sdk',
         'depends_on': ['copy-packages-for-docker'],
         'commands': [
