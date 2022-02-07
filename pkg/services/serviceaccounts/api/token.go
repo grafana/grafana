@@ -43,11 +43,21 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	}
 }
 
-// AddAPIKey adds an additional API key to a service account
-func (api *ServiceAccountsAPI) CreateNewServiceAccountToken(c *models.ReqContext) response.Response {
+// CreateNewToken adds an API key to a service account
+func (api *ServiceAccountsAPI) CreateNewToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
+
+	// confirm service account exists
+	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgId, saID); err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
+		}
 	}
 
 	cmd := models.AddApiKeyCommand{}
@@ -97,13 +107,14 @@ func (api *ServiceAccountsAPI) CreateNewServiceAccountToken(c *models.ReqContext
 	return response.JSON(200, result)
 }
 
-// AddAPIKey adds an additional API key to a service account
-func (api *ServiceAccountsAPI) DeleteServiceAccountToken(c *models.ReqContext) response.Response {
+// DeleteToken deletes service account tokens
+func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
 	}
 
+	// confirm service account exists
 	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgId, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -118,6 +129,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccountToken(c *models.ReqContext) r
 		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
 	}
 
+	// confirm API key belongs to service account. TODO: refactor get & delete to single call
 	cmdGet := &models.GetApiKeyByIdQuery{ApiKeyId: tokenID}
 	if err = bus.Dispatch(c.Req.Context(), cmdGet); err != nil || *cmdGet.Result.ServiceAccountId != saID {
 		status := 404
