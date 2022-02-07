@@ -44,7 +44,7 @@ func ProvideServiceAccountsService(
 		}
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, store)
 	serviceaccountsAPI.RegisterAPIEndpoints(features)
 
 	return s, nil

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -91,7 +90,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := api.apiKeyStore.AddAPIKey(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}
@@ -134,7 +133,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 
 	// confirm API key belongs to service account. TODO: refactor get & delete to single call
 	cmdGet := &models.GetApiKeyByIdQuery{ApiKeyId: tokenID}
-	if err = bus.Dispatch(c.Req.Context(), cmdGet); err != nil {
+	if err = api.apiKeyStore.GetApiKeyById(c.Req.Context(), cmdGet); err != nil {
 		status := 404
 		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
 			status = 500
@@ -151,7 +150,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	}
 
 	cmdDel := &models.DeleteApiKeyCommand{Id: tokenID, OrgId: c.OrgId}
-	if err = bus.Dispatch(c.Req.Context(), cmdDel); err != nil {
+	if err = api.apiKeyStore.DeleteApiKey(c.Req.Context(), cmdDel); err != nil {
 		status := 404
 		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
 			status = 500
