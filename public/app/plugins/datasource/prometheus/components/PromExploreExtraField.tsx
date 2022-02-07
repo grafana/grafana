@@ -44,7 +44,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
       }
     }
 
-    const onQueryTypeChange = getQueryTypeChangeChandler(query, onChange);
+    const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
     return (
       <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
@@ -121,7 +121,7 @@ export function getQueryTypeOptions(includeBoth: boolean) {
   return rangeOptions;
 }
 
-export function getQueryTypeChangeChandler(query: PromQuery, onChange: (update: PromQuery) => void) {
+export function getQueryTypeChangeHandler(query: PromQuery, onChange: (update: PromQuery) => void) {
   return (queryType: string) => {
     if (queryType === 'instant') {
       onChange({ ...query, instant: true, range: false });

@@ -40,7 +40,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, queryPreview: isEnabled });
+    onChange({ ...query, editorPreview: isEnabled });
     onRunQuery();
   };
 
@@ -78,7 +78,12 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             />
           </>
         )}
-        <QueryHeaderSwitch label="Preview" value={query.queryPreview} onChange={onQueryPreviewChange} />
+        <QueryHeaderSwitch
+          label="Preview"
+          value={query.editorPreview}
+          onChange={onQueryPreviewChange}
+          disabled={editorMode !== QueryEditorMode.Builder}
+        />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
@@ -92,7 +97,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               onChange={onChangeViewModel}
               onRunQuery={props.onRunQuery}
             />
-            {query.queryPreview && <QueryPreview query={visualQuery} />}
+            {query.editorPreview && <QueryPreview query={visualQuery} />}
             <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
           </>
         )}

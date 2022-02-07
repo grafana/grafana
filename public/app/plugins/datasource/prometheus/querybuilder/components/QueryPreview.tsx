@@ -20,7 +20,7 @@ export function QueryPreview({ query }: Props) {
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Query text">
+        <EditorField label="Preview">
           <div
             className={cx(styles.editorField, 'prism-syntax-highlight')}
             aria-label="selector"
@@ -35,7 +35,6 @@ export function QueryPreview({ query }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     editorField: css({
-      padding: theme.spacing(0.25, 1),
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
     }),

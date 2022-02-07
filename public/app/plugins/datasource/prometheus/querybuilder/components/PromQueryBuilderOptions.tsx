@@ -5,7 +5,7 @@ import { Input, RadioButtonGroup, Select, Switch } from '@grafana/ui';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 import { PromQuery } from '../../types';
 import { FORMAT_OPTIONS } from '../../components/PromQueryEditor';
-import { getQueryTypeChangeChandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
+import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 
 export interface Props {
   query: PromQuery;
@@ -33,7 +33,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   };
 
   const queryTypeOptions = getQueryTypeOptions(false);
-  const onQueryTypeChange = getQueryTypeChangeChandler(query, onChange);
+  const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
@@ -100,10 +100,17 @@ function getCollapsedInfo(query: PromQuery, formatOption: SelectableValue<string
   }
 
   items.push(`Format: ${formatOption.label}`);
-  items.push(`Step ${query.interval}`);
+
+  if (query.interval) {
+    items.push(`Step ${query.interval}`);
+  }
 
   if (query.instant) {
     items.push(`Instant: true`);
+  }
+
+  if (query.exemplar) {
+    items.push(`Exemplars: true`);
   }
 
   return items;
