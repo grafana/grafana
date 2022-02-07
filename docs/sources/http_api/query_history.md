@@ -114,7 +114,7 @@ Status codes:
 
 `PATCH /api/query-history/:uid`
 
-Updates a comment of query in the query history that matches the specified uid.
+Updates comment of a query with a specific uid that is stored in the query history.
 
 Query parameters:
 
