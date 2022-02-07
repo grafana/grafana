@@ -81,6 +81,44 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
+	t.Run("Influxdb response parser should parse metricFindQueries normally", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu",
+							"values": [
+								["cpu"],
+								["disk"],
+								["logs"]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := &Query{}
+		newField := data.NewField("value", nil, []string{
+			"cpu", "disk", "logs",
+		})
+		testFrame := data.NewFrame("cpu",
+			newField,
+		)
+
+		result := parser.Parse(prepare(response), query)
+
+		frame := result.Responses["metricFindQuery"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
 		parser := &ResponseParser{}
 
