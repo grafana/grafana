@@ -86,19 +86,19 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 
 	builder.WriteString("(((")
 
-	dashSql, params, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", "dashboards:read", f.User)
-	builder.WriteString(dashSql)
+	dashFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "dashboards", "dashboards:read", f.User)
+	builder.WriteString(dashFilter.Where)
 
 	builder.WriteString(" OR ")
 
-	dashFolderSql, dashFolderParams, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", "dashboards:read", f.User)
-	builder.WriteString(dashFolderSql)
+	dashFolderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.folder_id", "folders", "dashboards:read", f.User)
+	builder.WriteString(dashFolderFilter.Where)
 
 	builder.WriteString(") AND NOT dashboard.is_folder) OR (")
 
-	folderSql, folderParams, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", "folders:read", f.User)
-	builder.WriteString(folderSql)
+	folderFilter, _ := accesscontrol.Filter(context.Background(), "dashboard.id", "folders", "folders:read", f.User)
+	builder.WriteString(folderFilter.Where)
 	builder.WriteString(" AND dashboard.is_folder))")
 
-	return builder.String(), append(params, append(dashFolderParams, folderParams...)...)
+	return builder.String(), append(dashFilter.Args, append(dashFolderFilter.Args, folderFilter.Args...)...)
 }
