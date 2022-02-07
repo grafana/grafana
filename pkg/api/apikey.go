@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -80,12 +79,9 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 			return response.Error(400, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
+
+	cmd.ServiceAccountId = nil // Security: API keys can't be added to SAs through this endpoint since we do not implement access checks here
 	cmd.OrgId = c.OrgId
-	var err error
-	if hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		// Api keys should now be created with addadditionalapikey endpoint
-		return response.Error(400, "API keys should now be added via the AdditionalAPIKey endpoint.", err)
-	}
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {
@@ -110,17 +106,4 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, result)
-}
-
-// AddAPIKey adds an additional API key to a service account
-func (hs *HTTPServer) AdditionalAPIKey(c *models.ReqContext) response.Response {
-	cmd := models.AddApiKeyCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	if !hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
-		return response.Error(500, "Requires services-accounts feature", errors.New("feature missing"))
-	}
-
-	return hs.AddAPIKey(c)
 }
