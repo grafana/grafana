@@ -1,18 +1,19 @@
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import React, { FC, useState, useEffect } from 'react';
-import { HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import kbn from 'app/core/utils/kbn';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import pluralize from 'pluralize';
+import React, { FC, useEffect, useState } from 'react';
+import { useFolder } from '../../hooks/useFolder';
+import { useHasRuler } from '../../hooks/useHasRuler';
+import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
-import { RulesTable } from './RulesTable';
-import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { ActionIcon } from './ActionIcon';
-import { useHasRuler } from '../../hooks/useHasRuler';
-import kbn from 'app/core/utils/kbn';
-import { useFolder } from '../../hooks/useFolder';
-import { RuleStats } from './RuleStats';
 import { EditCloudGroupModal } from './EditCloudGroupModal';
+import { RulesTable } from './RulesTable';
+import { RuleStats } from './RuleStats';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -25,6 +26,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   const styles = useStyles2(getStyles);
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   useEffect(() => {
@@ -88,6 +90,16 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         onClick={() => setIsEditingGroup(true)}
       />
     );
+
+    actionIcons.push(
+      <ActionIcon
+        key="delete-group"
+        aria-label=""
+        tooltip="Remove group"
+        icon="trash-alt"
+        onClick={() => setIsDeletingGroup(true)}
+      />
+    );
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
@@ -129,6 +141,21 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
       {isEditingGroup && (
         <EditCloudGroupModal group={group} namespace={namespace} onClose={() => setIsEditingGroup(false)} />
       )}
+      <ConfirmModal
+        isOpen={isDeletingGroup}
+        title="Delete group"
+        body={
+          <div>
+            Deleting this group will permanently remove the group and {group.rules.length} alert{' '}
+            {pluralize('rule', group.rules.length)} belonging to it.
+            <br />
+            Are you sure you want to delete this group?
+          </div>
+        }
+        onConfirm={() => null}
+        onDismiss={() => setIsDeletingGroup(false)}
+        confirmText="Delete"
+      />
     </div>
   );
 });
