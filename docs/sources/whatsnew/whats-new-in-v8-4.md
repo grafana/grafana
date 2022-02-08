@@ -12,9 +12,9 @@ list = false
 
 We’re excited to announce Grafana v8.4, with a variety of improvements that focus on Grafana’s usability, performance, and security. Read on to learn about Alerting enhancements like a WeCom contact point, improved Alert panel and custom mute timings, as well as visualization improvements and details to help you share playlists more easily. In Grafana Enterprise, we’ve made caching more powerful to save you time and money while loading dashboards, boosted database encryption to keep secrets safe in your Grafana database, and made usability improvements to Recorded Queries, which allow you to track any data point over time.
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-# Grafana OSS
+# OSS
 
 ## Ease of use
 
@@ -26,24 +26,24 @@ You can now share links to your playlists the same way as with dashboards, to ea
 
 We’ve expanded the functionality of this existing and popular feature. You can now use $**interval and $**interval_ms in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
 
-## Accessibility improvements
+### Accessibility improvements
 
 We’re continuing to improve accessibility across Grafana, particularly focusing on keyboard navigation and screen readers.
 
 - Navigation: We’ve improved our keyboard navigation support in our main navbar, added focus states, and removed keyboard traps.
 - General components (tooltips, color pickers, modals, dropdowns, and so forth): we’ve ensured they’re keyboard navigable, improved focus trapping, and improved screen reader support.
-- Time series panel: charts are one of our main areas of limited accessibility. As of 8.4, you can also move a panel and make range selections using your keyboard. - Press arrow keys to move cursor around - Hold Shift to increase cursor speed - Hold space to start rage selection
+- Time series panel: charts are one of our main areas of limited accessibility. As of 8.4, you can also move a panel and make range selections using your keyboard. - Press arrow keys to move the cursor around. - Hold Shift to increase cursor speed. - Hold space to start rage selection.
   You can read our accessibility statement [here](https://grafana.com/accessibility/) and reach out to us with accessibility issues using our community Slack or our community forums.
 
 ### New option to configure OpenTelemetry
 
-Grafana is used to visualise traces and metrics, but Grafana itself can be traced as well. For example, users running a Grafana instance can export all the traces of endpoints and database requests to Jaeger, which helps you view all Grafana traffic.
+Grafana is used to visualize traces and metrics, but Grafana itself can be traced as well. For example, users running a Grafana instance can export all the traces of endpoints and database requests to Jaeger, which helps you view all Grafana traffic.
 
 We’re currently using OpenTracing for this, but since the repository is being deprecated, we’ve started our work to migrate to OpenTelemetry and remove OpenTracing. This release is the first step toward this goal. It also adds the option to configure OpenTelemetry instead of OpenTracing.
 
 ### Rotate your encryption key
 
-In Grafana 8.3, we upgraded Grafana to use envelope encryption, which adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys, called data encryption keys (DEKs), to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK).
+In Grafana 8.3, we upgraded Grafana to use envelope encryption, which adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys, called data encryption keys (DEKs), to encrypt them. These data encryption keys are themselves encrypted with a single key-encryption key (KEK).
 
 As of 8.4, you can rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised.
 
@@ -61,7 +61,7 @@ Paired with the existing Silences, this gives you even more control over when al
 
 The new Alert Panel displays your alerts and associated alert instances, and supports grouping by one or more custom labels. You can also display all alert instances in an ungrouped list by choosing the custom grouping mode without any configured labels.
 
-Traditionally alerts in the Alert Panel were grouped by the alert rule that created them. When you are monitoring a complex resource like an industrial pump, you typically have multiple alerts defined for that resource to observe different metrics.The new custom grouping feature allows you to view all alert instances for each individual resource by specifying a label such as “pump identifier”.
+Traditionally alerts in the Alert Panel were grouped by the alert rule that created them. When you are monitoring a complex resource like an industrial pump, you typically have multiple alerts defined for that resource to observe different metrics. The new custom grouping feature allows you to view all alert instances for individual resource by specifying a label such as “pump identifier”.
 
 ### WeCom contact point
 
@@ -79,58 +79,48 @@ We’ve expanded the bar chart so that you can:
   - Skip values when there are too many labels
   - Rotate labels
 
-## Grafana Alerting
+### Geomap
 
-Grafana Alerting is now the default alerting experience for all new Open Source installations of Grafana 8.3. Grafana Alerting in 8.3 includes the ability to test contact points and notification routing. Grafana 8.3 also adds the ability to configure and use external, Prometheus-style alert managers from within the Grafana Alerting workflow.
+Geomap now supports tooltips with data-links across multiple layers
 
-{{< figure src="/static/img/docs/alerting/alerting_8_0.png" max-width="1200px" caption="Grafana Alerting" >}}
+## OpenAPI v2 specification
 
-## Support for AWS CloudWatch Metrics Insights
+The HTTP API details are now [specified](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/papagian/api-spec/public/api-merged.json) using OpenAPI v2.
 
-Grafana and Amazon Managed Grafana now support AWS Metrics Insights – a fast, flexible, SQL-based query engine that enables you to identify trends and patterns across millions of operational metrics in real time.
-
-You can use Metrics Insights in the AWS CloudWatch plugin. Using this new feature is as simple as selecting the Metric Query type. The Metric Query type has two different modes: a Builder mode and a Code editor mode.
-
-The example below demonstrates using the new Metrics Insight capability to view the top 5 instances with the highest average CPU Utilization, ordered by maximum, in descending order. The code editor has built-in autocompletion support that gives suggestions throughout the composition of the query.
-
-{{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.gif" max-width="1200px" caption="Grafana Alerting" >}}
+The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) editor via the /swagger-ui endpoint that enables users to make requests to the HTTP API via the browser. This is disabled by default and it’s enabled when the swagger-ui feature toggle is set.
 
 # Grafana Enterprise
 
-## Recorded Queries
+## Security improvements
 
-Recorded queries turn “point in time” data into time series.
+### Fine-grained access control works for teams
 
-Recorded queries allow you to export the results of certain non-time series queries to the Enterprise backend in order to store data over time and allow customers to construct their own time series.
+Occasionally, Viewer, Editor, and Admin roles don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. Fine-grained access control is currently in beta.
 
-This new feature is especially helpful for Enterprise customers using plugins because many new plugins, like ServiceNow and Jira, don’t return time series so customers weren’t able to plot historical data over time. With recorded queries, now they can! For more information
+In Grafana 8.4, you can assign roles to teams, which apply to all members of that team. This is a convenient way to grant certain permissions to a group of users all at once. It also makes permissions easier to manage when you synchronize groups from an SSO provider, like Google Oauth or Okta, to teams in Grafana.
 
-## Assign fine-grained permissions directly to users with the new role picker (beta)
+In 8.4 you can also control access to Team and API key functionality itself, like viewing or editing API keys and adding members to certain teams.
 
-Sometimes the Viewer, Editor, and Admin roles just don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users, so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. The role picker can be access from the Grafana Admin user management page.
+Enable fine-grained access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about fine-grained access control in the [fine-grained access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
 
-{{< figure src="/static/img/docs/enterprise/enterprise_role_picker_8_3.png" max-width="1200px" caption="Grafana Enterprise Role Picker" >}}
+### Assign SAML users different roles in different Organizations
 
-## Use fine-grained access control for Organizations and Licensing (beta)
+You can use Grafana’s SAML integration to map organizations in your SAML service to [Organizations](​​https://grafana.com/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/) in Grafana, so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
 
-We’ve added new permissions to fine-grained access control to help you specify actions that users can perform. Now you can assign permissions to manage Organizations and License functions in Grafana, in addition to Users, Data Sources, Reports, and other resources. Fine-grained access control remains in beta and we will continue to add new permissions until all of Grafana’s endpoints are covered. For a complete list of the actions you can permit using fine-grained access control, see the [reference](https://grafana.com/docs/grafana/next/enterprise/access-control/fine-grained-access-control-references/).
+Additionally, you can now grant multiple SAML organizations access to Grafana, using the `allowed_organizations` attribute. Previously, you could only map one.
 
-## Get your encryption key from a Key Management Service
+Learn more in our [SAML docs](https://grafana.com/docs/grafana/next/enterprise/saml/).
 
-Grafana’s database contains secrets, like the credentials used to query data sources, send alert notifications and perform other functions within Grafana. These secrets are encrypted using keys, which are usually stored in Grafana’s configuration file. Now you can get your encryption key from Amazon KMS, Azure Key Vault, or Hashicorp Vault. This allows you to centrally manage your Grafana encryption key and reduce the chances it will leak.
+## Performance improvements
 
-In order to support this, we’ve upgraded Grafana Enterprise to use envelope encryption, which complements the KMS integration by adding a layer of indirection to the encryption process. Instead of encrypting all secrets with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). With envelope encryption, you can store a KEK in your KMS, and still quickly encrypt and decrypt data using DEKs stored within the Grafana database.
+### Recorded queries is more stable and usable
 
-## Pay the same for all users, regardless of their permissions
+We’ve made several stability and usability improvements to Recorded Queries, and removed the feature flag so you can get started with Recorded Queries out of the box.
 
-Are you tired of managing user permissions because your license only allows a certain number of Viewers and Editors or Admins? So were we. We’ve added support for combined user pricing, where all users cost the same and fall into the same license bucket in Grafana Enterprise. This is a specific license option and must be updated in your contract. To learn more, refer to our [licensing docs](https://grafana.com/docs/grafana/latest/enterprise/license/license-restrictions/). To switch to combined user pricing, contact your Grafana Labs account team.
+### Measure query cache hit rate and clear the cache
 
-{{< figure src="/static/img/docs/enterprise/enterprise_users_8_3.png" max-width="1200px" caption="Grafana Enterprise User Pricing" >}}
+[Query caching](https://grafana.com/blog/2021/09/02/reduce-costs-and-increase-performance-with-query-caching-in-grafana-cloud/) significantly reduces load times and costs of Grafana dashboards, by temporarily storing query results in a cache. Now you can measure the hit rate of your query cache, to see how many queries (and therefore how much time and money) it is saving. You can also use these measurements to tune the cache time to live (TTL), to balance performance and up-to-date data.
 
-## Author dashboards faster with resource caching
+You can also now manually clear the cache for a given data source in case data becomes stale, so that the next set of queries run against the data source itself.
 
-Your query editor just became faster. [Query caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) improves query performance and sometimes reduces cost, by reducing the number of repetitive queries performed against data sources. Resource caching does the same thing but for resource calls, like retrieving the list of applications in the AppDynamics editor, the list of metrics from Datadog, or the list of values in a template variable dropdown. This makes for a zippier user experience for everyone writing queries in Grafana.
-
-## Review audit logs for more services, like alerting
-
-[Audit logs](https://grafana.com/docs/grafana/latest/enterprise/auditing/) are a record of the actions users perform in Grafana, which you can investigate in case of a security incident or to understand Grafana usage better. We’ve added audit logs for new actions performed against plugins, data sources, library elements, and Grafana’s new alerting service. This ensures that if a user makes a change anywhere in Grafana Enterprise, you’ll have a record of it. For details, refer to the [Auditing docs](https://grafana.com/docs/grafana/latest/enterprise/auditing/).
+To learn more, refer to [query caching in the Grafana Enterprise docs](https://grafana.com/docs/grafana/next/enterprise/query-caching/)
