@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -340,4 +341,78 @@ func toNamespaceErrorResponse(err error) response.Response {
 		return ErrResp(http.StatusBadRequest, err, err.Error())
 	}
 	return apierrors.ToFolderErrorResponse(err)
+}
+
+type RuleChanges struct {
+	newRules int
+	Upsert   []store.UpsertRule
+	Delete   []*ngmodels.AlertRule
+}
+
+func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*RuleChanges, error) {
+	q := &ngmodels.ListRuleGroupAlertRulesQuery{
+		OrgID:        orgId,
+		NamespaceUID: namespace.Uid,
+		RuleGroup:    ruleGroupName,
+	}
+	if err := ruleStore.GetRuleGroupAlertRules(ctx, q); err != nil {
+		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)
+	}
+	existingGroupRules := q.Result
+
+	existingGroupRulesUIDs := make(map[string]ngmodels.AlertRule, len(existingGroupRules))
+	for _, r := range existingGroupRules {
+		existingGroupRulesUIDs[r.UID] = *r
+	}
+
+	upsert := make([]store.UpsertRule, 0, len(submittedRules))
+	toDelete := make([]*ngmodels.AlertRule, 0, len(submittedRules))
+	newRules := 0
+	for _, r := range submittedRules {
+		var existing *ngmodels.AlertRule = nil
+
+		if r.UID != "" {
+			if existingGroupRule, ok := existingGroupRulesUIDs[r.UID]; ok {
+				existing = &existingGroupRule
+				// remove the rule from existingGroupRulesUIDs
+				delete(existingGroupRulesUIDs, r.UID)
+			}
+
+			// Rule can be from other group or namespace
+			q := &ngmodels.GetAlertRuleByUIDQuery{OrgID: orgId, UID: r.UID}
+			if err := ruleStore.GetAlertRuleByUID(ctx, q); err != nil && !errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				return nil, fmt.Errorf("failed to query database for an alert rule with UID %s: %w", r.UID, err)
+			}
+			existing = q.Result
+		}
+
+		if existing == nil {
+			r.Version = 1
+			upsert = append(upsert, store.UpsertRule{
+				Existing: nil,
+				New:      *r,
+			})
+			newRules++
+			continue
+		}
+
+		// TODO check if rule is different and skip update
+		r.ID = existing.ID
+		r.Version = existing.Version + 1
+		upsert = append(upsert, store.UpsertRule{
+			Existing: existing,
+			New:      *r,
+		})
+		continue
+	}
+
+	for _, rule := range existingGroupRulesUIDs {
+		toDelete = append(toDelete, &rule)
+	}
+
+	return &RuleChanges{
+		Upsert:   upsert,
+		Delete:   toDelete,
+		newRules: newRules,
+	}, nil
 }
