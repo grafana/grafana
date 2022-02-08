@@ -1,6 +1,5 @@
 import { Icon, IconName, useStyles, Tooltip } from '@grafana/ui';
-import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
-import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
+import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
 import { Link } from 'react-router-dom';
@@ -40,7 +39,7 @@ export const ActionIcon: FC<Props> = ({
   );
 
   return (
-    <Tooltip content={tooltip} placement={tooltipPlacement}>
+    <Tooltip content={tooltip} placement={tooltipPlacement} interactive>
       {to ? (
         <GoTo url={to} label={ariaLabel} target={target}>
           {iconEl}
