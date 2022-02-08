@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { UIDropdown, UIMenu, UIMenuItem } from '..';
 import NewWindowIcon from './NewWindowIcon';
 
 type Link = {
@@ -32,28 +31,8 @@ const LinkValue = (props: { href: string; title?: string; children?: React.React
   </a>
 );
 
-// export for testing
-export const linkValueList = (links: Link[]) => (
-  <UIMenu>
-    {links.map(({ text, url }, index) => (
-      // `index` is necessary in the key because url can repeat
-      <UIMenuItem key={`${url}-${index}`}>
-        <LinkValue href={url}>{text}</LinkValue>
-      </UIMenuItem>
-    ))}
-  </UIMenu>
-);
-
 export default function ExternalLinks(props: ExternalLinksProps) {
   const { links } = props;
-  if (links.length === 1) {
-    return <LinkValue href={links[0].url} title={links[0].text} className={props.className} />;
-  }
-  return (
-    <UIDropdown overlay={linkValueList(links)} placement="bottomRight" trigger={['click']}>
-      <a className={props.className}>
-        <NewWindowIcon isLarge />
-      </a>
-    </UIDropdown>
-  );
+  // TODO: handle multiple items
+  return <LinkValue href={links[0].url} title={links[0].text} className={props.className} />;
 }
