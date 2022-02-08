@@ -52,7 +52,7 @@ const ServiceAccountPageUnconnected = ({
   }, [match, loadServiceAccount, loadServiceAccountTokens]);
 
   const onDeleteServiceAccountToken = (key: ApiKey) => {
-    deleteServiceAccountToken(key.id!);
+    deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
   };
 
   return (
