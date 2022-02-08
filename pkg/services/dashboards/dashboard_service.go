@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -232,6 +234,12 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 		OrgId:   dto.OrgId,
+		Permissions: map[int64]map[string][]string{
+			dto.OrgId: {
+				accesscontrol.ActionDashboardsCreate: {accesscontrol.ScopeFoldersAll},
+				accesscontrol.ActionDashboardsWrite:  {accesscontrol.ScopeFoldersAll},
+			},
+		},
 	}
 
 	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, true, false)
@@ -257,6 +265,12 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
+		Permissions: map[int64]map[string][]string{
+			dto.OrgId: {
+				accesscontrol.ActionFoldersCreate: {},
+				accesscontrol.ActionFoldersWrite:  {accesscontrol.ScopeFoldersAll},
+			},
+		},
 	}
 	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
