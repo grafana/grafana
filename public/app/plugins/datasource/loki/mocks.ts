@@ -43,6 +43,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
         }
       }
     },
+    interpolateString: (string: string) => string,
   } as any;
 }
 

@@ -4,7 +4,8 @@ import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
-import { Team } from 'app/types';
+import { AccessControlAction, Team } from 'app/types';
+import { contextSrv } from 'app/core/core';
 
 const mapDispatchToProps = {
   updateTeam,
@@ -18,6 +19,8 @@ interface OwnProps {
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
+  const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
+
   return (
     <VerticalGroup>
       <FieldSet label="Team settings">
@@ -26,6 +29,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           onSubmit={(formTeam: Team) => {
             updateTeam(formTeam.name, formTeam.email);
           }}
+          disabled={!canWriteTeamSettings}
         >
           {({ register }) => (
             <>
@@ -44,7 +48,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           )}
         </Form>
       </FieldSet>
-      <SharedPreferences resourceUri={`teams/${team.id}`} />
+      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} />
     </VerticalGroup>
   );
 };

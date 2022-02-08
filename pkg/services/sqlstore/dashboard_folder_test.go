@@ -327,7 +327,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := HasEditPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -393,7 +393,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := HasEditPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -461,7 +461,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := HasEditPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -485,7 +485,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := HasEditPermissionInFolders(context.Background(), query)
+						err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 						require.NoError(t, err)
 						require.True(t, query.Result)
 					})
@@ -501,7 +501,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := HasEditPermissionInFolders(context.Background(), query)
+						err := sqlStore.HasEditPermissionInFolders(context.Background(), query)
 						require.NoError(t, err)
 						require.True(t, query.Result)
 					})

@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -18,7 +17,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 	if c.OrgId != 0 {
 		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := bus.Dispatch(c.Req.Context(), &query)
+		err := hs.SQLStore.GetDataSources(c.Req.Context(), &query)
 
 		if err != nil {
 			return nil, err
@@ -214,6 +213,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
+		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
@@ -238,8 +238,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.updateChecker.LatestGrafanaVersion(),
-			"hasUpdate":     hs.updateChecker.GrafanaUpdateAvailable(),
+			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
+			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
 			"env":           setting.Env,
 		},
 		"licenseInfo": map[string]interface{}{
@@ -272,9 +272,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
-		"featureHighlights": map[string]bool{
-			"enabled": hs.SettingsProvider.Section("feature_highlights").KeyValue("enabled").MustBool(false),
-		},
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {

@@ -1,10 +1,10 @@
 .query-keyword {
   font-weight: $font-weight-semi-bold;
-  color: $text-blue;
+  color: $text-blue !important;
 }
 
 .query-segment-operator {
-  color: $orange;
+  color: $orange !important;
 }
 
 .query-placeholder {

@@ -176,9 +176,10 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID  int64 `json:"-"`
-	UserID int64 `json:"userId"`
-	Roles  []string
+	OrgID   int64 `json:"-"`
+	UserID  int64 `json:"userId"`
+	Roles   []string
+	Actions []string
 }
 
 // ScopeParams holds the parameters used to fill in scope templates
@@ -234,17 +235,15 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 }
 
 type SetResourcePermissionCommand struct {
-	Actions    []string
-	Resource   string
-	ResourceID string
-	Permission string
+	UserID      int64
+	TeamID      int64
+	BuiltinRole string
+	Permission  string
 }
 
-type GetResourcesPermissionsQuery struct {
-	Actions     []string
-	Resource    string
-	ResourceIDs []string
-	OnlyManaged bool
+type SQLFilter struct {
+	Where string
+	Args  []interface{}
 }
 
 const (

@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
-import Datasource from '../datasource';
 
+import Datasource from '../datasource';
 import { AzureMonitorQuery } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -159,10 +159,12 @@ export interface AzureResourceSummaryItem {
   resourceName: string | undefined;
 }
 
-export interface RawAzureResourceGroupItem {
-  subscriptionURI: string;
+export interface RawAzureSubscriptionItem {
   subscriptionName: string;
+  subscriptionId: string;
+}
 
+export interface RawAzureResourceGroupItem {
   resourceGroupURI: string;
   resourceGroupName: string;
 }
