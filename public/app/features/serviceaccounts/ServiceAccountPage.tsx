@@ -95,6 +95,10 @@ const ServiceAccountPageUnconnected = ({
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setNewTokenName('');
+    setIsWithExpirationDate(false);
+    setNewTokenExpirationDate('');
+    setIsExpirationDateValid(false);
   };
 
   const onExpirationDateChange = (value: Date | string) => {
