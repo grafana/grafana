@@ -40,11 +40,23 @@ describe('LogsVolumePanel', () => {
     expect(screen.getByText('ExploreGraph')).toBeInTheDocument();
   });
 
-  it('shows warning message without details', () => {
+  it('shows short warning message', () => {
     renderPanel({ state: LoadingState.Error, error: { data: { message: 'Test error message' } }, data: [] });
     expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
-    expect(screen.getByText('Please check console logs for more details.')).toBeInTheDocument();
-    expect(screen.queryByText('Test error message')).not.toBeInTheDocument();
+    expect(screen.getByText('Test error message')).toBeInTheDocument();
+  });
+
+  it('shows long warning message', () => {
+    // we make a long message
+    const messagePart = 'One two three four five six seven eight nine ten.';
+    const message = messagePart + ' ' + messagePart + ' ' + messagePart;
+
+    renderPanel({ state: LoadingState.Error, error: { data: { message } }, data: [] });
+    expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    const button = screen.getByText('Show details');
+    button.click();
+    expect(screen.getByText(message)).toBeInTheDocument();
   });
 
   it('does not show the panel when there is no volume data', () => {

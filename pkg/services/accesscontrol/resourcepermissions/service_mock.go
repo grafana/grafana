@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+var _ accesscontrol.ResourcePermissionsService = new(MockService)
+
 type MockService struct {
 	mock.Mock
 }
@@ -30,4 +32,9 @@ func (m *MockService) SetTeamPermission(ctx context.Context, orgID, teamID int64
 func (m *MockService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, builtInRole, resourceID, permission)
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
+}
+
+func (m *MockService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	mockedArgs := m.Called(ctx, orgID, resourceID, commands)
+	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }

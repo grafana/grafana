@@ -142,6 +142,10 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
+		r.Get("/swagger-ui", swaggerUI)
+	}
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -258,10 +262,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
+			keysRoute.Get("/", routing.Wrap(hs.GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Post("/additional", quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
-			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
+			keysRoute.Delete("/:id", routing.Wrap(hs.DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences
@@ -343,11 +346,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
-			dashboardRoute.Get("/tags", GetDashboardTags)
+			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", routing.Wrap(GetDashboardVersion))
+				dashIdRoute.Get("/versions", routing.Wrap(hs.GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", routing.Wrap(hs.GetDashboardVersion))
 				dashIdRoute.Post("/restore", routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {

@@ -37,6 +37,7 @@ export interface FeatureToggles {
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
+  swaggerUi?: boolean;
   featureHighlights?: boolean;
   liveDiscussions?: boolean;
   liveOrgDiscussions?: boolean;
