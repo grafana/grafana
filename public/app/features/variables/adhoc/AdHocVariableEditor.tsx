@@ -5,15 +5,14 @@ import { DataSourceRef, SelectableValue } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
-import { VariableEditorState } from '../editor/reducer';
-import { AdHocVariableEditorState } from './reducer';
 import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { StoreState } from 'app/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
+import { getAdhocVariableEditorState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor as VariableEditorState<AdHocVariableEditorState>,
+  extended: getAdhocVariableEditorState(state.templating.editor),
 });
 
 const mapDispatchToProps = {
@@ -37,9 +36,9 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const { variable, editor } = this.props;
-    const dataSources = editor.extended?.dataSources ?? [];
-    const infoText = editor.extended?.infoText ?? null;
+    const { variable, extended } = this.props;
+    const dataSources = extended?.dataSources ?? [];
+    const infoText = extended?.infoText ?? null;
     const options = dataSources.map((ds) => ({ label: ds.text, value: ds.value }));
     const value = options.find((o) => o.value?.uid === variable.datasource?.uid) ?? options[0];
 
@@ -56,6 +55,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
               labelWidth={10}
             />
           </InlineFieldRow>
+
           {infoText ? <Alert title={infoText} severity="info" /> : null}
         </VerticalGroup>
       </VerticalGroup>

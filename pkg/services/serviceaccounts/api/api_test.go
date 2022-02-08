@@ -129,7 +129,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 		user         *tests.TestUser
 		expectedCode int
 		acmock       *accesscontrolmock.Mock
-		userID       int
+		Id           int
 	}
 	testCases := []testRetrieveSATestCase{
 		{
@@ -157,9 +157,9 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			expectedCode: http.StatusForbidden,
 		},
 		{
-			desc:   "should be not found when the user doesnt exist",
-			user:   nil,
-			userID: 12,
+			desc: "should be not found when the user doesnt exist",
+			user: nil,
+			Id:   12,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
 				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
@@ -182,7 +182,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodGet, serviceaccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				scopeID := tc.userID
+				scopeID := tc.Id
 				if tc.user != nil {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
 					scopeID = int(createdUser.Id)
@@ -198,7 +198,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 					actualBody := map[string]interface{}{}
 					err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
 					require.NoError(t, err)
-					require.Equal(t, scopeID, int(actualBody["userId"].(float64)))
+					require.Equal(t, scopeID, int(actualBody["id"].(float64)))
 					require.Equal(t, tc.user.Login, actualBody["login"].(string))
 				}
 			})

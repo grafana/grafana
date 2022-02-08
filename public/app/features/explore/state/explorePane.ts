@@ -98,7 +98,6 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
-  originPanelId?: number | null;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
@@ -143,9 +142,7 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
-  panelsState?: ExplorePanelsState,
-
-  originPanelId?: number | null
+  panelsState?: ExplorePanelsState
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -166,7 +163,6 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        originPanelId,
         datasourceInstance: instance,
         history,
       })
@@ -205,7 +201,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
-    const { datasource, queries, range: urlRange, originPanelId, panelsState } = newUrlState;
+    const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -222,16 +218,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       await dispatch(
-        initializeExplore(
-          exploreId,
-          datasource,
-          initialQueries,
-          range,
-          containerWidth,
-          eventBridge,
-          panelsState,
-          originPanelId
-        )
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
       return;
     }
@@ -285,7 +272,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
 
     return {
       ...state,
@@ -295,7 +282,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, datasourceInstance),
-      originPanelId,
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,
