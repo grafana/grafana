@@ -54,7 +54,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-align: center;
     color: ${theme.colors.text.maxContrast};
     background-color: ${theme.colors.background.secondary};
-    border: 1px solid ${theme.colors.border.weak};
     font-size: ${theme.typography.size.lg};
     margin-right: ${theme.spacing(2)};
   `,
