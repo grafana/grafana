@@ -54,7 +54,7 @@ interface ScenarioContext {
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
-
+const DASH_UID = 'DGmvKKxZz';
 function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
     const loaderSrv = {
@@ -84,7 +84,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
           templating: {
             list: [constantBuilder().build()],
           },
-          uid: 'DGmvKKxZz',
+          uid: DASH_UID,
         },
       })),
     };
@@ -102,7 +102,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     const ctx: ScenarioContext = {
       args: {
-        urlUid: 'DGmvKKxZz',
+        urlUid: DASH_UID,
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
       },
@@ -123,9 +123,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             queries: [],
           },
         },
-        ...getPreloadedState('DGmvKKxZz', {
+        ...getPreloadedState(DASH_UID, {
           variables: {},
-          transaction: { ...initialTransactionState, uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
+          transaction: { ...initialTransactionState, uid: DASH_UID, status: TransactionStatus.Completed },
         }),
       },
       setup: (fn: () => void) => {
@@ -294,32 +294,11 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
 
 describeInitScenario('Initializing snapshot dashboard', (ctx) => {
   ctx.setup(() => {
-    ctx.storeState.user.orgId = 12;
-    ctx.args.routeName = DashboardRoutes.New;
+    ctx.args.urlUid = undefined;
   });
 
-  it('Should send action dashboardInitFetching', () => {
-    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
-  });
-
-  it('Should send action dashboardInitServices ', () => {
-    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
-  });
-
-  it('Should update location with orgId query param', () => {
-    const search = locationService.getSearch();
-    expect(search.get('orgId')).toBe('12');
-  });
-
-  it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[7].payload.title).toBe('New dashboard');
-  });
-
-  it('Should initialize services', () => {
-    expect(getTimeSrv().init).toBeCalled();
-    expect(getDashboardSrv().setCurrent).toBeCalled();
-    expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+  it('Should send action initVariablesTransaction with correct payload', () => {
+    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+    expect(ctx.actions[2].payload.action.payload.uid).toBe(DASH_UID);
   });
 });
