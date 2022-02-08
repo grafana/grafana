@@ -17,6 +17,7 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { runQueries } from './query';
 import { syncTimesAction, stateSave } from './main';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime/src/services/appEvents';
 
 //
 // Actions and Payloads
@@ -96,16 +97,18 @@ export const updateTime = (config: {
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
-    getTimeSrv().init(
-      new DashboardModel({
-        time: range.raw,
-        refresh: false,
-        timeZone,
-        timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
-          dispatch(updateTime({ exploreId: exploreId, rawRange: rawTimeRange }));
-        },
-      })
-    );
+    const dashboardModel = new DashboardModel({
+      time: range.raw,
+      refresh: false,
+      timeZone,
+    });
+
+    dashboardModel.events.subscribe(TimeRangeUpdatedEvent, (event) => {
+      const timeRange = event.payload;
+      dispatch(updateTimeRange({ exploreId: exploreId, rawRange: timeRange.raw }));
+    });
+
+    getTimeSrv().init(dashboardModel);
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };

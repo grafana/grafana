@@ -111,7 +111,6 @@ export class DashboardModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
-  timeRangeUpdated: any;
 
   // ------------------
   // not persisted
@@ -170,7 +169,6 @@ export class DashboardModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
-    this.timeRangeUpdated = data.timeRangeUpdated || this.defaultTimeRangeUpdated;
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -373,7 +371,7 @@ export class DashboardModel {
     }
   }
 
-  defaultTimeRangeUpdated(timeRange: TimeRange) {
+  timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(timeRange));
   }

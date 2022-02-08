@@ -173,7 +173,7 @@ export function initializeExplore(
     }
     dispatch(updateTime({ exploreId }));
 
-    keybindingSrv.setupExploreBindings();
+    keybindingSrv.setupTimeRangeBindings(false);
 
     if (instance) {
       // We do not want to add the url to browser history on init because when the pane is initialised it's because

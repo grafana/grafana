@@ -14,7 +14,7 @@ import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePick
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 import { locationService } from '@grafana/runtime';
-import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
+import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 
@@ -34,11 +34,11 @@ export class TimeSrv {
     this.refreshDashboard = this.refreshDashboard.bind(this);
 
     appEvents.subscribe(ZoomOutEvent, (e) => {
-      this.zoomOut(e.payload);
+      this.zoomOut(e.payload.scale, e.payload.updateUrl);
     });
 
     appEvents.subscribe(ShiftTimeEvent, (e) => {
-      this.shiftTime(e.payload);
+      this.shiftTime(e.payload.direction, e.payload.updateUrl);
     });
 
     appEvents.subscribe(AbsoluteTimeEvent, () => {
@@ -276,7 +276,7 @@ export class TimeSrv {
     this.setAutoRefresh(this.previousAutoRefresh);
   }
 
-  setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
+  setTime(time: RawTimeRange, updateUrl = true) {
     extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
@@ -288,8 +288,7 @@ export class TimeSrv {
       this.oldRefresh = null;
     }
 
-    // update url
-    if (fromRouteUpdate !== true) {
+    if (updateUrl === true) {
       const urlRange = this.timeRangeForUrl();
       const urlParams = locationService.getSearchObject();
 
@@ -335,21 +334,24 @@ export class TimeSrv {
     };
   }
 
-  zoomOut(factor: number) {
+  zoomOut(factor: number, updateUrl = true) {
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 
-    this.setTime({ from: toUtc(from), to: toUtc(to) });
+    this.setTime({ from: toUtc(from), to: toUtc(to) }, updateUrl);
   }
 
-  shiftTime(direction: ShiftTimeEventPayload) {
+  shiftTime(direction: ShiftTimeEventDirection, updateUrl = true) {
     const range = this.timeRange();
     const { from, to } = getShiftedTimeRange(direction, range);
 
-    this.setTime({
-      from: toUtc(from),
-      to: toUtc(to),
-    });
+    this.setTime(
+      {
+        from: toUtc(from),
+        to: toUtc(to),
+      },
+      updateUrl
+    );
   }
 
   makeAbsoluteTime() {
@@ -359,7 +361,7 @@ export class TimeSrv {
     }
 
     const { from, to } = this.timeRange();
-    this.setTime({ from, to });
+    this.setTime({ from, to }, true);
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now
