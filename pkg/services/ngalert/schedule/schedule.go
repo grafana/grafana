@@ -453,13 +453,13 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 		case <-ctx.Done():
 			waitErr := dispatcherGroup.Wait()
 
-			orgIds, err := sch.instanceStore.FetchOrgIds()
+			orgIds, err := sch.instanceStore.FetchOrgIds(ctx)
 			if err != nil {
 				sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 			}
 
 			for _, v := range orgIds {
-				sch.saveAlertStates(sch.stateManager.GetAll(v))
+				sch.saveAlertStates(ctx, sch.stateManager.GetAll(v))
 			}
 
 			sch.stateManager.Close()
@@ -541,8 +541,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		return q.Result, nil
 	}
 
-	evaluate := func(alertRule *models.AlertRule, attempt int64, ctx *evalContext) error {
-		logger := logger.New("version", alertRule.Version, "attempt", attempt, "now", ctx.now)
+	evaluate := func(ctx context.Context, alertRule *models.AlertRule, attempt int64, evalCtx *evalContext) error {
+		logger := logger.New("version", alertRule.Version, "attempt", attempt, "now", evalCtx.now)
 		start := sch.clock.Now()
 
 		condition := models.Condition{
@@ -550,7 +550,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			OrgID:     alertRule.OrgID,
 			Data:      alertRule.Data,
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.expressionService)
+		results, err := sch.evaluator.ConditionEval(&condition, evalCtx.now, sch.expressionService)
 		dur := sch.clock.Now().Sub(start)
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
@@ -562,8 +562,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		}
 		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 
-		processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
-		sch.saveAlertStates(processedStates)
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, alertRule, results)
+		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 
 		notify(alerts, logger)
@@ -629,7 +629,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 						currentRule = newRule
 						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
 					}
-					return evaluate(currentRule, attempt, ctx)
+					return evaluate(grafanaCtx, currentRule, attempt, ctx)
 				})
 				if err != nil {
 					logger.Error("evaluation failed after all retries", "err", err)
@@ -643,7 +643,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 }
 
-func (sch *schedule) saveAlertStates(states []*state.State) {
+func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
@@ -655,7 +655,7 @@ func (sch *schedule) saveAlertStates(states []*state.State) {
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
-		err := sch.instanceStore.SaveAlertInstance(&cmd)
+		err := sch.instanceStore.SaveAlertInstance(ctx, &cmd)
 		if err != nil {
 			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
