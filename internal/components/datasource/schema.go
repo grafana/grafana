@@ -90,8 +90,8 @@ type Model struct {
 	// Id                int64                  `json:"id"`
 	// OrgId int64 `json:"orgId"` // May change, but to make store work
 
-	UID               string `json:"uid"` // May change, but to make store work
-	Name              string `json:"name"`
+	//UID               string `json:"uid"` // May change, but to make store work
+	//Name              string `json:"name"`
 	Type              string `json:"type"`
 	TypeLogoUrl       string `json:"typeLogoUrl"`
 	Access            string `json:"access"` // enum: *"proxy" | "direct"

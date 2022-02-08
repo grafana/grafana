@@ -18,10 +18,10 @@ type DatasourceReconciler struct {
 }
 
 type Store interface {
-	Get(ctx context.Context, uid string) (Model, error)
+	Get(ctx context.Context, uid string) (CR, error)
 	//Upsert(context.Context, string, DataSource) error
-	Insert(ctx context.Context, ds Model) error
-	Update(ctx context.Context, ds Model) error
+	Insert(ctx context.Context, ds CR) error
+	Update(ctx context.Context, ds CR) error
 	Delete(ctx context.Context, uid string) error
 }
 
@@ -70,7 +70,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 			}, err 
 		}
 
-		if err := d.sto.Insert(ctx, ds.Spec); err != nil {
+		if err := d.sto.Insert(ctx, ds); err != nil {
 			return reconcile.Result{
 				Requeue:      true,
 				RequeueAfter: 1 * time.Minute,
@@ -78,7 +78,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}
 	}
 
-	if err := d.sto.Update(ctx, ds.Spec); err != nil {
+	if err := d.sto.Update(ctx, ds); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,
