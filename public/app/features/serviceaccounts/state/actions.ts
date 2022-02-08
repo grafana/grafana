@@ -16,6 +16,13 @@ export function loadServiceAccount(id: number): ThunkResult<void> {
   };
 }
 
+export function createServiceAccountToken(saID: number): ThunkResult<void> {
+  return async (dispatch) => {
+    await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`);
+    dispatch(loadServiceAccountTokens(saID));
+  };
+}
+
 export function deleteServiceAccountToken(saID: number, id: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`${BASE_URL}/${saID}/tokens/${id}`);
