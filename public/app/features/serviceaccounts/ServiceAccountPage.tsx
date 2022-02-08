@@ -14,7 +14,18 @@ import {
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
-import { Button, Field, FieldSet, Icon, Input, Modal, RadioButtonGroup, useStyles2, VerticalGroup } from '@grafana/ui';
+import {
+  Button,
+  DatePickerWithInput,
+  Field,
+  FieldSet,
+  Icon,
+  Input,
+  Modal,
+  RadioButtonGroup,
+  useStyles2,
+  VerticalGroup,
+} from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 
 const expirationOptions = [
@@ -62,8 +73,9 @@ const ServiceAccountPageUnconnected = ({
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTokenName, setNewTokenName] = useState('');
-  const [isExpirationSet, setIsExpirationSet] = useState(false);
-  const [newTokenExpirationDate, setNewTokenExpirationDate] = useState('');
+  const [isWithExpirationDate, setIsWithExpirationDate] = useState(false);
+  const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>('');
+  const [isExpirationDateValid, setIsExpirationDateValid] = useState(false);
   const styles = useStyles2(getStyles);
   const modalStyles = useStyles2(getModalStyles);
 
@@ -83,6 +95,12 @@ const ServiceAccountPageUnconnected = ({
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const onExpirationDateChange = (value: Date | string) => {
+    const isValid = value !== '';
+    setIsExpirationDateValid(isValid);
+    setNewTokenExpirationDate(value);
   };
 
   const modalTitle = (
@@ -139,23 +157,19 @@ const ServiceAccountPageUnconnected = ({
             <RadioButtonGroup
               className={styles.modalRow}
               options={expirationOptions}
-              value={isExpirationSet}
-              onChange={(v) => setIsExpirationSet(v)}
+              value={isWithExpirationDate}
+              onChange={(v) => setIsWithExpirationDate(v)}
               size="md"
             />
-            {isExpirationSet && (
+            {isWithExpirationDate && (
               <Field label="Expiration date" className={styles.modalRow}>
-                <Input
-                  name="tokenExpirationDate"
-                  value={newTokenExpirationDate}
-                  onChange={(e) => {
-                    setNewTokenExpirationDate(e.currentTarget.value);
-                  }}
-                />
+                <DatePickerWithInput onChange={onExpirationDateChange} value={newTokenExpirationDate} placeholder="" />
               </Field>
             )}
           </FieldSet>
-          <Button onClick={onCreateToken}>Generate token</Button>
+          <Button onClick={onCreateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
+            Generate token
+          </Button>
         </Modal>
       </Page.Contents>
     </Page>
