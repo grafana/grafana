@@ -334,16 +334,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   if (stackingGroups.size !== 0) {
     for (const [group, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-      if (group.startsWith(INTERNAL_NEGATIVE_Y_PREFIX)) {
-        // TODO: Fill/clip directions need to be reversed for negative y stacking groups in uPlot implementation
-        // We need to wait for next uplot version to get this in. As of now the negative y series fill will overly each other
-        continue;
-      } else {
-        for (let j = seriesIdxs.length - 1; j > 0; j--) {
-          builder.addBand({
-            series: [seriesIdxs[j], seriesIdxs[j - 1]],
-          });
-        }
+      for (let j = seriesIdxs.length - 1; j > 0; j--) {
+        builder.addBand({
+          series: [seriesIdxs[j], seriesIdxs[j - 1]],
+          dir: group.startsWith(INTERNAL_NEGATIVE_Y_PREFIX) ? 1 : -1,
+        });
       }
     }
   }
