@@ -67,42 +67,47 @@ describe('DashboardQueryEditor', () => {
     jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
   });
 
-  it('does not show a panel with the SHARED_DASHBOARD_QUERY datasource as an option in the dropdown', () => {
-    act(() => {
-      render(
-        <DashboardQueryEditor
-          queries={mockQueries}
-          panelData={mockPanelData}
-          onChange={mockOnChange}
-          onRunQueries={mockOnRunQueries}
-        />
-      );
-      const select = screen.getByText('Choose panel');
+  it('does not show a panel with the SHARED_DASHBOARD_QUERY datasource as an option in the dropdown', async () => {
+    render(
+      <DashboardQueryEditor
+        queries={mockQueries}
+        panelData={mockPanelData}
+        onChange={mockOnChange}
+        onRunQueries={mockOnRunQueries}
+      />
+    );
+    const select = screen.getByText('Choose panel');
 
-      userEvent.click(select);
-    });
-    expect(screen.getByText('My first panel')).toBeInTheDocument();
-    expect(screen.getByText('Another panel')).toBeInTheDocument();
+    userEvent.click(select);
+
+    const myFirstPanel = await screen.findByText('My first panel');
+    expect(myFirstPanel).toBeInTheDocument();
+
+    const anotherPanel = await screen.findByText('Another panel');
+    expect(anotherPanel).toBeInTheDocument();
+
     expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
   });
 
-  it('does not show the current panelInEdit as an option in the dropdown', () => {
-    act(() => {
-      mockDashboard.initEditPanel(mockDashboard.panels[0]);
-      render(
-        <DashboardQueryEditor
-          queries={mockQueries}
-          panelData={mockPanelData}
-          onChange={mockOnChange}
-          onRunQueries={mockOnRunQueries}
-        />
-      );
-      const select = screen.getByText('Choose panel');
+  it('does not show the current panelInEdit as an option in the dropdown', async () => {
+    mockDashboard.initEditPanel(mockDashboard.panels[0]);
+    render(
+      <DashboardQueryEditor
+        queries={mockQueries}
+        panelData={mockPanelData}
+        onChange={mockOnChange}
+        onRunQueries={mockOnRunQueries}
+      />
+    );
+    const select = screen.getByText('Choose panel');
 
-      userEvent.click(select);
-    });
+    userEvent.click(select);
+
     expect(screen.queryByText('My first panel')).not.toBeInTheDocument();
-    expect(screen.getByText('Another panel')).toBeInTheDocument();
+
+    const anotherPanel = await screen.findByText('Another panel');
+    expect(anotherPanel).toBeInTheDocument();
+
     expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
   });
 });
