@@ -31,8 +31,11 @@ node_modules: package.json yarn.lock ## Install node modules.
 	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
 
 ##@ Swagger
+SPEC_TARGET = public/api-spec.json
+MERGED_SPEC_TARGET := public/api-merged.json
+NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/post.json
 
-public/api-spec.json: $(API_DEFINITION_FILES) ## Generate API spec
+$(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	docker run --rm -it \
 	-e GOPATH=${HOME}/go:/go \
 	-e SWAGGER_GENERATE_EXTENSION=false \
@@ -45,19 +48,26 @@ public/api-spec.json: $(API_DEFINITION_FILES) ## Generate API spec
 	-x "github.com/prometheus/alertmanager" \
 	-i /grafana/pkg/api/docs/tags.json
 
+swagger-api-spec: $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+
+$(NGALERT_SPEC_TARGET):
+	+$(MAKE) -C pkg/services/ngalert/api/tooling post.json
+
+$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) ## Merge generated and ngalert API specs
+	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/post.json
+
 ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
 
-public/api-spec.json-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
+--swagger-api-spec-mac: ensure_go-swagger_mac $(API_DEFINITION_FILES)  ## Generate API spec (for M1 Mac)
 	swagger generate spec -m -w pkg/server -o public/api-spec.json \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-public/api-merged.json: public/api-spec.json pkg/services/ngalert/api/tooling/post.json ## Merge generated and ngalert API specs
-	go run pkg/api/docs/merge/merge_specs.go -o=public/api-merged.json $(<) pkg/services/ngalert/api/tooling/post.json
+swagger-api-spec-mac: --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
 
-validate-api-spec: public/api-merged.json ## Validate API spec
+validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	docker run --rm -it \
 	-e GOPATH=${HOME}/go:/go \
 	-e SWAGGER_GENERATE_EXTENSION=false \
@@ -67,7 +77,7 @@ validate-api-spec: public/api-merged.json ## Validate API spec
 	validate /grafana/$(<)
 
 clean-api-spec:
-	rm public/api-spec.json public/api-merged.json
+	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
 ##@ Building
 
@@ -75,7 +85,7 @@ gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
-build-go: public/api-merged.json gen-go ## Build all Go binaries.
+build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build
 
