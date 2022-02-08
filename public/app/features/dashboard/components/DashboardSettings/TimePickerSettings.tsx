@@ -10,24 +10,21 @@ interface Props {
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
   onMaxTimeRangeChange: (maxTimeRange: string) => void;
-  onOldestFromChange: (oldestFrom: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
   maxTimeRange: string;
-  oldestFrom: string;
   timezone: TimeZone;
 }
 
 interface State {
   isNowDelayValid: boolean;
   isMaxTimeRangeValid: boolean;
-  isOldestFromValid: boolean;
 }
 
 export class TimePickerSettings extends PureComponent<Props, State> {
-  state: State = { isNowDelayValid: true, isMaxTimeRangeValid: true, isOldestFromValid: true };
+  state: State = { isNowDelayValid: true, isMaxTimeRangeValid: true };
 
   onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
@@ -59,22 +56,6 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     }
 
     this.setState({ isMaxTimeRangeValid: false });
-  };
-
-  onOldestFromChange = (event: React.FormEvent<HTMLInputElement>) => {
-    const value = event.currentTarget.value;
-
-    if (isEmpty(value)) {
-      this.setState({ isOldestFromValid: true });
-      return this.props.onOldestFromChange(value);
-    }
-
-    if (value.match(/^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])$/)) {
-      this.setState({ isOldestFromValid: true });
-      return this.props.onOldestFromChange(value);
-    }
-
-    this.setState({ isOldestFromValid: false });
   };
 
   onHideTimePickerChange = () => {
@@ -122,16 +103,6 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             invalid={!this.state.isMaxTimeRangeValid}
             onChange={this.onMaxTimeRangeChange}
             defaultValue={this.props.maxTimeRange}
-          />
-        </Field>
-        <Field
-           label="Oldest 'from' time"
-           description="Prevents the user from selecting a time range starting further back in the past than the specified interval."
-        >
-          <Input
-            invalid={!this.state.isOldestFromValid}
-            onChange={this.onOldestFromChange}
-            defaultValue={this.props.oldestFrom}
           />
         </Field>
         <Field label="Hide time picker">
