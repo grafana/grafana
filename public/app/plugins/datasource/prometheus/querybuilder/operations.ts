@@ -10,12 +10,12 @@ import {
   QueryBuilderOperationParamDef,
   VisualQueryModeller,
 } from './shared/types';
-import { PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [
     {
-      id: 'histogram_quantile',
+      id: PromOperationId.HistogramQuantile,
       name: 'Histogram quantile',
       params: [{ name: 'Quantile', type: 'number', options: [0.99, 0.95, 0.9, 0.75, 0.5, 0.25] }],
       defaultParams: [0.9],
@@ -24,7 +24,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: defaultAddOperationHandler,
     },
     {
-      id: 'label_replace',
+      id: PromOperationId.LabelReplace,
       name: 'Label replace',
       params: [
         { name: 'Destination label', type: 'string' },
@@ -38,7 +38,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: defaultAddOperationHandler,
     },
     {
-      id: 'ln',
+      id: PromOperationId.Ln,
       name: 'Ln',
       params: [],
       defaultParams: [],
@@ -46,15 +46,15 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: functionRendererLeft,
       addOperationHandler: defaultAddOperationHandler,
     },
-    createRangeFunction('changes'),
-    createRangeFunction('rate'),
-    createRangeFunction('irate'),
-    createRangeFunction('increase'),
-    createRangeFunction('delta'),
+    createRangeFunction(PromOperationId.Changes),
+    createRangeFunction(PromOperationId.Rate),
+    createRangeFunction(PromOperationId.Irate),
+    createRangeFunction(PromOperationId.Increase),
+    createRangeFunction(PromOperationId.Delta),
     // Not sure about this one. It could also be a more generic "Simple math operation" where user specifies
     // both the operator and the operand in a single input
     {
-      id: '__multiply_by',
+      id: PromOperationId.MultiplyBy,
       name: 'Multiply by scalar',
       params: [{ name: 'Factor', type: 'number' }],
       defaultParams: [2],
@@ -63,7 +63,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: defaultAddOperationHandler,
     },
     {
-      id: '__divide_by',
+      id: PromOperationId.DivideBy,
       name: 'Divide by scalar',
       params: [{ name: 'Factor', type: 'number' }],
       defaultParams: [2],
@@ -72,7 +72,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: defaultAddOperationHandler,
     },
     {
-      id: '__nested_query',
+      id: PromOperationId.NestedQuery,
       name: 'Binary operation with query',
       params: [],
       defaultParams: [],
