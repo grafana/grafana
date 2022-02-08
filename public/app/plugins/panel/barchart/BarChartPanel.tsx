@@ -91,7 +91,13 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   };
 
   const frame0Ref = useRef<DataFrame>();
-  const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
+  const info = useMemo(() => {
+    let info = prepareBarChartDisplayValues(data?.series, theme, options);
+    return {
+      ...info,
+      viz: [info.viz],
+    };
+  }, [data, theme, options]);
   const structureRef = useRef(10000);
   useMemo(() => {
     structureRef.current++;
@@ -99,7 +105,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   }, [options]); // change every time the options object changes (while editing)
 
   const structureRev = useMemo(() => {
-    const f0 = info.viz;
+    const f0 = info.viz[0];
     const f1 = frame0Ref.current;
     if (!(f0 && f1 && compareDataFrameStructures(f0, f1, true))) {
       structureRef.current++;
@@ -132,7 +138,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     }
   }, [height, options.xTickLabelRotation, options.xTickLabelMaxLength]);
 
-  if (!info.viz?.fields.length) {
+  if (!info.viz[0]?.fields.length) {
     return <PanelDataErrorView panelId={id} data={data} message={info.warn} needsNumberField={true} />;
   }
 
@@ -178,7 +184,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       }
     }
 
-    return <PlotLegend data={[info.viz]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+    return <PlotLegend data={info.viz} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
@@ -233,14 +239,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       rawValue,
       getColor,
       fillOpacity,
-      allFrames: [info.viz],
+      allFrames: info.viz,
     });
   };
 
   return (
     <GraphNG
       theme={theme}
-      frames={[info.viz]}
+      frames={info.viz}
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
       preparePlotFrame={(f) => f[0]} // already processed in by the panel above!
