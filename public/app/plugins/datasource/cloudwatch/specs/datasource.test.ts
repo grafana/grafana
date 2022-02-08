@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 
 import * as redux from 'app/store/store';
-import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
+import { CloudWatchDatasource } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import {
   MetricEditorMode,
@@ -177,7 +177,7 @@ describe('CloudWatchDatasource', () => {
       jest.spyOn(rxjsUtils, 'increasingInterval').mockImplementation(() => interval(100));
     });
 
-    it('should stop querying when no more data received a number of times in a row', async () => {
+    it('should stop querying when timed out', async () => {
       const { ds } = getTestContext();
       const fakeFrames = genMockFrames(20);
       const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
@@ -213,8 +213,13 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
+      const iterations = 15;
+      // Times out after 15 passes for consistent testing
+      const timeoutFunc = () => {
+        return i >= iterations;
+      };
       const myResponse = await lastValueFrom(
-        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
       );
 
       const expectedData = [
@@ -235,10 +240,10 @@ describe('CloudWatchDatasource', () => {
         state: 'Done',
         error: {
           type: DataQueryErrorType.Timeout,
-          message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
+          message: `error: query timed out after 5 attempts`,
         },
       });
-      expect(i).toBe(15);
+      expect(i).toBe(iterations);
     });
 
     it('should continue querying as long as new data is being received', async () => {
@@ -256,8 +261,12 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
+      const startTime = new Date();
+      const timeoutFunc = () => {
+        return Date.now() >= startTime.valueOf() + 6000;
+      };
       const myResponse = await lastValueFrom(
-        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
       );
       expect(myResponse).toEqual({
         data: [fakeFrames[fakeFrames.length - 1]],
@@ -281,8 +290,12 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
+      const startTime = new Date();
+      const timeoutFunc = () => {
+        return Date.now() >= startTime.valueOf() + 6000;
+      };
       const myResponse = await lastValueFrom(
-        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
       );
 
       expect(myResponse).toEqual({
