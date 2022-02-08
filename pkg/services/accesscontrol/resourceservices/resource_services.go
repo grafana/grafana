@@ -176,7 +176,7 @@ func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, 
 				return err
 			}
 			query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
-			if err := sql.GetDashboard(ctx, &models.GetDashboardQuery{}); err != nil {
+			if err := sql.GetDashboard(ctx, query); err != nil {
 				return err
 			}
 
