@@ -89,7 +89,7 @@ describe('mapPromMetricsToServiceMap', () => {
     ]);
   });
 
-  fit('handles invalid failed count', () => {
+  it('handles invalid failed count', () => {
     // If node.failed > node.total, the stat circle will render in the wrong position
     // Fixed this by limiting the failed value to the total value
     const range = {
