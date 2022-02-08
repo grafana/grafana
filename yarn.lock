@@ -19170,9 +19170,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fork-ts-checker-webpack-plugin@npm:7.1.1":
-  version: 7.1.1
-  resolution: "fork-ts-checker-webpack-plugin@npm:7.1.1"
+"fork-ts-checker-webpack-plugin@npm:7.2.0":
+  version: 7.2.0
+  resolution: "fork-ts-checker-webpack-plugin@npm:7.2.0"
   dependencies:
     "@babel/code-frame": ^7.16.7
     chalk: ^4.1.2
@@ -19192,7 +19192,7 @@ __metadata:
   peerDependenciesMeta:
     vue-template-compiler:
       optional: true
-  checksum: f87dceeb1822a484428ed6fa8947583a237962d85dad14bb04430750d50aef596c4e7508a68faf797ffdd4d87a7e6857f186be630877de5f4789bcc44f05b34d
+  checksum: 767ed41ef3c1d0a88ca467e67a1f03a80049bdc610524b47dab51088a8174486c69a0c115fe7a2275773db215442694ecc6f549facadd105c19e880a786a9133
   languageName: node
   linkType: hard
 
@@ -20241,7 +20241,7 @@ __metadata:
     fast-json-patch: 3.1.0
     file-loader: 6.2.0
     file-saver: 2.0.5
-    fork-ts-checker-webpack-plugin: 7.1.1
+    fork-ts-checker-webpack-plugin: 7.2.0
     fs-extra: 10.0.0
     glob: 7.2.0
     history: 4.10.1
