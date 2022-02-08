@@ -204,6 +204,9 @@ import (
 //
 // Most of Grafana’s builtin data sources have backend implementation.
 //
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:query`.
+//
 // Responses:
 // 200: queryDatasourceResponse
 // 401: unauthorisedError

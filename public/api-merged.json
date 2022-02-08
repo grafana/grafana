@@ -4090,6 +4090,42 @@
         }
       }
     },
+    "/ds/query": {
+      "post": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
+        "tags": ["ds"],
+        "summary": "Query metrics with expressions",
+        "operationId": "queryMetricsWithExpressions",
+        "parameters": [
+          {
+            "x-go-name": "Body",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MetricRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/queryDataResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/folders": {
       "get": {
         "description": "Returns all folders that the authenticated user has permission to view.",
@@ -7574,7 +7610,7 @@
     },
     "/tsdb/query": {
       "post": {
-        "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.",
+        "description": "Queries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
         "tags": ["datasources"],
         "summary": "Query metrics.",
         "operationId": "queryDatasource",
@@ -13366,6 +13402,17 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "QueryDataResponse": {
+      "description": "It is the return type of a QueryData call.",
+      "type": "object",
+      "title": "QueryDataResponse contains the results from a QueryDataRequest.",
+      "properties": {
+        "Responses": {
+          "$ref": "#/definitions/Responses"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
+    },
     "Receiver": {
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
@@ -13571,6 +13618,15 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "Responses": {
+      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataRespones' frames based on these RefIDs.",
+      "type": "object",
+      "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses.",
+      "additionalProperties": {
+        "$ref": "#/definitions/DataResponse"
+      },
+      "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
     },
     "RevokeAuthTokenCmd": {
       "type": "object",
@@ -17222,6 +17278,12 @@
       "description": "PreconditionFailedError",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "queryDataResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
       }
     },
     "queryDatasourceResponse": {
