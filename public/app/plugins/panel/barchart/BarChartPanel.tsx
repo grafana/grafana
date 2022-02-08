@@ -91,13 +91,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   };
 
   const frame0Ref = useRef<DataFrame>();
-  const info = useMemo(() => {
-    let info = prepareBarChartDisplayValues(data?.series, theme, options);
-    return {
-      ...info,
-      viz: [info.viz],
-    };
-  }, [data, theme, options]);
+  const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const structureRef = useRef(10000);
   useMemo(() => {
     structureRef.current++;
