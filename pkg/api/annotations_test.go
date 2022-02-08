@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -10,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
@@ -127,50 +131,30 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			PanelId:     1,
 		}
 
-		viewerRole := models.ROLE_VIEWER
-		editorRole := models.ROLE_EDITOR
-
-		aclMockResp := []*models.DashboardAclInfoDTO{
-			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-		}
-
-		setUp := func() {
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = aclMockResp
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-				query.Result = []*models.TeamDTO{}
-				return nil
-			})
-		}
-
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
 				})
 				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-						setUp()
+						setUpACL()
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
 						sc.handlerFunc = DeleteAnnotationByID
@@ -184,26 +168,26 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-						setUp()
+						setUpACL()
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
 						sc.handlerFunc = DeleteAnnotationByID
@@ -217,26 +201,26 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_ADMIN
 			t.Run("Should be able to do anything", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
-					setUp()
+					setUpACL()
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				deleteAnnotationsScenario(t, "When calling POST on", "/api/annotations/mass-delete",
 					"/api/annotations/mass-delete", role, deleteCmd, func(sc *scenarioContext) {
-						setUp()
+						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					})
@@ -367,5 +351,269 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
+	})
+}
+
+func TestAPI_Annotations_AccessControl(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	setInitCtxSignedInEditor(sc.initCtx)
+	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	require.NoError(t, err)
+
+	type args struct {
+		permissions []*accesscontrol.Permission
+		url         string
+		body        io.Reader
+		method      string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "AccessControl getting annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+				url:         "/api/annotations",
+				method:      http.MethodGet,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl getting annotations without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations",
+				method:      http.MethodGet,
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl post annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+					{Action: accesscontrol.ActionAnnotationsTagsWrite},
+				},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostAnnotationsCmd{
+					Time:        1000,
+					Text:        "annotation text",
+					Tags:        []string{"tag1", "tag2"},
+					DashboardId: 1,
+					PanelId:     1,
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl post annotations without correct permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+				},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostAnnotationsCmd{
+					Time:        1000,
+					Text:        "annotation text",
+					Tags:        []string{"tag1", "tag2"},
+					DashboardId: 1,
+					PanelId:     1,
+				}),
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl delete annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: "annotations:id:1",
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodDelete,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl delete annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodDelete,
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl mass delete annotations with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsAll,
+				}},
+				url:    "/api/annotations/mass-delete",
+				method: http.MethodPost,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl mass delete annotations without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/mass-delete",
+				method:      http.MethodPost,
+			},
+			want: 403,
+		},
+
+		{
+			name: "AccessControl update annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsUpdate, Scope: "annotations:id:1",
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPut,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+					Id:   1,
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl update annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPut,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+					Id:   1,
+				}),
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl update with patch annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsUpdate, Scope: "annotations:id:1",
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPatch,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl update with patch annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPatch,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl getting tags annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll}},
+				url:         "/api/annotations/tags",
+				method:      http.MethodGet,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl getting tags annotations without correct permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/tags",
+				method:      http.MethodGet,
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl post graphite annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+					{Action: accesscontrol.ActionAnnotationsTagsWrite},
+				},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostGraphiteAnnotationsCmd{
+					When: 1000,
+					What: "annotation text",
+					Data: "myData",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl post graphite annotations without correct permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+				},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostGraphiteAnnotationsCmd{
+					When: 1000,
+					What: "annotation text",
+					Data: "myData",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 403,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setUpACL()
+			fakeAnnoRepo = &fakeAnnotationsRepo{}
+			annotations.SetRepository(fakeAnnoRepo)
+
+			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			response := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
+			assert.Equalf(t, tt.want, response.Code, "Annotations API(%v)", tt.args.url)
+		})
+	}
+}
+
+func setUpACL() {
+
+	viewerRole := models.ROLE_VIEWER
+	editorRole := models.ROLE_EDITOR
+
+	aclMockResp := []*models.DashboardAclInfoDTO{
+		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+	}
+
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
+		query.Result = aclMockResp
+		return nil
+	})
+
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+		query.Result = []*models.TeamDTO{}
+		return nil
 	})
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
@@ -337,3 +338,8 @@ func GetAnnotationTags(c *models.ReqContext) response.Response {
 
 	return response.JSON(200, annotations.GetAnnotationTagsResponse{Result: result})
 }
+
+var annotationCreateAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate),
+	accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsTagsWrite),
+)

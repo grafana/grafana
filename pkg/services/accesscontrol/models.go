@@ -323,11 +323,24 @@ const (
 
 	// Team related scopes
 	ScopeTeamsAll = "teams:*"
+
+	// Annotations related actions
+	ActionAnnotationsCreate = "annotations:create"
+	ActionAnnotationsDelete = "annotations:delete"
+	ActionAnnotationsRead   = "annotations:read"
+	ActionAnnotationsUpdate = "annotations:update"
+
+	ActionAnnotationsTagsRead  = "annotations.tags:read"
+	ActionAnnotationsTagsWrite = "annotations.tags:write"
+
+	ScopeAnnotationsAll     = "annotations:*"
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 var (
 	// Team scope
-	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+	ScopeTeamsID       = Scope("teams", "id", Parameter(":teamId"))
+	ScopeAnnotationsID = Scope("annotations", "id", Parameter(":annotationId"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

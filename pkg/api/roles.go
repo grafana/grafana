@@ -244,10 +244,44 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	annotationsWriterRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:annotations:writer",
+			DisplayName: "Annotation writer",
+			Description: "Create, read, write, or delete annotations and tags",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsCreate},
+				{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsUpdate, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsTagsWrite, Scope: accesscontrol.ScopeAnnotationsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_EDITOR)},
+	}
+
+	annotationsReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:annotations:reader",
+			DisplayName: "Annotation reader",
+			Description: "Read annotations and tags",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
+		teamsWriterRole, datasourcesExplorerRole, annotationsWriterRole, annotationsReaderRole,
 	)
 }
 
