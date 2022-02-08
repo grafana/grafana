@@ -484,7 +484,7 @@ func (ss *SQLStore) GetTeamMembersByUser(ctx context.Context, orgID, userID int6
 
 // GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
 func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
-	acFilter := &ac.SqlFilter{}
+	acFilter := &ac.SQLFilter{}
 	var err error
 
 	// With accesscontrol we filter out users based on the SignedInUser's permissions
@@ -501,7 +501,7 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 }
 
 // getTeamMembers return a list of members for the specified team
-func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SqlFilter) error {
+func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) error {
 	query.Result = make([]*models.TeamMemberDTO, 0)
 	sess := x.Table("team_member")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
