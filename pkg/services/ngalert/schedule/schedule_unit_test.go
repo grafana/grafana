@@ -482,6 +482,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evalContext)
 		evalAppliedChan := make(chan time.Time)
 
+		ctx := context.Background()
 		sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 
 		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
@@ -504,7 +505,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		// Now update the rule
 		newRule := *rule
 		newRule.Version++
-		ruleStore.putRule(&newRule)
+		ruleStore.putRule(ctx, &newRule)
 
 		// and call with new version
 		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
@@ -681,6 +682,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 			updateChan := make(chan struct{})
 
+			ctx := context.Background()
 			sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
 			sch.senders[orgID] = s
 
@@ -728,7 +730,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			wg.Wait()
 			newRule := rule
 			newRule.Version++
-			ruleStore.putRule(&newRule)
+			ruleStore.putRule(ctx, &newRule)
 			wg.Add(1)
 			updateChan <- struct{}{}
 			wg.Wait()
@@ -1041,6 +1043,8 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
 func CreateTestAlertRule(t *testing.T, dbstore *fakeRuleStore, intervalSeconds int64, orgID int64, evalResult eval.State) *models.AlertRule {
+	ctx := context.Background()
+
 	t.Helper()
 	records := make([]interface{}, 0, len(dbstore.recordedOps))
 	copy(records, dbstore.recordedOps)
@@ -1080,7 +1084,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *fakeRuleStore, intervalSeconds i
 		require.Fail(t, "Alert rule with desired evaluation result NoData is not supported yet")
 	}
 
-	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	err := dbstore.UpdateRuleGroup(ctx, store.UpdateRuleGroupCmd{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
@@ -1118,7 +1122,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *fakeRuleStore, intervalSeconds i
 		NamespaceUID: "namespace",
 		RuleGroup:    ruleGroup,
 	}
-	err = dbstore.GetRuleGroupAlertRules(&q)
+	err = dbstore.GetRuleGroupAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 

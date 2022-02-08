@@ -17,6 +17,7 @@ import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
 import { DataSourceRef, getDataSourceRef } from '@grafana/data';
+import { getAdhocVariableEditorState } from '../editor/selectors';
 
 export interface AdHocTableOptions {
   datasource: DataSourceRef;
@@ -84,28 +85,23 @@ export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): T
 export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { editor } = getState().templating;
+    const extended = getAdhocVariableEditorState(editor);
     const variable = getVariable(editor.id, getState());
-
-    const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
-
-    dispatch(
-      changeVariableEditorExtended({
-        propName: 'infoText',
-        propValue: loadingText,
-      })
-    );
     dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })));
 
     const ds = await getDatasourceSrv().get(datasource);
 
-    if (!ds || !ds.getTagKeys) {
-      dispatch(
-        changeVariableEditorExtended({
-          propName: 'infoText',
-          propValue: 'This data source does not support ad hoc filters yet.',
-        })
-      );
-    }
+    // TS TODO: ds is not typed to be optional - is this check unnecessary or is the type incorrect?
+    const message = ds?.getTagKeys
+      ? 'Ad hoc filters are applied automatically to all queries that target this data source'
+      : 'This data source does not support ad hoc filters yet.';
+
+    dispatch(
+      changeVariableEditorExtended({
+        infoText: message,
+        dataSources: extended?.dataSources ?? [],
+      })
+    );
   };
 };
 
@@ -128,8 +124,7 @@ export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
 
   dispatch(
     changeVariableEditorExtended({
-      propName: 'dataSources',
-      propValue: selectable,
+      dataSources: selectable,
     })
   );
 };

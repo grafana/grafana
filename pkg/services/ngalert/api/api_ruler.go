@@ -38,7 +38,7 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 		return toNamespaceErrorResponse(err)
 	}
 
-	uids, err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid)
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
 	}
@@ -60,7 +60,7 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := web.Params(c.Req)[":Groupname"]
-	uids, err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
 
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
@@ -90,7 +90,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
 	}
-	if err := srv.store.GetNamespaceAlertRules(&q); err != nil {
+	if err := srv.store.GetNamespaceAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
@@ -133,7 +133,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 		NamespaceUID: namespace.Uid,
 		RuleGroup:    ruleGroup,
 	}
-	if err := srv.store.GetRuleGroupAlertRules(&q); err != nil {
+	if err := srv.store.GetRuleGroupAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
@@ -187,7 +187,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		PanelID:       panelID,
 	}
 
-	if err := srv.store.GetOrgAlertRules(&q); err != nil {
+	if err := srv.store.GetOrgAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
@@ -282,7 +282,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		}
 	}
 
-	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	if err := srv.store.UpdateRuleGroup(c.Req.Context(), store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
 		NamespaceUID:    namespace.Uid,
 		RuleGroupConfig: ruleGroupConfig,
