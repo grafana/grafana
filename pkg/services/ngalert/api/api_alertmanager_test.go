@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/web"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
