@@ -166,7 +166,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 				shouldRemove = false
 				break
 			}
-			if item.Role != nil && item.Role == o.Role {
+			if item.Role != nil && o.Role != nil && *item.Role == *o.Role {
 				shouldRemove = false
 				break
 			}
@@ -191,8 +191,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 		svc = hs.permissionServices.GetFolderService()
 	}
 
-	resourceID := strconv.FormatInt(dashID, 10)
-	_, err := svc.SetPermissions(ctx, orgID, resourceID, commands...)
+	_, err := svc.SetPermissions(ctx, orgID, strconv.FormatInt(dashID, 10), commands...)
 	return err
 }
 
