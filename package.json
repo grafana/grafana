@@ -190,6 +190,7 @@
     "jest-date-mock": "1.0.8",
     "jest-junit": "13.0.0",
     "jest-matcher-utils": "27.5.0",
+    "jest-mock-console": "1.2.3",
     "lerna": "^4.0.0",
     "lint-staged": "12.3.3",
     "mini-css-extract-plugin": "2.5.3",
