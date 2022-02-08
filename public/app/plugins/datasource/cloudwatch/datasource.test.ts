@@ -226,14 +226,17 @@ describe('datasource', () => {
       });
     });
 
-    it('adds fields.config.interval', async () => {
+    it('sets fields.config.interval based on period', async () => {
       const { datasource } = setupMockedDataSource({
         data: {
           results: {
             a: {
               refId: 'a',
-              type: 'time',
               series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 60 } } }],
+            },
+            b: {
+              refId: 'b',
+              series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 120 } } }],
             },
           },
         },
@@ -249,6 +252,7 @@ describe('datasource', () => {
       await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data[0].fields[0].config.interval).toEqual(60000);
+        expect(response.data[1].fields[0].config.interval).toEqual(120000);
       });
     });
   });
