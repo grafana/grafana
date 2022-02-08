@@ -6,10 +6,6 @@ import { initialVariablesState, VariablePayload, VariablesState } from '../state
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { getInstanceState } from '../state/selectors';
 
-export interface DataSourceVariableEditorState {
-  dataSourceTypes: Array<{ text: string; value: string }>;
-}
-
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   ...initialVariableModelState,
   type: 'datasource',

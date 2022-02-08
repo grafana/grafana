@@ -8,9 +8,8 @@ import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableV
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
-import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
-import { initialVariableEditorState, VariableEditorState } from '../editor/reducer';
+import { initialVariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
 import { changeVariableMultiValue } from '../state/actions';
@@ -20,6 +19,7 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
+import { getQueryVariableEditorState } from '../editor/selectors';
 import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';
 
@@ -28,12 +28,14 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   if (!rootStateKey) {
     console.error('QueryVariableEditor: variable has no rootStateKey');
     return {
-      editor: initialVariableEditorState as VariableEditorState<QueryVariableEditorState>,
+      extended: getQueryVariableEditorState(initialVariableEditorState),
     };
   }
 
+  const { editor } = getVariablesState(rootStateKey, state);
+
   return {
-    editor: getVariablesState(rootStateKey, state).editor as VariableEditorState<QueryVariableEditorState>,
+    extended: getQueryVariableEditorState(editor),
   };
 };
 
@@ -125,14 +127,15 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   renderQueryEditor = () => {
-    const { editor, variable } = this.props;
-    if (!editor.extended || !editor.extended.dataSource || !editor.extended.VariableQueryEditor) {
+    const { extended, variable } = this.props;
+
+    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
 
     const query = variable.query;
-    const datasource = editor.extended.dataSource;
-    const VariableQueryEditor = editor.extended.VariableQueryEditor;
+    const datasource = extended.dataSource;
+    const VariableQueryEditor = extended.VariableQueryEditor;
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (

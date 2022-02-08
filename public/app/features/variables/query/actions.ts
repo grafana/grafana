@@ -6,20 +6,15 @@ import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
 import { getVariable, getVariablesState } from '../state/selectors';
-import {
-  addVariableEditorError,
-  changeVariableEditorExtended,
-  removeVariableEditorError,
-  VariableEditorState,
-} from '../editor/reducer';
+import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
-import { QueryVariableEditorState } from './reducer';
 import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 export const updateQueryVariableOptions = (
   identifier: KeyedVariableIdentifier,
@@ -77,9 +72,11 @@ export const changeQueryVariableDataSource = (
   return async (dispatch, getState) => {
     try {
       const { rootStateKey } = identifier;
-      const state = getVariablesState(rootStateKey, getState()).editor as VariableEditorState<QueryVariableEditorState>;
-      const previousDatasource = state.extended?.dataSource;
+      const { editor } = getVariablesState(rootStateKey, getState());
+      const extendedEditorState = getQueryVariableEditorState(editor);
+      const previousDatasource = extendedEditorState?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
+
       if (previousDatasource && previousDatasource.type !== dataSource?.type) {
         dispatch(
           toKeyedAction(
@@ -88,15 +85,16 @@ export const changeQueryVariableDataSource = (
           )
         );
       }
-      dispatch(
-        toKeyedAction(rootStateKey, changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }))
-      );
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);
+
       dispatch(
         toKeyedAction(
           rootStateKey,
-          changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor })
+          changeVariableEditorExtended({
+            dataSource,
+            VariableQueryEditor,
+          })
         )
       );
     } catch (err) {

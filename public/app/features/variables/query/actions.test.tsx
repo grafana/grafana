@@ -1,10 +1,11 @@
+import React from 'react';
 import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
+import { QueryVariableModel, VariableHide, VariableQueryEditorProps, VariableRefresh, VariableSort } from '../types';
 import {
   addVariable,
   changeVariableProp,
@@ -52,6 +53,9 @@ const mocks: Record<string, any> = {
   },
   pluginLoader: {
     importDataSourcePlugin: jest.fn().mockResolvedValue({ components: {} }),
+  },
+  VariableQueryEditor(props: VariableQueryEditorProps) {
+    return <div>this is a variable query editor</div>;
   },
 };
 
@@ -247,7 +251,7 @@ describe('query actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
       const testMetricSource = { name: 'test', value: 'test', meta: {} };
-      const editor = {};
+      const editor = mocks.VariableQueryEditor;
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -263,8 +267,10 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+        toKeyedAction(
+          'key',
+          changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+        )
       );
     });
   });
@@ -273,7 +279,7 @@ describe('query actions', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
       const testMetricSource = { name: 'test', value: null as unknown as string, meta: {} };
-      const editor = {};
+      const editor = mocks.VariableQueryEditor;
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -289,8 +295,10 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+        toKeyedAction(
+          'key',
+          changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+        )
       );
     });
   });
@@ -298,7 +306,7 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and no metric sources was found', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true });
-      const editor = {};
+      const editor = mocks.VariableQueryEditor;
 
       mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
@@ -314,26 +322,10 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })),
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
-      );
-    });
-  });
-
-  describe('when initQueryVariableEditor is dispatched and variable dont have datasource', () => {
-    it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ datasource: undefined });
-
-      const tester = await reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(
-          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        toKeyedAction(
+          'key',
+          changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
         )
-        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenAsyncActionIsDispatched(initQueryVariableEditor(toKeyedVariableIdentifier(variable)), true);
-
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: undefined }))
       );
     });
   });
@@ -341,7 +333,7 @@ describe('query actions', () => {
   describe('when changeQueryVariableDataSource is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ datasource: { uid: 'other' } });
-      const editor = {};
+      const editor = mocks.VariableQueryEditor;
 
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
@@ -359,17 +351,23 @@ describe('query actions', () => {
         );
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })),
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+        toKeyedAction(
+          'key',
+          changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+        )
       );
     });
 
     describe('and data source type changed', () => {
       it('then correct actions are dispatched', async () => {
         const variable = createVariable({ datasource: { uid: 'other' } });
-        const editor = {};
+        const editor = mocks.VariableQueryEditor;
+        const previousDataSource: any = { type: 'previous' };
         const templatingState = {
-          editor: { ...initialVariableEditorState, extended: { dataSource: { type: 'previous' } } },
+          editor: {
+            ...initialVariableEditorState,
+            extended: { dataSource: previousDataSource, VariableQueryEditor: editor },
+          },
         };
         const preloadedState = getPreloadedState('key', templatingState);
 
@@ -390,8 +388,10 @@ describe('query actions', () => {
 
         tester.thenDispatchedActionsShouldEqual(
           toKeyedAction('key', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: '' }))),
-          toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })),
-          toKeyedAction('key', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+          toKeyedAction(
+            'key',
+            changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+          )
         );
       });
     });
@@ -418,8 +418,10 @@ describe('query actions', () => {
         );
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })),
-        toKeyedAction('key', changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor }))
+        toKeyedAction(
+          'key',
+          changeVariableEditorExtended({ dataSource: mocks.datasource, VariableQueryEditor: editor })
+        )
       );
     });
   });

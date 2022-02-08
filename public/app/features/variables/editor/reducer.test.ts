@@ -62,7 +62,7 @@ describe('variableEditorReducer', () => {
         name: 'A name',
         isValid: false,
         errors: { update: 'Something wrong' },
-        extended: { prop: 1000 },
+        extended: null,
       };
       const payload = toVariablePayload({ id: '0', type: 'textbox' });
       reducerTester<VariableEditorState>()
@@ -181,14 +181,15 @@ describe('variableEditorReducer', () => {
 
   describe('when changeVariableEditorExtended is dispatched', () => {
     it('then state should be correct', () => {
-      const payload = { propName: 'someProp', propValue: [{}] };
+      const payload = { dataSourceTypes: [] };
+
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
         .whenActionIsDispatched(changeVariableEditorExtended(payload))
         .thenStateShouldEqual({
           ...initialVariableEditorState,
           extended: {
-            someProp: [{}],
+            dataSourceTypes: [],
           },
         });
     });

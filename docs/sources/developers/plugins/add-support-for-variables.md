@@ -80,26 +80,19 @@ For more information on the available variable formats, refer to [Advanced varia
 
 ## Set a variable from your plugin
 
-Not only can you read the value of a variable, you can also update the variable from your plugin. Use LocationSrv.update()
+Not only can you read the value of a variable, you can also update the variable from your plugin. Use `locationService.partial(query, replace)`.
 
 The following example shows how to update a variable called `service`.
 
 - `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
-- `partial: true` makes the update only affect the query parameters listed in `query`, and leaves the other query parameters unchanged.
 - `replace: true` tells Grafana to update the current URL state, rather than creating a new history entry.
 
 ```ts
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 ```
 
 ```ts
-getLocationSrv().update({
-  query: {
-    'var-service': 'billing',
-  },
-  partial: true,
-  replace: true,
-});
+locationService.partial({ 'var-service': 'billing' }, true);
 ```
 
 > **Note:** Grafana queries your data source whenever you update a variable. Excessive updates to variables can slow down Grafana and lead to a poor user experience.

@@ -9,6 +9,5 @@ import { ConfigEditor } from './configuration/ConfigEditor';
 export const plugin = new DataSourcePlugin(Datasource)
   .setQueryEditor(LokiQueryEditorByApp)
   .setConfigEditor(ConfigEditor)
-  .setExploreQueryField(LokiQueryEditorByApp)
   .setQueryEditorHelp(LokiCheatSheet)
   .setAnnotationQueryCtrl(LokiAnnotationsQueryCtrl);

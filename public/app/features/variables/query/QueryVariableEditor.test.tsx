@@ -5,7 +5,6 @@ import { DataSourceApi } from '@grafana/data';
 
 import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
-import { initialVariableEditorState } from '../editor/reducer';
 import { describe, expect } from '../../../../test/lib/common';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -16,19 +15,17 @@ import { KeyedVariableIdentifier } from '../state/types';
 
 const setupTestContext = (options: Partial<Props>) => {
   const variableDefaults: Partial<VariableModel> = { rootStateKey: 'key' };
+  const extended = {
+    VariableQueryEditor: LegacyVariableQueryEditor,
+    dataSource: {} as unknown as DataSourceApi,
+  };
   const defaults: Props = {
     variable: { ...initialQueryVariableModelState, ...variableDefaults },
     initQueryVariableEditor: jest.fn(),
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),
     changeVariableMultiValue: jest.fn(),
-    editor: {
-      ...initialVariableEditorState,
-      extended: {
-        VariableQueryEditor: LegacyVariableQueryEditor,
-        dataSource: {} as unknown as DataSourceApi,
-      },
-    },
+    extended,
     onPropChange: jest.fn(),
   };
 
