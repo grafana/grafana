@@ -48,10 +48,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [asyncServiceNameValue, setAsyncServiceNameValue] = useState<SelectableValue<any>>(
-    query.serviceName as SelectableValue
-  );
-  const [asyncSpanNameValue, setAsyncSpanNameValue] = useState<SelectableValue<any>>(query.spanName as SelectableValue);
+  const [asyncServiceNameValue, setAsyncServiceNameValue] = useState<SelectableValue<any>>({
+    value: '',
+  });
+  const [asyncSpanNameValue, setAsyncSpanNameValue] = useState<SelectableValue<any>>({
+    value: '',
+  });
   const [error, setError] = useState(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
   const [isLoadingService, setIsLoadingService] = useState<{ optionType: string; loading: boolean }>({
@@ -131,9 +133,11 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               menuShouldPortal
               loadOptions={fetchServiceNameOptions}
               isLoading={isLoadingService.optionType === 'serviceName' && isLoadingService.loading}
-              value={(query.serviceName as SelectableValue) || asyncServiceNameValue}
+              value={asyncServiceNameValue.value} //{(query.serviceName as SelectableValue) || asyncServiceNameValue}
               onChange={(v) => {
-                setAsyncServiceNameValue(v);
+                setAsyncServiceNameValue({
+                  value: v,
+                });
                 onChange({
                   ...query,
                   serviceName: v?.value || undefined,
@@ -154,9 +158,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               menuShouldPortal
               loadOptions={fetchSpanNameOptions}
               isLoading={isLoadingService.optionType === 'spanName' && isLoadingService.loading}
-              value={(query.spanName as SelectableValue) || asyncSpanNameValue}
+              value={asyncSpanNameValue.value}
               onChange={(v) => {
-                setAsyncSpanNameValue(v);
+                setAsyncSpanNameValue({ value: v });
                 onChange({
                   ...query,
                   spanName: v?.value || undefined,
