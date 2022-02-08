@@ -11,7 +11,14 @@ import {
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleNamespace, RuleWithLocation, StateHistoryItem } from 'app/types/unified-alerting';
+import {
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
+  RuleIdentifier,
+  RuleNamespace,
+  RuleWithLocation,
+  StateHistoryItem,
+} from 'app/types/unified-alerting';
 import {
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
@@ -48,6 +55,7 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import {
   getAllRulesSourceNames,
+  getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
   isGrafanaRulesSource,
   isVanillaPrometheusAlertManagerDataSource,
@@ -259,6 +267,21 @@ async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
     ...group,
     rules: group.rules.filter((r) => r !== rule),
   });
+}
+
+export function deleteRulesGroupAction(
+  namespace: CombinedRuleNamespace,
+  ruleGroup: CombinedRuleGroup
+): ThunkResult<void> {
+  return async (dispatch) => {
+    withAppEvents(
+      (async () => {
+        const sourceName = getRulesSourceName(namespace.rulesSource);
+        await deleteRulerRulesGroup(sourceName, namespace.name, ruleGroup.name);
+      })(),
+      { successMessage: 'Group deleted' }
+    );
+  };
 }
 
 export function deleteRuleAction(

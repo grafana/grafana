@@ -5,8 +5,10 @@ import kbn from 'app/core/utils/kbn';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
+import { deleteRulesGroupAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -23,6 +25,7 @@ interface Props {
 
 export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }) => {
   const { rulesSource } = namespace;
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
@@ -40,6 +43,10 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+
+  const deleteGroup = () => {
+    dispatch(deleteRulesGroupAction(namespace, group));
+  };
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -152,7 +159,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
             Are you sure you want to delete this group?
           </div>
         }
-        onConfirm={() => null}
+        onConfirm={deleteGroup}
         onDismiss={() => setIsDeletingGroup(false)}
         confirmText="Delete"
       />
