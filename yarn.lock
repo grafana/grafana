@@ -4261,7 +4261,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.1
     common-tags: 1.8.2
-    core-js: 3.20.2
+    core-js: 3.21.0
     css-loader: 6.5.1
     css-minimizer-webpack-plugin: 3.4.1
     csstype: 3.0.10
@@ -15371,10 +15371,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.20.2":
-  version: 3.20.2
-  resolution: "core-js@npm:3.20.2"
-  checksum: dc055a5a79f2e3c2e060b4fb8a3e228fa0de16464bff3c6605646183139eebaa68c390ec6d9c3acc5677f333df510b977ee3f1d5992e6c36b1f200e35f5ed8ca
+"core-js@npm:3.21.0":
+  version: 3.21.0
+  resolution: "core-js@npm:3.21.0"
+  checksum: 87df49aa2c5d0a521c52102b6669842dd30b334742e86dd4e0173c51230bc48d610060ab6de0f149766d188325b8c1b84598f901cf455674fe6c03ccc5c8026f
   languageName: node
   linkType: hard
 
@@ -20213,7 +20213,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
-    core-js: 3.20.2
+    core-js: 3.21.0
     css-loader: 6.5.1
     css-minimizer-webpack-plugin: 3.4.1
     cypress: 9.3.1
@@ -20258,6 +20258,7 @@ __metadata:
     jest-date-mock: 1.0.8
     jest-junit: 13.0.0
     jest-matcher-utils: 27.5.0
+    jest-mock-console: 1.2.3
     jquery: 3.6.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
@@ -23140,6 +23141,15 @@ __metadata:
     slash: ^3.0.0
     stack-utils: ^2.0.3
   checksum: ad0b063baf00e422033cc439ad908a432cbe6c49abfb256b9a49509c1ef3362124e8c25815db2f0423ede8a146efd0384ecd9fcf485e5bb66e7722b790421ca6
+  languageName: node
+  linkType: hard
+
+"jest-mock-console@npm:1.2.3":
+  version: 1.2.3
+  resolution: "jest-mock-console@npm:1.2.3"
+  peerDependencies:
+    jest: ">= 22.4.2"
+  checksum: 16f449e309919309b87b6ffb7171ff1feccb628bac97c44aa59594951447833abaaac4957be4258e1c7ce3c54ef6e24cb1e2a7c310f7b8cbc6b598323819dc10
   languageName: node
   linkType: hard
 
