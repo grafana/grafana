@@ -4300,6 +4300,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-popper: 2.2.5
+    react-popper-tooltip: ^4.3.1
     react-router-dom: ^5.2.0
     react-select: 5.2.2
     react-select-event: ^5.1.0
@@ -6613,7 +6614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@popperjs/core@npm:2.11.2":
+"@popperjs/core@npm:2.11.2, @popperjs/core@npm:^2.10.2":
   version: 2.11.2
   resolution: "@popperjs/core@npm:2.11.2"
   checksum: 5695bf020eda54636e16a62dc9b5fdd92beaf7b2d19f62fcef049d57c5cff92773562d80cbf760b217c3ec928da310eb24994ab6a00fd39dffa0af9b5dfc01a6
@@ -20311,6 +20312,7 @@ __metadata:
     react-loadable: 5.5.0
     react-moveable: 0.30.3
     react-popper: 2.2.5
+    react-popper-tooltip: ^4.3.1
     react-redux: 7.2.6
     react-refresh: 0.11.0
     react-resizable: 3.0.4
@@ -30408,7 +30410,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-popper@npm:2.2.5, react-popper@npm:^2.2.4":
+"react-popper-tooltip@npm:^4.3.1":
+  version: 4.3.1
+  resolution: "react-popper-tooltip@npm:4.3.1"
+  dependencies:
+    "@babel/runtime": ^7.15.4
+    "@popperjs/core": ^2.10.2
+    react-popper: ^2.2.5
+  peerDependencies:
+    react: ">=16.6.0"
+    react-dom: ">=16.6.0"
+  checksum: 82ae84c3b75324ddcafbc3ff4358d77780d20ff28dc5b01a3500b31b34e84caae5dbe3b569165b967b4cdbbacce7af6886e006e0921ee0da5b73638893014e0e
+  languageName: node
+  linkType: hard
+
+"react-popper@npm:2.2.5, react-popper@npm:^2.2.4, react-popper@npm:^2.2.5":
   version: 2.2.5
   resolution: "react-popper@npm:2.2.5"
   dependencies:
