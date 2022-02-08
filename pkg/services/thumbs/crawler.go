@@ -80,18 +80,18 @@ func (r *simpleCrawler) broadcastStatus() {
 }
 
 func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
+	r.queueMutex.Lock()
 	if r.IsRunning() {
 		tlog.Info("Already running")
 		return nil
 	}
-
-	r.queueMutex.Lock()
 
 	now := time.Now()
 
 	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails(theme, thumbnailKind)
 	if err != nil {
 		tlog.Error("Error when fetching dashboards with stale thumbnails", "err", err.Error())
+		r.queueMutex.Unlock()
 		return err
 	}
 
@@ -112,6 +112,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	})
 	if err != nil {
 		tlog.Error("Error when creating rendering session", "err", err.Error())
+		r.queueMutex.Unlock()
 		return err
 	}
 
