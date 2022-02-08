@@ -59,18 +59,19 @@ export function buildNavModel(team: Team): NavModelItem {
     url: `org/teams/edit/${team.id}/groupsync`,
   };
 
+  const isLoadingTeam = team === loadingTeam;
+
   // With both Legacy and FGAC the tab is protected being featureEnabled
   // While team is loading we leave the teamsync tab
   // With FGAC the External Group Sync tab is available when user has ActionTeamsPermissionsRead for this team
-  if (
-    featureEnabled('teamsync') &&
-    (team === loadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team))
-  ) {
-    navModel.children!.push(teamGroupSync);
-  } else if (config.featureToggles.featureHighlights && team !== loadingTeam) {
+  if (featureEnabled('teamsync')) {
+    if (isLoadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
+      navModel.children!.push(teamGroupSync);
+    }
+  } else if (config.featureToggles.featureHighlights) {
     navModel.children!.push({
       ...teamGroupSync,
-      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-team-sync-badge' }),
+      tabSuffix: () => ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge' }),
     });
   }
 
