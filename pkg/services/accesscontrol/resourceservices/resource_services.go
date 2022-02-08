@@ -138,10 +138,12 @@ func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegiste
 			if err != nil {
 				return err
 			}
-
-			if dash, err := sql.GetDashboard(id, orgID, "", ""); err != nil {
+			query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
+			if err := sql.GetDashboard(ctx, query); err != nil {
 				return err
-			} else if dash.IsFolder {
+			}
+
+			if query.Result.IsFolder {
 				return errors.New("not found")
 			}
 
@@ -173,9 +175,12 @@ func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, 
 			if err != nil {
 				return err
 			}
-			if dashboard, err := sql.GetDashboard(id, orgID, "", ""); err != nil {
+			query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
+			if err := sql.GetDashboard(ctx, &models.GetDashboardQuery{}); err != nil {
 				return err
-			} else if !dashboard.IsFolder {
+			}
+
+			if !query.Result.IsFolder {
 				return errors.New("not found")
 			}
 
