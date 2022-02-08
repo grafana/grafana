@@ -338,7 +338,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
-			dashboardRoute.Post("/db", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)), routing.Wrap(hs.PostDashboard))
+			dashboardRoute.Post("/db", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(ac.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
