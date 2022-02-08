@@ -77,13 +77,17 @@ func (ctx *Context) run() {
 // RemoteAddr returns more real IP address.
 func (ctx *Context) RemoteAddr() string {
 	addr := ctx.Req.Header.Get("X-Real-IP")
+
 	if len(addr) == 0 {
-		addr = ctx.Req.Header.Get("X-Forwarded-For")
-		if addr == "" {
-			addr = ctx.Req.RemoteAddr
-			if i := strings.LastIndex(addr, ":"); i > -1 {
-				addr = addr[:i]
-			}
+		// X-Forwarded-For may contain multiple IP addresses, separated by
+		// commas.
+		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
+	}
+
+	if len(addr) == 0 {
+		addr = ctx.Req.RemoteAddr
+		if i := strings.LastIndex(addr, ":"); i > -1 {
+			addr = addr[:i]
 		}
 	}
 	return addr
