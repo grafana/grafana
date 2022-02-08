@@ -670,8 +670,6 @@ export function queryLogsVolume<T extends DataQuery>(
         rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
       },
       error: (error) => {
-        const errorMessage = error.data?.message || error.statusText || error.message;
-        console.error('Log volume query failed with error: ', errorMessage);
         observer.next({
           state: LoadingState.Error,
           error: error,
