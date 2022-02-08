@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
-import { GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { PopoverContent, TooltipPlacement } from './types';
@@ -24,8 +24,7 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
     placement: placement,
     interactive: interactive,
     delayHide: interactive ? 100 : 0,
-    delayShow: 50,
-    // Focus is new, old tooltip did not show on focus, we could make this a parameter/option?
+    delayShow: 150,
     trigger: ['hover', 'focus'],
   });
 
@@ -64,9 +63,7 @@ function getStyles(theme: GrafanaTheme2) {
       border: 1px solid ${tooltipBorder};
       box-shadow: ${theme.shadows.z2};
       color: ${tooltipText};
-      display: flex;
       font-size: ${theme.typography.bodySmall.fontSize};
-      flex-direction: column;
       padding: ${theme.spacing(0.5, 1)};
       transition: opacity 0.3s;
       z-index: ${theme.zIndex.tooltip};
@@ -170,6 +167,23 @@ function getStyles(theme: GrafanaTheme2) {
         border-width: 0.5rem 0 0.5rem 0.4em;
         left: 3px;
         top: 0;
+      }
+
+      code {
+        border: none;
+        display: inline;
+        background: ${colorManipulator.darken(tooltipBg, 0.3)};
+        color: ${tooltipText};
+      }
+
+      strong,
+      em {
+        color: ${colorManipulator.emphasize(tooltipBg)};
+      }
+
+      a {
+        color: ${theme.colors.text.link};
+        text-decoration: underline;
       }
     `;
   }
