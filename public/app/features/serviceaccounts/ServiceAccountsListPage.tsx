@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { LinkButton, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
@@ -67,7 +67,7 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
                 </thead>
                 <tbody>
                   {serviceAccounts.map((serviceaccount: ServiceAccountDTO) => (
-                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.userId} />
+                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.id} />
                   ))}
                 </tbody>
               </table>
@@ -88,11 +88,11 @@ const getServiceAccountsAriaLabel = (name: string) => {
 };
 
 const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
-  const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
+  const editUrl = `org/serviceaccounts/${serviceaccount.id}`;
   const styles = useStyles2(getStyles);
 
   return (
-    <tr key={serviceaccount.userId}>
+    <tr key={serviceaccount.id}>
       <td className="width-4 text-center link-td">
         <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}>
           <img
@@ -143,7 +143,10 @@ const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemP
           title="tokens"
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          0
+          <span>
+            <Icon name={'key-skeleton-alt'}></Icon>
+          </span>
+          {serviceaccount.tokens}
         </a>
       </td>
     </tr>

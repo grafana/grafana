@@ -33,6 +33,11 @@ type ServiceAccountsAPI struct {
 	apiKeyStore    APIKeyStore
 }
 
+type serviceAccountIdDTO struct {
+	Id      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service serviceaccounts.Service,
@@ -88,11 +93,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
-	result := models.UserIdDTO{
-		Message: "Service account created",
+	sa := &serviceAccountIdDTO{
 		Id:      user.Id,
+		Message: "Service account created",
 	}
-	return response.JSON(http.StatusCreated, result)
+	return response.JSON(http.StatusCreated, sa)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
