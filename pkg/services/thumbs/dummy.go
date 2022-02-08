@@ -2,6 +2,7 @@ package thumbs
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 )

@@ -349,7 +349,6 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 
 	err := hs.lockService.LockAndExecute(crawlerCtx, hs.crawlLockServiceActionName, hs.scheduleOptions.crawlInterval, func(ctx context.Context) {
 		for _, theme := range hs.scheduleOptions.themes {
-
 			if err := hs.renderer.Run(crawlerCtx, authOpts, hs.scheduleOptions.crawlerMode, theme, hs.scheduleOptions.thumbnailKind); err != nil {
 				hs.log.Error("Scheduled crawl error", "theme", theme, "kind", hs.scheduleOptions.thumbnailKind, "err", err)
 			}

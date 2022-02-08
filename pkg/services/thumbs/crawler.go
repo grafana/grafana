@@ -139,7 +139,6 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	group, gCtx := errgroup.WithContext(ctx)
 	// create a pool of workers
 	for i := 0; i < r.threadCount; i++ {
-
 		walkerId := i
 		group.Go(func() error {
 			r.walk(walkerId, gCtx)
