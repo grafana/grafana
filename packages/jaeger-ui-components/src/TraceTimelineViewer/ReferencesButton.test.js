@@ -20,7 +20,6 @@ import ReferencesButton, { getStyles } from './ReferencesButton';
 import transformTraceData from '../model/transform-trace-data';
 import traceGenerator from '../demo/trace-generators';
 import ReferenceLink from '../url/ReferenceLink';
-import { UIDropdown, UIMenuItem } from '../uiElementsContext';
 
 describe(ReferencesButton, () => {
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
@@ -50,40 +49,14 @@ describe(ReferencesButton, () => {
   it('renders single reference', () => {
     const props = { ...baseProps, references: oneReference };
     const wrapper = shallow(<ReferencesButton {...props} />);
-    const dropdown = wrapper.find(UIDropdown);
     const refLink = wrapper.find(ReferenceLink);
     const tooltip = wrapper.find(Tooltip);
     const styles = getStyles();
 
-    expect(dropdown.length).toBe(0);
     expect(refLink.length).toBe(1);
     expect(refLink.prop('reference')).toBe(oneReference[0]);
     expect(refLink.first().props().className).toBe(styles.MultiParent);
     expect(tooltip.length).toBe(1);
     expect(tooltip.prop('content')).toBe(props.tooltipText);
-  });
-
-  it('renders multiple references', () => {
-    const props = { ...baseProps, references: moreReferences };
-    const wrapper = shallow(<ReferencesButton {...props} />);
-    const dropdown = wrapper.find(UIDropdown);
-    expect(dropdown.length).toBe(1);
-    // We have some wrappers here that dynamically inject specific component so we need to traverse a bit
-    // here
-    const menuInstance = shallow(
-      shallow(dropdown.first().props().overlay).prop('children')({
-        Menu({ children }) {
-          return <div>{children}</div>;
-        },
-      })
-    );
-    const submenuItems = menuInstance.find(UIMenuItem);
-    expect(submenuItems.length).toBe(3);
-    submenuItems.forEach((submenuItem, i) => {
-      expect(submenuItem.find(ReferenceLink).prop('reference')).toBe(moreReferences[i]);
-    });
-    expect(submenuItems.at(2).find(ReferenceLink).childAt(0).text()).toBe(
-      `(another trace) - ${moreReferences[2].spanID}`
-    );
   });
 });

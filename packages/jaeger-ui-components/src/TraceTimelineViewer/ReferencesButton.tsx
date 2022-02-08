@@ -18,7 +18,7 @@ import { stylesFactory, Tooltip } from '@grafana/ui';
 
 import NewWindowIcon from '../common/NewWindowIcon';
 import { TraceSpanReference } from '../types/trace';
-import { UIDropdown, UIMenuItem, UIMenu } from '../uiElementsContext';
+import { UIMenuItem, UIMenu } from '../uiElementsContext';
 import ReferenceLink from '../url/ReferenceLink';
 
 export const getStyles = stylesFactory(() => {
@@ -76,15 +76,7 @@ export default class ReferencesButton extends React.PureComponent<TReferencesBut
     const { references, children, tooltipText, focusSpan } = this.props;
     const styles = getStyles();
 
-    if (references.length > 1) {
-      return (
-        <Tooltip content={tooltipText}>
-          <UIDropdown overlay={this.referencesList(references)} placement="bottomRight" trigger={['click']}>
-            <a className={styles.MultiParent}>{children}</a>
-          </UIDropdown>
-        </Tooltip>
-      );
-    }
+    // TODO: handle multiple items with some dropdown
     const ref = references[0];
     return (
       <Tooltip content={tooltipText}>

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { UIDropdown, UIMenu, UIMenuItem } from '..';
+import { UIMenu, UIMenuItem } from '..';
 import NewWindowIcon from './NewWindowIcon';
 
 type Link = {
@@ -46,14 +46,6 @@ export const linkValueList = (links: Link[]) => (
 
 export default function ExternalLinks(props: ExternalLinksProps) {
   const { links } = props;
-  if (links.length === 1) {
-    return <LinkValue href={links[0].url} title={links[0].text} className={props.className} />;
-  }
-  return (
-    <UIDropdown overlay={linkValueList(links)} placement="bottomRight" trigger={['click']}>
-      <a className={props.className}>
-        <NewWindowIcon isLarge />
-      </a>
-    </UIDropdown>
-  );
+  // TODO: handle multiple items
+  return <LinkValue href={links[0].url} title={links[0].text} className={props.className} />;
 }

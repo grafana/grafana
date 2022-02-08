@@ -14,23 +14,6 @@
 
 import React from 'react';
 
-export type DropdownProps = {
-  overlay: React.ReactNode;
-  placement?: 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
-  trigger?: Array<'click' | 'hover' | 'contextMenu'>;
-  children?: React.ReactNode;
-};
-
-export const UIDropdown = function UIDropdown(props: DropdownProps) {
-  return (
-    <GetElementsContext>
-      {(elements: Elements) => {
-        return <elements.Dropdown {...props} />;
-      }}
-    </GetElementsContext>
-  );
-};
-
 export type MenuProps = {
   children?: React.ReactNode;
 };
@@ -60,7 +43,6 @@ export const UIMenuItem = function UIMenuItem(props: MenuItemProps) {
 };
 
 export type Elements = {
-  Dropdown: React.ComponentType<DropdownProps>;
   Menu: React.ComponentType<MenuProps>;
   MenuItem: React.ComponentType<MenuItemProps>;
 };

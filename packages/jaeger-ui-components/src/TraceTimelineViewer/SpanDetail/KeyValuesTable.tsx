@@ -22,7 +22,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import CopyIcon from '../../common/CopyIcon';
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { UIDropdown, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
@@ -100,17 +99,6 @@ LinkValue.defaultProps = {
   title: '',
 };
 
-const linkValueList = (links: TraceLink[]) => (
-  <UIMenu>
-    {links.map(({ text, url }, index) => (
-      // `index` is necessary in the key because url can repeat
-      <UIMenuItem key={`${url}-${index}`}>
-        <LinkValue href={url}>{text}</LinkValue>
-      </UIMenuItem>
-    ))}
-  </UIMenu>
-);
-
 type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
   linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
@@ -130,22 +118,13 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             const jsonTable = <div className={ubInlineBlock} dangerouslySetInnerHTML={markup} />;
             const links = linksGetter ? linksGetter(data, i) : null;
             let valueMarkup;
-            if (links && links.length === 1) {
+            if (links && links.length) {
+              // TODO: handle multiple items
               valueMarkup = (
                 <div>
                   <LinkValue href={links[0].url} title={links[0].text}>
                     {jsonTable}
                   </LinkValue>
-                </div>
-              );
-            } else if (links && links.length > 1) {
-              valueMarkup = (
-                <div>
-                  <UIDropdown overlay={linkValueList(links)} placement="bottomRight" trigger={['click']}>
-                    <a>
-                      {jsonTable} <Icon name="list-ul" />
-                    </a>
-                  </UIDropdown>
                 </div>
               );
             } else {

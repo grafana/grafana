@@ -18,7 +18,6 @@ import { shallow } from 'enzyme';
 import CopyIcon from '../../common/CopyIcon';
 
 import KeyValuesTable, { LinkValue } from './KeyValuesTable';
-import { UIDropdown } from '../../uiElementsContext';
 import { ubInlineBlock } from '../../uberUtilityStyles';
 
 describe('LinkValue', () => {
@@ -83,38 +82,6 @@ describe('<KeyValuesTable>', () => {
     expect(anchor.prop('href')).toBe('http://example.com/?kind=client');
     expect(anchor.prop('title')).toBe('More info about client');
     expect(anchor.closest('tr').find('td').first().text()).toBe('span.kind');
-  });
-
-  it('renders multiple links correctly', () => {
-    wrapper.setProps({
-      linksGetter: (array, i) =>
-        array[i].key === 'span.kind'
-          ? [
-              { url: `http://example.com/1?kind=${encodeURIComponent(array[i].value)}`, text: 'Example 1' },
-              { url: `http://example.com/2?kind=${encodeURIComponent(array[i].value)}`, text: 'Example 2' },
-            ]
-          : [],
-    });
-    const dropdown = wrapper.find(UIDropdown);
-    const overlay = shallow(dropdown.prop('overlay'));
-    // We have some wrappers here that dynamically inject specific component so we need to traverse a bit
-    // here
-    const menu = shallow(
-      overlay.prop('children')({
-        Menu({ children }) {
-          return <div>{children}</div>;
-        },
-      })
-    );
-    const anchors = menu.find(LinkValue);
-    expect(anchors).toHaveLength(2);
-    const firstAnchor = anchors.first();
-    expect(firstAnchor.prop('href')).toBe('http://example.com/1?kind=client');
-    expect(firstAnchor.children().text()).toBe('Example 1');
-    const secondAnchor = anchors.last();
-    expect(secondAnchor.prop('href')).toBe('http://example.com/2?kind=client');
-    expect(secondAnchor.children().text()).toBe('Example 2');
-    expect(dropdown.closest('tr').find('td').first().text()).toBe('span.kind');
   });
 
   it('renders a <CopyIcon /> with correct copyText for each data element', () => {
