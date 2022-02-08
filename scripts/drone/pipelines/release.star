@@ -465,6 +465,7 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
 
     return pipelines
 
+
 def get_e2e_suffix():
     if not disable_tests:
         return '-e2e'
