@@ -15,7 +15,6 @@
     "d3-force", // we should bump this once we move to esm modules
     "d3-interpolate", // we should bump this once we move to esm modules
     "d3-scale-chromatic", // we should bump this once we move to esm modules
-    "eslint", // wait until `eslint-plugin-react-hooks>4.2.0` is released
     "execa", // we should bump this once we move to esm modules
     "history", // we should bump this together with react-router-dom
     "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead

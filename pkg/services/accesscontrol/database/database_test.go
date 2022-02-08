@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -80,7 +81,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.Id}, accesscontrol.SetResourcePermissionCommand{
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.Id}, types.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:write"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -89,7 +90,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.teamPermissions {
-				_, err := store.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, accesscontrol.SetResourcePermissionCommand{
+				_, err := store.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, types.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -98,7 +99,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.builtinPermissions {
-				_, err := store.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", accesscontrol.SetResourcePermissionCommand{
+				_, err := store.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", types.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
