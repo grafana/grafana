@@ -72,20 +72,10 @@ type UnprocessableEntityError GenericError
 // swagger:response internalServerError
 type InternalServerError GenericError
 
-// QuotaReachedError is returned when quota have been reached for this resource.
-//
-// swagger:response quotaReachedError
-type QuotaReachedError GenericError
-
 // UnauthorizedError is returned when the request is not authenticated.
 //
 // swagger:response unauthorisedError
 type UnauthorizedError GenericError
-
-// DublicateAPIkeyError is returned when the API key conflicts with another
-//
-// swagger:response dublicateAPIkeyError
-type DublicateAPIkeyError GenericError
 
 // AcceptedResponse
 //

@@ -2940,10 +2940,10 @@
             "$ref": "#/responses/unauthorisedError"
           },
           "403": {
-            "$ref": "#/responses/quotaReachedError"
+            "$ref": "#/responses/forbiddenError"
           },
           "409": {
-            "$ref": "#/responses/dublicateAPIkeyError"
+            "$ref": "#/responses/conflictError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -3224,7 +3224,7 @@
             "$ref": "#/responses/unauthorisedError"
           },
           "403": {
-            "$ref": "#/responses/quotaReachedError"
+            "$ref": "#/responses/forbiddenError"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -3519,7 +3519,7 @@
             "$ref": "#/responses/unauthorisedError"
           },
           "403": {
-            "$ref": "#/responses/quotaReachedError"
+            "$ref": "#/responses/forbiddenError"
           },
           "409": {
             "$ref": "#/responses/conflictError"
@@ -4058,15 +4058,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -7164,6 +7164,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -7171,14 +7179,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -7212,16 +7212,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -16679,12 +16679,6 @@
         }
       }
     },
-    "dublicateAPIkeyError": {
-      "description": "DublicateAPIkeyError is returned when the API key conflicts with another",
-      "schema": {
-        "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
     "folderResponse": {
       "description": "",
       "schema": {
@@ -17234,12 +17228,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/DataResponse"
-      }
-    },
-    "quotaReachedError": {
-      "description": "QuotaReachedError is returned when quota have been reached for this resource.",
-      "schema": {
-        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "recordingRuleResponse": {

@@ -32,7 +32,6 @@ import "github.com/grafana/grafana/pkg/models"
 // 200: postDashboardResponse
 // 401: unauthorisedError
 // 403: forbiddenError
-// 403: quotaReachedError
 // 404: notFoundError
 // 500: internalServerError
 

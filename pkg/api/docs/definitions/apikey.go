@@ -29,8 +29,7 @@ import (
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
-// 403: quotaReachedError
-// 409: dublicateAPIkeyError
+// 409: conflictError
 // 500: internalServerError
 
 // swagger:route DELETE /auth/keys/{id} api_keys deleteAPIkey

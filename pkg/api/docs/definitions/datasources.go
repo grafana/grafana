@@ -34,7 +34,6 @@ import (
 // 200: createOrUpdateDatasourceResponse
 // 401: unauthorisedError
 // 403: forbiddenError
-// 403: quotaReachedError
 // 409: conflictError
 // 500: internalServerError
 
