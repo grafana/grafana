@@ -7,7 +7,9 @@ import (
 )
 
 var (
-	ErrQueryNotFound = errors.New("query in query history not found")
+	ErrQueryNotFound        = errors.New("query in query history not found")
+	ErrStarredQueryNotFound = errors.New("starred query not found")
+	ErrQueryAlreadyStarred  = errors.New("query was already starred")
 )
 
 type QueryHistory struct {
@@ -19,6 +21,12 @@ type QueryHistory struct {
 	CreatedAt     int64
 	Comment       string
 	Queries       *simplejson.Json
+}
+
+type QueryHistoryStar struct {
+	ID       int64  `xorm:"pk autoincr 'id'"`
+	QueryUID string `xorm:"query_uid"`
+	UserID   int64  `xorm:"user_id"`
 }
 
 type CreateQueryInQueryHistoryCommand struct {
@@ -43,6 +51,18 @@ type QueryHistoryResponse struct {
 
 // DeleteQueryFromQueryHistoryResponse is the response struct for deleting a query from query history
 type DeleteQueryFromQueryHistoryResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
+// StarQueryInQueryHistoryResponse is the response struct for starring a query in query history
+type StarQueryInQueryHistoryResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
+// UnstarQueryInQueryHistoryResponse is the response struct for unstarring a query in query history
+type UnstarQueryInQueryHistoryResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }

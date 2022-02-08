@@ -54,3 +54,50 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.Signe
 
 	return queryID, err
 }
+
+func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
+	var queryID int64
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		// Check if query exists as we want to star only existing queries
+		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Exist()
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return ErrQueryNotFound
+		}
+
+		// If query exists then star it
+		queryHistoryStar := QueryHistoryStar{
+			UserID:   user.UserId,
+			QueryUID: UID,
+		}
+
+		id, err := session.Insert(&queryHistoryStar)
+		if err != nil {
+			if s.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+				return ErrQueryAlreadyStarred
+			}
+			return err
+		}
+
+		queryID = id
+		return err
+	})
+
+	return queryID, err
+}
+
+func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
+	var queryID int64
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		id, err := session.Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
+		if id == 0 {
+			return ErrStarredQueryNotFound
+		}
+		queryID = id
+		return err
+	})
+
+	return queryID, err
+}

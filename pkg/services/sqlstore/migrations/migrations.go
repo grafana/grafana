@@ -75,6 +75,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 		}
 	}
+	addQueryHistoryStarMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

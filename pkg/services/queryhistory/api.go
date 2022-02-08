@@ -15,6 +15,8 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 	s.RouteRegister.Group("/api/query-history", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(s.createHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.deleteHandler))
+		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
+		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
 	})
 }
 
@@ -42,6 +44,13 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
+	// Unstar the query first
+	_, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	if err != nil && err != ErrStarredQueryNotFound {
+		s.log.Error("Failed to unstar query while deleting it from query history", "query", queryUID, "user", c.SignedInUser.UserId, "error", err)
+	}
+
+	// Then delete it
 	id, err := s.DeleteQueryFromQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete query from query history", err)
@@ -49,6 +58,40 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 
 	return response.JSON(http.StatusOK, DeleteQueryFromQueryHistoryResponse{
 		Message: "Query deleted",
+		ID:      id,
+	})
+}
+
+func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {
+	queryUID := web.Params(c.Req)[":uid"]
+	if len(queryUID) == 0 || !util.IsValidShortUID(queryUID) {
+		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
+	}
+
+	id, err := s.StarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to star query in query history", err)
+	}
+
+	return response.JSON(http.StatusOK, StarQueryInQueryHistoryResponse{
+		Message: "Query starred",
+		ID:      id,
+	})
+}
+
+func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Response {
+	queryUID := web.Params(c.Req)[":uid"]
+	if len(queryUID) == 0 || !util.IsValidShortUID(queryUID) {
+		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
+	}
+
+	id, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to unstar query in query history", err)
+	}
+
+	return response.JSON(http.StatusOK, UnstarQueryInQueryHistoryResponse{
+		Message: "Query unstarred",
 		ID:      id,
 	})
 }
