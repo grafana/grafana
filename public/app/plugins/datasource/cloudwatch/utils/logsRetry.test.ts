@@ -4,7 +4,6 @@ import { lastValueFrom, of, throwError } from 'rxjs';
 import { dataFrameToJSON, MutableDataFrame } from '@grafana/data';
 import { DataResponse, FetchError } from '@grafana/runtime';
 import { StartQueryRequest } from '../types';
-import { log } from 'console';
 
 describe('runWithRetry', () => {
   const timeoutPass = () => false;
@@ -43,7 +42,6 @@ describe('runWithRetry', () => {
     queryFunc.mockReturnValueOnce(throwError(() => createErrorResponse(targets)));
     queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
 
-    const startTime = new Date();
     const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutFail).pipe(toArray()));
     jest.runAllTimers();
     let error;
