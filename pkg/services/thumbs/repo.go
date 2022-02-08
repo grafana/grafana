@@ -6,19 +6,22 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func newThumbnailRepo(store *sqlstore.SQLStore) thumbnailRepo {
 	repo := &sqlThumbnailRepository{
-		store: store,
+		store:  store,
+		logger: log.New("thumbnails_repo"),
 	}
 	return repo
 }
 
 type sqlThumbnailRepository struct {
-	store *sqlstore.SQLStore
+	store  *sqlstore.SQLStore
+	logger log.Logger
 }
 
 func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error) {
@@ -27,14 +30,14 @@ func (r *sqlThumbnailRepository) saveFromFile(filePath string, meta models.Dashb
 	//   2. the rendering service, when image-renderer returns a screenshot
 
 	if !filepath.IsAbs(filePath) {
-		tlog.Error("Received relative path", "dashboardUID", meta.DashboardUID, "err", filePath)
+		r.logger.Error("Received relative path", "dashboardUID", meta.DashboardUID, "err", filePath)
 		return 0, errors.New("relative paths are not supported")
 	}
 
 	content, err := os.ReadFile(filepath.Clean(filePath))
 
 	if err != nil {
-		tlog.Error("error reading file", "dashboardUID", meta.DashboardUID, "err", err)
+		r.logger.Error("error reading file", "dashboardUID", meta.DashboardUID, "err", err)
 		return 0, err
 	}
 
@@ -45,7 +48,6 @@ func getMimeType(filePath string) string {
 	if strings.HasSuffix(filePath, ".webp") {
 		return "image/webp"
 	}
-
 	return "image/png"
 }
 
@@ -59,7 +61,7 @@ func (r *sqlThumbnailRepository) saveFromBytes(content []byte, mimeType string, 
 
 	_, err := r.store.SaveThumbnail(cmd)
 	if err != nil {
-		tlog.Error("error saving to the db", "dashboardUID", meta.DashboardUID, "err", err)
+		r.logger.Error("error saving to the db", "dashboardUID", meta.DashboardUID, "err", err)
 		return 0, err
 	}
 

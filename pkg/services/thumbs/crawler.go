@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -27,6 +28,7 @@ type simpleCrawler struct {
 	queue            []*models.DashboardWithStaleThumbnail
 	queueMutex       sync.Mutex
 	renderingSession rendering.Session
+	logger           log.Logger
 }
 
 func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
@@ -40,7 +42,8 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 			Complete: 0,
 			Queue:    0,
 		},
-		queue: nil,
+		queue:  nil,
+		logger: log.New("thumbnails_crawler"),
 	}
 	c.broadcastStatus()
 	return c
@@ -62,35 +65,36 @@ func (r *simpleCrawler) next() *models.DashboardWithStaleThumbnail {
 func (r *simpleCrawler) broadcastStatus() {
 	s, err := r.Status()
 	if err != nil {
-		tlog.Warn("error reading status")
+		r.logger.Warn("Error reading status", "error", err)
 		return
 	}
 	msg, err := json.Marshal(s)
 	if err != nil {
-		tlog.Warn("error making message")
+		r.logger.Warn("Error making message", "error", err)
 		return
 	}
 	err = r.glive.Publish(r.opts.OrgID, "grafana/broadcast/crawler", msg)
 	if err != nil {
-		tlog.Warn("error Publish message")
+		r.logger.Warn("Error Publish message", "error", err)
 		return
 	}
 }
 
 func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) (crawlStatus, error) {
-	if r.status.State == running {
-		tlog.Info("already running")
-		return r.Status()
-	}
-
 	r.queueMutex.Lock()
 	defer r.queueMutex.Unlock()
 
+	if r.status.State == running {
+		r.logger.Info("Crawler already running")
+		return r.Status()
+	}
+
 	now := time.Now()
 
+	// TODO: how theming work with stale thumbnails? I tried to start crawler with light theme but no stale dashboards found.
 	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails()
 	if err != nil {
-		tlog.Error("error when fetching dashboards with stale thumbnails", "err", err.Error())
+		r.logger.Error("Error when fetching dashboards with stale thumbnails", "err", err)
 		return crawlStatus{
 			Started:  now,
 			Finished: now,
@@ -115,12 +119,13 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme mode
 		Theme:           theme,
 		ConcurrentLimit: 10,
 	}
+	// TODO: Should we create session if no items found by findDashboardsWithStaleThumbnails?
 	renderingSession, err := r.renderService.CreateRenderingSession(context.Background(), r.opts.AuthOpts, rendering.SessionOpts{
 		Expiry:                     5 * time.Minute,
 		RefreshExpiryOnEachRequest: true,
 	})
 	if err != nil {
-		tlog.Error("error when creating rendering session", "err", err.Error())
+		r.logger.Error("Error when creating rendering session", "err", err)
 		return crawlStatus{
 			Started:  now,
 			Finished: now,
@@ -139,16 +144,27 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme mode
 	}
 	r.broadcastStatus()
 
-	tlog.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items))
+	r.logger.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items))
 
-	// create a pool of workers
-	for i := 0; i < r.threadCount; i++ {
-		go r.walk()
+	go func() {
+		var wg sync.WaitGroup
+		wg.Add(r.threadCount)
+		// create a pool of workers
+		for i := 0; i < r.threadCount; i++ {
+			go func() {
+				defer wg.Done()
+				r.walk()
+			}()
+			// wait 1/2 second before starting a new thread
+			// TODO: why we are sleeping here?
+			time.Sleep(500 * time.Millisecond)
+		}
+		wg.Wait()
+		r.walkFinished()
+		r.broadcastStatus()
+	}()
 
-		// wait 1/2 second before starting a new thread
-		time.Sleep(500 * time.Millisecond)
-	}
-
+	// TODO: what we broadcasting here?
 	r.broadcastStatus()
 	return r.Status()
 }
@@ -164,8 +180,8 @@ func (r *simpleCrawler) Stop() (crawlStatus, error) {
 }
 
 func (r *simpleCrawler) Status() (crawlStatus, error) {
-	r.statusMutex.Lock()
-	defer r.statusMutex.Unlock()
+	r.statusMutex.RLock()
+	defer r.statusMutex.RUnlock()
 
 	status := crawlStatus{
 		State:    r.status.State,
@@ -200,12 +216,12 @@ func (r *simpleCrawler) walkFinished() {
 
 	r.status.State = stopped
 	r.status.Finished = time.Now()
-	tlog.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "durationInSeconds", int64(time.Since(r.status.Started)/time.Second))
+	r.logger.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "duration", time.Since(r.status.Started))
 }
 
 func (r *simpleCrawler) shouldWalk() bool {
-	r.statusMutex.Lock()
-	defer r.statusMutex.Unlock()
+	r.statusMutex.RLock()
+	defer r.statusMutex.RUnlock()
 
 	return r.status.State == running
 }
@@ -222,7 +238,7 @@ func (r *simpleCrawler) walk() {
 		}
 
 		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug)
-		tlog.Info("Getting dashboard thumbnail", "dashboardUID", item.Uid, "url", url)
+		r.logger.Info("Getting dashboard thumbnail", "dashboardUID", item.Uid, "url", url)
 
 		res, err := r.renderService.Render(context.Background(), rendering.Opts{
 			Width:             320,
@@ -232,23 +248,24 @@ func (r *simpleCrawler) walk() {
 			TimeoutOpts:       r.opts.TimeoutOpts,
 			ConcurrentLimit:   r.opts.ConcurrentLimit,
 			Theme:             r.opts.Theme,
-			DeviceScaleFactor: -5, // negative numbers will render larger then scale down
+			DeviceScaleFactor: -5, // negative numbers will render larger than scale down.
 		}, r.renderingSession)
 		if err != nil {
-			tlog.Warn("error getting image", "dashboardUID", item.Uid, "url", url, "err", err)
+			r.logger.Warn("Error getting image", "dashboardUID", item.Uid, "url", url, "err", err)
 			r.newErrorResult()
 		} else if res.FilePath == "" {
-			tlog.Warn("error getting image... no response", "dashboardUID", item.Uid, "url", url)
+			r.logger.Warn("Error getting image... no response", "dashboardUID", item.Uid, "url", url)
 			r.newErrorResult()
 		} else if strings.Contains(res.FilePath, "public/img") {
-			tlog.Warn("error getting image... internal result", "dashboardUID", item.Uid, "url", url, "img", res.FilePath)
+			r.logger.Warn("Error getting image... internal result", "dashboardUID", item.Uid, "url", url, "img", res.FilePath)
 			r.newErrorResult()
 		} else {
 			func() {
 				defer func() {
+					// TODO: should we remove this file for previous if/else branches?
 					err := os.Remove(res.FilePath)
 					if err != nil {
-						tlog.Error("failed to remove thumbnail temp file", "dashboardUID", item.Uid, "url", url, "err", err)
+						r.logger.Error("Failed to remove thumbnail temp file", "dashboardUID", item.Uid, "url", url, "err", err)
 					}
 				}()
 
@@ -260,17 +277,14 @@ func (r *simpleCrawler) walk() {
 				}, item.Version)
 
 				if err != nil {
-					tlog.Warn("error saving image image", "dashboardUID", item.Uid, "url", url, "err", err)
+					r.logger.Warn("Error saving image image", "dashboardUID", item.Uid, "url", url, "err", err)
 					r.newErrorResult()
 				} else {
-					tlog.Info("saved thumbnail", "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId)
+					r.logger.Info("Saved thumbnail", "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId)
 					r.newSuccessResult()
 				}
 			}()
 		}
 		r.broadcastStatus()
 	}
-
-	r.walkFinished()
-	r.broadcastStatus()
 }

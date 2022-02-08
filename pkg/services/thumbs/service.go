@@ -20,10 +20,6 @@ import (
 	"github.com/segmentio/encoding/json"
 )
 
-var (
-	tlog log.Logger = log.New("thumbnails")
-)
-
 type Service interface {
 	Enabled() bool
 	GetImage(c *models.ReqContext)
@@ -47,15 +43,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rende
 	return &thumbService{
 		renderer:      newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo: thumbnailRepo,
+		logger:        log.New("thumbnails"),
 	}
 }
 
 type thumbService struct {
 	renderer      dashRenderer
 	thumbnailRepo thumbnailRepo
+	logger        log.Logger
 }
 
 func (hs *thumbService) Enabled() bool {
+	// TODO: Feature toggle check here?
 	return true
 }
 
@@ -109,7 +108,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 
 	err := web.Bind(c.Req, body)
 	if err != nil {
-		tlog.Error("Error parsing update thumbnail state request", "dashboardUid", req.UID, "err", err.Error())
+		hs.logger.Error("Error parsing update thumbnail state request", "dashboardUid", req.UID, "err", err.Error())
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
@@ -122,12 +121,12 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	})
 
 	if err != nil {
-		tlog.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", body.State)
+		hs.logger.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", body.State)
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
 
-	tlog.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", body.State)
+	hs.logger.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", body.State)
 	c.JSON(200, map[string]string{"success": "true"})
 }
 
@@ -150,14 +149,14 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	}
 
 	if err != nil {
-		tlog.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
+		hs.logger.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
 
 	c.Resp.Header().Set("Content-Type", res.MimeType)
 	if _, err := c.Resp.Write(res.Image); err != nil {
-		tlog.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
+		hs.logger.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
 	}
 }
 
@@ -190,9 +189,9 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 	defer func() {
 		_ = file.Close()
 	}()
-	tlog.Info("Uploaded File: %+v\n", handler.Filename)
-	tlog.Info("File Size: %+v\n", handler.Size)
-	tlog.Info("MIME Header: %+v\n", handler.Header)
+	hs.logger.Info("Uploaded File: %+v\n", handler.Filename)
+	hs.logger.Info("File Size: %+v\n", handler.Size)
+	hs.logger.Info("MIME Header: %+v\n", handler.Header)
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {

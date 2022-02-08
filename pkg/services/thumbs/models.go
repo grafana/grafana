@@ -10,13 +10,13 @@ type CrawlerMode string
 
 const (
 
-	// CrawlerModeThumbs will create small thumbnails for everything
+	// CrawlerModeThumbs will create small thumbnails for everything.
 	CrawlerModeThumbs CrawlerMode = "thumbs"
 
-	// CrawlerModeAnalytics will get full page results for everythign
+	// CrawlerModeAnalytics will get full page results for everything.
 	CrawlerModeAnalytics CrawlerMode = "analytics"
 
-	// CrawlerModeMigrate will migrate all dashboards with old schema
+	// CrawlerModeMigrate will migrate all dashboards with old schema.
 	CrawlerModeMigrate CrawlerMode = "migrate"
 )
 
@@ -52,17 +52,17 @@ type crawlStatus struct {
 }
 
 type dashRenderer interface {
-
-	// Assumes you have already authenticated as admin
+	// Start assumes you have already authenticated as admin.
 	Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) (crawlStatus, error)
 
-	// Assumes you have already authenticated as admin
+	// Stop assumes you have already authenticated as admin.
 	Stop() (crawlStatus, error)
 
-	// Assumes you have already authenticated as admin
+	// Status assumes you have already authenticated as admin.
 	Status() (crawlStatus, error)
 }
 
+// TODO: pass context to repo methods.
 type thumbnailRepo interface {
 	updateThumbnailState(state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
 	saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
