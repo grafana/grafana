@@ -598,6 +598,7 @@ func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, us
 		User:        user,
 		Datasources: datasources,
 	}
+	query.Result = datasources
 
 	if err := hs.DatasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &query); err != nil {
 		if !errors.Is(err, bus.ErrHandlerNotFound) {
