@@ -16,9 +16,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { stylesFactory, Tooltip } from '@grafana/ui';
 
-import NewWindowIcon from '../common/NewWindowIcon';
 import { TraceSpanReference } from '../types/trace';
-import { UIMenuItem, UIMenu } from '../uiElementsContext';
 import ReferenceLink from '../url/ReferenceLink';
 
 export const getStyles = stylesFactory(() => {
@@ -51,27 +49,6 @@ type TReferencesButtonProps = {
 };
 
 export default class ReferencesButton extends React.PureComponent<TReferencesButtonProps> {
-  referencesList = (references: TraceSpanReference[]) => {
-    const styles = getStyles();
-    return (
-      <UIMenu>
-        {references.map((ref) => {
-          const { span, spanID } = ref;
-          return (
-            <UIMenuItem key={`${spanID}`}>
-              <ReferenceLink reference={ref} focusSpan={this.props.focusSpan} className={styles.TraceRefLink}>
-                {span
-                  ? `${span.process.serviceName}:${span.operationName} - ${ref.spanID}`
-                  : `(another trace) - ${ref.spanID}`}
-                {!span && <NewWindowIcon className={styles.NewWindowIcon} />}
-              </ReferenceLink>
-            </UIMenuItem>
-          );
-        })}
-      </UIMenu>
-    );
-  };
-
   render() {
     const { references, children, tooltipText, focusSpan } = this.props;
     const styles = getStyles();

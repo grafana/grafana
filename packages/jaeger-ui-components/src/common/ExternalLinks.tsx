@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { UIMenu, UIMenuItem } from '..';
 import NewWindowIcon from './NewWindowIcon';
 
 type Link = {
@@ -30,18 +29,6 @@ const LinkValue = (props: { href: string; title?: string; children?: React.React
   <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer" className={props.className}>
     {props.children} <NewWindowIcon />
   </a>
-);
-
-// export for testing
-export const linkValueList = (links: Link[]) => (
-  <UIMenu>
-    {links.map(({ text, url }, index) => (
-      // `index` is necessary in the key because url can repeat
-      <UIMenuItem key={`${url}-${index}`}>
-        <LinkValue href={url}>{text}</LinkValue>
-      </UIMenuItem>
-    ))}
-  </UIMenu>
 );
 
 export default function ExternalLinks(props: ExternalLinksProps) {

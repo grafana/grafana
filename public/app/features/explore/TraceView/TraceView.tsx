@@ -18,7 +18,6 @@ import {
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
-  UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -29,7 +28,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
-import { UIElements } from './uiElements';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -115,7 +113,7 @@ export function TraceView(props: Props) {
   }
 
   return (
-    <UIElementsContext.Provider value={UIElements}>
+    <>
       <TracePageHeader
         canCollapse={false}
         clearSearch={clearSearch}
@@ -172,7 +170,7 @@ export function TraceView(props: Props) {
         focusedSpanId={focusedSpanId}
         createFocusSpanLink={createFocusSpanLink}
       />
-    </UIElementsContext.Provider>
+    </>
   );
 }
 
