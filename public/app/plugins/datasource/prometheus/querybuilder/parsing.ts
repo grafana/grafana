@@ -384,6 +384,7 @@ function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
 }
 
 // Debugging function for convenience.
+// @ts-ignore
 function log(expr: string, cur?: SyntaxNode) {
   const json = toJson(expr, cur);
   if (!json) {
