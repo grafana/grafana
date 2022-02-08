@@ -11,12 +11,12 @@ type DatasourcePermissionsService interface {
 }
 
 // dummy method
-func (hs *DatasourcePermissionsServiceImpl) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
+func (hs *OSSDatasourcePermissionsService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *models.DatasourcesPermissionFilterQuery) error {
 	return nil
 }
 
-type DatasourcePermissionsServiceImpl struct{}
+type OSSDatasourcePermissionsService struct{}
 
-func ProvideDatasourcePermissionsService() *DatasourcePermissionsServiceImpl {
-	return &DatasourcePermissionsServiceImpl{}
+func ProvideDatasourcePermissionsService() *OSSDatasourcePermissionsService {
+	return &OSSDatasourcePermissionsService{}
 }
