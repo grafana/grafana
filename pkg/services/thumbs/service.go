@@ -143,7 +143,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 		return
 	}
 
-	err = hs.thumbnailRepo.updateThumbnailState(body.State, models.DashboardThumbnailMeta{
+	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
@@ -166,7 +166,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.getThumbnail(models.DashboardThumbnailMeta{
+	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
@@ -230,7 +230,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		return
 	}
 
-	_, err = hs.thumbnailRepo.saveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
+	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,

@@ -4,6 +4,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -58,7 +59,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
 	})
@@ -73,7 +74,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.Equal(t, dash.Id, res[0].Id)
@@ -90,7 +91,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
 	})
@@ -103,7 +104,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.Equal(t, dash.Id, res[0].Id)
@@ -122,7 +123,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.Equal(t, dash.Id, res[0].Id)
@@ -142,7 +143,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
 	})
@@ -160,7 +161,7 @@ func TestSqlStorage(t *testing.T) {
 			Kind:  kind,
 			Theme: theme,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
 	})
@@ -179,7 +180,7 @@ func TestSqlStorage(t *testing.T) {
 			Theme:                             theme,
 			IncludeManuallyUploadedThumbnails: true,
 		}
-		res, err := sqlStore.FindDashboardsWithStaleThumbnails(&cmd)
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.Equal(t, dash.Id, res[0].Id)
@@ -198,7 +199,7 @@ func getThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string, orgId i
 		},
 	}
 
-	thumb, err := sqlStore.GetThumbnail(&cmd)
+	thumb, err := sqlStore.GetThumbnail(context.Background(), &cmd)
 	require.NoError(t, err)
 	return thumb
 }
@@ -217,7 +218,7 @@ func upsertTestDashboardThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID
 		Image:            make([]byte, 0),
 		MimeType:         "image/png",
 	}
-	dash, err := sqlStore.SaveThumbnail(&cmd)
+	dash, err := sqlStore.SaveThumbnail(context.Background(), &cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)
 
@@ -236,6 +237,6 @@ func updateThumbnailState(t *testing.T, sqlStore *SQLStore, dashboardUID string,
 		},
 		State: state,
 	}
-	err := sqlStore.UpdateThumbnailState(&cmd)
+	err := sqlStore.UpdateThumbnailState(context.Background(), &cmd)
 	require.NoError(t, err)
 }
