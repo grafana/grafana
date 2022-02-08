@@ -182,27 +182,30 @@ export async function testReceivers(
       })
     );
 
-    // api returns 207 if one or more receivers has failed test. Collect errors in this case
-    if (result.status === 207) {
+    if (receiversResponseContainsErrors(result.data)) {
       throw new Error(getReceiverResultError(result.data));
     }
   } catch (error) {
-    // api returns 400 if all receivers failed and 408 if all timed out
-    if (isFetchError(error) && (error.status === 400 || error.status === 408)) {
-      if (isTestReceiversResult(error.data)) {
-        throw new Error(getReceiverResultError(error.data));
-      }
+    if (isFetchError(error) && isTestReceiversResult(error.data) && receiversResponseContainsErrors(error.data)) {
+      throw new Error(getReceiverResultError(error.data));
     }
 
     throw error;
   }
 }
 
+function receiversResponseContainsErrors(result: TestReceiversResult) {
+  return result.receivers.some((receiver) =>
+    receiver.grafana_managed_receiver_configs.some((config) => config.status === 'failed')
+  );
+}
+
 function isTestReceiversResult(data: any): data is TestReceiversResult {
-  if (typeof data.receivers === 'object' && Array.isArray(data.receivers)) {
-    return data.receivers.every(
-      (receiver: any) =>
-        typeof receiver.name === 'string' && typeof receiver.grafana_managed_receiver_configs === 'object'
+  const { receivers } = data;
+
+  if (Array.isArray(data.receivers)) {
+    return receivers.every(
+      (receiver: any) => typeof receiver.name === 'string' && Array.isArray(receiver.grafana_managed_receiver_configs)
     );
   }
 
