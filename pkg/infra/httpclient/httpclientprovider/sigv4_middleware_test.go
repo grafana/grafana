@@ -108,7 +108,8 @@ func TestSigV4Middleware(t *testing.T) {
 
 		req, err := http.NewRequest(http.MethodGet, "http://", nil)
 		require.NoError(t, err)
-		// nolint:bodyclose as response is nil
+		// response is nil
+		// nolint:bodyclose
 		res, err := rt.RoundTrip(req)
 		require.Error(t, err)
 		require.Nil(t, res)
