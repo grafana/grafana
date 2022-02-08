@@ -82,6 +82,7 @@ func (r *simpleCrawler) broadcastStatus() {
 func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
 	r.queueMutex.Lock()
 	if r.IsRunning() {
+		r.queueMutex.Unlock()
 		tlog.Info("Already running")
 		return nil
 	}
