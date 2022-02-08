@@ -19217,7 +19217,7 @@ __metadata:
   peerDependenciesMeta:
     vue-template-compiler:
       optional: true
-  checksum: f87dceeb1822a484428ed6fa8947583a237962d85dad14bb04430750d50aef596c4e7508a68faf797ffdd4d87a7e6857f186be630877de5f4789bcc44f05b34d
+  checksum: 95d145ab7936445f3a9bfa4116ef73537f97196cfaa3f5b24473dff36d034e839d3b0e034a23beefc9619eceb7a9866816bfd55afd1968e955eb3b3f8cfc35ed
   languageName: node
   linkType: hard
 
