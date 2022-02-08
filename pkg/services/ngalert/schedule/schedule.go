@@ -377,7 +377,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				disabledOrgs = append(disabledOrgs, disabledOrg)
 			}
 
-			alertRules := sch.getAlertRules(disabledOrgs)
+			alertRules := sch.getAlertRules(ctx, disabledOrgs)
 			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
@@ -528,9 +528,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		notify(expiredAlerts, logger)
 	}
 
-	updateRule := func(oldRule *models.AlertRule) (*models.AlertRule, error) {
+	updateRule := func(ctx context.Context, oldRule *models.AlertRule) (*models.AlertRule, error) {
 		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
-		err := sch.ruleStore.GetAlertRuleByUID(&q)
+		err := sch.ruleStore.GetAlertRuleByUID(ctx, &q)
 		if err != nil {
 			logger.Error("failed to fetch alert rule", "err", err)
 			return nil, err
@@ -591,7 +591,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		case <-updateCh:
 			logger.Info("fetching new version of the rule")
 			err := retryIfError(func(attempt int64) error {
-				newRule, err := updateRule(currentRule)
+				newRule, err := updateRule(grafanaCtx, currentRule)
 				if err != nil {
 					return err
 				}
@@ -622,7 +622,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				err := retryIfError(func(attempt int64) error {
 					// fetch latest alert rule version
 					if currentRule == nil || currentRule.Version < ctx.version {
-						newRule, err := updateRule(currentRule)
+						newRule, err := updateRule(grafanaCtx, currentRule)
 						if err != nil {
 							return err
 						}
