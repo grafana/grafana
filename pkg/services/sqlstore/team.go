@@ -469,8 +469,9 @@ func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool
 	return false, err
 }
 
-// GetTeamMembersByUser return a list of memberships to teams a user has been granted
+// GetTeamMembersByUser return a list of memberships to teams granted to a user
 // If external is specified, only memberships provided by an external auth provider will be listed
+// This function doesn't perform any accesscontrol filtering.
 func (ss *SQLStore) GetTeamMembersByUser(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
 	query := &models.GetTeamMembersQuery{
 		OrgId:    orgID,
