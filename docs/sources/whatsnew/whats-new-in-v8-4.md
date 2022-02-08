@@ -22,9 +22,13 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 You can now share links to your playlists the same way as with dashboards, to easily set up the same playlist on multiple devices or kiosks.
 
+{{< figure src="/static/img/docs/dashboards/share-playlists-8-4.png" max-width="1200px" caption="Share playlist" >}}
+
 ### $**interval and $**interval_ms in panel title
 
 We’ve expanded the functionality of this existing and popular feature. You can now use $**interval and $**interval_ms in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
+
+{{< figure src="/static/img/docs/panels/interval-8-4.png" max-width="1200px" caption="Time intervals" >}}
 
 ### Accessibility improvements
 
@@ -49,6 +53,8 @@ As of 8.4, you can rotate your KEK and quickly re-encrypt your DEKs in case a ke
 
 Envelope encryption is not enabled by default in version 8.4. You can enable it by adding the term `envelopeEncryption` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud.
 
+{{< figure src="/static/img/docs/encryption/rotate-encryption-8-4.png" max-width="1200px" caption="Rotate encryption" >}}
+
 ## Alerting
 
 ### Support for mute timings
@@ -63,6 +69,8 @@ The new Alert Panel displays your alerts and associated alert instances, and sup
 
 Traditionally alerts in the Alert Panel were grouped by the alert rule that created them. When you are monitoring a complex resource like an industrial pump, you typically have multiple alerts defined for that resource to observe different metrics. The new custom grouping feature allows you to view all alert instances for individual resource by specifying a label such as “pump identifier”.
 
+{{< figure src="/static/img/docs/alerting/unified/custom-grouping-8-4.png" max-width="1200px" caption="Custom grouping in alerting" >}}
+
 ### WeCom contact point
 
 Starting with Grafana 8.4, you can [configure a WeCom](https://grafana.com/docs/grafana/next/alerting/unified-alerting/contact-points/#wecom) contact point, to send alert notifications to WeCom.
@@ -73,15 +81,19 @@ Starting with Grafana 8.4, you can [configure a WeCom](https://grafana.com/docs/
 
 We’ve expanded the bar chart so that you can:
 
-- Use time for the x axis
-- Color bars using a field property (ie, build success)
+- Use time for the x-axis.
+- Color bars using a field property (that is, build success).
 - Use labels effectively:
-  - Skip values when there are too many labels
-  - Rotate labels
+  - Skip values when there are too many labels.
+  - Rotate labels.
+
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-8-4.png" max-width="1200px" caption="Updated bar chart" >}}
 
 ### Geomap
 
-Geomap now supports tooltips with data-links across multiple layers
+Geomap now supports tooltips with data-links across multiple layers.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-tooltips-multiple-layers-8-4.png" max-width="1200px" caption="Assign SAML users role" >}}
 
 ## OpenAPI v2 specification
 
@@ -103,11 +115,15 @@ In 8.4 you can also control access to Team and API key functionality itself, lik
 
 Enable fine-grained access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about fine-grained access control in the [fine-grained access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
 
+{{< figure src="/static/img/docs/enterprise/8-4-fine-grain-access-control.png" max-width="1200px" caption="Assign SAML users role" >}}
+
 ### Assign SAML users different roles in different Organizations
 
-You can use Grafana’s SAML integration to map organizations in your SAML service to [Organizations](​​https://grafana.com/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/) in Grafana, so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
+You can use Grafana’s SAML integration to map organizations in your SAML service to [Organizations](​​https://grafana.com/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
 
 Additionally, you can now grant multiple SAML organizations access to Grafana, using the `allowed_organizations` attribute. Previously, you could only map one.
+
+{{< figure src="/static/img/docs/enterprise/8-4-SAML-auth.png" max-width="1200px" caption="Assign SAML users role" >}}
 
 Learn more in our [SAML docs](https://grafana.com/docs/grafana/next/enterprise/saml/).
 
@@ -115,7 +131,7 @@ Learn more in our [SAML docs](https://grafana.com/docs/grafana/next/enterprise/s
 
 ### Recorded queries is more stable and usable
 
-We’ve made several stability and usability improvements to Recorded Queries, and removed the feature flag so you can get started with Recorded Queries out of the box.
+We’ve made stability and usability improvements to Recorded Queries, and removed the feature flag so you can get started with Recorded Queries out of the box.
 
 ### Measure query cache hit rate and clear the cache
 
@@ -124,3 +140,5 @@ We’ve made several stability and usability improvements to Recorded Queries, a
 You can also now manually clear the cache for a given data source in case data becomes stale, so that the next set of queries run against the data source itself.
 
 To learn more, refer to [query caching in the Grafana Enterprise docs](https://grafana.com/docs/grafana/next/enterprise/query-caching/)
+
+{{< figure src="/static/img/docs/enterprise/8-4-query-caching.png" max-width="1200px" caption="Grafana Enterprise query caching" >}}
