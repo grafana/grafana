@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -138,7 +137,6 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(ctx *models.ReqContext) respo
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list service accounts", err)
 	}
-	fmt.Printf("%+v\n", serviceAccounts)
 	return response.JSON(http.StatusOK, serviceAccounts)
 }
 
