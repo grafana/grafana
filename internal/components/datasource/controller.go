@@ -10,6 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+var errDatasourceNotFound = errors.New("unknown datasource")
+
 type DatasourceReconciler struct {
 	cli rest.Interface
 	sto Store
@@ -59,8 +61,24 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}, err
 	}
 
-	// TODO: figure out insert vs Update
-	if err := d.sto.Insert(ctx, ds.Spec); err != nil {
+	_, err = d.sto.Get(ctx, string(ds.UID))
+	if err != nil {
+		if !errors.Is(err, errDatasourceNotFound) {
+			return reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: 1 * time.Minute,
+			}, err 
+		}
+
+		if err := d.sto.Insert(ctx, ds.Spec); err != nil {
+			return reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: 1 * time.Minute,
+			}, err
+		}
+	}
+
+	if err := d.sto.Update(ctx, ds.Spec); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,

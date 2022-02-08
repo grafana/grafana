@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var sch *schema.ThemaSchema
+//var sch *schema.ThemaSchema
 
 func init() {
 	lib := cuectx.ProvideThemaLibrary()
