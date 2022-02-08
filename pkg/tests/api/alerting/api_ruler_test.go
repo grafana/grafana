@@ -30,6 +30,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -337,6 +338,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -460,6 +462,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
+		AppModeProduction:    true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

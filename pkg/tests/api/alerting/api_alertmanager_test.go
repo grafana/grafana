@@ -36,6 +36,7 @@ func TestAMConfigAccess(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -398,6 +399,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -440,7 +442,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-		require.JSONEq(t, `{"error": "invalid username or password","message": "invalid username or password"}`, string(b))
+		require.JSONEq(t, `{"message": "invalid username or password"}`, string(b))
 	}
 
 	// When there are no alerts available, it returns an empty list.
@@ -568,6 +570,7 @@ func TestRulerAccess(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -697,6 +700,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -858,6 +862,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -1925,6 +1930,7 @@ func TestAlertmanagerStatus(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
@@ -1990,6 +1996,7 @@ func TestQuota(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -2235,6 +2242,7 @@ func TestEval(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		EnableQuota:           true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

@@ -26,6 +26,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		EnableUnifiedAlerting:                 true,
 		NGAlertAlertmanagerConfigPollInterval: 2 * time.Second,
 		DisableAnonymous:                      true,
+		AppModeProduction:                     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -138,6 +139,7 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)

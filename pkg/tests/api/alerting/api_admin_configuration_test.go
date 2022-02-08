@@ -30,6 +30,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		DisableAnonymous:               true,
 		NGAlertAdminConfigPollInterval: 2 * time.Second,
 		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
+		AppModeProduction:              true,
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
@@ -67,7 +68,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"no admin configuration available\",\"error\": \"no admin configuration available\"}")
+		require.JSONEq(t, `{"message": "no admin configuration available"}`, string(b))
 	}
 
 	// An invalid alertmanager choice should return an error.
@@ -84,7 +85,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"Invalid alertmanager choice specified\"}")
+		require.JSONEq(t, `{"message": "Invalid alertmanager choice specified"}`, string(b))
 	}
 
 	// Let's try to send all the alerts to an external Alertmanager
@@ -102,7 +103,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"At least one Alertmanager must be provided to choose this option\"}")
+		require.JSONEq(t, string(b), `{"message": "At least one Alertmanager must be provided to choose this option"}`)
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation
@@ -121,7 +122,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"admin configuration updated\"}")
+		require.JSONEq(t, string(b), `{"message": "admin configuration updated"}`)
 	}
 
 	// If we get the configuration again, it shows us what we've set.

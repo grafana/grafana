@@ -29,6 +29,7 @@ func TestPrometheusRules(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -329,6 +330,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
+		AppModeProduction:    true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -628,6 +630,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
