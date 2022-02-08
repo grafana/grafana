@@ -33,6 +33,7 @@ type ServiceAccountDTO struct {
 	Login  string `json:"login"`
 	OrgId  int64  `json:"orgId"`
 	Tokens int64  `json:"tokens"`
+	Role   string `json:"role"`
 }
 
 type ServiceAccountProfileDTO struct {
