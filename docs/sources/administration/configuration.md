@@ -757,6 +757,12 @@ Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 
 Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
 
+### sigv4_verbose_logging
+
+> Only available in Grafana 8.3.6+.
+
+Set to `true` to enable verbose request signature logging when AWS Signature Version 4 Authentication is enabled. Default is `false`.
+
 <hr />
 
 ## [auth.anonymous]
