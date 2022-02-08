@@ -2,8 +2,8 @@ import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
 import { featureEnabled } from '@grafana/runtime';
 import { NavModelItem, NavModel } from '@grafana/data';
 import config from 'app/core/config';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 
 const loadingTeam = {
   avatarUrl: 'public/img/user_profile.png',
@@ -67,8 +67,11 @@ export function buildNavModel(team: Team): NavModelItem {
     (team === loadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team))
   ) {
     navModel.children!.push(teamGroupSync);
-  } else if (config.featureToggles.featureHighlights) {
-    navModel.children!.push({ ...teamGroupSync, tabSuffix: ProBadge });
+  } else if (config.featureToggles.featureHighlights && team !== loadingTeam) {
+    navModel.children!.push({
+      ...teamGroupSync,
+      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-team-sync-badge' }),
+    });
   }
 
   return navModel;
