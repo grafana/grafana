@@ -149,7 +149,8 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     }
 
     setPrevResources(resources);
-  }, [resources, change, cpu, customCPU, customMemory, memory, prevResources]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resources]);
 
   useEffect(() => {
     getAllocatedResources();
@@ -159,7 +160,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
       unmounted.current = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getAllocatedResources]);
+  }, []);
 
   useEffect(() => {
     if (canGetExpectedResources(selectedCluster, values)) {
@@ -172,7 +173,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     }
 
     return () => clearTimeout(expectedTimer);
-  }, [memory, cpu, selectedCluster, topology, nodes, single, getExpectedResources, disk, values]);
+  }, [memory, cpu, selectedCluster, topology, nodes, single]);
 
   useEffect(() => {
     if (topology === DBClusterTopology.cluster && nodes < MIN_NODES) {

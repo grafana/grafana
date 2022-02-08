@@ -69,56 +69,30 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     [databaseType]
   );
 
-  const getAllocatedResources = useCallback(
-    async (triggerLoading = true) => {
-      try {
-        if (allocatedTimer) {
-          clearTimeout(allocatedTimer);
-        }
-
-        if (triggerLoading) {
-          setLoadingAllocatedResources(true);
-        }
-        setAllocatedResources(await DBClusterService.getAllocatedResources(kubernetesCluster.value));
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        if (triggerLoading) {
-          setLoadingAllocatedResources(false);
-        }
-
-        // don't schedule another request if the component was unmounted while the previous request was occuring
-        if (mounted.current) {
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-          allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
-        }
-      }
-    },
-    [kubernetesCluster?.value]
-  );
-
-  const getExpectedResources = useCallback(async () => {
+  const getAllocatedResources = useCallback(async (triggerLoading = true) => {
     try {
-      const dbClusterService = newDBClusterService(databaseType.value);
+      if (allocatedTimer) {
+        clearTimeout(allocatedTimer);
+      }
 
-      setLoadingExpectedResources(true);
-      setExpectedResources(
-        await dbClusterService.getExpectedResources({
-          clusterName: name,
-          kubernetesClusterName: kubernetesCluster,
-          databaseType: databaseType.value,
-          clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
-          cpu,
-          memory,
-          disk,
-        })
-      );
+      if (triggerLoading) {
+        setLoadingAllocatedResources(true);
+      }
+      setAllocatedResources(await DBClusterService.getAllocatedResources(kubernetesCluster.value));
     } catch (e) {
       logger.error(e);
     } finally {
-      setLoadingExpectedResources(false);
+      if (triggerLoading) {
+        setLoadingAllocatedResources(false);
+      }
+
+      // don't schedule another request if the component was unmounted while the previous request was occuring
+      if (mounted.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
+      }
     }
-  }, [cpu, databaseType?.value, disk, kubernetesCluster, memory, name, nodes, single, topology]);
+  }, []);
 
   useEffect(() => {
     if (prevResources === DBClusterResources.custom) {
@@ -138,7 +112,8 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     }
 
     setPrevResources(resources);
-  }, [resources, change, cpu, customCPU, customDisk, customMemory, disk, memory, prevResources]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resources]);
 
   useEffect(() => {
     if (kubernetesCluster) {
@@ -153,6 +128,28 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   }, [kubernetesCluster, getAllocatedResources, mounted]);
 
   useEffect(() => {
+    const getExpectedResources = async () => {
+      try {
+        const dbClusterService = newDBClusterService(databaseType.value);
+        setLoadingExpectedResources(true);
+        setExpectedResources(
+          await dbClusterService.getExpectedResources({
+            clusterName: name,
+            kubernetesClusterName: kubernetesCluster,
+            databaseType: databaseType.value,
+            clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
+            cpu,
+            memory,
+            disk,
+          })
+        );
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        setLoadingExpectedResources(false);
+      }
+    };
+
     if (canGetExpectedResources(kubernetesCluster, values)) {
       if (expectedTimer) {
         clearTimeout(expectedTimer);
@@ -163,7 +160,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     }
 
     return () => clearTimeout(expectedTimer);
-  }, [memory, cpu, disk, kubernetesCluster, topology, nodes, single, databaseType, getExpectedResources, values]);
+  }, [memory, cpu, disk, kubernetesCluster, topology, nodes, single, databaseType]);
 
   useEffect(() => {
     if (topology === DBClusterTopology.cluster && nodes < MIN_NODES) {
