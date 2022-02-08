@@ -58,7 +58,7 @@ export class TimeSrv {
     this.initTimeFromUrl();
     this.parseTime();
 
-    if (this.dashboard?.timepicker.maxTimeRange || this.dashboard?.timepicker.oldestFrom) {
+    if (this.dashboard?.timepicker.maxTimeRange) {
       this.checkTimeAtLoad();
     }
 
@@ -70,47 +70,38 @@ export class TimeSrv {
     }
   }
 
-  checkTimeAtLoad() {
-    let maxTimeRangeInMillis = 0,
-      oldestFromInMillis = 0;
+  isTimeRangeValid(time: any) {
+    let isValid = true;
+    let maxTimeRangeInMillis = 0;
     if (this.dashboard?.timepicker.maxTimeRange) {
       maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
     }
-    if (this.dashboard?.timepicker.oldestFrom) {
-      oldestFromInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.oldestFrom);
-    }
-    let min = 0;
-    if (maxTimeRangeInMillis !== 0 && oldestFromInMillis !== 0) {
-      min = Math.min(maxTimeRangeInMillis, oldestFromInMillis);
-    } else if (maxTimeRangeInMillis !== 0) {
-      min = maxTimeRangeInMillis;
-    } else if (oldestFromInMillis !== 0) {
-      min = oldestFromInMillis;
-    }
-    let str;
-    if (min !== 0) {
-      str = rangeUtil.secondsToHms(min / 1000);
-    }
-    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
-    let from: any = this.time.from;
-    let to: any = this.time.to;
-    if (dateMath.isMathString(from)) {
-      from = dateMath.parse(from, false, timezone);
-    }
-    if (dateMath.isMathString(to)) {
-      to = dateMath.parse(to, false, timezone);
+
+    if (maxTimeRangeInMillis !== 0) {
+      const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+      let from: any = time.from;
+      let to: any = time.to;
+      if (dateMath.isMathString(from)) {
+        from = dateMath.parse(from, false, timezone);
+      }
+      if (dateMath.isMathString(to)) {
+        to = dateMath.parse(to, false, timezone);
+      }
+
+      if (to.valueOf() - from.valueOf() > maxTimeRangeInMillis) {
+        isValid = false;
+      }
     }
 
-    if (
-      min !== 0 &&
-      ((maxTimeRangeInMillis !== 0 && to.valueOf() - from.valueOf() > maxTimeRangeInMillis) ||
-        (oldestFromInMillis !== 0 && Date.now() - from.valueOf() > oldestFromInMillis))
-    ) {
-      this.time.from = 'now-' + str;
-      this.time.to = 'now';
+    return isValid;
+  }
+
+  checkTimeAtLoad() {
+    if (!this.isTimeRangeValid(this.time)) {
+      this.time = getDefaultTimeRange().raw;
       this.setTime(this.time);
       appEvents.emit(AppEvents.alertWarning, [
-        'Previous time span of this dashboard has changed.',
+        'The selected time span is outside the maximum range limit.',
       ]);
     }
   }
@@ -300,39 +291,10 @@ export class TimeSrv {
 
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
     let shouldSetTime = true;
-    let maxTimeRangeInMillis = 0,
-      oldestFromInMillis = 0;
 
-    if (this.dashboard?.timepicker.maxTimeRange) {
-      maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
-    }
-
-    if (this.dashboard?.timepicker.oldestFrom) {
-      oldestFromInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.oldestFrom);
-    }
-
-    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
-    let from: any = time.from;
-    let to: any = time.to;
-
-    if (dateMath.isMathString(from)) {
-      from = dateMath.parse(from, false, timezone);
-    }
-
-    if (dateMath.isMathString(to)) {
-      to = dateMath.parse(to, false, timezone);
-    }
-
-    if (maxTimeRangeInMillis !== 0 && to.valueOf() - from.valueOf() > maxTimeRangeInMillis) {
+    if (!this.isTimeRangeValid(time)) {
       appEvents.emit(AppEvents.alertWarning, [
         'Timerange can not be longer than ' + this.dashboard?.timepicker.maxTimeRange + '. Please select a shorter duration.',
-      ]);
-      shouldSetTime = false;
-    }
-
-    if (oldestFromInMillis !== 0 && Date.now() - from.valueOf() > oldestFromInMillis) {
-      appEvents.emit(AppEvents.alertWarning, [
-        'The start of the time range can not be more than ' + this.dashboard?.timepicker.oldestFrom + ' ago. Please select a later from time.',
       ]);
       shouldSetTime = false;
     }
