@@ -15,9 +15,14 @@ export function loadServiceAccount(saID: number): ThunkResult<void> {
   };
 }
 
-export function createServiceAccountToken(saID: number): ThunkResult<void> {
+export function createServiceAccountToken(
+  saID: number,
+  data: any,
+  onTokenCreated: (key: string) => void
+): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`);
+    const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, data);
+    onTokenCreated(result.key);
     dispatch(loadServiceAccountTokens(saID));
   };
 }

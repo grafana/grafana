@@ -13,14 +13,17 @@ import {
   createServiceAccountToken,
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
+import { getTimeZone, GrafanaTheme2, NavModel, OrgRole } from '@grafana/data';
 import {
   Button,
+  ClipboardButton,
   DatePickerWithInput,
   Field,
   FieldSet,
+  HorizontalGroup,
   Icon,
   Input,
+  Label,
   Modal,
   RadioButtonGroup,
   useStyles2,
@@ -76,6 +79,7 @@ const ServiceAccountPageUnconnected = ({
   const [isWithExpirationDate, setIsWithExpirationDate] = useState(false);
   const [newTokenExpirationDate, setNewTokenExpirationDate] = useState<Date | string>('');
   const [isExpirationDateValid, setIsExpirationDateValid] = useState(false);
+  const [newToken, setNewToken] = useState('');
   const styles = useStyles2(getStyles);
   const modalStyles = useStyles2(getModalStyles);
 
@@ -90,7 +94,18 @@ const ServiceAccountPageUnconnected = ({
   };
 
   const onCreateToken = () => {
-    createServiceAccountToken(serviceAccount.userId);
+    createServiceAccountToken(
+      serviceAccount.id,
+      {
+        name: newTokenName,
+        role: OrgRole.Viewer,
+      },
+      onTokenCreated
+    );
+  };
+
+  const onTokenCreated = (key: string) => {
+    setNewToken(key);
   };
 
   const closeModal = () => {
@@ -99,6 +114,7 @@ const ServiceAccountPageUnconnected = ({
     setIsWithExpirationDate(false);
     setNewTokenExpirationDate('');
     setIsExpirationDateValid(false);
+    setNewToken('');
   };
 
   const onExpirationDateChange = (value: Date | string) => {
@@ -110,7 +126,9 @@ const ServiceAccountPageUnconnected = ({
   const modalTitle = (
     <div className={modalStyles.modalHeaderTitle}>
       <Icon name="key-skeleton-alt" size="lg" />
-      <span className={styles.modalTitle}>Add service account token</span>
+      <span className={styles.modalTitle}>
+        {!newToken ? 'Add service account token' : 'Service account token created'}
+      </span>
     </div>
   );
 
@@ -144,36 +162,76 @@ const ServiceAccountPageUnconnected = ({
           )}
         </VerticalGroup>
         <Modal isOpen={isModalOpen} title={modalTitle} onDismiss={closeModal} className={styles.modal}>
-          <FieldSet>
-            <Field
-              label="Display name"
-              description="Optional name to easily identify the token"
-              className={styles.modalRow}
-            >
-              <Input
-                name="tokenName"
-                value={newTokenName}
-                onChange={(e) => {
-                  setNewTokenName(e.currentTarget.value);
-                }}
-              />
-            </Field>
-            <RadioButtonGroup
-              className={styles.modalRow}
-              options={expirationOptions}
-              value={isWithExpirationDate}
-              onChange={(v) => setIsWithExpirationDate(v)}
-              size="md"
-            />
-            {isWithExpirationDate && (
-              <Field label="Expiration date" className={styles.modalRow}>
-                <DatePickerWithInput onChange={onExpirationDateChange} value={newTokenExpirationDate} placeholder="" />
-              </Field>
-            )}
-          </FieldSet>
-          <Button onClick={onCreateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
-            Generate token
-          </Button>
+          {!newToken ? (
+            <>
+              <FieldSet>
+                <Field
+                  label="Display name"
+                  description="Optional name to easily identify the token"
+                  className={styles.modalRow}
+                >
+                  <Input
+                    name="tokenName"
+                    value={newTokenName}
+                    onChange={(e) => {
+                      setNewTokenName(e.currentTarget.value);
+                    }}
+                  />
+                </Field>
+                <RadioButtonGroup
+                  className={styles.modalRow}
+                  options={expirationOptions}
+                  value={isWithExpirationDate}
+                  onChange={(v) => setIsWithExpirationDate(v)}
+                  size="md"
+                />
+                {isWithExpirationDate && (
+                  <Field label="Expiration date" className={styles.modalRow}>
+                    <DatePickerWithInput
+                      onChange={onExpirationDateChange}
+                      value={newTokenExpirationDate}
+                      placeholder=""
+                    />
+                  </Field>
+                )}
+              </FieldSet>
+              <Button onClick={onCreateToken} disabled={isWithExpirationDate && !isExpirationDateValid}>
+                Generate token
+              </Button>
+            </>
+          ) : (
+            <>
+              <FieldSet>
+                <Label
+                  description="You will not be able to see or generate it again. Loosing a token requires creating new one."
+                  className={styles.modalRow}
+                >
+                  Copy the token. It will be showed only once.
+                </Label>
+                <Field label="Token" className={styles.modalRow}>
+                  <div className={styles.modalTokenRow}>
+                    <Input name="tokenValue" value={newToken} readOnly />
+                    <ClipboardButton
+                      className={styles.modalCopyToClipboardButton}
+                      variant="secondary"
+                      size="md"
+                      getText={() => newToken}
+                    >
+                      <Icon name="copy" /> Copy to clipboard
+                    </ClipboardButton>
+                  </div>
+                </Field>
+              </FieldSet>
+              <HorizontalGroup>
+                <ClipboardButton variant="primary" getText={() => newToken} onClipboardCopy={closeModal}>
+                  Copy to clipboard and close
+                </ClipboardButton>
+                <Button variant="secondary" onClick={closeModal}>
+                  Close
+                </Button>
+              </HorizontalGroup>
+            </>
+          )}
         </Modal>
       </Page.Contents>
     </Page>
@@ -190,6 +248,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     modalRow: css`
       margin-bottom: ${theme.spacing(4)};
+    `,
+    modalTokenRow: css`
+      display: flex;
+    `,
+    modalCopyToClipboardButton: css`
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
 };
