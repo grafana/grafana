@@ -294,15 +294,15 @@ Do not use. This is developer jargon that refers to a UI panel. Refer to the pan
 
 One word, not two.
 
+#### Microsoft SQL Server
+
+Use the trademarked name, "SQL Server".
+If you need to be clear that you are referring to the Microsoft application,
+you can also use "Microsoft SQL Server" or "MS SQL Server".
+
 #### mixin
 
 One word, not two. Also, not hyphenated.
-
-#### MS SQL Server
-
-Always use "MS SQL" when referring to MS SQL Server application.
-
-Incorrect UI spellings will be corrected in a later version of Grafana.
 
 #### node_exporter
 
