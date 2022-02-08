@@ -38,5 +38,6 @@ export interface FeatureToggles {
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
   lokiLive?: boolean;
+  swaggerUi?: boolean;
   featureHighlights?: boolean;
 }

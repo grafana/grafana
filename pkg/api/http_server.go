@@ -446,7 +446,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.Recovery(hs.Cfg))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
 	if hs.Cfg.ImageUploadProvider == "local" {
@@ -553,7 +553,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	}
 }
 
-func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string) {
+func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string, exclude ...string) {
 	headers := func(c *web.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
@@ -576,6 +576,7 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 			SkipLogging: true,
 			Prefix:      prefix,
 			AddHeaders:  headers,
+			Exclude:     exclude,
 		},
 	))
 }

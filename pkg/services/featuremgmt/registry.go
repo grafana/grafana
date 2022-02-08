@@ -122,6 +122,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "swaggerUi",
+			Description: "Serves swagger UI",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:        "featureHighlights",
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
