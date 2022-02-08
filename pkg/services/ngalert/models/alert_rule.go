@@ -27,6 +27,19 @@ func (noDataState NoDataState) String() string {
 	return string(noDataState)
 }
 
+func NoDataStateFromString(state string) (NoDataState, error) {
+	switch state {
+	case string(Alerting):
+		return Alerting, nil
+	case string(NoData):
+		return NoData, nil
+	case string(OK):
+		return OK, nil
+	default:
+		return "", fmt.Errorf("unknown NoData state option %s", state)
+	}
+}
+
 const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
@@ -37,6 +50,17 @@ type ExecutionErrorState string
 
 func (executionErrorState ExecutionErrorState) String() string {
 	return string(executionErrorState)
+}
+
+func ErrStateFromString(opt string) (ExecutionErrorState, error) {
+	switch opt {
+	case string(Alerting):
+		return AlertingErrState, nil
+	case string(ErrorErrState):
+		return ErrorErrState, nil
+	default:
+		return "", fmt.Errorf("unknown Error state option %s", opt)
+	}
 }
 
 const (
