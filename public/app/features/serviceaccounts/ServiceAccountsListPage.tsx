@@ -90,7 +90,6 @@ const getServiceAccountsAriaLabel = (name: string) => {
 const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
   const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
   const styles = useStyles2(getStyles);
-  console.log(serviceaccount);
 
   return (
     <tr key={serviceaccount.userId}>
