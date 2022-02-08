@@ -289,27 +289,29 @@ type FakeInstanceStore struct {
 	recordedOps []interface{}
 }
 
-func (f *FakeInstanceStore) GetAlertInstance(q *models.GetAlertInstanceQuery) error {
+func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
 	return nil
 }
-func (f *FakeInstanceStore) ListAlertInstances(q *models.ListAlertInstancesQuery) error {
+func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
 	return nil
 }
-func (f *FakeInstanceStore) SaveAlertInstance(q *models.SaveAlertInstanceCommand) error {
+func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
 	return nil
 }
 
-func (f *FakeInstanceStore) FetchOrgIds() ([]int64, error)                  { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstance(_ int64, _, _ string) error { return nil }
+func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
+func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
+	return nil
+}
 
 func newFakeAdminConfigStore(t *testing.T) *fakeAdminConfigStore {
 	t.Helper()

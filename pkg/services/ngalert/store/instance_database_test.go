@@ -51,7 +51,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:     models.InstanceStateFiring,
 			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
-		err := dbstore.SaveAlertInstance(saveCmd)
+		err := dbstore.SaveAlertInstance(ctx, saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &models.GetAlertInstanceQuery{
@@ -60,7 +60,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 
-		err = dbstore.GetAlertInstance(getCmd)
+		err = dbstore.GetAlertInstance(ctx, getCmd)
 		require.NoError(t, err)
 
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
@@ -75,7 +75,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:     models.InstanceStateNormal,
 			Labels:    models.InstanceLabels{},
 		}
-		err := dbstore.SaveAlertInstance(saveCmd)
+		err := dbstore.SaveAlertInstance(ctx, saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &models.GetAlertInstanceQuery{
@@ -83,7 +83,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			RuleUID:   saveCmd.RuleUID,
 		}
 
-		err = dbstore.GetAlertInstance(getCmd)
+		err = dbstore.GetAlertInstance(ctx, getCmd)
 		require.NoError(t, err)
 
 		require.Equal(t, alertRule2.OrgID, getCmd.Result.RuleOrgID)
@@ -99,7 +99,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 
-		err := dbstore.SaveAlertInstance(saveCmdOne)
+		err := dbstore.SaveAlertInstance(ctx, saveCmdOne)
 		require.NoError(t, err)
 
 		saveCmdTwo := &models.SaveAlertInstanceCommand{
@@ -108,7 +108,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:     models.InstanceStateFiring,
 			Labels:    models.InstanceLabels{"test": "meow"},
 		}
-		err = dbstore.SaveAlertInstance(saveCmdTwo)
+		err = dbstore.SaveAlertInstance(ctx, saveCmdTwo)
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
@@ -116,7 +116,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			RuleUID:   saveCmdOne.RuleUID,
 		}
 
-		err = dbstore.ListAlertInstances(listQuery)
+		err = dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
 		require.Len(t, listQuery.Result, 2)
@@ -127,7 +127,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			RuleOrgID: orgID,
 		}
 
-		err := dbstore.ListAlertInstances(listQuery)
+		err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
 		require.Len(t, listQuery.Result, 4)
@@ -139,7 +139,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:     models.InstanceStateNormal,
 		}
 
-		err := dbstore.ListAlertInstances(listQuery)
+		err := dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
 		require.Len(t, listQuery.Result, 1)
@@ -153,7 +153,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
 
-		err := dbstore.SaveAlertInstance(saveCmdOne)
+		err := dbstore.SaveAlertInstance(ctx, saveCmdOne)
 		require.NoError(t, err)
 
 		saveCmdTwo := &models.SaveAlertInstanceCommand{
@@ -162,7 +162,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			State:     models.InstanceStateNormal,
 			Labels:    models.InstanceLabels{"test": "testValue"},
 		}
-		err = dbstore.SaveAlertInstance(saveCmdTwo)
+		err = dbstore.SaveAlertInstance(ctx, saveCmdTwo)
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
@@ -170,7 +170,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			RuleUID:   alertRule4.UID,
 		}
 
-		err = dbstore.ListAlertInstances(listQuery)
+		err = dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
 		require.Len(t, listQuery.Result, 1)
