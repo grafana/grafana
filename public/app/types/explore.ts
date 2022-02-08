@@ -204,12 +204,9 @@ export interface QueryTransaction {
 export type RichHistoryQuery = {
   ts: number;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
   queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
 };
 
 export interface ExplorePanelData extends PanelData {

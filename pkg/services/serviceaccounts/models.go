@@ -8,7 +8,7 @@ import (
 
 var (
 	ScopeAll = "serviceaccounts:*"
-	ScopeID  = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceaccountId"))
+	ScopeID  = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceAccountId"))
 )
 
 const (
@@ -23,10 +23,8 @@ type ServiceAccount struct {
 }
 
 type CreateServiceaccountForm struct {
-	OrgID       int64  `json:"-"`
-	Name        string `json:"name" binding:"Required"`
-	DisplayName string `json:"displayName"`
-	Description string `json:"description"`
+	OrgID int64  `json:"-"`
+	Name  string `json:"name" binding:"Required"`
 }
 
 type ServiceAccountIdDTO struct {

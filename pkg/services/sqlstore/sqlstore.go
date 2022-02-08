@@ -115,6 +115,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
+	ss.addStatsQueryAndCommandHandlers()
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()

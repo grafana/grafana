@@ -13,6 +13,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,8 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
@@ -43,9 +44,6 @@ func toMacaronPath(path string) string {
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	recipient := web.Params(ctx.Req)[":Recipient"]
-	if recipient == apimodels.GrafanaBackend.String() {
-		return apimodels.GrafanaBackend, nil
-	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
 		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
 			switch ds.Type {

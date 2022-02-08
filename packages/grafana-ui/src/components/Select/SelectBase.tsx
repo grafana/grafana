@@ -138,6 +138,7 @@ export function SelectBase<T>({
   value,
   width,
   isValidNewOption,
+  formatOptionLabel,
 }: SelectBaseProps<T>) {
   if (menuShouldPortal === false) {
     deprecationWarning('SelectBase', 'menuShouldPortal={false}', 'menuShouldPortal={true}');
@@ -237,6 +238,7 @@ export function SelectBase<T>({
     onKeyDown,
     onMenuClose: onCloseMenu,
     onMenuOpen: onOpenMenu,
+    formatOptionLabel,
     openMenuOnFocus,
     options,
     placeholder,
