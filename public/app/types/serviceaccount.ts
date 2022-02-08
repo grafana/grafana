@@ -24,15 +24,8 @@ export interface ServiceAccount {
   orgId?: number;
 }
 
-export interface ServiceAccountTokenDTO {
-  id: number;
-  name: string;
-  role: string;
-  expiration: string;
-}
-
 export interface ServiceAccountDTO extends WithAccessControlMetadata {
-  tokens: ServiceAccountTokenDTO[];
+  tokens: number;
   orgId: number;
   userId: number;
   email: string;
