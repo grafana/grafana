@@ -3,8 +3,11 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
+
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -442,6 +445,20 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			}
 		}
 
+		// remove all access control permission with folder scope
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("folders", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
+		}
+
+		for _, dash := range dashIds {
+			// remove all access control permission with child dashboard scopes
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			if err != nil {
+				return err
+			}
+		}
+
 		if len(dashIds) > 0 {
 			childrenDeletes := []string{
 				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
@@ -481,6 +498,11 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 					return err
 				}
 			}
+		}
+	} else {
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		if err != nil {
+			return err
 		}
 	}
 
