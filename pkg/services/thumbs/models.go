@@ -1,6 +1,7 @@
 package thumbs
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -10,13 +11,13 @@ type CrawlerMode string
 
 const (
 
-	// CrawlerModeThumbs will create small thumbnails for everything
+	// CrawlerModeThumbs will create small thumbnails for everything.
 	CrawlerModeThumbs CrawlerMode = "thumbs"
 
-	// CrawlerModeAnalytics will get full page results for everythign
+	// CrawlerModeAnalytics will get full page results for everything.
 	CrawlerModeAnalytics CrawlerMode = "analytics"
 
-	// CrawlerModeMigrate will migrate all dashboards with old schema
+	// CrawlerModeMigrate will migrate all dashboards with old schema.
 	CrawlerModeMigrate CrawlerMode = "migrate"
 )
 
@@ -53,20 +54,20 @@ type crawlStatus struct {
 
 type dashRenderer interface {
 
-	// Assumes you have already authenticated as admin
+	// Run Assumes you have already authenticated as admin.
 	Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) (crawlStatus, error)
 
-	// Assumes you have already authenticated as admin
+	// Assumes you have already authenticated as admin.
 	Stop() (crawlStatus, error)
 
-	// Assumes you have already authenticated as admin
+	// Assumes you have already authenticated as admin.
 	Status() (crawlStatus, error)
 }
 
 type thumbnailRepo interface {
-	updateThumbnailState(state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
-	saveFromFile(filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
-	saveFromBytes(bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
-	getThumbnail(meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
-	findDashboardsWithStaleThumbnails() ([]*models.DashboardWithStaleThumbnail, error)
+	updateThumbnailState(ctx context.Context, state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
+	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
+	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
+	getThumbnail(ctx context.Context, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
+	findDashboardsWithStaleThumbnails(ctx context.Context) ([]*models.DashboardWithStaleThumbnail, error)
 }
