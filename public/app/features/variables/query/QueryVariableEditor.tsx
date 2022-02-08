@@ -8,9 +8,7 @@ import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableV
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
-import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
-import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
 import { toVariableIdentifier } from '../state/types';
@@ -21,9 +19,10 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
+  extended: getQueryVariableEditorState(state.templating.editor),
 });
 
 const mapDispatchToProps = {
@@ -114,14 +113,15 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   renderQueryEditor = () => {
-    const { editor, variable } = this.props;
-    if (!editor.extended || !editor.extended.dataSource || !editor.extended.VariableQueryEditor) {
+    const { extended, variable } = this.props;
+
+    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
 
     const query = variable.query;
-    const datasource = editor.extended.dataSource;
-    const VariableQueryEditor = editor.extended.VariableQueryEditor;
+    const datasource = extended.dataSource;
+    const VariableQueryEditor = extended.VariableQueryEditor;
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
