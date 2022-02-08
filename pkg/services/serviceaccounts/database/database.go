@@ -176,8 +176,9 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		return nil, serviceaccounts.ErrServiceAccountNotFound
 	}
 	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:   query.Result[0].UserId,
-		Name: query.Result[0].Name,
+		Id:    query.Result[0].UserId,
+		Name:  query.Result[0].Name,
+		Login: query.Result[0].Login,
 	}
 	return saProfile, err
 }

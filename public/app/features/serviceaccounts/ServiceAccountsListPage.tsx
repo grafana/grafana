@@ -67,7 +67,7 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
                 </thead>
                 <tbody>
                   {serviceAccounts.map((serviceaccount: ServiceAccountDTO) => (
-                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.userId} />
+                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.id} />
                   ))}
                 </tbody>
               </table>
@@ -88,11 +88,11 @@ const getServiceAccountsAriaLabel = (name: string) => {
 };
 
 const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
-  const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
+  const editUrl = `org/serviceaccounts/${serviceaccount.id}`;
   const styles = useStyles2(getStyles);
 
   return (
-    <tr key={serviceaccount.userId}>
+    <tr key={serviceaccount.id}>
       <td className="width-4 text-center link-td">
         <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}>
           <img

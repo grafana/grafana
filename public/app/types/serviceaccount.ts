@@ -25,16 +25,13 @@ export interface ServiceAccount {
 }
 
 export interface ServiceAccountDTO extends WithAccessControlMetadata {
-  tokens: number;
+  id: number;
   orgId: number;
-  userId: number;
-  email: string;
+  tokens: number;
   name: string;
-  avatarUrl?: string;
   login: string;
+  avatarUrl?: string;
   role: string;
-  lastSeenAt: string;
-  lastSeenAtAge: string;
 }
 
 export interface ServiceAccountProfileState {
