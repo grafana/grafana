@@ -9,7 +9,7 @@ import { useStyles2 } from '../../themes';
  */
 export interface SeriesTableRowProps {
   color?: string;
-  label?: string;
+  label?: React.ReactNode;
   value?: string | GraphSeriesValue;
   isActive?: boolean;
 }
