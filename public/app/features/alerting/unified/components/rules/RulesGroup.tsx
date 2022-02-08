@@ -46,6 +46,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
   const deleteGroup = () => {
     dispatch(deleteRulesGroupAction(namespace, group));
+    setIsDeletingGroup(false);
   };
 
   const actionIcons: React.ReactNode[] = [];
