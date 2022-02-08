@@ -430,7 +430,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique","error":"failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
@@ -785,7 +785,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax","error":"invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
+		require.JSONEq(t, `{"message": "invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
 	}
 
 	// Now, let's check a panel_id without dashboard_uid returns a 400 Bad Request response
@@ -801,6 +801,6 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "panel_id must be set with dashboard_uid","error":"panel_id must be set with dashboard_uid"}`, string(b))
+		require.JSONEq(t, `{"message": "panel_id must be set with dashboard_uid"}`, string(b))
 	}
 }

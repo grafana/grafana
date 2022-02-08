@@ -63,7 +63,7 @@ func TestTestReceivers(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"error":"no receivers"}`, string(b))
+		require.JSONEq(t, `{}`, string(b))
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
