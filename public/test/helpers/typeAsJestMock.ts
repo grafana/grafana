@@ -6,4 +6,4 @@
  * const doFooMock = typeAsJestMock(doFoo); // doFooMock is of type jest.Mock with proper return type for doFoo
  */
 
-export const typeAsJestMock = <T extends (...args: any) => any>(fn: T) => (fn as unknown) as jest.Mock<ReturnType<T>>;
+export const typeAsJestMock = <T extends (...args: any) => any>(fn: T) => fn as unknown as jest.Mock<ReturnType<T>>;

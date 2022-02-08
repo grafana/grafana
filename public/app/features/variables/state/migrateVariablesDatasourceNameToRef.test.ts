@@ -25,7 +25,7 @@ describe('migrateVariablesDatasourceNameToRef', () => {
   describe('when called and variables have legacy data source props', () => {
     describe('and data source exists', () => {
       it('then correct actions are dispatched', async () => {
-        const legacyDs = ('${ds}' as unknown) as DataSourceRef;
+        const legacyDs = '${ds}' as unknown as DataSourceRef;
         const { query, adhoc, dispatch, getState, getDatasourceSrvFunc } = getTestContext(legacyDs, {
           uid: 'a random uid',
           type: 'prometheus',
@@ -49,7 +49,7 @@ describe('migrateVariablesDatasourceNameToRef', () => {
 
     describe('and data source does not exist', () => {
       it('then correct actions are dispatched', async () => {
-        const legacyDs = ('${ds}' as unknown) as DataSourceRef;
+        const legacyDs = '${ds}' as unknown as DataSourceRef;
         const { query, adhoc, dispatch, getState, getDatasourceSrvFunc } = getTestContext(legacyDs, undefined);
 
         migrateVariablesDatasourceNameToRef(getDatasourceSrvFunc)(dispatch, getState, undefined);

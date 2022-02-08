@@ -44,15 +44,8 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   }
 
   componentDidMount() {
-    const {
-      initialized,
-      exploreId,
-      initialDatasource,
-      initialQueries,
-      initialRange,
-      originPanelId,
-      panelsState,
-    } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, originPanelId, panelsState } =
+      this.props;
     const width = this.el?.offsetWidth ?? 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource

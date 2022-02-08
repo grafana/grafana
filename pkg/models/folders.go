@@ -62,7 +62,7 @@ type CreateFolderCommand struct {
 	Uid   string `json:"uid"`
 	Title string `json:"title"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 type UpdateFolderCommand struct {
@@ -71,7 +71,7 @@ type UpdateFolderCommand struct {
 	Version   int    `json:"version"`
 	Overwrite bool   `json:"overwrite"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 //

@@ -21,10 +21,7 @@ type Cfg struct {
 	// Azure Cloud settings
 	Azure setting.AzureSettings
 
-	CheckForUpdates bool
-
 	BuildVersion string // TODO Remove
-	AppSubURL    string // TODO Remove
 }
 
 func NewCfg() *Cfg {
@@ -48,10 +45,7 @@ func FromGrafanaCfg(grafanaCfg *setting.Cfg) *Cfg {
 	// Azure
 	cfg.Azure = grafanaCfg.Azure
 
-	cfg.CheckForUpdates = grafanaCfg.CheckForUpdates
-
 	cfg.BuildVersion = grafanaCfg.BuildVersion
-	cfg.AppSubURL = grafanaCfg.AppSubURL
 
 	return cfg
 }

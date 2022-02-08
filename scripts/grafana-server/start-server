@@ -4,7 +4,11 @@ set -eo pipefail
 . scripts/grafana-server/variables
 
 PORT=${PORT:-$DEFAULT_PORT}
-PACKAGE_FILE=${PACKAGE_FILE:-$DEFAULT_PACKAGE_FILE}
+ARCH=${ARCH:-$DEFAULT_ARCH}
+
+if [ "$ARCH" ]; then
+    ARCH+="/"
+fi
 
 ./scripts/grafana-server/kill-server
 
@@ -12,33 +16,23 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-# Expand any wildcards
-pkgs=(${PACKAGE_FILE})
-pkg=${pkgs[0]}
-if [[ -f ${pkg} ]]; then
-  echo "Found package tar file ${pkg}, extracting..."
-  tar zxf ${pkg} -C $RUNDIR
-  mv $RUNDIR/grafana-*/* $RUNDIR
-else
-  echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
-
-  if [[ ! -f bin/grafana-server ]]; then
-    echo bin/grafana-server missing
-    exit 1
-  fi
-
-  cp -r ./bin $RUNDIR
-  cp -r ./public $RUNDIR
-  cp -r ./tools $RUNDIR
-
-  mkdir $RUNDIR/conf
-  mkdir $PROV_DIR
-  mkdir $PROV_DIR/datasources
-  mkdir $PROV_DIR/dashboards
-
-  cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
-  cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
+if [[ ! -f bin/"$ARCH"grafana-server ]]; then
+  echo "bin/linux-amd64/grafana-server missing, trying local grafana-server binary"
 fi
+
+echo starting server
+
+cp -r ./bin $RUNDIR
+cp -r ./public $RUNDIR
+cp -r ./tools $RUNDIR
+
+mkdir $RUNDIR/conf
+mkdir $PROV_DIR
+mkdir $PROV_DIR/datasources
+mkdir $PROV_DIR/dashboards
+
+cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
+cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 
 echo -e "Copy provisioning setup from devenv"
 
@@ -49,7 +43,7 @@ cp -r devenv $RUNDIR
 
 echo -e "Starting Grafana Server port $PORT"
 
-$RUNDIR/bin/grafana-server \
+$RUNDIR/bin/"$ARCH"grafana-server \
   --homepath=$HOME_PATH \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \

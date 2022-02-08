@@ -143,6 +143,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			f := ini.Empty()
 			cfg := NewCfg()
+			cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 			unifiedAlertingSec, err := f.NewSection("unified_alerting")
 			require.NoError(t, err)
 			for k, v := range tc.unifiedAlertingOptions {

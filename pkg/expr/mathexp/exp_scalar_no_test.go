@@ -116,28 +116,24 @@ func TestNumberExpr(t *testing.T) {
 			results:   Results{[]Value{makeNumber("", nil, float64Pointer(-2.0))}},
 		},
 		{
-			name:      "binary: Scalar Op Number (Number will nil val) - currently Panics",
+			name:      "binary: Scalar Op Number (Number will nil val) returns nil",
 			expr:      "1 + $A",
+			newErrIs:  assert.NoError,
+			execErrIs: assert.NoError,
+			resultIs:  assert.Equal,
 			vars:      Vars{"A": Results{[]Value{makeNumber("", nil, nil)}}},
-			willPanic: true,
+			results:   Results{[]Value{makeNumber("", nil, nil)}},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testBlock := func() {
-				e, err := New(tt.expr)
-				tt.newErrIs(t, err)
-				if e != nil {
-					res, err := e.Execute("", tt.vars)
-					tt.execErrIs(t, err)
-					tt.resultIs(t, tt.results, res)
-				}
-			}
-			if tt.willPanic {
-				assert.Panics(t, testBlock)
-			} else {
-				assert.NotPanics(t, testBlock)
+			e, err := New(tt.expr)
+			tt.newErrIs(t, err)
+			if e != nil {
+				res, err := e.Execute("", tt.vars)
+				tt.execErrIs(t, err)
+				tt.resultIs(t, tt.results, res)
 			}
 		})
 	}

@@ -57,7 +57,10 @@ export function ServiceAccountProfile({
 
   return (
     <>
-      <h3 className="page-heading">Service account information</h3>
+      <h3 className="page-heading">Information</h3>
+      <a href="org/serviceaccounts">
+        <Button variant="link" icon="backward" />
+      </a>
       <div className="gf-form-group">
         <div className="gf-form">
           <table className="filter-table form-inline">

@@ -22,7 +22,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -39,7 +39,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			emailNotifier := not.(*EmailNotifier)
 
 			require.Nil(t, err)
@@ -63,7 +63,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewEmailNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			emailNotifier := not.(*EmailNotifier)
 
 			require.Nil(t, err)

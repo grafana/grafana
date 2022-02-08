@@ -20,7 +20,7 @@ export interface SyncTimesPayload {
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-export const localStorageFullAction = createAction('explore/localStorageFullAction');
+export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 
 /**
@@ -64,10 +64,10 @@ export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> =>
     const orgId = getState().user.orgId.toString();
     const urlStates: { [index: string]: string | null } = { orgId };
 
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
 
     if (right) {
-      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
+      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
     } else {
       urlStates.right = null;
     }
@@ -103,7 +103,7 @@ export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
       };
     }
 
-    const urlState = serializeStateToUrlParam(rightUrlState, true);
+    const urlState = serializeStateToUrlParam(rightUrlState);
     locationService.partial({ right: urlState }, true);
   };
 };
@@ -158,7 +158,7 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
-  localStorageFull: false,
+  richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
 };
 
@@ -214,10 +214,10 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (localStorageFullAction.match(action)) {
+  if (richHistoryStorageFullAction.match(action)) {
     return {
       ...state,
-      localStorageFull: true,
+      richHistoryStorageFull: true,
     };
   }
 

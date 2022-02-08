@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -24,7 +25,7 @@ import (
 )
 
 var (
-	serviceaccountIDPath = "/api/org/serviceaccounts/%v"
+	serviceaccountIDPath = "/api/serviceaccounts/%v"
 )
 
 // test the accesscontrol endpoints
@@ -96,8 +97,10 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 }
 
 func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock, routerRegister routing.RouteRegister, acmock *accesscontrolmock.Mock, sqlStore *sqlstore.SQLStore) *web.Mux {
-	a := NewServiceAccountsAPI(svc, acmock, routerRegister, database.NewServiceAccountsStore(sqlStore))
-	a.RegisterAPIEndpoints(&setting.Cfg{FeatureToggles: map[string]bool{"service-accounts": true}})
+	a := NewServiceAccountsAPI(setting.NewCfg(), svc, acmock, routerRegister, database.NewServiceAccountsStore(sqlStore), sqlStore)
+	a.RegisterAPIEndpoints(featuremgmt.WithFeatures(featuremgmt.FlagServiceAccounts))
+
+	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
 
 	m := web.New()
 	signedUser := &models.SignedInUser{

@@ -59,7 +59,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -76,7 +76,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -93,7 +93,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -109,7 +109,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 	})
 
@@ -200,7 +200,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err = GetDashboard(context.Background(), &query)
+		err = sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, query.Result.FolderId, int64(0))
 		require.Equal(t, query.Result.CreatedBy, savedDash.CreatedBy)
@@ -292,7 +292,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		setup()
 		query := models.GetDashboardTagsQuery{OrgId: 1}
 
-		err := GetDashboardTags(context.Background(), &query)
+		err := sqlStore.GetDashboardTags(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -590,7 +590,7 @@ func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAd
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
-	err = GetUserOrgList(context.Background(), &q1)
+	err = sqlStore.GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 	return *currentUser

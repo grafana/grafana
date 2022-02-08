@@ -1,3 +1,9 @@
+// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+// To change feature flags, edit:
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
+
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in
@@ -10,13 +16,6 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
-  recordedQueries?: boolean;
-  teamsync?: boolean;
-  ldapsync?: boolean;
-  caching?: boolean;
-  dspermissions?: boolean;
-  analytics?: boolean;
-  ['enterprise.plugins']?: boolean;
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
@@ -30,10 +29,14 @@ export interface FeatureToggles {
   tempoSearch?: boolean;
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
+  lokiBackendMode?: boolean;
   fullRangeLogsVolume?: boolean;
   accesscontrol?: boolean;
   prometheus_azure_auth?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
+  validatedQueries?: boolean;
+  swaggerUi?: boolean;
+  featureHighlights?: boolean;
 }

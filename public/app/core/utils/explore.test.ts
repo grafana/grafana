@@ -11,6 +11,7 @@ import {
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRangeFromUrl,
+  getTimeRange,
 } from './explore';
 import store from 'app/core/store';
 import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
@@ -114,6 +115,7 @@ describe('state functions', () => {
       );
     });
 
+    // TODO: remove in 9.0
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
@@ -134,7 +136,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}]'
+        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
   });
@@ -164,6 +166,7 @@ describe('state functions', () => {
       expect(state).toMatchObject(parsed);
     });
 
+    // TODO: remove in 9.0
     it('can parse the compact serialized state into the original state', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
@@ -221,7 +224,7 @@ describe('state functions', () => {
 });
 
 describe('getExploreUrl', () => {
-  const args = ({
+  const args = {
     panel: {
       getSavedId: () => 1,
       targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
@@ -237,7 +240,7 @@ describe('getExploreUrl', () => {
     timeSrv: {
       timeRangeForUrl: () => '1',
     },
-  } as unknown) as GetExploreUrlArguments;
+  } as unknown as GetExploreUrlArguments;
 
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
@@ -356,6 +359,19 @@ describe('getTimeRangeFromUrl', () => {
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+  });
+});
+
+describe('getTimeRange', () => {
+  describe('should flip from and to when from is after to', () => {
+    const rawRange = {
+      from: 'now',
+      to: 'now-6h',
+    };
+
+    const range = getTimeRange('utc', rawRange, 0);
+
+    expect(range.from.isBefore(range.to)).toBe(true);
   });
 });
 

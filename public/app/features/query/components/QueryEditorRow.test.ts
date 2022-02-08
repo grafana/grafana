@@ -45,12 +45,12 @@ describe('filterPanelDataToQuery', () => {
   });
 
   it('should include errors when missing data', () => {
-    const withError = ({
+    const withError = {
       series: [],
       error: {
         message: 'Error!!',
       },
-    } as unknown) as PanelData;
+    } as unknown as PanelData;
 
     const panelData = filterPanelDataToQuery(withError, 'B');
     expect(panelData).toBeDefined();
