@@ -25,6 +25,7 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
     interactive: interactive,
     delayHide: interactive ? 100 : 0,
     delayShow: 150,
+    offset: [0, 8],
     trigger: ['hover', 'focus'],
   });
 
@@ -101,72 +102,72 @@ function getStyles(theme: GrafanaTheme2) {
 
       &[data-popper-placement*='bottom'] .tooltip-arrow {
         left: 0;
-        margin-top: -0.4rem;
+        margin-top: -10px;
         top: 0;
       }
 
       &[data-popper-placement*='bottom'] .tooltip-arrow::before {
         border-color: transparent transparent ${tooltipBorder} transparent;
-        border-width: 0 0.5rem 0.4rem 0.5rem;
+        border-width: 0 8px 7px 8px;
         position: absolute;
         top: -1px;
       }
 
       &[data-popper-placement*='bottom'] .tooltip-arrow::after {
         border-color: transparent transparent ${tooltipBg} transparent;
-        border-width: 0 0.5rem 0.4rem 0.5rem;
+        border-width: 0 8px 7px 8px;
       }
 
       &[data-popper-placement*='top'] .tooltip-arrow {
         bottom: 0;
         left: 0;
-        margin-bottom: -12px;
+        margin-bottom: -11px;
       }
 
       &[data-popper-placement*='top'] .tooltip-arrow::before {
         border-color: ${tooltipBorder} transparent transparent transparent;
-        border-width: 0.4rem 0.5rem 0 0.5rem;
+        border-width: 7px 8px 0 7px;
         position: absolute;
         top: 1px;
       }
 
       &[data-popper-placement*='top'] .tooltip-arrow::after {
         border-color: ${tooltipBg} transparent transparent transparent;
-        border-width: 0.4rem 0.5rem 0 0.5rem;
+        border-width: 7px 8px 0 7px;
       }
 
       &[data-popper-placement*='right'] .tooltip-arrow {
         left: 0;
-        margin-left: -0.7rem;
+        margin-left: -11px;
       }
 
       &[data-popper-placement*='right'] .tooltip-arrow::before {
         border-color: transparent ${tooltipBorder} transparent transparent;
-        border-width: 0.5rem 0.4rem 0.5rem 0;
+        border-width: 7px 6px 7px 0;
       }
 
       &[data-popper-placement*='right'] .tooltip-arrow::after {
         border-color: transparent ${tooltipBg} transparent transparent;
-        border-width: 0.5rem 0.4rem 0.5rem 0;
-        left: 6px;
-        top: 0;
+        border-width: 6px 7px 7px 0;
+        left: 2px;
+        top: 1px;
       }
 
       &[data-popper-placement*='left'] .tooltip-arrow {
-        margin-right: -0.7rem;
+        margin-right: -10px;
         right: 0;
       }
 
       &[data-popper-placement*='left'] .tooltip-arrow::before {
         border-color: transparent transparent transparent ${tooltipBorder};
-        border-width: 0.5rem 0 0.5rem 0.4em;
+        border-width: 7px 0px 6px 7px;
       }
 
       &[data-popper-placement*='left'] .tooltip-arrow::after {
         border-color: transparent transparent transparent ${tooltipBg};
-        border-width: 0.5rem 0 0.5rem 0.4em;
-        left: 3px;
-        top: 0;
+        border-width: 6px 0 5px 5px;
+        left: 1px;
+        top: 1px;
       }
 
       code {
