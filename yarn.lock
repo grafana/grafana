@@ -19736,6 +19736,7 @@ __metadata:
     "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
+    "@types/marked": 4.0.1
     "@types/mousetrap": 1.6.3
     "@types/node": 16.11.19
     "@types/papaparse": 5.3.1
@@ -19848,6 +19849,7 @@ __metadata:
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 6.0.0
+    marked: 4.0.10
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.5.2
     moment: 2.29.1

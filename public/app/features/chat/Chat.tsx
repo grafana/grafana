@@ -1,8 +1,10 @@
 import React, { FunctionComponent, PureComponent, useState } from 'react';
 import { TextArea, IconButton, WithContextMenu, MenuItem, MenuGroup } from '@grafana/ui';
 import { getGrafanaLiveSrv, getBackendSrv } from '@grafana/runtime';
-import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
+import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
+import { marked } from 'marked';
+import { sanitize } from '@grafana/data/src/text/sanitize';
 
 export interface ChatProps {
   contentTypeId: number;
@@ -34,6 +36,18 @@ export interface MessagePacket {
 export interface ChatState {
   messages: Message[];
   value: string;
+}
+
+function renderChatMarkdown(str?: string): string {
+  const html = marked(str || '', {
+    pedantic: false,
+    gfm: true,
+    smartLists: true,
+    smartypants: false,
+    xhtml: false,
+    breaks: true,
+  });
+  return sanitize(html);
 }
 
 export class Chat extends PureComponent<ChatProps, ChatState> {
