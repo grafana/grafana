@@ -23,10 +23,6 @@ import (
 	"github.com/segmentio/encoding/json"
 )
 
-var (
-	tlog log.Logger = log.New("thumbnails")
-)
-
 type Service interface {
 	Run(ctx context.Context) error
 	Enabled() bool
@@ -49,6 +45,7 @@ type thumbService struct {
 	lockService                *serverlock.ServerLockService
 	features                   featuremgmt.FeatureToggles
 	crawlLockServiceActionName string
+	log                        log.Logger
 }
 
 type crawlerScheduleOptions struct {
@@ -72,6 +69,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		features:                   features,
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
+		log:                        log.New("thumbnails_service"),
 
 		scheduleOptions: crawlerScheduleOptions{
 			tickerInterval:   time.Hour,
@@ -138,7 +136,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 
 	err := web.Bind(c.Req, body)
 	if err != nil {
-		tlog.Error("Error parsing update thumbnail state request", "dashboardUid", req.UID, "err", err.Error())
+		hs.log.Error("Error parsing update thumbnail state request", "dashboardUid", req.UID, "err", err.Error())
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
@@ -151,12 +149,12 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	})
 
 	if err != nil {
-		tlog.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", body.State)
+		hs.log.Error("Error when trying to update thumbnail state", "dashboardUid", req.UID, "err", err.Error(), "newState", body.State)
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
 
-	tlog.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", body.State)
+	hs.log.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", body.State)
 	c.JSON(200, map[string]string{"success": "true"})
 }
 
@@ -179,14 +177,14 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	}
 
 	if err != nil {
-		tlog.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
+		hs.log.Error("Error when retrieving thumbnail", "dashboardUid", req.UID, "err", err.Error())
 		c.JSON(500, map[string]string{"dashboardUID": req.UID, "error": "unknown"})
 		return
 	}
 
 	c.Resp.Header().Set("Content-Type", res.MimeType)
 	if _, err := c.Resp.Write(res.Image); err != nil {
-		tlog.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
+		hs.log.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
 	}
 }
 
@@ -219,9 +217,9 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 	defer func() {
 		_ = file.Close()
 	}()
-	tlog.Info("Uploaded File: %+v\n", handler.Filename)
-	tlog.Info("File Size: %+v\n", handler.Size)
-	tlog.Info("MIME Header: %+v\n", handler.Header)
+	hs.log.Info("Uploaded File: %+v\n", handler.Filename)
+	hs.log.Info("File Size: %+v\n", handler.Size)
+	hs.log.Info("MIME Header: %+v\n", handler.Header)
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -330,12 +328,12 @@ func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models
 	interval := time.Minute
 	err := hs.lockService.LockAndExecute(crawlerCtx, hs.crawlLockServiceActionName, interval, func(ctx context.Context) {
 		if err := hs.renderer.Run(crawlerCtx, authOpts, mode, theme, kind); err != nil {
-			tlog.Error("On demand crawl error", "mode", mode, "theme", theme, "kind", kind, "userId", authOpts.UserID, "orgId", authOpts.OrgID, "orgRole", authOpts.OrgRole)
+			hs.log.Error("On demand crawl error", "mode", mode, "theme", theme, "kind", kind, "userId", authOpts.UserID, "orgId", authOpts.OrgID, "orgRole", authOpts.OrgRole)
 		}
 	})
 
 	if err != nil {
-		tlog.Error("On demand crawl lock error", "err", err)
+		hs.log.Error("On demand crawl lock error", "err", err)
 	}
 }
 
@@ -353,13 +351,13 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 		for _, theme := range hs.scheduleOptions.themes {
 
 			if err := hs.renderer.Run(crawlerCtx, authOpts, hs.scheduleOptions.crawlerMode, theme, hs.scheduleOptions.thumbnailKind); err != nil {
-				tlog.Error("Scheduled crawl error", "theme", theme, "kind", hs.scheduleOptions.thumbnailKind, "err", err)
+				hs.log.Error("Scheduled crawl error", "theme", theme, "kind", hs.scheduleOptions.thumbnailKind, "err", err)
 			}
 		}
 	})
 
 	if err != nil {
-		tlog.Error("Scheduled crawl lock error", "err", err)
+		hs.log.Error("Scheduled crawl lock error", "err", err)
 	}
 }
 
@@ -371,7 +369,7 @@ func (hs *thumbService) Run(ctx context.Context) error {
 		case <-gc.C:
 			go hs.runScheduledCrawl(ctx)
 		case <-ctx.Done():
-			tlog.Debug("Grafana is shutting down - stopping dashboard crawler")
+			hs.log.Debug("Grafana is shutting down - stopping dashboard crawler")
 			gc.Stop()
 
 			return nil

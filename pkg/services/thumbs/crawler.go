@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -28,6 +29,7 @@ type simpleCrawler struct {
 	statusMutex      sync.RWMutex
 	queue            []*models.DashboardWithStaleThumbnail
 	queueMutex       sync.Mutex
+	log              log.Logger
 	renderingSession rendering.Session
 }
 
@@ -37,6 +39,7 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 		threadCount:   6,
 		glive:         gl,
 		thumbnailRepo: repo,
+		log:           log.New("thumbnails_crawler"),
 		status: crawlStatus{
 			State:    initializing,
 			Complete: 0,
@@ -64,17 +67,17 @@ func (r *simpleCrawler) next() *models.DashboardWithStaleThumbnail {
 func (r *simpleCrawler) broadcastStatus() {
 	s, err := r.Status()
 	if err != nil {
-		tlog.Warn("Error reading status", "err", err)
+		r.log.Warn("Error reading status", "err", err)
 		return
 	}
 	msg, err := json.Marshal(s)
 	if err != nil {
-		tlog.Warn("Error making message", "err", err)
+		r.log.Warn("Error making message", "err", err)
 		return
 	}
 	err = r.glive.Publish(r.opts.OrgID, "grafana/broadcast/crawler", msg)
 	if err != nil {
-		tlog.Warn("Error Publish message", "err", err)
+		r.log.Warn("Error Publish message", "err", err)
 		return
 	}
 }
@@ -83,7 +86,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	r.queueMutex.Lock()
 	if r.IsRunning() {
 		r.queueMutex.Unlock()
-		tlog.Info("Already running")
+		r.log.Info("Already running")
 		return nil
 	}
 
@@ -91,7 +94,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 
 	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails(ctx, theme, thumbnailKind)
 	if err != nil {
-		tlog.Error("Error when fetching dashboards with stale thumbnails", "err", err.Error())
+		r.log.Error("Error when fetching dashboards with stale thumbnails", "err", err.Error())
 		r.queueMutex.Unlock()
 		return err
 	}
@@ -116,7 +119,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 		RefreshExpiryOnEachRequest: true,
 	})
 	if err != nil {
-		tlog.Error("Error when creating rendering session", "err", err.Error())
+		r.log.Error("Error when creating rendering session", "err", err.Error())
 		r.queueMutex.Unlock()
 		return err
 	}
@@ -131,7 +134,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	r.broadcastStatus()
 	r.queueMutex.Unlock()
 
-	tlog.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind))
+	r.log.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind))
 
 	group, gCtx := errgroup.WithContext(ctx)
 	// create a pool of workers
@@ -146,7 +149,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 
 	err = group.Wait()
 	if err != nil {
-		tlog.Error("Crawl ended with an error", "err", err)
+		r.log.Error("Crawl ended with an error", "err", err)
 	}
 
 	r.walkFinished()
@@ -206,7 +209,7 @@ func (r *simpleCrawler) walkFinished() {
 
 	r.status.State = stopped
 	r.status.Finished = time.Now()
-	tlog.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "durationInSeconds", int64(time.Since(r.status.Started)/time.Second))
+	r.log.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "durationInSeconds", int64(time.Since(r.status.Started)/time.Second))
 }
 
 func (r *simpleCrawler) shouldWalk() bool {
@@ -228,7 +231,7 @@ func (r *simpleCrawler) walk(id int, ctx context.Context) {
 		}
 
 		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug, r.opts.Theme)
-		tlog.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
+		r.log.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 
 		res, err := r.renderService.Render(ctx, rendering.Opts{
 			Width:             320,
@@ -241,13 +244,13 @@ func (r *simpleCrawler) walk(id int, ctx context.Context) {
 			DeviceScaleFactor: -5, // negative numbers will render larger and then scale down.
 		}, r.renderingSession)
 		if err != nil {
-			tlog.Warn("Error getting image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+			r.log.Warn("Error getting image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
 			r.newErrorResult()
 		} else if res.FilePath == "" {
-			tlog.Warn("Error getting image... no response", "walkerId", id, "dashboardUID", item.Uid, "url", url)
+			r.log.Warn("Error getting image... no response", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 			r.newErrorResult()
 		} else if strings.Contains(res.FilePath, "public/img") {
-			tlog.Warn("Error getting image... internal result", "walkerId", id, "dashboardUID", item.Uid, "url", url, "img", res.FilePath)
+			r.log.Warn("Error getting image... internal result", "walkerId", id, "dashboardUID", item.Uid, "url", url, "img", res.FilePath)
 			// rendering service returned a static error image - we should not remove that file
 			r.newErrorResult()
 		} else {
@@ -255,7 +258,7 @@ func (r *simpleCrawler) walk(id int, ctx context.Context) {
 				defer func() {
 					err := os.Remove(res.FilePath)
 					if err != nil {
-						tlog.Error("Failed to remove thumbnail temp file", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+						r.log.Error("Failed to remove thumbnail temp file", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
 					}
 				}()
 
@@ -267,10 +270,10 @@ func (r *simpleCrawler) walk(id int, ctx context.Context) {
 				}, item.Version)
 
 				if err != nil {
-					tlog.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
 					r.newErrorResult()
 				} else {
-					tlog.Info("Saved thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId)
+					r.log.Info("Saved thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId)
 					r.newSuccessResult()
 				}
 			}()
@@ -278,5 +281,5 @@ func (r *simpleCrawler) walk(id int, ctx context.Context) {
 		r.broadcastStatus()
 	}
 
-	tlog.Info("Walker finished", "walkerId", id)
+	r.log.Info("Walker finished", "walkerId", id)
 }
