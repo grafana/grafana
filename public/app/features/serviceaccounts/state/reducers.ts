@@ -11,6 +11,7 @@ export const initialState: ServiceAccountsState = {
 
 export const initialStateProfile: ServiceAccountProfileState = {
   serviceAccount: {} as ServiceAccountDTO,
+  isLoading: true,
   tokens: [] as ApiKey[],
 };
 
@@ -19,10 +20,10 @@ export const serviceAccountProfileSlice = createSlice({
   initialState: initialStateProfile,
   reducers: {
     serviceAccountLoaded: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountProfileState => {
-      return { ...state, serviceAccount: action.payload };
+      return { ...state, serviceAccount: action.payload, isLoading: false };
     },
     serviceAccountTokensLoaded: (state, action: PayloadAction<ApiKey[]>): ServiceAccountProfileState => {
-      return { ...state, tokens: action.payload };
+      return { ...state, tokens: action.payload, isLoading: false };
     },
   },
 });

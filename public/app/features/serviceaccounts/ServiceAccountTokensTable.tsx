@@ -1,23 +1,22 @@
 import React, { FC } from 'react';
-import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+import { DeleteButton, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 
 import { ApiKey } from '../../types';
 import { css } from '@emotion/css';
 
 interface Props {
-  apiKeys: ApiKey[];
+  tokens: ApiKey[];
   timeZone: TimeZone;
-  onDelete: (apiKey: ApiKey) => void;
+  onDelete: (token: ApiKey) => void;
 }
 
-export const ServiceAccountTokensTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
+export const ServiceAccountTokensTable: FC<Props> = ({ tokens, timeZone, onDelete }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   return (
     <>
-      <h3 className="page-heading">Tokens</h3>
       <table className="filter-table">
         <thead>
           <tr>
@@ -26,37 +25,35 @@ export const ServiceAccountTokensTable: FC<Props> = ({ apiKeys, timeZone, onDele
             <th style={{ width: '34px' }} />
           </tr>
         </thead>
-        {apiKeys.length > 0 ? (
-          <tbody>
-            {apiKeys.map((key) => {
-              const isExpired = Boolean(key.expiration && Date.now() > new Date(key.expiration).getTime());
-              return (
-                <tr key={key.id} className={styles.tableRow(isExpired)}>
-                  <td>{key.name}</td>
-                  <td>
-                    {formatDate(key.expiration, timeZone)}
-                    {isExpired && (
-                      <span className={styles.tooltipContainer}>
-                        <Tooltip content="This API key has expired.">
-                          <Icon name={'exclamation-triangle' as IconName} />
-                        </Tooltip>
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <DeleteButton aria-label="Delete API key" size="sm" onConfirm={() => onDelete(key)} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        ) : null}
+        <tbody>
+          {tokens.map((key) => {
+            const isExpired = !!(key.expiration && Date.now() > new Date(key.expiration).getTime());
+            return (
+              <tr key={key.id} className={styles.tableRow(isExpired)}>
+                <td>{key.name}</td>
+                <td>
+                  {formatDate(timeZone, key.expiration)}
+                  {isExpired && (
+                    <span className={styles.tooltipContainer}>
+                      <Tooltip content="This API key has expired.">
+                        <Icon name="exclamation-triangle" />
+                      </Tooltip>
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <DeleteButton aria-label="Delete API key" size="sm" onConfirm={() => onDelete(key)} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
     </>
   );
 };
 
-function formatDate(expiration: string | undefined, timeZone: TimeZone): string {
+function formatDate(timeZone: TimeZone, expiration?: string): string {
   if (!expiration) {
     return 'No expiration date';
   }

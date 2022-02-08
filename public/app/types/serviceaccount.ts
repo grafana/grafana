@@ -38,6 +38,7 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
 
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
+  isLoading: boolean;
   tokens: ApiKey[];
 }
 

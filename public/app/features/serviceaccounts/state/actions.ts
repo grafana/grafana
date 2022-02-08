@@ -19,17 +19,15 @@ export function loadServiceAccount(id: number): ThunkResult<void> {
 export function deleteServiceAccountToken(id: number): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const serviceAccount = getStore().serviceAccountProfile.serviceAccount;
-    getBackendSrv()
-      .delete(`${BASE_URL}/${serviceAccount.userId}/tokens/${id}`)
-      .then(() => dispatch(loadServiceAccountTokens()));
+    await getBackendSrv().delete(`${BASE_URL}/${serviceAccount.userId}/tokens/${id}`);
+    dispatch(loadServiceAccountTokens(serviceAccount.userId));
   };
 }
 
-export function loadServiceAccountTokens(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
+export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
+  return async (dispatch) => {
     try {
-      const serviceAccount = getStore().serviceAccountProfile.serviceAccount;
-      const response = await getBackendSrv().get(`${BASE_URL}/${serviceAccount.userId}/tokens`);
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}/tokens`);
       dispatch(serviceAccountTokensLoaded(response));
     } catch (error) {
       console.error(error);
