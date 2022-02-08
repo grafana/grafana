@@ -6389,6 +6389,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6396,14 +6404,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -6437,16 +6437,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -7600,9 +7600,6 @@
       "description": "Also acts as api DTO",
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/DataSource"
-        },
         "access": {
           "$ref": "#/definitions/DsAccess"
         },
@@ -8444,9 +8441,6 @@
     "CreateAlertNotificationCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/AlertNotification"
-        },
         "disableResolveMessage": {
           "type": "boolean",
           "x-go-name": "DisableResolveMessage"
@@ -8532,9 +8526,6 @@
     "CreateFolderCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/Folder"
-        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
@@ -8755,70 +8746,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/licensing"
-    },
-    "Dashboard": {
-      "description": "Dashboard model",
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "CreatedBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Data": {
-          "$ref": "#/definitions/Json"
-        },
-        "FolderId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "GnetId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "HasAcl": {
-          "type": "boolean"
-        },
-        "Id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "IsFolder": {
-          "type": "boolean"
-        },
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PluginId": {
-          "type": "string"
-        },
-        "Slug": {
-          "type": "string"
-        },
-        "Title": {
-          "type": "string"
-        },
-        "Uid": {
-          "type": "string"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "UpdatedBy": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "DashboardAclInfoDTO": {
       "type": "object",
@@ -10952,9 +10879,6 @@
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/Dashboard"
-        },
         "UpdatedAt": {
           "type": "string",
           "format": "date-time"
@@ -11545,9 +11469,6 @@
     "TrimDashboardCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/Dashboard"
-        },
         "dashboard": {
           "$ref": "#/definitions/Json"
         },
@@ -11572,9 +11493,6 @@
     "UpdateAlertNotificationCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/AlertNotification"
-        },
         "disableResolveMessage": {
           "type": "boolean",
           "x-go-name": "DisableResolveMessage"
@@ -11624,13 +11542,6 @@
     "UpdateAlertNotificationWithUidCommand": {
       "type": "object",
       "properties": {
-        "OrgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Result": {
-          "$ref": "#/definitions/AlertNotification"
-        },
         "disableResolveMessage": {
           "type": "boolean",
           "x-go-name": "DisableResolveMessage"
@@ -11721,9 +11632,6 @@
       "description": "Also acts as api DTO",
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/DataSource"
-        },
         "access": {
           "$ref": "#/definitions/DsAccess"
         },
@@ -11796,9 +11704,6 @@
     "UpdateFolderCommand": {
       "type": "object",
       "properties": {
-        "Result": {
-          "$ref": "#/definitions/Folder"
-        },
         "overwrite": {
           "type": "boolean",
           "x-go-name": "Overwrite"
@@ -13342,7 +13247,7 @@
       "name": "reports"
     },
     {
-      "description": "Grafana Alerting Alertmanager-like endpoints",
+      "description": "Grafana Alerting Alertmanager-compatible endpoints",
       "name": "alertmanager"
     },
     {
@@ -13354,7 +13259,7 @@
       "name": "testing"
     },
     {
-      "description": "Grafana Alerting Prometheus-like endpoints",
+      "description": "Grafana Alerting Prometheus-compatible endpoints",
       "name": "prometheus"
     }
   ]

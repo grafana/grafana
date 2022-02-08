@@ -92,7 +92,7 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 
-	Result *DataSource
+	Result *DataSource `json:"-"`
 }
 
 // Also acts as api DTO
@@ -119,7 +119,7 @@ type UpdateDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 
-	Result *DataSource
+	Result *DataSource `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
