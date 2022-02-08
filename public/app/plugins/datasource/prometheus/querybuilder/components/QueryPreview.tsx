@@ -4,7 +4,7 @@ import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { promQueryModeller } from '../PromQueryModeller';
 import { css, cx } from '@emotion/css';
-import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import Prism from 'prismjs';
 import { promqlGrammar } from '../../promql';
 
@@ -18,22 +18,23 @@ export function QueryPreview({ query }: Props) {
   const hightlighted = Prism.highlight(promQueryModeller.renderQuery(query), promqlGrammar, 'promql');
 
   return (
-    <EditorFieldGroup>
-      <EditorField label="Query text">
-        <div
-          className={cx(styles.editorField, 'prism-syntax-highlight')}
-          aria-label="selector"
-          dangerouslySetInnerHTML={{ __html: hightlighted }}
-        />
-      </EditorField>
-    </EditorFieldGroup>
+    <EditorRow>
+      <EditorFieldGroup>
+        <EditorField label="Preview">
+          <div
+            className={cx(styles.editorField, 'prism-syntax-highlight')}
+            aria-label="selector"
+            dangerouslySetInnerHTML={{ __html: hightlighted }}
+          />
+        </EditorField>
+      </EditorFieldGroup>
+    </EditorRow>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     editorField: css({
-      padding: theme.spacing(0.25, 1),
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
     }),

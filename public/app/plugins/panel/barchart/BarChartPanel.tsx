@@ -252,7 +252,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       width={width}
       height={height}
     >
-      {(config, alignedFrame) => {
+      {(config) => {
         if (oldConfig.current !== config) {
           oldConfig.current = setupConfig({
             config,
