@@ -52,7 +52,7 @@ describe('AlertActions', () => {
     await asyncAct(() => wrapper.find(dataTestId('silence-alert-button')).at(0).simulate('click'));
     wrapper.update();
     expect(alertsServiceToggle).toBeCalledTimes(1);
-    expect(alertsServiceToggle).toBeCalledWith({ alert_id: '4', silenced: 'FALSE' }, undefined);
+    expect(alertsServiceToggle).toBeCalledWith({ alert_ids: ['4'], silenced: 'FALSE' }, undefined);
   });
 
   it('calls the API to silence an active alert', async () => {
@@ -64,6 +64,6 @@ describe('AlertActions', () => {
     wrapper.update();
 
     expect(alertsServiceToggle).toBeCalledTimes(1);
-    expect(alertsServiceToggle).toBeCalledWith({ alert_id: '2', silenced: 'TRUE' }, undefined);
+    expect(alertsServiceToggle).toBeCalledWith({ alert_ids: ['2'], silenced: 'TRUE' }, undefined);
   });
 });
