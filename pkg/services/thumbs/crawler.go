@@ -226,7 +226,7 @@ func (r *simpleCrawler) walk(id int, ctx context.Context) {
 			break
 		}
 
-		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug)
+		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug, r.opts.Theme)
 		tlog.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 
 		res, err := r.renderService.Render(ctx, rendering.Opts{
