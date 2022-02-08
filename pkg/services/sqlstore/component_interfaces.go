@@ -42,7 +42,7 @@ func (s storeDS) Get(ctx context.Context, uid string) (datasource.Model, error) 
 	}
 
 	if err := s.ss.GetDataSource(ctx, cmd); err != nil {
-		return datasource.DataSource{}, err
+		return datasource.Model{}, err
 	}
 
 	return s.oldToNew(cmd.Result), nil
