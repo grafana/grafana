@@ -30,7 +30,7 @@ export const AlertsActions: FC<AlertsActionsProps> = ({ alert, getAlerts }) => {
     try {
       await AlertsService.toggle(
         {
-          alert_id: alert.alertId,
+          alert_ids: [alert.alertId],
           silenced: isSilenced ? 'FALSE' : 'TRUE',
         },
         generateToken(TOGGLE_ALERT_CANCEL_TOKEN)

@@ -2,9 +2,9 @@
 import { cx } from '@emotion/css';
 import { logger, Chip } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { Cell, Column, Row } from 'react-table';
+import { Cell, Column } from 'react-table';
 
-import { useStyles } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -18,7 +18,7 @@ import { AlertDetails } from './AlertDetails/AlertDetails';
 import { ALERT_RULE_TEMPLATES_TABLE_ID, GET_ALERTS_CANCEL_TOKEN } from './Alerts.constants';
 import { AlertsService } from './Alerts.service';
 import { getStyles } from './Alerts.styles';
-import { Alert, AlertStatus } from './Alerts.types';
+import { Alert, AlertStatus, AlertTogglePayload } from './Alerts.types';
 import { formatAlerts } from './Alerts.utils';
 import { AlertsActions } from './AlertsActions';
 
@@ -136,25 +136,53 @@ export const Alerts: FC = () => {
     []
   );
 
+  const handleSilenceAll = useCallback(async (silenced: AlertTogglePayload['silenced']) => {
+    await AlertsService.toggle({ silenced, alert_ids: [] });
+    getAlerts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     getAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <Table
-      showPagination
-      totalItems={totalItems}
-      totalPages={totalPages}
-      pageSize={pageSize}
-      pageIndex={pageIndex}
-      onPaginationChanged={handlePaginationChanged}
-      data={data}
-      columns={columns}
-      pendingRequest={pendingRequest}
-      emptyMessage={noData}
-      getCellProps={getCellProps}
-      renderExpandedRow={renderSelectedSubRow}
-    />
+    <>
+      <div className={style.actionsWrapper}>
+        <Button
+          size="md"
+          icon="bell-slash"
+          variant="link"
+          onClick={() => handleSilenceAll('TRUE')}
+          data-testid="alert-rule-template-add-modal-button"
+        >
+          {Messages.alerts.silenceAllAction}
+        </Button>
+        <Button
+          size="md"
+          icon="bell"
+          variant="link"
+          onClick={() => handleSilenceAll('FALSE')}
+          data-testid="alert-rule-template-add-modal-button"
+        >
+          {Messages.alerts.unsilenceAllAction}
+        </Button>
+      </div>
+      <Table
+        showPagination
+        totalItems={totalItems}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        onPaginationChanged={handlePaginationChanged}
+        data={data}
+        columns={columns}
+        pendingRequest={pendingRequest}
+        emptyMessage={noData}
+        getCellProps={getCellProps}
+        renderExpandedRow={renderSelectedSubRow}
+      />
+    </>
   );
 };

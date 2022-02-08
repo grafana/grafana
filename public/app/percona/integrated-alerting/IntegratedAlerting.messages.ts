@@ -7,6 +7,8 @@ export const Messages = {
     notificationChannels: 'Notification Channels',
   },
   alerts: {
+    silenceAllAction: 'Silence All',
+    unsilenceAllAction: 'Unsilence All',
     table: {
       noData: 'No alerts',
       columns: {

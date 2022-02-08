@@ -50,6 +50,6 @@ export interface AlertsListResponse {
 }
 
 export interface AlertTogglePayload {
-  alert_id: string;
+  alert_ids: string[];
   silenced: 'DO_NOT_CHANGE' | 'TRUE' | 'FALSE';
 }
