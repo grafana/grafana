@@ -175,7 +175,6 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	if len(query.Result) != 1 {
 		return nil, serviceaccounts.ErrServiceAccountNotFound
 	}
-	// TODO: make the serviceaccounts.ServiceAccountProfileDTO a model
 	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
 		Id:   query.Result[0].UserId,
 		Name: query.Result[0].Name,
