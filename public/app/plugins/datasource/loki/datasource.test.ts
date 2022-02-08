@@ -10,7 +10,6 @@ import {
   FieldType,
   LogRowModel,
   MutableDataFrame,
-  TimeSeries,
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, config } from '@grafana/runtime';
@@ -334,7 +333,7 @@ describe('LokiDatasource', () => {
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should return series data for metrics range queries', async () => {
+    it('should return dataframe data for metrics range queries', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: metricsQuery, refId: 'B', range: true }],
@@ -345,11 +344,19 @@ describe('LokiDatasource', () => {
 
       await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
-        const timeSeries = result.data[0] as TimeSeries;
+        const frame = result.data[0] as DataFrame;
 
-        expect(timeSeries.meta?.preferredVisualisationType).toBe('graph');
-        expect(timeSeries.refId).toBe('B');
-        expect(timeSeries.datapoints[0]).toEqual([1.1, 1605715380000]);
+        expect(frame.meta?.preferredVisualisationType).toBe('graph');
+        expect(frame.refId).toBe('B');
+        frame.fields.forEach((field) => {
+          const value = field.values.get(0);
+
+          if (field.type === FieldType.time) {
+            expect(value).toBe(1605715380000);
+          } else {
+            expect(value).toBe(1.1);
+          }
+        });
       });
     });
 

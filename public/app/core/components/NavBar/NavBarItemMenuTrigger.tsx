@@ -7,6 +7,7 @@ import { useMenuTriggerState } from '@react-stately/menu';
 import { useMenuTrigger } from '@react-aria/menu';
 import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useButton } from '@react-aria/button';
+import { useDialog } from '@react-aria/dialog';
 import { DismissButton, useOverlay } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
 
@@ -72,12 +73,14 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   // Get props for the button based on the trigger props from useMenuTrigger
   const { buttonProps } = useButton(menuTriggerProps, ref);
-
-  const buttonContent = (
-    <span className={styles.icon}>
-      {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-      {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
-    </span>
+  const Wrapper = item.highlightText ? NavFeatureHighlight : React.Fragment;
+  const itemContent = (
+    <Wrapper>
+      <span className={styles.icon}>
+        {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
+        {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
+      </span>
+    </Wrapper>
   );
   let element = (
     <button
@@ -88,7 +91,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       onClick={item?.onClick}
       aria-label={label}
     >
-      {item.highlightText ? <NavFeatureHighlight>{buttonContent}</NavFeatureHighlight> : buttonContent}
+      {itemContent}
     </button>
   );
 
@@ -105,10 +108,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           className={styles.element}
           aria-label={label}
         >
-          <span className={styles.icon}>
-            {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-            {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
-          </span>
+          {itemContent}
         </Link>
       ) : (
         <a
@@ -121,15 +121,13 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           className={styles.element}
           aria-label={label}
         >
-          <span className={styles.icon}>
-            {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-            {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
-          </span>
+          {itemContent}
         </a>
       );
   }
 
   const overlayRef = React.useRef(null);
+  const { dialogProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
       onClose: () => state.close(),
@@ -155,7 +153,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           }}
         >
           <FocusScope restoreFocus>
-            <div {...overlayProps} ref={overlayRef}>
+            <div {...overlayProps} {...dialogProps} ref={overlayRef}>
               <DismissButton onDismiss={() => state.close()} />
               {menu}
               <DismissButton onDismiss={() => state.close()} />

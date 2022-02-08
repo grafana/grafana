@@ -1,13 +1,9 @@
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 export const useHistory = () => {
   return {
     push: ({ query }: any) => {
-      getLocationSrv().update({
-        partial: true,
-        replace: false,
-        query,
-      });
+      locationService.partial(query);
     },
   };
 };

@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
@@ -49,7 +49,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -66,7 +66,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
@@ -86,29 +86,24 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, dashSvc dashboards.FolderService) error {
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		resourceID := strconv.FormatInt(folderID, 10)
 		svc := hs.permissionServices.GetFolderService()
-		_, err := svc.SetUserPermission(c.Req.Context(), c.OrgId, c.UserId, resourceID, models.PERMISSION_ADMIN.String())
+
+		_, err := svc.SetPermissions(c.Req.Context(), c.OrgId, resourceID, []accesscontrol.SetResourcePermissionCommand{
+			{UserID: c.UserId, Permission: models.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(models.ROLE_ADMIN), Permission: models.PERMISSION_ADMIN.String()},
+			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
+		}...)
 		if err != nil {
 			return err
 		}
-		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_ADMIN), resourceID, models.PERMISSION_ADMIN.String())
-		if err != nil {
-			return err
-		}
-		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_EDITOR), resourceID, models.PERMISSION_EDIT.String())
-		if err != nil {
-			return err
-		}
-		_, err = svc.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, string(models.ROLE_VIEWER), resourceID, models.PERMISSION_VIEW.String())
-		if err != nil {
-			return err
-		}
+
 	} else if hs.Cfg.EditorsCanAdmin {
 		if err := dashSvc.MakeUserAdmin(c.Req.Context(), c.OrgId, c.UserId, folderID, true); err != nil {
 			return err
@@ -129,7 +124,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(c.Req.Context(), g, cmd.Result))
+	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -154,7 +149,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	})
 }
 
-func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func (hs *HTTPServer) toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -163,10 +158,10 @@ func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *mode
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
 	if folder.CreatedBy > 0 {
-		creator = getUserLogin(ctx, folder.CreatedBy)
+		creator = hs.getUserLogin(ctx, folder.CreatedBy)
 	}
 	if folder.UpdatedBy > 0 {
-		updater = getUserLogin(ctx, folder.UpdatedBy)
+		updater = hs.getUserLogin(ctx, folder.UpdatedBy)
 	}
 
 	return dtos.Folder{

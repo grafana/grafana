@@ -31,9 +31,11 @@ type Manager struct {
 
 	ruleStore     store.RuleStore
 	instanceStore store.InstanceStore
+	sqlStore      sqlstore.Store
 }
 
-func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL, ruleStore store.RuleStore,
+	instanceStore store.InstanceStore, sqlStore sqlstore.Store) *Manager {
 	manager := &Manager{
 		cache:         newCache(logger, metrics, externalURL),
 		quit:          make(chan struct{}),
@@ -42,6 +44,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		metrics:       metrics,
 		ruleStore:     ruleStore,
 		instanceStore: instanceStore,
+		sqlStore:      sqlStore,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -51,7 +54,7 @@ func (st *Manager) Close() {
 	st.quit <- struct{}{}
 }
 
-func (st *Manager) Warm() {
+func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
 	st.ResetCache()
 
@@ -66,7 +69,7 @@ func (st *Manager) Warm() {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
+		if err := st.ruleStore.GetOrgAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
@@ -262,7 +265,7 @@ func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, al
 			OrgId: alertRule.OrgID,
 		}
 
-		err = sqlstore.GetDashboard(ctx, query)
+		err = st.sqlStore.GetDashboard(ctx, query)
 		if err != nil {
 			st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
 			return

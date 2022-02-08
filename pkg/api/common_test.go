@@ -158,6 +158,7 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	sqlStore             sqlstore.Store
+	authInfoService      *mockAuthInfoService
 }
 
 func (sc *scenarioContext) exec() {
@@ -311,9 +312,10 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
-		Cfg:      cfg,
-		Features: features,
-		Bus:      bus.GetBus(),
+		Cfg:           cfg,
+		Features:      features,
+		Bus:           bus.GetBus(),
+		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 }
 

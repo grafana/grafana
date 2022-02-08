@@ -95,7 +95,7 @@ func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, 
 	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
 	return nil, nil
 }
-func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64) ([]*models.OrgUserDTO, error) {
+func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64, serviceAccountID int64) ([]*models.OrgUserDTO, error) {
 	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
 	return nil, nil
 }
