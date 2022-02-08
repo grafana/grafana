@@ -133,7 +133,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               menuShouldPortal
               loadOptions={fetchServiceNameOptions}
               isLoading={isLoadingService.optionType === 'serviceName' && isLoadingService.loading}
-              value={asyncServiceNameValue.value} //{(query.serviceName as SelectableValue) || asyncServiceNameValue}
+              value={asyncServiceNameValue.value}
               onChange={(v) => {
                 setAsyncServiceNameValue({
                   value: v,
