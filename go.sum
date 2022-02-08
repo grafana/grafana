@@ -1242,6 +1242,8 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5J
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana-aws-sdk v0.9.1 h1:jMZlsLsWnqOwLt2UNcLUsJ2z6289hLYlscK35QgS158=
 github.com/grafana/grafana-aws-sdk v0.9.1/go.mod h1:6KaQ8uUD4KpXr/b7bAC7zbfSXTVOiTk4XhIrwkGWn4w=
+github.com/grafana/grafana-aws-sdk v0.10.0 h1:q7+mJtT/vsU5InDN57yM+BJ2z1kJDf1W4WwWPEZ0Cxw=
+github.com/grafana/grafana-aws-sdk v0.10.0/go.mod h1:vFIOHEnY1u5nY0/tge1IHQjPuG6DRKr2ISf/HikUdjE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
