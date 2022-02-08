@@ -263,7 +263,8 @@ func TestPluginProxy(t *testing.T) {
 				Resp: responseWriter,
 			},
 		}
-		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, secretsService)
+		store := mockstore.NewSQLStoreMock()
+		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, store, secretsService)
 		proxy.ServeHTTP(ctx.Resp, ctx.Req)
 
 		for {
