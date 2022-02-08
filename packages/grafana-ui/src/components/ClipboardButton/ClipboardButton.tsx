@@ -31,9 +31,14 @@ export function ClipboardButton({ onClipboardCopy, onClipboardError, children, g
       text: copiedText,
       trigger: buttonRef.current!,
     };
-    navigator.clipboard
-      .writeText(copiedText)
-      .then(() => (onClipboardCopy?.(dummyEvent), () => onClipboardError?.(dummyEvent)));
+
+    if (navigator.clipboard) {
+      navigator.clipboard
+        .writeText(copiedText)
+        .then(() => (onClipboardCopy?.(dummyEvent), () => onClipboardError?.(dummyEvent)));
+    } else {
+      console.error("Clipboard API not accessible. Please make sure you're running over HTTPS or on localhost");
+    }
   }, [getText, onClipboardCopy, onClipboardError]);
 
   return (
