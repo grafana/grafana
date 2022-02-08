@@ -7,6 +7,7 @@ import (
 
 type RuleService interface {
 	GetRule(orgID int64, uid string) (models.AlertRule, error)
+	GetRules(orgID int64) ([]*models.AlertRule, error)
 	CreateRule(models.AlertRule) error
 	UpdateRule(models.AlertRule) error
 	DeleteRule(orgID int64, uid string) error
@@ -33,6 +34,18 @@ func (service *GrafanaRuleService) GetRule(orgID int64, uid string) (models.Aler
 	}
 
 	return *query.Result, nil
+}
+
+func (service *GrafanaRuleService) GetRules(orgID int64) ([]*models.AlertRule, error) {
+	query := &models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+	err := service.store.GetOrgAlertRules(query)
+	if err != nil {
+		return []*models.AlertRule{}, err
+	}
+
+	return query.Result, nil
 }
 
 func (service *GrafanaRuleService) CreateRule(rule models.AlertRule) error {

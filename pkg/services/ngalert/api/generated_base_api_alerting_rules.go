@@ -18,6 +18,7 @@ import (
 
 type RuleRouter interface {
 	RouteGetRule(*models.ReqContext) response.Response
+	RouteGetRules(*models.ReqContext) response.Response
 	RouteCreateRule(*models.ReqContext) response.Response
 	RouteUpdateRule(*models.ReqContext) response.Response
 	RouteDeleteRule(*models.ReqContext) response.Response
@@ -31,6 +32,15 @@ func (api *API) RegisterRuleEndpoints(router RuleRouter, m *metrics.API) {
 				http.MethodGet,
 				"/api/alerting/rules/{uid}",
 				router.RouteGetRule,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/alerting/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alerting/rules",
+				router.RouteGetRules,
 				m,
 			),
 		)

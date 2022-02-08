@@ -26,6 +26,17 @@ func (s *RuleServer) RouteGetRule(c *api.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, alertRule)
 }
 
+func (s *RuleServer) RouteGetRules(c *api.ReqContext) response.Response {
+	if !c.HasUserRole(api.ROLE_VIEWER) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	alertRules, err := s.service.GetRules(c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, alertRules)
+}
+
 func (s *RuleServer) RouteCreateRule(c *api.ReqContext) response.Response {
 	if !c.HasUserRole(api.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
