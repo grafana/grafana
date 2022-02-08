@@ -1,6 +1,6 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { PopoverContentProps } from '../Tooltip/Tooltip';
+import { PopoverContentProps } from '../Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { Themeable2 } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';

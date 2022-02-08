@@ -3,7 +3,7 @@ import { cx, css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '../../themes';
 import { InlineLabel } from './InlineLabel';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip';
 import { FieldProps } from './Field';
 import { getChildId } from '../../utils/reactUtils';
 import { FieldValidationMessage } from './FieldValidationMessage';
