@@ -58,14 +58,6 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
       submittedValues.routing = '';
     }
 
-    if (!submittedValues.useWebhookTls) {
-      submittedValues.ca = undefined;
-      submittedValues.cert = undefined;
-      submittedValues.key = undefined;
-      submittedValues.serverName = undefined;
-      submittedValues.skipVerify = undefined;
-    }
-
     try {
       if (notificationChannel) {
         await NotificationChannelService.change(notificationChannel.channelId as string, submittedValues);

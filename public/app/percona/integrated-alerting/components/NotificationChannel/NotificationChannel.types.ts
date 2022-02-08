@@ -145,7 +145,6 @@ export interface NotificationChannelRenderProps {
   service?: string;
   channel?: string;
   webHookType?: WebHookAuthType;
-  useWebhookTls?: boolean;
   url?: string;
   username?: string;
   password?: string;

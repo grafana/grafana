@@ -13,7 +13,7 @@ export const Messages = {
     token: 'Bearer Token',
     noAuth: 'No Authorization',
     url: 'URL',
-    useTls: 'Use TLS',
+    tlsSettings: 'TLS Settings',
     ca: 'CA Certificate',
     certificate: 'Certificate',
     certKey: 'Certificate Key',

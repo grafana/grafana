@@ -101,7 +101,7 @@ export const TO_API = {
           insecure_skip_verify: !!values.skipVerify,
         },
       },
-      max_alerts: values.maxAlerts,
+      max_alerts: parseInt((values.maxAlerts || '') as string, 10) || 0,
       send_resolved: !!values.sendResolved,
     },
   }),
