@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -52,7 +51,6 @@ type RuleStore interface {
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
-	UpdateRuleGroup(ctx context.Context, cmd UpdateRuleGroupCmd) error
 	InTransaction(ctx context.Context, f func(ctx context.Context) error) error
 }
 
@@ -509,100 +507,6 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	}
 
 	return nil
-}
-
-// UpdateRuleGroup creates new rules and updates and/or deletes existing rules
-func (st DBstore) UpdateRuleGroup(ctx context.Context, cmd UpdateRuleGroupCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		ruleGroup := cmd.RuleGroupConfig.Name
-		q := &ngmodels.ListRuleGroupAlertRulesQuery{
-			OrgID:        cmd.OrgID,
-			NamespaceUID: cmd.NamespaceUID,
-			RuleGroup:    ruleGroup,
-		}
-		if err := st.GetRuleGroupAlertRules(ctx, q); err != nil {
-			return err
-		}
-		existingGroupRules := q.Result
-
-		existingGroupRulesUIDs := make(map[string]ngmodels.AlertRule, len(existingGroupRules))
-		for _, r := range existingGroupRules {
-			existingGroupRulesUIDs[r.UID] = *r
-		}
-
-		upsertRules := make([]UpsertRule, 0)
-		for _, r := range cmd.RuleGroupConfig.Rules {
-			if r.GrafanaManagedAlert == nil {
-				continue
-			}
-
-			newAlertRule := ngmodels.AlertRule{
-				OrgID:           cmd.OrgID,
-				Title:           r.GrafanaManagedAlert.Title,
-				Condition:       r.GrafanaManagedAlert.Condition,
-				Data:            r.GrafanaManagedAlert.Data,
-				UID:             r.GrafanaManagedAlert.UID,
-				IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-				NamespaceUID:    cmd.NamespaceUID,
-				RuleGroup:       ruleGroup,
-				NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
-				ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-			}
-
-			if r.ApiRuleNode != nil {
-				newAlertRule.For = time.Duration(r.ApiRuleNode.For)
-				newAlertRule.Annotations = r.ApiRuleNode.Annotations
-				newAlertRule.Labels = r.ApiRuleNode.Labels
-			}
-
-			if s := newAlertRule.Annotations[ngmodels.DashboardUIDAnnotation]; s != "" {
-				newAlertRule.DashboardUID = &s
-			}
-
-			if s := newAlertRule.Annotations[ngmodels.PanelIDAnnotation]; s != "" {
-				panelID, err := strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
-				}
-				newAlertRule.PanelID = &panelID
-			}
-
-			upsertRule := UpsertRule{
-				New: newAlertRule,
-			}
-
-			if existingGroupRule, ok := existingGroupRulesUIDs[r.GrafanaManagedAlert.UID]; ok {
-				upsertRule.Existing = &existingGroupRule
-				// remove the rule from existingGroupRulesUIDs
-				delete(existingGroupRulesUIDs, r.GrafanaManagedAlert.UID)
-			}
-			upsertRules = append(upsertRules, upsertRule)
-		}
-
-		if err := st.UpsertAlertRules(ctx, upsertRules); err != nil {
-			if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-				return ngmodels.ErrAlertRuleUniqueConstraintViolation
-			}
-			return err
-		}
-
-		// delete instances for rules that will not be removed
-		for _, rule := range existingGroupRules {
-			if _, ok := existingGroupRulesUIDs[rule.UID]; !ok {
-				if err := st.DeleteAlertInstancesByRuleUID(ctx, cmd.OrgID, rule.UID); err != nil {
-					return err
-				}
-			}
-		}
-
-		// delete the remaining rules
-		for ruleUID := range existingGroupRulesUIDs {
-			if err := st.DeleteAlertRuleByUID(ctx, cmd.OrgID, ruleUID); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }
 
 func (st DBstore) GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error {
