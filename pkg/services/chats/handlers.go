@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/services/annotations"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -100,10 +102,16 @@ func getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashb
 func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd SendMessageCmd) (*MessageDto, error) {
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
+		if !s.features.IsEnabled(featuremgmt.FlagLiveOrgDiscussions) {
+			return nil, ErrPermissionDenied
+		}
 		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
 			return nil, ErrPermissionDenied
 		}
 	case ContentTypeDashboard:
+		if !s.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
+			return nil, ErrPermissionDenied
+		}
 		dash, err := getDashboardByUid(ctx, orgId, cmd.ObjectId)
 		if err != nil {
 			return nil, err
@@ -113,6 +121,9 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *mo
 			return nil, ErrPermissionDenied
 		}
 	case ContentTypeAnnotation:
+		if !s.features.IsEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
+			return nil, ErrPermissionDenied
+		}
 		repo := annotations.GetRepository()
 		annotationID, err := strconv.ParseInt(cmd.ObjectId, 10, 64)
 		if err != nil {
@@ -166,10 +177,16 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *mo
 func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetMessagesCmd) ([]*MessageDto, error) {
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
+		if !s.features.IsEnabled(featuremgmt.FlagLiveOrgDiscussions) {
+			return nil, ErrPermissionDenied
+		}
 		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
 			return nil, ErrPermissionDenied
 		}
 	case ContentTypeDashboard:
+		if !s.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
+			return nil, ErrPermissionDenied
+		}
 		dash, err := getDashboardByUid(ctx, orgId, cmd.ObjectId)
 		if err != nil {
 			return nil, err
@@ -179,6 +196,9 @@ func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *mo
 			return nil, ErrPermissionDenied
 		}
 	case ContentTypeAnnotation:
+		if !s.features.IsEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
+			return nil, ErrPermissionDenied
+		}
 		repo := annotations.GetRepository()
 		annotationID, err := strconv.ParseInt(cmd.ObjectId, 10, 64)
 		if err != nil {

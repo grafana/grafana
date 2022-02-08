@@ -19,6 +19,7 @@ import { DashboardChatModalProxy } from 'app/features/dashboard/components/DashC
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import config from 'app/core/config';
 
 const mapDispatchToProps = {
   updateTimeZoneForSession,
@@ -215,12 +216,12 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    if (dashboard.uid) {
+    if (dashboard.uid && config.featureToggles.liveDashboardDiscussions) {
       buttons.push(
         <ModalsController key="button-chat">
           {({ showModal, hideModal }) => (
             <ToolbarButton
-              tooltip="Show chat"
+              tooltip="Show dashboard discussions"
               icon="chat"
               onClick={() => {
                 showModal(DashboardChatModalProxy, {

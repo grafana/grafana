@@ -13,7 +13,7 @@ import (
 
 func createSqlStorage(t *testing.T) Storage {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{Features: []string{featuremgmt.FlagLiveChats}})
+	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{Features: []string{featuremgmt.FlagLiveDiscussions}})
 	return &sqlStorage{
 		sql: sqlStore,
 	}

@@ -38,13 +38,6 @@ export interface ChatState {
 }
 
 export class Chat extends PureComponent<ChatProps, ChatState> {
-  // dataSourceSrv = getDataSourceSrv();
-
-  // static defaultProps: Partial<DataSourcePickerProps> = {
-  //   autoFocus: false,
-  //   openMenuOnFocus: false,
-  //   placeholder: 'Select data source',
-  // };
   subscription?: Unsubscribable;
   chatInput?: any;
   chatContainer?: any;
@@ -63,7 +56,6 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
       objectId: this.props.objectId,
       contentTypeId: this.props.contentTypeId,
     });
-    console.log(resp);
     this.setState({
       messages: resp.chatMessages,
     });
@@ -160,10 +152,8 @@ export class Chat extends PureComponent<ChatProps, ChatState> {
 
     const c = this.getLiveChannel();
     if (c) {
-      console.log('SUBSCRIBE', c);
       this.subscription = c.subscribe({
         next: (msg) => {
-          console.log('Got msg', msg);
           if (isLiveChannelMessageEvent(msg)) {
             const { messageCreated } = msg.message;
             if (messageCreated) {

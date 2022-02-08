@@ -368,6 +368,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
+
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}

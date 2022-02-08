@@ -3,6 +3,8 @@ package chats
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -10,13 +12,14 @@ import (
 )
 
 type Service struct {
-	cfg     *setting.Cfg
-	bus     bus.Bus
-	live    *live.GrafanaLive
-	storage Storage
+	cfg      *setting.Cfg
+	bus      bus.Bus
+	live     *live.GrafanaLive
+	storage  Storage
+	features *featuremgmt.FeatureManager
 }
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, live *live.GrafanaLive) *Service {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, live *live.GrafanaLive, features *featuremgmt.FeatureManager) *Service {
 	s := &Service{
 		cfg:  cfg,
 		bus:  bus,
@@ -24,6 +27,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, liv
 		storage: &sqlStorage{
 			sql: store,
 		},
+		features: features,
 	}
 	return s
 }

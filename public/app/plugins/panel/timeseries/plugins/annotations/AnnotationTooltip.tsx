@@ -4,6 +4,7 @@ import { GrafanaTheme2, textUtil } from '@grafana/data';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { css } from '@emotion/css';
 import { Chat } from '../../../../../../../packages/grafana-runtime';
+import config from 'app/core/config';
 
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
@@ -83,9 +84,11 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
             ))}
           </HorizontalGroup>
         </>
-        <div className={styles.chatWrapper}>
-          <Chat contentTypeId={3} objectId={annotation.id.toString()} />
-        </div>
+        {config.featureToggles.liveAnnotationDiscussions && (
+          <div className={styles.chatWrapper}>
+            <Chat contentTypeId={3} objectId={annotation.id.toString()} />
+          </div>
+        )}
       </div>
     </div>
   );

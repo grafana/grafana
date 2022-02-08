@@ -38,5 +38,8 @@ export interface FeatureToggles {
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
   featureHighlights?: boolean;
-  liveChats?: boolean;
+  liveDiscussions?: boolean;
+  liveOrgDiscussions?: boolean;
+  liveDashboardDiscussions?: boolean;
+  liveAnnotationDiscussions?: boolean;
 }
