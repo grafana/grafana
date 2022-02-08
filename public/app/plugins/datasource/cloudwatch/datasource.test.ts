@@ -225,6 +225,32 @@ describe('datasource', () => {
         expect(response.data.length).toEqual(2);
       });
     });
+
+    it('adds fields.config.interval', async () => {
+      const { datasource } = setupMockedDataSource({
+        data: {
+          results: {
+            a: {
+              refId: 'a',
+              type: 'time',
+              series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 60 } } }],
+            },
+          },
+        },
+      });
+
+      const observable = datasource.performTimeSeriesQuery(
+        {
+          queries: [{ datasourceId: 1, refId: 'a' }],
+        } as any,
+        { from: dateTime(), to: dateTime() } as any
+      );
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const response = received[0];
+        expect(response.data[0].fields[0].config.interval).toEqual(60000);
+      });
+    });
   });
 
   describe('describeLogGroup', () => {
