@@ -33,6 +33,11 @@ type ServiceAccountsAPI struct {
 	apiKeyStore    APIKeyStore
 }
 
+type serviceAccountIdDTO struct {
+	Id      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service serviceaccounts.Service,
@@ -63,7 +68,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Get("/upgrade", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.UpgradeServiceAccounts))
+		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
 		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
@@ -88,11 +93,11 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
-	result := models.UserIdDTO{
-		Message: "Service account created",
+	sa := &serviceAccountIdDTO{
 		Id:      user.Id,
+		Message: "Service account created",
 	}
-	return response.JSON(http.StatusCreated, result)
+	return response.JSON(http.StatusCreated, sa)
 }
 
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
