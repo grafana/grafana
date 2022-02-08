@@ -57,6 +57,7 @@ type crawlerScheduleOptions struct {
 	maxCrawlDuration time.Duration
 	crawlerMode      CrawlerMode
 	thumbnailKind    models.ThumbnailKind
+	themes           []models.Theme
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) Service {
@@ -78,6 +79,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 			maxCrawlDuration: time.Hour,
 			crawlerMode:      CrawlerModeThumbs,
 			thumbnailKind:    models.ThumbnailKindDefault,
+			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
 		},
 	}
 }
@@ -327,11 +329,13 @@ func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models
 	// wait for at least a minute after the last completed run
 	interval := time.Minute
 	err := hs.lockService.LockAndExecute(crawlerCtx, hs.crawlLockServiceActionName, interval, func(ctx context.Context) {
-		hs.renderer.Run(crawlerCtx, authOpts, mode, theme, kind)
+		if err := hs.renderer.Run(crawlerCtx, authOpts, mode, theme, kind); err != nil {
+			tlog.Error("On demand crawl error", "mode", mode, "theme", theme, "kind", kind, "userId", authOpts.UserID, "orgId", authOpts.OrgID, "orgRole", authOpts.OrgRole)
+		}
 	})
 
 	if err != nil {
-		tlog.Error("Error when on demand crawl", "err", err)
+		tlog.Error("On demand crawl lock error", "err", err)
 	}
 }
 
@@ -339,22 +343,23 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxCrawlDuration)
 	defer cancel()
 
-	err := hs.lockService.LockAndExecute(crawlerCtx, hs.crawlLockServiceActionName, hs.scheduleOptions.crawlInterval, func(ctx context.Context) {
-		hs.renderer.Run(crawlerCtx, rendering.AuthOpts{
-			OrgID:   0,
-			UserID:  0,
-			OrgRole: models.ROLE_ADMIN,
-		}, hs.scheduleOptions.crawlerMode, models.ThemeDark, models.ThumbnailKindDefault)
+	authOpts := rendering.AuthOpts{
+		OrgID:   0,
+		UserID:  0,
+		OrgRole: models.ROLE_ADMIN,
+	}
 
-		hs.renderer.Run(crawlerCtx, rendering.AuthOpts{
-			OrgID:   0,
-			UserID:  0,
-			OrgRole: models.ROLE_ADMIN,
-		}, hs.scheduleOptions.crawlerMode, models.ThemeLight, models.ThumbnailKindDefault)
+	err := hs.lockService.LockAndExecute(crawlerCtx, hs.crawlLockServiceActionName, hs.scheduleOptions.crawlInterval, func(ctx context.Context) {
+		for _, theme := range hs.scheduleOptions.themes {
+
+			if err := hs.renderer.Run(crawlerCtx, authOpts, hs.scheduleOptions.crawlerMode, theme, hs.scheduleOptions.thumbnailKind); err != nil {
+				tlog.Error("Scheduled crawl error", "theme", theme, "kind", hs.scheduleOptions.thumbnailKind, "err", err)
+			}
+		}
 	})
 
 	if err != nil {
-		tlog.Error("Error scheduling a run", "err", err)
+		tlog.Error("Scheduled crawl lock error", "err", err)
 	}
 }
 
