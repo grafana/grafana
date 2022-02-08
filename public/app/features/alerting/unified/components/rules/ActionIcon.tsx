@@ -39,7 +39,7 @@ export const ActionIcon: FC<Props> = ({
   );
 
   return (
-    <Tooltip content={tooltip} placement={tooltipPlacement} interactive>
+    <Tooltip content={tooltip} placement={tooltipPlacement}>
       {to ? (
         <GoTo url={to} label={ariaLabel} target={target}>
           {iconEl}
