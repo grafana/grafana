@@ -874,10 +874,11 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "Alerting",
+      "Error"
      ],
      "type": "string",
-     "x-go-enum-desc": "Alerting AlertingErrState",
+     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
      "x-go-name": "ExecErrState"
     },
     "id": {
@@ -1835,10 +1836,11 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "Alerting",
+      "Error"
      ],
      "type": "string",
-     "x-go-enum-desc": "Alerting AlertingErrState",
+     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
      "x-go-name": "ExecErrState"
     },
     "no_data_state": {
