@@ -1,14 +1,13 @@
 import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { ServiceAccountDTO } from 'app/types';
 import { serviceAccountLoaded, serviceAccountsLoaded, serviceAccountTokensLoaded } from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
 
-export function loadServiceAccount(id: number): ThunkResult<void> {
+export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const response = await getBackendSrv().get(`${BASE_URL}/${id}`);
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`);
       dispatch(serviceAccountLoaded(response));
     } catch (error) {
       console.error(error);
@@ -45,10 +44,10 @@ export function loadServiceAccounts(): ThunkResult<void> {
   };
 }
 
-export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
+export function updateServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: implement on backend
-    await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.userId}`, {});
+    await getBackendSrv().patch(`${BASE_URL}/${saID}`, {});
     dispatch(loadServiceAccounts());
   };
 }
