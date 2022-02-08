@@ -11,6 +11,8 @@ seqs: [
                 // TODO these are all currently marked as required, but it's
                 // likely that some/many/most of them aren't. This needs careful
                 // attention!
+                uid: string
+                //orgId: int
                 name: string
                 type: string
                 typeLogoUrl: string

@@ -16,9 +16,11 @@ type DatasourceReconciler struct {
 }
 
 type Store interface {
-	Get(string) (CR, error)
-	Upsert(string, CR) error
-	Delete(string) error
+	Get(ctx context.Context, uid string) (Model, error)
+	//Upsert(context.Context, string, DataSource) error
+	Insert(ctx context.Context, ds Model) error
+	Update(ctx context.Context, ds Model) error
+	Delete(ctx context.Context, uid string) error
 }
 
 // We could also accept Bridge instead
@@ -47,7 +49,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {
-		return reconcile.Result{}, d.sto.Delete(req.Name)
+		return reconcile.Result{}, d.sto.Delete(ctx, req.Name)
 	}
 
 	if err != nil {
@@ -57,7 +59,8 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}, err
 	}
 
-	if err := d.sto.Upsert(req.Name, ds); err != nil {
+	// TODO: figure out insert vs Update
+	if err := d.sto.Insert(ctx, ds.Spec); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,
