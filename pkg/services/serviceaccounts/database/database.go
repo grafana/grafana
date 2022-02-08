@@ -40,7 +40,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa 
 	}
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:     newuser.Id,
-		Email:  "",
 		Name:   newuser.Name,
 		Login:  newuser.Login,
 		OrgId:  newuser.OrgId,

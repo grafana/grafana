@@ -29,7 +29,6 @@ type CreateServiceaccountForm struct {
 
 type ServiceAccountDTO struct {
 	Id     int64  `json:"id"`
-	Email  string `json:"email"`
 	Name   string `json:"name"`
 	Login  string `json:"login"`
 	OrgId  int64  `json:"orgId"`
