@@ -54,7 +54,7 @@ func (st *Manager) Close() {
 	st.quit <- struct{}{}
 }
 
-func (st *Manager) Warm() {
+func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
 	st.ResetCache()
 
@@ -69,7 +69,7 @@ func (st *Manager) Warm() {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
+		if err := st.ruleStore.GetOrgAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 

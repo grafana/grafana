@@ -73,12 +73,14 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   // Get props for the button based on the trigger props from useMenuTrigger
   const { buttonProps } = useButton(menuTriggerProps, ref);
-
-  const buttonContent = (
-    <span className={styles.icon}>
-      {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-      {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
-    </span>
+  const Wrapper = item.highlightText ? NavFeatureHighlight : React.Fragment;
+  const itemContent = (
+    <Wrapper>
+      <span className={styles.icon}>
+        {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
+        {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
+      </span>
+    </Wrapper>
   );
   let element = (
     <button
@@ -89,7 +91,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       onClick={item?.onClick}
       aria-label={label}
     >
-      {item.highlightText ? <NavFeatureHighlight>{buttonContent}</NavFeatureHighlight> : buttonContent}
+      {itemContent}
     </button>
   );
 
@@ -106,10 +108,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           className={styles.element}
           aria-label={label}
         >
-          <span className={styles.icon}>
-            {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-            {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
-          </span>
+          {itemContent}
         </Link>
       ) : (
         <a
@@ -122,10 +121,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           className={styles.element}
           aria-label={label}
         >
-          <span className={styles.icon}>
-            {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-            {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
-          </span>
+          {itemContent}
         </a>
       );
   }

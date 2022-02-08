@@ -70,7 +70,7 @@ type fakeRuleStore struct {
 }
 
 // putRule puts the rule in the rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *fakeRuleStore) putRule(r *models.AlertRule) {
+func (f *fakeRuleStore) putRule(_ context.Context, r *models.AlertRule) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
@@ -94,15 +94,17 @@ func (f *fakeRuleStore) getRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *fakeRuleStore) DeleteAlertRuleByUID(_ int64, _ string) error { return nil }
-func (f *fakeRuleStore) DeleteNamespaceAlertRules(_ int64, _ string) ([]string, error) {
+func (f *fakeRuleStore) DeleteAlertRuleByUID(_ context.Context, _ int64, _ string) error { return nil }
+func (f *fakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
 	return []string{}, nil
 }
-func (f *fakeRuleStore) DeleteRuleGroupAlertRules(_ int64, _ string, _ string) ([]string, error) {
+func (f *fakeRuleStore) DeleteRuleGroupAlertRules(_ context.Context, _ int64, _ string, _ string) ([]string, error) {
 	return []string{}, nil
 }
-func (f *fakeRuleStore) DeleteAlertInstancesByRuleUID(_ int64, _ string) error { return nil }
-func (f *fakeRuleStore) GetAlertRuleByUID(q *models.GetAlertRuleByUIDQuery) error {
+func (f *fakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
+	return nil
+}
+func (f *fakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
@@ -129,7 +131,7 @@ func (f *fakeRuleStore) GetAlertRuleByUID(q *models.GetAlertRuleByUIDQuery) erro
 }
 
 // For now, we're not implementing namespace filtering.
-func (f *fakeRuleStore) GetAlertRulesForScheduling(q *models.ListAlertRulesQuery) error {
+func (f *fakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
@@ -146,19 +148,19 @@ func (f *fakeRuleStore) GetAlertRulesForScheduling(q *models.ListAlertRulesQuery
 
 	return nil
 }
-func (f *fakeRuleStore) GetOrgAlertRules(q *models.ListAlertRulesQuery) error {
+func (f *fakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
 	return nil
 }
-func (f *fakeRuleStore) GetNamespaceAlertRules(q *models.ListNamespaceAlertRulesQuery) error {
+func (f *fakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
 	return nil
 }
-func (f *fakeRuleStore) GetRuleGroupAlertRules(q *models.ListRuleGroupAlertRulesQuery) error {
+func (f *fakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.ListRuleGroupAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
@@ -196,7 +198,7 @@ func (f *fakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.Sig
 func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
 }
-func (f *fakeRuleStore) GetOrgRuleGroups(q *models.ListOrgRuleGroupsQuery) error {
+func (f *fakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, *q)
@@ -206,7 +208,7 @@ func (f *fakeRuleStore) GetOrgRuleGroups(q *models.ListOrgRuleGroupsQuery) error
 	return nil
 }
 
-func (f *fakeRuleStore) UpsertAlertRules(q []store.UpsertRule) error {
+func (f *fakeRuleStore) UpsertAlertRules(_ context.Context, q []store.UpsertRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, q)
@@ -215,7 +217,7 @@ func (f *fakeRuleStore) UpsertAlertRules(q []store.UpsertRule) error {
 	}
 	return nil
 }
-func (f *fakeRuleStore) UpdateRuleGroup(cmd store.UpdateRuleGroupCmd) error {
+func (f *fakeRuleStore) UpdateRuleGroup(_ context.Context, cmd store.UpdateRuleGroupCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = append(f.recordedOps, cmd)

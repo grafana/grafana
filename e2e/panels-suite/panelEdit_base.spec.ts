@@ -7,7 +7,7 @@ e2e.scenario({
   itName: 'Tests various Panel edit scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: true,
+  skipScenario: false,
   scenario: () => {
     e2e().intercept('/api/ds/query').as('query');
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
@@ -46,11 +46,16 @@ e2e.scenario({
         //  Can change to Alerts tab (graph panel is the default vis so the alerts tab should be rendered)
         e2e.components.Tab.title('Alert').should('be.visible').click();
         e2e.components.Tab.active().should('have.text', 'Alert0'); // there's no alert so therefore Alert + 0
-        e2e.components.AlertTab.content().should('not.exist');
+
+        // Needs to be disabled until Grafana EE turns unified alerting on by default
+        // e2e.components.AlertTab.content().should('not.exist');
+
         e2e.components.QueryTab.content().should('not.exist');
         e2e.components.TransformTab.content().should('not.exist');
-        e2e.components.PanelAlertTabContent.content().should('exist');
-        e2e.components.PanelAlertTabContent.content().should('be.visible');
+
+        // Needs to be disabled until Grafana EE turns unified alerting on by default
+        // e2e.components.PanelAlertTabContent.content().should('exist');
+        // e2e.components.PanelAlertTabContent.content().should('be.visible');
 
         e2e.components.Tab.title('Query').should('be.visible').click();
       });
