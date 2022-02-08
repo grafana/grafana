@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import {
   InlineFieldRow,
   InlineField,
@@ -8,7 +8,7 @@ import {
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
-  Select,
+  AsyncSelect,
   Alert,
   useStyles2,
 } from '@grafana/ui';
@@ -48,50 +48,48 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [autocomplete, setAutocomplete] = useState<{
-    serviceNameOptions: Array<SelectableValue<string>>;
-    spanNameOptions: Array<SelectableValue<string>>;
-  }>({
-    serviceNameOptions: [],
-    spanNameOptions: [],
-  });
+  const [asyncServiceNameValue, setAsyncServiceNameValue] = useState<SelectableValue<any>>(
+    query.serviceName as SelectableValue
+  );
+  const [asyncSpanNameValue, setAsyncSpanNameValue] = useState<SelectableValue<any>>(query.spanName as SelectableValue);
   const [error, setError] = useState(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
+  const [isLoadingService, setIsLoadingService] = useState<{ optionType: string; loading: boolean }>({
+    optionType: '',
+    loading: false,
+  });
+
+  async function loadOptionsAsync(nameType: string, lp: TempoLanguageProvider) {
+    const res = await lp.getOptions(nameType === 'serviceName' ? 'service.name' : 'name');
+    setIsLoadingService({ optionType: nameType, loading: false });
+    return res;
+  }
+
+  const loadOptions = useCallback(
+    (nameType: string) => {
+      setIsLoadingService({ optionType: nameType, loading: true });
+      return loadOptionsAsync(nameType, languageProvider);
+    },
+    [languageProvider]
+  );
 
   const fetchServiceNameOptions = useMemo(
-    () =>
-      debounce(
-        async () => {
-          const res = await languageProvider.getOptions('service.name');
-          setAutocomplete((prev) => ({ ...prev, serviceNameOptions: res }));
-        },
-        500,
-        { leading: true, trailing: true }
-      ),
-    [languageProvider]
+    () => debounce(() => loadOptions('serviceName'), 500, { leading: true, trailing: true }),
+    [loadOptions]
   );
 
   const fetchSpanNameOptions = useMemo(
-    () =>
-      debounce(
-        async () => {
-          const res = await languageProvider.getOptions('name');
-          setAutocomplete((prev) => ({ ...prev, spanNameOptions: res }));
-        },
-        500,
-        { leading: true, trailing: true }
-      ),
-    [languageProvider]
+    () => debounce(() => loadOptions('spanName'), 500, { leading: true, trailing: true }),
+    [loadOptions]
   );
 
   useEffect(() => {
-    const fetchAutocomplete = async () => {
+    const fetchOptions = async () => {
       try {
         await languageProvider.start();
-        const serviceNameOptions = await languageProvider.getOptions('service.name');
-        const spanNameOptions = await languageProvider.getOptions('name');
+        loadOptionsAsync('serviceName', languageProvider);
+        loadOptionsAsync('spanName', languageProvider);
         setHasSyntaxLoaded(true);
-        setAutocomplete({ serviceNameOptions, spanNameOptions });
       } catch (error) {
         // Display message if Tempo is connected but search 404's
         if (error?.status === 404) {
@@ -99,9 +97,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         } else {
           dispatch(notifyApp(createErrorNotification('Error', error)));
         }
+        setHasSyntaxLoaded(true);
       }
     };
-    fetchAutocomplete();
+    fetchOptions();
   }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
@@ -127,12 +126,14 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Service Name" labelWidth={14} grow>
-            <Select
+            <AsyncSelect
               inputId="service"
               menuShouldPortal
-              options={autocomplete.serviceNameOptions}
-              value={query.serviceName || ''}
+              loadOptions={fetchServiceNameOptions}
+              isLoading={isLoadingService.optionType === 'serviceName' && isLoadingService.loading}
+              value={(query.serviceName as SelectableValue) || asyncServiceNameValue}
               onChange={(v) => {
+                setAsyncServiceNameValue(v);
                 onChange({
                   ...query,
                   serviceName: v?.value || undefined,
@@ -141,18 +142,21 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               placeholder="Select a service"
               onOpenMenu={fetchServiceNameOptions}
               isClearable
+              defaultOptions
               onKeyDown={onKeyDown}
             />
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Span Name" labelWidth={14} grow>
-            <Select
+            <AsyncSelect
               inputId="spanName"
               menuShouldPortal
-              options={autocomplete.spanNameOptions}
-              value={query.spanName || ''}
+              loadOptions={fetchSpanNameOptions}
+              isLoading={isLoadingService.optionType === 'spanName' && isLoadingService.loading}
+              value={(query.spanName as SelectableValue) || asyncSpanNameValue}
               onChange={(v) => {
+                setAsyncSpanNameValue(v);
                 onChange({
                   ...query,
                   spanName: v?.value || undefined,
@@ -161,6 +165,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               placeholder="Select a span"
               onOpenMenu={fetchSpanNameOptions}
               isClearable
+              defaultOptions
               onKeyDown={onKeyDown}
             />
           </InlineField>

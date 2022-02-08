@@ -9,6 +9,7 @@ import {
   DataSourceJsonData,
   isValidGoDuration,
   LoadingState,
+  SelectableValue,
 } from '@grafana/data';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
@@ -53,8 +54,8 @@ export interface TempoQuery extends DataQuery {
   linkedQuery?: LokiQuery;
   search: string;
   queryType: TempoQueryType;
-  serviceName?: string;
-  spanName?: string;
+  serviceName?: string | SelectableValue;
+  spanName?: string | SelectableValue;
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
