@@ -97,13 +97,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	}
 
 	if len(items) == 0 {
-		return crawlStatus{
-			Started:  now,
-			Finished: now,
-			Last:     now,
-			State:    stopped,
-			Complete: 0,
-		}, err
+		return nil
 	}
 
 	r.mode = mode
