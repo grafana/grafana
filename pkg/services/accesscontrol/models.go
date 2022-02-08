@@ -248,6 +248,11 @@ type GetResourcesPermissionsQuery struct {
 	OnlyManaged bool
 }
 
+type SQLFilter struct {
+	Where string
+	Args  []interface{}
+}
+
 const (
 	GlobalOrgID = 0
 	// Permission actions
