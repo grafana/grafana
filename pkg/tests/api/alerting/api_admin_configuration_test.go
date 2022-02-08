@@ -103,7 +103,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), `{"message": "At least one Alertmanager must be provided to choose this option"}`)
+		require.JSONEq(t, `{"message": "At least one Alertmanager must be provided to choose this option"}`, string(b))
 	}
 
 	// Now, lets re-set external Alertmanagers for main organisation
@@ -122,7 +122,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), `{"message": "admin configuration updated"}`)
+		require.JSONEq(t, `{"message": "admin configuration updated"}`, string(b))
 	}
 
 	// If we get the configuration again, it shows us what we've set.
@@ -131,7 +131,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers))
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers), string(b))
 	}
 
 	// With the configuration set, we should eventually discover those Alertmanagers.
@@ -222,7 +222,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), "{\"message\": \"admin configuration updated\"}")
+		require.JSONEq(t, "{\"message\": \"admin configuration updated\"}", string(b))
 	}
 
 	// If we get the configuration again, it shows us what we've set.
@@ -231,7 +231,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, string(b), fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers))
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers), string(b))
 	}
 
 	// With the configuration set, we should eventually not discover Alertmanagers.
