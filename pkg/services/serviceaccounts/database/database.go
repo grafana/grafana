@@ -149,11 +149,18 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 		return nil, err
 	}
 	saDTOs := make([]*serviceaccounts.ServiceAccountDTO, len(query.Result))
-	for _, user := range query.Result {
-		saDTOs = append(saDTOs, &serviceaccounts.ServiceAccountDTO{
-			Id:   user.UserId,
-			Name: user.Name,
-		})
+	for i, user := range query.Result {
+		saDTOs[i] = &serviceaccounts.ServiceAccountDTO{
+			Id:    user.UserId,
+			OrgId: user.OrgId,
+			Name:  user.Name,
+			Login: user.Login,
+		}
+		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
+		if err != nil {
+			return nil, err
+		}
+		saDTOs[i].Tokens = int64(len(tokens))
 	}
 	return saDTOs, err
 }
