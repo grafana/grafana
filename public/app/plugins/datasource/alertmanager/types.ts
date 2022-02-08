@@ -245,7 +245,7 @@ interface TestReceiversResultGrafanaReceiverConfig {
   name: string;
   uid?: string;
   error?: string;
-  status: 'failed';
+  status: 'ok' | 'failed';
 }
 
 interface TestReceiversResultReceiver {
