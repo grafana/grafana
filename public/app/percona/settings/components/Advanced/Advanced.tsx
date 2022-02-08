@@ -282,7 +282,6 @@ export const Advanced: FC<AdvancedProps> = ({
                 tooltip={backupTooltip}
                 tooltipLinkText={tooltipLinkText}
                 link={backupLink}
-                className={cx({ [styles.switchDisabled]: !values.backup })}
                 dataTestId="advanced-backup"
                 component={SwitchRow}
               />

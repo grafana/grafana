@@ -42,10 +42,6 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       font-size: ${typography.size.sm};
       margin-left: ${spacing.sm};
     `,
-    switchDisabled: css`
-      label: disabled;
-      opacity: 0.6;
-    `,
     publicAddressLabelWrapper: css`
       align-items: start;
       margin-top: ${spacing.sm};
