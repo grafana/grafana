@@ -111,7 +111,7 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "swagger-ui",
+			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
 		},
