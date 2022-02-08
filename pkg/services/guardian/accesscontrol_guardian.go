@@ -210,11 +210,11 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
-		dashboard, err := a.store.GetDashboard(a.dashboardID, a.user.OrgId, "", "")
-		if err != nil {
+		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
+		if err := a.store.GetDashboard(a.ctx, query); err != nil {
 			return err
 		}
-		a.dashboard = dashboard
+		a.dashboard = query.Result
 	}
 	return nil
 }

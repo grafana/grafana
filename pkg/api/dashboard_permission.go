@@ -139,30 +139,20 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 
 // updateDashboardAccessControl is used for api backward compatibility
 func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, dashID int64, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
-	svc := hs.permissionServices.GetDashboardService()
-	if isFolder {
-		svc = hs.permissionServices.GetFolderService()
-	}
-
+	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
-		resourceID := strconv.FormatInt(dashID, 10)
 		permissions := item.Permission.String()
-		if item.UserID != 0 {
-			_, err := svc.SetUserPermission(ctx, orgID, accesscontrol.User{ID: item.UserID}, resourceID, permissions)
-			if err != nil {
-				return err
-			}
-		} else if item.TeamID != 0 {
-			_, err := svc.SetTeamPermission(ctx, orgID, item.TeamID, resourceID, permissions)
-			if err != nil {
-				return err
-			}
-		} else if item.Role != nil {
-			_, err := svc.SetBuiltInRolePermission(ctx, orgID, string(*item.Role), resourceID, permissions)
-			if err != nil {
-				return err
-			}
+		role := ""
+		if item.Role != nil {
+			role = string(*item.Role)
 		}
+
+		commands = append(commands, accesscontrol.SetResourcePermissionCommand{
+			UserID:      item.UserID,
+			TeamID:      item.TeamID,
+			BuiltinRole: role,
+			Permission:  permissions,
+		})
 	}
 
 	for _, o := range old {
@@ -176,33 +166,33 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 				shouldRemove = false
 				break
 			}
-			if item.Role != nil && item.Role == o.Role {
+			if item.Role != nil && o.Role != nil && *item.Role == *o.Role {
 				shouldRemove = false
 				break
 			}
 		}
 		if shouldRemove {
-			resourceID := strconv.FormatInt(dashID, 10)
-			if o.UserId != 0 {
-				_, err := svc.SetUserPermission(ctx, orgID, accesscontrol.User{ID: o.UserId}, resourceID, "")
-				if err != nil {
-					return err
-				}
-			} else if o.TeamId != 0 {
-				_, err := svc.SetTeamPermission(ctx, orgID, o.TeamId, resourceID, "")
-				if err != nil {
-					return err
-				}
-			} else if o.Role != nil {
-				_, err := svc.SetBuiltInRolePermission(ctx, orgID, string(*o.Role), resourceID, "")
-				if err != nil {
-					return err
-				}
+			role := ""
+			if o.Role != nil {
+				role = string(*o.Role)
 			}
+
+			commands = append(commands, accesscontrol.SetResourcePermissionCommand{
+				UserID:      o.UserId,
+				TeamID:      o.TeamId,
+				BuiltinRole: role,
+				Permission:  "",
+			})
 		}
 	}
 
-	return nil
+	svc := hs.permissionServices.GetDashboardService()
+	if isFolder {
+		svc = hs.permissionServices.GetFolderService()
+	}
+
+	_, err := svc.SetPermissions(ctx, orgID, strconv.FormatInt(dashID, 10), commands...)
+	return err
 }
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {

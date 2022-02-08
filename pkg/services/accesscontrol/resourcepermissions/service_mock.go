@@ -14,6 +14,11 @@ type MockService struct {
 	mock.Mock
 }
 
+func (m *MockService) MapActions(permission accesscontrol.ResourcePermission) string {
+	mockedArgs := m.Called(permission)
+	return mockedArgs.Get(0).(string)
+}
+
 func (m *MockService) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, resourceID)
 	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
