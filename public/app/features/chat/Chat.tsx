@@ -1,7 +1,6 @@
 import React, { FunctionComponent, PureComponent, useState } from 'react';
-import { getBackendSrv } from '../services/backendSrv';
 import { TextArea, IconButton, WithContextMenu, MenuItem, MenuGroup } from '@grafana/ui';
-import { getGrafanaLiveSrv } from '../services/live';
+import { getGrafanaLiveSrv, getBackendSrv } from '@grafana/runtime';
 import { isLiveChannelMessageEvent, LiveChannelScope, renderChatMarkdown } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 

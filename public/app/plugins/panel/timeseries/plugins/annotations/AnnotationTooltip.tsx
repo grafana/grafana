@@ -3,7 +3,7 @@ import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { css } from '@emotion/css';
-import { Chat } from '../../../../../../../packages/grafana-runtime';
+import { Chat } from 'app/features/chat/Chat';
 import config from 'app/core/config';
 
 interface AnnotationTooltipProps {
