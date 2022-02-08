@@ -716,7 +716,7 @@ const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQuer
 };
 
 export const initVariablesTransaction =
-  (urlUid: string, dashboard: DashboardModel): ThunkResult<void> =>
+  (urlUid: string, dashboard: DashboardModel): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const uid = toStateKey(urlUid);

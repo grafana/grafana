@@ -84,6 +84,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
           templating: {
             list: [constantBuilder().build()],
           },
+          uid: 'DGmvKKxZz',
         },
       })),
     };
@@ -288,5 +289,37 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   it('Should initialize timeSrv and dashboard query runner', () => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
+  });
+});
+
+describeInitScenario('Initializing snapshot dashboard', (ctx) => {
+  ctx.setup(() => {
+    ctx.storeState.user.orgId = 12;
+    ctx.args.routeName = DashboardRoutes.New;
+  });
+
+  it('Should send action dashboardInitFetching', () => {
+    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+  });
+
+  it('Should send action dashboardInitServices ', () => {
+    expect(ctx.actions[1].type).toBe(dashboardInitServices.type);
+  });
+
+  it('Should update location with orgId query param', () => {
+    const search = locationService.getSearch();
+    expect(search.get('orgId')).toBe('12');
+  });
+
+  it('Should send action dashboardInitCompleted', () => {
+    expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[7].payload.title).toBe('New dashboard');
+  });
+
+  it('Should initialize services', () => {
+    expect(getTimeSrv().init).toBeCalled();
+    expect(getDashboardSrv().setCurrent).toBeCalled();
+    expect(getDashboardQueryRunner().run).toBeCalled();
+    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 });
