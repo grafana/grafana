@@ -17,7 +17,7 @@ import (
 
 func newLogger(name string, lev string) log.Logger {
 	logger := log.New(name)
-	logger.SetLogger(level.NewFilter(logger.GetLogger(), level.AllowInfo()))
+	logger.Swap(level.NewFilter(logger.GetLogger(), level.AllowInfo()))
 	return logger
 }
 

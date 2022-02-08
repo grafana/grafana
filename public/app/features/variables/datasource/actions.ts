@@ -47,10 +47,5 @@ export const initDataSourceVariableEditor =
 
     dataSourceTypes.unshift({ text: '', value: '' });
 
-    dispatch(
-      changeVariableEditorExtended({
-        propName: 'dataSourceTypes',
-        propValue: dataSourceTypes,
-      })
-    );
+    dispatch(changeVariableEditorExtended({ dataSourceTypes }));
   };
