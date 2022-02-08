@@ -158,8 +158,6 @@ compilation-stats.json
 *_gen.go
 !pkg/services/featuremgmt/toggles_gen.go
 
-# api generated clients
-/pkg/api/clients
 # Auto-generated localisation files
 public/locales/_build/
 public/locales/**/*.js
