@@ -200,6 +200,8 @@ import (
 //
 // Query metrics.
 //
+// TODO Please refer to updated API queryMetricsWithExpressions instead
+//
 // Queries a data source having backend implementation.
 //
 // Most of Grafana’s builtin data sources have backend implementation.
@@ -207,6 +209,7 @@ import (
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:query`.
 //
+// Deprecated: true
 // Responses:
 // 200: queryDatasourceResponse
 // 401: unauthorisedError

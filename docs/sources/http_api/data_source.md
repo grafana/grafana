@@ -604,7 +604,9 @@ Content-Type: application/json
 
 Proxies all calls to the actual data source.
 
-## Query a data source by ID
+## [Deprecated] Query a data source by ID
+
+> **Warning:** This API is deprecated and will be removed in a future release. Refer to the [new data source query API](#query-a-data-source-by-id).
 
 Queries a data source having backend implementation.
 
@@ -712,3 +714,5 @@ Content-Type: application/json
   }
 }
 ```
+
+## Query a data source by ID
