@@ -32,7 +32,8 @@ export const UpdateDBClusterModal: FC<UpdateDBClusterModalProps> = ({
       setLoading(false);
       logger.error(e);
     }
-  }, [dbCluster, onUpdateFinished, availableImage, onClose, setLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbCluster, onUpdateFinished]);
 
   return (
     <div className={styles.modalWrapper}>

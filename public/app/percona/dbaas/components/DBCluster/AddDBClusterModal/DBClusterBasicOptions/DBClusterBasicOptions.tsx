@@ -26,45 +26,41 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
   const { kubernetesCluster, databaseType } = form.getState().values;
   const [databaseVersions, setDatabaseVersions] = useState<SelectableValue[]>([]);
   const [loadingDatabaseVersions, setLoadingDatabaseVersions] = useState(false);
-  const onChangeDatabase = useCallback(
-    (databaseType) => {
-      if (databaseType.value !== Databases.mysql) {
-        change(AddDBClusterFields.topology, DBClusterTopology.cluster);
-      }
+  const onChangeDatabase = useCallback((databaseType) => {
+    if (databaseType.value !== Databases.mysql) {
+      change(AddDBClusterFields.topology, DBClusterTopology.cluster);
+    }
 
-      change(AddDBClusterFields.databaseType, databaseType);
-    },
-    [change]
-  );
+    change(AddDBClusterFields.databaseType, databaseType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const kubernetesOptions = getKubernetesOptions(kubernetes);
 
   const [databaseOptions, setDatabaseOptions] = useState(DATABASE_OPTIONS);
-  const onChangeCluster = useCallback(
-    (selectedKubernetes) => {
-      const { operators } = selectedKubernetes;
-      const availableDatabaseOptions: DatabaseOption[] = [];
+  const onChangeCluster = useCallback((selectedKubernetes) => {
+    const { operators } = selectedKubernetes;
+    const availableDatabaseOptions: DatabaseOption[] = [];
 
-      Object.entries(operators as Operator).forEach(([operator, { status }]: [string, Operator]) => {
-        if (status === KubernetesOperatorStatus.ok) {
-          availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator as Operators) as DatabaseOption);
-        }
-      });
-
-      if (availableDatabaseOptions.length === 1) {
-        change(AddDBClusterFields.databaseType, availableDatabaseOptions[0]);
-      } else {
-        change(AddDBClusterFields.databaseType, {
-          value: undefined,
-          label: undefined,
-        });
+    Object.entries(operators as Operator).forEach(([operator, { status }]: [string, Operator]) => {
+      if (status === KubernetesOperatorStatus.ok) {
+        availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator as Operators) as DatabaseOption);
       }
+    });
 
-      setDatabaseOptions(availableDatabaseOptions);
-      change(AddDBClusterFields.kubernetesCluster, selectedKubernetes);
-    },
-    [change]
-  );
+    if (availableDatabaseOptions.length === 1) {
+      change(AddDBClusterFields.databaseType, availableDatabaseOptions[0]);
+    } else {
+      change(AddDBClusterFields.databaseType, {
+        value: undefined,
+        label: undefined,
+      });
+    }
+
+    setDatabaseOptions(availableDatabaseOptions);
+    change(AddDBClusterFields.kubernetesCluster, selectedKubernetes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isDatabaseVersionDisabled = useMemo(() => isOptionEmpty(databaseType), [databaseType]);
 

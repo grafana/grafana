@@ -58,7 +58,7 @@ export const ViewClusterConfigModal: FC<ViewKubernetesClusterModalProps> = ({
 
     getClusters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCluster, setVisible]);
+  }, [selectedCluster]);
 
   return (
     <Modal title="View cluster config" isVisible={isVisible} onClose={() => setVisible(false)}>

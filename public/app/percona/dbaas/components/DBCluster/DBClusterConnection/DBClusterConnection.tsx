@@ -36,7 +36,8 @@ export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster })
     if (isClusterReady) {
       getClusterConnection();
     }
-  }, [status, isClusterReady, databaseType, dbCluster]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   return (
     <>

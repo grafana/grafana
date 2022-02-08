@@ -36,5 +36,6 @@ export const useDatabaseVersions = (
     if (!isOptionEmpty(databaseType) && !isOptionEmpty(kubernetesCluster)) {
       getDatabaseVersions();
     }
-  }, [databaseType, kubernetesCluster, setLoadingDatabaseVersions, setDatabaseVersions, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [databaseType, kubernetesCluster]);
 };

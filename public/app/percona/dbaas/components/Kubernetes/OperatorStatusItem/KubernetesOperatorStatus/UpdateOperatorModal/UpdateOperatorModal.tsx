@@ -38,7 +38,8 @@ export const UpdateOperatorModal: FC<UpdateOperatorModalProps> = ({
       setLoading(false);
       logger.error(e);
     }
-  }, [kubernetesClusterName, onOperatorUpdated, availableVersion, onClose, operatorType, setLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kubernetesClusterName, selectedOperator, onOperatorUpdated]);
 
   return (
     <div className={styles.modalWrapper}>

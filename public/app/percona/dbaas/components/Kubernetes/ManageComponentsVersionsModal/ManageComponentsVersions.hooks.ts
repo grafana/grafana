@@ -95,7 +95,8 @@ export const useOperatorsComponentsVersions = (
       }
     };
     getComponents();
-  }, [kubernetes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return [
     initialValues,
