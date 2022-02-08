@@ -52,10 +52,6 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
     dashboard.timepicker.maxTimeRange = maxTimeRange;
   };
 
-  const onOldestFromChange = (oldestFrom: string) => {
-    dashboard.timepicker.oldestFrom = oldestFrom;
-  };
-
   const onHideTimePickerChange = (hide: boolean) => {
     dashboard.timepicker.hidden = hide;
     setRenderCounter(renderCounter + 1);
@@ -120,13 +116,11 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
         onRefreshIntervalChange={onRefreshIntervalChange}
         onNowDelayChange={onNowDelayChange}
         onMaxTimeRangeChange={onMaxTimeRangeChange}
-        onOldestFromChange={onOldestFromChange}
         onHideTimePickerChange={onHideTimePickerChange}
         refreshIntervals={dashboard.timepicker.refresh_intervals}
         timePickerHidden={dashboard.timepicker.hidden}
         nowDelay={dashboard.timepicker.nowDelay}
         maxTimeRange={dashboard.timepicker.maxTimeRange}
-        oldestFrom={dashboard.timepicker.oldestFrom}
         timezone={dashboard.timezone}
       />
 
