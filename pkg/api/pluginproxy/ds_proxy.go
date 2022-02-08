@@ -54,6 +54,7 @@ func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, 
 		return nil, err
 	}
 	res.Header.Del("Set-Cookie")
+	proxyutil.SetProxyResponseHeaders(res.Header)
 	return res, nil
 }
 
