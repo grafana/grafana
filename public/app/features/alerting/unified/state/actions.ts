@@ -2,6 +2,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
+  ExternalAlertmanagerConfig,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   ExternalAlertmanagersResponse,
@@ -121,7 +122,7 @@ export const fetchExternalAlertmanagersAction = createAsyncThunk(
 
 export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
   'unifiedAlerting/fetchExternAlertmanagersConfig',
-  (): Promise<{ alertmanagers: string[] }> => {
+  (): Promise<ExternalAlertmanagerConfig> => {
     return withSerializedError(fetchExternalAlertmanagerConfig());
   }
 );
@@ -806,11 +807,11 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
 
 export const addExternalAlertmanagersAction = createAsyncThunk(
   'unifiedAlerting/addExternalAlertmanagers',
-  async (alertManagerUrls: string[], thunkAPI): Promise<void> => {
+  async (alertmanagerConfig: ExternalAlertmanagerConfig, thunkAPI): Promise<void> => {
     return withAppEvents(
       withSerializedError(
         (async () => {
-          await addAlertManagers(alertManagerUrls);
+          await addAlertManagers(alertmanagerConfig);
           thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
         })()
       ),
