@@ -118,7 +118,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         user: {},
         explore: {
           left: {
-            originPanelId: undefined,
             queries: [],
           },
         },
@@ -231,7 +230,6 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
-    ctx.storeState.explore.left.originPanelId = 2;
     ctx.storeState.explore.left.queries = mockQueries;
   });
 

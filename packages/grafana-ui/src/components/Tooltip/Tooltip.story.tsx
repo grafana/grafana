@@ -61,9 +61,10 @@ export const Basic: Story = ({ content, ...args }) => {
     </Tooltip>
   );
 };
+
 Basic.args = {
   content: 'This is a tooltip',
   theme: 'info',
-  show: true,
+  show: undefined,
   placement: 'auto',
 };
