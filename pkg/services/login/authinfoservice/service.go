@@ -183,3 +183,7 @@ func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthI
 func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	return s.authInfoStore.UpdateAuthInfo(ctx, cmd)
 }
+
+func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+	return s.authInfoStore.SetAuthInfo(ctx, cmd)
+}

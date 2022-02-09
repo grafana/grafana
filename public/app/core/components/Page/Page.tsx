@@ -55,7 +55,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     width: 100%;
     flex-grow: 1;
-    width: 100%;
     min-height: 0;
   `,
 });

@@ -74,6 +74,14 @@ export class TeamList extends PureComponent<Props, State> {
       team,
       isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser })
     );
+    const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
+    const canUpdateTeamRoles =
+      contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesAdd, false) ||
+      contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesRemove, false);
+    const displayRolePicker =
+      contextSrv.licensedAccessControlEnabled() &&
+      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
+      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
     return (
       <tr key={team.id}>
@@ -93,9 +101,11 @@ export class TeamList extends PureComponent<Props, State> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
-        {contextSrv.licensedAccessControlEnabled() && (
+        {displayRolePicker && (
           <td>
-            <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />
+            {canSeeTeamRoles && (
+              <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} disabled={!canUpdateTeamRoles} />
+            )}
           </td>
         )}
         <td className="text-right">
@@ -134,6 +144,10 @@ export class TeamList extends PureComponent<Props, State> {
     const { teams, searchQuery, editorsCanAdmin, searchPage, setTeamsSearchPage } = this.props;
     const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
     const canCreate = contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
+    const displayRolePicker =
+      contextSrv.licensedAccessControlEnabled() &&
+      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
+      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
     const newTeamHref = canCreate ? 'org/teams/new' : '#';
     const paginatedTeams = this.getPaginatedTeams(teams);
     const totalPages = Math.ceil(teams.length / pageLimit);
@@ -159,7 +173,7 @@ export class TeamList extends PureComponent<Props, State> {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Members</th>
-                  {contextSrv.licensedAccessControlEnabled() && <th>Roles</th>}
+                  {displayRolePicker && <th>Roles</th>}
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>

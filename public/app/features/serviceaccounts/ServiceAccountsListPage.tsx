@@ -1,15 +1,16 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
-import { StoreState, ServiceAccountDTO } from 'app/types';
+import { StoreState, ServiceAccountDTO, AccessControlAction } from 'app/types';
 import { loadServiceAccounts, removeServiceAccount, updateServiceAccount } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaTheme2 } from '@grafana/data';
+import { contextSrv } from 'app/core/core';
 export type Props = ConnectedProps<typeof connector>;
 
 export interface State {}
@@ -41,6 +42,14 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        <h2>Service accounts</h2>
+        <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
+          {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              New service account
+            </LinkButton>
+          )}
+        </div>
         {isLoading ? (
           <PageLoader />
         ) : (
@@ -50,7 +59,7 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
                 <thead>
                   <tr>
                     <th></th>
-                    <th>Account</th>
+                    <th>Display name</th>
                     <th>ID</th>
                     <th>Roles</th>
                     <th>Tokens</th>
@@ -58,7 +67,7 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
                 </thead>
                 <tbody>
                   {serviceAccounts.map((serviceaccount: ServiceAccountDTO) => (
-                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.userId} />
+                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.id} />
                   ))}
                 </tbody>
               </table>
@@ -79,11 +88,11 @@ const getServiceAccountsAriaLabel = (name: string) => {
 };
 
 const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
-  const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
+  const editUrl = `org/serviceaccounts/${serviceaccount.id}`;
   const styles = useStyles2(getStyles);
 
   return (
-    <tr key={serviceaccount.userId}>
+    <tr key={serviceaccount.id}>
       <td className="width-4 text-center link-td">
         <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}>
           <img
@@ -97,20 +106,20 @@ const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemP
         <a
           className="ellipsis"
           href={editUrl}
-          title={serviceaccount.login}
+          title={serviceaccount.name}
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          {serviceaccount.login}
+          {serviceaccount.name}
         </a>
       </td>
       <td className="link-td max-width-10">
         <a
           className="ellipsis"
           href={editUrl}
-          title={serviceaccount.name}
+          title={serviceaccount.login}
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          {serviceaccount.name}
+          {serviceaccount.login}
         </a>
       </td>
       <td className={cx('link-td', styles.iconRow)}>
@@ -134,7 +143,10 @@ const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemP
           title="tokens"
           aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
         >
-          0
+          <span>
+            <Icon name={'key-skeleton-alt'}></Icon>
+          </span>
+          {serviceaccount.tokens}
         </a>
       </td>
     </tr>

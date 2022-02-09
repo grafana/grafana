@@ -35,7 +35,7 @@ func (p *flatResourcePermission) Managed() bool {
 
 func (s *AccessControlStore) SetUserResourcePermission(
 	ctx context.Context, orgID int64, user accesscontrol.User,
-	cmd accesscontrol.SetResourcePermissionCommand,
+	cmd types.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if user.ID == 0 {
@@ -45,16 +45,26 @@ func (s *AccessControlStore) SetUserResourcePermission(
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
-		if err == nil && hook != nil {
-			return hook(sess, orgID, user, cmd.ResourceID, cmd.Permission)
-		}
-
+		permission, err = s.setUserResourcePermission(sess, orgID, user, cmd, hook)
 		return err
 	})
 
+	return permission, err
+}
+func (s *AccessControlStore) setUserResourcePermission(
+	sess *sqlstore.DBSession, orgID int64, user accesscontrol.User,
+	cmd types.SetResourcePermissionCommand,
+	hook types.UserResourceHookFunc,
+) (*accesscontrol.ResourcePermission, error) {
+	permission, err := s.setResourcePermission(sess, orgID, managedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
 	if err != nil {
 		return nil, err
+	}
+
+	if hook != nil {
+		if err := hook(sess, orgID, user, cmd.ResourceID, cmd.Permission); err != nil {
+			return nil, err
+		}
 	}
 
 	return permission, nil
@@ -62,7 +72,7 @@ func (s *AccessControlStore) SetUserResourcePermission(
 
 func (s *AccessControlStore) SetTeamResourcePermission(
 	ctx context.Context, orgID, teamID int64,
-	cmd accesscontrol.SetResourcePermissionCommand,
+	cmd types.SetResourcePermissionCommand,
 	hook types.TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if teamID == 0 {
@@ -73,16 +83,27 @@ func (s *AccessControlStore) SetTeamResourcePermission(
 	var permission *accesscontrol.ResourcePermission
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
-		if err == nil && hook != nil {
-			return hook(sess, orgID, teamID, cmd.ResourceID, cmd.Permission)
-		}
-
+		permission, err = s.setTeamResourcePermission(sess, orgID, teamID, cmd, hook)
 		return err
 	})
 
+	return permission, err
+}
+
+func (s *AccessControlStore) setTeamResourcePermission(
+	sess *sqlstore.DBSession, orgID, teamID int64,
+	cmd types.SetResourcePermissionCommand,
+	hook types.TeamResourceHookFunc,
+) (*accesscontrol.ResourcePermission, error) {
+	permission, err := s.setResourcePermission(sess, orgID, managedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
 	if err != nil {
 		return nil, err
+	}
+
+	if hook != nil {
+		if err := hook(sess, orgID, teamID, cmd.ResourceID, cmd.Permission); err != nil {
+			return nil, err
+		}
 	}
 
 	return permission, nil
@@ -90,7 +111,7 @@ func (s *AccessControlStore) SetTeamResourcePermission(
 
 func (s *AccessControlStore) SetBuiltInResourcePermission(
 	ctx context.Context, orgID int64, builtInRole string,
-	cmd accesscontrol.SetResourcePermissionCommand,
+	cmd types.SetResourcePermissionCommand,
 	hook types.BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if !models.RoleType(builtInRole).IsValid() || builtInRole == accesscontrol.RoleGrafanaAdmin {
@@ -101,10 +122,7 @@ func (s *AccessControlStore) SetBuiltInResourcePermission(
 	var permission *accesscontrol.ResourcePermission
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
-		if err == nil && hook != nil {
-			return hook(sess, orgID, builtInRole, cmd.ResourceID, cmd.Permission)
-		}
+		permission, err = s.setBuiltInResourcePermission(sess, orgID, builtInRole, cmd, hook)
 		return err
 	})
 
@@ -115,10 +133,61 @@ func (s *AccessControlStore) SetBuiltInResourcePermission(
 	return permission, nil
 }
 
+func (s *AccessControlStore) setBuiltInResourcePermission(
+	sess *sqlstore.DBSession, orgID int64, builtInRole string,
+	cmd types.SetResourcePermissionCommand,
+	hook types.BuiltinResourceHookFunc,
+) (*accesscontrol.ResourcePermission, error) {
+	permission, err := s.setResourcePermission(sess, orgID, managedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	if hook != nil {
+		if err := hook(sess, orgID, builtInRole, cmd.ResourceID, cmd.Permission); err != nil {
+			return nil, err
+		}
+	}
+
+	return permission, nil
+}
+
+func (s *AccessControlStore) SetResourcePermissions(
+	ctx context.Context, orgID int64,
+	commands []types.SetResourcePermissionsCommand,
+	hooks types.ResourceHooks,
+) ([]accesscontrol.ResourcePermission, error) {
+	var err error
+	var permissions []accesscontrol.ResourcePermission
+
+	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, cmd := range commands {
+			var p *accesscontrol.ResourcePermission
+			if cmd.User.ID != 0 {
+				p, err = s.setUserResourcePermission(sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
+			} else if cmd.TeamID != 0 {
+				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
+			} else if models.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
+				p, err = s.setBuiltInResourcePermission(sess, orgID, cmd.BuiltinRole, cmd.SetResourcePermissionCommand, hooks.BuiltInRole)
+			}
+			if err != nil {
+				return err
+			}
+			if p != nil {
+				permissions = append(permissions, *p)
+			}
+		}
+
+		return nil
+	})
+
+	return permissions, err
+}
+
 type roleAdder func(roleID int64) error
 
 func (s *AccessControlStore) setResourcePermission(
-	sess *sqlstore.DBSession, orgID int64, roleName string, adder roleAdder, cmd accesscontrol.SetResourcePermissionCommand,
+	sess *sqlstore.DBSession, orgID int64, roleName string, adder roleAdder, cmd types.SetResourcePermissionCommand,
 ) (*accesscontrol.ResourcePermission, error) {
 	role, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
 	if err != nil {
@@ -159,22 +228,20 @@ func (s *AccessControlStore) setResourcePermission(
 		return nil, err
 	}
 
-	var permissions []flatResourcePermission
-
 	for action := range missing {
-		p, err := s.createResourcePermission(sess, role.ID, action, cmd.Resource, cmd.ResourceID)
+		id, err := s.createResourcePermission(sess, role.ID, action, cmd.Resource, cmd.ResourceID)
 		if err != nil {
 			return nil, err
 		}
-		permissions = append(permissions, *p)
+		keep = append(keep, id)
 	}
 
-	keptPermissions, err := s.getResourcePermissions(sess, cmd.ResourceID, keep)
+	permissions, err := s.getResourcePermissions(sess, cmd.ResourceID, keep)
 	if err != nil {
 		return nil, err
 	}
 
-	permission := flatPermissionsToResourcePermission(append(permissions, keptPermissions...))
+	permission := flatPermissionsToResourcePermission(permissions)
 	if permission == nil {
 		return &accesscontrol.ResourcePermission{}, nil
 	}
@@ -182,7 +249,7 @@ func (s *AccessControlStore) setResourcePermission(
 	return permission, nil
 }
 
-func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	var result []accesscontrol.ResourcePermission
 
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -194,45 +261,19 @@ func (s *AccessControlStore) GetResourcesPermissions(ctx context.Context, orgID 
 	return result, err
 }
 
-func (s *AccessControlStore) createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, resource string, resourceID string) (*flatResourcePermission, error) {
+func (s *AccessControlStore) createResourcePermission(sess *sqlstore.DBSession, roleID int64, action, resource string, resourceID string) (int64, error) {
 	permission := managedPermission(action, resource, resourceID)
 	permission.RoleID = roleID
 	permission.Created = time.Now()
 	permission.Updated = time.Now()
 
 	if _, err := sess.Insert(&permission); err != nil {
-		return nil, err
+		return 0, err
 	}
-
-	rawSql := `
-	SELECT
-		p.*,
-		? AS resource_id,
-		ur.user_id AS user_id,
-		u.login AS user_login,
-		u.email AS user_email,
-		tr.team_id AS team_id,
-		t.name AS team,
-		t.email AS team_email,
-		r.name as role_name
-	FROM permission p
-		LEFT JOIN role r ON p.role_id = r.id
-		LEFT JOIN team_role tr ON r.id = tr.role_id
-		LEFT JOIN team t ON tr.team_id = t.id
-		LEFT JOIN user_role ur ON r.id = ur.role_id
-		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
-	WHERE p.id = ?
-	`
-
-	p := &flatResourcePermission{}
-	if _, err := sess.SQL(rawSql, resourceID, permission.ID).Get(p); err != nil {
-		return nil, err
-	}
-
-	return p, nil
+	return permission.ID, nil
 }
 
-func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query accesscontrol.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *AccessControlStore) getResourcesPermissions(sess *sqlstore.DBSession, orgID int64, query types.GetResourcesPermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	if len(query.Actions) == 0 {
 		return nil, nil
 	}
@@ -544,13 +585,15 @@ func (s *AccessControlStore) getResourcePermissions(sess *sqlstore.DBSession, re
 		tr.team_id AS team_id,
 		t.name AS team,
 		t.email AS team_email,
-		r.name as role_name
+		r.name as role_name,
+		br.role AS built_in_role
 	FROM permission p
 		INNER JOIN role r ON p.role_id = r.id
 		LEFT JOIN team_role tr ON r.id = tr.role_id
 		LEFT JOIN team t ON tr.team_id = t.id
 		LEFT JOIN user_role ur ON r.id = ur.role_id
 		LEFT JOIN ` + s.sql.Dialect.Quote("user") + ` u ON ur.user_id = u.id
+		LEFT JOIN builtin_role br ON r.id = br.role_id
 	WHERE p.id IN (?` + strings.Repeat(",?", len(ids)-1) + `)
 	`
 
