@@ -175,6 +175,11 @@ export interface FieldState {
    * @internal -- we will try to make this unnecessary
    */
   origin?: DataFrameFieldIndex;
+
+  /**
+   * Boolean value is true if field is in a larger data set with multiple frames.
+   */
+  multipleFrames?: boolean;
 }
 
 /** @public */
