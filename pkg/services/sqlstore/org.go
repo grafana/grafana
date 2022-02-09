@@ -21,11 +21,11 @@ func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.UpdateOrg)
 	bus.AddHandler("sql", ss.UpdateOrgAddress)
 	bus.AddHandler("sql", GetOrgByName)
-	bus.AddHandler("sql", SearchOrgs)
+	bus.AddHandler("sql", ss.SearchOrgs)
 	bus.AddHandler("sql", ss.DeleteOrg)
 }
 
-func SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
+func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
 	query.Result = make([]*models.OrgDTO, 0)
 	sess := x.Table("org")
 	if query.Query != "" {
