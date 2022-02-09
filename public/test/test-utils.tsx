@@ -2,13 +2,13 @@ import React from 'react';
 import { render as rtlRender } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
-import { userReducer } from '../../../profile/state/reducers';
+import { createRootReducer } from 'app/core/reducers/root';
 
 function render(
   ui: React.ReactElement,
   {
     preloadedState,
-    store = configureStore({ reducer: { user: userReducer }, preloadedState }),
+    store = configureStore({ reducer: createRootReducer(), preloadedState }),
     ...renderOptions
   }: any = {}
 ) {

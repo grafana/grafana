@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from './test-utils';
+import { render, screen } from 'test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from '@grafana/ui';
 
