@@ -6,7 +6,6 @@ import { DataSourceJsonData, PluginMeta } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { RuleViewer } from './RuleViewer';
 import { configureStore } from 'app/store/configureStore';
-import { typeAsJestMock } from '../../../../test/helpers/typeAsJestMock';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -45,7 +44,7 @@ describe('RuleViewer', () => {
   });
 
   it('should render page with grafana alert', async () => {
-    typeAsJestMock(useCombinedRule).mockReturnValue({
+    jest.mocked(useCombinedRule).mockReturnValue({
       result: mockGrafanaRule as CombinedRule,
       loading: false,
       dispatched: true,
@@ -59,7 +58,7 @@ describe('RuleViewer', () => {
   });
 
   it('should render page with cloud alert', async () => {
-    typeAsJestMock(useCombinedRule).mockReturnValue({
+    jest.mocked(useCombinedRule).mockReturnValue({
       result: mockCloudRule as CombinedRule,
       loading: false,
       dispatched: true,
