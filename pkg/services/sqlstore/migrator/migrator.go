@@ -94,7 +94,11 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
-func (mg *Migrator) Start() (err error) {
+func (mg *Migrator) Start(isDatabaseLockingEnabled bool) (err error) {
+	if !isDatabaseLockingEnabled {
+		return mg.run()
+	}
+
 	return mg.InTransaction(func(sess *xorm.Session) error {
 		mg.Logger.Info("Locking database")
 		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, sess); err != nil {

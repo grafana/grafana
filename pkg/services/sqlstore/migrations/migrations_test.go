@@ -38,7 +38,7 @@ func TestMigrations(t *testing.T) {
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)
 
-	err = mg.Start()
+	err = mg.Start(false)
 	require.NoError(t, err)
 
 	has, err := x.SQL(query).Get(&result)
@@ -50,7 +50,7 @@ func TestMigrations(t *testing.T) {
 	mg = NewMigrator(x, &setting.Cfg{})
 	migrations.AddMigration(mg)
 
-	err = mg.Start()
+	err = mg.Start(false)
 	require.NoError(t, err)
 
 	has, err = x.SQL(query).Get(&result)
@@ -170,7 +170,7 @@ func TestMigratorLocking(t *testing.T) {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
-				err = mg.Start()
+				err = mg.Start(true)
 				if err != nil {
 					if errors.Is(err, ErrMigratorIsLocked) {
 						atomic.AddInt64(&errorNum, 1)
@@ -217,7 +217,7 @@ func TestDatabaseLocking(t *testing.T) {
 				mg, err := reg.get(i)
 				require.NoError(t, err)
 				t.Parallel()
-				err = mg.Start()
+				err = mg.Start(true)
 				if err != nil {
 					assert.ErrorIs(t, err, ErrLockDB)
 					if errors.Is(err, ErrLockDB) {

@@ -126,5 +126,10 @@ var (
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
 		},
+		{
+			Name:        "migrationLocking",
+			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
+		},
 	}
 )
