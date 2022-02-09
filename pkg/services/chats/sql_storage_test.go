@@ -11,9 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testFeatures struct{}
+
+func (t testFeatures) IsEnabled(flag string) bool {
+	return flag == featuremgmt.FlagLiveDashboardDiscussions || flag == featuremgmt.FlagLiveAnnotationDiscussions
+}
+
 func createSqlStorage(t *testing.T) Storage {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{Features: []string{featuremgmt.FlagLiveDashboardDiscussions}})
+	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{Features: &testFeatures{}})
 	return &sqlStorage{
 		sql: sqlStore,
 	}

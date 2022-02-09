@@ -101,8 +101,8 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *mo
 		return nil, err
 	}
 	mDto := messageToDto(m, userMap)
-	e := ChatEvent{
-		Event:          ChatEventMessageCreated,
+	e := chatmodel.ChatEvent{
+		Event:          chatmodel.ChatEventMessageCreated,
 		MessageCreated: mDto,
 	}
 	eventJSON, _ := json.Marshal(e)
