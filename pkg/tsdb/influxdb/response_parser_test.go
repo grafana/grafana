@@ -82,6 +82,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			floatField,
 		)
+		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		stringField := data.NewField("value", labels, []string{
 			"path val", "path val", "path val",
@@ -96,6 +97,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			stringField,
 		)
+		stringFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		boolField := data.NewField("value", labels, []bool{
 			true, false, true,
@@ -110,7 +112,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			boolField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		boolFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		result := parser.Parse(prepare(response), addQueryToQueries(*query))
 
