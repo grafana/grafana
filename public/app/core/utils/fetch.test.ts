@@ -9,6 +9,11 @@ import {
   parseUrlFromOptions,
 } from './fetch';
 
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as unknown as object),
+  deprecationWarning: () => {},
+}));
+
 describe('parseUrlFromOptions', () => {
   it.each`
     params                                                      | url                | expected
