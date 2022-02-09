@@ -14,7 +14,7 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { PopoverContent, Tooltip } from '../../../Tooltip/Tooltip';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ThemeContext } from '../../../../themes';
 
@@ -23,7 +23,7 @@ import { ThemeContext } from '../../../../themes';
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'>;
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;

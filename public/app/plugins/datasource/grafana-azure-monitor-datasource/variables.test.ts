@@ -6,7 +6,7 @@ import createMockDatasource from './__mocks__/datasource';
 import { invalidSubscriptionError } from './__mocks__/errors';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;
@@ -444,7 +444,7 @@ describe('VariableSupport', () => {
         })
       );
       const mockRequest = {
-        targets: [('Namespaces(subscriptionId, resourceGroup)' as unknown) as AzureMonitorQuery],
+        targets: ['Namespaces(subscriptionId, resourceGroup)' as unknown as AzureMonitorQuery],
       } as DataQueryRequest<AzureMonitorQuery>;
       const observables = variableSupport.query(mockRequest);
       observables.subscribe((result: DataQueryResponseData) => {

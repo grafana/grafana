@@ -22,7 +22,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := newGoogleChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := newGoogleChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -39,7 +39,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := newGoogleChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := newGoogleChatNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			webhookNotifier := not.(*GoogleChatNotifier)
 
 			require.Nil(t, err)

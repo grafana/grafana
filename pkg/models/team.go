@@ -55,7 +55,11 @@ type GetTeamByIdQuery struct {
 	SignedInUser *SignedInUser
 	HiddenUsers  map[string]struct{}
 	Result       *TeamDTO
+	UserIdFilter int64
 }
+
+// FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
+const FilterIgnoreUser int64 = 0
 
 type GetTeamsByUserQuery struct {
 	OrgId  int64
@@ -77,13 +81,14 @@ type SearchTeamsQuery struct {
 }
 
 type TeamDTO struct {
-	Id          int64          `json:"id"`
-	OrgId       int64          `json:"orgId"`
-	Name        string         `json:"name"`
-	Email       string         `json:"email"`
-	AvatarUrl   string         `json:"avatarUrl"`
-	MemberCount int64          `json:"memberCount"`
-	Permission  PermissionType `json:"permission"`
+	Id            int64           `json:"id"`
+	OrgId         int64           `json:"orgId"`
+	Name          string          `json:"name"`
+	Email         string          `json:"email"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	MemberCount   int64           `json:"memberCount"`
+	Permission    PermissionType  `json:"permission"`
+	AccessControl map[string]bool `json:"accessControl"`
 }
 
 type SearchTeamQueryResult struct {

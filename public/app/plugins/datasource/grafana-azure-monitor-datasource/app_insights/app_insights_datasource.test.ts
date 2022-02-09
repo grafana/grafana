@@ -10,7 +10,7 @@ const templateSrv = new TemplateSrv();
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));
@@ -142,7 +142,7 @@ describe('AppInsightsDatasource', () => {
             rawQueryString: queryString,
             timeColumn: 'timestamp',
             valueColumn: 'max',
-            segmentColumn: (undefined as unknown) as string,
+            segmentColumn: undefined as unknown as string,
           },
         },
       ],

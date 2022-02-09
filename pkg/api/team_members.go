@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,7 +24,15 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId}
+	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId, SignedInUser: c.SignedInUser}
+
+	// With accesscontrol the permission check has been done at middleware layer
+	// and the membership filtering will be done at DB layer based on user permissions
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgId, query.TeamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to list team members", err)
+		}
+	}
 
 	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
@@ -152,7 +161,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, userId, teamIDString, ""); err != nil {
+	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
@@ -171,7 +180,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 // Stubbable by tests.
 var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64, permission string) error {
 	teamIDString := strconv.FormatInt(teamID, 10)
-	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, userID, teamIDString, permission); err != nil {
+	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, accesscontrol.User{ID: userID}, teamIDString, permission); err != nil {
 		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 	}
 	return nil

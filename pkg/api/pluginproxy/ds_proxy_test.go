@@ -564,18 +564,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 		tests := []*testCase{
-			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, false),
-			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, authTypePassword, authCheckQuery, true),
-			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypePassword, authCheckHeader, true),
-			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypePassword, authCheckHeader, false),
-			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypeBasic, authCheckHeader, true),
-			createAuthTest(t, secretsService, models.DS_INFLUXDB, authTypeBasic, authCheckHeader, false),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery, false),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery, true),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader, true),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader, false),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, true),
+			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, false),
 
 			// These two should be enough for any other datasource at the moment. Proxy has special handling
 			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
 			// do not go through proxy but through TSDB API which is not tested here.
-			createAuthTest(t, secretsService, models.DS_ES, authTypeBasic, authCheckHeader, false),
-			createAuthTest(t, secretsService, models.DS_ES, authTypeBasic, authCheckHeader, true),
+			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, false),
+			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, true),
 		}
 		for _, test := range tests {
 			runDatasourceAuthTest(t, secretsService, test)
@@ -668,6 +668,20 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		require.NoError(t, writeErr)
 		assert.Equal(t, "important_cookie=important_value", proxy.ctx.Resp.Header().Get("Set-Cookie"))
+	})
+
+	t.Run("When response should set Content-Security-Policy header", func(t *testing.T) {
+		ctx, ds := setUp(t)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		assert.Equal(t, "sandbox", proxy.ctx.Resp.Header().Get("Content-Security-Policy"))
 	})
 
 	t.Run("Data source returns status code 401", func(t *testing.T) {
@@ -900,7 +914,7 @@ const (
 	authCheckHeader = "header"
 )
 
-func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
+func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string, url string, authType string, authCheck string, useSecureJsonData bool) *testCase {
 	ctx := context.Background()
 
 	// Basic user:password
@@ -911,6 +925,7 @@ func createAuthTest(t *testing.T, secretsService secrets.Service, dsType string,
 			Id:       1,
 			Type:     dsType,
 			JsonData: simplejson.New(),
+			Url:      url,
 		},
 	}
 	var message string

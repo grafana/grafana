@@ -37,8 +37,8 @@ export function addAxisConfig(
         placeholder: 'Optional text',
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-      // no matter what the field type is
-      shouldApply: () => true,
+      // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels
+      shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
     })
     .addNumberInput({
       path: 'axisWidth',

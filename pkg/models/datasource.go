@@ -13,7 +13,15 @@ const (
 	DS_INFLUXDB_08    = "influxdb_08"
 	DS_ES             = "elasticsearch"
 	DS_PROMETHEUS     = "prometheus"
+	DS_ALERTMANAGER   = "alertmanager"
+	DS_JAEGER         = "jaeger"
+	DS_LOKI           = "loki"
+	DS_OPENTSDB       = "opentsdb"
+	DS_TEMPO          = "tempo"
+	DS_ZIPKIN         = "zipkin"
 	DS_MYSQL          = "mysql"
+	DS_POSTGRES       = "postgres"
+	DS_MSSQL          = "mssql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
@@ -84,7 +92,7 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 
-	Result *DataSource
+	Result *DataSource `json:"-"`
 }
 
 // Also acts as api DTO
@@ -111,7 +119,7 @@ type UpdateDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 
-	Result *DataSource
+	Result *DataSource `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -163,6 +171,12 @@ type GetDataSourceQuery struct {
 //  Permissions
 // ---------------------
 
+// Datasource permission
+// Description:
+// * `0` - No Access
+// * `1` - Query
+// Enum: 0,1
+// swagger:model
 type DsPermissionType int
 
 const (

@@ -6,9 +6,11 @@ import { AccessControlAction } from 'app/types';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
+const loadingDSType = 'Loading';
+
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
-
+  const highlightsEnabled = config.featureToggles.featureHighlights;
   const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.uid,
@@ -39,7 +41,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     }
   }
 
-  if (pluginMeta.includes && hasDashboards(pluginMeta.includes)) {
+  if (pluginMeta.includes && hasDashboards(pluginMeta.includes) && contextSrv.hasRole('Admin')) {
     navModel.children!.push({
       active: false,
       icon: 'apps',
@@ -48,6 +50,8 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       url: `datasources/edit/${dataSource.uid}/dashboards`,
     });
   }
+
+  const isLoadingNav = dataSource.type === loadingDSType;
 
   const dsPermissions = {
     active: false,
@@ -61,11 +65,11 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
       navModel.children!.push(dsPermissions);
     }
-  } else if (config.featureHighlights.enabled) {
+  } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...dsPermissions,
       url: dsPermissions.url + '/upgrade',
-      tabSuffix: ProBadge,
+      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge' }),
     });
   }
 
@@ -79,11 +83,11 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 
   if (featureEnabled('analytics')) {
     navModel.children!.push(analytics);
-  } else if (config.featureHighlights.enabled) {
+  } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...analytics,
       url: analytics.url + '/upgrade',
-      tabSuffix: ProBadge,
+      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge' }),
     });
   }
 
@@ -98,11 +102,11 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 
   if (featureEnabled('caching')) {
     navModel.children!.push(caching);
-  } else if (config.featureHighlights.enabled) {
+  } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...caching,
       url: caching.url + '/upgrade',
-      tabSuffix: ProBadge,
+      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-caching-badge' }),
     });
   }
 
@@ -143,8 +147,8 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       orgId: 1,
       password: '',
       readOnly: false,
-      type: 'Loading',
-      typeName: 'Loading',
+      type: loadingDSType,
+      typeName: loadingDSType,
       typeLogoUrl: 'public/img/icn-datasource.svg',
       url: '',
       user: '',
