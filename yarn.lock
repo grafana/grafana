@@ -10216,13 +10216,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:4.0.1":
-  version: 4.0.1
-  resolution: "@types/marked@npm:4.0.1"
-  checksum: c2dabaae5ed5e2806ee3ef7f717ef7fe91ac5ee2718162219dd34de9d684d36efd561987fb3316b659d1add6d432696ca507da04b94380a77aac30870cb276d7
-  languageName: node
-  linkType: hard
-
 "@types/marked@npm:4.0.2":
   version: 4.0.2
   resolution: "@types/marked@npm:4.0.2"
@@ -20391,7 +20384,6 @@ __metadata:
     "@types/lodash": 4.14.149
     "@types/logfmt": ^1.2.1
     "@types/lru-cache": ^5.1.0
-    "@types/marked": 4.0.1
     "@types/mousetrap": 1.6.3
     "@types/node": 16.11.22
     "@types/papaparse": 5.3.2
@@ -20505,7 +20497,6 @@ __metadata:
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 6.0.0
-    marked: 4.0.10
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.5.3
     moment: 2.29.1
@@ -25372,15 +25363,6 @@ __metadata:
   peerDependencies:
     react: ">= 0.14.0"
   checksum: 9809d898ef71a0897f55e40481b8128a6041600d90387cf1d4126736bf8be0ba1f5594e57c655973b9aa60a877ad9e28e93124131e1e4902ca759a087a427027
-  languageName: node
-  linkType: hard
-
-"marked@npm:4.0.10":
-  version: 4.0.10
-  resolution: "marked@npm:4.0.10"
-  bin:
-    marked: bin/marked.js
-  checksum: 46cd8ef1a7cfcf5e461727c7f3e16dd4244369ef58f60485e75d3f5df9d53a8249b9609e96a336521eaa5c88d9531cbd296509a148718056e9375e69609f4442
   languageName: node
   linkType: hard
 

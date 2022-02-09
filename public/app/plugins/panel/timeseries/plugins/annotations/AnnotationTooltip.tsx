@@ -3,7 +3,7 @@ import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { css } from '@emotion/css';
-import { Chat } from 'app/features/chat/Chat';
+import { CommentManager } from 'app/features/chat/CommentManager';
 import config from 'app/core/config';
 
 interface AnnotationTooltipProps {
@@ -86,7 +86,7 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
         </>
         {config.featureToggles.liveAnnotationDiscussions && (
           <div className={styles.chatWrapper}>
-            <Chat contentTypeId={3} objectId={annotation.id.toString()} />
+            <CommentManager contentTypeId={3} objectId={annotation.id.toString()} />
           </div>
         )}
       </div>
