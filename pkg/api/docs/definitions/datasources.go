@@ -210,6 +210,7 @@ import (
 // you need to have a permission with action: `datasources:query`.
 //
 // Deprecated: true
+//
 // Responses:
 // 200: queryDatasourceResponse
 // 401: unauthorisedError
