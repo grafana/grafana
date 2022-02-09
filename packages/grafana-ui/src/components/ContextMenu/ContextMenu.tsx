@@ -11,7 +11,7 @@ export interface ContextMenuProps {
   y: number;
   /** Callback for closing the menu */
   onClose?: () => void;
-  /** Enable focus on first Menu element on openning the menu */
+  /** On menu open focus the first element */
   focusOnOpen?: boolean;
   /** RenderProp function that returns menu items to display */
   renderMenuItems?: () => React.ReactNode;
