@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Field, LoadingState, PanelProps } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { GraphNGProps, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import { GraphNGProps, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, KeyboardPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
@@ -74,6 +74,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       {(config, alignedDataFrame) => {
         return (
           <>
+            <KeyboardPlugin config={config} />
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin

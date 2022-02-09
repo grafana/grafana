@@ -2,18 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 import { DataSourceVariableModel, initialVariableModelState, VariableOption, VariableRefresh } from '../types';
-import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-  getInstanceState,
-  initialVariablesState,
-  VariablePayload,
-  VariablesState,
-} from '../state/types';
-
-export interface DataSourceVariableEditorState {
-  dataSourceTypes: Array<{ text: string; value: string }>;
-}
+import { getInstanceState, initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   ...initialVariableModelState,

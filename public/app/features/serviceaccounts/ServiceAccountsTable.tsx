@@ -4,7 +4,8 @@ import { OrgRolePicker } from '../admin/OrgRolePicker';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { fetchBuiltinRoles, fetchRoleOptions, UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 export interface Props {
   serviceAccounts: OrgServiceAccount[];
@@ -27,10 +28,15 @@ const ServiceAccountsTable: FC<Props> = (props) => {
   useEffect(() => {
     async function fetchOptions() {
       try {
-        let options = await fetchRoleOptions(orgId);
-        setRoleOptions(options);
-        const builtInRoles = await fetchBuiltinRoles(orgId);
-        setBuiltinRoles(builtInRoles);
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+          let options = await fetchRoleOptions(orgId);
+          setRoleOptions(options);
+        }
+
+        if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
+          const builtInRoles = await fetchBuiltinRoles(orgId);
+          setBuiltinRoles(builtInRoles);
+        }
       } catch (e) {
         console.error('Error loading options');
       }
@@ -39,9 +45,6 @@ const ServiceAccountsTable: FC<Props> = (props) => {
       fetchOptions();
     }
   }, [orgId]);
-
-  const getRoleOptions = async () => roleOptions;
-  const getBuiltinRoles = async () => builtinRoles;
 
   return (
     <>
@@ -88,8 +91,8 @@ const ServiceAccountsTable: FC<Props> = (props) => {
                       orgId={orgId}
                       builtInRole={serviceAccount.role}
                       onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
-                      getRoleOptions={getRoleOptions}
-                      getBuiltinRoles={getBuiltinRoles}
+                      roleOptions={roleOptions}
+                      builtInRoles={builtinRoles}
                       disabled={rolePickerDisabled}
                     />
                   ) : (

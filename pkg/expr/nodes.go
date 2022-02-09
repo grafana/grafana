@@ -254,8 +254,16 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			}
 		}
 
+		dataSource := dn.datasource.Type
 		for _, frame := range qr.Frames {
 			logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
+			// the WideToMany() function to error out, which results in unhealthy alerts.
+			// This check should be removed once inconsistencies in data source responses are solved.
+			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == models.DS_INFLUXDB {
+				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
+				continue
+			}
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err

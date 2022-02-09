@@ -1,10 +1,10 @@
 import { RegistryItemWithOptions } from '../utils/Registry';
-import BaseLayer from 'ol/layer/Base';
-import Map from 'ol/Map';
 import { PanelData } from '../types';
 import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
+import { PluggableMap } from 'ol';
+import BaseLayer from 'ol/layer/Base';
 
 /**
  * @alpha
@@ -62,7 +62,7 @@ export interface MapLayerOptions<TConfig = any> {
   // Layer opacity (0-1)
   opacity?: number;
 
-  //Check tooltip
+  // Check tooltip (defaults to true)
   tooltip?: boolean;
 }
 
@@ -105,5 +105,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
+  create: (map: PluggableMap, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
 }

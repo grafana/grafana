@@ -27,6 +27,11 @@ import (
 // StartGrafana starts a Grafana server.
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLStore) {
+	addr, env := StartGrafanaEnv(t, grafDir, cfgPath)
+	return addr, env.SQLStore
+}
+
+func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -65,7 +70,7 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLS
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr, env.SQLStore
+	return addr, env
 }
 
 // SetUpDatabase sets up the Grafana database.
@@ -231,6 +236,10 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = ngalertingSection.NewKey("alertmanager_config_poll_interval", o.NGAlertAlertmanagerConfigPollInterval.String())
 			require.NoError(t, err)
 		}
+		if o.AppModeProduction {
+			_, err = dfltSect.NewKey("app_mode", "production")
+			require.NoError(t, err)
+		}
 		if o.AnonymousUserRole != "" {
 			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
 			require.NoError(t, err)
@@ -308,6 +317,7 @@ type GrafanaOpts struct {
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
 	PluginAdminEnabled                    bool
+	AppModeProduction                     bool
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64

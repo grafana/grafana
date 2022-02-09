@@ -116,7 +116,7 @@ export class DashboardExporter {
               pluginName: ds.meta?.name,
             };
 
-            if (obj.datasource === null || typeof obj.datasource === 'string') {
+            if (!obj.datasource || typeof obj.datasource === 'string') {
               obj.datasource = '${' + refName + '}';
             } else {
               obj.datasource.uid = '${' + refName + '}';
@@ -176,7 +176,7 @@ export class DashboardExporter {
       if (isQuery(variable)) {
         templateizeDatasourceUsage(variable);
         variable.options = [];
-        variable.current = ({} as unknown) as VariableOption;
+        variable.current = {} as unknown as VariableOption;
         variable.refresh =
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       }

@@ -14,13 +14,14 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
+    'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
     'build_frontend_docs_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
+    'publish_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -99,7 +100,7 @@ def get_steps(edition, is_downstream=False):
     # Insert remaining steps
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, is_downstream=is_downstream),
-        e2e_tests_server_step(edition=edition),
+        grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
         e2e_tests_step('panels-suite', edition=edition),
@@ -111,8 +112,10 @@ def get_steps(edition, is_downstream=False):
         frontend_metrics_step(edition=edition),
         build_frontend_docs_step(edition=edition),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', ubuntu=False),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', ubuntu=True)
     ])
 
     if include_enterprise2:

@@ -28,7 +28,7 @@ To learn more about the differences between new alerts and the legacy alerts, re
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../panels/panel-library.md" >}}).
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../panels/library-panels/" >}}).
 
 ### Real-time streaming
 
@@ -114,7 +114,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- The Value mappings feature has been completely redesigned. For more information, refer to [Value mappings]({{< relref "../panels/value-mappings.md" >}}).
+- The Value mappings feature has been completely redesigned. For more information, refer to [About value mappings]({{< relref "../panels/format-data/about-value-mapping.md" >}}).
 - New **Table view** option is always available.
 
 The [Panels]({{< relref "../panels/_index.md" >}}) section has been updated to reflect these changes.
@@ -129,7 +129,7 @@ Under the hood, the new theme architecture enables us to bring more sophisticate
 
 When you inspect a panel, you can now download log results as a text (.txt) file.
 
-[Download log results]({{< relref "../panels/inspect-panel.md#download-log-results" >}}) in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}}) was added as a result of this feature.
+[Download log results]({{< relref "../panels/working-with-panels/download-log-results.md" >}}) was added as a result of this feature.
 
 ### Inspector in Explore
 

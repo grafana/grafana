@@ -174,23 +174,28 @@ describe('Receivers', () => {
     await renderReceivers();
 
     // go to new contact point page
-    userEvent.click(await ui.newContactPointButton.find());
+    await act(async () => {
+      userEvent.click(await ui.newContactPointButton.find());
+    });
 
     await byRole('heading', { name: /create contact point/i }).find();
+
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
-    // type in a name for the new receiver
-    userEvent.type(ui.inputs.name.get(), 'my new receiver');
+    await act(async () => {
+      // type in a name for the new receiver
+      userEvent.type(ui.inputs.name.get(), 'my new receiver');
 
-    // enter some email
-    const email = ui.inputs.email.addresses.get();
-    userEvent.clear(email);
-    userEvent.type(email, 'tester@grafana.com');
+      // enter some email
+      const email = ui.inputs.email.addresses.get();
+      userEvent.clear(email);
+      userEvent.type(email, 'tester@grafana.com');
 
-    // try to test the contact point
-    userEvent.click(ui.testContactPointButton.get());
+      // try to test the contact point
+      userEvent.click(await ui.testContactPointButton.find());
+    });
 
-    await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument());
+    await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument(), { timeout: 1000 });
     userEvent.click(ui.customContactPointOption.get());
     await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
 
@@ -254,7 +259,7 @@ describe('Receivers', () => {
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
-      await userEvent.click(ui.saveContactButton.get());
+      userEvent.click(await ui.saveContactButton.find());
     });
 
     // see that we're back to main page and proper api calls have been made

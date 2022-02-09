@@ -7,12 +7,7 @@ import {
   duplicateVariable,
   removeVariable,
 } from './sharedReducer';
-
-export enum TransactionStatus {
-  NotStarted = 'Not started',
-  Fetching = 'Fetching',
-  Completed = 'Completed',
-}
+import { TransactionStatus } from '../types';
 
 export interface TransactionState {
   uid: string | undefined | null;
@@ -67,10 +62,7 @@ function actionAffectsDirtyState(action: AnyAction): boolean {
   ].includes(action.type);
 }
 
-export const {
-  variablesInitTransaction,
-  variablesClearTransaction,
-  variablesCompleteTransaction,
-} = transactionSlice.actions;
+export const { variablesInitTransaction, variablesClearTransaction, variablesCompleteTransaction } =
+  transactionSlice.actions;
 
 export const transactionReducer = transactionSlice.reducer;

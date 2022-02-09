@@ -1,11 +1,12 @@
 import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
-import { StackingMode, VizLegendOptions } from '@grafana/schema';
+import { GraphFieldConfig, GraphTransform, StackingMode, VizLegendOptions } from '@grafana/schema';
 import { orderBy } from 'lodash';
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
+export const INTERNAL_NEGATIVE_Y_PREFIX = '__internalNegY';
 
 export function timeFormatToTemplate(f: string) {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
@@ -60,7 +61,16 @@ export function preparePlotData(
     }
 
     collectStackingGroups(f, stackingGroups, seriesIndex);
-    result.push(f.values.toArray());
+    const customConfig: GraphFieldConfig = f.config.custom || {};
+
+    const values = f.values.toArray();
+    if (customConfig.transform === GraphTransform.NegativeY) {
+      result.push(values.map((v) => v * -1));
+    } else if (customConfig.transform === GraphTransform.Constant) {
+      result.push(new Array(values.length).fill(values[0]));
+    } else {
+      result.push(values);
+    }
     seriesIndex++;
   }
 
@@ -74,7 +84,7 @@ export function preparePlotData(
     // array or stacking groups
     for (const [_, seriesIds] of stackingGroups.entries()) {
       const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-
+      const noValueStack = Array(dataLength).fill(true);
       const groupTotals = byPct ? Array(dataLength).fill(0) : null;
 
       if (byPct) {
@@ -99,10 +109,13 @@ export function preparePlotData(
 
         for (let k = 0; k < dataLength; k++) {
           const v = currentlyStacking[k];
+          if (v != null && noValueStack[k]) {
+            noValueStack[k] = false;
+          }
           acc[k] += v == null ? 0 : v / (byPct ? groupTotals![k] : 1);
         }
 
-        result[seriesIdx] = acc.slice();
+        result[seriesIdx] = acc.slice().map((v, i) => (noValueStack[i] ? null : v));
       }
     }
 
@@ -125,10 +138,15 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
     customConfig.stacking?.group &&
     !customConfig.hideFrom?.viz
   ) {
-    if (!groups.has(customConfig.stacking.group)) {
-      groups.set(customConfig.stacking.group, [seriesIdx]);
+    const group =
+      customConfig.transform === GraphTransform.NegativeY
+        ? `${INTERNAL_NEGATIVE_Y_PREFIX}-${customConfig.stacking.group}`
+        : customConfig.stacking.group;
+
+    if (!groups.has(group)) {
+      groups.set(group, [seriesIdx]);
     } else {
-      groups.set(customConfig.stacking.group, groups.get(customConfig.stacking.group)!.concat(seriesIdx));
+      groups.set(group, groups.get(group)!.concat(seriesIdx));
     }
   }
 }

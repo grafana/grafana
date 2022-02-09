@@ -50,8 +50,22 @@ func (sv StructWithValidation) Validate() error {
 	return nil
 }
 
+type StructWithPointerValidation struct {
+	A int
+}
+
+func (sv *StructWithPointerValidation) Validate() error {
+	if sv.A < 10 {
+		return errors.New("too small")
+	}
+	return nil
+}
+
 func TestValidationSuccess(t *testing.T) {
+	var nilInterface *StructWithPointerValidation
+
 	for _, x := range []interface{}{
+		nil,
 		42,
 		"foo",
 		struct{ A int }{},
@@ -65,6 +79,8 @@ func TestValidationSuccess(t *testing.T) {
 		StructWithStruct{StructWithInt{3}},
 		StructWithStructPointer{&StructWithInt{3}},
 		StructWithValidation{42},
+		&StructWithPointerValidation{42},
+		nilInterface,
 	} {
 		if err := validate(x); err != nil {
 			t.Error("Validation failed:", x, err)
@@ -93,6 +109,7 @@ func TestValidationFailure(t *testing.T) {
 		StructWithStructPointer{},
 		StructWithStructPointer{&StructWithInt{}},
 		StructWithValidation{2},
+		&StructWithPointerValidation{2},
 	} {
 		if err := validate(x); err == nil {
 			t.Error("Validation should fail:", i, x)

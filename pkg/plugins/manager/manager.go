@@ -4,22 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -35,101 +30,50 @@ var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
 var _ plugins.RendererManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg              *setting.Cfg
-	requestValidator models.PluginRequestValidator
-	sqlStore         *sqlstore.SQLStore
-	store            map[string]*plugins.Plugin
-	pluginInstaller  plugins.Installer
-	pluginLoader     plugins.Loader
-	pluginsMu        sync.RWMutex
-	log              log.Logger
+	cfg             *plugins.Cfg
+	store           map[string]*plugins.Plugin
+	pluginInstaller plugins.Installer
+	pluginLoader    plugins.Loader
+	pluginsMu       sync.RWMutex
+	pluginPaths     map[plugins.Class][]string
+	log             log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, requestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore) (*PluginManager, error) {
-	pm := newManager(cfg, requestValidator, pluginLoader, sqlStore)
-	if err := pm.init(); err != nil {
+func ProvideService(grafanaCfg *setting.Cfg, pluginLoader plugins.Loader) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), map[plugins.Class][]string{
+		plugins.Core:     corePluginPaths(grafanaCfg),
+		plugins.Bundled:  {grafanaCfg.BundledPluginsPath},
+		plugins.External: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...),
+	}, pluginLoader)
+	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func newManager(cfg *setting.Cfg, pluginRequestValidator models.PluginRequestValidator, pluginLoader plugins.Loader,
-	sqlStore *sqlstore.SQLStore) *PluginManager {
+func New(cfg *plugins.Cfg, pluginPaths map[plugins.Class][]string, pluginLoader plugins.Loader) *PluginManager {
 	return &PluginManager{
-		cfg:              cfg,
-		requestValidator: pluginRequestValidator,
-		sqlStore:         sqlStore,
-		pluginLoader:     pluginLoader,
-		store:            map[string]*plugins.Plugin{},
-		log:              log.New("plugin.manager"),
-		pluginInstaller:  installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+		cfg:             cfg,
+		pluginLoader:    pluginLoader,
+		pluginPaths:     pluginPaths,
+		store:           make(map[string]*plugins.Plugin),
+		log:             log.New("plugin.manager"),
+		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 	}
 }
 
-func (m *PluginManager) init() error {
-	// create external plugin's path if not exists
-	exists, err := fs.Exists(m.cfg.PluginsPath)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		if err = os.MkdirAll(m.cfg.PluginsPath, os.ModePerm); err != nil {
-			m.log.Error("Failed to create external plugins directory", "dir", m.cfg.PluginsPath, "error", err)
-		} else {
-			m.log.Debug("External plugins directory created", "dir", m.cfg.PluginsPath)
+func (m *PluginManager) Init() error {
+	for class, paths := range m.pluginPaths {
+		err := m.loadPlugins(context.Background(), class, paths...)
+		if err != nil {
+			return err
 		}
-	}
-
-	m.log.Info("Initialising plugins")
-
-	// install Core plugins
-	err = m.loadPlugins(m.corePluginPaths()...)
-	if err != nil {
-		return err
-	}
-
-	// install Bundled plugins
-	err = m.loadPlugins(m.cfg.BundledPluginsPath)
-	if err != nil {
-		return err
-	}
-
-	// install External plugins
-	err = m.loadPlugins(m.cfg.PluginsPath)
-	if err != nil {
-		return err
-	}
-
-	// install plugins from cfg.PluginSettings
-	err = m.loadPlugins(m.pluginSettingPaths()...)
-	if err != nil {
-		return err
 	}
 
 	return nil
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
-	if m.cfg.CheckForUpdates {
-		go func() {
-			m.checkForUpdates(ctx)
-
-			ticker := time.NewTicker(time.Minute * 10)
-			run := true
-
-			for run {
-				select {
-				case <-ticker.C:
-					m.checkForUpdates(ctx)
-				case <-ctx.Done():
-					run = false
-				}
-			}
-		}()
-	}
-
 	<-ctx.Done()
 	m.shutdown(ctx)
 	return ctx.Err()
@@ -161,7 +105,7 @@ func (m *PluginManager) plugins() []*plugins.Plugin {
 	return res
 }
 
-func (m *PluginManager) loadPlugins(paths ...string) error {
+func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, paths ...string) error {
 	if len(paths) == 0 {
 		return nil
 	}
@@ -173,7 +117,7 @@ func (m *PluginManager) loadPlugins(paths ...string) error {
 		}
 	}
 
-	loadedPlugins, err := m.pluginLoader.Load(pluginPaths, m.registeredPlugins())
+	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, m.registeredPlugins())
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
@@ -282,26 +226,13 @@ func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*b
 }
 
 func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	var dsURL string
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
-	}
-
-	err := m.requestValidator.Validate(dsURL, nil)
-	if err != nil {
-		return &backend.CheckHealthResult{
-			Status:  http.StatusForbidden,
-			Message: "Access denied",
-		}, nil
-	}
-
 	p, exists := m.plugin(req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
-	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
+	err := instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: req.PluginContext})
 		return
 	})
@@ -499,24 +430,17 @@ func (m *PluginManager) shutdown(ctx context.Context) {
 }
 
 // corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
-func (m *PluginManager) corePluginPaths() []string {
-	datasourcePaths := []string{
-		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/alertmanager"),
-		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/dashboard"),
-		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/jaeger"),
-		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/mixed"),
-		filepath.Join(m.cfg.StaticRootPath, "app/plugins/datasource/zipkin"),
-	}
+func corePluginPaths(cfg *setting.Cfg) []string {
+	datasourcePaths := filepath.Join(cfg.StaticRootPath, "app/plugins/datasource")
+	panelsPath := filepath.Join(cfg.StaticRootPath, "app/plugins/panel")
 
-	panelsPath := filepath.Join(m.cfg.StaticRootPath, "app/plugins/panel")
-
-	return append(datasourcePaths, panelsPath)
+	return []string{datasourcePaths, panelsPath}
 }
 
 // pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
-func (m *PluginManager) pluginSettingPaths() []string {
+func pluginSettingPaths(cfg *setting.Cfg) []string {
 	var pluginSettingDirs []string
-	for _, settings := range m.cfg.PluginSettings {
+	for _, settings := range cfg.PluginSettings {
 		path, exists := settings["path"]
 		if !exists || path == "" {
 			continue

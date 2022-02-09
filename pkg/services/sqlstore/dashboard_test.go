@@ -8,14 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,7 +59,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -75,7 +76,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -92,7 +93,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, query.Result.Title, "test dash 23")
@@ -108,7 +109,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err := GetDashboard(context.Background(), &query)
+		err := sqlStore.GetDashboard(context.Background(), &query)
 		require.Equal(t, err, models.ErrDashboardIdentifierNotSet)
 	})
 
@@ -116,7 +117,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "delete me", 1, 0, false, "delete this")
 
-		err := DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
+		err := sqlStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 			Id:    dash.Id,
 			OrgId: 1,
 		})
@@ -199,7 +200,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 		}
 
-		err = GetDashboard(context.Background(), &query)
+		err = sqlStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, query.Result.FolderId, int64(0))
 		require.Equal(t, query.Result.CreatedBy, savedDash.CreatedBy)
@@ -213,21 +214,21 @@ func TestDashboardDataAccess(t *testing.T) {
 		emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
-		err := DeleteDashboard(context.Background(), deleteCmd)
+		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 	})
 
 	t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: false}
-		err := DeleteDashboard(context.Background(), deleteCmd)
+		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.True(t, errors.Is(err, models.ErrFolderContainsAlertRules))
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
-		err := DeleteDashboard(context.Background(), deleteCmd)
+		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
 		query := search.FindPersistedDashboardsQuery{
@@ -291,7 +292,7 @@ func TestDashboardDataAccess(t *testing.T) {
 		setup()
 		query := models.GetDashboardTagsQuery{OrgId: 1}
 
-		err := GetDashboardTags(context.Background(), &query)
+		err := sqlStore.GetDashboardTags(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, len(query.Result), 2)
@@ -589,7 +590,7 @@ func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAd
 	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
-	err = GetUserOrgList(context.Background(), &q1)
+	err = sqlStore.GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 	return *currentUser

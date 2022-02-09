@@ -12,6 +12,10 @@ func (ds *dummyService) GetImage(c *models.ReqContext) {
 	c.JSON(400, map[string]string{"error": "invalid size"})
 }
 
+func (ds *dummyService) UpdateThumbnailState(c *models.ReqContext) {
+	c.JSON(400, map[string]string{"error": "invalid size"})
+}
+
 func (ds *dummyService) SetImage(c *models.ReqContext) {
 	c.JSON(400, map[string]string{"error": "invalid size"})
 }

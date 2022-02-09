@@ -17,10 +17,6 @@ type {{classname}}ForkingService interface { {{#operation}}
 	{{nickname}}(*models.ReqContext) response.Response{{/operation}}
 }
 
-type {{classname}}Service interface { {{#operation}}
-	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
-}
-
 {{#operations}}{{#operation}}
 func (f *Forked{{classname}}) {{nickname}}(ctx *models.ReqContext) response.Response {
 	{{#bodyParams}}
@@ -40,6 +36,7 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}ForkingService, 
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"),
+		api.authorize(http.Method{{httpMethod}}, "{{{path}}}"),
 		metrics.Instrument(
 			http.Method{{httpMethod}},
 			"{{{path}}}",
@@ -47,6 +44,6 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}ForkingService, 
 			m,
 		),
   ){{/operation}}{{/operations}}
-	}, middleware.ReqSignedIn)
+	})
 }{{#operation}}
 {{/operation}}{{/operations}}

@@ -1,28 +1,72 @@
 import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { OrgServiceAccount as OrgServiceAccount } from 'app/types';
-import { serviceAccountsLoaded } from './reducers';
+import { serviceAccountLoaded, serviceAccountsLoaded, serviceAccountTokensLoaded } from './reducers';
 
-export function loadServiceAccounts(): ThunkResult<void> {
+const BASE_URL = `/api/serviceaccounts`;
+
+export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
-    const serviceAccounts = await getBackendSrv().get('/api/serviceaccounts');
-    dispatch(serviceAccountsLoaded(serviceAccounts));
+    try {
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`);
+      dispatch(serviceAccountLoaded(response));
+    } catch (error) {
+      console.error(error);
+    }
   };
 }
 
-export function updateServiceAccount(serviceAccount: OrgServiceAccount): ThunkResult<void> {
+export function createServiceAccountToken(
+  saID: number,
+  data: any,
+  onTokenCreated: (key: string) => void
+): ThunkResult<void> {
+  return async (dispatch) => {
+    const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, data);
+    onTokenCreated(result.key);
+    dispatch(loadServiceAccountTokens(saID));
+  };
+}
+
+export function deleteServiceAccountToken(saID: number, id: number): ThunkResult<void> {
+  return async (dispatch) => {
+    await getBackendSrv().delete(`${BASE_URL}/${saID}/tokens/${id}`);
+    dispatch(loadServiceAccountTokens(saID));
+  };
+}
+
+export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}/tokens`);
+      dispatch(serviceAccountTokensLoaded(response));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+export function loadServiceAccounts(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      const response = await getBackendSrv().get(BASE_URL);
+      dispatch(serviceAccountsLoaded(response));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+export function updateServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
     // TODO: implement on backend
-    await getBackendSrv().patch(`/api/serviceaccounts/${serviceAccount.serviceAccountId}`, {
-      role: serviceAccount.role,
-    });
+    await getBackendSrv().patch(`${BASE_URL}/${saID}`, {});
     dispatch(loadServiceAccounts());
   };
 }
 
 export function removeServiceAccount(serviceAccountId: number): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/serviceaccounts/${serviceAccountId}`);
+    await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
     dispatch(loadServiceAccounts());
   };
 }

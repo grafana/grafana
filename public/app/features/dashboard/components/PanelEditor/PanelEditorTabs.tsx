@@ -41,7 +41,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
           if (tab.id === PanelEditorTabId.Alert) {
-            renderAlertTab(tab, panel, dashboard, onChangeTab);
+            return renderAlertTab(tab, panel, dashboard, onChangeTab);
           }
           return (
             <Tab
@@ -86,9 +86,13 @@ function renderAlertTab(
   dashboard: DashboardModel,
   onChangeTab: (tab: PanelEditorTab) => void
 ) {
-  if (!config.alertingEnabled || !config.unifiedAlertingEnabled) {
+  const alertingDisabled = !config.alertingEnabled && !config.unifiedAlertingEnabled;
+
+  if (alertingDisabled) {
     return null;
-  } else if (config.unifiedAlertingEnabled) {
+  }
+
+  if (config.unifiedAlertingEnabled) {
     return (
       <PanelAlertTab
         key={tab.id}
@@ -100,7 +104,9 @@ function renderAlertTab(
         dashboard={dashboard}
       />
     );
-  } else if (config.alertingEnabled) {
+  }
+
+  if (config.alertingEnabled) {
     return (
       <Tab
         key={tab.id}

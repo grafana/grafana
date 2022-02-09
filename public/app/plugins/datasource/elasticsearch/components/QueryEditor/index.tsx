@@ -1,15 +1,16 @@
 import React from 'react';
-import { getDefaultTimeRange, QueryEditorProps } from '@grafana/data';
+import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
-import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
+import { InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 import { changeAliasPattern, changeQuery } from './state';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useNextId } from '../../hooks/useNextId';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
+import { css } from '@emotion/css';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
@@ -25,6 +26,16 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: 
   </ElasticsearchProvider>
 );
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  root: css`
+    display: flex;
+  `,
+  queryFieldWrapper: css`
+    flex-grow: 1;
+    margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
+  `,
+});
+
 interface Props {
   value: ElasticsearchQuery;
 }
@@ -32,6 +43,7 @@ interface Props {
 const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
+  const styles = useStyles2(getStyles);
 
   // To be considered a time series query, the last bucked aggregation must be a Date Histogram
   const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
@@ -42,8 +54,9 @@ const QueryEditorForm = ({ value }: Props) => {
 
   return (
     <>
-      <InlineFieldRow>
-        <InlineField label="Query" labelWidth={17} grow>
+      <div className={styles.root}>
+        <InlineLabel width={17}>Query</InlineLabel>
+        <div className={styles.queryFieldWrapper}>
           <QueryField
             query={value.query}
             // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
@@ -53,7 +66,7 @@ const QueryEditorForm = ({ value }: Props) => {
             placeholder="Lucene Query"
             portalOrigin="elasticsearch"
           />
-        </InlineField>
+        </div>
         <InlineField
           label="Alias"
           labelWidth={15}
@@ -67,7 +80,7 @@ const QueryEditorForm = ({ value }: Props) => {
             defaultValue={value.alias}
           />
         </InlineField>
-      </InlineFieldRow>
+      </div>
 
       <MetricAggregationsEditor nextId={nextId} />
       {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}

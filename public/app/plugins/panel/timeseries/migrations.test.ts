@@ -390,6 +390,22 @@ describe('Graph Migrations', () => {
       expect(panel4.options.tooltip.sort).toBe(SortOrder.None);
     });
   });
+
+  describe('x axis', () => {
+    test('should hide x axis', () => {
+      const old: any = {
+        angular: {
+          xaxis: {
+            show: false,
+            mode: 'time',
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig).toMatchSnapshot();
+    });
+  });
 });
 
 const customColor = {
