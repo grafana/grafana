@@ -97,8 +97,7 @@ func (c *ClientV2) CollectMetrics(ctx context.Context, req *backend.CollectMetri
 		return &backend.CollectMetricsResult{}, nil
 	}
 
-	protoContext := backend.ToProto().PluginContext(req.PluginContext)
-	protoResp, err := c.DiagnosticsClient.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{PluginContext: protoContext})
+	protoResp, err := c.DiagnosticsClient.CollectMetrics(ctx, backend.ToProto().CollectMetricsRequest(req))
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
 			return &backend.CollectMetricsResult{}, nil
