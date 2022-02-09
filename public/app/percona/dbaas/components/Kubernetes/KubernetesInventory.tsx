@@ -45,7 +45,8 @@ export const KubernetesInventory: FC<KubernetesProps> = ({
         setDeleteModalVisible(false);
       }
     },
-    [selectedCluster, deleteKubernetes]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedCluster]
   );
 
   const columns = useMemo(

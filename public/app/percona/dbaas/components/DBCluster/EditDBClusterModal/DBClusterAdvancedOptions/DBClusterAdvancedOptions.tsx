@@ -70,7 +70,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     [selectedCluster]
   );
 
-  const getAllocatedResources = useCallback(async (triggerLoading = true) => {
+  const getAllocatedResources = async (triggerLoading = true) => {
     try {
       if (allocatedTimer) {
         clearTimeout(allocatedTimer);
@@ -92,9 +92,9 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
         allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
       }
     }
-  }, []);
+  };
 
-  const getExpectedResources = useCallback(async () => {
+  const getExpectedResources = async () => {
     try {
       const dbClusterService = newDBClusterService(selectedCluster.databaseType);
 
@@ -122,17 +122,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     } finally {
       setLoadingExpectedResources(false);
     }
-  }, [
-    cpu,
-    disk,
-    memory,
-    nodes,
-    selectedCluster.clusterName,
-    selectedCluster.databaseType,
-    selectedCluster.kubernetesClusterName,
-    single,
-    topology,
-  ]);
+  };
 
   useEffect(() => {
     if (prevResources === DBClusterResources.custom) {

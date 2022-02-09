@@ -1,5 +1,5 @@
 import { Modal, logger } from '@percona/platform-core';
-import React, { FC, useEffect, useState, useCallback } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 
 import { Button, Icon, Spinner, useStyles } from '@grafana/ui';
 
@@ -17,7 +17,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<DBClusterLogs>({ pods: [] });
   const [expanded, setExpanded] = useState(false);
-  const getClusterLogs = useCallback(async () => {
+  const getClusterLogs = async () => {
     if (!dbCluster) {
       return;
     }
@@ -30,8 +30,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbCluster]);
+  };
 
   const toggleCollapse = () => {
     setLogs({ pods: toggleLogs(logs.pods, !expanded) });
