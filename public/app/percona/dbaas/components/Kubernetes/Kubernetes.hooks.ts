@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { AppEvents } from '@grafana/data';
 import { logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -33,7 +33,7 @@ export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernete
     kubernetes: { deleteSuccess },
   } = Messages;
 
-  const getKubernetes = useCallback(async () => {
+  const getKubernetes = async () => {
     setLoading(true);
 
     try {
@@ -51,7 +51,7 @@ export const useKubernetes = ({ settings }: UseKubernetesProps): ManageKubernete
     }
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   const deleteKubernetes = async (kubernetesToDelete: Kubernetes, force?: boolean) => {
     try {

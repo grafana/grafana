@@ -66,7 +66,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     [databaseType]
   );
 
-  const getAllocatedResources = useCallback(async (triggerLoading = true) => {
+  const getAllocatedResources = async (triggerLoading = true) => {
     try {
       if (allocatedTimer) {
         clearTimeout(allocatedTimer);
@@ -75,7 +75,9 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       if (triggerLoading) {
         setLoadingAllocatedResources(true);
       }
-      setAllocatedResources(await DBClusterService.getAllocatedResources(kubernetesCluster.value));
+      const alloc = await DBClusterService.getAllocatedResources(kubernetesCluster.value);
+      console.log(alloc);
+      setAllocatedResources(alloc);
     } catch (e) {
       logger.error(e);
     } finally {
@@ -89,7 +91,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
         allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
       }
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (prevResources === DBClusterResources.custom) {
@@ -122,7 +124,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       clearTimeout(allocatedTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kubernetesCluster, getAllocatedResources, mounted]);
+  }, [kubernetesCluster]);
 
   useEffect(() => {
     const getExpectedResources = async () => {

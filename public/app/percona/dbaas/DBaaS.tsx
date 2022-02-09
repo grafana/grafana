@@ -48,7 +48,8 @@ export const DBaaS: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }
         component: <DBCluster key={TabKeys.dbclusters} kubernetes={kubernetes} />,
       },
     ],
-    [kubernetes, kubernetesLoading, addKubernetes, deleteKubernetes, getKubernetes, setLoading]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [kubernetes, kubernetesLoading]
   );
 
   return (
