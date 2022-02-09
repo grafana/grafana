@@ -270,12 +270,7 @@ func TestPluginProxy(t *testing.T) {
 				Resp: responseWriter,
 			},
 		}
-		store := mockstore.NewSQLStoreMock()
-
-		store.ExpectedPluginSetting = &models.PluginSetting{
-			SecureJsonData: map[string][]byte{},
-		}
-		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, store, secretsService)
+		proxy := NewApiPluginProxy(ctx, "", route, "", &setting.Cfg{}, secretsService)
 		proxy.ServeHTTP(ctx.Resp, ctx.Req)
 
 		for {
