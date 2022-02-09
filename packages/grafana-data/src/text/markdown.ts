@@ -42,15 +42,3 @@ export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOp
 
   return sanitizeTextPanelContent(html);
 }
-
-export function renderChatMarkdown(str?: string): string {
-  const html = marked(str || '', {
-    pedantic: false,
-    gfm: true,
-    smartLists: true,
-    smartypants: false,
-    xhtml: false,
-    breaks: true,
-  });
-  return sanitize(html);
-}

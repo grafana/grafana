@@ -46,6 +46,14 @@ export const ChatMessage: FunctionComponent<ChatMessageProps> = ({ message, acti
   // const [actionMenuExpanded, setActionMenuExpanded] = useState(false);
   const [showActionIcon, setShowActionIcon] = useState(false);
 
+  const onMouseEnter = () => {
+    setShowActionIcon(true);
+  };
+
+  const onMouseLeave = () => {
+    setShowActionIcon(false);
+  };
+
   const renderMenuGroupItems = () => {
     return (
       <MenuGroup label="">
@@ -61,16 +69,9 @@ export const ChatMessage: FunctionComponent<ChatMessageProps> = ({ message, acti
       </MenuGroup>
     );
   };
+
   return (
-    <div
-      onMouseEnter={() => {
-        setShowActionIcon(true);
-      }}
-      onMouseLeave={() => {
-        setShowActionIcon(false);
-      }}
-      className="chat-message"
-    >
+    <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className="chat-message">
       <div style={{ float: 'left', paddingTop: '6px', marginRight: '10px' }}>
         <img src={avatarUrl} alt="" style={{ width: '30px', height: '30px' }} />
       </div>
