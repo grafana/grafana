@@ -290,8 +290,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       top -= u.bbox.top;
 
       let val = u.data[seriesIdx][dataIdx]!;
-      let autoFontSize = 14;
-
       // accum min space abvailable for labels
       if (isXHorizontal) {
         vSpace = Math.min(vSpace, val < 0 ? u.bbox.height - (top + hgt) : top);
@@ -330,7 +328,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           labels[dataIdx][seriesIdx].textMetrics = textMetrics;
 
           // Retrieve the new font size and use it
-          autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+          let autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
 
           // Calculate the scaling factor for bouding boxes
           // Take into account the fact that calculateFontSize
