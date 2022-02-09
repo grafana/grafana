@@ -1,4 +1,4 @@
-+++
+rish+++
 title = "About users and permissions"
 aliases = ["docs/sources/manage-users/_index.md", "docs/sources/administration/manage-users-and-permissions/about-users-and-permissions.md", "/docs/grafana/latest/permissions/overview/", "docs/sources/permissions/_index.md", "docs/sources/permissions/organization_roles.md"]
 weight = 100
@@ -11,14 +11,14 @@ A _user_ is defined as any individual who can log in to Grafana. Each user is as
 You can assign a user one of three types of permissions:
 
 - Grafana server administrator permissions: Manage Grafana server-wide settings and resources
-- Organization permissions: Manage access to plugin, teams, and playlists
-- Dashboard and dashboard folder permission: Manage access to dashboards and dashboard folders
+- Organization permissions: Manage access to dashboards, alerts, plugins, teams, playlists, and other resources for an entire organization. The available roles are Viewer, Editor, and Admin.
+- Dashboard and folder permission: Manage access to dashboards and folders
 
-> **Note**: If you are running Grafana Enterprise, you can also control access to data sources and use fine-grained access control to control read and write permissions for specific resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
+> **Note**: If you are running Grafana Enterprise, you can also control access to data sources and use fine-grained access control to grant read and write permissions for specific resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
 
 ## Grafana server administrators
 
-A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and permissions. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
+A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
 A server administrator can perform the following tasks:
 
@@ -36,17 +36,21 @@ All Grafana users belong to at least one organization. An organization is an ent
 
 Permissions assigned to a user within an organization control the extent to which the user has access to and can update the following organization resources:
 
-- dashboard and dashboard folders
+- dashboards and folders
+- alerts
 - playlists
-- users
+- users within that organization
 - data sources
 - teams
 - organization and team settings
 - plugins
+- annotations
+- library panels
+- API keys
 
 ### Organization roles
 
-Organization role-based permissions are global, which means that each permission level applies to all Grafana resources. For example, an editor can see and update _all_ dashboards in an organization.
+Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "manage-dashboard-permissions/_index.md">}}).
 
 Grafana uses the following roles to control user access:
 
@@ -62,7 +66,10 @@ The following table lists permissions for each role.
 | Add, edit, delete dashboards     |             x              |   x    |        |
 | Add, edit, delete folders        |             x              |   x    |        |
 | View playlists                   |             x              |   x    |   x    |
-| Create, update, delete playlists |             x              |   x    |        |
+| Add, edit, delete playlists      |             x              |   x    |        |
+| Create library panels            |             x              |   x    |        |
+| View annotations                 |             x              |   x    |   x    |
+| Add, edit, delete annotations    |             x              |   x    |        |
 | Access Explore                   |             x              |   x    |        |
 | Add, edit, delete data sources   |             x              |        |        |
 | Add and edit users               |             x              |        |        |
