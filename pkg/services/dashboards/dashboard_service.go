@@ -40,6 +40,15 @@ type DashboardProvisioningService interface {
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 }
 
+var (
+	provisionerPermissions = map[string][]string{
+		accesscontrol.ActionFoldersCreate:    {},
+		accesscontrol.ActionFoldersWrite:     {accesscontrol.ScopeFoldersAll},
+		accesscontrol.ActionDashboardsCreate: {accesscontrol.ScopeFoldersAll},
+		accesscontrol.ActionDashboardsWrite:  {accesscontrol.ScopeFoldersAll},
+	}
+)
+
 // NewService is a factory for creating a new dashboard service.
 var NewService = func(store dashboards.Store) DashboardService {
 	return &dashboardServiceImpl{
@@ -152,11 +161,20 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	guard := guardian.New(ctx, dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
-	if canSave, err := guard.CanSave(); err != nil || !canSave {
-		if err != nil {
-			return nil, err
+	if dash.Id == 0 {
+		if canSave, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canSave {
+			if err != nil {
+				return nil, err
+			}
+			return nil, models.ErrDashboardUpdateAccessDenied
 		}
-		return nil, models.ErrDashboardUpdateAccessDenied
+	} else {
+		if canSave, err := guard.CanSave(); err != nil || !canSave {
+			if err != nil {
+				return nil, err
+			}
+			return nil, models.ErrDashboardUpdateAccessDenied
+		}
 	}
 
 	cmd := &models.SaveDashboardCommand{
@@ -235,10 +253,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		OrgRole: models.ROLE_ADMIN,
 		OrgId:   dto.OrgId,
 		Permissions: map[int64]map[string][]string{
-			dto.OrgId: {
-				accesscontrol.ActionDashboardsCreate: {accesscontrol.ScopeFoldersAll},
-				accesscontrol.ActionDashboardsWrite:  {accesscontrol.ScopeFoldersAll},
-			},
+			dto.OrgId: provisionerPermissions,
 		},
 	}
 
@@ -263,14 +278,9 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
-		UserId:  0,
-		OrgRole: models.ROLE_ADMIN,
-		Permissions: map[int64]map[string][]string{
-			dto.OrgId: {
-				accesscontrol.ActionFoldersCreate: {},
-				accesscontrol.ActionFoldersWrite:  {accesscontrol.ScopeFoldersAll},
-			},
-		},
+		UserId:      0,
+		OrgRole:     models.ROLE_ADMIN,
+		Permissions: map[int64]map[string][]string{dto.OrgId: provisionerPermissions},
 	}
 	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {

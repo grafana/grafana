@@ -44,14 +44,6 @@ type AccessControlDashboardGuardian struct {
 }
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
-	// check permissions to create new dashboard / folder
-	if a.dashboardID == 0 {
-		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionFoldersCreate),
-			accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate),
-		))
-	}
-
 	if err := a.loadDashboard(); err != nil {
 		return false, err
 	}
@@ -133,6 +125,14 @@ func (a *AccessControlDashboardGuardian) CanDelete() (bool, error) {
 		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsDelete, dashboardScope(a.dashboard.Id)),
 		accesscontrol.EvalPermission(accesscontrol.ActionDashboardsDelete, folderScope(a.dashboard.FolderId)),
 	))
+}
+
+func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool) (bool, error) {
+	if isFolder {
+		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersCreate))
+	}
+
+	return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate, folderScope(folderID)))
 }
 
 func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
