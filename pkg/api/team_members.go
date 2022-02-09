@@ -25,6 +25,9 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	}
 
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId}
+	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgId, query.TeamId, c.SignedInUser); err != nil {
+		return response.Error(403, "Not allowed to list team members", err)
+	}
 
 	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
