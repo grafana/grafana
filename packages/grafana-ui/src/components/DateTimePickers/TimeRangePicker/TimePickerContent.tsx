@@ -24,7 +24,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
       width: 546px;
       top: 116%;
       border-radius: 2px;
-      border: 1px solid ${theme.colors.border.weak};
+      border: 1px solid ${theme.colors.border.medium};
       ${isReversed ? 'left' : 'right'}: 0;
 
       @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {

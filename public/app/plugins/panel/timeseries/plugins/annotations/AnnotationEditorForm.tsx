@@ -155,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       z-index: ${theme.zIndex.dropdown};
-      border: 1px solid ${theme.colors.border.weak};
+      border: 1px solid ${theme.colors.border.medium};
       border-radius: ${theme.shape.borderRadius()};
       width: 460px;
     `,
