@@ -86,7 +86,7 @@ export class PanelHeaderCorner extends Component<Props> {
     const ariaLabel = selectors.components.Panels.Panel.headerCornerInfo(infoMode.toLowerCase());
 
     return (
-      <Tooltip content={content} placement="top-start" theme={theme}>
+      <Tooltip content={content} placement="top-start" theme={theme} interactive>
         <section className={className} onClick={onClick} aria-label={ariaLabel}>
           <i aria-hidden className="fa" />
           <span className="panel-info-corner-inner" />
