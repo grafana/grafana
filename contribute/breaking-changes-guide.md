@@ -2,6 +2,18 @@
 
 This guide tries to help you identifying and communicating breaking changes introduced to our frontend API.
 
+* [What are our public APIs?](#what-are-our-public-apis)
+* [What is Levitate?](#what-is-levitate)
+* [How does the CI workflow look like?](#how-does-the-ci-workflow-look-like)
+* [I received a comment on my PR, what does it mean?](#i-received-a-comment-on-my-pr-what-does-it-mean)
+* [**I know it's a breaking change, what's next?**](#i-know-its-a-breaking-change-whats-next)
+  * [Introduce breaking changes only in major versions](#introduce-breaking-changes-only-in-major-versions)
+  * [Deprecate first](#deprecate-first)
+  * [Communicate](#communicate)
+* [I still have questions, who can help me out?](#i-still-have-questions-who-can-help-me-out)
+
+---
+
 ## What are our public APIs?
 
 The Grafana frontend codebase is exposing functionality through NPM packages to make plugin development easier and faster.
