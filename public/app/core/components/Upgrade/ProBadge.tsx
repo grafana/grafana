@@ -9,7 +9,7 @@ export interface Props extends HTMLAttributes<HTMLSpanElement> {
   experimentId?: string;
 }
 
-export const ProBadge = ({ text = 'PRO', className, onLoad, experimentId, ...htmlProps }: Props): JSX.Element => {
+export const ProBadge = ({ text = 'PRO', className, experimentId, ...htmlProps }: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
