@@ -154,8 +154,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         title="Delete group"
         body={
           <div>
-            Deleting this group will permanently remove the group and {group.rules.length} alert{' '}
-            {pluralize('rule', group.rules.length)} belonging to it.
+            Deleting this group will permanently remove the group
+            <br />
+            and {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
             <br />
             Are you sure you want to delete this group?
           </div>
