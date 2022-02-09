@@ -1,9 +1,8 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["no-only-tests", "@emotion", "lodash", "jest"],
+  "plugins": ["@emotion", "lodash", "jest"],
   "rules": {
-    "no-only-tests/no-only-tests": "error",
     "react/prop-types": "off",
     "@emotion/jsx-import": "error",
     "lodash/import-scope": [2, "member"],
