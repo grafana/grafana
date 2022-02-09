@@ -4,7 +4,7 @@ on:
     types:
       - closed      
 concurrency:
-  group: pr-commands-closed
+  group: pr-commands-closed-${{ github.event.issue.number }}
 jobs:
   close_job:
     # this job will only run if the PR has been closed without being merged
