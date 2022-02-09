@@ -239,7 +239,11 @@ func (m *SQLStoreMock) RemoveTeamMember(ctx context.Context, cmd *models.RemoveT
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (m SQLStoreMock) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
+	return nil, m.ExpectedError
+}
+
+func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	return m.ExpectedError
 }
 

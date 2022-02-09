@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
@@ -29,20 +29,22 @@ jest.mock('@grafana/runtime', () => ({
 
 const store = configureStore();
 const renderRuleViewer = () => {
-  return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <RuleViewer {...mockRoute} />
-      </Router>
-    </Provider>
-  );
+  return act(async () => {
+    render(
+      <Provider store={store}>
+        <Router history={locationService.getHistory()}>
+          <RuleViewer {...mockRoute} />
+        </Router>
+      </Provider>
+    );
+  });
 };
 describe('RuleViewer', () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
 
-  it('should render page with grafana alert', () => {
+  it('should render page with grafana alert', async () => {
     typeAsJestMock(useCombinedRule).mockReturnValue({
       result: mockGrafanaRule as CombinedRule,
       loading: false,
@@ -50,13 +52,13 @@ describe('RuleViewer', () => {
       requestId: 'A',
       error: undefined,
     });
+    await renderRuleViewer();
 
-    renderRuleViewer();
     expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
     expect(screen.getByText('Test alert')).toBeInTheDocument();
   });
 
-  it('should render page with cloud alert', () => {
+  it('should render page with cloud alert', async () => {
     typeAsJestMock(useCombinedRule).mockReturnValue({
       result: mockCloudRule as CombinedRule,
       loading: false,
@@ -64,7 +66,7 @@ describe('RuleViewer', () => {
       requestId: 'A',
       error: undefined,
     });
-    renderRuleViewer();
+    await renderRuleViewer();
     expect(screen.getByText('Alerting / View rule')).toBeInTheDocument();
     expect(screen.getByText('Cloud test alert')).toBeInTheDocument();
   });
