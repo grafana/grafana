@@ -113,6 +113,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
 		require.NoError(t, err)
+		req.Header.Add("Content-Type", "application/json")
 		recorder := httptest.NewRecorder()
 		server.ServeHTTP(recorder, req)
 		return recorder
@@ -206,6 +207,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
 		require.NoError(t, err)
+		req.Header.Add("Content-Type", "application/json")
 		recorder := httptest.NewRecorder()
 		server.ServeHTTP(recorder, req)
 		return recorder
