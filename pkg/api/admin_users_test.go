@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -453,8 +452,13 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := HTTPServer{
-			Bus:   bus.GetBus(),
-			Login: fakeLoginService{expected: cmd},
+			Bus: bus.GetBus(),
+			Login: loginservice.LoginServiceMock{
+				ExpectedUserForm:    cmd,
+				NoExistingOrgId:     nonExistingOrgID,
+				AlreadyExitingLogin: existingTestLogin,
+				GeneratedUserId:     testUserID,
+			},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -470,26 +474,4 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 
 		fn(sc)
 	})
-}
-
-type fakeLoginService struct {
-	login.Service
-	expected dtos.AdminCreateUserForm
-}
-
-func (s fakeLoginService) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
-	if cmd.OrgId == nonExistingOrgID {
-		return nil, models.ErrOrgNotFound
-	}
-
-	if cmd.Login == existingTestLogin {
-		return nil, models.ErrUserAlreadyExists
-	}
-
-	if s.expected.Login == cmd.Login && s.expected.Email == cmd.Email &&
-		s.expected.Password == cmd.Password && s.expected.Name == cmd.Name && s.expected.OrgId == cmd.OrgId {
-		return &models.User{Id: testUserID}, nil
-	}
-
-	return nil, errors.New("unexpected cmd")
 }
