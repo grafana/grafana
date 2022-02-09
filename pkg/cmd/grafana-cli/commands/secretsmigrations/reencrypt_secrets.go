@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
@@ -40,18 +41,30 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 		if s.isBase64Encoded {
 			decoded, err = base64.StdEncoding.DecodeString(row.Secret)
 			if err != nil {
-				return err
+				logger.Warnf(
+					"Could not decode base64-encoded secret (%s with id %d) while re-encrypting: %s",
+					s.tableName, row.Id, err,
+				)
+				continue
 			}
 		}
 
 		decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
 		if err != nil {
-			return err
+			logger.Warnf(
+				"Could not decrypt secret (%s with id %d) while re-encrypting: %s",
+				s.tableName, row.Id, err,
+			)
+			continue
 		}
 
 		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
 		if err != nil {
-			return err
+			logger.Warnf(
+				"Could not decrypt secret (%s with id %d) while re-encrypting: %s",
+				s.tableName, row.Id, err,
+			)
+			continue
 		}
 
 		encoded := string(encrypted)
@@ -59,9 +72,20 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 			encoded = base64.StdEncoding.EncodeToString(encrypted)
 		}
 
-		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-		if _, err := sess.Exec(updateSQL, encoded, row.Id); err != nil {
-			return err
+		if s.hasUpdatedCol {
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+			_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
+		} else {
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+			_, err = sess.Exec(updateSQL, encoded, row.Id)
+		}
+
+		if err != nil {
+			logger.Warnf(
+				"Could not update secret (%s with id %d) while re-encrypting: %s",
+				s.tableName, row.Id, err,
+			)
+			continue
 		}
 	}
 
@@ -77,7 +101,8 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 	}
 
 	if err := sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
-		return err
+		logger.Warnf("Could not find any %s to re-encrypt", s.tableName)
+		return nil
 	}
 
 	for _, row := range rows {
@@ -87,20 +112,24 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 
 		decrypted, err := secretsSrv.DecryptJsonData(context.Background(), row.SecureJsonData)
 		if err != nil {
-			return err
+			logger.Warnf("Could not decrypt %s secrets (id: %d) while re-encrypting: %s", s.tableName, row.Id, err)
+			continue
 		}
 
-		var toUpdate struct {
+		toUpdate := struct {
 			SecureJsonData map[string][]byte
-		}
+			Updated        string
+		}{Updated: nowInUTC()}
 
 		toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
 		if err != nil {
-			return err
+			logger.Warnf("Could not re-encrypt %s secrets (id: %d): %s", s.tableName, row.Id, err)
+			continue
 		}
 
 		if _, err := sess.Table(s.tableName).Where("id = ?", row.Id).Update(toUpdate); err != nil {
-			return err
+			logger.Warnf("Could not update %s secrets (id: %d) while re-encrypting: %s", s.tableName, row.Id, err)
+			continue
 		}
 	}
 
@@ -166,6 +195,10 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 	return nil
 }
 
+func nowInUTC() string {
+	return time.Now().UTC().Format("2006-01-02 15:04:05")
+}
+
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	if !runner.Features.IsEnabled(featuremgmt.FlagEnvelopeEncryption) {
 		logger.Warn("Envelope encryption is not enabled, quitting...")
@@ -175,7 +208,7 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	toMigrate := []interface {
 		reencrypt(*manager.SecretsService, *xorm.Session) error
 	}{
-		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", isBase64Encoded: false},
+		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", hasUpdatedCol: true},
 		simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token", isBase64Encoded: true},
 		simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token", isBase64Encoded: true},
 		simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type", isBase64Encoded: true},
