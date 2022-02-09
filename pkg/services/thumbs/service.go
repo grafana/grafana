@@ -168,9 +168,10 @@ func (hs *thumbService) GetSystemRequirements(c *models.ReqContext) {
 	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
 	if err != nil {
 		tlog.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
+		c.JSON(200, map[string]interface{}{"met": false})
 	}
 
-	if err != nil || res.IsSupported {
+	if !res.IsSupported {
 		c.JSON(200, map[string]interface{}{"met": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
 		return
 	}
