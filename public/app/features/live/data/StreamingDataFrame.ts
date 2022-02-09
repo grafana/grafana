@@ -1,25 +1,22 @@
 import {
+  ArrayVector,
   DataFrame,
-  Field,
-  FieldDTO,
-  FieldType,
-  Labels,
-  QueryResultMeta,
   DataFrameJSON,
   decodeFieldValueEntities,
+  Field,
+  FieldDTO,
   FieldSchema,
+  FieldType,
   guessFieldTypeFromValue,
-  ArrayVector,
-  toFilteredDataFrameDTO,
+  Labels,
   parseLabels,
+  QueryResultMeta,
+  toFilteredDataFrameDTO,
 } from '@grafana/data';
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import {
-  StreamingFrameAction,
-  StreamingFrameOptions,
-} from '@grafana/runtime/src/services/live';
-import { renderLegendFormat } from 'app/plugins/datasource/prometheus/legend';
-import { AlignedData } from 'uplot';
+import {join} from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import {StreamingFrameAction, StreamingFrameOptions,} from '@grafana/runtime/src/services/live';
+import {renderLegendFormat} from 'app/plugins/datasource/prometheus/legend';
+import {AlignedData} from 'uplot';
 
 /**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
@@ -209,7 +206,7 @@ export class StreamingDataFrame implements DataFrame {
       const firstField = schema.fields[0];
       if (
         this.timeFieldIndex === 1 &&
-        firstField.type === FieldType.string && 
+        firstField.type === FieldType.string &&
         (firstField.name === 'labels' || firstField.name === 'Labels')
       ) {
         this.pushMode = PushMode.labels;
@@ -230,7 +227,7 @@ export class StreamingDataFrame implements DataFrame {
           const sf = niceSchemaFields[idx % len];
           f.config = sf.config ?? {};
           f.labels = sf.labels;
-        });        
+        });
         if (displayNameFormat) {
           this.fields.forEach((f) => {
             const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
@@ -473,7 +470,7 @@ export function transpose(vrecs: any[][]) {
 }
 
 // binary search for index of closest value
-function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
+export function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   let mid;
   lo = lo || 0;
   hi = hi || arr.length - 1;
