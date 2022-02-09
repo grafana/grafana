@@ -68,7 +68,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	authOpts := rendering.AuthOpts{
 		OrgID:   0,
 		UserID:  0,
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: models.ROLE_ADMIN,
 	}
 	return &thumbService{
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo),
