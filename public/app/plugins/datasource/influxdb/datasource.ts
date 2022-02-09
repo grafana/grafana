@@ -227,6 +227,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
+    // this only works in flux-mode, it should not be called in non-flux-mode
     if (!this.isFlux) {
       return query;
     }
