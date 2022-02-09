@@ -105,7 +105,7 @@ export function UnthemedTimeRangePicker(props: TimeRangePickerProps): ReactEleme
         />
       )}
 
-      <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
+      <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
         <ToolbarButton
           data-testid={selectors.components.TimePicker.openButton}
           aria-label={`Time range picker with current time range ${formattedRange(value, timeZone)} selected`}

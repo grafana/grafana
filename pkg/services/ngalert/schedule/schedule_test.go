@@ -82,7 +82,7 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 
-	_ = dbstore.SaveAlertInstance(saveCmd1)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
 
 	saveCmd2 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -93,7 +93,7 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
-	_ = dbstore.SaveAlertInstance(saveCmd2)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
 	schedCfg := schedule.SchedulerCfg{
 		C:            clock.NewMock(),

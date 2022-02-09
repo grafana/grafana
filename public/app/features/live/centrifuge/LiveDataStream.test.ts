@@ -17,6 +17,7 @@ import { mapValues } from 'lodash';
 import { StreamingFrameAction } from '@grafana/runtime';
 import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 import { StreamingDataFrame } from '../data/StreamingDataFrame';
+import mockConsole, { RestoreConsole } from 'jest-mock-console';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
@@ -118,6 +119,16 @@ const dummyErrorMessage = 'dummy-error';
 
 describe('LiveDataStream', () => {
   jest.useFakeTimers();
+
+  let restoreConsole: RestoreConsole | undefined;
+
+  beforeEach(() => {
+    restoreConsole = mockConsole();
+  });
+
+  afterEach(() => {
+    restoreConsole?.();
+  });
 
   const expectValueCollectionState = <T>(
     valuesCollection: ValuesCollection<T>,

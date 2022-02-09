@@ -1529,7 +1529,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 
-	_ = dbstore.SaveAlertInstance(saveCmd1)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
 
 	saveCmd2 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -1540,7 +1540,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
-	_ = dbstore.SaveAlertInstance(saveCmd2)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
 	testCases := []struct {
 		desc               string

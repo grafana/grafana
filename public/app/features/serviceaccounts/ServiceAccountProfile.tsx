@@ -40,11 +40,11 @@ export function ServiceAccountProfile({
     }
   };
 
-  const handleServiceAccountDelete = () => onServiceAccountDelete(serviceaccount.userId);
+  const handleServiceAccountDelete = () => onServiceAccountDelete(serviceaccount.id);
 
-  const handleServiceAccountDisable = () => onServiceAccountDisable(serviceaccount.userId);
+  const handleServiceAccountDisable = () => onServiceAccountDisable(serviceaccount.id);
 
-  const handleServiceAccountEnable = () => onServiceAccountEnable(serviceaccount.userId);
+  const handleServiceAccountEnable = () => onServiceAccountEnable(serviceaccount.id);
 
   const onServiceAccountNameChange = (newValue: string) => {
     onServiceAccountUpdate({
