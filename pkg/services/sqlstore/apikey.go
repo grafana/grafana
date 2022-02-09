@@ -125,7 +125,7 @@ func (ss *SQLStore) UpdateApikeyServiceAccount(ctx context.Context, apikeyId int
 			ss.log.Warn("API key not found", "err", err)
 			return models.ErrApiKeyNotFound
 		}
-		key.ServiceAccountId = saccountId
+		key.ServiceAccountId = &saccountId
 
 		if _, err := sess.ID(key.Id).Update(&key); err != nil {
 			ss.log.Warn("Could not update api key", "err", err)

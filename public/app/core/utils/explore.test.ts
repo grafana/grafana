@@ -23,7 +23,6 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
-  originPanelId: undefined,
 };
 
 describe('state functions', () => {

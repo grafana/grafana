@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -1480,7 +1481,8 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{})
+		ss := mockstore.NewSQLStoreMock()
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{}, ss)
 		t.Run(tc.desc, func(t *testing.T) {
 			fakeAnnoRepo := schedule.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
@@ -1511,10 +1513,11 @@ func TestStaleResultsHandler(t *testing.T) {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
 
+	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, dbstore, 600, mainOrgID)
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
 
 	saveCmd1 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -1526,7 +1529,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 
-	_ = dbstore.SaveAlertInstance(saveCmd1)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
 
 	saveCmd2 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -1537,7 +1540,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
-	_ = dbstore.SaveAlertInstance(saveCmd2)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
 	testCases := []struct {
 		desc               string
@@ -1587,8 +1590,10 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore)
-		st.Warm()
+		ctx := context.Background()
+		sqlStore := mockstore.NewSQLStoreMock()
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, sqlStore)
+		st.Warm(ctx)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db

@@ -17,7 +17,7 @@ import { TNil } from '../types';
 
 export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
   if (!spans) {
-    return null;
+    return undefined;
   }
 
   // if a span field includes at least one filter in includeFilters, the span is a match

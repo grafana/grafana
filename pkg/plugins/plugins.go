@@ -72,7 +72,7 @@ func (p PluginDTO) SupportsStreaming() bool {
 }
 
 func (p PluginDTO) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p PluginDTO) IsCorePlugin() bool {

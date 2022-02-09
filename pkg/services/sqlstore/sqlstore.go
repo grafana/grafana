@@ -115,6 +115,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
+	ss.addStatsQueryAndCommandHandlers()
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
@@ -463,6 +464,10 @@ type InitTestDBOpt struct {
 	Features                *featuremgmt.FeatureManager
 }
 
+var featuresEnabledDuringTests = []interface{}{
+	featuremgmt.FlagDashboardPreviews,
+}
+
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
@@ -490,7 +495,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		dbType := migrator.SQLite
 
 		if len(opts) == 0 {
-			opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, Features: featuremgmt.WithFeatures()}}
+			opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, Features: featuremgmt.WithFeatures(featuresEnabledDuringTests...)}}
 		}
 
 		// environment variable present for test db?

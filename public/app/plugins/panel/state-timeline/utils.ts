@@ -310,6 +310,15 @@ export function unsetSameFutureValues(values: any[]): any[] | undefined {
   return clone;
 }
 
+function getSpanNulls(field: Field) {
+  let spanNulls = field.config.custom?.spanNulls;
+
+  // magic value for join() to leave nulls alone instead of expanding null ranges
+  // should be set to -1 when spanNulls = null|undefined|false|0, which is "retain nulls, without expanding"
+  // Infinity is not optimal here since it causes spanNulls to be more expensive than simply removing all nulls unconditionally
+  return !spanNulls ? -1 : spanNulls === true ? Infinity : spanNulls;
+}
+
 /**
  * Merge values by the threshold
  */
@@ -359,8 +368,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
       ...field.config,
       custom: {
         ...field.config.custom,
-        // magic value for join() to leave nulls alone
-        spanNulls: -1,
+        spanNulls: getSpanNulls(field),
       },
     },
     type: FieldType.string,
@@ -413,8 +421,7 @@ export function prepareTimelineFields(
               ...field.config,
               custom: {
                 ...field.config.custom,
-                // magic value for join() to leave nulls alone
-                spanNulls: -1,
+                spanNulls: getSpanNulls(field),
               },
             },
           };

@@ -140,6 +140,10 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
+		r.Get("/swagger-ui", swaggerUI)
+	}
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -234,7 +238,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/orgs", authorizeInOrg(reqSignedIn, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsCreate)), quota("org"), routing.Wrap(hs.CreateOrg))
 
 		// search all orgs
-		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(SearchOrgs))
+		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.SearchOrgs))
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
@@ -256,10 +260,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
+			keysRoute.Get("/", routing.Wrap(hs.GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Post("/additional", quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
-			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
+			keysRoute.Delete("/:id", routing.Wrap(hs.DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences
@@ -332,8 +335,9 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDashboardByUID))
 
 			if hs.ThumbService != nil {
-				dashboardRoute.Get("/uid/:uid/img/:size/:theme", hs.ThumbService.GetImage)
-				dashboardRoute.Post("/uid/:uid/img/:size/:theme", hs.ThumbService.SetImage)
+				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
+				dashboardRoute.Post("/uid/:uid/img/:kind/:theme", hs.ThumbService.SetImage)
+				dashboardRoute.Put("/uid/:uid/img/:kind/:theme", hs.ThumbService.UpdateThumbnailState)
 			}
 
 			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
@@ -341,11 +345,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
-			dashboardRoute.Get("/tags", GetDashboardTags)
+			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", routing.Wrap(GetDashboardVersion))
+				dashIdRoute.Get("/versions", routing.Wrap(hs.GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", routing.Wrap(hs.GetDashboardVersion))
 				dashIdRoute.Post("/restore", routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
@@ -357,7 +361,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/", routing.Wrap(SearchDashboardSnapshots))
+			dashboardRoute.Get("/", routing.Wrap(hs.SearchDashboardSnapshots))
 		})
 
 		// Playlist
@@ -463,7 +467,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabled(featuremgmt.FlagShowFeatureFlagsInUI) {
 			adminRoute.Get("/settings/features", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)), hs.Features.HandleGetSettings)
 		}
-		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(AdminGetStats))
+		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts))
 
 		if hs.ThumbService != nil {
@@ -488,11 +492,11 @@ func (hs *HTTPServer) registerRoutes() {
 		userIDScope := ac.Scope("global", "users", "id", ac.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
-		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(AdminUpdateUserPassword))
+		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
 		adminUserRoute.Put("/:id/permissions", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(AdminDeleteUser))
+		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
 		adminUserRoute.Post("/:id/disable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
-		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(AdminEnableUser))
+		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
 		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
 		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
 
@@ -512,11 +516,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Snapshots
-	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, CreateDashboardSnapshot)
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
-	r.Get("/api/snapshots/:key", routing.Wrap(GetDashboardSnapshot))
-	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(DeleteDashboardSnapshot))
+	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
+	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
+	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)

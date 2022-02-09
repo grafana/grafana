@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 
@@ -80,7 +81,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		appLink := &dtos.NavLink{
 			Text:       plugin.Name,
 			Id:         "plugin-page-" + plugin.ID,
-			Url:        plugin.DefaultNavURL,
+			Url:        path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 			Img:        plugin.Info.Logos.Small,
 			SortWeight: dtos.WeightPlugin,
 		}

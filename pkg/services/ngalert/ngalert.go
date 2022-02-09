@@ -139,7 +139,7 @@ func (ng *AlertNG) init() error {
 		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
 	ng.stateManager = stateManager
@@ -169,7 +169,7 @@ func (ng *AlertNG) init() error {
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	ng.stateManager.Warm()
+	ng.stateManager.Warm(ctx)
 
 	children, subCtx := errgroup.WithContext(ctx)
 
