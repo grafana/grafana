@@ -90,7 +90,8 @@ jobs:
 
           ${{ steps.levitate-run.outputs.message }}
 
-          [Check console output](${{ steps.levitate-run.outputs.job_link }})
+          [Console output](${{ steps.levitate-run.outputs.job_link }})
+          [Read our guideline](../../contribute/breaking-changes-guide.md)
 
     - name: Remove comment on PR
       if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
