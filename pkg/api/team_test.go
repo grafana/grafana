@@ -255,7 +255,7 @@ func TestTeamAPIEndpoint_GetTeamByID_FGAC(t *testing.T) {
 		res := &models.TeamDTO{}
 		err := json.Unmarshal(response.Body.Bytes(), res)
 		require.NoError(t, err)
-		assert.Equal(t, res.Name, "team1")
+		assert.Equal(t, "team1", res.Name)
 	})
 }
 
