@@ -26,7 +26,7 @@ export const UserRolePicker: FC<Props> = ({
   disabled,
   builtinRolesDisabled,
 }) => {
-  const [{ loading, value: appliedRoles }, getUserRoles] = useAsyncFn(async () => {
+  const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
         return await fetchUserRoles(userId, orgId);
@@ -53,7 +53,7 @@ export const UserRolePicker: FC<Props> = ({
       onRolesChange={onRolesChange}
       onBuiltinRoleChange={onBuiltinRoleChange}
       roleOptions={roleOptions}
-      appliedRoles={appliedRoles || []}
+      appliedRoles={appliedRoles}
       builtInRoles={builtInRoles}
       isLoading={loading}
       disabled={disabled}
