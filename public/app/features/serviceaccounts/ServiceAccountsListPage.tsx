@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
@@ -38,6 +38,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 const ServiceAccountsListPage = ({
   loadServiceAccounts,
+  removeServiceAccount,
   fetchACOptions,
   updateServiceAccount,
   navModel,
@@ -47,6 +48,8 @@ const ServiceAccountsListPage = ({
   builtInRoles,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  let toRemove: ServiceAccountDTO | null | undefined;
+
   useEffect(() => {
     loadServiceAccounts();
     if (contextSrv.accessControlEnabled()) {
@@ -58,6 +61,14 @@ const ServiceAccountsListPage = ({
     const updatedServiceAccount = { ...serviceAccount, role: role };
 
     updateServiceAccount(updatedServiceAccount);
+  };
+
+  const onSetToRemove = (serviceAccount: ServiceAccountDTO) => {
+    toRemove = serviceAccount;
+  };
+
+  const onRemoveServiceAccount = (serviceAccount: ServiceAccountDTO) => {
+    removeServiceAccount(serviceAccount.id);
   };
 
   return (
@@ -84,6 +95,7 @@ const ServiceAccountsListPage = ({
                     <th>ID</th>
                     <th>Roles</th>
                     <th>Tokens</th>
+                    <th style={{ width: '34px' }} />
                   </tr>
                 </thead>
                 <tbody>
@@ -94,12 +106,31 @@ const ServiceAccountsListPage = ({
                       builtInRoles={builtInRoles}
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
+                      onSetToRemove={onSetToRemove}
                     />
                   ))}
                 </tbody>
               </table>
             </div>
           </>
+        )}
+        {Boolean(toRemove) && (
+          <ConfirmModal
+            body={`Are you sure you want to delete user ${toRemove?.name}?`}
+            confirmText="Delete"
+            title="Delete"
+            onDismiss={() => {
+              toRemove = null;
+            }}
+            isOpen={true}
+            onConfirm={() => {
+              if (!toRemove) {
+                return;
+              }
+              onRemoveServiceAccount(toRemove);
+              toRemove = null;
+            }}
+          />
         )}
       </Page.Contents>
     </Page>
@@ -111,6 +142,7 @@ type ServiceAccountListItemProps = {
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
+  onSetToRemove: (serviceAccount: ServiceAccountDTO) => void;
 };
 
 const getServiceAccountsAriaLabel = (name: string) => {
@@ -118,7 +150,7 @@ const getServiceAccountsAriaLabel = (name: string) => {
 };
 
 const ServiceAccountListItem = memo(
-  ({ serviceAccount, onRoleChange, roleOptions, builtInRoles }: ServiceAccountListItemProps) => {
+  ({ serviceAccount, onRoleChange, roleOptions, builtInRoles, onSetToRemove }: ServiceAccountListItemProps) => {
     const editUrl = `org/serviceAccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
@@ -188,6 +220,19 @@ const ServiceAccountListItem = memo(
             {serviceAccount.tokens}
           </a>
         </td>
+        {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
+          <td>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => {
+                onSetToRemove(serviceAccount);
+              }}
+              icon="times"
+              aria-label="Delete user"
+            />
+          </td>
+        )}
       </tr>
     );
   }
