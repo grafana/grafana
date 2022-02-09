@@ -169,6 +169,7 @@ func (hs *thumbService) GetSystemRequirements(c *models.ReqContext) {
 	if err != nil {
 		tlog.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
 		c.JSON(200, map[string]interface{}{"met": false})
+		return
 	}
 
 	if !res.IsSupported {
