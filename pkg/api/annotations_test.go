@@ -598,7 +598,6 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 }
 
 func setUpACL() {
-
 	viewerRole := models.ROLE_VIEWER
 	editorRole := models.ROLE_EDITOR
 
