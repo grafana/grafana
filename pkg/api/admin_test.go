@@ -147,8 +147,8 @@ func TestAdmin_AccessControl(t *testing.T) {
 			cfg := setting.NewCfg()
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			sc.resp = httptest.NewRecorder()
-			hs.SQLStore = mockstore.NewSQLStoreMock()
 			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
+			hs.SQLStore = mockstore.NewSQLStoreMock()
 
 			var err error
 			sc.req, err = http.NewRequest(test.method, test.url, nil)

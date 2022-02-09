@@ -417,7 +417,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 		userSearchResult = &models.ExternalUserInfo{
 			Login: "ldap-daniel",
 		}
-
 	}, &sqlstoremock)
 
 	assert.Equal(t, http.StatusOK, sc.resp.Code)
@@ -468,9 +467,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		userSearchError = multildap.ErrDidNotFindUser
 
 		sc.cfg.AdminUser = "ldap-daniel"
-
 	}, &sqlstoremock)
-
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	expected := `
