@@ -3,7 +3,7 @@ import {
   DataTransformerID,
   KeyValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { HorizontalGroup, FilterPill } from '@grafana/ui';
@@ -77,7 +77,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
 
       this.setState({
         options,
-        selected: selected.map(s => s.refId),
+        selected: selected.map((s) => s.refId),
       });
     } else {
       this.setState({ options: allNames, selected: [] });
@@ -87,7 +87,7 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
   onFieldToggle = (fieldName: string) => {
     const { selected } = this.state;
     if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter(s => s !== fieldName));
+      this.onChange(selected.filter((s) => s !== fieldName));
     } else {
       this.onChange([...selected, fieldName]);
     }
@@ -129,11 +129,12 @@ export class FilterByRefIdTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFramesByRefIdTransformRegistryItem: TransformerRegistyItem<FilterFramesByRefIdTransformerOptions> = {
-  id: DataTransformerID.filterByRefId,
-  editor: FilterByRefIdTransformerEditor,
-  transformation: standardTransformers.filterFramesByRefIdTransformer,
-  name: 'Filter data by query',
-  description:
-    'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
-};
+export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> =
+  {
+    id: DataTransformerID.filterByRefId,
+    editor: FilterByRefIdTransformerEditor,
+    transformation: standardTransformers.filterFramesByRefIdTransformer,
+    name: 'Filter data by query',
+    description:
+      'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
+  };

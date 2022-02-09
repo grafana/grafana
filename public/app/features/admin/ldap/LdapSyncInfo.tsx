@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
-import { Spinner } from '@grafana/ui';
+import { Button, Spinner } from '@grafana/ui';
 import { SyncInfo } from 'app/types';
 
 interface Props {
@@ -26,17 +26,15 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
     const { ldapSyncInfo } = this.props;
     const { isSyncing } = this.state;
     const nextSyncTime = dateTimeFormat(ldapSyncInfo.nextSync, { format });
-    const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
-    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(ldapSyncInfo.prevSync!.started, { format }) : '';
 
     return (
       <>
         <h3 className="page-heading">
           LDAP Synchronisation
-          <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
+          <Button className="pull-right" onClick={this.handleSyncClick} hidden>
             <span className="btn-title">Bulk-sync now</span>
             {isSyncing && <Spinner inline={true} />}
-          </button>
+          </Button>
         </h3>
         <div className="gf-form-group">
           <div className="gf-form">
@@ -53,15 +51,6 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
                 <tr>
                   <td>Next scheduled synchronisation</td>
                   <td>{nextSyncTime}</td>
-                </tr>
-                <tr>
-                  <td>Last synchronisation</td>
-                  {prevSyncSuccessful && (
-                    <>
-                      <td>{prevSyncTime}</td>
-                      <td>Successful</td>
-                    </>
-                  )}
                 </tr>
               </tbody>
             </table>

@@ -3,6 +3,7 @@
  */
 export interface SelectableValue<T = any> {
   label?: string;
+  ariaLabel?: string;
   value?: T;
   imgUrl?: string;
   icon?: string;

@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { VerticalGroup } from '@grafana/ui';
 
@@ -10,17 +10,17 @@ import { VariableTextField } from '../editor/VariableTextField';
 export interface Props extends VariableEditorProps<ConstantVariableModel> {}
 
 export class ConstantVariableEditor extends PureComponent<Props> {
-  onChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onChange = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
-  onBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
@@ -28,7 +28,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
   render() {
     return (
       <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Constant Options" />
+        <VariableSectionHeader name="Constant options" />
         <VariableTextField
           value={this.props.variable.query}
           name="Value"
@@ -36,7 +36,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
           onChange={this.onChange}
           onBlur={this.onBlur}
           labelWidth={20}
-          ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2}
           grow
         />
       </VerticalGroup>

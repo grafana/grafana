@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
+import { LineStyle } from '@grafana/schema';
 import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
-import { HorizontalGroup, IconButton, LineStyle, RadioButtonGroup, Select } from '@grafana/ui';
+import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 
 type LineFill = 'solid' | 'dash' | 'dot';
 
@@ -34,7 +35,7 @@ const dashOptions: Array<SelectableValue<string>> = [
   '50, 10',
   '5, 10',
   '30, 3, 3',
-].map(txt => ({
+].map((txt) => ({
   label: txt,
   value: txt,
 }));
@@ -45,7 +46,7 @@ const dotOptions: Array<SelectableValue<string>> = [
   '0, 30',
   '0, 40',
   '0, 3, 3',
-].map(txt => ({
+].map((txt) => ({
   label: txt,
   value: txt,
 }));
@@ -57,7 +58,7 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
       return options[0];
     }
     const str = value.dash?.join(', ');
-    const val = options.find(o => o.value === str);
+    const val = options.find((o) => o.value === str);
     if (!val) {
       return {
         label: str,
@@ -72,27 +73,35 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
       <RadioButtonGroup
         value={value?.fill || 'solid'}
         options={lineFillOptions}
-        onChange={v => {
+        onChange={(v) => {
+          let dash: number[] | undefined = undefined;
+          if (v === 'dot') {
+            dash = parseText(dotOptions[0].value!);
+          } else if (v === 'dash') {
+            dash = parseText(dashOptions[0].value!);
+          }
           onChange({
             ...value,
             fill: v!,
+            dash,
           });
         }}
       />
       {value?.fill && value?.fill !== 'solid' && (
         <>
           <Select
+            menuShouldPortal
             allowCustomValue={true}
             options={options}
             value={current}
             width={20}
-            onChange={v => {
+            onChange={(v) => {
               onChange({
                 ...value,
                 dash: parseText(v.value ?? ''),
               });
             }}
-            formatCreateLabel={t => `Segments: ${parseText(t).join(', ')}`}
+            formatCreateLabel={(t) => `Segments: ${parseText(t).join(', ')}`}
           />
           <div>
             &nbsp;

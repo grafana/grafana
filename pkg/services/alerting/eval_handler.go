@@ -7,19 +7,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // DefaultEvalHandler is responsible for evaluating the alert rule.
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration
+	requestHandler  legacydata.RequestHandler
 }
 
 // NewEvalHandler is the `DefaultEvalHandler` constructor.
-func NewEvalHandler() *DefaultEvalHandler {
+func NewEvalHandler(requestHandler legacydata.RequestHandler) *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
 		alertJobTimeout: time.Second * 5,
+		requestHandler:  requestHandler,
 	}
 }
 
@@ -31,7 +34,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 	for i := 0; i < len(context.Rule.Conditions); i++ {
 		condition := context.Rule.Conditions[i]
-		cr, err := condition.Eval(context)
+		cr, err := condition.Eval(context, e.requestHandler)
 		if err != nil {
 			context.Error = err
 		}
@@ -49,11 +52,14 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
-			noDataFound = noDataFound || cr.NoDataFound
 		} else {
 			firing = firing && cr.Firing
-			noDataFound = noDataFound && cr.NoDataFound
 		}
+
+		// We cannot evaluate the expression when one or more conditions are missing data
+		// and so noDataFound should be true if at least one condition returns no data,
+		// irrespective of the operator.
+		noDataFound = noDataFound || cr.NoDataFound
 
 		if i > 0 {
 			conditionEvals = "[" + conditionEvals + " " + strings.ToUpper(cr.Operator) + " " + strconv.FormatBool(cr.Firing) + "]"

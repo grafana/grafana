@@ -2,10 +2,13 @@ import { AnnotationTarget } from './types';
 
 export class CloudMonitoringAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  annotation: any;
+  declare annotation: any;
 
-  constructor() {
-    this.annotation.target = this.annotation.target || {};
+  /** @ngInject */
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation || {};
+    this.annotation.target = $scope.ctrl.annotation.target || {};
+
     this.onQueryChange = this.onQueryChange.bind(this);
   }
 

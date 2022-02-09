@@ -1,3 +1,5 @@
+import { DataFrame } from './dataFrame';
+
 /**
  * Base class for editor builders
  *
@@ -49,5 +51,5 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
    * Function that enables configuration of when option editor should be shown based on current panel option properties.
    */
-  showIf?: (currentOptions: TOptions) => boolean | undefined;
+  showIf?: (currentOptions: TOptions, data?: DataFrame[]) => boolean | undefined;
 }

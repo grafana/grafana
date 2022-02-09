@@ -1,12 +1,12 @@
 import React from 'react';
 import { LogDetails, Props } from './LogDetails';
-import { LogRowModel, LogLevel, GrafanaTheme, MutableDataFrame, Field } from '@grafana/data';
+import { LogRowModel, LogLevel, MutableDataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { mount } from 'enzyme';
 import { LogDetailsRow } from './LogDetailsRow';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const props: Props = {
-    theme: {} as GrafanaTheme,
+    theme: {} as GrafanaTheme2,
     showDuplicates: false,
     wrapLogMessage: false,
     row: {
@@ -20,6 +20,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
       timeLocal: '',
       timeUtc: '',
       hasAnsi: false,
+      hasUnescapedContent: false,
       entry: '',
       raw: '',
       uid: '0',
@@ -107,7 +108,7 @@ describe('LogDetails', () => {
       {
         getFieldLinks: (field: Field, rowIndex: number) => {
           if (field.config && field.config.links) {
-            return field.config.links.map(link => {
+            return field.config.links.map((link) => {
               return {
                 href: link.url.replace('${__value.text}', field.values.get(rowIndex)),
                 title: link.title,

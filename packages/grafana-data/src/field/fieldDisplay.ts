@@ -1,5 +1,4 @@
-import toString from 'lodash/toString';
-import isEmpty from 'lodash/isEmpty';
+import { toString, isEmpty } from 'lodash';
 
 import { getDisplayProcessor } from './displayProcessor';
 import {
@@ -16,12 +15,13 @@ import {
   TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
-import { GrafanaTheme } from '../types/theme';
+import { GrafanaTheme2 } from '../themes';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
+import { getFieldDisplayName } from './fieldState';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -43,17 +43,6 @@ export const VAR_FIELD_NAME = '__field.displayName'; // Includes the rendered ta
 export const VAR_FIELD_LABELS = '__field.labels';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
-
-function getTitleTemplate(stats: string[]): string {
-  const parts: string[] = [];
-  if (stats.length > 1) {
-    parts.push('${' + VAR_CALC + '}');
-  }
-
-  parts.push('${' + VAR_FIELD_NAME + '}');
-
-  return parts.join(' ');
-}
 
 export interface FieldSparkline {
   y: Field; // Y values
@@ -82,14 +71,14 @@ export interface GetFieldDisplayValuesOptions {
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   timeZone?: TimeZone;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, timeZone } = options;
+  const { replaceVariables, reduceOptions, timeZone, theme } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -104,136 +93,142 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
   );
 
-  if (options.data) {
-    // Field overrides are applied already
-    const data = options.data;
-    let hitLimit = false;
-    const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const scopedVars: ScopedVars = {};
-    const defaultDisplayName = getTitleTemplate(calcs);
+  const data = options.data ?? [];
+  const limit = reduceOptions.limit ? reduceOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
+  const scopedVars: ScopedVars = {};
 
-    for (let s = 0; s < data.length && !hitLimit; s++) {
-      const series = data[s]; // Name is already set
+  let hitLimit = false;
 
-      const { timeField } = getTimeField(series);
-      const view = new DataFrameView(series);
+  for (let s = 0; s < data.length && !hitLimit; s++) {
+    const dataFrame = data[s]; // Name is already set
 
-      for (let i = 0; i < series.fields.length && !hitLimit; i++) {
-        const field = series.fields[i];
-        const fieldLinksSupplier = field.getLinks;
+    const { timeField } = getTimeField(dataFrame);
+    const view = new DataFrameView(dataFrame);
 
-        // To filter out time field, need an option for this
-        if (!fieldMatcher(field, series, data)) {
-          continue;
-        }
+    for (let i = 0; i < dataFrame.fields.length && !hitLimit; i++) {
+      const field = dataFrame.fields[i];
+      const fieldLinksSupplier = field.getLinks;
 
-        let config = field.config; // already set by the prepare task
+      // To filter out time field, need an option for this
+      if (!fieldMatcher(field, dataFrame, data)) {
+        continue;
+      }
 
-        if (field.state?.range) {
-          // Us the global min/max values
-          config = {
-            ...config,
-            ...field.state?.range,
-          };
-        }
+      let config = field.config; // already set by the prepare task
 
-        const displayName = field.config.displayName ?? defaultDisplayName;
+      if (field.state?.range) {
+        // Us the global min/max values
+        config = {
+          ...config,
+          ...field.state?.range,
+        };
+      }
 
-        const display =
-          field.display ??
-          getDisplayProcessor({
-            field,
-            theme: options.theme,
-            timeZone,
-          });
+      const displayName = field.config.displayName ?? '';
 
-        // Show all rows
-        if (reduceOptions.values) {
-          const usesCellValues = displayName.indexOf(VAR_CELL_PREFIX) >= 0;
+      const display =
+        field.display ??
+        getDisplayProcessor({
+          field,
+          theme: options.theme,
+          timeZone,
+        });
 
-          for (let j = 0; j < field.values.length; j++) {
-            // Add all the row variables
-            if (usesCellValues) {
-              for (let k = 0; k < series.fields.length; k++) {
-                const f = series.fields[k];
-                const v = f.values.get(j);
-                scopedVars[VAR_CELL_PREFIX + k] = {
-                  value: v,
-                  text: toString(v),
-                };
-              }
-            }
+      // Show all rows
+      if (reduceOptions.values) {
+        const usesCellValues = displayName.indexOf(VAR_CELL_PREFIX) >= 0;
 
-            const displayValue = display(field.values.get(j));
-            displayValue.title = replaceVariables(displayName, {
-              ...field.state?.scopedVars, // series and field scoped vars
-              ...scopedVars,
-            });
-
-            values.push({
-              name: '',
-              field: config,
-              display: displayValue,
-              view,
-              colIndex: i,
-              rowIndex: j,
-              getLinks: fieldLinksSupplier
-                ? () =>
-                    fieldLinksSupplier({
-                      valueRowIndex: j,
-                    })
-                : () => [],
-              hasLinks: hasLinks(field),
-            });
-
-            if (values.length >= limit) {
-              hitLimit = true;
-              break;
-            }
-          }
-        } else {
-          const results = reduceField({
-            field,
-            reducers: calcs, // The stats to calculate
-          });
-
-          for (const calc of calcs) {
-            scopedVars[VAR_CALC] = { value: calc, text: calc };
-            const displayValue = display(results[calc]);
-            displayValue.title = replaceVariables(displayName, {
-              ...field.state?.scopedVars, // series and field scoped vars
-              ...scopedVars,
-            });
-
-            let sparkline: FieldSparkline | undefined = undefined;
-            if (options.sparkline) {
-              sparkline = {
-                y: series.fields[i],
-                x: timeField,
+        for (let j = 0; j < field.values.length; j++) {
+          // Add all the row variables
+          if (usesCellValues) {
+            for (let k = 0; k < dataFrame.fields.length; k++) {
+              const f = dataFrame.fields[k];
+              const v = f.values.get(j);
+              scopedVars[VAR_CELL_PREFIX + k] = {
+                value: v,
+                text: toString(v),
               };
-              if (calc === ReducerID.last) {
-                sparkline.highlightIndex = sparkline.y.values.length - 1;
-              } else if (calc === ReducerID.first) {
-                sparkline.highlightIndex = 0;
-              }
             }
-
-            values.push({
-              name: calc,
-              field: config,
-              display: displayValue,
-              sparkline,
-              view,
-              colIndex: i,
-              getLinks: fieldLinksSupplier
-                ? () =>
-                    fieldLinksSupplier({
-                      calculatedValue: displayValue,
-                    })
-                : () => [],
-              hasLinks: hasLinks(field),
-            });
           }
+
+          field.state = setIndexForPaletteColor(field, values.length);
+
+          const displayValue = display(field.values.get(j));
+          const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
+          const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
+
+          values.push({
+            name: '',
+            field: config,
+            display: {
+              ...displayValue,
+              title: rowName,
+              color: overrideColor ?? displayValue.color,
+            },
+            view,
+            colIndex: i,
+            rowIndex: j,
+            getLinks: fieldLinksSupplier
+              ? () =>
+                  fieldLinksSupplier({
+                    valueRowIndex: j,
+                  })
+              : () => [],
+            hasLinks: hasLinks(field),
+          });
+
+          if (values.length >= limit) {
+            hitLimit = true;
+            break;
+          }
+        }
+      } else {
+        const results = reduceField({
+          field,
+          reducers: calcs, // The stats to calculate
+        });
+
+        for (const calc of calcs) {
+          scopedVars[VAR_CALC] = { value: calc, text: calc };
+          const displayValue = display(results[calc]);
+
+          if (displayName !== '') {
+            displayValue.title = replaceVariables(displayName, {
+              ...field.state?.scopedVars, // series and field scoped vars
+              ...scopedVars,
+            });
+          } else {
+            displayValue.title = getFieldDisplayName(field, dataFrame, data);
+          }
+
+          let sparkline: FieldSparkline | undefined = undefined;
+          if (options.sparkline) {
+            sparkline = {
+              y: dataFrame.fields[i],
+              x: timeField,
+            };
+            if (calc === ReducerID.last) {
+              sparkline.highlightIndex = sparkline.y.values.length - 1;
+            } else if (calc === ReducerID.first) {
+              sparkline.highlightIndex = 0;
+            }
+          }
+
+          values.push({
+            name: calc,
+            field: config,
+            display: displayValue,
+            sparkline,
+            view,
+            colIndex: i,
+            getLinks: fieldLinksSupplier
+              ? () =>
+                  fieldLinksSupplier({
+                    calculatedValue: displayValue,
+                  })
+              : () => [],
+            hasLinks: hasLinks(field),
+          });
         }
       }
     }
@@ -245,6 +240,74 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   return values;
 };
+
+function getSmartDisplayNameForRow(
+  frame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables: InterpolateFunction,
+  scopedVars: ScopedVars
+): string {
+  let parts: string[] = [];
+  let otherNumericFields = 0;
+
+  if (field.config.displayName) {
+    return replaceVariables(field.config.displayName, {
+      ...field.state?.scopedVars, // series and field scoped vars
+      ...scopedVars,
+    });
+  }
+
+  for (const otherField of frame.fields) {
+    if (otherField === field) {
+      continue;
+    }
+
+    if (otherField.type === FieldType.string) {
+      const value = otherField.values.get(rowIndex) ?? '';
+      const mappedValue = otherField.display ? otherField.display(value).text : value;
+      if (mappedValue.length > 0) {
+        parts.push(mappedValue);
+      }
+    } else if (otherField.type === FieldType.number) {
+      otherNumericFields++;
+    }
+  }
+
+  if (otherNumericFields || parts.length === 0) {
+    parts.push(getFieldDisplayName(field, frame));
+  }
+
+  return parts.join(' ');
+}
+
+/**
+ * Palette color modes use series index (field index) which does not work for when displaing rows
+ * So updating seriesIndex here makes the palette color modes work in "All values" mode
+ */
+function setIndexForPaletteColor(field: Field, currentLength: number) {
+  return {
+    ...field.state,
+    seriesIndex: currentLength,
+  };
+}
+
+/**
+ * This function makes overrides that set color work for row values
+ */
+function lookupRowColorFromOverride(displayName: string, fieldConfig: FieldConfigSource, theme: GrafanaTheme2) {
+  for (const override of fieldConfig.overrides) {
+    if (override.matcher.id === 'byName' && override.matcher.options === displayName) {
+      for (const prop of override.properties) {
+        if (prop.id === 'color' && prop.value) {
+          return theme.visualization.getColorByName(prop.value.fixedColor);
+        }
+      }
+    }
+  }
+
+  return null;
+}
 
 export function hasLinks(field: Field): boolean {
   return field.config?.links?.length ? field.config.links.length > 0 : false;

@@ -1,18 +1,21 @@
 import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
 import { GraphiteOptions, GraphiteType } from '../types';
+import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
+import { MappingsConfiguration } from './MappingsConfiguration';
+import { fromString, toString } from './parseLokiLabelMappings';
+import store from 'app/core/store';
 
-const graphiteVersions = [
-  { label: '0.9.x', value: '0.9' },
-  { label: '1.0.x', value: '1.0' },
-  { label: '1.1.x', value: '1.1' },
-];
+export const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
+
+const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
 
 const graphiteTypes = Object.entries(GraphiteType).map(([label, value]) => ({
   label,
@@ -21,9 +24,16 @@ const graphiteTypes = Object.entries(GraphiteType).map(([label, value]) => ({
 
 export type Props = DataSourcePluginOptionsEditorProps<GraphiteOptions>;
 
-export class ConfigEditor extends PureComponent<Props> {
+type State = {
+  showMappingsHelp: boolean;
+};
+
+export class ConfigEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = {
+      showMappingsHelp: store.getObject(SHOW_MAPPINGS_HELP_KEY, true),
+    };
   }
 
   renderTypeHelp = () => {
@@ -40,14 +50,23 @@ export class ConfigEditor extends PureComponent<Props> {
     );
   };
 
+  componentDidMount() {
+    updateDatasourcePluginJsonDataOption(this.props, 'graphiteVersion', this.currentGraphiteVersion);
+  }
+
   render() {
     const { options, onOptionsChange } = this.props;
 
-    const currentVersion =
-      graphiteVersions.find(item => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
+    const currentVersion = graphiteVersions.find((item) => item.value === this.currentGraphiteVersion);
 
     return (
       <>
+        {options.access === 'direct' && (
+          <Alert title="Deprecation Notice" severity="warning">
+            This data source uses browser access mode. This mode is deprecated and will be removed in the future. Please
+            use server access mode instead.
+          </Alert>
+        )}
         <DataSourceHttpSettings
           defaultUrl="http://localhost:8080"
           dataSourceConfig={options}
@@ -61,6 +80,8 @@ export class ConfigEditor extends PureComponent<Props> {
                 Version
               </InlineFormLabel>
               <Select
+                aria-label="Graphite version"
+                menuShouldPortal
                 value={currentVersion}
                 options={graphiteVersions}
                 width={8}
@@ -72,8 +93,10 @@ export class ConfigEditor extends PureComponent<Props> {
             <div className="gf-form">
               <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
+                aria-label="Graphite backend type"
+                menuShouldPortal
                 options={graphiteTypes}
-                value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}
+                value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
                 width={8}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />
@@ -93,7 +116,37 @@ export class ConfigEditor extends PureComponent<Props> {
             </div>
           )}
         </div>
+        <MappingsConfiguration
+          mappings={(options.jsonData.importConfiguration?.loki?.mappings || []).map(toString)}
+          showHelp={this.state.showMappingsHelp}
+          onDismiss={() => {
+            this.setState({ showMappingsHelp: false });
+            store.setObject(SHOW_MAPPINGS_HELP_KEY, false);
+          }}
+          onRestoreHelp={() => {
+            this.setState({ showMappingsHelp: true });
+            store.setObject(SHOW_MAPPINGS_HELP_KEY, true);
+          }}
+          onChange={(mappings) => {
+            onOptionsChange({
+              ...options,
+              jsonData: {
+                ...options.jsonData,
+                importConfiguration: {
+                  ...options.jsonData.importConfiguration,
+                  loki: {
+                    mappings: mappings.map(fromString),
+                  },
+                },
+              },
+            });
+          }}
+        />
       </>
     );
+  }
+
+  private get currentGraphiteVersion() {
+    return this.props.options.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
   }
 }

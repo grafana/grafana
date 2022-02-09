@@ -15,6 +15,7 @@ var (
 	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
 	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
 	ErrFolderAccessDenied            = errors.New("access denied to folder")
+	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
 )
 
 type Folder struct {
@@ -30,23 +31,6 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasAcl    bool
-}
-
-// GetDashboardModel turns the command into the saveable model
-func (cmd *CreateFolderCommand) GetDashboardModel(orgId int64, userId int64) *Dashboard {
-	dashFolder := NewDashboardFolder(strings.TrimSpace(cmd.Title))
-	dashFolder.OrgId = orgId
-	dashFolder.SetUid(strings.TrimSpace(cmd.Uid))
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	dashFolder.CreatedBy = userId
-	dashFolder.UpdatedBy = userId
-	dashFolder.UpdateSlug()
-
-	return dashFolder
 }
 
 // UpdateDashboardModel updates an existing model from command into model for update
@@ -78,7 +62,7 @@ type CreateFolderCommand struct {
 	Uid   string `json:"uid"`
 	Title string `json:"title"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 type UpdateFolderCommand struct {
@@ -87,7 +71,7 @@ type UpdateFolderCommand struct {
 	Version   int    `json:"version"`
 	Overwrite bool   `json:"overwrite"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 //

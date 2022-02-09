@@ -3,7 +3,6 @@ package azuremonitor
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,29 +12,25 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
 )
 
 // ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	proxy serviceProxy
 }
 
 // ApplicationInsightsQuery is the model that holds the information
 // needed to make a metrics query to Application Insights, and the information
 // used to parse the response.
 type ApplicationInsightsQuery struct {
-	RefID string
+	RefID     string
+	TimeRange backend.TimeRange
 
 	// Text based raw query options.
 	ApiURL string
@@ -49,41 +44,36 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
-func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
-	}
+func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+
+	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query)
+		queryRes, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
 		if err != nil {
 			return nil, err
 		}
-		result.Results[query.RefID] = queryRes
+		result.Responses[query.RefID] = queryRes
 	}
 
 	return result, nil
 }
 
-func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*ApplicationInsightsQuery, error) {
+func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery) ([]*ApplicationInsightsQuery, error) {
 	applicationInsightsQueries := []*ApplicationInsightsQuery{}
-	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
+		queryBytes, err := query.JSON.MarshalJSON()
 		if err != nil {
 			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights query into JSON: %w", err)
 		}
@@ -99,15 +89,18 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 		azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
 		timeGrain := insightsJSONModel.TimeGrain
 		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
-		if timeGrain == "auto" {
-			timeGrain, err = setAutoTimeGrain(query.IntervalMs, timeGrains)
+
+		// Previous versions of the query model don't specify a time grain, so we
+		// need to fallback to a default value
+		if timeGrain == "auto" || timeGrain == "" {
+			timeGrain, err = setAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		params := url.Values{}
-		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		if timeGrain != "none" {
 			params.Add("interval", timeGrain)
 		}
@@ -122,7 +115,8 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			params.Add("segment", strings.Join(insightsJSONModel.Dimensions, ","))
 		}
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
-			RefID:       query.RefId,
+			RefID:       query.RefID,
+			TimeRange:   query.TimeRange,
 			ApiURL:      azureURL,
 			Params:      params,
 			Alias:       insightsJSONModel.Alias,
@@ -136,39 +130,35 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (*tsdb.QueryResult, error) {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (
+	backend.DataResponse, error) {
+	dataResponse := backend.DataResponse{}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo, url)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
-	span.SetTag("target", query.Target)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	ctx, span := tracer.Start(ctx, "application insights query")
+	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
+	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
+	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
+	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
 
-	defer span.Finish()
+	defer span.End()
 
-	err = opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
-
-	if err != nil {
-		azlog.Warn("failed to inject global tracer")
-	}
+	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, client, req)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -178,84 +168,43 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		}
 	}()
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("request failed, status: %s", res.Status)
+		return backend.DataResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	mr := MetricsResult{}
 	err = json.Unmarshal(body, &mr)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 
 	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	applyInsightsMetricAlias(frame, query.Alias)
 
-	queryResult.Dataframes = tsdb.NewDecodedDataFrames(data.Frames{frame})
-	return queryResult, nil
+	dataResponse.Frames = data.Frames{frame}
+	return dataResponse, nil
 }
 
-func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
-	if !ok {
-		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
-	}
+func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
+	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	appInsightsRoute, pluginRouteName, err := e.getPluginRoute(plugin, cloudName)
-	if err != nil {
-		return nil, err
-	}
-
-	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", pluginRouteName, appInsightsAppID)
-
-	u, err := url.Parse(dsInfo.Url)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo)
+	req.URL.Path = fmt.Sprintf("/v1/apps/%s", appInsightsAppID)
 
 	return req, nil
-}
-
-func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "appinsights"
-
-	if cloudName == "chinaazuremonitor" {
-		pluginRouteName = "chinaappinsights"
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-
-	for _, route := range plugin.Routes {
-		if route.Path == pluginRouteName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, pluginRouteName, nil
 }
 
 // formatApplicationInsightsLegendKey builds the legend key or timeseries name

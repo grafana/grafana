@@ -1,24 +1,32 @@
 import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
 
-import { DataQuery, QueryEditorProps } from './datasource';
+import { QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
+import { DataQuery, DataSourceRef } from './query';
 
 /**
  * This JSON object is stored in the dashboard json model.
  */
 export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource: string;
+  datasource?: DataSourceRef | string | null;
+
   enable: boolean;
   name: string;
   iconColor: string;
   hide?: boolean;
+  builtIn?: number;
+  type?: string;
+  snapshotData?: any;
 
   // Standard datasource query
   target?: TQuery;
 
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
+
+  // Sadly plugins can set any property directly on the main object
+  [key: string]: any;
 }
 
 export interface AnnotationEvent {
@@ -38,9 +46,19 @@ export interface AnnotationEvent {
   type?: string;
   tags?: string[];
   color?: string;
+  alertId?: number;
+  newState?: string;
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard'
+}
+
+export interface AnnotationEventUIModel {
+  id?: string;
+  from: number;
+  to: number;
+  tags: string[];
+  description: string;
 }
 
 /**

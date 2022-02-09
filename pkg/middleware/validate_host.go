@@ -5,10 +5,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func ValidateHostHeader(cfg *setting.Cfg) macaron.Handler {
+func ValidateHostHeader(cfg *setting.Cfg) web.Handler {
 	return func(c *models.ReqContext) {
 		// ignore local render calls
 		if c.IsRenderCall {

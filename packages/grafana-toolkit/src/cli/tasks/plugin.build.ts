@@ -18,6 +18,8 @@ interface PluginBuildOptions {
   coverage: boolean;
   maxJestWorkers?: string;
   preserveConsole?: boolean;
+  skipTest?: boolean;
+  skipLint?: boolean;
 }
 
 interface Fixable {
@@ -32,7 +34,7 @@ const clean = () => useSpinner('Cleaning', () => rimraf(`${process.cwd()}/dist`)
 const copyIfNonExistent = (srcPath: string, destPath: string) =>
   copyFile(srcPath, destPath, COPYFILE_EXCL)
     .then(() => console.log(`Created: ${destPath}`))
-    .catch(error => {
+    .catch((error) => {
       if (error.code !== 'EEXIST') {
         throw error;
       }
@@ -44,7 +46,6 @@ export const prepare = () =>
       // Remove local dependencies for @grafana/data/node_modules
       // See: https://github.com/grafana/grafana/issues/26748
       rimraf(resolvePath(__dirname, 'node_modules/@grafana/data/node_modules')),
-
       // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
       copyIfNonExistent(
         resolvePath(__dirname, '../../config/tsconfig.plugin.local.json'),
@@ -59,11 +60,15 @@ export const prepare = () =>
   );
 
 export const versions = async () => {
-  const nodeVersion = await execa('node', ['--version']);
-  console.log(`Using Node.js ${nodeVersion}`);
+  try {
+    const nodeVersion = await execa('node', ['--version']);
+    console.log(`Using Node.js ${nodeVersion.stdout}`);
 
-  const toolkitVersion = await execa('grafana-toolkit', ['--version']);
-  console.log(`Using @grafana/toolkit ${toolkitVersion}`);
+    const toolkitVersion = await execa('grafana-toolkit', ['--version']);
+    console.log(`Using @grafana/toolkit ${toolkitVersion.stdout}`);
+  } catch (err) {
+    console.log(`Error reading versions`, err);
+  }
 };
 
 // @ts-ignore
@@ -90,11 +95,11 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
 
     // @todo should remove this because the config file could be in a parent dir or within package.json
     const configFile = await globby(resolvePath(process.cwd(), '.eslintrc?(.cjs|.js|.json|.yaml|.yml)')).then(
-      filePaths => {
+      (filePaths) => {
         if (filePaths.length > 0) {
           return filePaths[0];
         } else {
-          return resolvePath(__dirname, '../../config/eslint.plugin.json');
+          return resolvePath(__dirname, '../../config/eslint.plugin.js');
         }
       }
     );
@@ -102,6 +107,7 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
     const cli = new CLIEngine({
       configFile,
       fix,
+      useEslintrc: false,
     });
 
     const report = cli.executeOnFiles(await getTypescriptSources());
@@ -128,11 +134,17 @@ export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({
   coverage,
   maxJestWorkers,
   preserveConsole,
+  skipTest,
+  skipLint,
 }) => {
   await versions();
   await prepare();
-  await lintPlugin({ fix: false });
-  await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
+  if (!skipLint) {
+    await lintPlugin({ fix: false });
+  }
+  if (!skipTest) {
+    await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
+  }
   await bundlePlugin({ watch: false, production: true, preserveConsole });
 };
 

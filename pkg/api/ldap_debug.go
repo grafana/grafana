@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
@@ -12,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -60,7 +64,7 @@ type LDAPServerDTO struct {
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs() error {
+func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
@@ -70,7 +74,7 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.Dispatch(q); err != nil {
+	if err := bus.Dispatch(ctx, q); err != nil {
 		return err
 	}
 
@@ -97,38 +101,38 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 }
 
 // ReloadLDAPCfg reloads the LDAP configuration
-func (hs *HTTPServer) ReloadLDAPCfg() Response {
+func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
-		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	err := ldap.ReloadConfig()
 	if err != nil {
-		return Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
+		return response.Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
 	}
-	return Success("LDAP config reloaded")
+	return response.Success("LDAP config reloaded")
 }
 
 // GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
-func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
-		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	ldapConfig, err := getLDAPConfig(hs.Cfg)
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
+		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
 
 	ldap := newLDAP(ldapConfig.Servers)
 
 	if ldap == nil {
-		return Error(http.StatusInternalServerError, "Failed to find the LDAP server", nil)
+		return response.Error(http.StatusInternalServerError, "Failed to find the LDAP server", nil)
 	}
 
 	statuses, err := ldap.Ping()
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to connect to the LDAP server(s)", err)
+		return response.Error(http.StatusBadRequest, "Failed to connect to the LDAP server(s)", err)
 	}
 
 	serverDTOs := []*LDAPServerDTO{}
@@ -146,40 +150,43 @@ func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 		serverDTOs = append(serverDTOs, s)
 	}
 
-	return JSON(http.StatusOK, serverDTOs)
+	return response.JSON(http.StatusOK, serverDTOs)
 }
 
 // PostSyncUserWithLDAP enables a single Grafana user to be synchronized against LDAP
-func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
+func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
-		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	ldapConfig, err := getLDAPConfig(hs.Cfg)
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
+		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
 
-	userId := c.ParamsInt64(":id")
+	userId, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(&query); err != nil { // validate the userId exists
+	if err := bus.Dispatch(c.Req.Context(), &query); err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
-			return Error(404, models.ErrUserNotFound.Error(), nil)
+			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 
-		return Error(500, "Failed to get user", err)
+		return response.Error(500, "Failed to get user", err)
 	}
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
 
-	if err := bus.Dispatch(authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if err := bus.Dispatch(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, models.ErrUserNotFound) {
-			return Error(404, models.ErrUserNotFound.Error(), nil)
+			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 
-		return Error(500, "Failed to get user", err)
+		return response.Error(500, "Failed to get user", err)
 	}
 
 	ldapServer := newLDAP(ldapConfig.Servers)
@@ -189,25 +196,25 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 			if hs.Cfg.AdminUser == query.Result.Login { // User is *the* Grafana Admin. We cannot disable it.
 				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, query.Result.Login)
 				ldapLogger.Error(errMsg)
-				return Error(http.StatusBadRequest, errMsg, err)
+				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			err := login.DisableExternalUser(query.Result.Login)
+			err := login.DisableExternalUser(c.Req.Context(), query.Result.Login)
 			if err != nil {
-				return Error(http.StatusInternalServerError, "Failed to disable the user", err)
+				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
 
 			err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userId)
 			if err != nil {
-				return Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
+				return response.Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
 			}
 
-			return Error(http.StatusBadRequest, "User not found in LDAP. Disabled the user without updating information", nil) // should this be a success?
+			return response.Error(http.StatusBadRequest, "User not found in LDAP. Disabled the user without updating information", nil) // should this be a success?
 		}
 
 		ldapLogger.Debug("Failed to sync the user with LDAP", "err", err)
-		return Error(http.StatusBadRequest, "Something went wrong while finding the user in LDAP", err)
+		return response.Error(http.StatusBadRequest, "Something went wrong while finding the user in LDAP", err)
 	}
 
 	upsertCmd := &models.UpsertUserCommand{
@@ -216,37 +223,37 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
-	err = bus.Dispatch(upsertCmd)
+	err = bus.Dispatch(c.Req.Context(), upsertCmd)
 	if err != nil {
-		return Error(http.StatusInternalServerError, "Failed to update the user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
 
-	return Success("User synced successfully")
+	return response.Success("User synced successfully")
 }
 
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
-func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
-		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	ldapConfig, err := getLDAPConfig(hs.Cfg)
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
+		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
 	}
 
 	ldap := newLDAP(ldapConfig.Servers)
 
-	username := c.Params(":username")
+	username := web.Params(c.Req)[":username"]
 
 	if len(username) == 0 {
-		return Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
+		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
 	}
 
 	user, serverConfig, err := ldap.User(username)
 
 	if user == nil {
-		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
+		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
 	ldapLogger.Debug("user found", "user", user)
@@ -299,20 +306,17 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	u.OrgRoles = orgRoles
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	err = u.FetchOrgs()
+	err = u.FetchOrgs(c.Req.Context())
 	if err != nil {
-		return Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
+		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
-	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
-	err = bus.Dispatch(cmd)
-	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
-		return Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
+	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
 
-	u.Teams = cmd.Result
-
-	return JSON(200, u)
+	return response.JSON(200, u)
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.

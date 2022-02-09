@@ -71,7 +71,7 @@ describe('TraceTimelineViewer/utils', () => {
       { fn: isErrorSpan, name: 'isErrorSpan', key: 'error', value: 'true' },
     ];
 
-    spanTypeTestCases.forEach(testCase => {
+    spanTypeTestCases.forEach((testCase) => {
       const msg = `${testCase.name}() is true only when a ${testCase.key}=${testCase.value} tag is present`;
       it(msg, () => {
         const span = { tags: traceGenerator.tags() };
@@ -85,7 +85,7 @@ describe('TraceTimelineViewer/utils', () => {
   describe('spanContainsErredSpan()', () => {
     it('returns true only when a descendant has an error tag', () => {
       const errorTag = { key: 'error', type: 'bool', value: true };
-      const getTags = withError => (withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags());
+      const getTags = (withError) => (withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags());
 
       // Using a string to generate the test spans. Each line results in a span. The
       // left number indicates whether or not the generated span has a descendant
@@ -107,10 +107,10 @@ describe('TraceTimelineViewer/utils', () => {
       `
         .trim()
         .split('\n')
-        .map(s => s.trim());
+        .map((s) => s.trim());
       // Get the expectation, str -> number -> bool
-      const expectations = config.map(s => Boolean(Number(s[0])));
-      const spans = config.map(line => ({
+      const expectations = config.map((s) => Boolean(Number(s[0])));
+      const spans = config.map((line) => ({
         depth: line.length,
         tags: getTags(+line.slice(-1)),
       }));

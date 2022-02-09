@@ -1,13 +1,11 @@
-import _ from 'lodash';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import coreModule from 'app/core/core_module';
+import { chain } from 'lodash';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import {
   DataFrame,
   DataLink,
   DataLinkBuiltInVars,
-  DataLinkClickEvent,
   deprecationWarning,
   Field,
   FieldType,
@@ -16,7 +14,6 @@ import {
   KeyValue,
   LinkModel,
   locationUtil,
-  PanelPlugin,
   ScopedVars,
   textUtil,
   urlUtil,
@@ -24,7 +21,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 const timeRangeVars = [
   {
@@ -84,7 +81,7 @@ const buildLabelPath = (label: string) => {
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
-    .map(variable => ({
+    .map((variable) => ({
       value: variable.name as string,
       label: variable.name,
       origin: VariableOrigin.Template,
@@ -110,10 +107,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     }
   }
 
-  const labels = _.chain(all)
-    .flatten()
-    .uniq()
-    .value();
+  const labels = chain(all).flatten().uniq().value();
 
   return [
     {
@@ -122,7 +116,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
       origin: VariableOrigin.Field,
     },
-    ...labels.map(label => ({
+    ...labels.map((label) => ({
       value: `__field.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,
       documentation: `${label} label value`,
@@ -137,30 +131,36 @@ export const getDataFrameVars = (dataFrames: DataFrame[]) => {
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
 
-  for (const frame of dataFrames) {
-    for (const field of frame.fields) {
-      const displayName = getFieldDisplayName(field, frame, dataFrames);
+  if (dataFrames.length !== 1) {
+    // It's not possible to access fields of other dataframes. So if there are multiple dataframes we need to skip these suggestions.
+    // Also return early if there are no dataFrames.
+    return [];
+  }
 
-      if (keys[displayName]) {
-        continue;
-      }
+  const frame = dataFrames[0];
 
-      suggestions.push({
-        value: `__data.fields${buildLabelPath(displayName)}`,
-        label: `${displayName}`,
-        documentation: `Formatted value for ${displayName} on the same row`,
-        origin: VariableOrigin.Fields,
-      });
+  for (const field of frame.fields) {
+    const displayName = getFieldDisplayName(field, frame, dataFrames);
 
-      keys[displayName] = true;
+    if (keys[displayName]) {
+      continue;
+    }
 
-      if (!numeric && field.type === FieldType.number) {
-        numeric = { ...field, name: displayName };
-      }
+    suggestions.push({
+      value: `__data.fields${buildLabelPath(displayName)}`,
+      label: `${displayName}`,
+      documentation: `Formatted value for ${displayName} on the same row`,
+      origin: VariableOrigin.Fields,
+    });
 
-      if (!title && field.config.displayName && field.config.displayName !== field.name) {
-        title = { ...field, name: displayName };
-      }
+    keys[displayName] = true;
+
+    if (!numeric && field.type === FieldType.number) {
+      numeric = { ...field, name: displayName };
+    }
+
+    if (!title && field.config.displayName && field.config.displayName !== field.name) {
+      title = { ...field, name: displayName };
     }
   }
 
@@ -240,20 +240,6 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
   return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
-export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: DataFrame[]): VariableSuggestion[] => {
-  const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
-  return [
-    ...dataVariables, // field values
-    ...getTemplateSrv()
-      .getVariables()
-      .map(variable => ({
-        value: variable.name as string,
-        label: variable.name,
-        origin: VariableOrigin.Template,
-      })),
-  ];
-};
-
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: any) => any;
@@ -261,15 +247,12 @@ export interface LinkService {
 }
 
 export class LinkSrv implements LinkService {
-  /** @ngInject */
-  constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
-
   getLinkUrl(link: any) {
-    let url = locationUtil.assureBaseUrl(this.templateSrv.replace(link.url || ''));
+    let url = locationUtil.assureBaseUrl(getTemplateSrv().replace(link.url || ''));
     let params: { [key: string]: any } = {};
 
     if (link.keepTime) {
-      const range = this.timeSrv.timeRangeForUrl();
+      const range = getTimeSrv().timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
     }
@@ -277,7 +260,7 @@ export class LinkSrv implements LinkService {
     if (link.includeVars) {
       params = {
         ...params,
-        ...getAllVariableValuesForUrl(),
+        ...getVariablesUrlParams(),
       };
     }
 
@@ -286,9 +269,11 @@ export class LinkSrv implements LinkService {
   }
 
   getAnchorInfo(link: any) {
+    const templateSrv = getTemplateSrv();
     const info: any = {};
     info.href = this.getLinkUrl(link);
-    info.title = this.templateSrv.replace(link.title || '');
+    info.title = templateSrv.replace(link.title || '');
+    info.tooltip = templateSrv.replace(link.tooltip || '');
     return info;
   }
 
@@ -309,30 +294,26 @@ export class LinkSrv implements LinkService {
       });
     }
 
-    let onClick: ((event: DataLinkClickEvent) => void) | undefined = undefined;
-
-    if (link.onClick) {
-      onClick = (e: DataLinkClickEvent) => {
-        if (link.onClick) {
-          link.onClick({
-            origin,
-            replaceVariables,
-            e,
-          });
-        }
-      };
-    }
-
     const info: LinkModel<T> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: replaceVariables ? replaceVariables(link.title || '') : link.title,
-      target: link.targetBlank ? '_blank' : '_self',
+      title: link.title ?? '',
+      target: link.targetBlank ? '_blank' : undefined,
       origin,
-      onClick,
     };
 
     if (replaceVariables) {
       info.href = replaceVariables(info.href);
+      info.title = replaceVariables(link.title);
+    }
+
+    if (link.onClick) {
+      info.onClick = (e) => {
+        link.onClick!({
+          origin,
+          replaceVariables,
+          e,
+        });
+      };
     }
 
     info.href = getConfig().disableSanitizeHtml ? info.href : textUtil.sanitizeUrl(info.href);
@@ -354,14 +335,15 @@ export class LinkSrv implements LinkService {
   }
 }
 
-let singleton: LinkService;
+let singleton: LinkService | undefined;
 
 export function setLinkSrv(srv: LinkService) {
   singleton = srv;
 }
 
 export function getLinkSrv(): LinkService {
+  if (!singleton) {
+    singleton = new LinkSrv();
+  }
   return singleton;
 }
-
-coreModule.service('linkSrv', LinkSrv);

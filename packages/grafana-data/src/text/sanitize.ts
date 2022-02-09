@@ -1,14 +1,36 @@
-import xss from 'xss';
+import * as xss from 'xss';
 import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
 
 const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
-  // @ts-ignore
-  acc[element] = xss.whiteList[element].concat(['class', 'style']);
+  acc[element] = xss.whiteList[element]?.concat(['class', 'style']);
   return acc;
-}, {});
+}, {} as xss.IWhiteList);
 
 const sanitizeXSS = new xss.FilterXSS({
   whiteList: XSSWL,
+});
+
+const sanitizeTextPanelWhitelist = new xss.FilterXSS({
+  whiteList: XSSWL,
+  css: {
+    whiteList: {
+      ...xss.getDefaultCSSWhiteList(),
+      'flex-direction': true,
+      'flex-wrap': true,
+      'flex-basis': true,
+      'flex-grow': true,
+      'flex-shrink': true,
+      'flex-flow': true,
+      gap: true,
+      order: true,
+      'justify-content': true,
+      'justify-items': true,
+      'justify-self': true,
+      'align-items': true,
+      'align-content': true,
+      'align-self': true,
+    },
+  },
 });
 
 /**
@@ -27,6 +49,15 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
+export function sanitizeTextPanelContent(unsanitizedString: string): string {
+  try {
+    return sanitizeTextPanelWhitelist.process(unsanitizedString);
+  } catch (error) {
+    console.error('String could not be sanitized', unsanitizedString);
+    return 'Text string could not be sanitized';
+  }
+}
+
 export function sanitizeUrl(url: string): string {
   return braintreeSanitizeUrl(url);
 }
@@ -36,9 +67,5 @@ export function hasAnsiCodes(input: string): boolean {
 }
 
 export function escapeHtml(str: string): string {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

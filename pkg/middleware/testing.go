@@ -6,30 +6,31 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 )
 
 type scenarioContext struct {
 	t                    *testing.T
-	m                    *macaron.Macaron
+	m                    *web.Mux
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
 	apiKey               string
 	authHeader           string
+	jwtAuthHeader        string
 	tokenSessionCookie   string
 	respJson             map[string]interface{}
 	handlerFunc          handlerFunc
-	defaultHandler       macaron.Handler
+	defaultHandler       web.Handler
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
+	jwtAuthService       *models.FakeJWTService
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
 	sqlStore             *sqlstore.SQLStore
@@ -50,6 +51,11 @@ func (sc *scenarioContext) withTokenSessionCookie(unhashedToken string) *scenari
 
 func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
 	sc.authHeader = authHeader
+	return sc
+}
+
+func (sc *scenarioContext) withJWTAuthHeader(jwtAuthHeader string) *scenarioContext {
+	sc.jwtAuthHeader = jwtAuthHeader
 	return sc
 }
 
@@ -93,6 +99,11 @@ func (sc *scenarioContext) exec() {
 	if sc.authHeader != "" {
 		sc.t.Logf(`Adding header "Authorization: %s"`, sc.authHeader)
 		sc.req.Header.Set("Authorization", sc.authHeader)
+	}
+
+	if sc.jwtAuthHeader != "" {
+		sc.t.Logf(`Adding header "%s: %s"`, sc.cfg.JWTAuthHeaderName, sc.jwtAuthHeader)
+		sc.req.Header.Set(sc.cfg.JWTAuthHeaderName, sc.jwtAuthHeader)
 	}
 
 	if sc.tokenSessionCookie != "" {

@@ -1,5 +1,5 @@
-import _ from 'lodash';
-import md5 from 'md5';
+import { capitalize, groupBy, isEmpty } from 'lodash';
+import { v5 as uuidv5 } from 'uuid';
 import { of } from 'rxjs';
 
 import {
@@ -17,6 +17,7 @@ import {
   QueryResultMeta,
   TimeSeriesValue,
   ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -37,6 +38,9 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
+import { renderLegendFormat } from '../prometheus/legend';
+
+const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
@@ -61,7 +65,7 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
     times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
     timesNs.add(ts);
     lines.add(line);
-    uids.add(createUid(ts, labelsString, line, usedUids));
+    uids.add(createUid(ts, labelsString, line, usedUids, refId));
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -148,14 +152,14 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
       tsNsField.values.add(ts);
       lineField.values.add(line);
       labelsField.values.add(unique);
-      idField.values.add(createUid(ts, allLabelsString, line, usedUids));
+      idField.values.add(createUid(ts, allLabelsString, line, usedUids, data.refId));
     }
   }
 }
 
-function createUid(ts: string, labelsString: string, line: string, usedUids: any): string {
+function createUid(ts: string, labelsString: string, line: string, usedUids: any, refId?: string): string {
   // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
-  let id = md5(`${ts}_${labelsString}_${line}`);
+  let id = uuidv5(`${ts}_${labelsString}_${line}`, UUID_NAMESPACE);
 
   // Check if generated id is unique
   // If not and we've already used it, append it's count after it
@@ -170,6 +174,9 @@ function createUid(ts: string, labelsString: string, line: string, usedUids: any
     usedUids[id] = 0;
   }
   // Return unique id
+  if (refId) {
+    return `${id}_${refId}`;
+  }
   return id;
 }
 
@@ -178,21 +185,16 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
   return {
     target: name,
     title: name,
-    datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
+    datapoints: lokiPointsToTimeseriesPoints(matrixResult.values),
     tags: matrixResult.metric,
     meta: options.meta,
     refId: options.refId,
   };
 }
 
-export function lokiPointsToTimeseriesPoints(
-  data: Array<[number, string]>,
-  options: TransformerOptions
-): TimeSeriesValue[][] {
-  const stepMs = options.step * 1000;
+export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): TimeSeriesValue[][] {
   const datapoints: TimeSeriesValue[][] = [];
 
-  let baseTimestampMs = options.start / 1e6;
   for (const [time, value] of data) {
     let datapointValue: TimeSeriesValue = parseFloat(value);
 
@@ -201,17 +203,8 @@ export function lokiPointsToTimeseriesPoints(
     }
 
     const timestamp = time * 1000;
-    for (let t = baseTimestampMs; t < timestamp; t += stepMs) {
-      datapoints.push([null, t]);
-    }
 
-    baseTimestampMs = timestamp + stepMs;
     datapoints.push([datapointValue, timestamp]);
-  }
-
-  const endTimestamp = options.end / 1e6;
-  for (let t = baseTimestampMs; t <= endTimestamp; t += stepMs) {
-    datapoints.push([null, t]);
   }
 
   return datapoints;
@@ -240,12 +233,12 @@ export function lokiResultsToTableModel(
   table.meta = meta;
   table.columns = [
     { text: 'Time', type: FieldType.time },
-    ...sortedLabels.map(label => ({ text: label, filterable: true, type: FieldType.string })),
+    ...sortedLabels.map((label) => ({ text: label, filterable: true, type: FieldType.string })),
     { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
-  lokiResults.forEach(series => {
+  lokiResults.forEach((series) => {
     const newSeries: LokiMatrixResult = {
       metric: series.metric,
       values: (series as LokiVectorResult).value
@@ -263,7 +256,7 @@ export function lokiResultsToTableModel(
       table.rows.push(
         ...newSeries.values.map(([a, b]) => [
           a * 1000,
-          ...sortedLabels.map(label => newSeries.metric[label] || ''),
+          ...sortedLabels.map((label) => newSeries.metric[label] || ''),
           parseFloat(b),
         ])
       );
@@ -275,9 +268,9 @@ export function lokiResultsToTableModel(
 
 export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
-    options === undefined || _.isEmpty(options.legendFormat)
+    options === undefined || isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
+      : renderLegendFormat(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -285,22 +278,17 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
   return label;
 }
 
-function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
-}
-
 function getOriginalMetricName(labelData: { [key: string]: string }) {
   const metricName = labelData.__name__ || '';
   delete labelData.__name__;
   const labelPart = Object.entries(labelData)
-    .map(label => `${label[0]}="${label[1]}"`)
+    .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
 }
 
 export function decamelize(s: string): string {
-  return s.replace(/[A-Z]/g, m => ` ${m.toLowerCase()}`);
+  return s.replace(/[A-Z]/g, (m) => ` ${m.toLowerCase()}`);
 }
 
 // Turn loki stats { metric: value } into meta stat { title: metric, value: value }
@@ -323,7 +311,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
       } else if (/bytes/i.test(label)) {
         unit = 'decbytes';
       }
-      const title = `${_.capitalize(section)}: ${decamelize(label)}`;
+      const title = `${capitalize(section)}: ${decamelize(label)}`;
       result.push({ displayName: title, value, unit });
     }
   }
@@ -353,11 +341,11 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const series: DataFrame[] = data.map(stream => {
-    const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
+  const series: DataFrame[] = data.map((stream) => {
+    const dataFrame = lokiStreamResultToDataFrame(stream, reverse, target.refId);
     enhanceDataFrame(dataFrame, config);
 
-    if (meta.custom && dataFrame.fields.some(f => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
+    if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
       meta.custom.error = 'Error when parsing some of the logs';
     }
 
@@ -394,7 +382,7 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-  const derivedFieldsGrouped = _.groupBy(derivedFields, 'name');
+  const derivedFieldsGrouped = groupBy(derivedFields, 'name');
 
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
@@ -422,7 +410,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
 
       acc.push({
         // Will be filled out later
-        title: '',
+        title: derivedFieldConfig.urlDisplayLabel || '',
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
@@ -434,7 +422,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
     } else if (derivedFieldConfig.url) {
       acc.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
-        title: '',
+        title: derivedFieldConfig.urlDisplayLabel || '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         url: derivedFieldConfig.url,
       });
@@ -453,7 +441,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
   };
 }
 
-export function rangeQueryResponseToTimeSeries(
+function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
@@ -480,14 +468,41 @@ export function rangeQueryResponseToTimeSeries(
 
   switch (response.data.resultType) {
     case LokiResultType.Vector:
-      return response.data.result.map(vecResult =>
+      return response.data.result.map((vecResult) =>
         lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions)
       );
     case LokiResultType.Matrix:
-      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
+      return response.data.result.map((matrixResult) => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
     default:
       return [];
   }
+}
+
+export function rangeQueryResponseToDataFrames(
+  response: LokiResponse,
+  query: LokiRangeQueryRequest,
+  target: LokiQuery,
+  responseListLength: number,
+  scopedVars: ScopedVars
+): DataFrame[] {
+  const series = rangeQueryResponseToTimeSeries(response, query, target, responseListLength, scopedVars);
+  const frames = series.map((s) => toDataFrame(s));
+
+  const { step } = query;
+
+  if (step != null) {
+    const intervalMs = step * 1000;
+
+    frames.forEach((frame) => {
+      frame.fields.forEach((field) => {
+        if (field.type === FieldType.time) {
+          field.config.interval = intervalMs;
+        }
+      });
+    });
+  }
+
+  return frames;
 }
 
 export function processRangeQueryResponse(
@@ -510,7 +525,7 @@ export function processRangeQueryResponse(
     case LokiResultType.Vector:
     case LokiResultType.Matrix:
       return of({
-        data: rangeQueryResponseToTimeSeries(
+        data: rangeQueryResponseToDataFrames(
           response,
           query,
           {

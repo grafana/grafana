@@ -17,6 +17,8 @@ Open the terminal, and run the following command in your [plugin directory]({{< 
 npx @grafana/toolkit plugin:create my-grafana-plugin
 ```
 
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
+
 If you want a more guided introduction to plugin development, check out our tutorials:
 
 - [Build a panel plugin]({{< relref "/tutorials/build-a-panel-plugin.md" >}})
@@ -46,6 +48,7 @@ Improve an existing plugin with one of our guides:
 - [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
 - [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
+- [Add a query editor help component]({{< relref "add-query-editor-help.md" >}})
 - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
 - [Error handling]({{< relref "error-handling.md" >}})
@@ -75,12 +78,10 @@ Learn more about Grafana options and packages.
 
 #### Typescript
 
-- [Grafana Data]({{< relref "../../packages_api/data/_index.md" >}})
-- [Grafana Runtime]({{< relref "../../packages_api/runtime/_index.md" >}})
-- [Grafana UI]({{< relref "../../packages_api/ui/_index.md" >}})
+- Grafana Data
+- Grafana Runtime
+- Grafana UI
 
 #### Go
 
 - [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go" >}})
-
-

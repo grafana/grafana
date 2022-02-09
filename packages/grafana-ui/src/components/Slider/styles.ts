@@ -1,30 +1,21 @@
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
-import { css as cssCore } from '@emotion/core';
-import { css } from 'emotion';
-import tinycolor from 'tinycolor2';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css as cssCore } from '@emotion/react';
+import { css } from '@emotion/css';
 
-export const getFocusStyle = (theme: GrafanaTheme) => css`
-  &:focus {
-    ${focusCss(theme)}
-  }
-`;
-
-export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
-  const { spacing, palette } = theme;
-  const railColor = theme.isLight ? palette.gray5 : palette.dark6;
-  const trackColor = theme.isLight ? palette.blue85 : palette.blue77;
-  const handleColor = theme.isLight ? palette.blue85 : palette.blue80;
-  const blueOpacity = tinycolor(handleColor)
-    .setAlpha(0.2)
-    .toString();
+export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
+  const { spacing } = theme;
+  const railColor = theme.colors.border.strong;
+  const trackColor = theme.colors.primary.main;
+  const handleColor = theme.colors.primary.main;
+  const blueOpacity = theme.colors.primary.transparent;
   const hoverSyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
 
   return {
     container: css`
       width: 100%;
-      margin: ${isHorizontal ? 'none' : `${spacing.sm} ${spacing.lg} ${spacing.sm} ${spacing.sm}`};
+      margin: ${isHorizontal ? 'inherit' : `${spacing(1, 3, 1, 1)}`};
+      padding-bottom: ${isHorizontal && hasMarks ? theme.spacing(1) : 'inherit'};
       height: ${isHorizontal ? 'auto' : '100%'};
     `,
     slider: css`
@@ -33,12 +24,23 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
         flex-grow: 1;
         margin-left: 7px; // half the size of the handle to align handle to the left on 0 value
       }
+      .rc-slider-mark {
+        top: ${theme.spacing(1.75)};
+      }
+      .rc-slider-mark-text {
+        color: ${theme.colors.text.disabled};
+        font-size: ${theme.typography.bodySmall.fontSize};
+      }
+      .rc-slider-mark-text-active {
+        color: ${theme.colors.text.primary};
+      }
       .rc-slider-vertical .rc-slider-handle {
         margin-top: -10px;
       }
       .rc-slider-handle {
         border: none;
         background-color: ${handleColor};
+        box-shadow: ${theme.shadows.z1};
         cursor: pointer;
       }
       .rc-slider-handle:hover,
@@ -53,7 +55,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       }
       .rc-slider-rail {
         background-color: ${railColor};
-        border: 1px solid ${railColor};
         cursor: pointer;
       }
     `,
@@ -69,7 +70,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
         }
 
         .rc-slider-tooltip-inner {
-          color: ${theme.colors.text};
+          color: ${theme.colors.text.primary};
           background-color: transparent !important;
           border-radius: 0;
           box-shadow: none;
@@ -100,14 +101,14 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       }
     `,
     sliderInputField: css`
-      margin-left: ${theme.spacing.lg};
+      margin-left: ${theme.spacing(3)};
       width: 60px;
       input {
         text-align: center;
       }
     `,
     sliderInputFieldVertical: css`
-      margin: 0 0 ${theme.spacing.lg} 0;
+      margin: 0 0 ${theme.spacing(3)} 0;
       order: 1;
     `,
   };

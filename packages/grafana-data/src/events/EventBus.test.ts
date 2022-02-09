@@ -1,6 +1,7 @@
 import { EventBusSrv } from './EventBus';
-import { BusEventWithPayload } from './types';
+import { BusEvent, BusEventWithPayload } from './types';
 import { eventFactory } from './eventFactory';
+import { DataHoverEvent } from './common';
 
 interface LoginEventPayload {
   logins: number;
@@ -35,7 +36,7 @@ describe('EventBus', () => {
     const bus = new EventBusSrv();
     const events: LoginEvent[] = [];
 
-    bus.subscribe(LoginEvent, event => {
+    bus.subscribe(LoginEvent, (event) => {
       events.push(event);
     });
 
@@ -44,6 +45,27 @@ describe('EventBus', () => {
 
     expect(events[0].payload.logins).toBe(10);
     expect(events.length).toBe(1);
+  });
+
+  describe('EventBusWithSource', () => {
+    it('can add sources to the source path', () => {
+      const bus = new EventBusSrv();
+      const busWithSource = bus.newScopedBus('foo');
+      expect((busWithSource as any).path).toEqual(['foo']);
+    });
+
+    it('adds the source to the event payload', () => {
+      const bus = new EventBusSrv();
+      let events: BusEvent[] = [];
+
+      bus.subscribe(DataHoverEvent, (event) => events.push(event));
+
+      const busWithSource = bus.newScopedBus('foo');
+      busWithSource.publish({ type: DataHoverEvent.type });
+
+      expect(events.length).toEqual(1);
+      expect(events[0].origin).toEqual(busWithSource);
+    });
   });
 
   describe('Legacy emitter behavior', () => {
@@ -69,11 +91,11 @@ describe('EventBus', () => {
       const legacyEvents: any = [];
       const newEvents: any = [];
 
-      bus.on(legacyEvent, event => {
+      bus.on(legacyEvent, (event) => {
         legacyEvents.push(event);
       });
 
-      bus.subscribe(AlertSuccessEvent, event => {
+      bus.subscribe(AlertSuccessEvent, (event) => {
         newEvents.push(event);
       });
 
@@ -160,7 +182,7 @@ describe('EventBus', () => {
       const bus = new EventBusSrv();
       const events: LoginEvent[] = [];
 
-      bus.subscribe(LoginEvent, event => {
+      bus.subscribe(LoginEvent, (event) => {
         events.push(event);
       });
 

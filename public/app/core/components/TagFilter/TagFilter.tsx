@@ -1,9 +1,9 @@
 // Libraries
 import React, { FC } from 'react';
-import { css } from 'emotion';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
-import { AsyncSelect, stylesFactory, useTheme, resetSelectStyles, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { components } from 'react-select';
+import debounce from 'debounce-promise';
+import { stylesFactory, useTheme, Icon, AsyncMultiSelect } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -15,8 +15,11 @@ export interface TermCount {
 }
 
 export interface Props {
+  allowCustomValue?: boolean;
+  formatCreateLabel?: (input: string) => string;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
+  inputId?: string;
   isClearable?: boolean;
   onChange: (tags: string[]) => void;
   placeholder?: string;
@@ -31,7 +34,10 @@ const filterOption = (option: any, searchQuery: string) => {
 };
 
 export const TagFilter: FC<Props> = ({
+  allowCustomValue = false,
+  formatCreateLabel,
   hideValues,
+  inputId,
   isClearable,
   onChange,
   placeholder = 'Filter by tag',
@@ -42,36 +48,40 @@ export const TagFilter: FC<Props> = ({
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const onLoadOptions = (query: string) => {
-    return tagOptions().then(options => {
-      return options.map(option => ({
-        value: option.term,
-        label: option.term,
-        count: option.count,
-      }));
-    });
+  const onLoadOptions = async (query: string) => {
+    const options = await tagOptions();
+    return options.map((option) => ({
+      value: option.term,
+      label: option.term,
+      count: option.count,
+    }));
   };
+
+  const debouncedLoadOptions = debounce(onLoadOptions, 300);
 
   const onTagChange = (newTags: any[]) => {
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
-    onChange((newTags || []).map(tag => tag.value));
+    onChange((newTags || []).map((tag) => tag.value));
   };
 
-  const value = tags.map(tag => ({ value: tag, label: tag, count: 0 }));
+  const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
 
   const selectOptions = {
+    allowCreateWhileLoading: true,
+    allowCustomValue,
+    formatCreateLabel,
     defaultOptions: true,
     filterOption,
     getOptionLabel: (i: any) => i.label,
     getOptionValue: (i: any) => i.value,
+    inputId,
     isMulti: true,
-    loadOptions: onLoadOptions,
+    loadOptions: debouncedLoadOptions,
     loadingMessage: 'Loading...',
     noOptionsMessage: 'No tags found',
     onChange: onTagChange,
     placeholder,
-    styles: resetSelectStyles(),
     value,
     width,
     components: {
@@ -93,13 +103,13 @@ export const TagFilter: FC<Props> = ({
   };
 
   return (
-    <div className={styles.tagFilter} aria-label="Tag filter">
+    <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
         <span className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags
         </span>
       )}
-      <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
+      <AsyncMultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };

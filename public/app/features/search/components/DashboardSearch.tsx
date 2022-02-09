@@ -1,27 +1,24 @@
 import React, { FC, memo } from 'react';
-import { css } from 'emotion';
-import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
-import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
-export interface OwnProps {
+export interface Props {
   onCloseSearch: () => void;
 }
 
-export type Props = OwnProps & ConnectProps & DispatchProps;
-
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateLocation }) => {
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
-    params,
-    updateLocation
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
+  const { results, loading, onToggleSection, onKeyDown, showPreviews, onShowPreviewsChange } = useDashboardSearch(
+    query,
+    onCloseSearch
   );
-  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
 
   return (
@@ -37,9 +34,11 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateL
           <ActionRow
             {...{
               onLayoutChange,
+              onShowPreviewsChange: (ev) => onShowPreviewsChange(ev.target.checked),
               onSortChange,
               onTagFilterChange,
               query,
+              showPreviews,
             }}
           />
           <CustomScrollbar>
@@ -50,6 +49,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateL
               editable={false}
               onToggleSection={onToggleSection}
               layout={query.layout}
+              showPreviews={showPreviews}
             />
           </CustomScrollbar>
         </div>
@@ -57,11 +57,12 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateL
     </div>
   );
 });
+
 DashboardSearch.displayName = 'DashboardSearch';
 
-export default connectWithRouteParams(DashboardSearch);
+export default DashboardSearch;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     overlay: css`
       left: 0;
@@ -70,22 +71,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       bottom: 0;
       z-index: ${theme.zIndex.sidemenu};
       position: fixed;
-      background: ${theme.colors.dashboardBg};
+      background: ${theme.colors.background.canvas};
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        left: 60px;
+      ${theme.breakpoints.up('md')} {
+        left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
       }
     `,
     container: css`
       max-width: 1400px;
       margin: 0 auto;
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing(2)};
 
       height: 100%;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        padding: 32px;
+      ${theme.breakpoints.up('md')} {
+        padding: ${theme.spacing(4)};
       }
     `,
     closeBtn: css`
@@ -101,6 +102,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       height: 100%;
+      padding-bottom: ${theme.spacing(3)};
     `,
   };
 });

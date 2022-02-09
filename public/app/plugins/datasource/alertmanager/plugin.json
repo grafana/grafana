@@ -1,0 +1,63 @@
+{
+  "type": "datasource",
+  "name": "Alertmanager",
+  "id": "alertmanager",
+  "metrics": false,
+  "state": "alpha",
+  "routes": [
+    {
+      "method": "POST",
+      "path": "alertmanager/api/v2/silences",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "path": "alertmanager/api/v2/silence",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/silences",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "PUT",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "GET",
+      "path": "alertmanager/api/v2/alerts",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "GET",
+      "path": "api/v1/alerts",
+      "reqRole": "Admin"
+    }
+  ],
+  "info": {
+    "description": "",
+    "author": {
+      "name": "Prometheus alertmanager",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Learn more",
+        "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+      }
+    ]
+  }
+}

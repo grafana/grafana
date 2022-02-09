@@ -1,21 +1,25 @@
 package migrator
 
 import (
+	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Migrator struct {
-	x          *xorm.Engine
+	DBEngine   *xorm.Engine
 	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
+	Cfg        *setting.Cfg
 }
 
 type MigrationLog struct {
@@ -27,12 +31,13 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine) *Migrator {
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg := &Migrator{}
-	mg.x = engine
+	mg.DBEngine = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
-	mg.Dialect = NewDialect(mg.x)
+	mg.Dialect = NewDialect(mg.DBEngine)
+	mg.Cfg = cfg
 	return mg
 }
 
@@ -45,11 +50,22 @@ func (mg *Migrator) AddMigration(id string, m Migration) {
 	mg.migrations = append(mg.migrations, m)
 }
 
+func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
+	result := make([]string, 0, len(mg.migrations))
+	for _, migration := range mg.migrations {
+		if migration.SkipMigrationLog() && excludeNotLogged {
+			continue
+		}
+		result = append(result, migration.Id())
+	}
+	return result
+}
+
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
 
-	exists, err := mg.x.IsTableExist(new(MigrationLog))
+	exists, err := mg.DBEngine.IsTableExist(new(MigrationLog))
 	if err != nil {
 		return nil, errutil.Wrap("failed to check table existence", err)
 	}
@@ -57,7 +73,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 		return logMap, nil
 	}
 
-	if err = mg.x.Find(&logItems); err != nil {
+	if err = mg.DBEngine.Find(&logItems); err != nil {
 		return nil, err
 	}
 
@@ -79,11 +95,15 @@ func (mg *Migrator) Start() error {
 		return err
 	}
 
+	migrationsPerformed := 0
+	migrationsSkipped := 0
+	start := time.Now()
 	for _, m := range mg.migrations {
 		m := m
 		_, exists := logMap[m.Id()]
 		if exists {
 			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())
+			migrationsSkipped++
 			continue
 		}
 
@@ -95,27 +115,36 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		err := mg.inTransaction(func(sess *xorm.Session) error {
+		err := mg.InTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
-				if _, err := sess.Insert(&record); err != nil {
-					return err
+				if !m.SkipMigrationLog() {
+					if _, err := sess.Insert(&record); err != nil {
+						return err
+					}
 				}
 				return err
 			}
 			record.Success = true
-			_, err = sess.Insert(&record)
+			if !m.SkipMigrationLog() {
+				_, err = sess.Insert(&record)
+			}
+			if err == nil {
+				migrationsPerformed++
+			}
 			return err
 		})
 		if err != nil {
-			return errutil.Wrap("migration failed", err)
+			return errutil.Wrap(fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
 		}
 	}
 
+	mg.Logger.Info("migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
+
 	// Make sure migrations are synced
-	return mg.x.Sync2()
+	return mg.DBEngine.Sync2()
 }
 
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
@@ -160,8 +189,8 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 type dbTransactionFunc func(sess *xorm.Session) error
 
-func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
-	sess := mg.x.NewSession()
+func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
+	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
 	if err := sess.Begin(); err != nil {

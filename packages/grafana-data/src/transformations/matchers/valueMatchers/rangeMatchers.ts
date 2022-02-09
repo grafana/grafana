@@ -7,7 +7,7 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions<number>> 
   id: ValueMatcherID.between,
   name: 'Is between',
   description: 'Match when field value is between given option values.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       if (isNaN(value)) {
@@ -16,10 +16,10 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions<number>> 
       return value > options.from && value < options.to;
     };
   },
-  getOptionsDisplayText: options => {
+  getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is between ${options.from} and ${options.to}.`;
   },
-  isApplicable: field => field.type === FieldType.number,
+  isApplicable: (field) => field.type === FieldType.number,
   getDefaultOptions: () => ({ from: 0, to: 100 }),
 };
 

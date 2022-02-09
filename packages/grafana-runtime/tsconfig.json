@@ -3,18 +3,9 @@
     "baseUrl": ".",
     "declarationDir": "dist",
     "outDir": "compiled",
-    "rootDirs": ["."],
-    "paths": {
-      "@grafana/slate-react": ["../grafana-ui/node_modules/@types/slate-react"]
-    },
-    "typeRoots": ["node_modules/@types"]
+    "rootDirs": ["."]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",
-  "include": [
-    "src/**/*.ts*",
-    "../../public/app/types/jquery/*.ts",
-    "../../public/app/types/sanitize-url.d.ts",
-    "../../public/app/types/svg.d.ts"
-  ]
+  "include": ["src/**/*.ts*", "../../public/app/types/jquery/*.ts", "../../public/app/types/*.d.ts"]
 }

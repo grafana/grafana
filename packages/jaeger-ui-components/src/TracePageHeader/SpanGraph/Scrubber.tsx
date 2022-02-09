@@ -14,57 +14,62 @@
 
 import React from 'react';
 import cx from 'classnames';
+import { css } from '@emotion/css';
+import { useStyles2 } from '@grafana/ui';
 
-import { createStyle } from '../../Theme';
-import { css } from 'emotion';
-
-export const getStyles = createStyle(() => {
-  const ScrubberHandleExpansion = css`
-    label: ScrubberHandleExpansion;
-    cursor: col-resize;
-    fill-opacity: 0;
-    fill: #44f;
-  `;
-  const ScrubberHandle = css`
-    label: ScrubberHandle;
-    cursor: col-resize;
-    fill: #555;
-  `;
-  const ScrubberLine = css`
-    label: ScrubberLine;
-    pointer-events: none;
-    stroke: #555;
-  `;
+export const getStyles = () => {
   return {
+    ScrubberHandleExpansion: cx(
+      css`
+        label: ScrubberHandleExpansion;
+        cursor: col-resize;
+        fill-opacity: 0;
+        fill: #44f;
+      `,
+      'scrubber-handle-expansion'
+    ),
+    ScrubberHandle: cx(
+      css`
+        label: ScrubberHandle;
+        cursor: col-resize;
+        fill: #555;
+      `,
+      'scrubber-handle'
+    ),
+    ScrubberLine: cx(
+      css`
+        label: ScrubberLine;
+        pointer-events: none;
+        stroke: #555;
+      `,
+      'scrubber-line'
+    ),
     ScrubberDragging: css`
       label: ScrubberDragging;
-      & .${ScrubberHandleExpansion} {
+      & .scrubber-handle-expansion {
         fill-opacity: 1;
       }
-      & .${ScrubberHandle} {
+      & .scrubber-handle {
         fill: #44f;
       }
-      & > .${ScrubberLine} {
+      & > .scrubber-line {
         stroke: #44f;
       }
     `,
     ScrubberHandles: css`
       label: ScrubberHandles;
-      &:hover > .${ScrubberHandleExpansion} {
+      &:hover > .scrubber-handle-expansion {
         fill-opacity: 1;
       }
-      &:hover > .${ScrubberHandle} {
+      &:hover > .scrubber-handle {
         fill: #44f;
       }
-      &:hover + .${ScrubberLine} {
+      &:hover + .scrubber.line {
         stroke: #44f;
       }
     `,
-    ScrubberHandleExpansion,
-    ScrubberHandle,
-    ScrubberLine,
   };
-});
+};
 
 type ScrubberProps = {
   isDragging: boolean;
@@ -76,7 +81,7 @@ type ScrubberProps = {
 
 export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMouseLeave, position }: ScrubberProps) {
   const xPercent = `${position * 100}%`;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const className = cx({ [styles.ScrubberDragging]: isDragging });
   return (
     <g className={className}>

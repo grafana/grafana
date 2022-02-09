@@ -1,0 +1,18 @@
+{
+  "panels": [
+    {
+      "datasource": "${DS_GDEV-TESTDATA}",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "right",
+            "filterable": false
+          },
+          "decimals": 3,
+          "mappings": [],
+          "unit": "watt"
+        }
+      }
+    }
+  ]
+}

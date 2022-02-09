@@ -27,8 +27,8 @@ export class UnitPicker extends PureComponent<Props> {
     const unitGroups = getValueFormats();
 
     // Need to transform the data structure to work well with Select
-    const groupOptions = unitGroups.map(group => {
-      const options = group.submenu.map(unit => {
+    const groupOptions = unitGroups.map((group) => {
+      const options = group.submenu.map((unit) => {
         const sel = {
           label: unit.text,
           value: unit.value,
@@ -56,6 +56,7 @@ export class UnitPicker extends PureComponent<Props> {
         width={width}
         initialValue={current && current.label}
         allowCustomValue
+        changeOnSelect={false}
         formatCreateLabel={formatCreateLabel}
         options={groupOptions as CascaderOption[]}
         placeholder="Choose"

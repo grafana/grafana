@@ -8,7 +8,7 @@ import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
-import { createEmptyQueryResponse, loadAndInitDatasource, makeInitialUpdateState } from './utils';
+import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
 
 //
 // Actions and Payloads
@@ -35,13 +35,13 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
  */
 export function changeDatasource(
   exploreId: ExploreId,
-  datasourceName: string,
+  datasourceUid: string,
   options?: { importQueries: boolean }
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, datasourceName);
-    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
+    const { history, instance } = await loadAndInitDatasource(orgId, datasourceUid);
+    const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
 
     dispatch(
       updateDatasourceInstanceAction({
@@ -51,13 +51,12 @@ export function changeDatasource(
       })
     );
 
-    const queries = getState().explore[exploreId].queries;
-
     if (options?.importQueries) {
+      const queries = getState().explore[exploreId]!.queries;
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
-    if (getState().explore[exploreId].isLive) {
+    if (getState().explore[exploreId]!.isLive) {
       dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
     }
 
@@ -93,15 +92,13 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      latency: 0,
+      logsVolumeDataProvider: undefined,
+      logsVolumeData: undefined,
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],
-      originPanelId: state.urlState && state.urlState.originPanelId,
       history,
       datasourceMissing: false,
-      logsHighlighterExpressions: undefined,
-      update: makeInitialUpdateState(),
     };
   }
 

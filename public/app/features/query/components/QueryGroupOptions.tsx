@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { rangeUtil, PanelData, DataSourceApi, DataQuery } from '@grafana/data';
+import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 
 // Components
 import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
@@ -10,26 +10,8 @@ import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@gra
 // Types
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
-import { css } from 'emotion';
-
-export interface QueryGroupOptions {
-  queries: DataQuery[];
-  dataSource: QueryGroupDataSource;
-  maxDataPoints?: number | null;
-  minInterval?: string | null;
-  cacheTimeout?: string | null;
-  timeRange?: {
-    from?: string | null;
-    shift?: string | null;
-    hide?: boolean;
-  };
-}
-
-interface QueryGroupDataSource {
-  name?: string | null;
-  uid?: string;
-  default?: boolean;
-}
+import { css } from '@emotion/css';
+import { QueryGroupOptions } from 'app/types';
 
 interface Props {
   options: QueryGroupOptions;
@@ -268,7 +250,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               width={9}
               tooltip={
                 <>
-                  The evaluated Interval that is sent to data source and is used in <code>$__interval</code> and{' '}
+                  The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
                   <code>$__interval_ms</code>
                 </>
               }
@@ -277,7 +259,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             </InlineFormLabel>
             <InlineFormLabel width={6}>{realInterval}</InlineFormLabel>
             <div className="gf-form-label query-segment-operator">=</div>
-            <div className="gf-form-label">Max data points / time range</div>
+            <div className="gf-form-label">Time range / max data points</div>
           </div>
         </div>
       </>

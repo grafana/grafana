@@ -2,6 +2,7 @@ package guardian
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -35,7 +36,7 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 			OrgId:   orgID,
 			OrgRole: role,
 		}
-		guard := New(dashboardID, orgID, user)
+		guard := New(context.Background(), dashboardID, orgID, user)
 
 		sc := &scenarioContext{
 			t:                t,
@@ -56,7 +57,7 @@ func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenario
 			OrgRole:  role,
 			ApiKeyId: 10,
 		}
-		guard := New(dashboardID, orgID, user)
+		guard := New(context.Background(), dashboardID, orgID, user)
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -74,7 +75,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	sc.t.Run(desc, func(t *testing.T) {
 		bus.ClearBusHandlers()
 
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 			if query.OrgID != sc.givenUser.OrgId {
 				sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgID)
 			}
@@ -94,7 +95,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 			}
 		}
 
-		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 			if query.OrgId != sc.givenUser.OrgId {
 				sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
 			}
@@ -107,7 +108,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		})
 
 		sc.permissionScenario = desc
-		sc.g = New(dashboardID, sc.givenUser.OrgId, sc.givenUser)
+		sc.g = New(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams

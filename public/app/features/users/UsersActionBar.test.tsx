@@ -4,6 +4,13 @@ import { Props, UsersActionBar } from './UsersActionBar';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setUsersSearchQuery } from './state/reducers';
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasPermission: () => true,
+    hasAccess: () => true,
+  },
+}));
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',

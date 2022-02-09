@@ -1,96 +1,44 @@
 import AzureMonitorDatasource from '../datasource';
+import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { AzureLogsVariable, KustoSchema } from '../types';
+import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
 import { toUtc } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import createMockQuery from '../__mocks__/query';
+import { singleVariable } from '../__mocks__/variables';
 
 const templateSrv = new TemplateSrv();
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => backendSrv,
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => templateSrv,
 }));
 
+const makeResourceURI = (
+  resourceName: string,
+  resourceGroup = 'test-resource-group',
+  subscriptionID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+) =>
+  `/subscriptions/${subscriptionID}/resourceGroups/${resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/${resourceName}`;
+
 describe('AzureLogAnalyticsDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    datasourceRequestMock.mockImplementation(jest.fn());
-  });
-
   const ctx: any = {};
 
   beforeEach(() => {
     ctx.instanceSettings = {
-      jsonData: { logAnalyticsSubscriptionId: 'xxx' },
+      jsonData: { subscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
     };
 
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
-  describe('When the config option "Same as Azure Monitor" has been chosen', () => {
-    const tableResponseWithOneColumn = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
-            {
-              name: 'Category',
-              type: 'string',
-            },
-          ],
-          rows: [['Administrative'], ['Policy']],
-        },
-      ],
-    };
-
-    const workspaceResponse = {
-      value: [
-        {
-          name: 'aworkspace',
-          properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-          },
-        },
-      ],
-    };
-
-    let workspacesUrl: string;
-    let azureLogAnalyticsUrl: string;
-
-    beforeEach(async () => {
-      ctx.instanceSettings.jsonData.subscriptionId = 'xxx';
-      ctx.instanceSettings.jsonData.tenantId = 'xxx';
-      ctx.instanceSettings.jsonData.clientId = 'xxx';
-      ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          workspacesUrl = options.url;
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
-        } else {
-          azureLogAnalyticsUrl = options.url;
-          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
-        }
-      });
-
-      await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
-    });
-
-    it('should use the loganalyticsazure plugin route', () => {
-      expect(workspacesUrl).toContain('azuremonitor');
-      expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
-    });
-  });
-
   describe('When performing testDatasource', () => {
+    beforeEach(() => {
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+    });
+
     describe('and an error is returned', () => {
       const error = {
         data: {
@@ -104,171 +52,64 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.logAnalyticsSubscriptionId = 'xxx';
-        ctx.instanceSettings.jsonData.logAnalyticsTenantId = 'xxx';
-        ctx.instanceSettings.jsonData.logAnalyticsClientId = 'xxx';
-        datasourceRequestMock.mockImplementation(() => Promise.reject(error));
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockRejectedValue(error);
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('error');
-          expect(results.message).toEqual(
-            '1. Azure Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. '
+        return ctx.ds.azureLogAnalyticsDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('error');
+          expect(result.message).toEqual(
+            'Azure Log Analytics requires access to Azure Monitor but had the following error: Bad Request: InvalidApiVersionParameter. An error message.'
           );
         });
       });
+    });
+
+    it('should not include double slashes when getting the resource', async () => {
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = '/foo/bar';
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockResolvedValue(true);
+      await ctx.ds.azureLogAnalyticsDatasource.testDatasource();
+      expect(ctx.ds.azureLogAnalyticsDatasource.getResource).toHaveBeenCalledWith('loganalytics/v1/foo/bar/metadata');
     });
   });
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('metadata');
-        return Promise.resolve({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200 });
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        expect(path).toContain('metadata');
+        return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
       });
     });
 
-    it('should return a schema with a table and rows', () => {
-      return ctx.ds.azureLogAnalyticsDatasource.getSchema('myWorkspace').then((result: KustoSchema) => {
-        expect(Object.keys(result.Databases.Default.Tables).length).toBe(2);
-        expect(result.Databases.Default.Tables.Alert.Name).toBe('Alert');
-        expect(result.Databases.Default.Tables.AzureActivity.Name).toBe('AzureActivity');
-        expect(result.Databases.Default.Tables.Alert.OrderedColumns.length).toBe(69);
-        expect(result.Databases.Default.Tables.AzureActivity.OrderedColumns.length).toBe(21);
-        expect(result.Databases.Default.Tables.Alert.OrderedColumns[0].Name).toBe('TimeGenerated');
-        expect(result.Databases.Default.Tables.Alert.OrderedColumns[0].Type).toBe('datetime');
+    it('should return a schema to use with monaco-kusto', async () => {
+      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
 
-        expect(Object.keys(result.Databases.Default.Functions).length).toBe(1);
-        expect(result.Databases.Default.Functions.Func1.Name).toBe('Func1');
-      });
-    });
-  });
+      expect(result.database.tables).toHaveLength(2);
+      expect(result.database.tables[0].name).toBe('Alert');
+      expect(result.database.tables[0].timespanColumn).toBe('TimeGenerated');
+      expect(result.database.tables[1].name).toBe('AzureActivity');
+      expect(result.database.tables[0].columns).toHaveLength(69);
 
-  describe('When performing metricFindQuery', () => {
-    let queryResults: AzureLogsVariable[];
-
-    const workspacesResponse = {
-      value: [
+      expect(result.database.functions[1].inputParameters).toEqual([
         {
-          name: 'workspace1',
-          properties: {
-            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa1',
-          },
+          name: 'RangeStart',
+          type: 'datetime',
+          defaultValue: 'datetime(null)',
+          cslDefaultValue: 'datetime(null)',
         },
         {
-          name: 'workspace2',
-          properties: {
-            customerId: 'eeee4fde-1aaa-4d60-9974-eeee562ffaa2',
-          },
+          name: 'VaultSubscriptionList',
+          type: 'string',
+          defaultValue: '"*"',
+          cslDefaultValue: '"*"',
         },
-      ],
-    };
-
-    describe('and is the workspaces() macro', () => {
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('xxx');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspaces()');
-      });
-
-      it('should return a list of workspaces', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('workspace1');
-        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
-        expect(queryResults[1].text).toBe('workspace2');
-        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
-      });
-    });
-
-    describe('and is the workspaces() macro with the subscription parameter', () => {
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspaces(11112222-eeee-4949-9b2d-9106972f9123)');
-      });
-
-      it('should return a list of workspaces', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('workspace1');
-        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
-        expect(queryResults[1].text).toBe('workspace2');
-        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
-      });
-    });
-
-    describe('and is the workspaces() macro with the subscription parameter quoted', () => {
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspaces("11112222-eeee-4949-9b2d-9106972f9123")');
-      });
-
-      it('should return a list of workspaces', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('workspace1');
-        expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
-        expect(queryResults[1].text).toBe('workspace2');
-        expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
-      });
-    });
-
-    describe('and is a custom query', () => {
-      const tableResponseWithOneColumn = {
-        tables: [
-          {
-            name: 'PrimaryResult',
-            columns: [
-              {
-                name: 'Category',
-                type: 'string',
-              },
-            ],
-            rows: [['Administrative'], ['Policy']],
-          },
-        ],
-      };
-
-      const workspaceResponse = {
-        value: [
-          {
-            name: 'aworkspace',
-            properties: {
-              source: 'Azure',
-              customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-            },
-          },
-        ],
-      };
-
-      beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-            return Promise.resolve({ data: workspaceResponse, status: 200 });
-          } else {
-            return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
-          }
-        });
-
-        queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
-      });
-
-      it('should return a list of categories in the correct format', () => {
-        expect(queryResults.length).toBe(2);
-        expect(queryResults[0].text).toBe('Administrative');
-        expect(queryResults[0].value).toBe('Administrative');
-        expect(queryResults[1].text).toBe('Policy');
-        expect(queryResults[1].value).toBe('Policy');
-      });
+        {
+          name: 'ExcludeLegacyEvent',
+          type: 'bool',
+          defaultValue: 'True',
+          cslDefaultValue: 'True',
+        },
+      ]);
     });
   });
 
@@ -303,6 +144,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       value: [
         {
           name: 'aworkspace',
+          id: makeResourceURI('a-workspace'),
           properties: {
             source: 'Azure',
             customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
@@ -314,11 +156,11 @@ describe('AzureLogAnalyticsDatasource', () => {
     let annotationResults: any[];
 
     beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        if (path.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
+          return Promise.resolve(workspaceResponse);
         } else {
-          return Promise.resolve({ data: tableResponse, status: 200 });
+          return Promise.resolve(tableResponse);
         }
       });
 
@@ -349,6 +191,141 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(annotationResults[1].time).toBe(1527971280000);
       expect(annotationResults[1].text).toBe('Computer2');
       expect(annotationResults[1].tags[0]).toBe('tag2');
+    });
+  });
+
+  describe('When performing getWorkspaces', () => {
+    beforeEach(() => {
+      ctx.ds.azureLogAnalyticsDatasource.getWorkspaceList = jest
+        .fn()
+        .mockResolvedValue({ value: [{ name: 'foobar', id: 'foo', properties: { customerId: 'bar' } }] });
+    });
+
+    it('should return the workspace id', async () => {
+      const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub');
+      expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
+    });
+  });
+
+  describe('When performing getFirstWorkspace', () => {
+    beforeEach(() => {
+      ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription = jest.fn().mockResolvedValue('foo');
+      ctx.ds.azureLogAnalyticsDatasource.getWorkspaces = jest
+        .fn()
+        .mockResolvedValue([{ text: 'foobar', value: 'foo' }]);
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = undefined;
+    });
+
+    it('should return the stored workspace', async () => {
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'bar';
+      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      expect(workspace).toEqual('bar');
+      expect(ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription).not.toHaveBeenCalled();
+    });
+
+    it('should return the first workspace', async () => {
+      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      expect(workspace).toEqual('foo');
+    });
+  });
+
+  describe('When performing targetContainsTemplate', () => {
+    it('should return false when no variable is being used', () => {
+      const query = createMockQuery();
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      query.queryType = AzureQueryType.LogAnalytics;
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should return true when resource field is using a variable', () => {
+      const templateSrv = new TemplateSrv();
+      const query = createMockQuery();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = { resource: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
+    });
+
+    it('should return false when a variable is used in a different part of the query', () => {
+      const templateSrv = new TemplateSrv();
+      const query = createMockQuery();
+      templateSrv.init([singleVariable]);
+
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureResourceGraph = { query: `$${singleVariable.name}` };
+      expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+  });
+
+  describe('When performing filterQuery', () => {
+    const ctx: any = {};
+    let laDatasource: AzureLogAnalyticsDatasource;
+
+    beforeEach(() => {
+      ctx.instanceSettings = {
+        jsonData: { subscriptionId: 'xxx' },
+        url: 'http://azureloganalyticsapi',
+      };
+
+      laDatasource = new AzureLogAnalyticsDatasource(ctx.instanceSettings);
+    });
+
+    it('should run complete queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeTruthy();
+    });
+
+    it('should not run empty queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
+    it('should not run hidden queries', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        hide: true,
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
+    it('should not run queries missing a kusto query', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          resource: '/sub/124/rg/cloud/vm/server',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+
+    it('should not run queries missing a resource', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureLogAnalytics: {
+          query: 'perf | take 100',
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
     });
   });
 });

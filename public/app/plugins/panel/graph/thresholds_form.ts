@@ -1,10 +1,10 @@
-import coreModule from 'app/core/core_module';
+import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
 import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
   panelCtrl: any;
   panel: any;
-  disabled: boolean;
+  disabled = false;
 
   /** @ngInject */
   constructor(private $scope: any) {}
@@ -12,7 +12,7 @@ export class ThresholdFormCtrl {
   $onInit() {
     this.panel = this.panelCtrl.panel;
 
-    if (this.panel.alert) {
+    if (this.panel.alert && !config.unifiedAlertingEnabled) {
       this.disabled = true;
     }
 
@@ -63,12 +63,8 @@ export class ThresholdFormCtrl {
   onThresholdTypeChange(index: number) {
     // Because of the ng-model binding, threshold's color mode is already set here
     if (this.panel.thresholds[index].colorMode === 'custom') {
-      this.panel.thresholds[index].fillColor = tinycolor(config.theme.palette.blue85)
-        .setAlpha(0.2)
-        .toRgbString();
-      this.panel.thresholds[index].lineColor = tinycolor(config.theme.palette.blue77)
-        .setAlpha(0.6)
-        .toRgbString();
+      this.panel.thresholds[index].fillColor = tinycolor(config.theme.palette.blue85).setAlpha(0.2).toRgbString();
+      this.panel.thresholds[index].lineColor = tinycolor(config.theme.palette.blue77).setAlpha(0.6).toRgbString();
     }
     this.panelCtrl.render();
   }

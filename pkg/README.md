@@ -23,7 +23,7 @@ For more information on developing for the backend:
 
 | package | description |
 | ------- | ----------- |
-| /pkg/bus | The bus is described in more details under [Communication](/contribute/architecture/communication.md) |
+| /pkg/bus | The bus is described in more details under [Communication](/contribute/architecture/backend/communication.md) |
 | /pkg/models | This is where we keep our domain model. This package should not depend on any package outside standard library. It does contain some references within Grafana but that is something we should avoid going forward. |
 | /pkg/registry | Package for managing services. |
 | /pkg/services/alerting | Grafana's alerting services. The alerting engine runs in a separate goroutine and shouldn't depend on anything else within Grafana. |
@@ -32,17 +32,17 @@ For more information on developing for the backend:
 
 ## Dependency management
 
-Refer to [UPGRADING_DEPENDENCIES.md](https://github.com/grafana/grafana/blob/master/UPGRADING_DEPENDENCIES.md).
+Refer to [UPGRADING_DEPENDENCIES.md](https://github.com/grafana/grafana/blob/main/UPGRADING_DEPENDENCIES.md).
 
 ## Ongoing refactoring
 
-These issues are not something we want to address all at once but something we will improve incrementally. Since Grafana is released at a regular schedule the preferred approach is to do this in batches. Not only is it easier to review, but it also reduces the risk of conflicts when cherry-picking fixes from master to release branches. Please try to submit changes that span multiple locations at the end of the release cycle. We prefer to wait until the end because we make fewer patch releases at the end of the release cycle, so there are fewer opportunities for complications.
+These issues are not something we want to address all at once but something we will improve incrementally. Since Grafana is released at a regular schedule the preferred approach is to do this in batches. Not only is it easier to review, but it also reduces the risk of conflicts when cherry-picking fixes from main to release branches. Please try to submit changes that span multiple locations at the end of the release cycle. We prefer to wait until the end because we make fewer patch releases at the end of the release cycle, so there are fewer opportunities for complications.
 
 ### Global state
 
-Global state makes testing and debugging software harder and it's something we want to avoid when possible. Unfortunately, there is quite a lot of global state in Grafana. 
+Global state makes testing and debugging software harder and it's something we want to avoid when possible. Unfortunately, there is quite a lot of global state in Grafana.
 
-We want to migrate away from this by using the `inject` package to wire up all dependencies either in `pkg/cmd/grafana-server/main.go` or self-registering using `registry.RegisterService` ex https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L25.
+We want to migrate away from this by using the `inject` package to wire up all dependencies either in `pkg/cmd/grafana-server/main.go` or self-registering using `registry.RegisterService` ex https://github.com/grafana/grafana/blob/main/pkg/services/cleanup/cleanup.go#L25.
 
 ### Limit the use of the init() function
 
@@ -79,8 +79,21 @@ Use of the `simplejson` package (`pkg/components/simplejson`) in place of types 
 
 All new features that require state should be possible to configure using config files. For example:
 
-- [Data sources](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/datasources)
-- [Alert notifiers](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/notifiers)
-- [Dashboards](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/dashboards)
+- [Data sources](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/datasources)
+- [Alert notifiers](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/notifiers)
+- [Dashboards](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/dashboards)
 
 Today its only possible to provision data sources and dashboards but this is something we want to support all over Grafana.
+
+### Use context.Context "everywhere"
+
+The package [context](https://golang.org/pkg/context/) should be used and propagated through all the layers of the code. For example the `context.Context` of an incoming API request should be propagated to any other layers being used such as the bus, service and database layers. Utility functions/methods normally doesn't need `context.Context` To follow best practices, any function/method that receives a context.Context argument should receive it as its first argument.
+
+To be able to solve certain problems and/or implement and support certain features making sure that `context.Context` is passed down through all layers of the code is vital. Being able to provide contextual information for the full life-cycle of an API request allows us to use contextual logging, provide contextual information about the authenticated user, create multiple spans for a distributed trace of service calls and database queries etc.
+
+Code should use `context.TODO` when it's unclear which Context to use or it is not yet available (because the surrounding function has not yet been extended to accept a `context.Context` argument).
+
+
+More details in [Services](/contribute/architecture/backend/services.md), [Communication](/contribute/architecture/backend/communication.md) and [Database](/contribute/architecture/backend/database.md).
+
+[Original design doc](https://docs.google.com/document/d/1ebUhUVXU8FlShezsN-C64T0dOoo-DaC9_r-c8gB2XEU/edit#).

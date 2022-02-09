@@ -1,5 +1,5 @@
-import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
-import isEqual from 'lodash/isEqual';
+import React, { FormEvent, PureComponent } from 'react';
+import { isEqual } from 'lodash';
 import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
 import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -52,7 +52,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<{}>, snapshot?: any): void {
     if (!isEqual(prevProps.editor.errors, this.props.editor.errors)) {
-      Object.values(this.props.editor.errors).forEach(error => {
+      Object.values(this.props.editor.errors).forEach((error) => {
         appEvents.emit(AppEvents.alertWarning, ['Validation', error]);
       });
     }
@@ -62,9 +62,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     this.props.variableEditorUnMount(this.props.identifier);
   }
 
-  onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onNameChange = (event: FormEvent<HTMLInputElement>) => {
     event.preventDefault();
-    this.props.changeVariableName(this.props.identifier, event.target.value);
+    this.props.changeVariableName(this.props.identifier, event.currentTarget.value);
   };
 
   onTypeChange = (option: SelectableValue<VariableType>) => {
@@ -74,16 +74,16 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     this.props.changeVariableType(toVariablePayload(this.props.identifier, { newType: option.value }));
   };
 
-  onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onLabelChange = (event: FormEvent<HTMLInputElement>) => {
     event.preventDefault();
     this.props.changeVariableProp(
-      toVariablePayload(this.props.identifier, { propName: 'label', propValue: event.target.value })
+      toVariablePayload(this.props.identifier, { propName: 'label', propValue: event.currentTarget.value })
     );
   };
 
-  onDescriptionChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onDescriptionChange = (event: FormEvent<HTMLInputElement>) => {
     this.props.changeVariableProp(
-      toVariablePayload(this.props.identifier, { propName: 'description', propValue: event.target.value })
+      toVariablePayload(this.props.identifier, { propName: 'description', propValue: event.currentTarget.value })
     );
   };
 
@@ -133,7 +133,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   name="Name"
                   placeholder="name"
                   required
-                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput}
+                  testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
                 />
                 <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
               </InlineFieldRow>
@@ -150,7 +150,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   onChange={this.onLabelChange}
                   name="Label"
                   placeholder="optional display name"
-                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
+                  testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
                 />
                 <VariableHideSelect
                   onChange={this.onHideChange}

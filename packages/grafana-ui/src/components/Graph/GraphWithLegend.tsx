@@ -1,11 +1,12 @@
 // Libraries
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import { VizLegendItem, LegendDisplayMode, SeriesColorChangeHandler, LegendPlacement } from '../VizLegend/types';
+import { VizLegendItem } from '../VizLegend/types';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
@@ -17,7 +18,6 @@ export interface GraphWithLegendProps extends GraphProps {
   hideZero?: boolean;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
-  onSeriesColorChange?: SeriesColorChangeHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
 }
@@ -26,7 +26,6 @@ const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendPr
   wrapper: css`
     display: flex;
     flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
-    height: 100%;
   `,
   graphContainer: css`
     min-height: 65%;
@@ -58,7 +57,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     sortLegendDesc,
     legendDisplayMode,
     placement,
-    onSeriesColorChange,
     onSeriesToggle,
     onToggleSort,
     hideEmpty,
@@ -81,7 +79,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             color: s.color || '',
             disabled: !s.isVisible,
             yAxis: s.yAxis.index,
-            displayValues: s.info || [],
+            getDisplayValues: () => s.info || [],
           },
         ]);
   }, []);
@@ -120,7 +118,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
                   onSeriesToggle(item.label, event);
                 }
               }}
-              onSeriesColorChange={onSeriesColorChange}
               onToggleSort={onToggleSort}
             />
           </CustomScrollbar>

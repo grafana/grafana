@@ -165,6 +165,7 @@ describe('LogsParsers', () => {
 
     test('should detect format', () => {
       expect(parser.test('foo')).toBeFalsy();
+      expect(parser.test('"foo"')).toBeFalsy();
       expect(parser.test('{"foo":"bar"}')).toBeTruthy();
     });
 
@@ -295,6 +296,7 @@ describe('sortLogsResult', () => {
     dataFrame: new MutableDataFrame(),
     entry: '',
     hasAnsi: false,
+    hasUnescapedContent: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
@@ -312,6 +314,7 @@ describe('sortLogsResult', () => {
     dataFrame: new MutableDataFrame(),
     entry: '',
     hasAnsi: false,
+    hasUnescapedContent: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
@@ -355,12 +358,12 @@ describe('sortLogsResult', () => {
 });
 
 describe('checkLogsError()', () => {
-  const log = ({
+  const log = {
     labels: {
       __error__: 'Error Message',
       foo: 'boo',
     },
-  } as any) as LogRowModel;
+  } as any as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });

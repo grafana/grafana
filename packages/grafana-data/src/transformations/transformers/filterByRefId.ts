@@ -18,7 +18,7 @@ export const filterFramesByRefIdTransformer: DataTransformerInfo<FilterFramesByR
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source => {
+  operator: (options) => (source) => {
     const filterOptions: FilterOptions = {};
     if (options.include) {
       filterOptions.include = {

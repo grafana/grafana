@@ -1,11 +1,21 @@
-import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
-import { GraphNG, Table } from '@grafana/ui';
+import {
+  ApplyFieldOverrideOptions,
+  DataTransformerConfig,
+  dateMath,
+  FieldColorModeId,
+  NavModelItem,
+  PanelData,
+} from '@grafana/data';
+import { Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
-import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
+import { QueryGroupOptions } from 'app/types';
+import Page from '../../core/components/Page/Page';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { PanelRenderer } from '../panel/components/PanelRenderer';
 
 interface State {
   queryRunner: PanelQueryRunner;
@@ -22,7 +32,7 @@ export const TestStuffPage: FC = () => {
 
     queryRunner.run({
       queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
+      datasource: queryOptions.dataSource,
       timezone: 'browser',
       timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
       maxDataPoints: queryOptions.maxDataPoints ?? 100,
@@ -37,29 +47,51 @@ export const TestStuffPage: FC = () => {
   /**
    * Subscribe to data
    */
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
+  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable(observable);
 
-  return (
-    <div style={{ padding: '30px 50px' }} className="page-scrollbar-wrapper">
-      <h3>New page</h3>
-      <div>
-        <QueryGroup
-          options={queryOptions}
-          queryRunner={queryRunner}
-          onRunQueries={onRunQueries}
-          onOptionsChange={onOptionsChange}
-        />
-      </div>
+  const node: NavModelItem = {
+    id: 'test-page',
+    text: 'Test page',
+    icon: 'dashboard',
+    subTitle: 'FOR TESTING!',
+    url: 'sandbox/test',
+  };
 
-      {data && (
-        <div style={{ padding: '16px' }}>
-          <GraphNG width={1200} height={300} data={data.series} timeRange={data.timeRange} timeZone="browser" />
-          <hr></hr>
-          <Table data={data.series[0]} width={1200} height={300} />
+  return (
+    <Page navModel={{ node: node, main: node }}>
+      <Page.Contents>
+        {data && (
+          <AutoSizer style={{ width: '100%', height: '600px' }}>
+            {({ width }) => {
+              return (
+                <div>
+                  <PanelRenderer
+                    title="Hello"
+                    pluginId="timeseries"
+                    width={width}
+                    height={300}
+                    data={data}
+                    options={{}}
+                    fieldConfig={{ defaults: {}, overrides: [] }}
+                    timeZone="browser"
+                  />
+                  <Table data={data.series[0]} width={width} height={300} />
+                </div>
+              );
+            }}
+          </AutoSizer>
+        )}
+        <div style={{ marginTop: '16px', height: '45%' }}>
+          <QueryGroup
+            options={queryOptions}
+            queryRunner={queryRunner}
+            onRunQueries={onRunQueries}
+            onOptionsChange={onOptionsChange}
+          />
         </div>
-      )}
-    </div>
+      </Page.Contents>
+    </Page>
   );
 };
 
@@ -74,12 +106,13 @@ export function getDefaultState(): State {
       overrides: [],
     },
     replaceVariables: (v: string) => v,
-    theme: config.theme,
+    theme: config.theme2,
   };
 
   const dataConfig = {
     getTransformations: () => [] as DataTransformerConfig[],
     getFieldOverrideOptions: () => options,
+    getDataSupport: () => ({ annotations: false, alertStates: false }),
   };
 
   return {

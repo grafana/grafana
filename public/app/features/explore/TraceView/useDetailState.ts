@@ -1,13 +1,19 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+import { DataFrame } from '@grafana/data';
 import { DetailState } from '@jaegertracing/jaeger-ui-components';
-import { TraceLog } from '@grafana/data';
+import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 
 /**
  * Keeps state of the span detail. This means whether span details are open but also state of each detail subitem
  * like logs or tags.
  */
-export function useDetailState() {
+export function useDetailState(frame: DataFrame) {
   const [detailStates, setDetailStates] = useState(new Map<string, DetailState>());
+
+  // Clear detail state when new trace arrives
+  useEffect(() => {
+    setDetailStates(new Map<string, DetailState>());
+  }, [frame, setDetailStates]);
 
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {
@@ -40,20 +46,30 @@ export function useDetailState() {
     detailStates,
     toggleDetail,
     detailLogItemToggle,
-    detailLogsToggle: useCallback(makeDetailSubsectionToggle('logs', detailStates, setDetailStates), [detailStates]),
-    detailWarningsToggle: useCallback(makeDetailSubsectionToggle('warnings', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailStackTracesToggle: useCallback(makeDetailSubsectionToggle('stackTraces', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailReferencesToggle: useCallback(makeDetailSubsectionToggle('references', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailProcessToggle: useCallback(makeDetailSubsectionToggle('process', detailStates, setDetailStates), [
-      detailStates,
-    ]),
-    detailTagsToggle: useCallback(makeDetailSubsectionToggle('tags', detailStates, setDetailStates), [detailStates]),
+    detailLogsToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('logs', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailWarningsToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('warnings', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailStackTracesToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('stackTraces', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailReferencesToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('references', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailProcessToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('process', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
+    detailTagsToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('tags', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
   };
 }
 

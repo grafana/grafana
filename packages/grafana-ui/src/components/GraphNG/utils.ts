@@ -1,152 +1,74 @@
-import {
-  DataFrame,
-  ArrayVector,
-  NullValueMode,
-  getFieldDisplayName,
-  Field,
-  fieldMatchers,
-  FieldMatcherID,
-  FieldType,
-  FieldState,
-  DataFrameFieldIndex,
-} from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
-import uPlot, { AlignedData, JoinNullMode } from 'uplot';
-import { XYFieldMatchers } from './GraphNG';
+import { XYFieldMatchers } from './types';
+import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames } from '@grafana/data';
+import { nullToUndefThreshold } from './nullToUndefThreshold';
+import { applyNullInsertThreshold } from './nullInsertThreshold';
+import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { FIXED_UNIT } from './GraphNG';
 
-// the results ofter passing though data
-export interface XYDimensionFields {
-  x: Field[];
-  y: Field[];
+// will mutate the DataFrame's fields' values
+function applySpanNullsThresholds(frame: DataFrame) {
+  let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
+  let refValues = refField?.values.toArray() as any[];
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    let field = frame.fields[i];
+
+    if (field === refField) {
+      continue;
+    }
+
+    let spanNulls = field.config.custom?.spanNulls;
+
+    if (typeof spanNulls === 'number') {
+      if (spanNulls !== -1) {
+        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+      }
+    }
+  }
+
+  return frame;
 }
 
-export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: DataFrame[]): XYDimensionFields {
-  const out: XYDimensionFields = {
-    x: [],
-    y: [],
-  };
-  for (const field of frame.fields) {
-    if (match.x(field, frame, frames ?? [])) {
-      out.x.push(field);
-    }
-    if (match.y(field, frame, frames ?? [])) {
-      out.y.push(field);
-    }
-  }
-  return out;
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
+  let alignedFrame = outerJoinDataFrames({
+    frames: frames.map((frame) => applyNullInsertThreshold(frame)),
+    joinBy: dimFields.x,
+    keep: dimFields.y,
+    keepOriginIndices: true,
+  });
+
+  return alignedFrame && applySpanNullsThresholds(alignedFrame);
 }
 
-/**
- * Returns a single DataFrame with:
- * - A shared time column
- * - only numeric fields
- *
- * @alpha
- */
-export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
-  const valuesFromFrames: AlignedData[] = [];
-  const sourceFields: Field[] = [];
-  const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
-  const nullModes: JoinNullMode[][] = [];
+export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
+  const defaultPart = 'na';
 
-  // Default to timeseries config
-  if (!fields) {
-    fields = {
-      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-    };
+  const scaleRange = `${config.min !== undefined ? config.min : defaultPart}-${
+    config.max !== undefined ? config.max : defaultPart
+  }`;
+
+  const scaleSoftRange = `${config.custom?.axisSoftMin !== undefined ? config.custom.axisSoftMin : defaultPart}-${
+    config.custom?.axisSoftMax !== undefined ? config.custom.axisSoftMax : defaultPart
+  }`;
+
+  const scalePlacement = `${
+    config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : AxisPlacement.Auto
+  }`;
+
+  const scaleUnit = config.unit ?? FIXED_UNIT;
+
+  const scaleDistribution = config.custom?.scaleDistribution
+    ? getScaleDistributionPart(config.custom.scaleDistribution)
+    : ScaleDistribution.Linear;
+
+  const scaleLabel = Boolean(config.custom?.axisLabel) ? config.custom!.axisLabel : defaultPart;
+
+  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}`;
+}
+
+function getScaleDistributionPart(config: ScaleDistributionConfig) {
+  if (config.type === ScaleDistribution.Log) {
+    return `${config.type}${config.log}`;
   }
-
-  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-    const frame = frames[frameIndex];
-    const dims = mapDimesions(fields, frame, frames);
-
-    if (!(dims.x.length && dims.y.length)) {
-      continue; // no numeric and no time fields
-    }
-
-    if (dims.x.length > 1) {
-      throw new Error('Only a single x field is supported');
-    }
-
-    let nullModesFrame: JoinNullMode[] = [0];
-
-    // Add the first X axis
-    if (!sourceFields.length) {
-      sourceFields.push(dims.x[0]);
-    }
-
-    const alignedData: AlignedData = [
-      dims.x[0].values.toArray(), // The x axis (time)
-    ];
-
-    for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
-      const field = frame.fields[fieldIndex];
-
-      if (!fields.y(field, frame, frames)) {
-        continue;
-      }
-
-      let values = field.values.toArray();
-      let joinNullMode = field.config.custom?.spanNulls ? 0 : 2;
-
-      if (field.config.nullValueMode === NullValueMode.AsZero) {
-        values = values.map(v => (v === null ? 0 : v));
-        joinNullMode = 0;
-      }
-
-      sourceFieldsRefs[sourceFields.length] = { frameIndex, fieldIndex };
-
-      alignedData.push(values);
-      nullModesFrame.push(joinNullMode);
-
-      // This will cache an appropriate field name in the field state
-      getFieldDisplayName(field, frame, frames);
-      sourceFields.push(field);
-    }
-
-    valuesFromFrames.push(alignedData);
-    nullModes.push(nullModesFrame);
-  }
-
-  if (valuesFromFrames.length === 0) {
-    return null;
-  }
-
-  // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
-
-  if (alignedData!.length !== sourceFields.length) {
-    throw new Error('outerJoinValues lost a field?');
-  }
-
-  let seriesIdx = 0;
-  // Replace the values from the outer-join field
-  return {
-    frame: {
-      length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => {
-        let state: FieldState = { ...sourceFields[idx].state };
-
-        if (sourceFields[idx].type !== FieldType.time) {
-          state.seriesIndex = seriesIdx;
-          seriesIdx++;
-        }
-
-        return {
-          ...sourceFields[idx],
-          state,
-          values: new ArrayVector(vals),
-        };
-      }),
-    },
-    isGap,
-    getDataFrameFieldIndex: (alignedFieldIndex: number) => {
-      const index = sourceFieldsRefs[alignedFieldIndex];
-      if (!index) {
-        throw new Error(`Could not find index for ${alignedFieldIndex}`);
-      }
-      return index;
-    },
-  };
+  return config.type;
 }

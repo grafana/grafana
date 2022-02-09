@@ -1,21 +1,19 @@
-import React, { ComponentType } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme, toPascalCase } from '@grafana/data';
+import React from 'react';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
-//@ts-ignore
-import * as DefaultIcon from '@iconscout/react-unicons';
-import * as MonoIcon from './assets';
-import { customIcons } from './custom';
-import { SvgProps } from './assets/types';
+import SVG from 'react-inlinesvg';
+import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 
-const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
+const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
+  title?: string;
 }
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -36,53 +34,66 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-function getIconComponent(name: string, type: string): ComponentType<SvgProps> {
-  if (alwaysMonoIcons.includes(name)) {
-    type = 'mono';
-  }
-
-  if (name?.startsWith('gf-')) {
-    return customIcons[name];
-  }
-
-  const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
-
-  /* Unicons don't have type definitions */
-  //@ts-ignore
-  const Component = type === 'default' ? DefaultIcon[iconName] : MonoIcon[iconName];
-
-  return Component ?? customIcons.notFoundDummy;
+function getIconSubDir(name: IconName, type: string): string {
+  return name?.startsWith('gf-')
+    ? 'custom'
+    : alwaysMonoIcons.includes(name)
+    ? 'mono'
+    : type === 'default'
+    ? 'unicons'
+    : 'mono';
 }
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', name, className, style, ...divElementProps }, ref) => {
+  ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
     const theme = useTheme();
-    const styles = getIconStyles(theme);
-    const svgSize = getSvgSize(size);
 
     /* Temporary solution to display also font awesome icons */
     if (name?.startsWith('fa fa-')) {
-      return <i className={cx(name, className)} {...divElementProps} style={style} />;
+      return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
     }
 
-    const Component = getIconComponent(name, type);
+    if (name === 'panel-add') {
+      size = 'xl';
+    }
+
+    if (!cacheInitialized) {
+      initIconCache();
+    }
+
+    const styles = getIconStyles(theme);
+    const svgSize = getSvgSize(size);
+    const svgHgt = svgSize;
+    const svgWid = name?.startsWith('gf-bar-align') ? 16 : name?.startsWith('gf-interp') ? 30 : svgSize;
+    const subDir = getIconSubDir(name, type);
+    const svgPath = `${iconRoot}${subDir}/${name}.svg`;
 
     return (
       <div className={styles.container} {...divElementProps} ref={ref}>
-        {type === 'default' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
-        {type === 'mono' && (
-          <Component
-            size={svgSize}
-            className={cx(styles.icon, { [styles.orange]: name === 'favorite' }, className)}
-            style={style}
-          />
-        )}
+        <SVG
+          src={svgPath}
+          width={svgWid}
+          height={svgHgt}
+          title={title}
+          className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
+          style={style}
+        />
       </div>
     );
   }
 );
 
 Icon.displayName = 'Icon';
+
+function getFontAwesomeIconStyles(iconName: string, className?: string): string {
+  return cx(
+    iconName,
+    {
+      'fa-spin': iconName === 'fa fa-spinner',
+    },
+    className
+  );
+}
 
 /* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
 export const getSvgSize = (size: IconSize) => {

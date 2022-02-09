@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -13,16 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
+	cw "github.com/weaveworks/common/tracing"
 )
 
 const (
@@ -32,36 +34,51 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &ContextHandler{},
-		InitPriority: registry.High,
-	})
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore,
+	tracer tracing.Tracer) *ContextHandler {
+	return &ContextHandler{
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+		JWTAuthService:   jwtService,
+		RemoteCache:      remoteCache,
+		RenderService:    renderService,
+		SQLStore:         sqlStore,
+		tracer:           tracer,
+	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg             `inject:""`
-	AuthTokenService models.UserTokenService  `inject:""`
-	RemoteCache      *remotecache.RemoteCache `inject:""`
-	RenderService    rendering.Service        `inject:""`
-	SQLStore         *sqlstore.SQLStore       `inject:""`
-
+	Cfg              *setting.Cfg
+	AuthTokenService models.UserTokenService
+	JWTAuthService   models.JWTService
+	RemoteCache      *remotecache.RemoteCache
+	RenderService    rendering.Service
+	SQLStore         *sqlstore.SQLStore
+	tracer           tracing.Tracer
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
 }
 
-// Init initializes the service.
-func (h *ContextHandler) Init() error {
+type reqContextKey struct{}
+
+// FromContext returns the ReqContext value stored in a context.Context, if any.
+func FromContext(c context.Context) *models.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*models.ReqContext); ok {
+		return reqCtx
+	}
 	return nil
 }
 
 // Middleware provides a middleware to initialize the Macaron context.
-func (h *ContextHandler) Middleware(c *macaron.Context) {
-	ctx := &models.ReqContext{
-		Context:        c,
+func (h *ContextHandler) Middleware(mContext *web.Context) {
+	_, span := h.tracer.Start(mContext.Req.Context(), "Auth - Middleware")
+	defer span.End()
+
+	reqContext := &models.ReqContext{
+		Context:        mContext,
 		SignedInUser:   &models.SignedInUser{},
 		IsSignedIn:     false,
 		AllowAnonymous: false,
@@ -69,15 +86,37 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 		Logger:         log.New("context"),
 	}
 
+	// Inject ReqContext into a request context and replace the request instance in the macaron context
+	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Map(mContext.Req)
+
+	traceID, exists := cw.ExtractTraceID(mContext.Req.Context())
+	if exists {
+		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
+	}
+
 	const headerName = "X-Grafana-Org-Id"
 	orgID := int64(0)
-	orgIDHeader := ctx.Req.Header.Get(headerName)
+	orgIDHeader := reqContext.Req.Header.Get(headerName)
 	if orgIDHeader != "" {
 		id, err := strconv.ParseInt(orgIDHeader, 10, 64)
 		if err == nil {
 			orgID = id
 		} else {
-			ctx.Logger.Debug("Received invalid header", "header", headerName, "value", orgIDHeader)
+			reqContext.Logger.Debug("Received invalid header", "header", headerName, "value", orgIDHeader)
+		}
+	}
+
+	queryParameters, err := url.ParseQuery(reqContext.Req.URL.RawQuery)
+	if err != nil {
+		reqContext.Logger.Error("Failed to parse query parameters", "error", err)
+	}
+	if queryParameters.Has("targetOrgId") {
+		targetOrg, err := strconv.ParseInt(queryParameters.Get("targetOrgId"), 10, 64)
+		if err == nil {
+			orgID = targetOrg
+		} else {
+			reqContext.Logger.Error("Invalid target organization ID", "error", err)
 		}
 	}
 
@@ -87,50 +126,60 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 	// then look for api key in session (special case for render calls via api)
 	// then test if anonymous access is enabled
 	switch {
-	case h.initContextWithRenderAuth(ctx):
-	case h.initContextWithAPIKey(ctx):
-	case h.initContextWithBasicAuth(ctx, orgID):
-	case h.initContextWithAuthProxy(ctx, orgID):
-	case h.initContextWithToken(ctx, orgID):
-	case h.initContextWithAnonymousUser(ctx):
+	case h.initContextWithRenderAuth(reqContext):
+	case h.initContextWithAPIKey(reqContext):
+	case h.initContextWithBasicAuth(reqContext, orgID):
+	case h.initContextWithAuthProxy(reqContext, orgID):
+	case h.initContextWithToken(reqContext, orgID):
+	case h.initContextWithJWT(reqContext, orgID):
+	case h.initContextWithAnonymousUser(reqContext):
 	}
 
-	ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
-	ctx.Data["ctx"] = ctx
+	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
+	span.AddEvents(
+		[]string{"uname", "orgId", "userId"},
+		[]tracing.EventValue{
+			{Str: reqContext.Login},
+			{Num: reqContext.OrgId},
+			{Num: reqContext.UserId}},
+	)
 
-	c.Map(ctx)
+	mContext.Map(reqContext)
 
 	// update last seen every 5min
-	if ctx.ShouldUpdateLastSeenAt() {
-		ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
-			ctx.Logger.Error("Failed to update last_seen_at", "error", err)
+	if reqContext.ShouldUpdateLastSeenAt() {
+		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
+		if err := bus.Dispatch(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
 }
 
-func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqContext) bool {
 	if !h.Cfg.AnonymousEnabled {
 		return false
 	}
 
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
+	defer span.End()
+
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
-		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
+		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
 
-	ctx.IsSignedIn = false
-	ctx.AllowAnonymous = true
-	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
-	ctx.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	ctx.OrgId = org.Id
-	ctx.OrgName = org.Name
+	reqContext.IsSignedIn = false
+	reqContext.AllowAnonymous = true
+	reqContext.SignedInUser = &models.SignedInUser{IsAnonymous: true}
+	reqContext.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
+	reqContext.OrgId = org.Id
+	reqContext.OrgName = org.Name
 	return true
 }
 
-func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
-	header := ctx.Req.Header.Get("Authorization")
+func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
+	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	var keyString string
 	if len(parts) == 2 && parts[0] == "Bearer" {
@@ -146,17 +195,20 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 		return false
 	}
 
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
+	defer span.End()
+
 	// base64 decode key
 	decoded, err := apikeygen.Decode(keyString)
 	if err != nil {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := bus.Dispatch(&keyQuery); err != nil {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
+	if err := bus.Dispatch(reqContext.Req.Context(), &keyQuery); err != nil {
+		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
 
@@ -165,11 +217,11 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 	// validate api key
 	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
 	if err != nil {
-		ctx.JsonApiErr(500, "Validating API key failed", err)
+		reqContext.JsonApiErr(500, "Validating API key failed", err)
 		return true
 	}
 	if !isValid {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
 
@@ -179,31 +231,56 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 		getTime = time.Now
 	}
 	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-		ctx.JsonApiErr(401, "Expired API key", err)
+		reqContext.JsonApiErr(401, "Expired API key", err)
 		return true
 	}
 
-	ctx.IsSignedIn = true
-	ctx.SignedInUser = &models.SignedInUser{}
-	ctx.OrgRole = apikey.Role
-	ctx.ApiKeyId = apikey.Id
-	ctx.OrgId = apikey.OrgId
+	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+		//Use the old APIkey method.  This provides backwards compatibility.
+		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.OrgRole = apikey.Role
+		reqContext.ApiKeyId = apikey.Id
+		reqContext.OrgId = apikey.OrgId
+		reqContext.IsSignedIn = true
+		return true
+	}
+
+	//There is a service account attached to the API key
+
+	//Use service account linked to API key as the signed in user
+	query := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := bus.Dispatch(reqContext.Req.Context(), &query); err != nil {
+		reqContext.Logger.Error(
+			"Failed to link API key to service account in",
+			"id", query.UserId,
+			"org", query.OrgId,
+			"err", err,
+		)
+		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		return true
+	}
+
+	reqContext.IsSignedIn = true
+	reqContext.SignedInUser = query.Result
 	return true
 }
 
-func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
 
-	header := ctx.Req.Header.Get("Authorization")
+	header := reqContext.Req.Header.Get("Authorization")
 	if header == "" {
 		return false
 	}
 
+	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithBasicAuth")
+	defer span.End()
+
 	username, password, err := util.DecodeBasicAuthHeader(header)
 	if err != nil {
-		ctx.JsonApiErr(401, "Invalid Basic Auth Header", err)
+		reqContext.JsonApiErr(401, "Invalid Basic Auth Header", err)
 		return true
 	}
 
@@ -212,8 +289,8 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := bus.Dispatch(&authQuery); err != nil {
-		ctx.Logger.Debug(
+	if err := bus.Dispatch(reqContext.Req.Context(), &authQuery); err != nil {
+		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
 			"err", err,
@@ -222,65 +299,68 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 		if errors.Is(err, models.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
-		ctx.JsonApiErr(401, InvalidUsernamePassword, err)
+		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
 		return true
 	}
 
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error(
+	if err := bus.Dispatch(ctx, &query); err != nil {
+		reqContext.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
 			"org", orgID,
 		)
-		ctx.JsonApiErr(401, InvalidUsernamePassword, err)
+		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
 		return true
 	}
 
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
+	reqContext.SignedInUser = query.Result
+	reqContext.IsSignedIn = true
 	return true
 }
 
-func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
 
-	rawToken := ctx.GetCookie(h.Cfg.LoginCookieName)
+	rawToken := reqContext.GetCookie(h.Cfg.LoginCookieName)
 	if rawToken == "" {
 		return false
 	}
 
-	token, err := h.AuthTokenService.LookupToken(ctx.Req.Context(), rawToken)
+	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithToken")
+	defer span.End()
+
+	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
-		ctx.Logger.Error("Failed to look up user based on cookie", "error", err)
-		cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
+		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
+		reqContext.LookupTokenErr = err
 		return false
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
+	if err := bus.Dispatch(ctx, &query); err != nil {
+		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
 
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
-	ctx.UserToken = token
+	reqContext.SignedInUser = query.Result
+	reqContext.IsSignedIn = true
+	reqContext.UserToken = token
 
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
-	ctx.Resp.Before(h.rotateEndOfRequestFunc(ctx, h.AuthTokenService, token))
+	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
 
 	return true
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService,
-	token *models.UserToken) macaron.BeforeFunc {
-	return func(w macaron.ResponseWriter) {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
+	token *models.UserToken) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
 			return
@@ -288,48 +368,54 @@ func (h *ContextHandler) rotateEndOfRequestFunc(ctx *models.ReqContext, authToke
 
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
-		if errors.Is(ctx.Context.Req.Context().Err(), context.Canceled) {
+		if errors.Is(reqContext.Context.Req.Context().Err(), context.Canceled) {
 			return
 		}
 
-		addr := ctx.RemoteAddr()
+		ctx, span := h.tracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
+		defer span.End()
+
+		addr := reqContext.RemoteAddr()
 		ip, err := network.GetIPFromAddress(addr)
 		if err != nil {
-			ctx.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
+			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ip, ctx.Req.UserAgent())
+		rotated, err := authTokenService.TryRotateToken(ctx, token, ip, reqContext.Req.UserAgent())
 		if err != nil {
-			ctx.Logger.Error("Failed to rotate token", "error", err)
+			reqContext.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			cookies.WriteSessionCookie(ctx, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			cookies.WriteSessionCookie(reqContext, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
 		}
 	}
 }
 
-func (h *ContextHandler) initContextWithRenderAuth(ctx *models.ReqContext) bool {
-	key := ctx.GetCookie("renderKey")
+func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false
 	}
 
-	renderUser, exists := h.RenderService.GetRenderUser(key)
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithRenderAuth")
+	defer span.End()
+
+	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
 	if !exists {
-		ctx.JsonApiErr(401, "Invalid Render Key", nil)
+		reqContext.JsonApiErr(401, "Invalid Render Key", nil)
 		return true
 	}
 
-	ctx.IsSignedIn = true
-	ctx.SignedInUser = &models.SignedInUser{
+	reqContext.IsSignedIn = true
+	reqContext.SignedInUser = &models.SignedInUser{
 		OrgId:   renderUser.OrgID,
 		UserId:  renderUser.UserID,
 		OrgRole: models.RoleType(renderUser.OrgRole),
 	}
-	ctx.IsRenderCall = true
-	ctx.LastSeenAt = time.Now()
+	reqContext.IsRenderCall = true
+	reqContext.LastSeenAt = time.Now()
 	return true
 }
 
@@ -363,11 +449,11 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 	}
 }
 
-func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
-	username := ctx.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
+func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
+	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 	auth := authproxy.New(h.Cfg, &authproxy.Options{
 		RemoteCache: h.RemoteCache,
-		Ctx:         ctx,
+		Ctx:         reqContext,
 		OrgID:       orgID,
 	})
 
@@ -383,9 +469,12 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		return false
 	}
 
+	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAuthProxy")
+	defer span.End()
+
 	// Check if allowed to continue with this IP
 	if err := auth.IsAllowedIP(); err != nil {
-		h.handleError(ctx, err, 407, func(details error) {
+		h.handleError(reqContext, err, 407, func(details error) {
 			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
 		})
 		return true
@@ -393,7 +482,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	id, err := logUserIn(auth, username, logger, false)
 	if err != nil {
-		h.handleError(ctx, err, 407, nil)
+		h.handleError(reqContext, err, 407, nil)
 		return true
 	}
 
@@ -414,13 +503,13 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		}
 		id, err = logUserIn(auth, username, logger, true)
 		if err != nil {
-			h.handleError(ctx, err, 407, nil)
+			h.handleError(reqContext, err, 407, nil)
 			return true
 		}
 
 		user, err = auth.GetSignedInUser(id)
 		if err != nil {
-			h.handleError(ctx, err, 407, nil)
+			h.handleError(reqContext, err, 407, nil)
 			return true
 		}
 	}
@@ -428,12 +517,12 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 	logger.Debug("Successfully got user info", "userID", user.UserId, "username", user.Login)
 
 	// Add user info to context
-	ctx.SignedInUser = user
-	ctx.IsSignedIn = true
+	reqContext.SignedInUser = user
+	reqContext.IsSignedIn = true
 
 	// Remember user data in cache
 	if err := auth.Remember(id); err != nil {
-		h.handleError(ctx, err, 500, func(details error) {
+		h.handleError(reqContext, err, 500, func(details error) {
 			logger.Error(
 				"Failed to store user in cache",
 				"username", username,

@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
+import React, { useCallback, useState } from 'react';
+import { Icon, ReactUtils, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useUpdateEffect } from 'react-use';
 import { Draggable } from 'react-beautiful-dnd';
 
@@ -16,6 +16,7 @@ interface QueryOperationRowProps {
   children: React.ReactNode;
   isOpen?: boolean;
   draggable?: boolean;
+  disabled?: boolean;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -34,6 +35,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   onClose,
   onOpen,
   isOpen,
+  disabled,
   draggable,
   index,
   id,
@@ -67,38 +69,44 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     },
   };
 
-  const titleElement = title && renderOrCallToRender(title, renderPropArgs);
-  const actionsElement = actions && renderOrCallToRender(actions, renderPropArgs);
-  const headerElementRendered = headerElement && renderOrCallToRender(headerElement, renderPropArgs);
+  const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
+  const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
+  const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
   const rowHeader = (
     <div className={styles.header}>
-      <Icon
-        name={isContentVisible ? 'angle-down' : 'angle-right'}
-        className={styles.collapseIcon}
-        onClick={onRowToggle}
-      />
-      {title && (
-        <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-          <div className={styles.title}>{titleElement}</div>
-        </div>
-      )}
-      {headerElementRendered}
-      {actions && <div>{actionsElement}</div>}
-      {draggable && (
-        <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
-      )}
+      <div className={styles.column}>
+        <Icon
+          name={isContentVisible ? 'angle-down' : 'angle-right'}
+          className={styles.collapseIcon}
+          onClick={onRowToggle}
+        />
+        {title && (
+          <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
+            <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
+          </div>
+        )}
+        {headerElementRendered}
+      </div>
+
+      <div className={styles.column}>
+        {actionsElement}
+        {draggable && (
+          <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+        )}
+      </div>
     </div>
   );
 
   if (draggable) {
     return (
       <Draggable draggableId={id} index={index}>
-        {provided => {
+        {(provided) => {
+          const dragHandleProps = { ...provided.dragHandleProps, role: 'group' }; // replace the role="button" because it causes https://dequeuniversity.com/rules/axe/4.3/nested-interactive?application=msftAI
           return (
             <>
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-                <div {...provided.dragHandleProps}>{rowHeader}</div>
+                <div {...dragHandleProps}>{rowHeader}</div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
               </div>
             </>
@@ -122,16 +130,28 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.md};
     `,
     header: css`
+      label: Header;
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
       min-height: ${theme.spacing.formInputHeight}px;
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(100px, max-content) min-content;
       align-items: center;
       justify-content: space-between;
+      white-space: nowrap;
+
+      &:focus {
+        outline: none;
+      }
+    `,
+    column: css`
+      label: Column;
+      display: flex;
+      align-items: center;
     `,
     dragIcon: css`
-      cursor: drag;
+      cursor: grab;
       color: ${theme.colors.textWeak};
       &:hover {
         color: ${theme.colors.text};
@@ -157,10 +177,14 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
       overflow: hidden;
+      text-overflow: ellipsis;
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
       margin-left: ${theme.spacing.lg};
+    `,
+    disabled: css`
+      color: ${theme.colors.textWeak};
     `,
   };
 });

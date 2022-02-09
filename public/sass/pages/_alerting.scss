@@ -1,18 +1,22 @@
 .alert-state-paused,
 .alert-state-pending {
   color: $text-muted;
+  font-weight: $font-weight-semi-bold;
 }
 
 .alert-state-ok {
   color: $online;
+  font-weight: $font-weight-semi-bold;
 }
 
 .alert-state-warning {
   color: $warn;
+  font-weight: $font-weight-semi-bold;
 }
 
 .alert-state-critical {
   color: $critical;
+  font-weight: $font-weight-semi-bold;
 }
 
 .alert-notify-emails {

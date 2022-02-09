@@ -12,7 +12,7 @@ import {
   ReducerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
@@ -24,7 +24,7 @@ import {
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -38,6 +38,8 @@ const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
 ];
+
+const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
   CalculateFieldTransformerEditorProps,
@@ -78,15 +80,15 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 
   private extractAllNames(): OperatorFunction<DataFrame[], string[]> {
-    return source =>
+    return (source) =>
       source.pipe(
-        map(input => {
+        map((input) => {
           const allNames: string[] = [];
           const byName: KeyValue<boolean> = {};
 
           for (const frame of input) {
             for (const field of frame.fields) {
-              if (field.type !== FieldType.number) {
+              if (!okTypes.has(field.type)) {
                 continue;
               }
 
@@ -107,9 +109,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   private extractNamesAndSelected(
     configuredOptions: string[]
   ): OperatorFunction<string[], { names: string[]; selected: string[] }> {
-    return source =>
+    return (source) =>
       source.pipe(
-        map(allNames => {
+        map((allNames) => {
           if (!configuredOptions.length) {
             return { names: allNames, selected: [] };
           }
@@ -170,7 +172,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onFieldToggle = (fieldName: string) => {
     const { selected } = this.state;
     if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter(s => s !== fieldName));
+      this.onChange(selected.filter((s) => s !== fieldName));
     } else {
       this.onChange([...selected, fieldName]);
     }
@@ -275,7 +277,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
     let foundLeft = !options?.left;
     let foundRight = !options?.right;
-    const names = this.state.names.map(v => {
+    const names = this.state.names.map((v) => {
       if (v === options?.left) {
         foundLeft = true;
       }
@@ -287,7 +289,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const leftNames = foundLeft ? names : [...names, { label: options?.left, value: options?.left }];
     const rightNames = foundRight ? names : [...names, { label: options?.right, value: options?.right }];
 
-    const ops = binaryOperators.list().map(v => {
+    const ops = binaryOperators.list().map((v) => {
       return { label: v.id, value: v.id };
     });
 
@@ -298,6 +300,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
+            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             options={leftNames}
@@ -306,12 +309,14 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             onChange={this.onBinaryLeftChanged}
           />
           <Select
+            menuShouldPortal
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
           />
           <Select
+            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             className="min-width-10"
@@ -339,9 +344,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           <div className="gf-form">
             <div className="gf-form-label width-8">Mode</div>
             <Select
+              menuShouldPortal
               className="width-18"
               options={calculationModes}
-              value={calculationModes.find(v => v.value === mode)}
+              value={calculationModes.find((v) => v.value === mode)}
               onChange={this.onModeChanged}
             />
           </div>
@@ -374,7 +380,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 }
 
-export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
+export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,

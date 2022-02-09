@@ -30,17 +30,17 @@ In essence, a data frame is a collection of _fields_, where each field correspon
 
 ```ts
 interface Field {
-    name:    string;
-     // Prometheus like Labels / Tags
-    labels?: Record<string, string>;
+  name: string;
+  // Prometheus like Labels / Tags
+  labels?: Record<string, string>;
 
-    // For example string, number, time (or more specific primitives in the backend)
-    type:   FieldType;
-    // Array of values all of the same type
-    values: Vector<T>;
+  // For example string, number, time (or more specific primitives in the backend)
+  type: FieldType;
+  // Array of values all of the same type
+  values: Vector<T>;
 
-    // Optional display data for the field (e.g. unit, name over-ride, etc)
-    config: FieldConfig;
+  // Optional display data for the field (e.g. unit, name over-ride, etc)
+  config: FieldConfig;
 }
 ```
 
@@ -72,7 +72,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series]({{< relref "../../getting-started/timeseries.md" >}}).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../basics/timeseries.md" >}}).
 
 ### Wide format
 
@@ -163,6 +163,8 @@ Dimensions: 5 fields by 2 rows
 +---------------------+------------------+------------------+------------------+------------------+
 ```
 
+> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. Read more about how to use it here: [Prepare time series-transformation]({{< relref "../../panels/reference-transformation-functions.md#prepare-time-series" >}}).
+
 ## Technical references
 
 This section contains links to technical reference and implementations of data frames.
@@ -173,7 +175,7 @@ The data frame structure is inspired by, and uses the [Apache Arrow Project](htt
 
 ### Javascript
 
-The Javascript implementation of data frames is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
+The Javascript implementation of data frames is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/main/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/main/packages/grafana-data).
 
 ### Go
 

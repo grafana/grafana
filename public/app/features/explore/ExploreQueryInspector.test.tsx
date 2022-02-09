@@ -1,24 +1,24 @@
 import React, { ComponentProps } from 'react';
 import { Observable } from 'rxjs';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TimeRange, LoadingState } from '@grafana/data';
+import { TimeRange, LoadingState, InternalTimeZones } from '@grafana/data';
 import { ExploreId } from 'app/types';
 import { ExploreQueryInspector } from './ExploreQueryInspector';
 
 type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
 
-jest.mock('../dashboard/components/Inspector/styles', () => ({
+jest.mock('../inspector/styles', () => ({
   getPanelInspectorStyles: () => ({}),
 }));
 
 jest.mock('app/core/services/backend_srv', () => ({
-  getBackendSrv: () => ({
+  backendSrv: {
     getInspectorStream: () =>
-      new Observable(subscriber => {
+      new Observable((subscriber) => {
         subscriber.next(response());
         subscriber.next(response(true));
       }) as any,
-  }),
+  },
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -27,17 +27,20 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-const setup = () => {
+const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
     loading: false,
     width: 100,
     exploreId: ExploreId.left,
     onClose: jest.fn(),
+    timeZone: InternalTimeZones.utc,
     queryResponse: {
       state: LoadingState.Done,
       series: [],
       timeRange: {} as TimeRange,
     },
+    runQueries: jest.fn(),
+    ...propOverrides,
   };
 
   return render(<ExploreQueryInspector {...props} />);
@@ -48,14 +51,17 @@ describe('ExploreQueryInspector', () => {
     setup();
     expect(screen.getByTitle(/close query inspector/i)).toBeInTheDocument();
   });
-  it('should render 2 Tabs', () => {
+  it('should render 4 Tabs if queryResponse has no error', () => {
     setup();
-    expect(screen.getByLabelText(/tab stats/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/tab query inspector/i)).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/tab/i)).toHaveLength(4);
   });
-  it('should display query data', () => {
+  it('should render 5 Tabs if queryResponse has error', () => {
+    setup({ queryResponse: { error: 'Bad gateway' } });
+    expect(screen.getAllByLabelText(/tab/i)).toHaveLength(5);
+  });
+  it('should display query data when click on expanding', () => {
     setup();
-    fireEvent.click(screen.getByLabelText(/tab query inspector/i));
+    fireEvent.click(screen.getByLabelText(/tab query/i));
     fireEvent.click(screen.getByText(/expand all/i));
     expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
   });

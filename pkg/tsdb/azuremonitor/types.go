@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // AzureMonitorQuery is the query for all the services as they have similar queries
@@ -17,6 +19,7 @@ type AzureMonitorQuery struct {
 	Params        url.Values
 	RefID         string
 	Alias         string
+	TimeRange     backend.TimeRange
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -56,11 +59,16 @@ type AzureMonitorResponse struct {
 
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
-	Tables []AzureLogAnalyticsTable `json:"tables"`
+	Tables []AzureResponseTable `json:"tables"`
 }
 
-// AzureLogAnalyticsTable is the table format for Log Analytics responses
-type AzureLogAnalyticsTable struct {
+// AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
+type AzureResourceGraphResponse struct {
+	Data AzureResponseTable `json:"data"`
+}
+
+// AzureResponseTable is the table format for Azure responses
+type AzureResponseTable struct {
 	Name    string `json:"name"`
 	Columns []struct {
 		Name string `json:"name"`
@@ -133,8 +141,34 @@ type logJSONQuery struct {
 	AzureLogAnalytics struct {
 		Query        string `json:"query"`
 		ResultFormat string `json:"resultFormat"`
-		Workspace    string `json:"workspace"`
+		Resource     string `json:"resource"`
+
+		// Deprecated: Queries should be migrated to use Resource instead
+		Workspace string `json:"workspace"`
 	} `json:"azureLogAnalytics"`
+}
+
+type argJSONQuery struct {
+	AzureResourceGraph struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+	} `json:"azureResourceGraph"`
+}
+
+// metricChartDefinition is the JSON model for a metrics chart definition
+type metricChartDefinition struct {
+	ResourceMetadata    map[string]string   `json:"resourceMetadata"`
+	Name                string              `json:"name"`
+	AggregationType     int                 `json:"aggregationType"`
+	Namespace           string              `json:"namespace"`
+	MetricVisualization metricVisualization `json:"metricVisualization"`
+}
+
+// metricVisualization is the JSON model for the visualization field of a
+// metricChartDefinition
+type metricVisualization struct {
+	DisplayName         string `json:"displayName"`
+	ResourceDisplayName string `json:"resourceDisplayName"`
 }
 
 // InsightsDimensions will unmarshal from a JSON string, or an array of strings,

@@ -5,7 +5,7 @@ weight = 7
 
 # Keyboard shortcuts
 
-Grafana has a number of keyboard shortcuts available. Press Shift + `?` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
+Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
 **Popular shortcuts:**
 

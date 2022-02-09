@@ -1,6 +1,5 @@
 import { ComponentClass } from 'react';
 import { KeyValue } from './data';
-import { LiveChannelSupport } from './live';
 
 /** Describes plugins life cycle status */
 export enum PluginState {
@@ -25,6 +24,15 @@ export enum PluginSignatureStatus {
   invalid = 'invalid', // invalid signature
   modified = 'modified', // valid signature, but content mismatch
   missing = 'missing', // missing signature file
+}
+
+/** Describes level of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels/ | plugin signature level} */
+export enum PluginSignatureType {
+  grafana = 'grafana',
+  commercial = 'commercial',
+  community = 'community',
+  private = 'private',
+  core = 'core',
 }
 
 /** Describes error code returned from Grafana plugins API call */
@@ -65,6 +73,8 @@ export interface PluginMeta<T extends KeyValue = {}> {
   latestVersion?: string;
   pinned?: boolean;
   signature?: PluginSignatureStatus;
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
   live?: boolean;
 }
 
@@ -76,6 +86,7 @@ interface PluginDependencyInfo {
 }
 
 export interface PluginDependencies {
+  grafanaDependency?: string;
   grafanaVersion: string;
   plugins: PluginDependencyInfo[];
 }
@@ -158,13 +169,6 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
 
-  /**
-   * Live streaming support
-   *
-   * Note: `plugin.json` must also define `live: true`
-   */
-  channelSupport?: LiveChannelSupport;
-
   // Config control (app/datasource)
   angularConfigCtrl?: any;
 
@@ -181,10 +185,10 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   }
 
   /**
-   * Specify how the plugin should support paths within the live streaming environment
+   * @deprecated -- this is no longer necessary and will be removed
    */
-  setChannelSupport(support: LiveChannelSupport) {
-    this.channelSupport = support;
+  setChannelSupport(support: any) {
+    console.warn('[deprecation] plugin is using ignored option: setChannelSupport', this.meta);
     return this;
   }
 

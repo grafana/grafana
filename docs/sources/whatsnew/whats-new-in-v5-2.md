@@ -23,7 +23,7 @@ Grafana v5.2 brings new features, many enhancements and bug fixes. This article 
 
 ## Elasticsearch alerting
 
-{{< docs-imagebox img="/img/docs/v52/elasticsearch_alerting.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/elasticsearch_alerting.png" max-width="800px" class="docs-image--right" >}}
 
 Grafana v5.2 ships with an updated Elasticsearch data source with support for alerting. Alerting support for Elasticsearch has been one of
 the most requested features by our community and now it's finally here. Please try it out and let us know what you think.
@@ -46,7 +46,7 @@ information in the [Installing using Docker documentation](/installation/docker/
 
 ## Security
 
-{{< docs-imagebox img="/img/docs/v52/login_change_password.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/login_change_password.png" max-width="800px" class="docs-image--right" >}}
 
 Starting from Grafana v5.2, when you login with the administrator account using the default password you'll be presented with a form to change the password.
 We hope this encourages users to follow Grafana's best practices and change the default administrator password.
@@ -55,12 +55,12 @@ We hope this encourages users to follow Grafana's best practices and change the 
 
 ## Prometheus
 
-The Prometheus data source now aligns the start/end of the query sent to Prometheus with the step, which ensures PromQL expressions with *rate*
+The Prometheus data source now aligns the start/end of the query sent to Prometheus with the step, which ensures PromQL expressions with _rate_
 functions get consistent results, and thus avoids graphs jumping around on reload.
 
 ## InfluxDB
 
-The InfluxDB data source now includes support for the *mode* function which returns the most frequent value in a list of field values.
+The InfluxDB data source now includes support for the _mode_ function which returns the most frequent value in a list of field values.
 
 ## Alerting
 
@@ -70,7 +70,7 @@ By popular demand Grafana now includes support for an alert notification channel
 
 ### Modified time range and variables are no longer saved by default
 
-{{< docs-imagebox img="/img/docs/v52/dashboard_save_modal.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/dashboard_save_modal.png" max-width="800px" class="docs-image--right" >}}
 
 Starting from Grafana v5.2, a modified time range or variable are no longer saved by default. To save a modified
 time range or variable, you'll need to actively select that when saving a dashboard, see screenshot.
@@ -81,14 +81,14 @@ when you actually want to overwrite those settings.
 
 ### Import dashboard enhancements
 
-{{< docs-imagebox img="/img/docs/v52/dashboard_import.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/dashboard_import.png" max-width="800px" class="docs-image--right" >}}
 
 Grafana v5.2 adds support for specifying an existing folder or creating a new one when importing a dashboard - a long-awaited feature since
 Grafana v5.0 introduced support for dashboard folders and permissions. The import dashboard page has also got some general improvements
 and should now make it more clear if a possible import will overwrite an existing dashboard, or not.
 
 This release also adds some improvements for those users only having editor or admin permissions in certain folders. The links to
-*Create Dashboard* and *Import Dashboard* are now available in the side navigation, in dashboard search and on the manage dashboards/folder page for a
+_Create Dashboard_ and _Import Dashboard_ are now available in the side navigation, in dashboard search and on the manage dashboards/folder page for a
 user that has editor role in an organization or the edit permission in at least one folder.
 
 <div class="clearfix"></div>

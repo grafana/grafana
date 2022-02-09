@@ -1,6 +1,6 @@
-import React, { FC, useCallback, useMemo } from 'react';
-import { css } from 'emotion';
-import { IconButton, Label, Select, stylesFactory, Switch, useTheme } from '@grafana/ui';
+import React, { FC, useMemo } from 'react';
+import { css } from '@emotion/css';
+import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   SelectableValue,
   getFrameDisplayName,
@@ -9,7 +9,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 
-import { XYDimensionConfig, Options } from './types';
+import { XYDimensionConfig, XYChartOptions } from './models.gen';
 import { getXYDimensions, isGraphable } from './dims';
 
 interface XYInfo {
@@ -18,24 +18,20 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Options>> = ({
+export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
   value,
   onChange,
   context,
 }) => {
-  if (!context.data) {
-    return <div>No data...</div>;
-  }
-
   const frameNames = useMemo(() => {
-    if (context.data && context.data.length > 0) {
+    if (context?.data?.length) {
       return context.data.map((f, idx) => ({
         value: idx,
         label: getFrameDisplayName(f, idx),
       }));
     }
     return [{ value: 0, label: 'First result' }];
-  }, [context.data, value?.frame]);
+  }, [context.data]);
 
   const dims = useMemo(() => getXYDimensions(value, context.data), [context.data, value]);
 
@@ -56,7 +52,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
     };
     const frame = context.data ? context.data[value?.frame ?? 0] : undefined;
     if (frame) {
-      const xName = getFieldDisplayName(dims.x, dims.frame, context.data);
+      const xName = dims.x ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
       for (let field of frame.fields) {
         if (isGraphable(field)) {
           const name = getFieldDisplayName(field, frame, context.data);
@@ -84,22 +80,20 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
     return v;
   }, [dims, context.data, value]);
 
-  const toggleSort = useCallback(() => {
-    onChange({
-      ...value,
-      sort: !value?.sort,
-    });
-  }, [value, onChange]);
-
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  if (!context.data) {
+    return <div>No data...</div>;
+  }
 
   return (
     <div>
       <Select
+        menuShouldPortal
         options={frameNames}
-        value={frameNames.find(v => v.value === value?.frame) ?? frameNames[0]}
-        onChange={v => {
+        value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
+        onChange={(v) => {
           onChange({
             ...value,
             frame: v.value!,
@@ -109,23 +103,20 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
       <br />
       <Label>X Field</Label>
       <Select
+        menuShouldPortal
         options={info.numberFields}
         value={info.xAxis}
-        onChange={v => {
+        onChange={(v) => {
           onChange({
             ...value,
             x: v.value,
           });
         }}
       />
-      <div className={styles.sorter}>
-        <Switch value={value?.sort ?? false} onClick={toggleSort} />
-        <div onClick={toggleSort}>&nbsp; Sort field</div>
-      </div>
       <br />
       <Label>Y Fields</Label>
       <div>
-        {info.yFields.map(v => (
+        {info.yFields.map((v) => (
           <div key={v.label} className={styles.row}>
             <IconButton
               name={v.value ? 'eye-slash' : 'eye'}

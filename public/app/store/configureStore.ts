@@ -1,11 +1,10 @@
-import { configureStore as reduxConfigureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
-import { createLogger } from 'redux-logger';
-import { ThunkMiddleware } from 'redux-thunk';
+import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
-import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { buildInitialState } from '../core/reducers/navModel';
+import { ThunkMiddlewareFor } from '@reduxjs/toolkit/src/getDefaultMiddleware';
+import { AnyAction } from 'redux';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -14,27 +13,19 @@ export function addRootReducer(reducers: any) {
   addReducer(reducers);
 }
 
-export function configureStore() {
-  const logger = createLogger({
-    predicate: getState => {
-      return getState().application.logActions;
-    },
-  });
-
-  const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, logger] : [];
-
-  const reduxDefaultMiddleware = getDefaultMiddleware<StoreState>({
-    thunk: true,
-    serializableCheck: false,
-    immutableCheck: false,
-  } as any);
-
-  const store = reduxConfigureStore<StoreState>({
+export function configureStore(initialState?: Partial<StoreState>) {
+  const store = reduxConfigureStore<
+    StoreState,
+    AnyAction,
+    ReadonlyArray<ThunkMiddlewareFor<StoreState, { thunk: true }>>
+  >({
     reducer: createRootReducer(),
-    middleware: [...reduxDefaultMiddleware, ...middleware] as [ThunkMiddleware<StoreState>],
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
+      ...initialState,
     },
   });
 
@@ -42,7 +33,7 @@ export function configureStore() {
   return store;
 }
 
-/* 
+/*
 function getActionsToIgnoreSerializableCheckOn() {
   return [
     'dashboard/setPanelAngularComponent',
@@ -58,7 +49,7 @@ function getActionsToIgnoreSerializableCheckOn() {
 }
 
 function getPathsToIgnoreMutationAndSerializableCheckOn() {
-  return [    
+  return [
     'plugins.panels',
     'dashboard.panels',
     'dashboard.getModel',
@@ -75,7 +66,7 @@ function getPathsToIgnoreMutationAndSerializableCheckOn() {
     'explore.right.eventBridge',
     'explore.right.range',
     'explore.left.querySubscription',
-    'explore.right.querySubscription',    
+    'explore.right.querySubscription',
   ];
 }
 */

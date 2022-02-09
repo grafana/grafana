@@ -1,33 +1,30 @@
-import { MetricFindValue, SelectableValue } from '@grafana/data';
-import { InlineSegmentGroup, Segment, SegmentAsync, useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
-import React, { FunctionComponent } from 'react';
+import { SelectableValue } from '@grafana/data';
+import { InlineSegmentGroup, Segment, SegmentAsync, useTheme2 } from '@grafana/ui';
+import { cx } from '@emotion/css';
+import React, { useCallback } from 'react';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
 import { SettingsEditor } from './SettingsEditor';
-import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { changeMetricField, changeMetricType } from './state/actions';
 import { MetricPicker } from '../../MetricPicker';
 import { segmentStyles } from '../styles';
 import {
   isMetricAggregationWithField,
+  isMetricAggregationWithInlineScript,
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
   MetricAggregationType,
 } from './aggregations';
+import { useFields } from '../../../hooks/useFields';
+import { satisfies } from 'semver';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
   value: metric.type,
-});
-
-const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
-  label: text,
-  value: `${value || text}`,
 });
 
 interface Props {
@@ -42,7 +39,8 @@ const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConf
 
 const getTypeOptions = (
   previousMetrics: MetricAggregation[],
-  esVersion: number
+  esVersion: string,
+  xpack = false
 ): Array<SelectableValue<MetricAggregationType>> => {
   // we'll include Pipeline Aggregations only if at least one previous metric is a "Basic" one
   const includePipelineAggregations = previousMetrics.some(isBasicAggregation);
@@ -50,12 +48,11 @@ const getTypeOptions = (
   return (
     Object.entries(metricAggregationConfig)
       // Only showing metrics type supported by the configured version of ES
-      .filter(([_, { minVersion = 0, maxVersion = esVersion }]) => {
-        // TODO: Double check this
-        return esVersion >= minVersion && esVersion <= maxVersion;
-      })
+      .filter(([_, { versionRange = '*' }]) => satisfies(esVersion, versionRange))
       // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
+      // Filtering out X-Pack plugins if X-Pack is disabled
+      .filter(([_, config]) => (config.xpack ? xpack : true))
       .map(([key, { label }]) => ({
         label,
         value: key as MetricAggregationType,
@@ -63,44 +60,44 @@ const getTypeOptions = (
   );
 };
 
-export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
-  const styles = getStyles(useTheme(), !!value.hide);
+export const MetricEditor = ({ value }: Props) => {
+  const styles = getStyles(useTheme2(), !!value.hide);
   const datasource = useDatasource();
   const query = useQuery();
-  const dispatch = useDispatch<MetricAggregationAction>();
+  const dispatch = useDispatch();
+  const getFields = useFields(value.type);
+
+  const loadOptions = useCallback(async () => {
+    const remoteFields = await getFields();
+
+    // Metric aggregations that have inline script support don't require a field to be set.
+    if (isMetricAggregationWithInlineScript(value)) {
+      return [{ label: 'None' }, ...remoteFields];
+    }
+
+    return remoteFields;
+  }, [getFields, value]);
 
   const previousMetrics = query.metrics!.slice(
     0,
-    query.metrics!.findIndex(m => m.id === value.id)
+    query.metrics!.findIndex((m) => m.id === value.id)
   );
-
-  // TODO: This could be common with the one in BucketAggregationEditor
-  const getFields = async () => {
-    const get = () => {
-      if (value.type === 'cardinality') {
-        return datasource.getFields();
-      }
-      return datasource.getFields('number');
-    };
-
-    return (await get().toPromise()).map(toSelectableValue);
-  };
 
   return (
     <>
       <InlineSegmentGroup>
         <Segment
           className={cx(styles.color, segmentStyles)}
-          options={getTypeOptions(previousMetrics, datasource.esVersion)}
-          onChange={e => dispatch(changeMetricType(value.id, e.value!))}
+          options={getTypeOptions(previousMetrics, datasource.esVersion, datasource.xpack)}
+          onChange={(e) => dispatch(changeMetricType({ id: value.id, type: e.value! }))}
           value={toOption(value)}
         />
 
         {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
           <SegmentAsync
             className={cx(styles.color, segmentStyles)}
-            loadOptions={getFields}
-            onChange={e => dispatch(changeMetricField(value.id, e.value!))}
+            loadOptions={loadOptions}
+            onChange={(e) => dispatch(changeMetricField({ id: value.id, field: e.value! }))}
             placeholder="Select Field"
             value={value.field}
           />
@@ -109,7 +106,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
         {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
           <MetricPicker
             className={cx(styles.color, segmentStyles)}
-            onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
+            onChange={(e) => dispatch(changeMetricField({ id: value.id, field: e.value?.id! }))}
             options={previousMetrics}
             value={value.field}
           />

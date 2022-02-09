@@ -18,9 +18,9 @@ provider (listed above). There is also options for allowing self sign up.
 Grafana are using short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated each `token_rotation_interval_minutes` for an active authenticated user.
 
-An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_days` time from "now" that Grafana will remember the user.
-This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_days` and still being authenticated.
- This is true as long as the time since user login is less than `login_maximum_lifetime_days`.
+An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
+This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_duration` and still being authenticated.
+This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
 
 #### Remote logout
 
@@ -38,10 +38,10 @@ Example:
 login_cookie_name = grafana_session
 
 # The lifetime (days) an authenticated user can be inactive before being required to login at next visit. Default is 7 days.
-login_maximum_inactive_lifetime_days = 7
+login_maximum_inactive_lifetime_duration = 7d
 
 # The maximum lifetime (days) an authenticated user can be logged in since login time before being required to login. Default is 30 days.
-login_maximum_lifetime_days = 30
+login_maximum_lifetime_duration = 30d
 
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10
@@ -52,7 +52,7 @@ api_key_max_seconds_to_live = -1
 
 ### Anonymous authentication
 
-You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
+You can make Grafana accessible without any login required by enabling anonymous access in the configuration file. For more information, refer to [Implications of allowing anonymous access to dashboards]({{< relref "../administration/security.md" >}}).
 
 Example:
 
@@ -65,6 +65,9 @@ org_name = Main Org.
 
 # Role for unauthenticated users, other valid values are `Editor` and `Admin`
 org_role = Viewer
+
+# Hide the Grafana version text from the footer and help tooltip for unauthenticated users (default: false)
+hide_version = true
 ```
 
 If you change your organization name in the Grafana UI this setting needs to be updated to match the new name.
@@ -103,7 +106,7 @@ oauth_auto_login = true
 
 ### Hide sign-out menu
 
-Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
+Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy or JWT authentication.
 
 ```bash
 [auth]

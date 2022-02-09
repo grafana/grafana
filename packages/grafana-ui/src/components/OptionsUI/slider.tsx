@@ -8,7 +8,6 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   item,
 }) => {
   const { settings } = item;
-
   const initialValue = typeof value === 'number' ? value : typeof value === 'string' ? +value : 0;
 
   return (
@@ -17,7 +16,10 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
       min={settings?.min || 0}
       max={settings?.max || 100}
       step={settings?.step}
+      marks={settings?.marks}
+      included={settings?.included}
       onChange={onChange}
+      ariaLabelForHandle={settings?.ariaLabelForHandle}
     />
   );
 };

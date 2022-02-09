@@ -20,15 +20,16 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
   const lokiSeriesEndpointRegex = /^\/loki\/api\/v1\/series/;
 
   const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/label`;
+  const rangeMock = {
+    start: 1560153109000,
+    end: 1560163909000,
+  };
 
   const labels = Object.keys(labelsAndValues);
   return {
+    getTimeRangeParams: () => rangeMock,
     metadataRequest: (url: string, params?: { [key: string]: string }) => {
       if (url === lokiLabelsEndpoint) {
-        //To test custom time ranges
-        if (Number(params?.start) === 2000000) {
-          return [labels[0]];
-        }
         return labels;
       } else {
         const labelsMatch = url.match(lokiLabelsAndValuesEndpointRegex);
@@ -36,12 +37,13 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
         if (labelsMatch) {
           return labelsAndValues[labelsMatch[1]] || [];
         } else if (seriesMatch && series && params) {
-          return series[params.match] || [];
+          return series[params['match[]']] || [];
         } else {
           throw new Error(`Unexpected url error, ${url}`);
         }
       }
     },
+    interpolateString: (string: string) => string,
   } as any;
 }
 

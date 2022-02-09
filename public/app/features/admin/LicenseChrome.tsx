@@ -1,6 +1,6 @@
 import React from 'react';
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
@@ -24,7 +24,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 40px 0 0 79px;
       position: relative;
       background: url('${backgroundUrl}') right;
-  `,
+    `,
   };
 });
 
@@ -32,9 +32,10 @@ interface Props {
   header: string;
   subheader?: string;
   editionNotice?: string;
+  children?: React.ReactNode;
 }
 
-export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheader, children }) => {
+export function LicenseChrome({ header, editionNotice, subheader, children }: Props) {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -68,7 +69,7 @@ export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheade
       {editionNotice && <div className={styles.footer}>{editionNotice}</div>}
     </>
   );
-};
+}
 
 interface CircleProps {
   size: string;

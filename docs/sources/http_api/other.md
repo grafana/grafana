@@ -5,7 +5,6 @@ keywords = ["grafana", "http", "documentation", "api", "other"]
 aliases = ["/docs/grafana/latest/http_api/other/"]
 +++
 
-
 # Frontend Settings API
 
 ## Get Settings

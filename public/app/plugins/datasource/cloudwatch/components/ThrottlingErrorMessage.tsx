@@ -20,7 +20,7 @@ export const ThrottlingErrorMessage: FunctionComponent<Props> = ({ region }) => 
       target="_blank"
       rel="noreferrer"
       className="text-link"
-      href={`https://grafana.com/docs/features/datasources/cloudwatch/#service-quotas`}
+      href="https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#service-quotas"
     >
       documentation
     </a>

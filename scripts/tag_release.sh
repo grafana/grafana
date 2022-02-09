@@ -11,8 +11,8 @@ if [ "${_tag}" == "" ]; then
     exit 1
 fi
 
-if [ "${_branch}" == "master" ]; then
-    echo "you cannot tag releases from the master branch"
+if [ "${_branch}" == "main" ]; then
+    echo "you cannot tag releases from the main branch"
     echo "please checkout the release branch"
     echo "ex 'git checkout v5.1.x'"
     exit 1

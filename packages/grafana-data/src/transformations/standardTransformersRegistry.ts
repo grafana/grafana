@@ -14,11 +14,15 @@ export interface TransformerUIProps<T> {
   onChange: (options: T) => void;
 }
 
-export interface TransformerRegistyItem<TOptions> extends RegistryItem {
+export interface TransformerRegistryItem<TOptions> extends RegistryItem {
   /**
    * Object describing transformer configuration
    */
   transformation: DataTransformerInfo<TOptions>;
+
+  /** Markdown with more detailed description and help */
+  help?: string;
+
   /**
    * React component used as UI for the transformer
    */
@@ -29,4 +33,4 @@ export interface TransformerRegistyItem<TOptions> extends RegistryItem {
  * Registry of transformation options that can be driven by
  * stored configuration files.
  */
-export const standardTransformersRegistry = new Registry<TransformerRegistyItem<any>>();
+export const standardTransformersRegistry = new Registry<TransformerRegistryItem<any>>();

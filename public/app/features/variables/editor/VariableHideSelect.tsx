@@ -18,7 +18,7 @@ const HIDE_OPTIONS = [
 ];
 
 export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<Props>) {
-  const value = useMemo(() => HIDE_OPTIONS.find(o => o.value === hide) ?? HIDE_OPTIONS[0], [hide]);
+  const value = useMemo(() => HIDE_OPTIONS.find((o) => o.value === hide) ?? HIDE_OPTIONS[0], [hide]);
 
   if (type === 'constant') {
     return null;
@@ -30,7 +30,7 @@ export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<P
       value={value}
       options={HIDE_OPTIONS}
       onChange={onChange}
-      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect}
+      testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelectV2}
     />
   );
 }

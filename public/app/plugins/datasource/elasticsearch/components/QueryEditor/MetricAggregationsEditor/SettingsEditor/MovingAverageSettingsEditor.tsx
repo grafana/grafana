@@ -1,150 +1,113 @@
-import { Input, InlineField, Select, Switch } from '@grafana/ui';
-import React, { FunctionComponent } from 'react';
+import { Input, InlineField, Select, InlineSwitch } from '@grafana/ui';
+import { uniqueId } from 'lodash';
+import React, { useRef } from 'react';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { movingAvgModelOptions } from '../../../../query_def';
 import { isEWMAMovingAverage, isHoltMovingAverage, isHoltWintersMovingAverage, MovingAverage } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
+import { SettingField } from './SettingField';
 
 interface Props {
   metric: MovingAverage;
 }
 
 // The way we handle changes for those settings is not ideal compared to the other components in the editor
-export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
+// FIXME: using `changeMetricSetting` will cause an error when switching from models that have different options
+// as they might be incompatible. We should clear all other options on model change.
+export const MovingAverageSettingsEditor = ({ metric }: Props) => {
   const dispatch = useDispatch();
+  const { current: baseId } = useRef(uniqueId('es-moving-avg-'));
 
   return (
     <>
-      <InlineField label="Model">
+      <InlineField label="Model" labelWidth={16}>
         <Select
-          onChange={value => dispatch(changeMetricSetting(metric, 'model', value.value!))}
+          inputId={`${baseId}-model`}
+          menuShouldPortal
+          onChange={(value) => dispatch(changeMetricSetting({ metric, settingName: 'model', newValue: value.value }))}
           options={movingAvgModelOptions}
           value={metric.settings?.model}
         />
       </InlineField>
 
-      <InlineField label="Window">
-        <Input
-          onBlur={e => dispatch(changeMetricSetting(metric, 'window', parseInt(e.target.value!, 10)))}
-          defaultValue={metric.settings?.window}
-        />
-      </InlineField>
+      <SettingField label="Window" settingName="window" metric={metric} placeholder="5" />
 
-      <InlineField label="Predict">
-        <Input
-          onBlur={e => dispatch(changeMetricSetting(metric, 'predict', parseInt(e.target.value!, 10)))}
-          defaultValue={metric.settings?.predict}
-        />
-      </InlineField>
+      <SettingField label="Predict" settingName="predict" metric={metric} />
 
-      {isEWMAMovingAverage(metric) && (
-        <>
-          <InlineField label="Alpha">
-            <Input
-              onBlur={e => dispatch(changeMetricSetting(metric, 'alpha', parseInt(e.target.value!, 10)))}
-              defaultValue={metric.settings?.alpha}
-            />
-          </InlineField>
-
-          <InlineField label="Minimize">
-            <Switch
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'minimize', e.target.checked))
-              }
-              checked={!!metric.settings?.minimize}
-            />
-          </InlineField>
-        </>
+      {(isEWMAMovingAverage(metric) || isHoltMovingAverage(metric) || isHoltWintersMovingAverage(metric)) && (
+        <InlineField label="Alpha" labelWidth={16}>
+          <Input
+            id={`${baseId}-alpha`}
+            onBlur={(e) =>
+              dispatch(
+                changeMetricSetting({
+                  metric,
+                  settingName: 'settings',
+                  newValue: {
+                    ...metric.settings?.settings,
+                    alpha: e.target.value,
+                  },
+                })
+              )
+            }
+            defaultValue={metric.settings?.settings?.alpha}
+          />
+        </InlineField>
       )}
 
-      {isHoltMovingAverage(metric) && (
-        <>
-          <InlineField label="Alpha">
-            <Input
-              onBlur={e =>
-                dispatch(
-                  changeMetricSetting(metric, 'settings', {
+      {(isHoltMovingAverage(metric) || isHoltWintersMovingAverage(metric)) && (
+        <InlineField label="Beta" labelWidth={16}>
+          <Input
+            id={`${baseId}-beta`}
+            onBlur={(e) =>
+              dispatch(
+                changeMetricSetting({
+                  metric,
+                  settingName: 'settings',
+                  newValue: {
                     ...metric.settings?.settings,
-                    alpha: parseInt(e.target.value!, 10),
-                  })
-                )
-              }
-              defaultValue={metric.settings?.settings?.alpha}
-            />
-          </InlineField>
-          <InlineField label="Beta">
-            <Input
-              onBlur={e =>
-                dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    beta: parseInt(e.target.value!, 10),
-                  })
-                )
-              }
-              defaultValue={metric.settings?.settings?.beta}
-            />
-          </InlineField>
-
-          <InlineField label="Minimize">
-            <Switch
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'minimize', e.target.checked))
-              }
-              checked={!!metric.settings?.minimize}
-            />
-          </InlineField>
-        </>
+                    beta: e.target.value,
+                  },
+                })
+              )
+            }
+            defaultValue={metric.settings?.settings?.beta}
+          />
+        </InlineField>
       )}
 
       {isHoltWintersMovingAverage(metric) && (
         <>
-          <InlineField label="Alpha">
+          <InlineField label="Gamma" labelWidth={16}>
             <Input
-              onBlur={e =>
+              id={`${baseId}-gamma`}
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    alpha: parseInt(e.target.value!, 10),
-                  })
-                )
-              }
-              defaultValue={metric.settings?.settings?.alpha}
-            />
-          </InlineField>
-          <InlineField label="Beta">
-            <Input
-              onBlur={e =>
-                dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    beta: parseInt(e.target.value!, 10),
-                  })
-                )
-              }
-              defaultValue={metric.settings?.settings?.beta}
-            />
-          </InlineField>
-          <InlineField label="Gamma">
-            <Input
-              onBlur={e =>
-                dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    gamma: parseInt(e.target.value!, 10),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      gamma: e.target.value,
+                    },
                   })
                 )
               }
               defaultValue={metric.settings?.settings?.gamma}
             />
           </InlineField>
-          <InlineField label="Period">
+          <InlineField label="Period" labelWidth={16}>
             <Input
-              onBlur={e =>
+              id={`${baseId}-period`}
+              onBlur={(e) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', {
-                    ...metric.settings?.settings,
-                    period: parseInt(e.target.value!, 10),
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: {
+                      ...metric.settings?.settings,
+                      period: e.target.value!,
+                    },
                   })
                 )
               }
@@ -152,26 +115,34 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
             />
           </InlineField>
 
-          <InlineField label="Pad">
-            <Switch
+          <InlineField label="Pad" labelWidth={16}>
+            <InlineSwitch
+              id={`${baseId}-pad`}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 dispatch(
-                  changeMetricSetting(metric, 'settings', { ...metric.settings?.settings, pad: e.target.checked })
+                  changeMetricSetting({
+                    metric,
+                    settingName: 'settings',
+                    newValue: { ...metric.settings?.settings, pad: e.target.checked },
+                  })
                 )
               }
               checked={!!metric.settings?.settings?.pad}
             />
           </InlineField>
-
-          <InlineField label="Minimize">
-            <Switch
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                dispatch(changeMetricSetting(metric, 'minimize', e.target.checked))
-              }
-              checked={!!metric.settings?.minimize}
-            />
-          </InlineField>
         </>
+      )}
+
+      {(isEWMAMovingAverage(metric) || isHoltMovingAverage(metric) || isHoltWintersMovingAverage(metric)) && (
+        <InlineField label="Minimize" labelWidth={16}>
+          <InlineSwitch
+            id={`${baseId}-minimize`}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              dispatch(changeMetricSetting({ metric, settingName: 'minimize', newValue: e.target.checked }))
+            }
+            checked={!!metric.settings?.minimize}
+          />
+        </InlineField>
       )}
     </>
   );

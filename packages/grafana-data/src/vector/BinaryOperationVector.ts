@@ -2,6 +2,9 @@ import { Vector } from '../types/vector';
 import { vectorToArray } from './vectorToArray';
 import { BinaryOperation } from '../utils/binaryOperators';
 
+/**
+ * @public
+ */
 export class BinaryOperationVector implements Vector<number> {
   constructor(private left: Vector<number>, private right: Vector<number>, private operation: BinaryOperation) {}
 

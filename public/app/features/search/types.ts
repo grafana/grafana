@@ -41,6 +41,8 @@ export interface DashboardSectionItem {
   uid?: string;
   uri: string;
   url: string;
+  sortMeta?: number;
+  sortMetaName?: string;
 }
 
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection {}
@@ -67,6 +69,8 @@ export interface DashboardQuery {
   skipStarred: boolean;
   folderIds: number[];
   sort: SelectableValue | null;
+  // Save sorting data between layouts
+  prevSort: SelectableValue | null;
   layout: SearchLayout;
 }
 
@@ -92,10 +96,11 @@ export enum SearchLayout {
   Folders = 'folders',
 }
 
-export interface RouteParams {
+export interface SearchQueryParams {
   query?: string | null;
   sort?: string | null;
   starred?: boolean | null;
   tag?: string[] | null;
   layout?: SearchLayout | null;
+  folder?: string | null;
 }

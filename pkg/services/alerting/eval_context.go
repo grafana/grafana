@@ -3,9 +3,9 @@ package alerting
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,7 +23,7 @@ type EvalContext struct {
 	StartTime      time.Time
 	EndTime        time.Time
 	Rule           *Rule
-	log            log.Logger
+	Log            log.Logger
 
 	dashboardRef *models.DashboardRef
 
@@ -32,19 +32,25 @@ type EvalContext struct {
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
 
+	RequestValidator models.PluginRequestValidator
+
 	Ctx context.Context
+
+	Store AlertStore
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
 	return &EvalContext{
-		Ctx:            alertCtx,
-		StartTime:      time.Now(),
-		Rule:           rule,
-		Logs:           make([]*ResultLogEntry, 0),
-		EvalMatches:    make([]*EvalMatch, 0),
-		log:            log.New("alerting.evalContext"),
-		PrevAlertState: rule.State,
+		Ctx:              alertCtx,
+		StartTime:        time.Now(),
+		Rule:             rule,
+		Logs:             make([]*ResultLogEntry, 0),
+		EvalMatches:      make([]*EvalMatch, 0),
+		Log:              log.New("alerting.evalContext"),
+		PrevAlertState:   rule.State,
+		RequestValidator: requestValidator,
+		Store:            sqlStore,
 	}
 }
 
@@ -104,7 +110,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	}
 
 	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := bus.Dispatch(uidQuery); err != nil {
+	if err := c.Store.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 
@@ -148,7 +154,7 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 
 func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	if c.Error != nil {
-		c.log.Error("Alert Rule Result Error",
+		c.Log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"error", c.Error,
@@ -165,7 +171,7 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	}
 
 	if c.NoDataFound {
-		c.log.Info("Alert Rule returned no data",
+		c.Log.Info("Alert Rule returned no data",
 			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())
@@ -177,4 +183,67 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	}
 
 	return models.AlertStateOK
+}
+
+// evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as
+// templates, and evaluate the templates using data from the alert evaluation's tags
+func (c *EvalContext) evaluateNotificationTemplateFields() error {
+	if len(c.EvalMatches) < 1 {
+		return nil
+	}
+
+	templateDataMap, err := buildTemplateDataMap(c.EvalMatches)
+	if err != nil {
+		return err
+	}
+
+	ruleMsg, err := evaluateTemplate(c.Rule.Message, templateDataMap)
+	if err != nil {
+		return err
+	}
+	c.Rule.Message = ruleMsg
+
+	ruleName, err := evaluateTemplate(c.Rule.Name, templateDataMap)
+	if err != nil {
+		return err
+	}
+	c.Rule.Name = ruleName
+
+	return nil
+}
+
+func evaluateTemplate(s string, m map[string]string) (string, error) {
+	for k, v := range m {
+		re, err := regexp.Compile(fmt.Sprintf(`\${%s}`, regexp.QuoteMeta(k)))
+		if err != nil {
+			return "", err
+		}
+		s = re.ReplaceAllString(s, v)
+	}
+
+	return s, nil
+}
+
+// buildTemplateDataMap builds a map of alert evaluation tag names to a set of associated values (comma separated)
+func buildTemplateDataMap(evalMatches []*EvalMatch) (map[string]string, error) {
+	var result = map[string]string{}
+	for _, match := range evalMatches {
+		for tagName, tagValue := range match.Tags {
+			// skip duplicate values
+			rVal, err := regexp.Compile(fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(tagValue)))
+			if err != nil {
+				return nil, err
+			}
+			rMatch := rVal.FindString(result[tagName])
+			if len(rMatch) > 0 {
+				continue
+			}
+			if _, exists := result[tagName]; exists {
+				result[tagName] = fmt.Sprintf("%s, %s", result[tagName], tagValue)
+			} else {
+				result[tagName] = tagValue
+			}
+		}
+	}
+	return result, nil
 }

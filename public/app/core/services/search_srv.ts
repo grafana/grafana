@@ -1,5 +1,4 @@
-import _ from 'lodash';
-
+import { clone, keys, sortBy, take, values } from 'lodash';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -29,15 +28,15 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
-    const dashIds: number[] = _.take(impressionSrv.getDashboardOpened(), 30);
+    const dashIds: number[] = take(impressionSrv.getDashboardOpened(), 30);
     if (dashIds.length === 0) {
       return Promise.resolve([]);
     }
 
-    return backendSrv.search({ dashboardIds: dashIds }).then(result => {
+    return backendSrv.search({ dashboardIds: dashIds }).then((result) => {
       return dashIds
-        .map(orderId => result.find(result => result.id === orderId))
-        .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
+        .map((orderId) => result.find((result) => result.id === orderId))
+        .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
@@ -46,7 +45,7 @@ export class SearchSrv {
       return Promise.resolve();
     }
 
-    return backendSrv.search({ starred: true, limit: 30 }).then(result => {
+    return backendSrv.search({ starred: true, limit: 30 }).then((result) => {
       if (result.length > 0) {
         (sections as any)['starred'] = {
           title: 'Starred',
@@ -63,7 +62,7 @@ export class SearchSrv {
   search(options: any) {
     const sections: any = {};
     const promises = [];
-    const query = _.clone(options);
+    const query = clone(options);
     const filters = hasFilters(options) || query.folderIds?.length > 0;
 
     query.folderIds = query.folderIds || [];
@@ -71,7 +70,7 @@ export class SearchSrv {
     if (query.layout === SearchLayout.List) {
       return backendSrv
         .search({ ...query, type: DashboardSearchItemType.DashDB })
-        .then(results => (results.length ? [{ title: '', items: results }] : []));
+        .then((results) => (results.length ? [{ title: '', items: results }] : []));
     }
 
     if (!filters) {
@@ -87,13 +86,13 @@ export class SearchSrv {
     }
 
     promises.push(
-      backendSrv.search(query).then(results => {
+      backendSrv.search(query).then((results) => {
         return this.handleSearchResult(sections, results);
       })
     );
 
     return Promise.all(promises).then(() => {
-      return _.sortBy(_.values(sections), 'score');
+      return sortBy(values(sections), 'score');
     });
   }
 
@@ -113,7 +112,7 @@ export class SearchSrv {
           items: [],
           url: hit.url,
           icon: 'folder',
-          score: _.keys(sections).length,
+          score: keys(sections).length,
           type: hit.type,
         };
       }
@@ -134,7 +133,7 @@ export class SearchSrv {
             url: hit.folderUrl,
             items: [],
             icon: 'folder-open',
-            score: _.keys(sections).length,
+            score: keys(sections).length,
             type: DashboardSearchItemType.DashFolder,
           };
         } else {
@@ -143,7 +142,7 @@ export class SearchSrv {
             title: 'General',
             items: [],
             icon: 'folder-open',
-            score: _.keys(sections).length,
+            score: keys(sections).length,
             type: DashboardSearchItemType.DashFolder,
           };
         }

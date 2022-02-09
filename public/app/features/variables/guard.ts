@@ -7,10 +7,11 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceRef,
   MetricFindValue,
-  QueryEditorProps,
   StandardVariableQuery,
   StandardVariableSupport,
+  VariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
@@ -18,12 +19,11 @@ import {
   AdHocVariableModel,
   ConstantVariableModel,
   QueryVariableModel,
-  VariableModel,
   VariableQueryEditorType,
+  VariableQueryEditorProps,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from './types';
-import { VariableQueryProps } from '../../types';
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
@@ -44,13 +44,29 @@ export const isMulti = (model: VariableModel): model is VariableWithMultiSupport
 };
 
 export const hasOptions = (model: VariableModel): model is VariableWithOptions => {
+  return hasObjectProperty(model, 'options');
+};
+
+export const hasCurrent = (model: VariableModel): model is VariableWithOptions => {
+  return hasObjectProperty(model, 'current');
+};
+
+function hasObjectProperty(model: VariableModel, property: string): model is VariableWithOptions {
   if (!model) {
     return false;
   }
 
-  const withOptions = model as VariableWithOptions;
-  return withOptions.hasOwnProperty('options') && typeof withOptions.options === 'object';
-};
+  const withProperty = model as Record<string, any>;
+  return withProperty.hasOwnProperty(property) && typeof withProperty[property] === 'object';
+}
+
+export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
+  if (datasource === null) {
+    return false;
+  }
+
+  return typeof datasource === 'string';
+}
 
 interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,
@@ -78,7 +94,7 @@ interface DataSourceWithCustomVariableSupport<
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     getType(): VariableSupportType;
-    editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
+    editor: VariableQueryEditorType;
     query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
   };
 }
@@ -162,7 +178,7 @@ export function isLegacyQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<VariableQueryProps> {
+): component is ComponentType<VariableQueryEditorProps> {
   if (!component) {
     return false;
   }
@@ -176,7 +192,7 @@ export function isQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<QueryEditorProps<any>> {
+): component is VariableQueryEditorType {
   if (!component) {
     return false;
   }

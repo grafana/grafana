@@ -1,32 +1,22 @@
 import React, { FC, memo } from 'react';
-import { css } from 'emotion';
-import { Checkbox, stylesFactory } from '@grafana/ui';
+import { Checkbox } from '@grafana/ui';
 
 interface Props {
   checked?: boolean;
-  onClick: any;
+  onClick?: React.MouseEventHandler<HTMLInputElement>;
+  className?: string;
   editable?: boolean;
+  'aria-label'?: string;
 }
 
-export const SearchCheckbox: FC<Props> = memo(({ onClick, checked = false, editable = false }) => {
-  const styles = getStyles();
-
-  return editable ? (
-    <div onClick={onClick} className={styles.wrapper}>
-      <Checkbox value={checked} />
-    </div>
-  ) : null;
-});
-
-const getStyles = stylesFactory(() => ({
-  // Vertically align absolutely positioned checkbox element
-  wrapper: css`
-    height: 21px;
-    margin-right: 12px;
-    & > label {
-      height: 100%;
-    }
-  `,
-}));
+export const SearchCheckbox: FC<Props> = memo(
+  ({ onClick, className, checked = false, editable = false, 'aria-label': ariaLabel }) => {
+    return editable ? (
+      <div onClick={onClick} className={className}>
+        <Checkbox value={checked} aria-label={ariaLabel} />
+      </div>
+    ) : null;
+  }
+);
 
 SearchCheckbox.displayName = 'SearchCheckbox';

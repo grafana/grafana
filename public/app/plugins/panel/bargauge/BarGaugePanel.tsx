@@ -8,6 +8,7 @@ import {
   FieldConfig,
   DisplayProcessor,
   DisplayValue,
+  VizOrientation,
 } from '@grafana/data';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 
@@ -28,7 +29,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
     let processor: DisplayProcessor | undefined = undefined;
     if (view && isNumber(colIndex)) {
-      processor = view!.getFieldDisplayProcessor(colIndex as number);
+      processor = view.getFieldDisplayProcessor(colIndex);
     }
 
     return (
@@ -40,7 +41,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         field={field}
         text={options.text}
         display={processor}
-        theme={config.theme}
+        theme={config.theme2}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
         onClick={openMenu}
@@ -52,16 +53,16 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   };
 
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
-    const { value } = valueProps;
+    const { value, orientation } = valueProps;
     const { hasLinks, getLinks } = value;
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
-          {api => {
-            return this.renderComponent(valueProps, api);
-          }}
-        </DataLinksContextMenu>
+        <div style={{ width: '100%', display: orientation === VizOrientation.Vertical ? 'flex' : 'initial' }}>
+          <DataLinksContextMenu links={getLinks} config={value.field}>
+            {(api) => this.renderComponent(valueProps, api)}
+          </DataLinksContextMenu>
+        </div>
       );
     }
 
@@ -70,11 +71,12 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
+
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       timeZone,
     });

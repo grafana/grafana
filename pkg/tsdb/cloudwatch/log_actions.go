@@ -4,59 +4,67 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
-func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
+const (
+	LimitExceededException = "LimitExceededException"
+	defaultLimit           = 10
+)
+
+type AWSError struct {
+	Code    string
+	Message string
+	Payload map[string]string
+}
+
+func (e *AWSError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
+
+func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	resultChan := make(chan backend.Responses, len(req.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+
 		query := query
 		eg.Go(func() error {
-			dataframe, err := e.executeLogAction(ectx, queryContext, query)
+			dataframe, err := e.executeLogAction(ectx, model, query, req.PluginContext)
 			if err != nil {
+				var AWSError *AWSError
+				if errors.As(err, &AWSError) {
+					resultChan <- backend.Responses{
+						query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: AWSError},
+					}
+					return nil
+				}
 				return err
 			}
 
-			// When a query of the form "stats ... by ..." is made, we want to return
-			// one series per group defined in the query, but due to the format
-			// the query response is in, there does not seem to be a way to tell
-			// by the response alone if/how the results should be grouped.
-			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-			// the "statsGroups" parameter is sent along with the query to the backend so that we
-			// can correctly group the CloudWatch logs response.
-			statsGroups := query.Model.Get("statsGroups").MustStringArray()
-			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
-				groupedFrames, err := groupResults(dataframe, statsGroups)
-				if err != nil {
-					return err
-				}
-
-				resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(groupedFrames)}
-				return nil
+			groupedFrames, err := groupResponseFrame(dataframe, model.Get("statsGroups").MustStringArray())
+			if err != nil {
+				return err
 			}
-
-			if dataframe.Meta != nil {
-				dataframe.Meta.PreferredVisualization = "logs"
-			} else {
-				dataframe.Meta = &data.FrameMeta{
-					PreferredVisualization: "logs",
-				}
-			}
-
-			resultChan <- &tsdb.QueryResult{
-				RefId:      query.RefId,
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
+			resultChan <- backend.Responses{
+				query.RefID: backend.DataResponse{Frames: groupedFrames},
 			}
 			return nil
 		})
@@ -67,23 +75,30 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 
 	close(resultChan)
 
-	response := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
-	}
 	for result := range resultChan {
-		response.Results[result.RefId] = result
+		for refID, response := range result {
+			respD := resp.Responses[refID]
+			respD.Frames = response.Frames
+			respD.Error = response.Error
+			resp.Responses[refID] = respD
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext *tsdb.TsdbQuery, query *tsdb.Query) (*data.Frame, error) {
-	parameters := query.Model
-	subType := query.Model.Get("subtype").MustString()
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
+	subType := model.Get("subtype").MustString()
 
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	region := parameters.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getCWLogsClient(region)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultRegion := dsInfo.region
+
+	region := model.Get("region").MustString(defaultRegion)
+	logsClient, err := e.getCWLogsClient(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -92,20 +107,20 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 
 	switch subType {
 	case "DescribeLogGroups":
-		data, err = e.handleDescribeLogGroups(ctx, logsClient, parameters)
+		data, err = e.handleDescribeLogGroups(ctx, logsClient, model)
 	case "GetLogGroupFields":
-		data, err = e.handleGetLogGroupFields(ctx, logsClient, parameters, query.RefId)
+		data, err = e.handleGetLogGroupFields(ctx, logsClient, model, query.RefID)
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, parameters, queryContext.TimeRange, query.RefId)
+		data, err = e.handleStartQuery(ctx, logsClient, model, query.TimeRange, query.RefID)
 	case "StopQuery":
-		data, err = e.handleStopQuery(ctx, logsClient, parameters)
+		data, err = e.handleStopQuery(ctx, logsClient, model)
 	case "GetQueryResults":
-		data, err = e.handleGetQueryResults(ctx, logsClient, parameters, query.RefId)
+		data, err = e.handleGetQueryResults(ctx, logsClient, model, query.RefID)
 	case "GetLogEvents":
-		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
+		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errutil.Wrapf(err, "failed to execute log action with subtype: %s", subType)
 	}
 
 	return data, nil
@@ -114,7 +129,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	parameters *simplejson.Json) (*data.Frame, error) {
 	queryRequest := &cloudwatchlogs.GetLogEventsInput{
-		Limit:         aws.Int64(parameters.Get("limit").MustInt64(10)),
+		Limit:         aws.Int64(parameters.Get("limit").MustInt64(defaultLimit)),
 		StartFromHead: aws.Bool(parameters.Get("startFromHead").MustBool(false)),
 	}
 
@@ -195,16 +210,9 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 }
 
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange *tsdb.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
-	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
+	parameters *simplejson.Json, timeRange backend.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+	startTime := timeRange.From
+	endTime := timeRange.To
 
 	if !startTime.Before(endTime) {
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
@@ -214,11 +222,17 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	// so that a row's context can be retrieved later if necessary.
 	// The usage of ltrim around the @log/@logStream fields is a necessary workaround, as without it,
 	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
-	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
+	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " +
+		logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
-		StartTime:     aws.Int64(startTime.Unix()),
-		EndTime:       aws.Int64(endTime.Unix()),
+		StartTime: aws.Int64(startTime.Unix()),
+		// Usually grafana time range allows only second precision, but you can create ranges with milliseconds
+		// for example when going from trace to logs for that trace and trace length is sub second. In that case
+		// StartTime is effectively floored while here EndTime is ceiled and so we should get the logs user wants
+		// and also a little bit more but as CW logs accept only seconds as integers there is not much to do about
+		// that.
+		EndTime:       aws.Int64(int64(math.Ceil(float64(endTime.UnixNano()) / 1e9))),
 		LogGroupNames: aws.StringSlice(parameters.Get("logGroupNames").MustStringArray()),
 		QueryString:   aws.String(modifiedQueryString),
 	}
@@ -231,16 +245,21 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 }
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange *tsdb.TimeRange, refID string) (*data.Frame, error) {
-	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
+	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
+	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
+			plog.Debug("executeStartQuery limit exceeded", "err", awsErr)
+			return nil, &AWSError{Code: LimitExceededException, Message: err.Error()}
+		}
 		return nil, err
 	}
 
 	dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
 	dataFrame.RefID = refID
 
-	clientRegion := parameters.Get("region").MustString("default")
+	clientRegion := model.Get("region").MustString("default")
 
 	dataFrame.Meta = &data.FrameMeta{
 		Custom: map[string]interface{}{

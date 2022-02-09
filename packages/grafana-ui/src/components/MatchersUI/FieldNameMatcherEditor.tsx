@@ -1,25 +1,26 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, DataFrame } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
+import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
-export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
-  const { data, options, onChange: onChangeFromProps } = props;
+export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
+  const { data, options, onChange: onChangeFromProps, id } = props;
   const names = useFieldDisplayNames(data);
-  const selectOptions = useSelectOptions(names);
+  const selectOptions = useSelectOptions(names, options);
 
   const onChange = useCallback(
     (selection: SelectableValue<string>) => {
-      if (!selection.value || !names.has(selection.value)) {
+      if (!frameHasName(selection.value, names)) {
         return;
       }
-      return onChangeFromProps(selection.value);
+      return onChangeFromProps(selection.value!);
     },
     [names, onChangeFromProps]
   );
 
-  const selectedOption = selectOptions.find(v => v.value === options);
-  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
+  const selectedOption = selectOptions.find((v) => v.value === options);
+  return <Select menuShouldPortal value={selectedOption} options={selectOptions} onChange={onChange} inputId={id} />;
 });
 FieldNameMatcherEditor.displayName = 'FieldNameMatcherEditor';
 
@@ -29,28 +30,5 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   matcher: fieldMatchers.get(FieldMatcherID.byName),
   name: 'Fields with name',
   description: 'Set properties for a specific field',
-  optionsToLabel: options => options,
-};
-
-const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
-  return useMemo(() => {
-    const names: Set<string> = new Set();
-
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        names.add(getFieldDisplayName(field, frame, data));
-      }
-    }
-
-    return names;
-  }, [data]);
-};
-
-const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
-  return useMemo(() => {
-    return Array.from(displayNames).map(n => ({
-      value: n,
-      label: n,
-    }));
-  }, [displayNames]);
+  optionsToLabel: (options) => options,
 };

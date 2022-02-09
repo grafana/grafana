@@ -3,21 +3,43 @@ import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 
+/**
+ * @public
+ * The app container that is loading another plugin (panel or query editor)
+ * */
 export enum CoreApp {
+  CloudAlerting = 'cloud-alerting',
+  UnifiedAlerting = 'unified-alerting',
   Dashboard = 'dashboard',
   Explore = 'explore',
+  Unknown = 'unknown',
+  PanelEditor = 'panel-editor',
+  PanelViewer = 'panel-viewer',
 }
 
 export interface AppRootProps<T = KeyValue> {
   meta: AppPluginMeta<T>;
-
-  path: string; // The URL path to this page
-  query: KeyValue; // The URL query parameters
+  /**
+   * base URL segment for an app, /app/pluginId
+   */
+  basename: string; // The URL path to this page
 
   /**
    * Pass the nav model to the container... is there a better way?
    */
   onNavChanged: (nav: NavModel) => void;
+
+  /**
+   * The URL query parameters
+   * @deprecated Use react-router instead
+   */
+  query: KeyValue;
+
+  /**
+   * The URL path to this page
+   * @deprecated Use react-router instead
+   */
+  path: string;
 }
 
 export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
@@ -28,9 +50,6 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
   root?: ComponentClass<AppRootProps<T>>;
   rootNav?: NavModel; // Initial navigation model
-
-  // Old style pages
-  angularPages?: { [component: string]: any };
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -67,12 +86,6 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
             console.warn('App Page uses unknown component: ', include.component, this.meta);
             continue;
           }
-
-          if (!this.angularPages) {
-            this.angularPages = {};
-          }
-
-          this.angularPages[include.component] = exp;
         }
       }
     }

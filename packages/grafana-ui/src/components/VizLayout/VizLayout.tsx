@@ -1,6 +1,11 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { css } from '@emotion/css';
+import { LegendPlacement } from '@grafana/schema';
+import { GrafanaTheme2 } from '@grafana/data';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { getFocusStyles } from '../../themes/mixins';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 /**
  * @beta
@@ -8,7 +13,7 @@ import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 export interface VizLayoutProps {
   width: number;
   height: number;
-  legend?: React.ReactElement<VizLayoutLegendProps>;
+  legend?: React.ReactElement<VizLayoutLegendProps> | null;
   children: (width: number, height: number) => React.ReactNode;
 }
 
@@ -23,27 +28,29 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
  * @beta
  */
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
+  const styles = useStyles2(getVizStyles);
   const containerStyle: CSSProperties = {
     display: 'flex',
     width: `${width}px`,
     height: `${height}px`,
   };
+  const [legendRef, legendMeasure] = useMeasure<HTMLDivElement>();
 
   if (!legend) {
-    return <div style={containerStyle}>{children(width, height)}</div>;
+    return (
+      <div tabIndex={0} style={containerStyle} className={styles.viz}>
+        {children(width, height)}
+      </div>
+    );
   }
 
-  const { position, maxHeight, maxWidth } = legend.props;
-  const [legendRef, legendMeasure] = useMeasure();
-  let size: VizSize | null = null;
+  const { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
 
-  const vizStyle: CSSProperties = {
-    flexGrow: 2,
-  };
+  let size: VizSize | null = null;
 
   const legendStyle: CSSProperties = {};
 
-  switch (position) {
+  switch (placement) {
     case 'bottom':
       containerStyle.flexDirection = 'column';
       legendStyle.maxHeight = maxHeight;
@@ -63,7 +70,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   }
 
   // This happens when position is switched from bottom to right
-  // Then we preserve old with for one render cycle until lenged is measured in it's new position
+  // Then we preserve old with for one render cycle until legend is measured in it's new position
   if (size?.width === 0) {
     size.width = width;
   }
@@ -74,7 +81,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      <div style={vizStyle}>{size && children(size.width, size.height)}</div>
+      <div tabIndex={0} className={styles.viz}>
+        {size && children(size.width, size.height)}
+      </div>
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
@@ -82,6 +91,15 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   );
 };
 
+export const getVizStyles = (theme: GrafanaTheme2) => {
+  return {
+    viz: css({
+      flexGrow: 2,
+      borderRadius: theme.shape.borderRadius(1),
+      '&:focus-visible': getFocusStyles(theme),
+    }),
+  };
+};
 interface VizSize {
   width: number;
   height: number;
@@ -91,10 +109,10 @@ interface VizSize {
  * @beta
  */
 export interface VizLayoutLegendProps {
-  position: 'bottom' | 'right';
+  placement: LegendPlacement;
+  children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
-  children: React.ReactNode;
 }
 
 /**

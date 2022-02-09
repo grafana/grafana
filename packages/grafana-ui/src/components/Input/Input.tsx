@@ -1,10 +1,10 @@
 import React, { HTMLProps, ReactNode } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css, cx } from '@emotion/css';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { Spinner } from '../Spinner/Spinner';
-import { useClientRect } from '../../utils/useClientRect';
+import useMeasure from 'react-use/lib/useMeasure';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
@@ -24,16 +24,61 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 }
 
 interface StyleDeps {
-  theme: GrafanaTheme;
-  invalid: boolean;
+  theme: GrafanaTheme2;
+  invalid?: boolean;
   width?: number;
 }
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
-  const { palette, colors } = theme;
-  const borderRadius = theme.border.radius.sm;
-  const height = theme.spacing.formInputHeight;
+export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
+  /**
+   * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
+   * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
+   * Thanks to that prefix/suffix do not overflow the input element itself.
+   */
+  const [prefixRef, prefixRect] = useMeasure<HTMLDivElement>();
+  const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
 
+  const theme = useTheme2();
+  const styles = getInputStyles({ theme, invalid: !!invalid, width });
+
+  return (
+    <div className={cx(styles.wrapper, className)}>
+      {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
+
+      <div className={styles.inputWrapper}>
+        {prefix && (
+          <div className={styles.prefix} ref={prefixRef}>
+            {prefix}
+          </div>
+        )}
+
+        <input
+          ref={ref}
+          className={styles.input}
+          {...restProps}
+          style={{
+            paddingLeft: prefix ? prefixRect.width + 12 : undefined,
+            paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
+          }}
+        />
+
+        {(suffix || loading) && (
+          <div className={styles.suffix} ref={suffixRef}>
+            {loading && <Spinner className={styles.loadingIndicator} inline={true} />}
+            {suffix}
+          </div>
+        )}
+      </div>
+
+      {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
+    </div>
+  );
+});
+
+Input.displayName = 'Input';
+
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
     position: absolute;
@@ -48,7 +93,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
   `;
 
   return {
@@ -57,14 +102,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-wrapper;
         display: flex;
-        width: ${width ? `${8 * width}px` : '100%'};
-        height: ${height}px;
-        border-radius: ${borderRadius};
+        width: ${width ? `${theme.spacing(width)}` : '100%'};
+        height: ${theme.spacing(theme.components.height.md)};
+        border-radius: ${theme.shape.borderRadius()};
         &:hover {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
+            border-color: ${invalid ? theme.colors.error.border : theme.colors.primary.border};
           }
 
           // only show number buttons on hover
@@ -134,21 +179,25 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     `,
 
     input: cx(
-      getFocusStyle(theme),
+      getFocusStyle(theme.v1),
       sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        border-radius: ${borderRadius};
+        border-radius: ${theme.shape.borderRadius()};
         height: 100%;
         width: 100%;
       `
     ),
     inputDisabled: css`
-      background-color: ${colors.formInputBgDisabled};
-      color: ${colors.formInputDisabledText};
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
+      border: 1px solid ${theme.colors.action.disabledBackground};
+      &:focus {
+        box-shadow: none;
+      }
     `,
     addon: css`
       label: input-addon;
@@ -185,8 +234,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-prefix;
-        padding-left: ${theme.spacing.sm};
-        padding-right: ${theme.spacing.xs};
+        padding-left: ${theme.spacing(1)};
+        padding-right: ${theme.spacing(0.5)};
         border-right: none;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -196,8 +245,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-suffix;
-        padding-right: ${theme.spacing.sm};
-        padding-left: ${theme.spacing.xs};
+        padding-left: ${theme.spacing(1)};
+        padding-right: ${theme.spacing(1)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
@@ -207,57 +256,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     ),
     loadingIndicator: css`
       & + * {
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       }
     `,
   };
 });
-
-export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
-  /**
-   * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
-   * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
-   * Thanks to that prefix/suffix do not overflow the input element itself.
-   */
-  const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
-  const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
-
-  const theme = useTheme();
-  const styles = getInputStyles({ theme, invalid: !!invalid, width });
-
-  return (
-    <div className={cx(styles.wrapper, className)}>
-      {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
-
-      <div className={styles.inputWrapper}>
-        {prefix && (
-          <div className={styles.prefix} ref={prefixRef}>
-            {prefix}
-          </div>
-        )}
-
-        <input
-          ref={ref}
-          className={styles.input}
-          {...restProps}
-          style={{
-            paddingLeft: prefixRect ? prefixRect.width : undefined,
-            paddingRight: suffixRect ? suffixRect.width : undefined,
-          }}
-        />
-
-        {(suffix || loading) && (
-          <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Spinner className={styles.loadingIndicator} inline={true} />}
-            {suffix}
-          </div>
-        )}
-      </div>
-
-      {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
-    </div>
-  );
-});
-
-Input.displayName = 'Input';

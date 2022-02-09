@@ -1,3 +1,4 @@
+import produce from 'immer';
 import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', () => {
@@ -138,12 +139,20 @@ describe('when generating timeseries from influxdb response', () => {
         expect(result[0].datapoints[0][1]).toBe(1431946625000);
         expect(result[0].datapoints[1][0]).toBe(12);
         expect(result[0].datapoints[1][1]).toBe(1431946626000);
+        expect(result[0].tags).toMatchObject({
+          app: 'test',
+          server: 'server1',
+        });
 
         expect(result[1].target).toBe('cpu.mean {app: test2, server: server2}');
         expect(result[1].datapoints[0][0]).toBe(15);
         expect(result[1].datapoints[0][1]).toBe(1431946625000);
         expect(result[1].datapoints[1][0]).toBe(16);
         expect(result[1].datapoints[1][1]).toBe(1431946626000);
+        expect(result[1].tags).toMatchObject({
+          app: 'test2',
+          server: 'server2',
+        });
       });
     });
 
@@ -191,6 +200,14 @@ describe('when generating timeseries from influxdb response', () => {
       const result = series.getTimeSeries();
 
       expect(result[0].target).toBe('alias: prod -> count');
+    });
+
+    it('should handle too large indexes', () => {
+      options.alias = 'alias: $0 $1 $2 $3 $4 $5';
+      const series = new InfluxSeries(options);
+      const result = series.getTimeSeries();
+
+      expect(result[0].target).toBe('alias: app prod server1 count $4 $5');
     });
   });
 
@@ -290,6 +307,63 @@ describe('when generating timeseries from influxdb response', () => {
         expect(annotations[0].tags.length).toBe(2);
         expect(annotations[0].tags[0]).toBe('America');
         expect(annotations[0].tags[1]).toBe('backend');
+      });
+    });
+
+    describe('given a time-column in the json-response', () => {
+      const options = {
+        alias: '',
+        series: [
+          {
+            name: 'cpu',
+            tags: { cpu: 'cpu1' },
+            columns: ['time', 'usage_idle'],
+            values: [[1481549440372, 42]],
+          },
+        ],
+      };
+
+      it('the column-names should be correct if the time-column is not renamed', () => {
+        const series = new InfluxSeries(options);
+        const table = series.getTable();
+
+        expect(table.columns).toStrictEqual([
+          {
+            text: 'Time',
+            type: 'time',
+          },
+          {
+            text: 'cpu',
+          },
+          {
+            text: 'usage_idle',
+          },
+        ]);
+
+        expect(table.rows).toStrictEqual([[1481549440372, 'cpu1', 42]]);
+      });
+
+      it('the column-names should be correct if the time-column is renamed', () => {
+        const renamedOptions = produce(options, (draft) => {
+          // we rename the time-column to `zeit`
+          draft.series[0].columns[0] = 'zeit';
+        });
+        const series = new InfluxSeries(renamedOptions);
+        const table = series.getTable();
+
+        expect(table.columns).toStrictEqual([
+          {
+            text: 'zeit',
+          },
+          {
+            text: 'cpu',
+          },
+          {
+            text: 'usage_idle',
+          },
+        ]);
+
+        expect(table.rows).toStrictEqual([[1481549440372, 'cpu1', 42]]);
       });
     });
   });

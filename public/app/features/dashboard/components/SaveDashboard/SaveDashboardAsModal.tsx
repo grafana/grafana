@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Modal } from '@grafana/ui';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { useDashboardSave } from './useDashboardSave';
 import { SaveDashboardModalProps } from './types';
 
-export const SaveDashboardAsModal: React.FC<SaveDashboardModalProps & {
-  isNew?: boolean;
-}> = ({ dashboard, onDismiss, isNew }) => {
+export const SaveDashboardAsModal: React.FC<
+  SaveDashboardModalProps & {
+    isNew?: boolean;
+  }
+> = ({ dashboard, onDismiss, isNew }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);
   const [dashboardSaveModelClone, setDashboardSaveModelClone] = useState();
   return (

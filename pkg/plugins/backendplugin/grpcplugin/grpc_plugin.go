@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/hashicorp/go-plugin"
 )
@@ -14,21 +15,24 @@ import (
 type pluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
+	backend.QueryDataHandler
 	backend.CallResourceHandler
+	backend.StreamHandler
 }
 
 type grpcPlugin struct {
-	descriptor    PluginDescriptor
-	clientFactory func() *plugin.Client
-	client        *plugin.Client
-	pluginClient  pluginClient
-	logger        log.Logger
-	mutex         sync.RWMutex
+	descriptor     PluginDescriptor
+	clientFactory  func() *plugin.Client
+	client         *plugin.Client
+	pluginClient   pluginClient
+	logger         log.Logger
+	mutex          sync.RWMutex
+	decommissioned bool
 }
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
@@ -36,7 +40,7 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
 			},
 		}, nil
-	})
+	}
 }
 
 func (p *grpcPlugin) PluginID() string {
@@ -57,20 +61,24 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 		return err
 	}
 
-	if p.client.NegotiatedVersion() > 1 {
-		p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
-		if err != nil {
-			return err
-		}
-	} else {
-		p.pluginClient, err = newClientV1(p.descriptor, p.logger, rpcClient)
-		if err != nil {
-			return err
-		}
+	if p.client.NegotiatedVersion() < 2 {
+		return errors.New("plugin protocol version not supported")
+	}
+	p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
+	if err != nil {
+		return err
 	}
 
 	if p.pluginClient == nil {
 		return errors.New("no compatible plugin implementation found")
+	}
+
+	elevated, err := process.IsRunningWithElevatedPrivileges()
+	if err != nil {
+		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
+	}
+	if elevated {
+		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
 	}
 
 	return nil
@@ -99,38 +107,83 @@ func (p *grpcPlugin) Exited() bool {
 	return true
 }
 
-func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *grpcPlugin) Decommission() error {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	p.decommissioned = true
+
+	return nil
+}
+
+func (p *grpcPlugin) IsDecommissioned() bool {
+	return p.decommissioned
+}
+
+func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, false
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
+	return pluginClient, true
+}
 
+func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
 	return pluginClient.CollectMetrics(ctx)
 }
 
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.CheckHealth(ctx, req)
 }
 
+func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+
+	return pluginClient.QueryData(ctx, req)
+}
+
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.CallResource(ctx, req, sender)
+}
+
+func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.SubscribeStream(ctx, request)
+}
+
+func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.PublishStream(ctx, request)
+}
+
+func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.RunStream(ctx, req, sender)
 }

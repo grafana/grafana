@@ -147,7 +147,7 @@ The [controls addon](https://storybook.js.org/docs/react/essentials/controls) pr
 
 #### Migrating a story from Knobs to Controls
 
-As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/src/components/Button/Button.story.tsx). Here's the guide on how to migrate a story to controls.
+As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Button/Button.story.tsx). Here's the guide on how to migrate a story to controls.
 
 1.  Remove the `@storybook/addon-knobs` dependency.
 2.  Import the Story type from `@storybook/react`

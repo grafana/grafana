@@ -52,7 +52,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 
   const subCache = `subcache ${__dirname} ${remainingRequest}`;
 
-  childCompiler.plugin('compilation', compilation => {
+  childCompiler.plugin('compilation', (compilation) => {
     if (!compilation.cache) {
       return;
     }
@@ -83,7 +83,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 
 function getOutputFilename(options, { target }) {
   if (!options) {
-    return { filename: `[hash].${target}.js`, options: undefined };
+    return { filename: `[fullhash].${target}.js`, options: undefined };
   }
   if (typeof options === 'string') {
     return { filename: options, options: undefined };

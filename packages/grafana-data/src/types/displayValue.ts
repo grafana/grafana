@@ -12,21 +12,19 @@ export interface DisplayValue extends FormattedValue {
    */
   percent?: number;
   /**
-   *  Color based on configs or Threshold
+   *  Color based on mappings or threshold
    */
   color?: string;
+  /**
+   *  Icon based on mappings or threshold
+   */
+  icon?: string;
   title?: string;
-}
 
-/**
- * Explicit control for text settings
- */
-export interface TextDisplayOptions {
-  /* Explicit text size */
-  titleSize?: number;
-
-  /* Explicit text size */
-  valueSize?: number;
+  /**
+   * Used in limited scenarios like legend reducer calculations
+   */
+  description?: string;
 }
 
 /**

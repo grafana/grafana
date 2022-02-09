@@ -1,12 +1,22 @@
 import { Event, Severity } from '@sentry/browser';
-import { logger, parseRetryAfterHeader, PromiseBuffer, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
-import { Response, Status } from '@sentry/types';
+import {
+  logger,
+  makePromiseBuffer,
+  parseRetryAfterHeader,
+  PromiseBuffer,
+  supportsReferrerPolicy,
+  SyncPromise,
+} from '@sentry/utils';
+import { Response } from '@sentry/types';
 import { BaseTransport } from '../types';
 
 export interface CustomEndpointTransportOptions {
   endpoint: string;
   fetchParameters?: Partial<RequestInit>;
+  maxConcurrentRequests?: number;
 }
+
+const DEFAULT_MAX_CONCURRENT_REQUESTS = 3;
 
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
@@ -19,16 +29,20 @@ export class CustomEndpointTransport implements BaseTransport {
   /** Locks transport after receiving 429 response */
   private _disabledUntil: Date = new Date(Date.now());
 
-  private readonly _buffer: PromiseBuffer<Response> = new PromiseBuffer(30);
+  private readonly _buffer: PromiseBuffer<Response>;
 
-  constructor(public options: CustomEndpointTransportOptions) {}
+  constructor(public options: CustomEndpointTransportOptions) {
+    this._buffer = makePromiseBuffer(options.maxConcurrentRequests ?? DEFAULT_MAX_CONCURRENT_REQUESTS);
+  }
 
   sendEvent(event: Event): PromiseLike<Response> {
     if (new Date(Date.now()) < this._disabledUntil) {
-      return Promise.reject({
+      const reason = `Dropping frontend event due to too many requests.`;
+      console.warn(reason);
+      return Promise.resolve({
         event,
-        reason: `Transport locked till ${this._disabledUntil} due to too many requests.`,
-        status: 429,
+        reason,
+        status: 'skipped',
       });
     }
 
@@ -39,7 +53,7 @@ export class CustomEndpointTransport implements BaseTransport {
         level: event.level ?? (event.exception ? Severity.Error : Severity.Info),
         exception: event.exception
           ? {
-              values: event.exception.values?.map(value => ({
+              values: event.exception.values?.map((value) => ({
                 ...value,
                 // according to both typescript and go types, value is supposed to be string.
                 // but in some odd cases at runtime it turns out to be an empty object {}
@@ -48,7 +62,7 @@ export class CustomEndpointTransport implements BaseTransport {
               })),
             }
           : event.exception,
-        breadcrumbs: event.breadcrumbs?.map(breadcrumb => ({
+        breadcrumbs: event.breadcrumbs?.map((breadcrumb) => ({
           ...breadcrumb,
           timestamp: makeTimestamp(breadcrumb.timestamp),
         })),
@@ -74,30 +88,42 @@ export class CustomEndpointTransport implements BaseTransport {
       Object.assign(options, this.options.fetchParameters);
     }
 
-    return this._buffer.add(
-      new SyncPromise<Response>((resolve, reject) => {
-        window
-          .fetch(sentryReq.url, options)
-          .then(response => {
-            const status = Status.fromHttpCode(response.status);
+    return this._buffer
+      .add(
+        () =>
+          new SyncPromise<Response>((resolve, reject) => {
+            window
+              .fetch(sentryReq.url, options)
+              .then((response) => {
+                if (response.status === 200) {
+                  resolve({ status: 'success' });
+                  return;
+                }
 
-            if (status === Status.Success) {
-              resolve({ status });
-              return;
-            }
+                if (response.status === 429) {
+                  const now = Date.now();
+                  const retryAfterHeader = response.headers.get('Retry-After');
+                  this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
+                  logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
+                }
 
-            if (status === Status.RateLimit) {
-              const now = Date.now();
-              const retryAfterHeader = response.headers.get('Retry-After');
-              this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
-              logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
-            }
-
-            reject(response);
+                reject(response);
+              })
+              .catch(reject);
           })
-          .catch(reject);
-      })
-    );
+      )
+      .then(undefined, (reason) => {
+        if (reason.message === 'Not adding Promise due to buffer limit reached.') {
+          const msg = `Dropping frontend log event due to too many requests in flight.`;
+          console.warn(msg);
+          return {
+            event,
+            reason: msg,
+            status: 'skipped',
+          };
+        }
+        throw reason;
+      });
   }
 }
 

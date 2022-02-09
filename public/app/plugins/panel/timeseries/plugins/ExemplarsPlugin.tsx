@@ -1,96 +1,84 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ArrayVector,
   DataFrame,
-  dateTimeFormat,
-  FieldType,
-  MutableDataFrame,
-  systemDateFormats,
+  DataFrameFieldIndex,
+  Field,
+  LinkModel,
   TimeZone,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { EventsCanvas, usePlotContext } from '@grafana/ui';
+import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
+import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
+import uPlot from 'uplot';
 
 interface ExemplarsPluginProps {
+  config: UPlotConfigBuilder;
   exemplars: DataFrame[];
   timeZone: TimeZone;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-// Type representing exemplars data frame fields
-interface ExemplarsDataFrameViewDTO {
-  time: number;
-  y: number;
-  text: string;
-  tags: string[];
-}
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks, config }) => {
+  const plotInstance = useRef<uPlot>();
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone }) => {
-  const plotCtx = usePlotContext();
+  useLayoutEffect(() => {
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+    });
+  }, [config]);
 
-  // TEMPORARY MOCK
-  const [exemplarsMock, setExemplarsMock] = useState<DataFrame[]>([]);
+  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+    const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+    const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
-  const timeFormatter = useCallback(
-    (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone,
-      });
-    },
-    [timeZone]
-  );
-
-  // THIS EVENT ONLY MOCKS EXEMPLAR Y VALUE!!!! TO BE REMOVED WHEN WE GET CORRECT EXEMPLARS SHAPE VIA PROPS
-  useEffect(() => {
-    if (plotCtx.isPlotReady) {
-      const mocks: DataFrame[] = [];
-
-      for (const frame of exemplars) {
-        const mock = new MutableDataFrame(frame);
-        mock.addField({
-          name: 'y',
-          type: FieldType.number,
-          values: new ArrayVector(
-            Array(frame.length)
-              .fill(0)
-              .map(() => Math.random())
-          ),
-        });
-        mocks.push(mock);
-      }
-
-      setExemplarsMock(mocks);
+    if (!time || !value || !plotInstance.current) {
+      return undefined;
     }
-  }, [plotCtx.isPlotReady, exemplars]);
 
-  const mapExemplarToXYCoords = useCallback(
-    (exemplar: ExemplarsDataFrameViewDTO) => {
-      const plotInstance = plotCtx.getPlotInstance();
+    // Filter x, y scales out
+    const yScale =
+      Object.keys(plotInstance.current.scales).find((scale) => !['x', 'y'].some((key) => key === scale)) ?? FIXED_UNIT;
 
-      if (!exemplar.time || !plotCtx.isPlotReady || !plotInstance) {
-        return undefined;
-      }
+    const yMin = plotInstance.current.scales[yScale].min;
+    const yMax = plotInstance.current.scales[yScale].max;
 
-      return {
-        x: plotInstance.valToPos(exemplar.time, 'x'),
-        // exemplar.y is a temporary mock for an examplar. This Needs to be calculated according to examplar scale!
-        y: Math.floor((exemplar.y * plotInstance.bbox.height) / window.devicePixelRatio),
-      };
-    },
-    [plotCtx.isPlotReady, plotCtx.getPlotInstance]
-  );
+    let y = value.values.get(dataFrameFieldIndex.fieldIndex);
+    // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
+    if (yMin != null && y < yMin) {
+      y = yMin;
+    }
+
+    if (yMax != null && y > yMax) {
+      y = yMax;
+    }
+
+    return {
+      x: plotInstance.current.valToPos(time.values.get(dataFrameFieldIndex.fieldIndex), 'x'),
+      y: plotInstance.current.valToPos(y, yScale),
+    };
+  }, []);
 
   const renderMarker = useCallback(
-    (exemplar: ExemplarsDataFrameViewDTO) => {
-      return <ExemplarMarker time={timeFormatter(exemplar.time)} text={exemplar.text} tags={exemplar.tags} />;
+    (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      return (
+        <ExemplarMarker
+          timeZone={timeZone}
+          getFieldLinks={getFieldLinks}
+          dataFrame={dataFrame}
+          dataFrameFieldIndex={dataFrameFieldIndex}
+          config={config}
+        />
+      );
     },
-    [timeFormatter]
+    [config, timeZone, getFieldLinks]
   );
 
   return (
-    <EventsCanvas<ExemplarsDataFrameViewDTO>
+    <EventsCanvas
+      config={config}
       id="exemplars"
-      events={exemplarsMock}
+      events={exemplars}
       renderEventMarker={renderMarker}
       mapEventToXYCoords={mapExemplarToXYCoords}
     />

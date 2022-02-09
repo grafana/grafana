@@ -1,10 +1,10 @@
 import chalk from 'chalk';
 import commandExists from 'command-exists';
-import { promises as fs, readFileSync } from 'fs';
+import { promises as fs, readFileSync, existsSync, unlinkSync } from 'fs';
 import { prompt } from 'inquirer';
-import kebabCase from 'lodash/kebabCase';
+import { kebabCase } from 'lodash';
 import path from 'path';
-import gitPromise from 'simple-git/promise';
+import gitPromise from 'simple-git';
 import { promptConfirm, promptInput } from '../../utils/prompt';
 import { rmdir } from '../../utils/rmdir';
 import { useSpinner } from '../../utils/useSpinner';
@@ -49,8 +49,8 @@ export const getPluginId = (pluginDetails: PluginDetails) =>
 export const getPluginKeywords = (pluginDetails: PluginDetails) =>
   pluginDetails.keywords
     .split(',')
-    .map(k => k.trim())
-    .filter(k => k !== '');
+    .map((k) => k.trim())
+    .filter((k) => k !== '');
 
 export const verifyGitExists = async () => {
   return new Promise((resolve, reject) => {
@@ -177,6 +177,7 @@ export const printGrafanaTutorialsDetails = (type: PluginType) => {
   console.group();
   console.log();
   console.log(chalk.bold.yellow(`Congrats! You have just created ${PluginNames[type]}.`));
+  console.log('Please run `yarn install` to install frontend dependencies.');
   console.log();
   if (type !== 'backend-datasource-plugin') {
     console.log(`${PluginNames[type]} tutorial: ${TutorialPaths[type]}`);
@@ -188,3 +189,10 @@ export const printGrafanaTutorialsDetails = (type: PluginType) => {
   console.groupEnd();
 };
 /* eslint-enable no-console */
+
+export const removeLockFile = ({ pluginPath }: { pluginPath: string }) => {
+  const lockFilePath = path.resolve(pluginPath, 'yarn.lock');
+  if (existsSync(lockFilePath)) {
+    unlinkSync(lockFilePath);
+  }
+};

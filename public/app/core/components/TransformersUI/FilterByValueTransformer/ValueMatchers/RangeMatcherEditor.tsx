@@ -9,7 +9,7 @@ type PropNames = 'from' | 'to';
 export function rangeMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<RangeValueMatcherOptions<T>>> {
-  return ({ options, onChange, field }) => {
+  return function RangeMatcherEditor({ options, onChange, field }) {
     const { validator } = config;
     const [isInvalid, setInvalid] = useState({
       from: !validator(options.from),
@@ -49,8 +49,8 @@ export function rangeMatcherEditor<T = any>(
           invalid={isInvalid['from']}
           defaultValue={String(options.from)}
           placeholder="From"
-          onChange={event => onChangeValue(event, 'from')}
-          onBlur={event => onChangeOptions(event, 'from')}
+          onChange={(event) => onChangeValue(event, 'from')}
+          onBlur={(event) => onChangeOptions(event, 'from')}
         />
         <div className="gf-form-label">and</div>
         <Input
@@ -58,8 +58,8 @@ export function rangeMatcherEditor<T = any>(
           invalid={isInvalid['to']}
           defaultValue={String(options.to)}
           placeholder="To"
-          onChange={event => onChangeValue(event, 'to')}
-          onBlur={event => onChangeOptions(event, 'to')}
+          onChange={(event) => onChangeValue(event, 'to')}
+          onBlur={(event) => onChangeOptions(event, 'to')}
         />
       </>
     );
@@ -72,7 +72,7 @@ export const getRangeValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Rang
       name: 'Is between',
       id: ValueMatcherID.between,
       component: rangeMatcherEditor<number>({
-        validator: value => {
+        validator: (value) => {
           return !isNaN(value);
         },
       }),

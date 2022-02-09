@@ -15,17 +15,17 @@ import (
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
 
-func init() {
+func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
-	bus.AddHandler("sql", UpdateOrg)
-	bus.AddHandler("sql", UpdateOrgAddress)
+	bus.AddHandler("sql", ss.UpdateOrg)
+	bus.AddHandler("sql", ss.UpdateOrgAddress)
 	bus.AddHandler("sql", GetOrgByName)
 	bus.AddHandler("sql", SearchOrgs)
-	bus.AddHandler("sql", DeleteOrg)
+	bus.AddHandler("sql", ss.DeleteOrg)
 }
 
-func SearchOrgs(query *models.SearchOrgsQuery) error {
+func SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
 	query.Result = make([]*models.OrgDTO, 0)
 	sess := x.Table("org")
 	if query.Query != "" {
@@ -39,13 +39,16 @@ func SearchOrgs(query *models.SearchOrgsQuery) error {
 		sess.In("id", query.Ids)
 	}
 
-	sess.Limit(query.Limit, query.Limit*query.Page)
+	if query.Limit > 0 {
+		sess.Limit(query.Limit, query.Limit*query.Page)
+	}
+
 	sess.Cols("id", "name")
 	err := sess.Find(&query.Result)
 	return err
 }
 
-func GetOrgById(query *models.GetOrgByIdQuery) error {
+func GetOrgById(ctx context.Context, query *models.GetOrgByIdQuery) error {
 	var org models.Org
 	exists, err := x.Id(query.Id).Get(&org)
 	if err != nil {
@@ -60,7 +63,7 @@ func GetOrgById(query *models.GetOrgByIdQuery) error {
 	return nil
 }
 
-func GetOrgByName(query *models.GetOrgByNameQuery) error {
+func GetOrgByName(ctx context.Context, query *models.GetOrgByNameQuery) error {
 	var org models.Org
 	exists, err := x.Where("name=?", query.Name).Get(&org)
 	if err != nil {
@@ -151,7 +154,7 @@ func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, 
 	return createOrg(name, userID, ss.engine)
 }
 
-func CreateOrg(cmd *models.CreateOrgCommand) error {
+func CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
 	org, err := createOrg(cmd.Name, cmd.UserId, x)
 	if err != nil {
 		return err
@@ -161,8 +164,8 @@ func CreateOrg(cmd *models.CreateOrgCommand) error {
 	return nil
 }
 
-func UpdateOrg(cmd *models.UpdateOrgCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
@@ -194,8 +197,8 @@ func UpdateOrg(cmd *models.UpdateOrgCommand) error {
 	})
 }
 
-func UpdateOrgAddress(cmd *models.UpdateOrgAddressCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		org := models.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -221,8 +224,8 @@ func UpdateOrgAddress(cmd *models.UpdateOrgAddressCommand) error {
 	})
 }
 
-func DeleteOrg(cmd *models.DeleteOrgCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -238,6 +241,17 @@ func DeleteOrg(cmd *models.DeleteOrgCommand) error {
 			"DELETE FROM org_user WHERE org_id = ?",
 			"DELETE FROM org WHERE id = ?",
 			"DELETE FROM temp_user WHERE org_id = ?",
+			"DELETE FROM ngalert_configuration WHERE org_id = ?",
+			"DELETE FROM alert_configuration WHERE org_id = ?",
+			"DELETE FROM alert_instance WHERE rule_org_id = ?",
+			"DELETE FROM alert_notification WHERE org_id = ?",
+			"DELETE FROM alert_notification_state WHERE org_id = ?",
+			"DELETE FROM alert_rule WHERE org_id = ?",
+			"DELETE FROM alert_rule_tag WHERE EXISTS (SELECT 1 FROM alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+			"DELETE FROM alert_rule_version WHERE rule_org_id = ?",
+			"DELETE FROM alert WHERE org_id = ?",
+			"DELETE FROM annotation WHERE org_id = ?",
+			"DELETE FROM kv_store WHERE org_id = ?",
 		}
 
 		for _, sql := range deletes {

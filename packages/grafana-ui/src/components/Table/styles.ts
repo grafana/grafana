@@ -1,19 +1,18 @@
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { styleMixins, stylesFactory } from '../../themes';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { getScrollbarWidth } from '../../utils';
 
-export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
-  const { palette, colors } = theme;
-  const headerBg = theme.colors.bg2;
-  const borderColor = theme.colors.border1;
-  const resizerColor = theme.isLight ? palette.blue95 : palette.blue77;
+export const getTableStyles = (theme: GrafanaTheme2) => {
+  const { colors } = theme;
+  const headerBg = theme.colors.background.secondary;
+  const borderColor = theme.colors.border.weak;
+  const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
-  const lineHeight = theme.typography.lineHeight.md;
+  const lineHeight = theme.typography.body.lineHeight;
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
-  const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
-  const scollbarWidth = getScrollbarWidth();
+  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
+  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string) => {
     return css`
@@ -26,25 +25,26 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
 
       ${color ? `color: ${color};` : ''};
       ${background ? `background: ${background};` : ''};
+      background-clip: padding-box;
 
-      &:last-child {
+      &:last-child:not(:only-child) {
         border-right: none;
-
-        > div {
-          padding-right: ${scollbarWidth + cellPadding}px;
-        }
+        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
         overflow: visible;
         width: auto !important;
-        box-shadow: 0 0 2px ${theme.colors.formFocusOutline};
+        box-shadow: 0 0 2px ${theme.colors.primary.main};
         background: ${background ?? rowHoverBg};
         z-index: 1;
 
         .cell-filter-actions  {
           display: inline-flex;
         }
+      }
+      a {
+        color: inherit;
       }
     `;
   };
@@ -54,6 +54,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
+    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
     rowHeight: cellHeight + 2,
     table: css`
@@ -70,12 +71,20 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${headerBg};
       position: relative;
     `,
+    tfoot: css`
+      label: tfoot;
+      height: ${cellHeight}px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: ${headerBg};
+      position: relative;
+    `,
     headerCell: css`
       padding: ${cellPadding}px;
       overflow: hidden;
       white-space: nowrap;
-      color: ${colors.textBlue};
-      border-right: 1px solid ${theme.colors.panelBg};
+      color: ${colors.primary.text};
+      border-right: 1px solid ${theme.colors.border.weak};
       display: flex;
 
       &:last-child {
@@ -83,16 +92,18 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     headerCellLabel: css`
+      border: none;
+      padding: 0;
+      background: inherit;
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       display: flex;
-      margin-right: ${theme.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
     `,
     cellContainer: buildCellContainerStyle(),
     cellText: css`
-      cursor: text;
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
@@ -106,6 +117,12 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       white-space: nowrap;
       text-decoration: underline;
     `,
+    imageCellLink: css`
+      cursor: pointer;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    `,
     headerFilter: css`
       label: headerFilter;
       cursor: pointer;
@@ -116,6 +133,10 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
 
       &:hover {
         background-color: ${rowHoverBg};
+      }
+
+      &:last-child {
+        border-bottom: 0;
       }
     `,
     imageCell: css`
@@ -134,7 +155,6 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       right: -4px;
       border-radius: 3px;
       top: 0;
-      z-index: ${theme.zIndex.dropdown};
       touch-action: none;
 
       &:hover {
@@ -148,16 +168,27 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
         justify-content: flex-end;
         flex-grow: 1;
         opacity: 0.6;
-        padding-left: ${theme.spacing.xxs};
+        padding-left: ${theme.spacing(0.25)};
       `,
       'cell-filter-actions'
     ),
     filterItem: css`
       label: filterItem;
       cursor: pointer;
-      padding: 0 ${theme.spacing.xxs};
+      padding: 0 ${theme.spacing(0.025)};
+    `,
+    typeIcon: css`
+      margin-right: ${theme.spacing(1)};
+      color: ${theme.colors.text.secondary};
+    `,
+    noData: css`
+      align-items: center;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+      width: 100%;
     `,
   };
-});
+};
 
 export type TableStyles = ReturnType<typeof getTableStyles>;

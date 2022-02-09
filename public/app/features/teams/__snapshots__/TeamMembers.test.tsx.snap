@@ -9,23 +9,18 @@ exports[`Render should render component 1`] = `
       className="gf-form gf-form--grow"
     >
       <FilterInput
-        inputClassName="gf-form-input"
-        labelClassName="gf-form--has-input-icon gf-form--grow"
         onChange={[Function]}
         placeholder="Search members"
         value=""
       />
     </div>
-    <div
-      className="page-action-bar__spacer"
-    />
-    <button
-      className="btn btn-primary pull-right"
+    <Button
+      className="pull-right"
       disabled={false}
       onClick={[Function]}
     >
       Add member
-    </button>
+    </Button>
   </div>
   <SlideDown
     in={false}
@@ -33,22 +28,21 @@ exports[`Render should render component 1`] = `
     <div
       className="cta-form"
     >
-      <button
-        className="cta-form__close btn btn-transparent"
+      <CloseButton
+        aria-label="Close 'Add team member' dialogue"
         onClick={[Function]}
+      />
+      <Label
+        htmlFor="user-picker"
       >
-        <Icon
-          name="times"
-        />
-      </button>
-      <h5>
         Add team member
-      </h5>
+      </Label>
       <div
         className="gf-form-inline"
       >
         <UserPicker
           className="min-width-30"
+          inputId="user-picker"
           onSelected={[Function]}
         />
       </div>
@@ -103,23 +97,18 @@ exports[`Render should render team members 1`] = `
       className="gf-form gf-form--grow"
     >
       <FilterInput
-        inputClassName="gf-form-input"
-        labelClassName="gf-form--has-input-icon gf-form--grow"
         onChange={[Function]}
         placeholder="Search members"
         value=""
       />
     </div>
-    <div
-      className="page-action-bar__spacer"
-    />
-    <button
-      className="btn btn-primary pull-right"
+    <Button
+      className="pull-right"
       disabled={false}
       onClick={[Function]}
     >
       Add member
-    </button>
+    </Button>
   </div>
   <SlideDown
     in={false}
@@ -127,22 +116,21 @@ exports[`Render should render team members 1`] = `
     <div
       className="cta-form"
     >
-      <button
-        className="cta-form__close btn btn-transparent"
+      <CloseButton
+        aria-label="Close 'Add team member' dialogue"
         onClick={[Function]}
+      />
+      <Label
+        htmlFor="user-picker"
       >
-        <Icon
-          name="times"
-        />
-      </button>
-      <h5>
         Add team member
-      </h5>
+      </Label>
       <div
         className="gf-form-inline"
       >
         <UserPicker
           className="min-width-30"
+          inputId="user-picker"
           onSelected={[Function]}
         />
       </div>

@@ -10,14 +10,18 @@ import {
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
+  FieldType,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
+  NumericRange,
   PanelProps,
 } from '@grafana/data';
 
 import { config } from 'app/core/config';
 import { StatPanelOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { findNumericFieldMinMax } from '@grafana/data/src/field/fieldOverrides';
+import { isNumber } from 'lodash';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   renderComponent = (
@@ -45,7 +49,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         text={options.text}
         width={width}
         height={height}
-        theme={config.theme}
+        theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
       />
@@ -69,8 +73,8 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
-          {api => {
+        <DataLinksContextMenu links={getLinks} config={value.field}>
+          {(api) => {
             return this.renderComponent(valueProps, api);
           }}
         </DataLinksContextMenu>
@@ -83,11 +87,33 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
 
+    let globalRange: NumericRange | undefined = undefined;
+
+    for (let frame of data.series) {
+      for (let field of frame.fields) {
+        let { config } = field;
+        // mostly copied from fieldOverrides, since they are skipped during streaming
+        // Set the Min/Max value automatically
+        if (field.type === FieldType.number) {
+          if (field.state?.range) {
+            continue;
+          }
+          if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
+            globalRange = findNumericFieldMinMax(data.series);
+          }
+          const min = config.min ?? globalRange!.min;
+          const max = config.max ?? globalRange!.max;
+          field.state = field.state ?? {};
+          field.state.range = { min, max, delta: max! - min! };
+        }
+      }
+    }
+
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,

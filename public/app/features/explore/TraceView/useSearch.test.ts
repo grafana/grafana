@@ -1,12 +1,12 @@
 import { act, renderHook } from '@testing-library/react-hooks';
 import { useSearch } from './useSearch';
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 describe('useSearch', () => {
   it('returns matching span IDs', async () => {
     const { result } = renderHook(() =>
       useSearch([
-        ({
+        {
           spanID: 'span1',
           operationName: 'operation1',
           process: {
@@ -15,9 +15,9 @@ describe('useSearch', () => {
           },
           tags: [],
           logs: [],
-        } as unknown) as TraceSpan,
+        } as unknown as TraceSpan,
 
-        ({
+        {
           spanID: 'span2',
           operationName: 'operation2',
           process: {
@@ -26,7 +26,7 @@ describe('useSearch', () => {
           },
           tags: [],
           logs: [],
-        } as unknown) as TraceSpan,
+        } as unknown as TraceSpan,
       ])
     );
 

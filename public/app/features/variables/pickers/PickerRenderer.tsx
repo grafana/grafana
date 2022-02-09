@@ -8,7 +8,7 @@ interface Props {
   variable: VariableModel;
 }
 
-export const PickerRenderer: FunctionComponent<Props> = props => {
+export const PickerRenderer: FunctionComponent<Props> = (props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
 
   if (!props.variable) {
@@ -37,7 +37,8 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
-          aria-label={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+          htmlFor={variable.id}
         >
           {labelOrName}
         </label>
@@ -48,7 +49,8 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
   return (
     <label
       className="gf-form-label gf-form-label--variable"
-      aria-label={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+      data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+      htmlFor={variable.id}
     >
       {labelOrName}
     </label>

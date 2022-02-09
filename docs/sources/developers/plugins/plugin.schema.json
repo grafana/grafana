@@ -9,7 +9,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "Schema definition for the plugin.json file"
+      "description": "Schema definition for the plugin.json file."
     },
     "id": {
       "type": "string",
@@ -32,11 +32,11 @@
     },
     "annotations": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports annotation queries."
+      "description": "For data source plugins, if the plugin supports annotation queries."
     },
     "alerting": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports alerting."
+      "description": "For data source plugins, if the plugin supports alerting."
     },
     "backend": {
       "type": "boolean",
@@ -62,6 +62,10 @@
         "type": "object",
         "additionalItems": false,
         "properties": {
+          "uid": {
+            "type": "string",
+            "description": "Unique identifier of the included resource"
+          },
           "type": {
             "type": "string",
             "enum": ["dashboard", "page", "panel", "datasource"]
@@ -98,7 +102,7 @@
     },
     "logs": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports logs."
+      "description": "For data source plugins, if the plugin supports logs."
     },
     "skipDataQuery": {
       "type": "boolean",
@@ -106,21 +110,27 @@
     },
     "metrics": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports metric queries. Used in the Explore feature."
+      "description": "For data source plugins, if the plugin supports metric queries. Used in Explore."
     },
     "streaming": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports streaming."
+      "description": "For data source plugins, if the plugin supports streaming."
     },
     "tables": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "This is an undocumented feature."
     },
     "tracing": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports tracing."
+      "description": "For data source plugins, if the plugin supports tracing."
     },
     "hiddenQueries": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "For data source plugins, include hidden queries in the data request."
+    },
+    "autoEnabled": {
+      "type": "boolean",
+      "description": "Set to true for app plugins that should be enabled by default in all orgs"
     },
     "dependencies": {
       "type": "object",
@@ -293,7 +303,7 @@
         "version": {
           "type": "string",
           "description": "Project version of this commit, e.g. `6.7.x`.",
-          "pattern": "^([0-9x]+\\.[0-9x]+\\.*[0-9x]*$|\\%VERSION\\%)"
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
         }
       }
     },
@@ -330,7 +340,7 @@
           },
           "method": {
             "type": "string",
-            "description": "For data source plugins. Route method matches the HTTP verb like GET or POST."
+            "description": "For data source plugins. Route method matches the HTTP verb like GET or POST. Multiple methods can be provided as a comma-separated list."
           },
           "url": {
             "type": "string",
@@ -346,6 +356,10 @@
             "type": "array",
             "description": "For data source plugins. Route headers adds HTTP headers to the proxied request."
           },
+          "body": {
+            "type": "object",
+            "description": "For data source plugins. Route headers set the body content and length to the proxied request."
+          },
           "tokenAuth": {
             "type": "object",
             "description": "For data source plugins. Token authentication section used with an OAuth API.",
@@ -353,34 +367,90 @@
             "properties": {
               "url": {
                 "type": "string",
-                "description": "For data source plugins. URL to fetch the authentication token.",
-                "format": "uri"
+                "description": "URL to fetch the authentication token."
+              },
+              "scopes": {
+                "type": "array",
+                "description": "The list of scopes that your application should be granted access to.",
+                "items": {
+                  "type": "string"
+                }
               },
               "params": {
                 "type": "object",
-                "description": "For data source plugins. Parameters for the token authentication request.",
+                "description": "Parameters for the token authentication request.",
                 "additionalProperties": false,
                 "properties": {
                   "grant_type": {
                     "type": "string",
-                    "description": "For data source plugins. OAuth grant type."
+                    "description": "OAuth grant type"
                   },
                   "client_id": {
                     "type": "string",
-                    "description": "For data source plugins. OAuth client id."
+                    "description": "OAuth client ID"
                   },
                   "client_secret": {
                     "type": "string",
-                    "description": "For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob."
+                    "description": "OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob."
                   },
                   "resource": {
                     "type": "string",
-                    "description": "For data source plugins. OAuth resource."
+                    "description": "OAuth resource"
+                  }
+                }
+              }
+            }
+          },
+          "jwtTokenAuth": {
+            "type": "object",
+            "description": "For data source plugins. Token authentication section used with an JWT OAuth API.",
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to fetch the JWT token.",
+                "format": "uri"
+              },
+              "scopes": {
+                "type": "array",
+                "description": "The list of scopes that your application should be granted access to.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "params": {
+                "type": "object",
+                "description": "Parameters for the JWT token authentication request.",
+                "additionalProperties": false,
+                "properties": {
+                  "token_uri": {
+                    "type": "string",
+                    "description": ""
+                  },
+                  "client_email": {
+                    "type": "string",
+                    "description": ""
+                  },
+                  "private_key": {
+                    "type": "string",
+                    "description": ""
                   }
                 }
               }
             }
           }
+        }
+      }
+    },
+    "enterpriseFeatures": {
+      "type": "object",
+      "description": "Grafana Enerprise specific features.",
+      "additionalProperties": true,
+      "properties": {
+        "healthDiagnosticsErrors": {
+          "type": "boolean",
+          "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5.",
+          "default": false
         }
       }
     }

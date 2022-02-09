@@ -1,25 +1,28 @@
-import React, { FC, useState } from 'react';
-import { Organization } from 'app/types';
+import React, { useState } from 'react';
+import { AccessControlAction, Organization } from 'app/types';
 import { Button, ConfirmModal } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 
 interface Props {
   orgs: Organization[];
   onDelete: (orgId: number) => void;
 }
 
-export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
+export function AdminOrgsTable({ orgs, onDelete }: Props) {
+  const canDeleteOrgs = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
+
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
   return (
     <table className="filter-table form-inline filter-table--hover">
       <thead>
         <tr>
-          <th>Id</th>
+          <th>ID</th>
           <th>Name</th>
           <th style={{ width: '1%' }}></th>
         </tr>
       </thead>
       <tbody>
-        {orgs.map(org => (
+        {orgs.map((org) => (
           <tr key={`${org.id}-${org.name}`}>
             <td className="link-td">
               <a href={`admin/orgs/edit/${org.id}`}>{org.id}</a>
@@ -28,7 +31,14 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
               <a href={`admin/orgs/edit/${org.id}`}>{org.name}</a>
             </td>
             <td className="text-right">
-              <Button variant="destructive" size="sm" icon="times" onClick={() => setDeleteOrg(org)} />
+              <Button
+                variant="destructive"
+                size="sm"
+                icon="times"
+                onClick={() => setDeleteOrg(org)}
+                aria-label="Delete org"
+                disabled={!canDeleteOrgs}
+              />
             </td>
           </tr>
         ))}
@@ -54,4 +64,4 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
       )}
     </table>
   );
-};
+}

@@ -12,7 +12,7 @@ json-tree {
     }
 
     &::before,
-    & > .json-tree-key {
+    > .json-tree-key {
       cursor: pointer;
     }
   }

@@ -127,14 +127,6 @@ func (a *Alert) GetTagsFromSettings() []*Tag {
 	return tags
 }
 
-type SaveAlertsCommand struct {
-	DashboardId int64
-	UserId      int64
-	OrgId       int64
-
-	Alerts []*Alert
-}
-
 type PauseAlertCommand struct {
 	OrgId       int64
 	AlertIds    []int64
@@ -208,19 +200,4 @@ type AlertStateInfoDTO struct {
 	PanelId      int64          `json:"panelId"`
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
-}
-
-// "Internal" commands
-
-type UpdateDashboardAlertsCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
-}
-
-type ValidateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
 }

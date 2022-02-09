@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
-import { Icon, ButtonSelect, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
-import { select, boolean, number } from '@storybook/addon-knobs';
-import { getIconKnob } from '../../utils/storybook/knobs';
-import kebabCase from 'lodash/kebabCase';
+import { SelectCommonProps } from './types';
+import { Meta, Story } from '@storybook/react';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
+import { auto } from '@popperjs/core';
+import { action } from '@storybook/addon-actions';
 
 export default {
   title: 'Forms/Select',
@@ -18,115 +19,115 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: [
+        'getOptionValue',
+        'getOptionLabel',
+        'formatCreateLabel',
+        'filterOption',
+        'className',
+        'components',
+        'defaultValue',
+        'id',
+        'inputId',
+        'onBlur',
+        'onChange',
+        'onCloseMenu',
+        'onCreateOption',
+        'onInputChange',
+        'onKeyDown',
+        'onOpenMenu',
+        'prefix',
+        'renderControl',
+        'options',
+        'isOptionDisabled',
+        'maxVisibleValues',
+        'aria-label',
+        'noOptionsMessage',
+        'menuPosition',
+        'isValidNewOption',
+        'value',
+      ],
+    },
   },
-};
-
-const BEHAVIOUR_GROUP = 'Behaviour props';
+  args: {
+    width: 0,
+    disabled: false,
+    isLoading: false,
+    invalid: false,
+    icon: 'arrow-down',
+  },
+  argTypes: {
+    width: { control: { type: 'range', min: 1, max: 100 } },
+    icon: {
+      control: {
+        type: 'select',
+        options: getAvailableIcons(),
+      },
+    },
+  },
+} as Meta;
 
 const loadAsyncOptions = () => {
-  return new Promise<Array<SelectableValue<string>>>(resolve => {
+  return new Promise<Array<SelectableValue<string>>>((resolve) => {
     setTimeout(() => {
       resolve(generateOptions());
     }, 2000);
   });
 };
 
-const getKnobs = () => {
-  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
-  const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
-  const loading = boolean('Loading', false, BEHAVIOUR_GROUP);
-  const prefixSuffixOpts = {
-    None: null,
-    Text: '$',
-    ...getAvailableIcons().reduce<Record<string, string>>((prev, c) => {
-      return {
-        ...prev,
-        [`Icon: ${c}`]: `icon-${c}`,
-      };
-    }, {}),
-  };
-  const VISUAL_GROUP = 'Visual options';
-  // ---
-  const prefix = select('Prefix', prefixSuffixOpts, null, VISUAL_GROUP);
-  const width = number('Width', 0, undefined, VISUAL_GROUP);
-
-  let prefixEl: any = prefix;
-  if (prefix && prefix.match(/icon-/g)) {
-    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
-  }
-
-  return {
-    width,
-    disabled,
-    invalid,
-    loading,
-    prefixEl,
-  };
+const getPrefix = (prefix: string) => {
+  const prefixEl = <Icon name={prefix as IconName} />;
+  return prefixEl;
 };
 
-const getMultiSelectKnobs = () => {
-  const isClearable = boolean('Clearable', false, BEHAVIOUR_GROUP);
-  const closeMenuOnSelect = boolean('Close on Select', false, BEHAVIOUR_GROUP);
-  const maxVisibleValues = number('Max. visible values', 5, undefined, BEHAVIOUR_GROUP);
+interface StoryProps extends Partial<SelectCommonProps<string>> {
+  icon: string;
+}
 
-  return {
-    isClearable,
-    closeMenuOnSelect,
-    maxVisibleValues,
-  };
-};
-
-const getDynamicProps = () => {
-  const knobs = getKnobs();
-  return {
-    width: knobs.width,
-    disabled: knobs.disabled,
-    isLoading: knobs.loading,
-    invalid: knobs.invalid,
-    prefix: knobs.prefixEl,
-  };
-};
-
-export const Basic = () => {
+export const Basic: Story<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
     <>
       <Select
+        menuShouldPortal
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
+          action('onChange')(v);
         }}
-        {...getDynamicProps()}
+        {...args}
       />
     </>
   );
 };
-
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const BasicSelectPlainValue = () => {
+export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
   const [value, setValue] = useState<string>();
   return (
     <>
       <Select
+        menuShouldPortal
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.value);
+          action('onChange')(v);
         }}
-        {...getDynamicProps()}
+        prefix={getPrefix(args.icon)}
+        {...args}
       />
     </>
   );
 };
-
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const SelectWithOptionDescriptions = () => {
+export const SelectWithOptionDescriptions: Story = (args) => {
   // TODO this is not working with new Select
 
   const [value, setValue] = useState<number>();
@@ -144,12 +145,15 @@ export const SelectWithOptionDescriptions = () => {
   return (
     <>
       <Select
+        menuShouldPortal
         options={options}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.value);
+          action('onChange')(v);
         }}
-        {...getDynamicProps()}
+        prefix={getPrefix(args.icon)}
+        {...args}
       />
     </>
   );
@@ -158,150 +162,189 @@ export const SelectWithOptionDescriptions = () => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const MultiPlainValue = () => {
+export const MultiPlainValue: Story = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
     <>
       <MultiSelect
+        menuShouldPortal
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.map((v: any) => v.value));
         }}
-        {...getDynamicProps()}
+        prefix={getPrefix(args.icon)}
+        {...args}
       />
     </>
   );
 };
 
-export const MultiSelectWithOptionGroups = () => {
+export const MultiSelectWithOptionGroups: Story = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
     <>
       <MultiSelect
+        menuShouldPortal
         options={[
           { label: '1', value: '1' },
           { label: '2', value: '2', options: [{ label: '5', value: '5' }] },
         ]}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v.map((v: any) => v.value));
+          action('onChange')(v);
         }}
-        {...getDynamicProps()}
+        prefix={getPrefix(args.icon)}
+        {...args}
       />
     </>
   );
 };
 
-export const MultiSelectBasic = () => {
+export const MultiSelectBasic: Story = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
 
   return (
     <>
       <MultiSelect
+        menuShouldPortal
         options={generateOptions()}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
+          action('onChange')(v);
         }}
-        {...getDynamicProps()}
-        {...getMultiSelectKnobs()}
+        prefix={getPrefix(args.icon)}
+        {...args}
       />
     </>
   );
 };
+MultiSelectBasic.args = {
+  isClearable: false,
+  closeMenuOnSelect: false,
+  maxVisibleValues: 5,
+};
 
-export const MultiSelectAsync = () => {
+export const MultiSelectAsync: Story = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 
   return (
     <AsyncMultiSelect
+      menuShouldPortal
       loadOptions={loadAsyncOptions}
       defaultOptions
       value={value}
-      onChange={v => {
+      onChange={(v) => {
         setValue(v);
+        action('onChange')(v);
       }}
-      allowCustomValue
-      {...getDynamicProps()}
+      prefix={getPrefix(args.icon)}
+      {...args}
     />
   );
 };
-export const ButtonSelectBasic = () => {
-  const [value, setValue] = useState<SelectableValue<string>>();
-  const icon = getIconKnob();
-  return (
-    <ButtonSelect
-      placeholder="Select all the things..."
-      value={value}
-      options={generateOptions()}
-      onChange={v => {
-        setValue(v);
-      }}
-      allowCustomValue
-      icon={icon}
-      {...getDynamicProps()}
-    />
-  );
+MultiSelectAsync.args = {
+  allowCustomValue: false,
 };
 
-export const BasicSelectAsync = () => {
+export const BasicSelectAsync: Story = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
     <AsyncSelect
+      menuShouldPortal
       loadOptions={loadAsyncOptions}
       defaultOptions
       value={value}
-      onChange={v => {
+      onChange={(v) => {
         setValue(v);
+        action('onChange')(v);
       }}
-      {...getDynamicProps()}
+      prefix={getPrefix(args.icon)}
+      {...args}
     />
   );
 };
 
-export const AutoMenuPlacement = () => {
+export const AutoMenuPlacement: Story = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
     <>
       <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
         <Select
+          menuShouldPortal
           options={generateOptions()}
           value={value}
-          onChange={v => {
+          onChange={(v) => {
             setValue(v);
+            action('onChange')(v);
           }}
-          {...getDynamicProps()}
+          prefix={getPrefix(args.icon)}
+          {...args}
+        />
+      </div>
+    </>
+  );
+};
+AutoMenuPlacement.args = {
+  menuPlacement: auto,
+};
+
+export const WidthAuto: Story = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <div style={{ width: '100%' }}>
+        <Select
+          menuShouldPortal
+          options={generateOptions()}
+          value={value}
+          onChange={(v) => {
+            setValue(v);
+            action('onChange')(v);
+          }}
+          prefix={getPrefix(args.icon)}
+          {...args}
+          width="auto"
         />
       </div>
     </>
   );
 };
 
-export const CustomValueCreation = () => {
+export const CustomValueCreation: Story = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
   const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
   const options = generateOptions();
   return (
     <>
       <Select
+        menuShouldPortal
         options={[...options, ...customOptions]}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
+          action('onChange')(v);
         }}
-        allowCustomValue
-        onCreateOption={v => {
-          const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };
+        allowCustomValue={args.allowCustomValue}
+        onCreateOption={(v) => {
+          const customValue: SelectableValue<string> = { value: v, label: v };
           setCustomOptions([...customOptions, customValue]);
           setValue(customValue);
+          action('onCreateOption')(v);
         }}
-        {...getDynamicProps()}
+        prefix={getPrefix(args.icon)}
+        {...args}
       />
     </>
   );
+};
+CustomValueCreation.args = {
+  allowCustomValue: true,
 };

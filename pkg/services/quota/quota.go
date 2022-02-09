@@ -5,23 +5,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ErrInvalidQuotaTarget = errors.New("invalid quota target")
 
-func init() {
-	registry.RegisterService(&QuotaService{})
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService) *QuotaService {
+	return &QuotaService{
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+	}
 }
 
 type QuotaService struct {
-	AuthTokenService models.UserTokenService `inject:""`
-	Cfg              *setting.Cfg            `inject:""`
-}
-
-func (qs *QuotaService) Init() error {
-	return nil
+	AuthTokenService models.UserTokenService
+	Cfg              *setting.Cfg
 }
 
 func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
@@ -64,8 +62,8 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target}
-			if err := bus.Dispatch(&query); err != nil {
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
+			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Used >= scope.DefaultLimit {
@@ -75,8 +73,13 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn {
 				continue
 			}
-			query := models.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
+			query := models.GetOrgQuotaByTargetQuery{
+				OrgId:                  c.OrgId,
+				Target:                 scope.Target,
+				Default:                scope.DefaultLimit,
+				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled(),
+			}
+			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -93,8 +96,8 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn || c.UserId == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
+			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
+			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -130,8 +133,16 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 		return scopes, nil
 	case "dashboard":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Dashboard},
-			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.Dashboard},
+			models.QuotaScope{
+				Name:         "global",
+				Target:       target,
+				DefaultLimit: qs.Cfg.Quota.Global.Dashboard,
+			},
+			models.QuotaScope{
+				Name:         "org",
+				Target:       target,
+				DefaultLimit: qs.Cfg.Quota.Org.Dashboard,
+			},
 		)
 		return scopes, nil
 	case "data_source":
@@ -149,6 +160,12 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 	case "session":
 		scopes = append(scopes,
 			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Session},
+		)
+		return scopes, nil
+	case "alert_rule": // target need to match the respective database name
+		scopes = append(scopes,
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.AlertRule},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.AlertRule},
 		)
 		return scopes, nil
 	default:

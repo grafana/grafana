@@ -19,6 +19,7 @@ type UserAuth struct {
 	Created           time.Time
 	OAuthAccessToken  string
 	OAuthRefreshToken string
+	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
 }
@@ -45,6 +46,10 @@ type LoginInfo struct {
 	HTTPStatus    int
 	Error         error
 }
+
+// RequestURIKey is used as key to save request URI in contexts
+// (used for the Enterprise auditing feature)
+type RequestURIKey struct{}
 
 // ---------------------
 // COMMANDS
@@ -94,8 +99,6 @@ type GetUserByAuthInfoQuery struct {
 	UserId     int64
 	Email      string
 	Login      string
-
-	Result *User
 }
 
 type GetExternalUserInfoByLoginQuery struct {
@@ -116,9 +119,4 @@ type TeamOrgGroupDTO struct {
 	TeamName string `json:"teamName"`
 	OrgName  string `json:"orgName"`
 	GroupDN  string `json:"groupDN"`
-}
-
-type GetTeamsForLDAPGroupCommand struct {
-	Groups []string
-	Result []TeamOrgGroupDTO
 }

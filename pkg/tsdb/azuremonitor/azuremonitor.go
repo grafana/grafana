@@ -2,125 +2,200 @@ package azuremonitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+)
+
+const (
+	timeSeries = "time_series"
 )
 
 var (
-	azlog           log.Logger
-	legendKeyFormat *regexp.Regexp
+	azlog           = log.New("tsdb.azuremonitor")
+	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-// AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
-type AzureMonitorExecutor struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
-}
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
+	proxy := &httpServiceProxy{}
+	executors := map[string]azDatasourceExecutor{
+		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
+		appInsights:        &ApplicationInsightsDatasource{proxy: proxy},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{proxy: proxy},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
+		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
+	}
+	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
 
-// NewAzureMonitorExecutor initializes a http client
-func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	httpClient, err := dsInfo.GetHttpClient()
-	if err != nil {
-		return nil, err
+	s := &Service{
+		im:        im,
+		executors: executors,
+		tracer:    tracer,
 	}
 
-	return &AzureMonitorExecutor{
-		httpClient: httpClient,
-		dsInfo:     dsInfo,
+	s.queryMux = s.newQueryMux()
+	s.resourceHandler = httpadapter.New(s.newResourceMux())
+
+	return s
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return s.queryMux.QueryData(ctx, req)
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(ctx, req, sender)
+}
+
+type serviceProxy interface {
+	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter
+}
+
+type Service struct {
+	im        instancemgmt.InstanceManager
+	executors map[string]azDatasourceExecutor
+
+	queryMux        *datasource.QueryTypeMux
+	resourceHandler backend.CallResourceHandler
+	tracer          tracing.Tracer
+}
+
+type azureMonitorSettings struct {
+	SubscriptionId               string `json:"subscriptionId"`
+	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
+	AppInsightsAppId             string `json:"appInsightsAppId"`
+}
+
+type datasourceInfo struct {
+	Cloud       string
+	Credentials azcredentials.AzureCredentials
+	Settings    azureMonitorSettings
+	Routes      map[string]azRoute
+	Services    map[string]datasourceService
+
+	JSONData                map[string]interface{}
+	DecryptedSecureJSONData map[string]string
+	DatasourceID            int64
+	OrgID                   int64
+}
+
+type datasourceService struct {
+	URL        string
+	HTTPClient *http.Client
+}
+
+func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
+	route := dsInfo.Routes[routeName]
+	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
+	if err != nil {
+		return datasourceService{}, err
+	}
+	return datasourceService{
+		URL:        dsInfo.Routes[routeName].URL,
+		HTTPClient: client,
 	}, nil
 }
 
-func init() {
-	azlog = log.New("tsdb.azuremonitor")
-	tsdb.RegisterTsdbQueryEndpoint("grafana-azure-monitor-datasource", NewAzureMonitorExecutor)
-	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData, err := simplejson.NewJson(settings.JSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		jsonDataObj := map[string]interface{}{}
+		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		azMonitorSettings := azureMonitorSettings{}
+		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		cloud, err := getAzureCloud(cfg, jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
+		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
+		model := datasourceInfo{
+			Cloud:                   cloud,
+			Credentials:             credentials,
+			Settings:                azMonitorSettings,
+			JSONData:                jsonDataObj,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+			DatasourceID:            settings.ID,
+			Routes:                  routes[cloud],
+			Services:                map[string]datasourceService{},
+		}
+
+		for routeName := range executors {
+			service, err := getDatasourceService(cfg, clientProvider, model, routeName)
+			if err != nil {
+				return nil, err
+			}
+			model.Services[routeName] = service
+		}
+
+		return model, nil
+	}
 }
 
-// Query takes in the frontend queries, parses them into the query format
-// expected by chosen Azure Monitor service (Azure Monitor, App Insights etc.)
-// executes the queries against the API and parses the response into
-// the right format
-func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var err error
+type azDatasourceExecutor interface {
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
+	resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
+}
 
-	var azureMonitorQueries []*tsdb.Query
-	var applicationInsightsQueries []*tsdb.Query
-	var azureLogAnalyticsQueries []*tsdb.Query
-	var insightsAnalyticsQueries []*tsdb.Query
-
-	for _, query := range tsdbQuery.Queries {
-		queryType := query.Model.Get("queryType").MustString("")
-
-		switch queryType {
-		case "Azure Monitor":
-			azureMonitorQueries = append(azureMonitorQueries, query)
-		case "Application Insights":
-			applicationInsightsQueries = append(applicationInsightsQueries, query)
-		case "Azure Log Analytics":
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
-		case "Insights Analytics":
-			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
-		default:
-			return nil, fmt.Errorf("alerting not supported for %q", queryType)
-		}
-	}
-
-	azDatasource := &AzureMonitorDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
-	}
-
-	aiDatasource := &ApplicationInsightsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
-	}
-
-	alaDatasource := &AzureLogAnalyticsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
-	}
-
-	iaDatasource := &InsightsAnalyticsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
-	}
-
-	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
+func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (datasourceInfo, error) {
+	i, err := s.im.Get(req.PluginContext)
 	if err != nil {
-		return nil, err
+		return datasourceInfo{}, err
 	}
-
-	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
+	dsInfo, ok := i.(datasourceInfo)
+	if !ok {
+		return datasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
+	dsInfo.OrgID = req.PluginContext.OrgID
+	return dsInfo, nil
+}
 
-	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
+func (s *Service) newQueryMux() *datasource.QueryTypeMux {
+	mux := datasource.NewQueryTypeMux()
+	for dsType := range s.executors {
+		// Make a copy of the string to keep the reference after the iterator
+		dst := dsType
+		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			executor := s.executors[dst]
+			dsInfo, err := s.getDataSourceFromPluginReq(req)
+			if err != nil {
+				return nil, err
+			}
+			service, ok := dsInfo.Services[dst]
+			if !ok {
+				return nil, fmt.Errorf("missing service for %s", dst)
+			}
+			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
+		})
 	}
-
-	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range aiResult.Results {
-		azResult.Results[k] = v
-	}
-
-	for k, v := range alaResult.Results {
-		azResult.Results[k] = v
-	}
-
-	for k, v := range iaResult.Results {
-		azResult.Results[k] = v
-	}
-
-	return azResult, nil
+	return mux
 }

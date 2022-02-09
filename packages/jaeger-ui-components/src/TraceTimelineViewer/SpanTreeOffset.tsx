@@ -13,18 +13,19 @@
 // limitations under the License.
 
 import React from 'react';
-import _get from 'lodash/get';
+import { get as _get } from 'lodash';
 import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
+import { GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
+import { autoColor } from '../Theme';
 
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
-
-export const getStyles = createStyle((theme: Theme) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     SpanTreeOffset: css`
       label: SpanTreeOffset;
@@ -34,7 +35,6 @@ export const getStyles = createStyle((theme: Theme) => {
     SpanTreeOffsetParent: css`
       label: SpanTreeOffsetParent;
       &:hover {
-        background-color: ${autoColor(theme, '#e8e8e8')};
         cursor: pointer;
       }
     `,
@@ -75,7 +75,7 @@ type TProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
+  theme: GrafanaTheme2;
 };
 
 export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
@@ -141,7 +141,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
     const styles = getStyles(theme);
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
-        {this.ancestorIds.map(ancestorId => (
+        {this.ancestorIds.map((ancestorId) => (
           <span
             key={ancestorId}
             className={cx(styles.indentGuide, {
@@ -149,15 +149,15 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
             })}
             data-ancestor-id={ancestorId}
             data-test-id="SpanTreeOffset--indentGuide"
-            onMouseEnter={event => this.handleMouseEnter(event, ancestorId)}
-            onMouseLeave={event => this.handleMouseLeave(event, ancestorId)}
+            onMouseEnter={(event) => this.handleMouseEnter(event, ancestorId)}
+            onMouseLeave={(event) => this.handleMouseLeave(event, ancestorId)}
           />
         ))}
         {icon && (
           <span
             className={styles.iconWrapper}
-            onMouseEnter={event => this.handleMouseEnter(event, spanID)}
-            onMouseLeave={event => this.handleMouseLeave(event, spanID)}
+            onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
+            onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
             data-test-id="icon-wrapper"
           >
             {icon}
@@ -168,4 +168,4 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
   }
 }
 
-export default withTheme(UnthemedSpanTreeOffset);
+export default withTheme2(UnthemedSpanTreeOffset);

@@ -1,19 +1,33 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"os"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 // --- Migration Guide line ---
-// 1. Never change a migration that is committed and pushed to master
+// 1. Never change a migration that is committed and pushed to main
 // 2. Always add new migrations (to change or undo previous migrations)
 // 3. Some migrations are not yet written (rename column, table, drop table, index etc)
 
-func AddMigrations(mg *Migrator) {
+type OSSMigrations struct {
+}
+
+func ProvideOSSMigrations() *OSSMigrations {
+	return &OSSMigrations{}
+}
+
+func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
 	addStarMigrations(mg)
 	addOrgMigrations(mg)
-	addDashboardMigration(mg)
+	addDashboardMigration(mg) // Do NOT add more migrations to this function.
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
@@ -27,7 +41,7 @@ func AddMigrations(mg *Migrator) {
 	addTestDataMigrations(mg)
 	addDashboardVersionMigration(mg)
 	addTeamMigrations(mg)
-	addDashboardAclMigrations(mg)
+	addDashboardAclMigrations(mg) // Do NOT add more migrations to this function.
 	addTagMigration(mg)
 	addLoginAttemptMigrations(mg)
 	addUserAuthMigrations(mg)
@@ -35,6 +49,32 @@ func AddMigrations(mg *Migrator) {
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
+	// TODO Delete when unified alerting is enabled by default unconditionally (Grafana v9)
+	if err := ualert.CheckUnifiedAlertingEnabledByDefault(mg); err != nil { // this should always go before any other ualert migration
+		mg.Logger.Error("failed to determine the status of alerting engine. Enable either legacy or unified alerting explicitly and try again", "err", err)
+		os.Exit(1)
+	}
+	ualert.AddTablesMigrations(mg)
+	ualert.AddDashAlertMigration(mg)
+	addLibraryElementsMigrations(mg)
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveConfig) {
+			addLiveChannelMigrations(mg)
+		}
+	}
+
+	ualert.RerunDashAlertMigration(mg)
+	addSecretsMigration(mg)
+	addKVStoreMigrations(mg)
+	ualert.AddDashboardUIDPanelIDMigration(mg)
+	accesscontrol.AddMigration(mg)
+	addQueryHistoryMigrations(mg)
+
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			accesscontrol.AddTeamMembershipMigrations(mg)
+		}
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

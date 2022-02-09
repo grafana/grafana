@@ -1,11 +1,13 @@
 import React, { FC } from 'react';
-import { Button, Tooltip, Icon, Form, Input, Field, FieldSet } from '@grafana/ui';
-import { User } from 'app/types';
+import { Trans, t } from '@lingui/macro';
+import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { UserDTO } from 'app/types';
 import config from 'app/core/config';
-import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
+import { ProfileUpdateFields } from './types';
 
 export interface Props {
-  user: User;
+  user: UserDTO | null;
   isSavingUser: boolean;
   updateProfile: (payload: ProfileUpdateFields) => void;
 }
@@ -21,31 +23,57 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
     <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
       {({ register, errors }) => {
         return (
-          <FieldSet label="Edit Profile">
-            <Field label="Name" invalid={!!errors.name} error="Name is required">
-              <Input name="name" ref={register({ required: true })} placeholder="Name" defaultValue={user.name} />
-            </Field>
-            <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
+          <FieldSet label={<Trans id="user-profile.title">Edit profile</Trans>}>
+            <Field
+              label={t({ id: 'user-profile.fields.name-label', message: 'Name' })}
+              invalid={!!errors.name}
+              error={<Trans id="user-profile.fields.name-error">Name is required</Trans>}
+              disabled={disableLoginForm}
+            >
               <Input
-                name="email"
-                ref={register({ required: true })}
-                placeholder="Email"
-                defaultValue={user.email}
+                {...register('name', { required: true })}
+                id="edit-user-profile-name"
+                placeholder={t({ id: 'user-profile.fields.name-label', message: 'Name' })}
+                defaultValue={user?.name ?? ''}
                 suffix={<InputSuffix />}
               />
             </Field>
-            <Field label="Username" disabled={disableLoginForm}>
+
+            <Field
+              label={t({ id: 'user-profile.fields.email-label', message: 'Email' })}
+              invalid={!!errors.email}
+              error={<Trans id="user-profile.fields.email-error">Email is required</Trans>}
+              disabled={disableLoginForm}
+            >
               <Input
-                name="login"
-                ref={register}
-                defaultValue={user.login}
-                placeholder="Username"
+                {...register('email', { required: true })}
+                id="edit-user-profile-email"
+                placeholder={t({ id: 'user-profile.fields.email-label', message: 'Email' })}
+                defaultValue={user?.email ?? ''}
                 suffix={<InputSuffix />}
               />
             </Field>
+
+            <Field
+              label={t({ id: 'user-profile.fields.username-label', message: 'Username' })}
+              disabled={disableLoginForm}
+            >
+              <Input
+                {...register('login')}
+                id="edit-user-profile-username"
+                defaultValue={user?.login ?? ''}
+                placeholder={t({ id: 'user-profile.fields.username-label', message: 'Username' })}
+                suffix={<InputSuffix />}
+              />
+            </Field>
+
             <div className="gf-form-button-row">
-              <Button variant="primary" disabled={isSavingUser}>
-                Save
+              <Button
+                variant="primary"
+                disabled={isSavingUser}
+                data-testid={selectors.components.UserProfile.profileSaveButton}
+              >
+                <Trans id="common.save">Save</Trans>
               </Button>
             </div>
           </FieldSet>
@@ -59,7 +87,7 @@ export default UserProfileEditForm;
 
 const InputSuffix: FC = () => {
   return disableLoginForm ? (
-    <Tooltip content="Login Details Locked - managed in another system.">
+    <Tooltip content="Login details locked because they are managed in another system.">
       <Icon name="lock" />
     </Tooltip>
   ) : null;

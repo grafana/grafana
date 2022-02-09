@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -24,18 +23,7 @@ type DashboardSnapshot struct {
 	Updated time.Time
 
 	Dashboard          *simplejson.Json
-	DashboardEncrypted securedata.SecureData
-}
-
-func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {
-	if ds.DashboardEncrypted != nil {
-		decrypted, err := ds.DashboardEncrypted.Decrypt()
-		if err != nil {
-			return nil, err
-		}
-		return simplejson.NewJson(decrypted)
-	}
-	return ds.Dashboard, nil
+	DashboardEncrypted []byte
 }
 
 // DashboardSnapshotDTO without dashboard map
@@ -56,21 +44,38 @@ type DashboardSnapshotDTO struct {
 // -----------------
 // COMMANDS
 
+// swagger:model
 type CreateDashboardSnapshotCommand struct {
+	// The complete dashboard model.
+	// required:true
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	Name      string           `json:"name"`
-	Expires   int64            `json:"expires"`
+	// Snapshot name
+	// required:false
+	Name string `json:"name"`
+	// When the snapshot should expire in seconds in seconds. Default is never to expire.
+	// required:false
+	// default:0
+	Expires int64 `json:"expires"`
 
 	// these are passed when storing an external snapshot ref
+	// Save the snapshot on an external server rather than locally.
+	// required:false
+	// default: false
 	External          bool   `json:"external"`
 	ExternalUrl       string `json:"-"`
 	ExternalDeleteUrl string `json:"-"`
 
-	Key       string `json:"key"`
+	// Define the unique key. Required if `external` is `true`.
+	// required:false
+	Key string `json:"key"`
+	// Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.
+	// required:false
 	DeleteKey string `json:"deleteKey"`
 
 	OrgId  int64 `json:"-"`
 	UserId int64 `json:"-"`
+
+	DashboardEncrypted []byte `json:"-"`
 
 	Result *DashboardSnapshot
 }

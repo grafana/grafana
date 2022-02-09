@@ -44,7 +44,6 @@ aptly repo add "$REPO" /deb-repo/tmp #adds too many packages in enterprise
 echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
 echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 
-pkill gpg-agent || true
 touch /tmp/sign-this
 rm /tmp/sign-this.asc || true
 ./scripts/build/update_repo/unlock-gpg-key.sh "$GPG_PASS"

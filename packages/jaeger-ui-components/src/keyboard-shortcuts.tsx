@@ -39,7 +39,7 @@ function getInstance(): Combokeys {
 
 export function merge(callbacks: ShortcutCallbacks) {
   const inst = getInstance();
-  Object.keys(callbacks).forEach(name => {
+  Object.keys(callbacks).forEach((name) => {
     const keysHandler = callbacks[name];
     if (keysHandler) {
       inst.bind(keyboardMappings[name].binding, keysHandler);

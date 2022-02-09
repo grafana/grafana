@@ -18,7 +18,8 @@ export type ValueFormatter = (
   value: number,
   decimals?: DecimalCount,
   scaledDecimals?: DecimalCount,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  showMs?: boolean
 ) => FormattedValue;
 
 export interface ValueFormat {
@@ -45,8 +46,13 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   if (value === null) {
     return '';
   }
+
   if (value === Number.NEGATIVE_INFINITY || value === Number.POSITIVE_INFINITY) {
     return value.toLocaleString();
+  }
+
+  if (decimals === null || decimals === undefined) {
+    decimals = getDecimalsForValue(value);
   }
 
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
@@ -57,31 +63,37 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     return formatted;
   }
 
-  // If tickDecimals was specified, ensure that we have exactly that
-  // much precision; otherwise default to the value's own precision.
-  if (decimals != null) {
-    const decimalPos = formatted.indexOf('.');
-    const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
-    if (precision < decimals) {
-      return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
-    }
+  const decimalPos = formatted.indexOf('.');
+  const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
+  if (precision < decimals) {
+    return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
   }
 
   return formatted;
 }
 
-export function toFixedScaled(
-  value: number,
-  decimals: DecimalCount,
-  scaledDecimals: DecimalCount,
-  additionalDecimals: number,
-  ext?: string
-): FormattedValue {
-  if (scaledDecimals === null || scaledDecimals === undefined) {
-    return { text: toFixed(value, decimals), suffix: ext };
+function getDecimalsForValue(value: number): number {
+  const log10 = Math.floor(Math.log(Math.abs(value)) / Math.LN10);
+  let dec = -log10 + 1;
+  const magn = Math.pow(10, -dec);
+  const norm = value / magn; // norm is between 1.0 and 10.0
+
+  // special case for 2.5, requires an extra decimal
+  if (norm > 2.25) {
+    ++dec;
   }
+
+  if (value % 1 === 0) {
+    dec = 0;
+  }
+
+  const decimals = Math.max(0, dec);
+  return decimals;
+}
+
+export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
   return {
-    text: toFixed(value, scaledDecimals + additionalDecimals),
+    text: toFixed(value, decimals),
     suffix: ext,
   };
 }
@@ -99,6 +111,16 @@ export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
       return { text, suffix: ' ' + unit };
     }
     return { text };
+  };
+}
+
+export function isBooleanUnit(unit?: string) {
+  return unit && unit.startsWith('bool');
+}
+
+export function booleanValueFormatter(t: string, f: string): ValueFormatter {
+  return (value: any) => {
+    return { text: value ? t : f };
   };
 }
 
@@ -124,10 +146,6 @@ export function scaledUnits(factor: number, extArray: string[]): ValueFormatter 
       if (steps >= limit) {
         return { text: 'NA' };
       }
-    }
-
-    if (steps > 0 && scaledDecimals !== null && scaledDecimals !== undefined) {
-      decimals = scaledDecimals + 3 * steps;
     }
 
     return { text: toFixed(size, decimals), suffix: extArray[steps] };
@@ -170,7 +188,7 @@ function buildFormats() {
   }
 
   // Resolve units pointing to old IDs
-  [{ from: 'farenheit', to: 'fahrenheit' }].forEach(alias => {
+  [{ from: 'farenheit', to: 'fahrenheit' }].forEach((alias) => {
     const f = index[alias.to];
     if (f) {
       index[alias.from] = f;
@@ -192,7 +210,7 @@ export function getValueFormat(id?: string | null): ValueFormatter {
   const fmt = index[id];
 
   if (!fmt && id) {
-    const idx = id.indexOf(':');
+    let idx = id.indexOf(':');
 
     if (idx > 0) {
       const key = id.substring(0, idx);
@@ -223,6 +241,16 @@ export function getValueFormat(id?: string | null): ValueFormatter {
       if (key === 'currency') {
         return currency(sub);
       }
+
+      if (key === 'bool') {
+        idx = sub.indexOf('/');
+        if (idx >= 0) {
+          const t = sub.substring(0, idx);
+          const f = sub.substring(idx + 1);
+          return booleanValueFormatter(t, f);
+        }
+        return booleanValueFormatter(sub, '-');
+      }
     }
 
     return toFixedUnit(id);
@@ -244,10 +272,10 @@ export function getValueFormats() {
     buildFormats();
   }
 
-  return categories.map(cat => {
+  return categories.map((cat) => {
     return {
       text: cat.name,
-      submenu: cat.formats.map(format => {
+      submenu: cat.formats.map((format) => {
         return {
           text: format.name,
           value: format.id,

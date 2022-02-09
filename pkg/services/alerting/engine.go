@@ -6,54 +6,87 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	tlog "github.com/opentracing/opentracing-go/log"
-
 	"github.com/benbjohnson/clock"
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
+
+// AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
+// A subset is needed to make it easier to mock during the tests.
+type AlertStore interface {
+	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
+	GetDataSource(context.Context, *models.GetDataSourceQuery) error
+	GetDashboardUIDById(context.Context, *models.GetDashboardRefByIdQuery) error
+	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
+	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
+	SetAlertState(context.Context, *models.SetAlertStateCommand) error
+}
 
 // AlertEngine is the background process that
 // schedules alert evaluations and makes sure notifications
 // are sent.
 type AlertEngine struct {
-	RenderService rendering.Service `inject:""`
-	Bus           bus.Bus           `inject:""`
+	RenderService    rendering.Service
+	Bus              bus.Bus
+	RequestValidator models.PluginRequestValidator
+	DataService      legacydata.RequestHandler
+	Cfg              *setting.Cfg
 
-	execQueue     chan *Job
-	ticker        *Ticker
-	scheduler     scheduler
-	evalHandler   evalHandler
-	ruleReader    ruleReader
-	log           log.Logger
-	resultHandler resultHandler
+	execQueue         chan *Job
+	ticker            *Ticker
+	scheduler         scheduler
+	evalHandler       evalHandler
+	ruleReader        ruleReader
+	log               log.Logger
+	resultHandler     resultHandler
+	usageStatsService usagestats.Service
+	tracer            tracing.Tracer
+	sqlStore          AlertStore
 }
 
-func init() {
-	registry.RegisterService(&AlertEngine{})
-}
-
-// IsDisabled returns true if the alerting service is disable for this instance.
+// IsDisabled returns true if the alerting service is disabled for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	return setting.AlertingEnabled == nil || !*setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.UnifiedAlerting.IsEnabled()
 }
 
-// Init initializes the AlertingService.
-func (e *AlertEngine) Init() error {
+// ProvideAlertEngine returns a new AlertEngine.
+func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
+	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
+	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg) *AlertEngine {
+	e := &AlertEngine{
+		Cfg:               cfg,
+		RenderService:     renderer,
+		Bus:               bus,
+		RequestValidator:  requestValidator,
+		DataService:       dataService,
+		usageStatsService: usageStatsService,
+		tracer:            tracer,
+		sqlStore:          sqlStore,
+	}
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
-	e.evalHandler = NewEvalHandler()
-	e.ruleReader = newRuleReader()
+	e.evalHandler = NewEvalHandler(e.DataService)
+	e.ruleReader = newRuleReader(sqlStore)
 	e.log = log.New("alerting.engine")
-	e.resultHandler = newResultHandler(e.RenderService)
-	return nil
+	e.resultHandler = newResultHandler(e.RenderService, sqlStore, notificationService, encryptionService.GetDecryptedValue)
+
+	e.registerUsageMetrics()
+
+	return e
 }
 
 // Run starts the alerting service background process.
@@ -82,7 +115,7 @@ func (e *AlertEngine) alertingTicker(grafanaCtx context.Context) error {
 		case tick := <-e.ticker.C:
 			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
-				e.scheduler.Update(e.ruleReader.fetch())
+				e.scheduler.Update(e.ruleReader.fetch(grafanaCtx))
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
@@ -161,42 +194,45 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
-	span := opentracing.StartSpan("alert execution")
-	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
-
-	evalContext := NewEvalContext(alertCtx, job.Rule)
+	alertCtx, span := e.tracer.Start(alertCtx, "alert execution")
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.RequestValidator, e.sqlStore)
 	evalContext.Ctx = alertCtx
 
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
-				ext.Error.Set(span, true)
-				span.LogFields(
-					tlog.Error(fmt.Errorf("%v", err)),
-					tlog.String("message", "failed to execute alert rule. panic was recovered."),
-				)
-				span.Finish()
+				span.RecordError(fmt.Errorf("%v", err))
+				span.AddEvents(
+					[]string{"error", "message"},
+					[]tracing.EventValue{
+						{Str: fmt.Sprintf("%v", err)},
+						{Str: "failed to execute alert rule. panic was recovered."},
+					})
+				span.End()
 				close(attemptChan)
 			}
 		}()
 
 		e.evalHandler.Eval(evalContext)
 
-		span.SetTag("alertId", evalContext.Rule.ID)
-		span.SetTag("dashboardId", evalContext.Rule.DashboardID)
-		span.SetTag("firing", evalContext.Firing)
-		span.SetTag("nodatapoints", evalContext.NoDataFound)
-		span.SetTag("attemptID", attemptID)
+		span.SetAttributes("alertId", evalContext.Rule.ID, attribute.Key("alertId").Int64(evalContext.Rule.ID))
+		span.SetAttributes("dashboardId", evalContext.Rule.DashboardID, attribute.Key("dashboardId").Int64(evalContext.Rule.DashboardID))
+		span.SetAttributes("firing", evalContext.Firing, attribute.Key("firing").Bool(evalContext.Firing))
+		span.SetAttributes("nodatapoints", evalContext.NoDataFound, attribute.Key("nodatapoints").Bool(evalContext.NoDataFound))
+		span.SetAttributes("attemptID", attemptID, attribute.Key("attemptID").Int(attemptID))
 
 		if evalContext.Error != nil {
-			ext.Error.Set(span, true)
-			span.LogFields(
-				tlog.Error(evalContext.Error),
-				tlog.String("message", "alerting execution attempt failed"),
-			)
+			span.RecordError(evalContext.Error)
+			span.AddEvents(
+				[]string{"error", "message"},
+				[]tracing.EventValue{
+					{Str: fmt.Sprintf("%v", evalContext.Error)},
+					{Str: "alerting execution attempt failed"},
+				})
+
 			if attemptID < setting.AlertingMaxAttempts {
-				span.Finish()
+				span.End()
 				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 				attemptChan <- (attemptID + 1)
 				return
@@ -224,8 +260,32 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 			}
 		}
 
-		span.Finish()
+		span.End()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)
 	}()
+}
+
+func (e *AlertEngine) registerUsageMetrics() {
+	e.usageStatsService.RegisterMetricsFunc(func(ctx context.Context) (map[string]interface{}, error) {
+		alertingUsageStats, err := e.QueryUsageStats(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		alertingOtherCount := 0
+		metrics := map[string]interface{}{}
+
+		for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+			if e.usageStatsService.ShouldBeReported(ctx, dsType) {
+				metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+			} else {
+				alertingOtherCount += usageCount
+			}
+		}
+
+		metrics["stats.alerting.ds.other.count"] = alertingOtherCount
+
+		return metrics, nil
+	})
 }

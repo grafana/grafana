@@ -1,29 +1,35 @@
 import {
+  AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
+  ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
-  LogsDedupStrategy,
   PanelData,
 } from '@grafana/data';
 
-import { ExploreItemState, ExploreUpdateState } from 'app/types/explore';
+import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
-import { lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { toRawTimeRange } from '../utils/time';
+import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
 
-export const makeInitialUpdateState = (): ExploreUpdateState => ({
-  datasource: false,
-  queries: false,
-  range: false,
-  mode: false,
-});
+const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
+export const storeGraphStyle = (graphStyle: string): void => {
+  store.set(GRAPH_STYLE_KEY, graphStyle);
+};
+
+const loadGraphStyle = (): ExploreGraphStyle => {
+  const data = store.get(GRAPH_STYLE_KEY);
+  return toGraphStyle(data);
+};
 
 /**
  * Returns a fresh Explore area state
@@ -47,18 +53,18 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   scanning: false,
   loading: false,
   queryKeys: [],
-  urlState: null,
-  update: makeInitialUpdateState(),
-  latency: 0,
   isLive: false,
   isPaused: false,
-  urlReplaced: false,
   queryResponse: createEmptyQueryResponse(),
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  dedupStrategy: LogsDedupStrategy.none,
-  eventBridge: (null as unknown) as EventBusExtended,
+  eventBridge: null as unknown as EventBusExtended,
+  cache: [],
+  logsVolumeDataProvider: undefined,
+  logsVolumeData: undefined,
+  graphStyle: loadGraphStyle(),
+  panelsState: {},
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -69,9 +75,17 @@ export const createEmptyQueryResponse = (): PanelData => ({
 
 export async function loadAndInitDatasource(
   orgId: number,
-  datasourceName?: string
+  datasourceUid?: string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
-  const instance = await getDatasourceSrv().get(datasourceName);
+  let instance;
+  try {
+    instance = await getDatasourceSrv().get(datasourceUid);
+  } catch (error) {
+    // Falling back to the default data source in case the provided data source was not found.
+    // It may happen if last used data source or the data source provided in the URL has been
+    // removed or it is not provisioned anymore.
+    instance = await getDatasourceSrv().get();
+  }
   if (instance.init) {
     try {
       instance.init();
@@ -85,6 +99,51 @@ export async function loadAndInitDatasource(
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
+  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
   return { history, instance };
+}
+
+// recursively walks an object, removing keys where the value is undefined
+// if the resulting object is empty, returns undefined
+function pruneObject(obj: object): object | undefined {
+  let pruned = mapValues(obj, (value) => (isObject(value) ? pruneObject(value) : value));
+  pruned = omitBy<typeof pruned>(pruned, isEmpty);
+  if (isEmpty(pruned)) {
+    return undefined;
+  }
+  return pruned;
+}
+
+export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+  return {
+    // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
+    // lets just fallback instead of crashing.
+    datasource: pane.datasourceInstance?.name || '',
+    queries: pane.queries.map(clearQueryKeys),
+    range: toRawTimeRange(pane.range),
+    // don't include panelsState in the url unless a piece of state is actually set
+    panelsState: pruneObject(pane.panelsState),
+  };
+}
+
+export function createCacheKey(absRange: AbsoluteTimeRange) {
+  const params = {
+    from: absRange.from,
+    to: absRange.to,
+  };
+
+  const cacheKey = Object.entries(params)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v.toString())}`)
+    .join('&');
+  return cacheKey;
+}
+
+export function getResultsFromCache(
+  cache: Array<{ key: string; value: PanelData }>,
+  absoluteRange: AbsoluteTimeRange
+): PanelData | undefined {
+  const cacheKey = createCacheKey(absoluteRange);
+  const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
+  const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
+  return cacheValue;
 }

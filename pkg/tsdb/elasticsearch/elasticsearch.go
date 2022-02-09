@@ -2,45 +2,167 @@ package elasticsearch
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/Masterminds/semver"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-// ElasticsearchExecutor represents a handler for handling elasticsearch datasource request
-type ElasticsearchExecutor struct{}
+var eslog = log.New("tsdb.elasticsearch")
 
-var (
-	intervalCalculator tsdb.IntervalCalculator
-)
-
-// NewElasticsearchExecutor creates a new elasticsearch executor
-func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &ElasticsearchExecutor{}, nil
+type Service struct {
+	httpClientProvider httpclient.Provider
+	intervalCalculator intervalv2.Calculator
+	im                 instancemgmt.InstanceManager
 }
 
-func init() {
-	intervalCalculator = tsdb.NewIntervalCalculator(nil)
-	tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	eslog.Debug("initializing")
+
+	return &Service{
+		im:                 datasource.NewInstanceManager(newInstanceSettings()),
+		httpClientProvider: httpClientProvider,
+		intervalCalculator: intervalv2.NewCalculator(),
+	}
 }
 
-// Query handles an elasticsearch datasource request
-func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	if len(tsdbQuery.Queries) == 0 {
-		return nil, fmt.Errorf("query contains no queries")
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
+		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, tsdbQuery.TimeRange)
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
+
+	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
+	if err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
+
+	query := newTimeSeriesQuery(client, req.Queries, s.intervalCalculator)
+	return query.execute()
+}
+
+func newInstanceSettings() datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData := map[string]interface{}{}
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		httpCliOpts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, fmt.Errorf("error getting http options: %w", err)
+		}
+
+		// Set SigV4 service namespace
+		if httpCliOpts.SigV4 != nil {
+			httpCliOpts.SigV4.Service = "es"
+		}
+
+		version, err := coerceVersion(jsonData["esVersion"])
+
+		if err != nil {
+			return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
+		}
+
+		timeField, ok := jsonData["timeField"].(string)
+		if !ok {
+			return nil, errors.New("timeField cannot be cast to string")
+		}
+
+		if timeField == "" {
+			return nil, errors.New("elasticsearch time field name is required")
+		}
+
+		interval, ok := jsonData["interval"].(string)
+		if !ok {
+			interval = ""
+		}
+
+		timeInterval, ok := jsonData["timeInterval"].(string)
+		if !ok {
+			timeInterval = ""
+		}
+
+		maxConcurrentShardRequests, ok := jsonData["maxConcurrentShardRequests"].(float64)
+		if !ok {
+			maxConcurrentShardRequests = 256
+		}
+
+		includeFrozen, ok := jsonData["includeFrozen"].(bool)
+		if !ok {
+			includeFrozen = false
+		}
+
+		xpack, ok := jsonData["xpack"].(bool)
+		if !ok {
+			xpack = false
+		}
+
+		model := es.DatasourceInfo{
+			ID:                         settings.ID,
+			URL:                        settings.URL,
+			HTTPClientOpts:             httpCliOpts,
+			Database:                   settings.Database,
+			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
+			ESVersion:                  version,
+			TimeField:                  timeField,
+			Interval:                   interval,
+			TimeInterval:               timeInterval,
+			IncludeFrozen:              includeFrozen,
+			XPack:                      xpack,
+		}
+		return model, nil
+	}
+}
+
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	if tsdbQuery.Debug {
-		client.EnableDebug()
+	instance := i.(es.DatasourceInfo)
+
+	return &instance, nil
+}
+
+func coerceVersion(v interface{}) (*semver.Version, error) {
+	versionString, ok := v.(string)
+	if ok {
+		return semver.NewVersion(versionString)
 	}
 
-	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)
-	return query.execute()
+	versionNumber, ok := v.(float64)
+	if !ok {
+		return nil, fmt.Errorf("elasticsearch version %v, cannot be cast to int", v)
+	}
+
+	// Legacy version numbers (before Grafana 8)
+	// valid values were 2,5,56,60,70
+	switch int64(versionNumber) {
+	case 2:
+		return semver.NewVersion("2.0.0")
+	case 5:
+		return semver.NewVersion("5.0.0")
+	case 56:
+		return semver.NewVersion("5.6.0")
+	case 60:
+		return semver.NewVersion("6.0.0")
+	case 70:
+		return semver.NewVersion("7.0.0")
+	default:
+		return nil, fmt.Errorf("elasticsearch version=%d is not supported", int64(versionNumber))
+	}
 }

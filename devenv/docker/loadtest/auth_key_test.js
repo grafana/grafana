@@ -2,7 +2,6 @@ import { sleep, check, group } from 'k6';
 import { createClient, createBasicAuthClient, createBearerAuthClient } from './modules/client.js';
 import { createTestOrgIfNotExists, createTestdataDatasourceIfNotExists } from './modules/util.js';
 
-
 export let options = {
   noCookiesReset: true,
 };
@@ -28,7 +27,7 @@ export const setup = () => {
   };
 };
 
-export default data => {
+export default (data) => {
   client.withOrgId(data.orgId);
 
   group('API key test', () => {
@@ -37,7 +36,7 @@ export default data => {
         let res = client.datasources.getAll();
 
         check(res, {
-          'response status is 200': r => r.status === 200,
+          'response status is 200': (r) => r.status === 200,
         });
       });
     }
@@ -69,7 +68,7 @@ export default data => {
         let responses = client.batch(requests);
         for (let n = 0; n < batchCount; n++) {
           check(responses[n], {
-            'response status is 200': r => r.status === 200,
+            'response status is 200': (r) => r.status === 200,
           });
         }
       });
@@ -79,4 +78,4 @@ export default data => {
   sleep(5);
 };
 
-export const teardown = data => {};
+export const teardown = (data) => {};

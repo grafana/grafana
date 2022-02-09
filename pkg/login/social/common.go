@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
 )
@@ -67,14 +66,13 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 		err = fmt.Errorf(string(response.Body))
 		return
 	}
-
-	log.Tracef("HTTP GET %s: %s %s", url, r.Status, string(response.Body))
+	s.log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
 
 	err = nil
 	return
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (string, error) {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (interface{}, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}
@@ -93,10 +91,40 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (strin
 		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
 	}
 
+	return val, nil
+}
+
+func (s *SocialBase) searchJSONForStringAttr(attributePath string, data []byte) (string, error) {
+	val, err := s.searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return "", err
+	}
+
 	strVal, ok := val.(string)
 	if ok {
 		return strVal, nil
 	}
 
 	return "", nil
+}
+
+func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []byte) ([]string, error) {
+	val, err := s.searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return []string{}, err
+	}
+
+	ifArr, ok := val.([]interface{})
+	if !ok {
+		return []string{}, nil
+	}
+
+	result := []string{}
+	for _, v := range ifArr {
+		if strVal, ok := v.(string); ok {
+			result = append(result, strVal)
+		}
+	}
+
+	return result, nil
 }

@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
-	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 )
@@ -23,12 +21,23 @@ const (
 	TypeDatasourceNode
 )
 
+func (nt NodeType) String() string {
+	switch nt {
+	case TypeCMDNode:
+		return "Expression"
+	case TypeDatasourceNode:
+		return "Datasource"
+	default:
+		return "Unknown"
+	}
+}
+
 // Node is a node in a Data Pipeline. Node is either a expression command or a datasource query.
 type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
 	RefID() string
-	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
+	Execute(c context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 	String() string
 }
 
@@ -37,10 +46,10 @@ type DataPipeline []Node
 
 // execute runs all the command/datasource requests in the pipeline return a
 // map of the refId of the of each command
-func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
+func (dp *DataPipeline) execute(c context.Context, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
-		res, err := node.Execute(c, vars)
+		res, err := node.Execute(c, vars, s)
 		if err != nil {
 			return nil, err
 		}
@@ -52,8 +61,8 @@ func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
-	graph, err := buildDependencyGraph(req)
+func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
+	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +76,8 @@ func buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func buildDependencyGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
-	graph, err := buildGraph(req)
+func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, error) {
+	graph, err := s.buildGraph(req)
 	if err != nil {
 		return nil, err
 	}
@@ -113,37 +122,46 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
+func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
+		if query.DataSource == nil || query.DataSource.Uid == "" {
+			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
+		}
+
 		rawQueryProp := make(map[string]interface{})
-		err := json.Unmarshal(query.JSON, &rawQueryProp)
+		queryBytes, err := query.JSON.MarshalJSON()
+
 		if err != nil {
 			return nil, err
 		}
+
+		err = json.Unmarshal(queryBytes, &rawQueryProp)
+		if err != nil {
+			return nil, err
+		}
+
 		rn := &rawNode{
-			Query:     rawQueryProp,
-			RefID:     query.RefID,
-			TimeRange: query.TimeRange,
-			QueryType: query.QueryType,
+			Query:      rawQueryProp,
+			RefID:      query.RefID,
+			TimeRange:  query.TimeRange,
+			QueryType:  query.QueryType,
+			DataSource: query.DataSource,
 		}
 
-		dsName, err := rn.GetDatasourceName()
-		if err != nil {
-			return nil, err
-		}
+		var node Node
 
-		var node graph.Node
-		switch dsName {
-		case DatasourceName:
+		if IsDataSource(rn.DataSource.Uid) {
 			node, err = buildCMDNode(dp, rn)
-		default: // If it's not an expression query, it's a data source query.
-			node, err = buildDSNode(dp, rn, req.PluginContext.OrgID)
+		} else {
+			node, err = s.buildDSNode(dp, rn, req)
 		}
+
 		if err != nil {
 			return nil, err
 		}
+
 		dp.AddNode(node)
 	}
 	return dp, nil
@@ -172,6 +190,18 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 
 			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("can not add self referencing node for var '%v' ", neededVar)
+			}
+
+			if cmdNode.CMDType == TypeClassicConditions {
+				if neededNode.NodeType() != TypeDatasourceNode {
+					return fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType())
+				}
+			}
+
+			if neededNode.NodeType() == TypeCMDNode {
+				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
+					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+				}
 			}
 
 			edge := dp.NewEdge(neededNode, cmdNode)

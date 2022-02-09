@@ -25,7 +25,7 @@ export class FetchQueueWorker {
         // https://rxjs.dev/api/operators/concatMap
         concatMap(({ state, noOfInProgress }) => {
           const apiRequests = Object.keys(state)
-            .filter(k => state[k].state === FetchStatus.Pending && !isDataQuery(state[k].options.url))
+            .filter((k) => state[k].state === FetchStatus.Pending && !isDataQuery(state[k].options.url))
             .reduce((all, key) => {
               const entry = { id: key, options: state[key].options };
               all.push(entry);
@@ -33,7 +33,7 @@ export class FetchQueueWorker {
             }, [] as WorkerEntry[]);
 
           const dataRequests = Object.keys(state)
-            .filter(key => state[key].state === FetchStatus.Pending && isDataQuery(state[key].options.url))
+            .filter((key) => state[key].state === FetchStatus.Pending && isDataQuery(state[key].options.url))
             .reduce((all, key) => {
               const entry = { id: key, options: state[key].options };
               all.push(entry);

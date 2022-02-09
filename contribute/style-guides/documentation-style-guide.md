@@ -2,70 +2,77 @@
 
 This style guide applies to all documentation created for Grafana products.
 
-For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+For information about how to write technical documentation, refer to the following resources:
 
-The [Divio documentation system](https://documentation.divio.com/) site and the [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles) are also good resources.
+- [Google Technical Writing courses](https://developers.google.com/tech-writing)
+- [Divio documentation system](https://documentation.divio.com/)
+- [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles)
 
 ## Contributing
 
-The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
+The _Documentation style guide_ is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
 
 ## Published guides
 
-For all items not covered in this guide, refer to the [Microsoft Style Guide](https://docs.microsoft.com/en-us/style-guide/welcome/) and the [Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html).
+For all items that are not covered in this guide, refer to the [Google developer documentation style guide](https://developers.google.com/style) and the [Microsoft style guide](https://docs.microsoft.com/en-us/style-guide/welcome/), in that order.
 
 ## Spelling
 
-The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
+To catch common misspellings, the [codespell](https://github.com/codespell-project/codespell) tool is run for every change.
 
 ## Inclusive language
 
-This section provides guidelines on how to avoid using charged language in documentation.
+Avoid using charged language.
 
 ### Allowing and blocking
 
-Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
+When referring to _allowing_ or _blocking_ content or traffic, use a form of _allow_ or _block_:
 
-- When used as a noun, use "allowlist" or "blocklist".
-- When used as a verb, use "allow" or "block"
+- (noun) _allowlist_ or _blocklist_
+- (verb) _allow_ or _block_
 
 Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
 
-### Leader and follower
+Avoid _whitelist_ or _blacklist_.
 
-Don't use "master" or "slave" to describe relationships between nodes or processes.
+### Primary and secondary
 
-- Use "leader", "main" or "primary," instead of "master."
-- Use "follower" or "secondary," instead of "slave."
+To describe relationships between nodes or processes, there are several options:
 
-### Exceptions
+- Use _primary_, _main_, or _parent_, instead of _master_.
+- Use _secondary_, _replica_, or _child_, instead of _slave_.
 
-When referring to a configuration or settings used by third-party libraries och technologies outside the Grafana project, prefer the original name to avoid confusion.
-
-For example, use "master" when referring to the default Git branch.
+Avoid _master_ or _slave_.
 
 ## Grafana-specific style
 
-The following sections provide general guidelines on topics specific to Grafana documentation. Note that for the most part, these are *guidelines*, not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
+The following guidelines are specific to Grafana documentation. For the most part, these are _guidelines_ are not rigid rules. If you have questions, then please ask in the #docs channel of Grafana Slack.
 
 ### General
 
-- Use active voice. Avoid passive voice.
-  - Use active: Grafana displays the heatmap visualization.
-  - Avoid passive: The heatmap visualization is displayed.
-- Write directly to the reader.
+Per the [Voice and tone](https://developers.google.com/style/tone) section of the Google developer documentation style guide:
+
+> In your documents, aim for a voice and tone that's conversational, friendly, and respectful without being overly colloquial or frivolous; a voice that's casual and natural and approachable, not pedantic or pushy. Try to sound like a knowledgeable friend who understands what the developer wants to do.
+
+- Use active voice:
+  - Active: Grafana displays the heatmap visualization.
+  - Passive: The heatmap visualization is displayed.
+- Write directly to the reader:
   - Use: "After you create a dashboard, you can add a panel to it."
   - Avoid: "After you create a dashboard, it is possible to add a panel to it."
-- Write in the imperative second person. Examples: You can write a query. Click the panel. Close the window.
-- Write in present tense.
-  - Use: The panel opens. Grafana opens the panel.
-  - Not: The panel will open.
-- Do not use an ampersand (&) as an abbreviation for "and."
+- Write in the imperative second person:
+  - "Click the panel."
+  - "Close the window."
+- Write in present tense:
+  - Use: "The panel opens."
+  - Avoid: "The panel will open."
+- Do not use an ampersand (&) as an abbreviation for _and_.
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
-- Avoid using internal slang and jargon in technical documentation.
-- Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
-- Sentence length should be 25 words or less. If your thought is longer than 25 words, consider breaking up the sentence or changing the format to a list.
-- Paragraphs should be three sentences or fewer. Break up long paragraphs.
+- Avoid using internal jargon or slang.
+- Do not use two spaces after a period; use one space after a sentence.
+- Remove any extra space characters at the end of a paragraph.
+- Aim for your sentences to be fewer than 25 words. Instead, use smaller complete phrases or change the format, such as using a list.
+- Aim for paragraphs to be three sentences or fewer. Make the text more concise, use more headings, or both.
 
 ### File naming conventions
 
@@ -101,6 +108,7 @@ However, sometimes we need to use headings as numbered steps. This is mostly in 
 If that is the case, then use the following format for headings:
 
 ##### Step 1. Install the software
+
 ##### Step 2. Run the software
 
 ### Images
@@ -111,9 +119,16 @@ If that is the case, then use the following format for headings:
 - Assume all graphics will be exclusively viewed on the web.
 - Maximum image size is 3840px X 2160px.
 - Screenshots should be readable, but not too large.
-- _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
+- _Do not_ use image shortcodes. Follow the guidance in [Markdown style guide](../documentation/documentation-markdown-guide.md#Images).
 - Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 - When you name a file, follow the [file naming conventions](#file-naming-conventions). Example: image-name-7-3.png
+
+### Unordered lists
+
+Here are a few general rules about unordered lists. For more guidance, refer to [Lists](https://developers.google.com/style/lists) in the [Google developer style guide](https://developers.google.com/style/).
+
+- List items should begin with a capital letter unless there is a strong reason not to. For example, you are listing case-sensitive parameters.
+- List items should end with periods if they are complete sentences. If one item in a list ends with a period, then apply periods to all of them.
 
 ### Capitalization
 
@@ -139,10 +154,23 @@ In general, "integration" is not capitalized. Only capitalize it if it is capita
 The first letter of the name of an integration is always capitalized, even if the original named source is lowercase.
 
 **Examples:**
+
 - MySQL Integration
 - CockroachDB Integration
 - Etcd Integration
 - I installed an integration on my local Grafana.
+
+#### Kubernetes objects
+
+Capitalize Kubernetes objects such as Job, Pod, and StatefulSet when it is clear you are specifically talking about them and not generic jobs, pods, or whatever.
+
+Introduce the object as "Kubernetes XX" on the first usage, then just the object in subsequent uses.
+
+**Example:**
+
+Create the Kubernetes Job and check the logs to retrieve the generated token:
+
+The Job requires the token be submitted as …
 
 ### Links and references
 
@@ -190,16 +218,20 @@ Warnings tell the user not to do something. For example:
 - Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
 
 - Do not add `$` before commands. Make it easy for users to copy and paste commands.
+
   - **Right:** `sudo yum install grafana`
   - **Wrong:** `$ sudo yum install grafana`
 
 - Include `sudo` before commands that require `sudo` to work.
 
 For terminal examples and Grafana configuration, use a `bash` code block:
+
 ```bash
 sudo yum install grafana
 ```
+
 For HTTP request/response, use an `http` code block:
+
 ```http
 GET /api/dashboards/id/1/permissions HTTP/1.1
 Accept: application/json
@@ -237,6 +269,7 @@ Two words if used as a verb, one word if used as a noun.
 Two words, not one.
 
 **Exceptions:**
+
 - "datasource" used as an identifier
 - "datasource" in a URL
 - Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
@@ -245,7 +278,8 @@ Two words, not one.
 
 #### display (verb)
 
-*Display* is a transitive verb, which means it always needs a direct object.
+_Display_ is a transitive verb, which means it always needs a direct object.
+
 - Correct, active voice: Grafana displays your list of active alarms.
 - Correct, but passive voice: Your list of active alarms is displayed.
 - Incorrect: The list of active alarms displays.
@@ -272,6 +306,15 @@ Do not hyphenate when used as an adjective unless the lack of hyphen would cause
 
 Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
 
+#### plugin, plug in
+
+Two words if used as a verb, one word if used as a noun. Do not use _plug-in_.
+
+**Examples**
+
+- Plug in the appliance.
+- Download the plugin.
+
 #### setup, set up
 
 Two words if used as a verb, one word if used as a noun.
@@ -281,14 +324,22 @@ Two words if used as a verb, one word if used as a noun.
 - Set up the workspace.
 - Initial setup might take five minutes.
 
-### node_exporter, windows_exporter
+#### node_exporter, windows_exporter
 
 When referencing the Prometheus data source exporters, always use "node_exporter" and "windows_exporter" when referring to those tools.
 
 **Correct:** node_exporter, windows_exporter
 **Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
 
+#### web server
+
+Two words, not one.
+
+**Correct:** web server
+**Incorrect:** webserver
+
 ### MS SQL Server
+
 Always use "MS SQL" when referring to MS SQL Server application.
 
 Incorrect UI spellings will be corrected in a later version of Grafana.

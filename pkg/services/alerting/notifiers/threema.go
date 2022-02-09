@@ -1,14 +1,16 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -19,7 +21,7 @@ func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "threema",
 		Name:        "Threema Gateway",
-		Description: "Sends notifications to Threema using the Threema Gateway",
+		Description: "Sends notifications to Threema using Threema Gateway (Basic IDs)",
 		Heading:     "Threema Gateway settings",
 		Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
 			"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
@@ -30,7 +32,7 @@ func init() {
 				Element:        alerting.ElementTypeInput,
 				InputType:      alerting.InputTypeText,
 				Placeholder:    "*3MAGWID",
-				Description:    "Your 8 character Threema Gateway ID (starting with a *).",
+				Description:    "Your 8 character Threema Gateway Basic ID (starting with a *).",
 				PropertyName:   "gateway_id",
 				Required:       true,
 				ValidationRule: "\\*[0-9A-Z]{7}",
@@ -69,14 +71,14 @@ type ThreemaNotifier struct {
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewThreemaNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
 
 	gatewayID := model.Settings.Get("gateway_id").MustString()
 	recipientID := model.Settings.Get("recipient_id").MustString()
-	apiSecret := model.DecryptedValue("api_secret", model.Settings.Get("api_secret").MustString())
+	apiSecret := fn(context.Background(), model.SecureSettings, "api_secret", model.Settings.Get("api_secret").MustString(), setting.SecretKey)
 
 	// Validation
 	if gatewayID == "" {
@@ -99,7 +101,7 @@ func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	}
 
 	return &ThreemaNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		GatewayID:    gatewayID,
 		RecipientID:  recipientID,
 		APISecret:    apiSecret,
@@ -156,7 +158,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 		HttpMethod: "POST",
 		HttpHeader: headers,
 	}
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := notifier.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		notifier.log.Error("Failed to send webhook", "error", err, "webhook", notifier.Name)
 		return err
 	}

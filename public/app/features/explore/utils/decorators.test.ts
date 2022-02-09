@@ -1,12 +1,10 @@
-jest.mock('@grafana/data/src/datetime/formatter', () => ({
-  dateTimeFormat: () => 'format() jest mocked',
-  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
-}));
-
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { lastValueFrom } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
   DataQueryRequest,
+  FieldColorModeId,
   FieldType,
   LoadingState,
   PanelData,
@@ -15,14 +13,19 @@ import {
 } from '@grafana/data';
 
 import {
-  decorateWithGraphLogsTraceAndTable,
+  decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
   decorateWithTableResult,
 } from './decorators';
-import { describe } from '../../../../test/lib/common';
 import { ExplorePanelData } from 'app/types';
 import TableModel from 'app/core/table_model';
+
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
+  dateTimeFormat: () => 'format() jest mocked',
+  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+}));
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({
@@ -69,15 +72,16 @@ const getTestContext = () => {
 const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelData => {
   const defaults: ExplorePanelData = {
     series: [],
-    timeRange: ({} as unknown) as TimeRange,
+    timeRange: {} as unknown as TimeRange,
     state: LoadingState.Done,
     graphFrames: [],
-    graphResult: (undefined as unknown) as null,
+    graphResult: undefined as unknown as null,
     logsFrames: [],
-    logsResult: (undefined as unknown) as null,
+    logsResult: undefined as unknown as null,
     tableFrames: [],
-    tableResult: (undefined as unknown) as null,
+    tableResult: undefined as unknown as null,
     traceFrames: [],
+    nodeGraphFrames: [],
   };
 
   return { ...defaults, ...args };
@@ -90,10 +94,10 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
-      timeRange: ({} as unknown) as TimeRange,
+      timeRange: {} as unknown as TimeRange,
     };
 
-    expect(decorateWithGraphLogsTraceAndTable(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
       state: LoadingState.Done,
       timeRange: {},
@@ -101,6 +105,7 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       tableFrames: [table, emptyTable],
       logsFrames: [logs],
       traceFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -112,10 +117,10 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
-      timeRange: ({} as unknown) as TimeRange,
+      timeRange: {} as unknown as TimeRange,
     };
 
-    expect(decorateWithGraphLogsTraceAndTable(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [],
       state: LoadingState.Done,
       timeRange: {},
@@ -123,31 +128,33 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
       tableFrames: [],
       logsFrames: [],
       traceFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
     });
   });
 
-  it('should handle query error', () => {
+  it('should return frames even if there is an error', () => {
     const { timeSeries, logs, table } = getTestContext();
     const series: DataFrame[] = [timeSeries, logs, table];
     const panelData: PanelData = {
       series,
       error: {},
       state: LoadingState.Error,
-      timeRange: ({} as unknown) as TimeRange,
+      timeRange: {} as unknown as TimeRange,
     };
 
-    expect(decorateWithGraphLogsTraceAndTable(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [timeSeries, logs, table],
       error: {},
       state: LoadingState.Error,
       timeRange: {},
-      graphFrames: [],
-      tableFrames: [],
-      logsFrames: [],
+      graphFrames: [timeSeries],
+      tableFrames: [table],
+      logsFrames: [logs],
       traceFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -159,37 +166,7 @@ describe('decorateWithGraphResult', () => {
   it('should process the graph dataFrames', () => {
     const { timeSeries } = getTestContext();
     const panelData = createExplorePanelData({ graphFrames: [timeSeries] });
-    console.log(decorateWithGraphResult(panelData).graphResult);
-    expect(decorateWithGraphResult(panelData).graphResult).toMatchObject([
-      {
-        label: 'A-series',
-        data: [
-          [100, 4],
-          [200, 5],
-          [300, 6],
-        ],
-        isVisible: true,
-        yAxis: {
-          index: 1,
-        },
-        seriesIndex: 0,
-        timeStep: 100,
-      },
-      {
-        label: 'B-series',
-        data: [
-          [100, 7],
-          [200, 8],
-          [300, 9],
-        ],
-        isVisible: true,
-        yAxis: {
-          index: 1,
-        },
-        seriesIndex: 1,
-        timeStep: 100,
-      },
-    ]);
+    expect(decorateWithGraphResult(panelData).graphResult).toMatchObject([timeSeries]);
   });
 
   it('returns null if it gets empty array', () => {
@@ -197,10 +174,10 @@ describe('decorateWithGraphResult', () => {
     expect(decorateWithGraphResult(panelData).graphResult).toBeNull();
   });
 
-  it('returns null if panelData has error', () => {
+  it('returns data if panelData has error', () => {
     const { timeSeries } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, graphFrames: [timeSeries] });
-    expect(decorateWithGraphResult(panelData).graphResult).toBeNull();
+    expect(decorateWithGraphResult(panelData).graphResult).toMatchObject([timeSeries]);
   });
 });
 
@@ -208,7 +185,7 @@ describe('decorateWithTableResult', () => {
   it('should process table type dataFrame', async () => {
     const { table, emptyTable } = getTestContext();
     const panelData = createExplorePanelData({ tableFrames: [table, emptyTable] });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
 
     let theResult = panelResult.tableResult;
 
@@ -265,7 +242,7 @@ describe('decorateWithTableResult', () => {
       }),
     ];
     const panelData = createExplorePanelData({ tableFrames });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     const result = panelResult.tableResult;
 
     expect(result?.fields[0].name).toBe('Time');
@@ -288,28 +265,28 @@ describe('decorateWithTableResult', () => {
     tableFrames[0].fields[0].display = displayFunctionMock;
 
     const panelData = createExplorePanelData({ tableFrames });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     expect(panelResult.tableResult?.fields[0].display).toBe(displayFunctionMock);
   });
 
   it('should return null when passed empty array', async () => {
     const panelData = createExplorePanelData({ tableFrames: [] });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     expect(panelResult.tableResult).toBeNull();
   });
 
-  it('returns null if panelData has error', async () => {
+  it('returns data if panelData has error', async () => {
     const { table, emptyTable } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, tableFrames: [table, emptyTable] });
-    const panelResult = await decorateWithTableResult(panelData).toPromise();
-    expect(panelResult.tableResult).toBeNull();
+    const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
+    expect(panelResult.tableResult).not.toBeNull();
   });
 });
 
 describe('decorateWithLogsResult', () => {
   it('should correctly transform logs dataFrames', () => {
     const { logs } = getTestContext();
-    const request = ({ timezone: 'utc', intervalMs: 60000 } as unknown) as DataQueryRequest;
+    const request = { timezone: 'utc', intervalMs: 60000 } as unknown as DataQueryRequest;
     const panelData = createExplorePanelData({ logsFrames: [logs], request });
     expect(decorateWithLogsResult()(panelData).logsResult).toEqual({
       hasUniqueLabels: false,
@@ -321,6 +298,7 @@ describe('decorateWithLogsResult', () => {
           entry: 'this is a message',
           entryFieldIndex: 3,
           hasAnsi: false,
+          hasUnescapedContent: false,
           labels: {},
           logLevel: 'unknown',
           raw: 'this is a message',
@@ -339,6 +317,7 @@ describe('decorateWithLogsResult', () => {
           entry: 'third',
           entryFieldIndex: 3,
           hasAnsi: false,
+          hasUnescapedContent: false,
           labels: {},
           logLevel: 'unknown',
           raw: 'third',
@@ -357,6 +336,7 @@ describe('decorateWithLogsResult', () => {
           entry: 'second message',
           entryFieldIndex: 3,
           hasAnsi: false,
+          hasUnescapedContent: false,
           labels: {},
           logLevel: 'unknown',
           raw: 'second message',
@@ -372,35 +352,38 @@ describe('decorateWithLogsResult', () => {
       ],
       series: [
         {
-          label: 'unknown',
-          color: '#8e8e8e',
-          data: [[0, 3]],
-          isVisible: true,
-          yAxis: {
-            index: 1,
-            min: 0,
-            tickDecimals: 0,
-          },
-          seriesIndex: 0,
-          timeField: {
-            name: 'Time',
-            type: 'time',
-            config: {},
-            values: new ArrayVector([0]),
-            index: 0,
-            display: expect.anything(),
-          },
-          valueField: {
-            name: 'unknown',
-            type: 'number',
-            config: { unit: undefined, color: '#8e8e8e' },
-            values: new ArrayVector([3]),
-            labels: undefined,
-            index: 1,
-            display: expect.anything(),
-            state: expect.anything(),
-          },
-          timeStep: 0,
+          name: 'unknown',
+          length: 1,
+          fields: [
+            { name: 'Time', type: 'time', values: new ArrayVector([0]), config: {} },
+            {
+              name: 'Value',
+              type: 'number',
+              labels: undefined,
+              values: new ArrayVector([3]),
+              config: {
+                color: {
+                  fixedColor: '#8e8e8e',
+                  mode: FieldColorModeId.Fixed,
+                },
+                min: 0,
+                decimals: 0,
+                unit: undefined,
+                custom: {
+                  drawStyle: GraphDrawStyle.Bars,
+                  barAlignment: 0,
+                  barMaxWidth: 5,
+                  barWidthFactor: 0.9,
+                  lineColor: '#8e8e8e',
+                  fillColor: '#8e8e8e',
+                  pointColor: '#8e8e8e',
+                  lineWidth: 0,
+                  fillOpacity: 100,
+                  stacking: { mode: StackingMode.Normal, group: 'A' },
+                },
+              },
+            },
+          ],
         },
       ],
       visibleRange: undefined,
@@ -412,9 +395,9 @@ describe('decorateWithLogsResult', () => {
     expect(decorateWithLogsResult()(panelData).logsResult).toBeNull();
   });
 
-  it('returns null if panelData has error', () => {
+  it('returns data if panelData has error', () => {
     const { logs } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, logsFrames: [logs] });
-    expect(decorateWithLogsResult()(panelData).logsResult).toBeNull();
+    expect(decorateWithLogsResult()(panelData).logsResult).not.toBeNull();
   });
 });

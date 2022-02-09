@@ -1,8 +1,8 @@
-define([], function() {
+define([], function () {
   'use strict';
 
   return {
-    create: function() {
+    create: function () {
       return {
         title: '',
         tags: [],

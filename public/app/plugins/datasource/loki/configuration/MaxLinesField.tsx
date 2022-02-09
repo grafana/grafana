@@ -19,7 +19,7 @@ export const MaxLinesField = (props: Props) => {
           type="number"
           className="gf-form-input width-8 gf-form-input--has-help-icon"
           value={value}
-          onChange={event => onChange(event.currentTarget.value)}
+          onChange={(event) => onChange(event.currentTarget.value)}
           spellCheck={false}
           placeholder="1000"
         />

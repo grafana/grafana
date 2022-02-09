@@ -1,0 +1,22 @@
+{
+    "grafana_managed_receiver": {
+        "uid": "alertmanager UID",
+        "name": "an alert manager receiver",
+        "type": "prometheus-alertmanager",
+        "isDefault": false,
+        "sendReminder": false,
+        "disableResolveMessage": false,
+        "frequency": "5m",
+        "settings": {
+            "autoResolve": true,
+            "basicAuthUser": "user",
+            "httpMethod": "POST",
+            "severity": "critical",
+            "uploadImage": false,
+            "url": "http://localhost:9093"
+        },
+        "secureSettings": {
+            "basicAuthPassword": "<basicAuthPassword>"
+        }
+    }
+}

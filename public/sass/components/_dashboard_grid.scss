@@ -1,5 +1,5 @@
-@import '~react-grid-layout/css/styles.css';
-@import '~react-resizable/css/styles.css';
+@import 'react-grid-layout/css/styles.css';
+@import 'react-resizable/css/styles.css';
 
 .react-resizable-handle {
   // this needs to use visibility and not display none in order not to cause resize flickering
@@ -7,6 +7,8 @@
 }
 
 .react-grid-item {
+  touch-action: initial !important;
+
   &:hover {
     .react-resizable-handle {
       visibility: visible;
@@ -15,10 +17,6 @@
 }
 
 .panel-in-fullscreen {
-  .react-grid-layout {
-    height: 90% !important;
-  }
-
   .react-grid-item {
     display: none !important;
     transition-property: none !important;
@@ -26,8 +24,6 @@
     &--fullscreen {
       display: block !important;
       position: unset !important;
-      width: 100% !important;
-      height: 100% !important;
       transform: translate(0px, 0px) !important;
     }
   }
@@ -52,15 +48,10 @@
 }
 
 @include media-breakpoint-down(sm) {
-  .react-grid-layout {
-    height: 100% !important;
-  }
-
   .react-grid-item {
     display: block !important;
     transition-property: none !important;
     position: unset !important;
-    width: 100% !important;
     transform: translate(0px, 0px) !important;
     margin-bottom: $space-md;
   }
@@ -69,7 +60,7 @@
 .react-grid-item.react-grid-placeholder {
   box-shadow: $panel-grid-placeholder-shadow;
   background: $panel-grid-placeholder-bg;
-  z-index: 0;
+  z-index: -1;
   opacity: unset;
 }
 

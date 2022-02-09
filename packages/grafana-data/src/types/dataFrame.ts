@@ -7,6 +7,7 @@ import { Vector } from './vector';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
 
+/** @public */
 export enum FieldType {
   time = 'time', // or date
   number = 'number',
@@ -14,15 +15,17 @@ export enum FieldType {
   boolean = 'boolean',
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
+  geo = 'geo',
   other = 'other', // Object, Array, etc
 }
 
 /**
+ * @public
  * Every property is optional
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig<TOptions extends object = any> {
+export interface FieldConfig<TOptions = any> {
   /**
    * The display value for this field.  This supports template variables blank is auto
    */
@@ -64,6 +67,12 @@ export interface FieldConfig<TOptions extends object = any> {
   min?: number | null;
   max?: number | null;
 
+  // Interval indicates the expected regular step between values in the series.
+  // When an interval exists, consumers can identify "missing" values when the expected value is not present.
+  // The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
+  // The interval uses the same units as the values.  For time.Time, this is defined in milliseconds.
+  interval?: number | null;
+
   // Convert input values into a display string
   mappings?: ValueMapping[];
 
@@ -86,6 +95,7 @@ export interface FieldConfig<TOptions extends object = any> {
   custom?: TOptions;
 }
 
+/** @public */
 export interface ValueLinkConfig {
   /**
    * Result of field reduction
@@ -119,11 +129,6 @@ export interface Field<T = any, V = Vector<T>> {
   state?: FieldState | null;
 
   /**
-   * Convert text to the field value
-   */
-  parse?: (value: any) => T;
-
-  /**
    * Convert a value for display
    */
   display?: DisplayProcessor;
@@ -134,6 +139,7 @@ export interface Field<T = any, V = Vector<T>> {
   getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
 }
 
+/** @alpha */
 export interface FieldState {
   /**
    * An appropriate name for the field (does not include frame info)
@@ -162,8 +168,16 @@ export interface FieldState {
    * Useful for assigning color to series by looking up a color in a palette using this index
    */
   seriesIndex?: number;
+
+  /**
+   * Location of this field within the context frames results
+   *
+   * @internal -- we will try to make this unnecessary
+   */
+  origin?: DataFrameFieldIndex;
 }
 
+/** @public */
 export interface NumericRange {
   min?: number | null;
   max?: number | null;
@@ -179,6 +193,7 @@ export interface DataFrame extends QueryResultBase {
 }
 
 /**
+ * @public
  * Like a field, but properties are optional and values may be a simple array
  */
 export interface FieldDTO<T = any> {
@@ -190,6 +205,7 @@ export interface FieldDTO<T = any> {
 }
 
 /**
+ * @public
  * Like a DataFrame, but fields may be a FieldDTO
  */
 export interface DataFrameDTO extends QueryResultBase {
@@ -206,7 +222,8 @@ export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 /**
  * Describes where a specific data frame field is located within a
  * dataset of type DataFrame[]
- * @public
+ *
+ * @internal -- we will try to make this unnecessary
  */
 export interface DataFrameFieldIndex {
   frameIndex: number;

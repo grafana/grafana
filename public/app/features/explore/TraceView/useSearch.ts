@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
-import { filterSpans } from '@jaegertracing/jaeger-ui-components';
-import { TraceSpan } from '@grafana/data';
+import { useCallback, useMemo, useState } from 'react';
+import { filterSpans, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 /**
  * Controls the state of search input that highlights spans if they match the search string.
@@ -8,9 +7,13 @@ import { TraceSpan } from '@grafana/data';
  */
 export function useSearch(spans?: TraceSpan[]) {
   const [search, setSearch] = useState('');
-  const spanFindMatches: Set<string> | undefined | null = useMemo(() => {
+  const spanFindMatches: Set<string> | undefined = useMemo(() => {
     return search && spans ? filterSpans(search, spans) : undefined;
   }, [search, spans]);
 
-  return { search, setSearch, spanFindMatches };
+  const clearSearch = useCallback(() => {
+    setSearch('');
+  }, [setSearch]);
+
+  return { search, setSearch, spanFindMatches, clearSearch };
 }

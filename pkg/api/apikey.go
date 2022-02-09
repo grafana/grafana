@@ -2,19 +2,23 @@ package api
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetAPIKeys(c *models.ReqContext) Response {
+// GetAPIKeys returns a list of API keys
+func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
 
-	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to list api keys", err)
+	if err := hs.SQLStore.GetAPIKeys(c.Req.Context(), &query); err != nil {
+		return response.Error(500, "Failed to list api keys", err)
 	}
 
 	result := make([]*models.ApiKeyDTO, len(query.Result))
@@ -32,52 +36,67 @@ func GetAPIKeys(c *models.ReqContext) Response {
 		}
 	}
 
-	return JSON(200, result)
+	return response.JSON(200, result)
 }
 
-func DeleteAPIKey(c *models.ReqContext) Response {
-	id := c.ParamsInt64(":id")
-
-	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
-
-	err := bus.Dispatch(cmd)
+// DeleteAPIKey deletes an API key
+func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return Error(500, "Failed to delete API key", err)
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	return Success("API key deleted")
+	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
+	err = hs.SQLStore.DeleteApiKey(c.Req.Context(), cmd)
+	if err != nil {
+		var status int
+		if errors.Is(err, models.ErrApiKeyNotFound) {
+			status = 404
+		} else {
+			status = 500
+		}
+		return response.Error(status, "Failed to delete API key", err)
+	}
+
+	return response.Success("API key deleted")
 }
 
-func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) Response {
+// AddAPIKey adds an API key
+func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
+	cmd := models.AddApiKeyCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if !cmd.Role.IsValid() {
-		return Error(400, "Invalid role specified", nil)
+		return response.Error(400, "Invalid role specified", nil)
 	}
 
 	if hs.Cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
-			return Error(400, "Number of seconds before expiration should be set", nil)
+			return response.Error(400, "Number of seconds before expiration should be set", nil)
 		}
 		if cmd.SecondsToLive > hs.Cfg.ApiKeyMaxSecondsToLive {
-			return Error(400, "Number of seconds before expiration is greater than the global limit", nil)
+			return response.Error(400, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
+
+	cmd.ServiceAccountId = nil // Security: API keys can't be added to SAs through this endpoint since we do not implement access checks here
 	cmd.OrgId = c.OrgId
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {
-		return Error(500, "Generating API key failed", err)
+		return response.Error(500, "Generating API key failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
-
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := hs.SQLStore.AddAPIKey(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
-			return Error(400, err.Error(), nil)
+			return response.Error(400, err.Error(), nil)
 		}
 		if errors.Is(err, models.ErrDuplicateApiKey) {
-			return Error(409, err.Error(), nil)
+			return response.Error(409, err.Error(), nil)
 		}
-		return Error(500, "Failed to add API Key", err)
+		return response.Error(500, "Failed to add API Key", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
@@ -86,5 +105,5 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		Key:  newKeyInfo.ClientSecret,
 	}
 
-	return JSON(200, result)
+	return response.JSON(200, result)
 }

@@ -13,13 +13,30 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 
-	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/net/context/ctxhttp"
 )
+
+type DatasourceInfo struct {
+	ID                         int64
+	HTTPClientOpts             sdkhttpclient.Options
+	URL                        string
+	Database                   string
+	ESVersion                  *semver.Version
+	TimeField                  string
+	Interval                   string
+	TimeInterval               string
+	MaxConcurrentShardRequests int64
+	IncludeFrozen              bool
+	XPack                      bool
+}
 
 const loggerName = "tsdb.elasticsearch.client"
 
@@ -27,13 +44,13 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
-	return ds.GetHttpClient()
+var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
+	return httpClientProvider.New(ds.HTTPClientOpts)
 }
 
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
-	GetVersion() int
+	GetVersion() *semver.Version
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
@@ -42,19 +59,8 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb.TimeRange) (Client, error) {
-	version, err := ds.JsonData.Get("esVersion").Int()
-	if err != nil {
-		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
-	}
-
-	timeField, err := ds.JsonData.Get("timeField").String()
-	if err != nil {
-		return nil, fmt.Errorf("elasticsearch time field name is required, err=%v", err)
-	}
-
-	indexInterval := ds.JsonData.Get("interval").MustString()
-	ip, err := newIndexPattern(indexInterval, ds.Database)
+var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
+	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		return nil, err
 	}
@@ -64,34 +70,31 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 		return nil, err
 	}
 
-	clientLog.Debug("Creating new client", "version", version, "timeField", timeField, "indices", strings.Join(indices, ", "))
+	clientLog.Debug("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
-	switch version {
-	case 2, 5, 56, 60, 70:
-		return &baseClientImpl{
-			ctx:       ctx,
-			ds:        ds,
-			version:   version,
-			timeField: timeField,
-			indices:   indices,
-			timeRange: timeRange,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("elasticsearch version=%d is not supported", version)
+	return &baseClientImpl{
+		ctx:                ctx,
+		httpClientProvider: httpClientProvider,
+		ds:                 ds,
+		version:            ds.ESVersion,
+		timeField:          ds.TimeField,
+		indices:            indices,
+		timeRange:          timeRange,
+	}, nil
 }
 
 type baseClientImpl struct {
-	ctx          context.Context
-	ds           *models.DataSource
-	version      int
-	timeField    string
-	indices      []string
-	timeRange    *tsdb.TimeRange
-	debugEnabled bool
+	ctx                context.Context
+	httpClientProvider httpclient.Provider
+	ds                 *DatasourceInfo
+	version            *semver.Version
+	timeField          string
+	indices            []string
+	timeRange          backend.TimeRange
+	debugEnabled       bool
 }
 
-func (c *baseClientImpl) GetVersion() int {
+func (c *baseClientImpl) GetVersion() *semver.Version {
 	return c.version
 }
 
@@ -100,19 +103,14 @@ func (c *baseClientImpl) GetTimeField() string {
 }
 
 func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	return tsdb.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]interface{}{
-		"interval": queryInterval,
-	}), 5*time.Second)
-}
-
-func (c *baseClientImpl) getSettings() *simplejson.Json {
-	return c.ds.JsonData
+	timeInterval := c.ds.TimeInterval
+	return intervalv2.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
 }
 
 type multiRequest struct {
 	header   map[string]interface{}
 	body     interface{}
-	interval tsdb.Interval
+	interval intervalv2.Interval
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
@@ -154,7 +152,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 }
 
 func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
-	u, err := url.Parse(c.ds.Url)
+	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -182,20 +180,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		}
 	}
 
-	req.Header.Set("User-Agent", "Grafana")
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	if c.ds.BasicAuth {
-		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.BasicAuthUser, c.ds.DecryptedBasicAuthPassword())
-	}
-
-	if !c.ds.BasicAuth && c.ds.User != "" {
-		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.User, c.ds.DecryptedPassword())
-	}
-
-	httpClient, err := newDatasourceHttpClient(c.ds)
+	httpClient, err := newDatasourceHttpClient(c.httpClientProvider, c.ds)
 	if err != nil {
 		return nil, err
 	}
@@ -296,13 +283,18 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			interval: searchReq.Interval,
 		}
 
-		if c.version == 2 {
+		if c.version.Major() < 5 {
 			mr.header["search_type"] = "count"
-		}
+		} else {
+			allowedVersionRange, _ := semver.NewConstraint(">=5.6.0, <7.0.0")
 
-		if c.version >= 56 && c.version < 70 {
-			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
-			mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
+			if allowedVersionRange.Check(c.version) {
+				maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
+				if maxConcurrentShardRequests == 0 {
+					maxConcurrentShardRequests = 256
+				}
+				mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
+			}
 		}
 
 		multiRequests = append(multiRequests, &mr)
@@ -312,12 +304,23 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
-	if c.version >= 70 {
-		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
-		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+	var qs []string
+
+	if c.version.Major() >= 7 {
+		maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
+		if maxConcurrentShardRequests == 0 {
+			maxConcurrentShardRequests = 5
+		}
+		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
 	}
 
-	return ""
+	allowedFrozenIndicesVersionRange, _ := semver.NewConstraint(">=6.6.0")
+
+	if (allowedFrozenIndicesVersionRange.Check(c.version)) && c.ds.IncludeFrozen && c.ds.XPack {
+		qs = append(qs, "ignore_throttled=false")
+	}
+
+	return strings.Join(qs, "&")
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

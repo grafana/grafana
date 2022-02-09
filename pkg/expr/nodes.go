@@ -8,34 +8,45 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
 
-// baseNode includes commmon properties used across DPNodes.
+var (
+	logger = log.New("expr")
+)
+
+type QueryError struct {
+	RefID string
+	Err   error
+}
+
+func (e QueryError) Error() string {
+	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+}
+
+func (e QueryError) Unwrap() error {
+	return e.Err
+}
+
+// baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
 	refID string
 }
 
 type rawNode struct {
-	RefID     string `json:"refId"`
-	Query     map[string]interface{}
-	QueryType string
-	TimeRange backend.TimeRange
-}
-
-func (rn *rawNode) GetDatasourceName() (string, error) {
-	rawDs, ok := rn.Query["datasource"]
-	if !ok {
-		return "", fmt.Errorf("no datasource in query for refId %v", rn.RefID)
-	}
-	dsName, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
-	}
-	return dsName, nil
+	RefID      string `json:"refId"`
+	Query      map[string]interface{}
+	QueryType  string
+	TimeRange  TimeRange
+	DataSource *models.DataSource
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -51,7 +62,7 @@ func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 }
 
 // String returns a string representation of the node. In particular for
-// %v formating in error messages.
+// %v formatting in error messages.
 func (b *baseNode) String() string {
 	return b.refID
 }
@@ -81,7 +92,7 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	return gn.Command.Execute(ctx, vars)
 }
 
@@ -96,6 +107,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
+		CMDType: commandType,
 	}
 
 	switch commandType {
@@ -105,6 +117,8 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
+	case TypeClassicConditions:
+		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}
@@ -123,13 +137,15 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query        json.RawMessage
-	datasourceID int64
-	orgID        int64
-	queryType    string
-	timeRange    backend.TimeRange
-	intervalMS   int64
-	maxDP        int64
+	query      json.RawMessage
+	datasource *models.DataSource
+
+	orgID      int64
+	queryType  string
+	timeRange  TimeRange
+	intervalMS int64
+	maxDP      int64
+	request    Request
 }
 
 // NodeType returns the data pipeline node type.
@@ -137,7 +153,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -148,26 +164,18 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
-		orgID:      orgID,
+		orgID:      req.OrgId,
 		query:      json.RawMessage(encodedQuery),
 		queryType:  rn.QueryType,
 		intervalMS: defaultIntervalMS,
 		maxDP:      defaultMaxDP,
 		timeRange:  rn.TimeRange,
+		request:    *req,
+		datasource: rn.DataSource,
 	}
-
-	rawDsID, ok := rn.Query["datasourceId"]
-	if !ok {
-		return nil, fmt.Errorf("no datasourceId in expression data source request for refId %v", rn.RefID)
-	}
-	floatDsID, ok := rawDsID.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-	}
-	dsNode.datasourceID = int64(floatDsID)
 
 	var floatIntervalMS float64
-	if rawIntervalMS := rn.Query["intervalMs"]; ok {
+	if rawIntervalMS, ok := rn.Query["intervalMs"]; ok {
 		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
 			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
 		}
@@ -175,7 +183,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 	}
 
 	var floatMaxDP float64
-	if rawMaxDP := rn.Query["maxDataPoints"]; ok {
+	if rawMaxDP, ok := rn.Query["maxDataPoints"]; ok {
 		if floatMaxDP, ok = rawMaxDP.(float64); !ok {
 			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got type %T for refId %v", rawMaxDP, rn.RefID)
 		}
@@ -188,12 +196,15 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
+	if err != nil {
+		return mathexp.Results{}, errutil.Wrap("failed to convert datasource instance settings", err)
+	}
 	pc := backend.PluginContext{
-		OrgID: dn.orgID,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID: dn.datasourceID,
-		},
+		OrgID:                      dn.orgID,
+		DataSourceInstanceSettings: dsInstanceSettings,
+		PluginID:                   dn.datasource.Type,
 	}
 
 	q := []backend.DataQuery{
@@ -202,26 +213,33 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 			MaxDataPoints: dn.maxDP,
 			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
-			TimeRange:     dn.timeRange,
-			QueryType:     dn.queryType,
+			TimeRange: backend.TimeRange{
+				From: dn.timeRange.From,
+				To:   dn.timeRange.To,
+			},
+			QueryType: dn.queryType,
 		},
 	}
 
-	resp, err := QueryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
+		Headers:       dn.request.Headers,
 	})
-
 	if err != nil {
 		return mathexp.Results{}, err
 	}
 
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
+		if qr.Error != nil {
+			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
+		}
+
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-				backend.Logger.Debug("expression datasource query (numberSet)", "query", refID)
+				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)
 				if err != nil {
 					return mathexp.Results{}, err
@@ -236,8 +254,16 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 			}
 		}
 
+		dataSource := dn.datasource.Type
 		for _, frame := range qr.Frames {
-			backend.Logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
+			// the WideToMany() function to error out, which results in unhealthy alerts.
+			// This check should be removed once inconsistencies in data source responses are solved.
+			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == models.DS_INFLUXDB {
+				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
+				continue
+			}
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err

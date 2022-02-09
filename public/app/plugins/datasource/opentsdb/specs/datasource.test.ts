@@ -5,7 +5,7 @@ import { createFetchResponse } from '../../../../../test/helpers/createFetchResp
 import { of } from 'rxjs';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -26,7 +26,7 @@ describe('opentsdb', () => {
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
     const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
-    const replace = jest.fn(value => value);
+    const replace = jest.fn((value) => value);
     const templateSrv: any = {
       replace,
     };

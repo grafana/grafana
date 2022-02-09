@@ -4,14 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
@@ -54,30 +53,27 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 	}
 
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
+		TimeoutOpts: rendering.TimeoutOpts{
+			Timeout: time.Duration(timeout) * time.Second,
+		},
+		AuthOpts: rendering.AuthOpts{
+			OrgID:   c.OrgId,
+			UserID:  c.UserId,
+			OrgRole: c.OrgRole,
+		},
 		Width:             width,
 		Height:            height,
-		Timeout:           time.Duration(timeout) * time.Second,
-		OrgId:             c.OrgId,
-		UserId:            c.UserId,
-		OrgRole:           c.OrgRole,
-		Path:              c.Params("*") + queryParams,
+		Path:              web.Params(c.Req)["*"] + queryParams,
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
 		Headers:           headers,
-	})
+		Theme:             rendering.ThemeDark,
+	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {
 			c.Handle(hs.Cfg, 500, err.Error(), err)
-			return
-		}
-		if errors.Is(err, rendering.ErrPhantomJSNotInstalled) {
-			if strings.HasPrefix(runtime.GOARCH, "arm") {
-				c.Handle(hs.Cfg, 500, "Rendering failed - PhantomJS isn't included in arm build per default", err)
-			} else {
-				c.Handle(hs.Cfg, 500, "Rendering failed - PhantomJS isn't installed correctly", err)
-			}
 			return
 		}
 
@@ -86,5 +82,5 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 	}
 
 	c.Resp.Header().Set("Content-Type", "image/png")
-	http.ServeFile(c.Resp, c.Req.Request, result.FilePath)
+	http.ServeFile(c.Resp, c.Req, result.FilePath)
 }

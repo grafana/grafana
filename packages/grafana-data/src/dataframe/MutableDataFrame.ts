@@ -1,7 +1,7 @@
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types/data';
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { makeFieldParser } from '../utils/fieldParser';
 import { MutableVector, Vector } from '../types/vector';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -11,7 +11,7 @@ export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
 type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
-export const MISSING_VALUE: any = null;
+export const MISSING_VALUE: any = undefined; // Treated as connected in new graph panel
 
 export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
   name?: string;
@@ -155,6 +155,27 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
+  private parsers: Map<Field, (v: string) => any> | undefined = undefined;
+
+  /**
+   * @deprecated unclear if this is actually used
+   */
+  setParser(field: Field, parser: (v: string) => any) {
+    if (!this.parsers) {
+      this.parsers = new Map<Field, (v: string) => any>();
+    }
+    this.parsers.set(field, parser);
+    return parser;
+  }
+
+  private parseValue(field: Field, v: any): any {
+    let p = this.parsers?.get(field);
+    if (!p) {
+      p = this.setParser(field, makeFieldParser(v, field));
+    }
+    return p(v);
+  }
+
   /**
    * This will add each value to the corresponding column
    */
@@ -181,17 +202,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       const f = this.fields[i];
       let v = row[i];
       if (f.type !== FieldType.string && isString(v)) {
-        if (!f.parse) {
-          f.parse = makeFieldParser(v, f);
-        }
-        v = f.parse(v);
+        v = this.parseValue(f, v);
       }
       f.values.add(v);
     }
   }
 
   /**
-   * Add all properties of the value as fields on the frame
+   * Add values from an object to corresponding fields. Similar to appendRow but does not create new fields.
    */
   add(value: T) {
     // Will add one value for every field
@@ -200,10 +218,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       let val = obj[field.name];
 
       if (field.type !== FieldType.string && isString(val)) {
-        if (!field.parse) {
-          field.parse = makeFieldParser(val, field);
-        }
-        val = field.parse(val);
+        val = this.parseValue(field, val);
       }
 
       if (val === undefined) {

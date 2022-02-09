@@ -1,9 +1,9 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import React, { FC, useEffect, useState, memo } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { DataQueryRequest, PanelData } from '@grafana/data';
+import { DataQueryRequest, PanelData, ScopedVars, textUtil, rangeUtil } from '@grafana/data';
 
 interface Props {
   datasource: PrometheusDatasource;
@@ -22,7 +22,7 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
         }
 
         const {
-          request: { range, interval },
+          request: { range, interval, scopedVars },
         } = panelData;
 
         const start = datasource.getPrometheusTime(range.from, false);
@@ -30,12 +30,31 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
         const rangeDiff = Math.ceil(end - start);
         const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
 
+        const enrichedScopedVars: ScopedVars = {
+          ...scopedVars,
+          // As we support $__rate_interval variable in min step, we need add it to scopedVars
+          ...datasource.getRateIntervalScopedVariable(
+            rangeUtil.intervalToSeconds(interval),
+            rangeUtil.intervalToSeconds(datasource.interval)
+          ),
+        };
+
         const options = {
           interval,
+          scopedVars: enrichedScopedVars,
         } as DataQueryRequest<PromQuery>;
 
+        const customQueryParameters: { [key: string]: string } = {};
+        if (datasource.customQueryParameters) {
+          for (const [k, v] of datasource.customQueryParameters) {
+            customQueryParameters[k] = v;
+          }
+        }
+
         const queryOptions = datasource.createQuery(query, options, start, end);
+
         const expr = {
+          ...customQueryParameters,
           'g0.expr': queryOptions.expr,
           'g0.range_input': rangeDiff + 's',
           'g0.end_input': endTime,
@@ -43,7 +62,7 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
           'g0.tab': 0,
         };
 
-        const args = _.map(expr, (v: string, k: string) => {
+        const args = map(expr, (v: string, k: string) => {
           return k + '=' + encodeURIComponent(v);
         }).join('&');
         return `${datasource.directUrl}/graph?${args}`;
@@ -51,10 +70,10 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
 
       setHref(getExternalLink());
     }
-  }, [panelData]);
+  }, [datasource, panelData, query]);
 
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer">
+    <a href={textUtil.sanitizeUrl(href)} target="_blank" rel="noopener noreferrer">
       Prometheus
     </a>
   );

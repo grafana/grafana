@@ -14,14 +14,14 @@
 
 import React from 'react';
 import { shallow } from 'enzyme';
+import { createTheme } from '@grafana/data';
 
 import { UnthemedCanvasSpanGraph } from './CanvasSpanGraph';
-import { defaultTheme } from '../../Theme';
 
 describe('<CanvasSpanGraph>', () => {
   it('renders without exploding', () => {
     const items = [{ valueWidth: 1, valueOffset: 1, serviceName: 'service-name-0' }];
-    const wrapper = shallow(<UnthemedCanvasSpanGraph items={[]} valueWidth={4000} theme={defaultTheme} />);
+    const wrapper = shallow(<UnthemedCanvasSpanGraph items={[]} valueWidth={4000} theme={createTheme()} />);
     expect(wrapper).toBeDefined();
     wrapper.instance()._setCanvasRef({
       getContext: () => ({

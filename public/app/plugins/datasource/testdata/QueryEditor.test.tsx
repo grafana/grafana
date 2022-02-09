@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { defaultQuery } from './constants';
 import { QueryEditor, Props } from './QueryEditor';
 import { scenarios } from './__mocks__/scenarios';
+import { defaultStreamQuery } from './runStreams';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -36,7 +37,7 @@ describe('Test Datasource Query Editor', () => {
   it('should switch scenario and display its default values', async () => {
     const { rerender } = setup();
 
-    let select = (await screen.findByText('Scenario')).nextSibling!;
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     const scs = screen.getAllByLabelText('Select option');
 
@@ -67,14 +68,35 @@ describe('Test Datasource Query Editor', () => {
     await fireEvent.keyDown(select, { keyCode: 40 });
     await userEvent.click(screen.getByText('Streaming Client'));
     expect(mockOnChange).toHaveBeenCalledWith(
-      expect.objectContaining({ scenarioId: 'streaming_client', stringInput: '' })
+      expect.objectContaining({ scenarioId: 'streaming_client', stream: defaultStreamQuery })
     );
-    rerender(<QueryEditor {...props} query={{ ...defaultQuery, scenarioId: 'streaming_client', stringInput: '' }} />);
+
+    const streamQuery = { ...defaultQuery, stream: defaultStreamQuery, scenarioId: 'streaming_client' };
+
+    rerender(<QueryEditor {...props} query={streamQuery} />);
+
     expect(await screen.findByText('Streaming Client')).toBeInTheDocument();
     expect(screen.getByText('Type')).toBeInTheDocument();
     expect(screen.getByLabelText('Noise')).toHaveValue(2.2);
     expect(screen.getByLabelText('Speed (ms)')).toHaveValue(250);
     expect(screen.getByLabelText('Spread')).toHaveValue(3.5);
     expect(screen.getByLabelText('Bands')).toHaveValue(1);
+  });
+
+  it('persists the datasource from the query when switching scenario', async () => {
+    const mockDatasource = {
+      type: 'test',
+      uid: 'foo',
+    };
+    setup({
+      query: {
+        ...defaultQuery,
+        datasource: mockDatasource,
+      },
+    });
+    let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
+    await fireEvent.keyDown(select, { keyCode: 40 });
+    await userEvent.click(screen.getByText('Grafana API'));
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ datasource: mockDatasource }));
   });
 });

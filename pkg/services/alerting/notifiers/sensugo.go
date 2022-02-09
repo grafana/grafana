@@ -1,15 +1,18 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -69,9 +72,9 @@ func init() {
 }
 
 // NewSensuGoNotifier is the constructor for the Sensu Go Notifier.
-func NewSensuGoNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewSensuGoNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
-	apikey := model.DecryptedValue("apikey", model.Settings.Get("apikey").MustString())
+	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), setting.SecretKey)
 
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}
@@ -81,7 +84,7 @@ func NewSensuGoNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	}
 
 	return &SensuGoNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		URL:          url,
 		Entity:       model.Settings.Get("entity").MustString(),
 		Check:        model.Settings.Get("check").MustString(),
@@ -111,6 +114,11 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	var namespace string
 
+	customData := triggMetrString
+	for _, evt := range evalContext.EvalMatches {
+		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
+
 	bodyJSON := simplejson.New()
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
@@ -134,12 +142,14 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.SetPath([]string{"entity", "metadata", "namespace"}, "default")
 		namespace = "default"
 	}
-	// Sensu Go needs check output
+	// Sensu Go needs check output, triggered metrics as default value
 	if evalContext.Rule.Message != "" {
 		bodyJSON.SetPath([]string{"check", "output"}, evalContext.Rule.Message)
 	} else {
-		bodyJSON.SetPath([]string{"check", "output"}, "Grafana Metric Condition Met")
+		bodyJSON.SetPath([]string{"check", "output"}, customData)
 	}
+	// Add timestamp detail in event
+	bodyJSON.SetPath([]string{"check", "issued"}, time.Now().Unix())
 	// Sensu GO requires that the check portion of the event have an interval
 	bodyJSON.SetPath([]string{"check", "interval"}, 86400)
 
@@ -187,7 +197,7 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 			"Authorization": fmt.Sprintf("Key %s", sn.APIKey),
 		},
 	}
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := sn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return err
 	}

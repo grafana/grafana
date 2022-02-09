@@ -34,6 +34,8 @@ export interface PanelEditorState {
   shouldDiscardChanges: boolean;
   isOpen: boolean;
   ui: PanelEditorUIState;
+  isVizPickerOpen: boolean;
+  tableViewEnabled: boolean;
 }
 
 export const initialState = (): PanelEditorState => {
@@ -56,6 +58,8 @@ export const initialState = (): PanelEditorState => {
     initDone: false,
     shouldDiscardChanges: false,
     isOpen: false,
+    isVizPickerOpen: false,
+    tableViewEnabled: false,
     ui: {
       ...DEFAULT_PANEL_EDITOR_UI_STATE,
       ...migratedState,
@@ -87,10 +91,26 @@ const pluginsSlice = createSlice({
     },
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
+      // Close viz picker if closing options pane
+      if (!state.ui.isPanelOptionsVisible && state.isVizPickerOpen) {
+        state.isVizPickerOpen = false;
+      }
     },
-    closeCompleted: state => {
+    toggleVizPicker: (state, action: PayloadAction<boolean>) => {
+      state.isVizPickerOpen = action.payload;
+      // Ensure options pane is opened when viz picker is open
+      if (state.isVizPickerOpen) {
+        state.ui.isPanelOptionsVisible = true;
+      }
+    },
+    toggleTableView(state) {
+      state.tableViewEnabled = !state.tableViewEnabled;
+    },
+    closeEditor: (state) => {
       state.isOpen = false;
       state.initDone = false;
+      state.isVizPickerOpen = false;
+      state.tableViewEnabled = false;
     },
   },
 });
@@ -99,8 +119,14 @@ export const {
   updateEditorInitState,
   setEditorPanelData,
   setDiscardChanges,
-  closeCompleted,
+  closeEditor,
   setPanelEditorUIState,
+  toggleVizPicker,
+  toggleTableView,
 } = pluginsSlice.actions;
 
 export const panelEditorReducer = pluginsSlice.reducer;
+
+export default {
+  panelEditor: panelEditorReducer,
+};

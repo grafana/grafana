@@ -9,7 +9,7 @@ import {
   isSystemOverrideWithRef,
   SystemConfigOverrideRule,
 } from '@grafana/data';
-import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
+import { GraphNGLegendEvent, SeriesVisibilityChangeMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hideSeriesFrom';
 const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
@@ -38,7 +38,7 @@ export const hideSeriesConfigFactory = (
   const currentIndex = overrides.findIndex(isHideSeriesOverride);
 
   if (currentIndex < 0) {
-    if (mode === GraphNGLegendEventMode.ToggleSelection) {
+    if (mode === SeriesVisibilityChangeMode.ToggleSelection) {
       const override = createOverride([displayName]);
 
       return {
@@ -59,7 +59,7 @@ export const hideSeriesConfigFactory = (
   const overridesCopy = Array.from(overrides);
   const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
-  if (mode === GraphNGLegendEventMode.ToggleSelection) {
+  if (mode === SeriesVisibilityChangeMode.ToggleSelection) {
     const existing = getExistingDisplayNames(current);
 
     if (existing[0] === displayName && existing.length === 1) {
@@ -93,9 +93,9 @@ export const hideSeriesConfigFactory = (
 };
 
 const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
-  const property = current.properties.find(p => p.id === 'custom.hideFrom');
+  const property = current.properties.find((p) => p.id === 'custom.hideFrom');
   const existing = getExistingDisplayNames(current);
-  const index = existing.findIndex(name => name === displayName);
+  const index = existing.findIndex((name) => name === displayName);
 
   if (index < 0) {
     existing.push(displayName);

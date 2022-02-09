@@ -1,153 +1,139 @@
+//go:build integration
 // +build integration
 
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardProvisioningTest(t *testing.T) {
-	Convey("Testing Dashboard provisioning", t, func() {
-		InitTestDB(t)
+	sqlStore := InitTestDB(t)
 
-		folderCmd := &models.SaveDashboardCommand{
-			OrgId:    1,
-			FolderId: 0,
-			IsFolder: true,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"id":    nil,
-				"title": "test dashboard",
-			}),
+	folderCmd := models.SaveDashboardCommand{
+		OrgId:    1,
+		FolderId: 0,
+		IsFolder: true,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": "test dashboard",
+		}),
+	}
+
+	dash, err := sqlStore.SaveDashboard(folderCmd)
+	require.Nil(t, err)
+
+	saveDashboardCmd := models.SaveDashboardCommand{
+		OrgId:    1,
+		IsFolder: false,
+		FolderId: dash.Id,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": "test dashboard",
+		}),
+	}
+
+	t.Run("Saving dashboards with provisioning meta data", func(t *testing.T) {
+		now := time.Now()
+
+		provisioning := &models.DashboardProvisioning{
+			Name:       "default",
+			ExternalId: "/var/grafana.json",
+			Updated:    now.Unix(),
 		}
 
-		err := SaveDashboard(folderCmd)
-		So(err, ShouldBeNil)
+		dash, err := sqlStore.SaveProvisionedDashboard(saveDashboardCmd, provisioning)
+		require.Nil(t, err)
+		require.NotNil(t, dash)
+		require.NotEqual(t, 0, dash.Id)
+		dashId := dash.Id
 
-		saveDashboardCmd := &models.SaveDashboardCommand{
-			OrgId:    1,
-			IsFolder: false,
-			FolderId: folderCmd.Result.Id,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"id":    nil,
-				"title": "test dashboard",
-			}),
-		}
-
-		Convey("Saving dashboards with provisioning meta data", func() {
-			now := time.Now()
-
-			cmd := &models.SaveProvisionedDashboardCommand{
-				DashboardCmd: saveDashboardCmd,
-				DashboardProvisioning: &models.DashboardProvisioning{
-					Name:       "default",
-					ExternalId: "/var/grafana.json",
-					Updated:    now.Unix(),
-				},
+		t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
+			saveCmd := models.SaveDashboardCommand{
+				OrgId:    1,
+				IsFolder: false,
+				FolderId: dash.Id,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"id":    nil,
+					"title": "another_dashboard",
+				}),
+			}
+			provisioning := &models.DashboardProvisioning{
+				Name:       "another_reader",
+				ExternalId: "/var/grafana.json",
+				Updated:    now.Unix(),
 			}
 
-			err := SaveProvisionedDashboard(cmd)
-			So(err, ShouldBeNil)
-			So(cmd.Result, ShouldNotBeNil)
-			So(cmd.Result.Id, ShouldNotEqual, 0)
-			dashId := cmd.Result.Id
+			anotherDash, err := sqlStore.SaveProvisionedDashboard(saveCmd, provisioning)
+			require.Nil(t, err)
 
-			Convey("Deleting orphaned provisioned dashboards", func() {
-				anotherCmd := &models.SaveProvisionedDashboardCommand{
-					DashboardCmd: &models.SaveDashboardCommand{
-						OrgId:    1,
-						IsFolder: false,
-						FolderId: folderCmd.Result.Id,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"id":    nil,
-							"title": "another_dashboard",
-						}),
-					},
-					DashboardProvisioning: &models.DashboardProvisioning{
-						Name:       "another_reader",
-						ExternalId: "/var/grafana.json",
-						Updated:    now.Unix(),
-					},
-				}
+			query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
+			err = sqlStore.GetDashboards(context.Background(), query)
+			require.Nil(t, err)
+			require.NotNil(t, query.Result)
 
-				err := SaveProvisionedDashboard(anotherCmd)
-				So(err, ShouldBeNil)
+			deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
+			require.Nil(t, sqlStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
-				query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherCmd.Result.Id}}
-				err = GetDashboards(query)
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldNotBeNil)
+			query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
+			err = sqlStore.GetDashboards(context.Background(), query)
+			require.Nil(t, err)
 
-				deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-				So(DeleteOrphanedProvisionedDashboards(deleteCmd), ShouldBeNil)
+			require.Equal(t, 1, len(query.Result))
+			require.Equal(t, dashId, query.Result[0].Id)
+		})
 
-				query = &models.GetDashboardsQuery{DashboardIds: []int64{cmd.Result.Id, anotherCmd.Result.Id}}
-				err = GetDashboards(query)
-				So(err, ShouldBeNil)
+		t.Run("Can query for provisioned dashboards", func(t *testing.T) {
+			rslt, err := sqlStore.GetProvisionedDashboardData("default")
+			require.Nil(t, err)
 
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Id, ShouldEqual, dashId)
-			})
+			require.Equal(t, 1, len(rslt))
+			require.Equal(t, dashId, rslt[0].DashboardId)
+			require.Equal(t, now.Unix(), rslt[0].Updated)
+		})
 
-			Convey("Can query for provisioned dashboards", func() {
-				query := &models.GetProvisionedDashboardDataQuery{Name: "default"}
-				err := GetProvisionedDashboardDataQuery(query)
-				So(err, ShouldBeNil)
+		t.Run("Can query for one provisioned dashboard", func(t *testing.T) {
+			data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
+			require.Nil(t, err)
+			require.NotNil(t, data)
+		})
 
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].DashboardId, ShouldEqual, dashId)
-				So(query.Result[0].Updated, ShouldEqual, now.Unix())
-			})
+		t.Run("Can query for none provisioned dashboard", func(t *testing.T) {
+			data, err := sqlStore.GetProvisionedDataByDashboardID(3000)
+			require.Nil(t, err)
+			require.Nil(t, data)
+		})
 
-			Convey("Can query for one provisioned dashboard", func() {
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
+		t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
+			deleteCmd := &models.DeleteDashboardCommand{
+				Id:    dash.Id,
+				OrgId: 1,
+			}
 
-				err := GetProvisionedDataByDashboardId(query)
-				So(err, ShouldBeNil)
+			require.Nil(t, sqlStore.DeleteDashboard(context.Background(), deleteCmd))
 
-				So(query.Result, ShouldNotBeNil)
-			})
+			data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
+			require.Nil(t, err)
+			require.Nil(t, data)
+		})
 
-			Convey("Can query for none provisioned dashboard", func() {
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: 3000}
+		t.Run("UnprovisionDashboard should delete provisioning metadata", func(t *testing.T) {
+			unprovisionCmd := &models.UnprovisionDashboardCommand{
+				Id: dashId,
+			}
 
-				err := GetProvisionedDataByDashboardId(query)
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeNil)
-			})
+			require.Nil(t, UnprovisionDashboard(context.Background(), unprovisionCmd))
 
-			Convey("Deleting folder should delete provision meta data", func() {
-				deleteCmd := &models.DeleteDashboardCommand{
-					Id:    folderCmd.Result.Id,
-					OrgId: 1,
-				}
-
-				So(DeleteDashboard(deleteCmd), ShouldBeNil)
-
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
-
-				err = GetProvisionedDataByDashboardId(query)
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeNil)
-			})
-
-			Convey("UnprovisionDashboard should delete provisioning metadata", func() {
-				unprovisionCmd := &models.UnprovisionDashboardCommand{
-					Id: dashId,
-				}
-
-				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
-
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashId}
-
-				err = GetProvisionedDataByDashboardId(query)
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeNil)
-			})
+			data, err := sqlStore.GetProvisionedDataByDashboardID(dashId)
+			require.Nil(t, err)
+			require.Nil(t, data)
 		})
 	})
 }

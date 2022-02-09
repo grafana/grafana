@@ -1,43 +1,43 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
+import { usePanelContext } from '../PanelChrome';
 import { SeriesIcon } from './SeriesIcon';
 
 interface Props {
-  disabled: boolean;
-  color: string;
-  yAxis: number;
-  onColorChange: (color: string) => void;
-  onToggleAxis?: () => void;
+  seriesName: string;
+  color?: string;
+  gradient?: string;
+  readonly?: boolean;
 }
 
-export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({
-  disabled,
-  yAxis,
-  color,
-  onColorChange,
-  onToggleAxis,
-}) => {
-  return disabled ? (
-    <SeriesIcon color={color} />
-  ) : (
-    <SeriesColorPicker
-      yaxis={yAxis}
-      color={color}
-      onChange={onColorChange}
-      onToggleAxis={onToggleAxis}
-      enableNamedColors
-    >
-      {({ ref, showColorPicker, hideColorPicker }) => (
-        <SeriesIcon
-          color={color}
-          className="pointer"
-          ref={ref}
-          onClick={showColorPicker}
-          onMouseLeave={hideColorPicker}
-        />
-      )}
-    </SeriesColorPicker>
+/**
+ * @internal
+ */
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color, gradient, readonly }) => {
+  const { onSeriesColorChange } = usePanelContext();
+  const onChange = useCallback(
+    (color: string) => {
+      return onSeriesColorChange!(seriesName, color);
+    },
+    [seriesName, onSeriesColorChange]
   );
+
+  if (seriesName && onSeriesColorChange && color && !readonly) {
+    return (
+      <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
+        {({ ref, showColorPicker, hideColorPicker }) => (
+          <SeriesIcon
+            color={color}
+            className="pointer"
+            ref={ref}
+            onClick={showColorPicker}
+            onMouseLeave={hideColorPicker}
+          />
+        )}
+      </SeriesColorPicker>
+    );
+  }
+  return <SeriesIcon color={color} gradient={gradient} />;
 };
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';

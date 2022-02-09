@@ -9,7 +9,7 @@ services:
       - ${HOME}/.ssh:/root/.ssh
       - ../../..:/root/grafana-toolkit
   cibuilt:
-    image: "srclosson/grafana-plugin-ci-e2e"
+    image: "grafana/grafana-plugin-ci-e2e"
     user: root
     volumes:
       - ../scripts:/root/scripts

@@ -7,8 +7,9 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
+import { AsNumberVector } from '../../vector/AsNumberVector';
 import { getTimeField } from '../../dataframe/processDataFrame';
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
@@ -70,13 +71,13 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: options => outerSource => {
+  operator: (options) => (outerSource) => {
     const operator =
       options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
     return outerSource.pipe(
       operator,
-      map(data => {
+      map((data) => {
         const mode = options.mode ?? CalculateFieldMode.ReduceRow;
         let creator: ValuesCreator | undefined = undefined;
 
@@ -91,7 +92,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           return data;
         }
 
-        return data.map(frame => {
+        return data.map((frame) => {
           // delegate field creation to the specific function
           const values = creator!(frame);
           if (!values) {
@@ -187,6 +188,9 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
 
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
+      if (f.type === FieldType.boolean) {
+        return new AsNumberVector(f.values);
+      }
       return f.values;
     }
   }
@@ -206,7 +210,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return (undefined as unknown) as Vector;
+      return undefined as unknown as Vector;
     }
 
     return new BinaryOperationVector(left, right, operator.operation);

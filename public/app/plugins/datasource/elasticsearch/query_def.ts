@@ -1,4 +1,4 @@
-import { BucketAggregation } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { DateHistogram } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   ExtendedStat,
   MetricAggregation,
@@ -6,6 +6,7 @@ import {
   MetricAggregationType,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { ElasticsearchQuery } from './types';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },
@@ -26,19 +27,24 @@ export const movingAvgModelOptions: MovingAverageModelOption[] = [
   { label: 'Holt Winters', value: 'holt_winters' },
 ];
 
+export const highlightTags = {
+  pre: '@HIGHLIGHT@',
+  post: '@/HIGHLIGHT@',
+};
+
 export function defaultMetricAgg(id = '1'): MetricAggregation {
   return { type: 'count', id };
 }
 
-export function defaultBucketAgg(id = '1'): BucketAggregation {
+export function defaultBucketAgg(id = '1'): DateHistogram {
   return { type: 'date_histogram', id, settings: { interval: 'auto' } };
 }
 
 export const findMetricById = (metrics: MetricAggregation[], id: MetricAggregation['id']) =>
-  metrics.find(metric => metric.id === id);
+  metrics.find((metric) => metric.id === id);
 
-export function hasMetricOfType(target: any, type: string): boolean {
-  return target && target.metrics && target.metrics.some((m: any) => m.type === type);
+export function hasMetricOfType(target: ElasticsearchQuery, type: MetricAggregationType): boolean {
+  return !!target?.metrics?.some((m) => m.type === type);
 }
 
 // Even if we have type guards when building a query, we currently have no way of getting this information from the response.

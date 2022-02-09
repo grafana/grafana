@@ -1,4 +1,3 @@
-import coreModule from 'app/core/core_module';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 const hitTypes = {
@@ -13,11 +12,11 @@ export class ValidationSrv {
     return this.validate(folderId, name, 'A dashboard or a folder with the same name already exists');
   }
 
-  validateNewFolderName(name: string) {
+  validateNewFolderName(name?: string) {
     return this.validate(0, name, 'A folder or dashboard in the general folder with the same name already exists');
   }
 
-  private async validate(folderId: any, name: string, existingErrorMessage: string) {
+  private async validate(folderId: any, name: string | undefined, existingErrorMessage: string) {
     name = (name || '').trim();
     const nameLowerCased = name.toLowerCase();
 
@@ -63,8 +62,4 @@ export class ValidationSrv {
   }
 }
 
-const validationSrv = new ValidationSrv();
-
-export default validationSrv;
-
-coreModule.service('validationSrv', ValidationSrv);
+export const validationSrv = new ValidationSrv();

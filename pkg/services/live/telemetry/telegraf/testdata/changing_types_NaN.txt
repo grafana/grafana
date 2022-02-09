@@ -1,0 +1,4 @@
+system,host=A sensor=0,sensor2="NaN",state="aaa" 1616403090000000000
+system,host=B sensor="NaN",sensor2=0,state="bbb" 1616403090000000000
+system,host=A sensor="NaN",sensor2=0,state="ccc" 1616403091000000000
+system,host=B sensor=0,sensor2="NaN",state=1 1616403091000000000

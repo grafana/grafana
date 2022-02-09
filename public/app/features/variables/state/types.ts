@@ -1,12 +1,10 @@
-import { VariableModel } from '../types';
-import { VariablesState } from './variablesReducer';
 import { VariableType } from '@grafana/data';
 
-export const NEW_VARIABLE_ID = '00000000-0000-0000-0000-000000000000';
-export const ALL_VARIABLE_TEXT = 'All';
-export const ALL_VARIABLE_VALUE = '$__all';
-export const NONE_VARIABLE_TEXT = 'None';
-export const NONE_VARIABLE_VALUE = '';
+import { VariableModel } from '../types';
+
+export interface VariablesState extends Record<string, VariableModel> {}
+
+export const initialVariablesState: VariablesState = {};
 
 export const getInstanceState = <Model extends VariableModel = VariableModel>(state: VariablesState, id: string) => {
   return state[id] as Model;

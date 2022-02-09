@@ -5,13 +5,14 @@ export * from './assertSuccessNotification';
 export * from './deleteDashboard';
 export * from './deleteDataSource';
 export * from './editPanel';
-export * from './explore';
 export * from './login';
 export * from './openDashboard';
 export * from './openPanelMenuItem';
 export * from './revertAllChanges';
 export * from './saveDashboard';
 export * from './selectOption';
+export * from './importDashboard';
+export * from './importDashboards';
 
 export {
   VISUALIZATION_ALERT_LIST,

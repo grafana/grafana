@@ -1,13 +1,12 @@
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider, { LABEL_REFRESH_INTERVAL, LokiHistoryItem, rangeToParams } from './language_provider';
-import { AbsoluteTimeRange } from '@grafana/data';
+import LanguageProvider, { LokiHistoryItem } from './language_provider';
 import { TypeaheadInput } from '@grafana/ui';
-import { advanceTo, clear, advanceBy } from 'jest-date-mock';
-import { beforeEach } from 'test/lib/common';
 
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
+import { AbstractLabelOperator } from '@grafana/data';
+import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({
   store: {
@@ -23,11 +22,6 @@ jest.mock('app/store/store', () => ({
 
 describe('Language completion provider', () => {
   const datasource = makeMockLokiDatasource({});
-
-  const rangeMock: AbsoluteTimeRange = {
-    from: 1560153109000,
-    to: 1560163909000,
-  };
 
   describe('query suggestions', () => {
     it('returns no suggestions on empty context', async () => {
@@ -50,7 +44,7 @@ describe('Language completion provider', () => {
       ];
       const result = await instance.provideCompletionItems(
         { text: '', prefix: '', value, wrapperClasses: [] },
-        { history, absoluteRange: rangeMock }
+        { history }
       );
       expect(result.context).toBeUndefined();
 
@@ -86,11 +80,47 @@ describe('Language completion provider', () => {
     it('returns pipe operations on pipe context', async () => {
       const instance = new LanguageProvider(datasource);
       const input = createTypeaheadInput('{app="test"} | ', ' ', '', 15, ['context-pipe']);
-      const result = await instance.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const result = await instance.provideCompletionItems(input);
       expect(result.context).toBeUndefined();
       expect(result.suggestions.length).toEqual(2);
       expect(result.suggestions[0].label).toEqual('Operators');
       expect(result.suggestions[1].label).toEqual('Parsers');
+    });
+  });
+
+  describe('fetchSeries', () => {
+    it('should use match[] parameter', () => {
+      const datasource = makeMockLokiDatasource({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeries = languageProvider.fetchSeries;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeries('{job="grafana"}');
+      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+        end: 1560163909000,
+        'match[]': '{job="grafana"}',
+        start: 1560153109000,
+      });
+    });
+  });
+
+  describe('fetchSeriesLabels', () => {
+    it('should interpolate variable in series', () => {
+      const datasource: LokiDatasource = {
+        metadataRequest: () => ({ data: { data: [] as any[] } }),
+        getTimeRangeParams: () => ({ start: 0, end: 1 }),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as any as LokiDatasource;
+
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue([]);
+      fetchSeriesLabels('$stream');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('/loki/api/v1/series', {
+        end: 1,
+        'match[]': 'interpolated-stream',
+        start: 0,
+      });
     });
   });
 
@@ -99,7 +129,7 @@ describe('Language completion provider', () => {
       const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{}', '', '', 1);
-      const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const result = await provider.provideCompletionItems(input);
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([
         {
@@ -116,7 +146,7 @@ describe('Language completion provider', () => {
       const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{l}', '', '', 2);
-      const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const result = await provider.provideCompletionItems(input);
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([
         {
@@ -138,7 +168,7 @@ describe('Language completion provider', () => {
       );
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{foo="bar",}', '', '', 11);
-      const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const result = await provider.provideCompletionItems(input);
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'label1' }], label: 'Labels' }]);
     });
@@ -150,7 +180,7 @@ describe('Language completion provider', () => {
       );
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{baz="42",foo="bar",}', '', '', 20);
-      const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const result = await provider.provideCompletionItems(input);
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'label2' }], label: 'Labels' }]);
     });
@@ -161,9 +191,28 @@ describe('Language completion provider', () => {
       const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{label1=}', '=', 'label1');
-      let result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      let result = await provider.provideCompletionItems(input);
 
-      result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      result = await provider.provideCompletionItems(input);
+      expect(result.context).toBe('context-label-values');
+      expect(result.suggestions).toEqual([
+        {
+          items: [
+            { label: 'label1_val1', filterText: '"label1_val1"' },
+            { label: 'label1_val2', filterText: '"label1_val2"' },
+          ],
+          label: 'Label values for "label1"',
+        },
+      ]);
+    });
+    it('returns label values suggestions from Loki when re-editing', async () => {
+      const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const input = createTypeaheadInput('{label1="label1_v"}', 'label1_v', 'label1', 17, [
+        'attr-value',
+        'context-labels',
+      ]);
+      let result = await provider.provideCompletionItems(input);
       expect(result.context).toBe('context-label-values');
       expect(result.suggestions).toEqual([
         {
@@ -179,33 +228,23 @@ describe('Language completion provider', () => {
 
   describe('label values', () => {
     it('should fetch label values if not cached', async () => {
-      const absoluteRange: AbsoluteTimeRange = {
-        from: 0,
-        to: 5000,
-      };
-
       const datasource = makeMockLokiDatasource({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
-      const labelValues = await provider.fetchLabelValues('testkey', absoluteRange);
+      const labelValues = await provider.fetchLabelValues('testkey');
       expect(requestSpy).toHaveBeenCalled();
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
     });
 
     it('should return cached values', async () => {
-      const absoluteRange: AbsoluteTimeRange = {
-        from: 0,
-        to: 5000,
-      };
-
       const datasource = makeMockLokiDatasource({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
-      const labelValues = await provider.fetchLabelValues('testkey', absoluteRange);
+      const labelValues = await provider.fetchLabelValues('testkey');
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
 
-      const nextLabelValues = await provider.fetchLabelValues('testkey', absoluteRange);
+      const nextLabelValues = await provider.fetchLabelValues('testkey');
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
     });
@@ -214,106 +253,50 @@ describe('Language completion provider', () => {
 
 describe('Request URL', () => {
   it('should contain range params', async () => {
-    const rangeMock: AbsoluteTimeRange = {
-      from: 1560153109000,
-      to: 1560163909000,
-    };
-
     const datasourceWithLabels = makeMockLokiDatasource({ other: [] });
+    const rangeParams = datasourceWithLabels.getTimeRangeParams();
     const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
 
-    const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
-    await instance.refreshLogLabels(rangeMock, true);
+    const instance = new LanguageProvider(datasourceWithLabels);
+    instance.fetchLabels();
     const expectedUrl = '/loki/api/v1/label';
-    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeToParams(rangeMock));
+    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });
 });
 
 describe('Query imports', () => {
   const datasource = makeMockLokiDatasource({});
 
-  const rangeMock: AbsoluteTimeRange = {
-    from: 1560153109000,
-    to: 1560163909000,
-  };
-
-  it('returns empty queries for unknown origin datasource', async () => {
-    const instance = new LanguageProvider(datasource, { initialRange: rangeMock });
-    const result = await instance.importQueries([{ refId: 'bar', expr: 'foo' }], 'unknown');
-    expect(result).toEqual([{ refId: 'bar', expr: '' }]);
+  it('returns empty queries', async () => {
+    const instance = new LanguageProvider(datasource);
+    const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+    expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
   });
 
-  describe('prometheus query imports', () => {
-    it('returns empty query from metric-only query', async () => {
-      const instance = new LanguageProvider(datasource, { initialRange: rangeMock });
-      const result = await instance.importPrometheusQuery('foo');
-      expect(result).toEqual('');
+  describe('exporting to abstract query', () => {
+    it('exports labels', async () => {
+      const instance = new LanguageProvider(datasource);
+      const abstractQuery = instance.exportToAbstractQuery({
+        refId: 'bar',
+        expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+        instant: true,
+        range: false,
+      });
+      expect(abstractQuery).toMatchObject({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+          { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+          { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+        ],
+      });
     });
-
-    it('returns empty query from selector query if label is not available', async () => {
-      const datasourceWithLabels = makeMockLokiDatasource({ other: [] });
-      const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
-      const result = await instance.importPrometheusQuery('{foo="bar"}');
-      expect(result).toEqual('{}');
-    });
-
-    it('returns selector query from selector query with common labels', async () => {
-      const datasourceWithLabels = makeMockLokiDatasource({ foo: [] });
-      const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
-      const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
-      expect(result).toEqual('{foo="bar"}');
-    });
-
-    it('returns selector query from selector query with all labels if logging label list is empty', async () => {
-      const datasourceWithLabels = makeMockLokiDatasource({});
-      const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
-      const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
-      expect(result).toEqual('{baz="42",foo="bar"}');
-    });
-  });
-});
-
-describe('Labels refresh', () => {
-  const datasource = makeMockLokiDatasource({});
-  const instance = new LanguageProvider(datasource);
-
-  const rangeMock: AbsoluteTimeRange = {
-    from: 1560153109000,
-    to: 1560163909000,
-  };
-
-  beforeEach(() => {
-    instance.fetchLogLabels = jest.fn();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-    clear();
-  });
-
-  it("should not refresh labels if refresh interval hasn't passed", () => {
-    advanceTo(new Date(2019, 1, 1, 0, 0, 0));
-    instance.logLabelFetchTs = Date.now();
-    advanceBy(LABEL_REFRESH_INTERVAL / 2);
-    instance.refreshLogLabels(rangeMock);
-    expect(instance.fetchLogLabels).not.toBeCalled();
-  });
-
-  it('should refresh labels if refresh interval passed', () => {
-    advanceTo(new Date(2019, 1, 1, 0, 0, 0));
-    instance.logLabelFetchTs = Date.now();
-    advanceBy(LABEL_REFRESH_INTERVAL + 1);
-    instance.refreshLogLabels(rangeMock);
-    expect(instance.fetchLogLabels).toBeCalled();
   });
 });
 
 async function getLanguageProvider(datasource: LokiDatasource) {
   const instance = new LanguageProvider(datasource);
-  instance.initialRange = {
-    from: Date.now() - 10000,
-    to: Date.now(),
-  };
   await instance.start();
   return instance;
 }

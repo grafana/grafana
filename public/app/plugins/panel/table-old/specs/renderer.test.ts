@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { each } from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
 import { ScopedVars, TimeZone } from '@grafana/data';
@@ -15,7 +15,7 @@ const templateSrv = {
   replace: (value: any, scopedVars: ScopedVars) => {
     if (scopedVars) {
       // For testing variables replacement in link
-      _.each(scopedVars, (val, key) => {
+      each(scopedVars, (val, key) => {
         value = value.replace('$' + key, val.value);
       });
     }

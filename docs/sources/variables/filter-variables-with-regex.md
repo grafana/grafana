@@ -4,7 +4,6 @@ keywords = ["grafana", "templating", "documentation", "guide", "template", "vari
 weight = 700
 +++
 
-
 # Filter variables with regex
 
 Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.

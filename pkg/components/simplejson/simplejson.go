@@ -181,6 +181,17 @@ func (j *Json) GetIndex(index int) *Json {
 	return &Json{nil}
 }
 
+// SetIndex modifies `Json` array by `index` and `value`
+// for `index` in its `array` representation
+func (j *Json) SetIndex(index int, val interface{}) {
+	a, err := j.Array()
+	if err == nil {
+		if len(a) > index {
+			a[index] = val
+		}
+	}
+}
+
 // CheckGet returns a pointer to a new `Json` object and
 // a `bool` identifying success or failure
 //
@@ -470,4 +481,19 @@ func (j *Json) MustUint64(args ...uint64) uint64 {
 	}
 
 	return def
+}
+
+// MarshalYAML implements yaml.Marshaller.
+func (j *Json) MarshalYAML() (interface{}, error) {
+	return j.data, nil
+}
+
+// UnmarshalYAML implements yaml.Unmarshaller.
+func (j *Json) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var data interface{}
+	if err := unmarshal(&data); err != nil {
+		return err
+	}
+	j.data = data
+	return nil
 }

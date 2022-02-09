@@ -5,7 +5,7 @@ import { Invitee, OrgUser } from 'app/types';
 // import { getMockUser } from './__mocks__/userMocks';
 import { NavModel } from '@grafana/data';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { setUsersSearchQuery } from './state/reducers';
+import { setUsersSearchPage, setUsersSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -24,12 +24,14 @@ const setup = (propOverrides?: object) => {
     users: [] as OrgUser[],
     invitees: [] as Invitee[],
     searchQuery: '',
+    searchPage: 1,
     externalUserMngInfo: '',
     loadInvitees: jest.fn(),
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
     removeUser: jest.fn(),
     setUsersSearchQuery: mockToolkitActionCreator(setUsersSearchQuery),
+    setUsersSearchPage: mockToolkitActionCreator(setUsersSearchPage),
     hasFetched: false,
   };
 

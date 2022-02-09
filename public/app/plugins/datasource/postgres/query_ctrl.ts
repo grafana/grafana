@@ -1,19 +1,15 @@
-import _ from 'lodash';
+import { clone, filter, find, findIndex, indexOf, map } from 'lodash';
 import appEvents from 'app/core/app_events';
 import { PostgresMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
-import { SqlPart } from 'app/core/components/sql_part/sql_part';
-import PostgresQuery from './postgres_query';
+import { SqlPart } from 'app/angular/components/sql_part/sql_part';
+import PostgresQueryModel from './postgres_query_model';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
-import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { getLocationSrv, TemplateSrv } from '@grafana/runtime';
-
-export interface QueryMeta {
-  sql: string;
-}
+import { TemplateSrv } from '@grafana/runtime';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 const defaultQuery = `SELECT
   $__time(time_column),
@@ -28,18 +24,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
-  queryModel: PostgresQuery;
+  queryModel: PostgresQueryModel;
   metaBuilder: PostgresMetaQuery;
-  lastQueryError: string | null;
-  showHelp: boolean;
+  lastQueryMeta?: QueryResultMeta;
+  lastQueryError?: string;
+  showHelp = false;
   tableSegment: any;
   whereAdd: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
-  selectMenu: any[];
-  selectParts: SqlPart[][];
-  groupParts: SqlPart[];
-  whereParts: SqlPart[];
+  selectMenu: any[] = [];
+  selectParts: SqlPart[][] = [[]];
+  groupParts: SqlPart[] = [];
+  whereParts: SqlPart[] = [];
   groupAdd: any;
 
   /** @ngInject */
@@ -51,7 +48,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   ) {
     super($scope, $injector);
     this.target = this.target;
-    this.queryModel = new PostgresQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.queryModel = new PostgresQueryModel(this.target, templateSrv, this.panel.scopedVars);
     this.metaBuilder = new PostgresMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 
@@ -106,13 +103,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
-  showQueryInspector() {
-    getLocationSrv().update({
-      query: { inspect: this.panel.id, inspectTab: 'query' },
-      partial: true,
-    });
-  }
-
   updateRawSqlAndRefresh() {
     if (!this.target.rawQuery) {
       this.target.rawSql = this.queryModel.buildQuery();
@@ -122,23 +112,23 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   updateProjection() {
-    this.selectParts = _.map(this.target.select, (parts: any) => {
-      return _.map(parts, sqlPart.create).filter(n => n);
+    this.selectParts = map(this.target.select, (parts: any) => {
+      return map(parts, sqlPart.create).filter((n) => n);
     });
-    this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
-    this.groupParts = _.map(this.target.group, sqlPart.create).filter(n => n);
+    this.whereParts = map(this.target.where, sqlPart.create).filter((n) => n);
+    this.groupParts = map(this.target.group, sqlPart.create).filter((n) => n);
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectParts, selectParts => {
-      return _.map(selectParts, (part: any) => {
+    this.target.select = map(this.selectParts, (selectParts) => {
+      return map(selectParts, (part: any) => {
         return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
     });
-    this.target.where = _.map(this.whereParts, (part: any) => {
+    this.target.where = map(this.whereParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, name: part.name, params: part.params };
     });
-    this.target.group = _.map(this.groupParts, (part: any) => {
+    this.target.group = map(this.groupParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, params: part.params };
     });
   }
@@ -199,17 +189,27 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit(CoreEvents.showConfirmModal, {
-        title: 'Warning',
-        text2: 'Switching to query builder may overwrite your raw SQL.',
-        icon: 'exclamation-triangle',
-        yesText: 'Switch',
-        onConfirm: () => {
-          this.target.rawQuery = !this.target.rawQuery;
-        },
-      });
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: 'Warning',
+          text2: 'Switching to query builder may overwrite your raw SQL.',
+          icon: 'exclamation-triangle',
+          yesText: 'Switch',
+          onConfirm: () => {
+            // This could be called from React, so wrap in $evalAsync.
+            // Will then either run as part of the current digest cycle or trigger a new one.
+            this.$scope.$evalAsync(() => {
+              this.target.rawQuery = !this.target.rawQuery;
+            });
+          },
+        })
+      );
     } else {
-      this.target.rawQuery = !this.target.rawQuery;
+      // This could be called from React, so wrap in $evalAsync.
+      // Will then either run as part of the current digest cycle or trigger a new one.
+      this.$scope.$evalAsync(() => {
+        this.target.rawQuery = !this.target.rawQuery;
+      });
     }
   }
 
@@ -241,7 +241,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then((result: any) => {
       // check if time column is still valid
-      if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
+      if (result.length > 0 && !find(result, (r: any) => r.text === this.target.timeColumn)) {
         const segment = this.uiSegmentSrv.newSegment(result[0].text);
         this.timeColumnSegment.html = segment.html;
         this.timeColumnSegment.value = segment.value;
@@ -311,7 +311,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   onDataReceived(dataList: any) {
-    this.lastQueryError = null;
+    this.lastQueryError = undefined;
+    this.lastQueryMeta = dataList[0]?.meta;
   }
 
   onDataError(err: any) {
@@ -325,7 +326,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   transformToSegments(config: { addNone?: any; addTemplateVars?: any; templateQuoter?: any }) {
     return (results: any) => {
-      const segments = _.map(results, segment => {
+      const segments = map(results, (segment) => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -336,7 +337,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         for (const variable of this.templateSrv.getVariables()) {
           let value;
           value = '$' + variable.name;
-          if (config.templateQuoter && ((variable as unknown) as VariableWithMultiSupport).multi === false) {
+          if (config.templateQuoter && (variable as unknown as VariableWithMultiSupport).multi === false) {
             value = config.templateQuoter(value);
           }
 
@@ -359,11 +360,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   findAggregateIndex(selectParts: any) {
-    return _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
+    return findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
   }
 
   findWindowIndex(selectParts: any) {
-    return _.findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
+    return findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
   }
 
   addSelectPart(selectParts: any[], item: { value: any }, subItem: { type: any; value: any }) {
@@ -379,8 +380,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     switch (partType) {
       case 'column':
-        const parts = _.map(selectParts, (part: any) => {
-          return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
+        const parts = map(selectParts, (part: any) => {
+          return sqlPart.create({ type: part.def.type, params: clone(part.params) });
         });
         this.selectParts.push(parts);
         break;
@@ -397,7 +398,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         } else {
           selectParts.splice(1, 0, partModel);
         }
-        if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
+        if (!find(selectParts, (p: any) => p.def.type === 'alias')) {
           addAlias = true;
         }
         break;
@@ -415,7 +416,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
             selectParts.splice(1, 0, partModel);
           }
         }
-        if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
+        if (!find(selectParts, (p: any) => p.def.type === 'alias')) {
           addAlias = true;
         }
         break;
@@ -442,11 +443,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
     if (part.def.type === 'column') {
       // remove all parts of column unless its last column
       if (this.selectParts.length > 1) {
-        const modelsIndex = _.indexOf(this.selectParts, selectParts);
+        const modelsIndex = indexOf(this.selectParts, selectParts);
         this.selectParts.splice(modelsIndex, 1);
       }
     } else {
-      const partIndex = _.indexOf(selectParts, part);
+      const partIndex = indexOf(selectParts, part);
       selectParts.splice(partIndex, 1);
     }
 
@@ -525,10 +526,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     // add aggregates when adding group by
     for (const selectParts of this.selectParts) {
-      if (!selectParts.some(part => part.def.type === 'aggregate')) {
+      if (!selectParts.some((part) => part.def.type === 'aggregate')) {
         const aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
         selectParts.splice(1, 0, aggregate);
-        if (!selectParts.some(part => part.def.type === 'alias')) {
+        if (!selectParts.some((part) => part.def.type === 'alias')) {
           const alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
           selectParts.push(alias);
         }
@@ -541,8 +542,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   removeGroup(part: { def: { type: string } }, index: number) {
     if (part.def.type === 'time') {
       // remove aggregations
-      this.selectParts = _.map(this.selectParts, (s: any) => {
-        return _.filter(s, (part: any) => {
+      this.selectParts = map(this.selectParts, (s: any) => {
+        return filter(s, (part: any) => {
           if (part.def.type === 'aggregate' || part.def.type === 'percentile') {
             return false;
           }
@@ -660,12 +661,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   addGroupAction() {
-    switch (this.groupAdd.value) {
-      default: {
-        this.addGroup(this.groupAdd.type, this.groupAdd.value);
-      }
-    }
-
+    this.addGroup(this.groupAdd.type, this.groupAdd.value);
     this.resetPlusButton(this.groupAdd);
     this.updateRawSqlAndRefresh();
   }

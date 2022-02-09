@@ -3,13 +3,13 @@ import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { formattedValueToString, DisplayValue, getColorForTheme, FieldConfig } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 import { getTextColorForBackground } from '../../utils';
-import { DrawStyle, GraphFieldConfig } from '../uPlot/config';
+import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 const LINE_HEIGHT = 1.2;
@@ -30,9 +30,9 @@ export abstract class BigValueLayout {
   textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, theme, text } = props;
+    const { width, height, value, text } = props;
 
-    this.valueColor = getColorForTheme(value.color || 'green', theme);
+    this.valueColor = value.color ?? 'gray';
     this.panelPadding = height > 100 ? 12 : 8;
     this.textValues = getTextValues(props);
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);
@@ -90,6 +90,10 @@ export abstract class BigValueLayout {
         break;
       case BigValueColorMode.Background:
         styles.color = getTextColorForBackground(this.valueColor);
+        break;
+      case BigValueColorMode.None:
+        styles.color = this.props.theme.colors.text.primary;
+        break;
     }
 
     return styles;
@@ -151,7 +155,7 @@ export abstract class BigValueLayout {
   renderChart(): JSX.Element | null {
     const { sparkline, colorMode } = this.props;
 
-    if (!sparkline || !sparkline.y) {
+    if (!sparkline || sparkline.y?.type !== FieldType.number) {
       return null;
     }
 
@@ -159,23 +163,22 @@ export abstract class BigValueLayout {
     let lineColor: string;
 
     switch (colorMode) {
-      case BigValueColorMode.Value:
-        lineColor = this.valueColor;
-        fillColor = tinycolor(this.valueColor)
-          .setAlpha(0.2)
-          .toRgbString();
-        break;
       case BigValueColorMode.Background:
         fillColor = 'rgba(255,255,255,0.4)';
-        lineColor = tinycolor(this.valueColor)
-          .brighten(40)
-          .toRgbString();
+        lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();
+        break;
+      case BigValueColorMode.None:
+      case BigValueColorMode.Value:
+      default:
+        lineColor = this.valueColor;
+        fillColor = tinycolor(this.valueColor).setAlpha(0.2).toRgbString();
+        break;
     }
 
     // The graph field configuration applied to Y values
     const config: FieldConfig<GraphFieldConfig> = {
       custom: {
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         lineWidth: 1,
         fillColor,
         lineColor,

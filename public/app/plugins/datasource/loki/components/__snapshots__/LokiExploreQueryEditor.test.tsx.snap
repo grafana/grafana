@@ -2,6 +2,21 @@
 
 exports[`LokiExploreQueryEditor should render component 1`] = `
 <LokiQueryField
+  ExtraFieldElement={
+    <LokiOptionFields
+      lineLimitValue="0"
+      onChange={[MockFunction]}
+      onRunQuery={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "maxLines": 0,
+          "refId": "A",
+        }
+      }
+      resolution={1}
+    />
+  }
   data={
     Object {
       "request": Object {
@@ -36,16 +51,20 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       },
     }
   }
+  data-testid="loki-editor-explore"
   datasource={
     Object {
+      "getTimeRangeParams": [Function],
+      "interpolateString": [Function],
       "languageProvider": LokiLanguageProvider {
-        "addLabelValuesToOptions": [Function],
         "cleanText": [Function],
         "datasource": [Circular],
+        "fetchSeries": [Function],
         "fetchSeriesLabels": [Function],
         "getBeginningCompletionItems": [Function],
         "getPipeCompletionItem": [Function],
         "getTermCompletionItems": [Function],
+        "labelFetchTs": 0,
         "labelKeys": Array [],
         "labelsCache": LRUCache {
           Symbol(max): 10,
@@ -63,7 +82,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           },
           Symbol(length): 0,
         },
-        "logLabelFetchTs": 0,
+        "lookupsDisabled": false,
         "request": [Function],
         "seriesCache": LRUCache {
           Symbol(max): 10,
@@ -82,6 +101,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           Symbol(length): 0,
         },
         "start": [Function],
+        "started": false,
       },
       "metadataRequest": [Function],
     }

@@ -1,28 +1,28 @@
+//go:build integration
 // +build integration
 
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSavingTags(t *testing.T) {
-	Convey("Testing tags saving", t, func() {
-		InitTestDB(t)
+	InitTestDB(t)
 
-		tagPairs := []*models.Tag{
-			{Key: "outage"},
-			{Key: "type", Value: "outage"},
-			{Key: "server", Value: "server-1"},
-			{Key: "error"},
-		}
-		tags, err := EnsureTagsExist(newSession(), tagPairs)
+	tagPairs := []*models.Tag{
+		{Key: "outage"},
+		{Key: "type", Value: "outage"},
+		{Key: "server", Value: "server-1"},
+		{Key: "error"},
+	}
+	tags, err := EnsureTagsExist(newSession(context.Background()), tagPairs)
 
-		So(err, ShouldBeNil)
-		So(len(tags), ShouldEqual, 4)
-	})
+	require.Nil(t, err)
+	require.Equal(t, 4, len(tags))
 }

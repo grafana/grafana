@@ -19,7 +19,7 @@
 // accessible variables in this scope
 var window, document, ARGS, $, jQuery, moment, kbn;
 
-return function(callback) {
+return function (callback) {
   // Setup some variables
   var dashboard;
 
@@ -54,7 +54,7 @@ return function(callback) {
   $.ajax({
     method: 'GET',
     url: '/',
-  }).done(function(result) {
+  }).done(function (result) {
     dashboard.rows.push({
       title: 'Chart',
       height: '300px',

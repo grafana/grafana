@@ -5,12 +5,14 @@ import React, { memo } from 'react';
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
 import CloudWatchLink from './CloudWatchLink';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
-type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery> & { allowCustomValue?: boolean };
+type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
+  allowCustomValue?: boolean;
+};
 
 const labelClass = css`
   margin-left: 3px;
@@ -40,7 +42,7 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       datasource={datasource}
       query={query}
       onBlur={() => {}}
-      onChange={(val: CloudWatchLogsQuery) => onChange({ ...val, queryMode: 'Logs' })}
+      onChange={onChange}
       onRunQuery={onRunQuery}
       history={[]}
       data={data}

@@ -1,5 +1,5 @@
 import React, { FC, HTMLProps, ReactNode } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -24,6 +24,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: row;
       flex-wrap: wrap;
       align-content: flex-start;
+      row-gap: ${theme.spacing.xs};
     `,
   };
 };

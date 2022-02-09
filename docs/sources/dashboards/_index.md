@@ -10,7 +10,7 @@ A _dashboard_ is a set of one or more panels organized and arranged into one or 
 
 ## Dashboard UI
 
-<img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
+<img src="/static/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
 
 1. Zoom out time range
 1. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
@@ -22,7 +22,7 @@ A _dashboard_ is a set of one or more panels organized and arranged into one or 
 
 Click the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="/img/docs/v50/top_nav_annotated.png" width="580px">
+<img class="no-shadow" src="/static/img/docs/v50/top_nav_annotated.png" width="580px">
 
 The image above shows you the top header for a Dashboard.
 
@@ -48,13 +48,13 @@ Dashboards can be tagged, and the dashboard picker provides quick, searchable ac
 
 ## Rows
 
-A *row* is a logical divider within a dashboard. It is used to group panels together.
+A _row_ is a logical divider within a dashboard. It is used to group panels together.
 
 Rows are always 12 “units” wide. These units are automatically scaled dependent on the horizontal resolution of your browser. You can control the relative width of panels within a row by setting their specific width.
 
 We use a unit abstraction so that Grafana looks great on all screen sizes.
 
- > **Note:** With MaxDataPoint functionality, Grafana can show you the perfect number of data points, regardless of resolution or time range.
+> **Note:** With MaxDataPoint functionality, Grafana can show you the perfect number of data points, regardless of resolution or time range.
 
 Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
 

@@ -30,7 +30,7 @@ describe('filterByRefId transformer', () => {
       options: {},
     };
 
-    await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith((received) => {
       const filtered = received[0];
       expect(filtered.length).toBe(3);
     });
@@ -45,9 +45,9 @@ describe('filterByRefId transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith((received) => {
         const filtered = received[0];
-        expect(filtered.map(f => f.refId)).toEqual(['A', 'B']);
+        expect(filtered.map((f) => f.refId)).toEqual(['A', 'B']);
       });
     });
   });

@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Node Graph",
+  "id": "nodeGraph",
+  "state": "beta",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-node-graph.svg",
+      "large": "img/icn-node-graph.svg"
+    }
+  }
+}

@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { DataFrame, TimeRange, ValueLinkConfig } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -15,63 +14,12 @@ import { getFieldLinksForExplore } from './utils/links';
 interface TableContainerProps {
   ariaLabel?: string;
   exploreId: ExploreId;
-  loading: boolean;
   width: number;
+  timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
-  tableResult?: DataFrame;
-  splitOpen: typeof splitOpen;
-  range: TimeRange;
 }
 
-export class TableContainer extends PureComponent<TableContainerProps> {
-  getTableHeight() {
-    const { tableResult } = this.props;
-
-    if (!tableResult || tableResult.length === 0) {
-      return 200;
-    }
-
-    // tries to estimate table height
-    return Math.max(Math.min(600, tableResult.length * 35) + 35);
-  }
-
-  render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel } = this.props;
-
-    const height = this.getTableHeight();
-    const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
-    const hasTableResult = tableResult?.length;
-
-    if (tableResult && tableResult.length) {
-      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
-      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
-      // differently and sidestep this getLinks API on a dataframe
-      for (const field of tableResult.fields) {
-        field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore({ field, rowIndex: config.valueRowIndex!, splitOpenFn: splitOpen, range });
-        };
-      }
-    }
-
-    return (
-      <Collapse label="Table" loading={loading} isOpen>
-        {hasTableResult ? (
-          <Table
-            ariaLabel={ariaLabel}
-            data={tableResult!}
-            width={tableWidth}
-            height={height}
-            onCellFilterAdded={onCellFilterAdded}
-          />
-        ) : (
-          <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
-        )}
-      </Collapse>
-    );
-  }
-}
-
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
+function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
@@ -84,4 +32,72 @@ const mapDispatchToProps = {
   splitOpen,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TableContainer));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = TableContainerProps & ConnectedProps<typeof connector>;
+
+export class TableContainer extends PureComponent<Props> {
+  getTableHeight() {
+    const { tableResult } = this.props;
+
+    if (!tableResult || tableResult.length === 0) {
+      return 200;
+    }
+
+    // tries to estimate table height
+    return Math.max(Math.min(600, tableResult.length * 35) + 35);
+  }
+
+  render() {
+    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel, timeZone } = this.props;
+    const height = this.getTableHeight();
+    const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
+
+    let dataFrame = tableResult;
+
+    if (dataFrame?.length) {
+      dataFrame = applyFieldOverrides({
+        data: [dataFrame],
+        timeZone,
+        theme: config.theme2,
+        replaceVariables: (v: string) => v,
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      })[0];
+      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
+      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
+      // differently and sidestep this getLinks API on a dataframe
+      for (const field of dataFrame.fields) {
+        field.getLinks = (config: ValueLinkConfig) => {
+          return getFieldLinksForExplore({
+            field,
+            rowIndex: config.valueRowIndex!,
+            splitOpenFn: splitOpen,
+            range,
+            dataFrame: dataFrame!,
+          });
+        };
+      }
+    }
+
+    return (
+      <Collapse label="Table" loading={loading} isOpen>
+        {dataFrame?.length ? (
+          <Table
+            ariaLabel={ariaLabel}
+            data={dataFrame}
+            width={tableWidth}
+            height={height}
+            onCellFilterAdded={onCellFilterAdded}
+          />
+        ) : (
+          <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
+        )}
+      </Collapse>
+    );
+  }
+}
+
+export default connector(TableContainer);

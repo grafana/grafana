@@ -42,7 +42,7 @@ In previous versions of Grafana, each visualization had slightly different ways 
 
 We have yet to migrate all core panels to this new architecture so in 7.0 there will be some inconsistencies in the UI between panels. This will be fixed soon in future releases as we update all the core panels and help the community update the community panel plugins.
 
-Learn more about this feature in [Panel editor]({{< relref "../panels/panel-editor.md" >}}).
+Learn more about this feature in [Panel editor]({{< relref "../panels/working-with-panels/_index.md" >}}).
 
 ## New tracing UI
 
@@ -52,15 +52,15 @@ You can use the new trace view in Explore either directly to search for a partic
 
 In the future we will add more workflows and integrations so that correlating between metrics, logs and traces is even easier.
 
-{{< docs-imagebox img="/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
+{{< figure src="/static/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
 
 ## Transformations
 
 The data you want to visualize can come from many different places and it is usually not in exactly the right form. Users can now transform non-time series data into tables (e.g., JSON files or even simple lookup tables) in seconds without any customization or additional overhead. They can then combine non-time series data with any other data in Grafana; data from an external database or a panel that already exists in one of their current dashboards.
 
-By chaining a simple set of point and click [transformations]({{< relref "../panels/transformations/_index.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
+By chaining a simple set of point and click [transformations]({{< relref "../panels/reference-transformation-functions.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
-[Transformations]({{< relref "../panels/transformations/_index.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
+[Transformations]({{< relref "../panels/transform-data/about-transformation.md" >}}) also adds the ability to do math across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
 For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 
@@ -78,7 +78,7 @@ We are also introducing a new shared data model for both time series and table d
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another and add the result to a new field.
 
-Learn more about this feature in [Transformations]({{< relref "../panels/transformations/_index.md" >}}).
+Learn more about this feature in [Transformations]({{< relref "../panels/reference-transformation-functions.md" >}}).
 
 ## Field options and overrides
 
@@ -88,15 +88,15 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field options]({{< relref "../panels/field-options/_index.md" >}}).
+Learn more about this feature in [Field overrides]({{< relref "../panels/override-field-values/about-field-overrides.md" >}}).
 
 ## Inspect panels and export data to CSV
 
-{{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
+{{< figure src="/static/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
 
 Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
-Learn more about this feature in [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}}).
+Learn more about this feature in [Inspect a panel]({{< relref "../panels/query-a-data-source/inspect-request-and-response-data.md" >}}).
 
 <div class="clearfix"></div>
 
@@ -155,7 +155,7 @@ To help you get started with Grafana, we’ve launched a brand new tutorials pla
 
 ## Rollup indicator for Metrictank queries
 
-{{< docs-imagebox img="/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
+{{< figure src="/static/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
 
 Depending on the cardinality of the data and the time range MetricTank may return rolled up (aggregated) data. This can be as subtle as potentially only 1 or 2 graphs out of nine being rolled up. The new rollup indicator is visible in the panel title and you can also inspect extensive metadata and stats about the Metrictank query result and its rollups.
 
@@ -169,7 +169,7 @@ Since then we have been working towards removing PhantomJS. In October 2019, whe
 
 As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) which is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chromium/Chrome. The [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can either be installed as a Grafana plugin running in its own process side-by-side with Grafana. or runs as an external HTTP service, hosted using Docker or as a standalone application.
 
-Read more about [Image Rendering]({{< relref "../administration/image_rendering/" >}}) in the documentation for further instructions.
+Read more about [Image Rendering]({{< relref "../image-rendering/" >}}) in the documentation for further instructions.
 
 ## Query history in Explore out of beta
 
@@ -179,7 +179,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 ## Stackdriver data source supports Service Monitoring
 
-[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/cloudmonitoring/#slo-service-level-objective-queries" >}}).
+[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/google-cloud-monitoring/_index.md/#slo-service-level-objective-queries" >}}).
 
 ## Time zone support
 
@@ -204,13 +204,13 @@ This includes problems like:
 - How to identify dashboards that are not being used
 - Who created or last viewed this dashboard?
 
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
+{{< figure src="/static/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
 
 ### Usage insights and Presence indicator
 
 This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../enterprise/usage-insights/#improved-dashboard-search" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../enterprise/usage-insights/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../enterprise/usage-insights/#dashboard-insights" >}}) allows you to view recent dashboard usage.
 
-{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
+{{< figure src="/static/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 
 ### SAML Role and Team Sync
 

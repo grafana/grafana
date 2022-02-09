@@ -8,8 +8,9 @@ export default {
   title: 'Forms/Field',
   component: Field,
   argTypes: {
-    children: { control: { disable: true } },
-    className: { control: { disable: true } },
+    label: { control: { type: 'text' } },
+    description: { control: { type: 'text' } },
+    error: { control: { type: 'text' } },
   },
   parameters: {
     docs: {
@@ -18,10 +19,13 @@ export default {
     knobs: {
       disabled: true,
     },
+    controls: {
+      exclude: ['children', 'className'],
+    },
   },
 };
 
-export const Simple: Story<FieldProps> = args => (
+export const Simple: Story<FieldProps> = (args) => (
   <div>
     <Field {...args}>
       <Input id="thisField" />
@@ -39,9 +43,9 @@ Simple.args = {
   horizontal: false,
 };
 
-export const HorizontalLayout: Story<FieldProps> = args => {
+export const HorizontalLayout: Story<FieldProps> = (args) => {
   const [checked, setChecked] = useState(false);
-  const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
+  const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
   return (
     <div>
       <Field {...args}>

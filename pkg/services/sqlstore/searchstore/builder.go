@@ -55,8 +55,15 @@ func (b *Builder) buildSelect() {
 			dashboard.folder_id,
 			folder.uid AS folder_uid,
 			folder.slug AS folder_slug,
-			folder.title AS folder_title
-		FROM `)
+			folder.title AS folder_title `)
+
+	for _, f := range b.Filters {
+		if f, ok := f.(FilterSelect); ok {
+			b.sql.WriteString(fmt.Sprintf(", %s", f.Select()))
+		}
+	}
+
+	b.sql.WriteString(` FROM `)
 }
 
 func (b *Builder) applyFilters() (ordering string) {

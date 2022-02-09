@@ -1,15 +1,22 @@
-  elasticsearch:
-    image: elasticsearch:2.4.1
-    command: elasticsearch -Des.network.host=0.0.0.0
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - ./docker/blocks/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
 
-  fake-elastic-data:
-    image: grafana/fake-data-gen
-    network_mode: bridge
+  elasticsearch-latest:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0-beta1
+    command: elasticsearch
     environment:
-      FD_DATASOURCE: elasticsearch
-      FD_PORT: 9200
+      - "discovery.type=single-node"
+      - "xpack.license.self_generated.type=basic"
+      - "xpack.security.enabled=false"
+    ports:
+      - "14200:9200"
+      - "14300:9300"
+
+  # TODO: uncomment when https://github.com/grafana/fake-data-gen/pull/20 is merged
+  # fake-elastic-latest-data:
+  #   image: grafana/fake-data-gen
+  #   links:
+  #     - elasticsearch-latest
+  #   environment:
+  #     FD_SERVER: elasticsearch-latest
+  #     FD_DATASOURCE: elasticsearch8
+  #     FD_PORT: 9200

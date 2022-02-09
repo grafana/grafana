@@ -1,14 +1,18 @@
-import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
+import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions, displayModes } from './types';
-import { addStandardDataReduceOptions } from '../stat/types';
+import { addOrientationOption, addStandardDataReduceOptions } from '../stat/types';
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
+import { BarGaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .useFieldConfig()
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
+    addOrientationOption(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder);
+
     builder
       .addRadio({
         path: 'displayMode',
@@ -27,4 +31,5 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
-  .setMigrationHandler(barGaugePanelMigrationHandler);
+  .setMigrationHandler(barGaugePanelMigrationHandler)
+  .setSuggestionsSupplier(new BarGaugeSuggestionsSupplier());

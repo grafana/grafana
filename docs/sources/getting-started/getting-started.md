@@ -22,7 +22,7 @@ To log in to Grafana for the first time:
 
 1. Open your web browser and go to http://localhost:3000/. The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
 1. On the login page, enter `admin` for username and password.
-1. Click **Log In**. If login is successful, then you will see a prompt to change the password.
+1. Click **Log in**. If login is successful, then you will see a prompt to change the password.
 1. Click **OK** on the prompt, then change your password.
 
 > **Note:** We strongly recommend that you follow Grafana's best practices and change the default administrator password. Don't forget to record your credentials!
@@ -31,17 +31,18 @@ To log in to Grafana for the first time:
 
 To create your first dashboard:
 
-1. Click the **+** icon on the left panel, select **Create Dashboard**, and then click **Add new panel**.
-1. In the New Dashboard/Edit Panel view, go to the **Query** tab.
-1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting ``-- Grafana --`` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
-1. Click the  **Save** icon in the top right corner of your screen to save the dashboard.
+1. Click the **+** icon on the side menu.
+1. On the dashboard, click **Add an empty panel**.
+1. In the New dashboard/Edit panel view, go to the **Query** tab.
+1. Configure your [query]({{< relref "../panels/query-a-data-source/add-a-query" >}}) by selecting `-- Grafana --` from the data source selector. This generates the Random Walk dashboard.
+1. Click the **Save** icon in the top right corner of your screen to save the dashboard.
 1. Add a descriptive name, and then click **Save**.
 
- Congratulations, you have created your first dashboard and it is displaying results.
+Congratulations, you have created your first dashboard and it is displaying results.
 
 ## Next steps
 
- Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/_index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
 
 - [Panels]({{< relref "../panels/_index.md" >}})
 - [Dashboards]({{< relref "../dashboards/_index.md" >}})

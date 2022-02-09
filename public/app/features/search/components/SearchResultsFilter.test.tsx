@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { selectOptionInTest } from '@grafana/ui';
 import { Props, SearchResultsFilter } from './SearchResultsFilter';
 import { SearchLayout } from '../types';
 
@@ -14,6 +15,7 @@ beforeEach(() => {
 const searchQuery = {
   starred: false,
   sort: null,
+  prevSort: null,
   tag: ['tag'],
   query: '',
   skipRecent: true,
@@ -35,6 +37,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onLayoutChange: noop,
     query: searchQuery,
     onSortChange: noop,
+    onShowPreviewsChange: noop,
     editable: true,
   };
 
@@ -80,9 +83,8 @@ describe('SearchResultsFilter', () => {
       query: { ...searchQuery, tag: [] },
     });
     const tagComponent = await screen.findByLabelText('Tag filter');
+    await selectOptionInTest(tagComponent, 'tag1');
 
-    fireEvent.keyDown(tagComponent.querySelector('div') as Node, { keyCode: 40 });
-    fireEvent.click(await screen.findByText('tag1'));
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
     expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
   });

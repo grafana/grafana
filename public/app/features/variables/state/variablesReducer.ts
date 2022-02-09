@@ -1,21 +1,15 @@
-import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { createAction } from '@reduxjs/toolkit';
 import { variableAdapters } from '../adapters';
 import { sharedReducer } from './sharedReducer';
 import { VariableModel } from '../types';
-import { VariablePayload } from './types';
-
-export interface VariablesState extends Record<string, VariableModel> {}
-
-export const initialVariablesState: VariablesState = {};
+import { AnyAction } from 'redux';
+import { initialVariablesState, VariablesState } from './types';
 
 export const cleanVariables = createAction<undefined>('templating/cleanVariables');
 
-export const variablesReducer = (
-  state: VariablesState = initialVariablesState,
-  action: PayloadAction<VariablePayload>
-): VariablesState => {
+export const variablesReducer = (state: VariablesState = initialVariablesState, action: AnyAction): VariablesState => {
   if (cleanVariables.match(action)) {
-    const globalVariables = Object.values(state).filter(v => v.global);
+    const globalVariables = Object.values(state).filter((v) => v.global);
     if (!globalVariables) {
       return initialVariablesState;
     }

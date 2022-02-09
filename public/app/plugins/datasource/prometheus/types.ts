@@ -1,29 +1,51 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { QueryEditorMode } from './querybuilder/shared/types';
+import { PromVisualQuery } from './querybuilder/types';
 
 export interface PromQuery extends DataQuery {
   expr: string;
   format?: string;
   instant?: boolean;
   range?: boolean;
+  exemplar?: boolean;
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  // Timezone offset to align start & end time on backend
+  utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  /** Code, Builder or Explain */
+  editorMode?: QueryEditorMode;
+  /** Controls if the query preview is shown */
+  editorPreview?: boolean;
+  /** Temporary until we have a parser */
+  visualQuery?: PromVisualQuery;
 }
 
 export interface PromOptions extends DataSourceJsonData {
-  timeInterval: string;
-  queryTimeout: string;
-  httpMethod: string;
-  directUrl: string;
+  timeInterval?: string;
+  queryTimeout?: string;
+  httpMethod?: string;
+  directUrl?: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
+  exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
 }
+
+export enum PromQueryType {
+  timeSeriesQuery = 'timeSeriesQuery',
+}
+
+export type ExemplarTraceIdDestination = {
+  name: string;
+  url?: string;
+  urlDisplayLabel?: string;
+  datasourceUid?: string;
+};
 
 export interface PromQueryRequest extends PromQuery {
   step?: number;
@@ -40,7 +62,7 @@ export interface PromMetricsMetadataItem {
 }
 
 export interface PromMetricsMetadata {
-  [metric: string]: PromMetricsMetadataItem[];
+  [metric: string]: PromMetricsMetadataItem;
 }
 
 export interface PromDataSuccessResponse<T = PromData> {
@@ -55,7 +77,22 @@ export interface PromDataErrorResponse<T = PromData> {
   data: T;
 }
 
-export type PromData = PromMatrixData | PromVectorData | PromScalarData;
+export type PromData = PromMatrixData | PromVectorData | PromScalarData | PromExemplarData[];
+
+export interface Labels {
+  [index: string]: any;
+}
+
+export interface Exemplar {
+  labels: Labels;
+  value: number;
+  timestamp: number;
+}
+
+export interface PromExemplarData {
+  seriesLabels: PromMetric;
+  exemplars: Exemplar[];
+}
 
 export interface PromVectorData {
   resultType: 'vector';
@@ -85,12 +122,15 @@ export interface PromMetric {
   [index: string]: any;
 }
 
-export function isFetchErrorResponse(response: any): response is FetchError {
-  return 'cancelled' in response;
-}
-
 export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {
   return 'values' in result;
+}
+
+export function isExemplarData(result: PromData): result is PromExemplarData[] {
+  if (result == null || !Array.isArray(result)) {
+    return false;
+  }
+  return result.length ? 'exemplars' in result[0] : false;
 }
 
 export type MatrixOrVectorResult = PromMatrixData['result'][0] | PromVectorData['result'][0];

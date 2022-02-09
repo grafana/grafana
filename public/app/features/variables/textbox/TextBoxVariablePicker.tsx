@@ -10,7 +10,7 @@ import { useDispatch } from 'react-redux';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
-export function TextBoxVariablePicker({ variable }: Props): ReactElement {
+export function TextBoxVariablePicker({ variable, onVariableChange }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
   useEffect(() => {
@@ -27,19 +27,40 @@ export function TextBoxVariablePicker({ variable }: Props): ReactElement {
         toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
       )
     );
-    variableAdapters.get(variable.type).updateOptions(variable);
-  }, [dispatch, variable, updatedValue]);
 
-  const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value), [
-    setUpdatedValue,
-  ]);
+    if (onVariableChange) {
+      onVariableChange({
+        ...variable,
+        current: { ...variable.current, value: updatedValue },
+      });
+      return;
+    }
+
+    variableAdapters.get(variable.type).updateOptions(variable);
+  }, [variable, updatedValue, dispatch, onVariableChange]);
+
+  const onChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
+    [setUpdatedValue]
+  );
 
   const onBlur = (e: FocusEvent<HTMLInputElement>) => updateVariable();
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.keyCode === 13) {
+      event.preventDefault();
       updateVariable();
     }
   };
 
-  return <Input type="text" value={updatedValue} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
+  return (
+    <Input
+      type="text"
+      value={updatedValue}
+      onChange={onChange}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
+      placeholder="Enter variable value"
+      id={variable.id}
+    />
+  );
 }

@@ -103,6 +103,11 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
+	ErrProvisionedDashboardNotFound = DashboardErr{
+		Reason:     "Dashboard is not provisioned",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 )
 
 // DashboardErr represents a dashboard error.
@@ -339,11 +344,18 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
+	FolderUid    string           `json:"folderUid"`
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
 
-	Result *Dashboard
+	Result *Dashboard `json:"-"`
+}
+
+type TrimDashboardCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Meta      *simplejson.Json `json:"meta"`
+	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {
@@ -355,23 +367,10 @@ type DashboardProvisioning struct {
 	Updated     int64
 }
 
-type SaveProvisionedDashboardCommand struct {
-	DashboardCmd          *SaveDashboardCommand
-	DashboardProvisioning *DashboardProvisioning
-
-	Result *Dashboard
-}
-
 type DeleteDashboardCommand struct {
-	Id    int64
-	OrgId int64
-}
-
-type ValidateDashboardBeforeSaveCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	Overwrite bool
-	Result    *ValidateDashboardBeforeSaveResult
+	Id                     int64
+	OrgId                  int64
+	ForceDeleteFolderRules bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
@@ -423,16 +422,6 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
-}
-
-type GetProvisionedDashboardDataByIdQuery struct {
-	DashboardId int64
-	Result      *DashboardProvisioning
-}
-
-type GetProvisionedDashboardDataQuery struct {
-	Name   string
-	Result []*DashboardProvisioning
 }
 
 type GetDashboardsBySlugQuery struct {

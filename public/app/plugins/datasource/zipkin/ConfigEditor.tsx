@@ -1,5 +1,6 @@
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourceHttpSettings } from '@grafana/ui';
+import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSettings } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 
@@ -11,11 +12,17 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9411"
         dataSourceConfig={options}
-        showAccessOptions={true}
+        showAccessOptions={false}
         onChange={onOptionsChange}
       />
 
-      <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+      <div className="gf-form-group">
+        <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
+
+      <div className="gf-form-group">
+        <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
     </>
   );
 };

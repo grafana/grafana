@@ -25,7 +25,7 @@ export const generateOptions = (desc = false) => {
     'Han Harnish',
   ];
 
-  return values.map<SelectableValue<string>>(name => ({
+  return values.map<SelectableValue<string>>((name) => ({
     value: kebabCase(name),
     label: name,
     description: desc ? `This is a description of ${name}` : undefined,

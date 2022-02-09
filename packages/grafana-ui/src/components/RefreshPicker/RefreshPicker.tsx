@@ -1,27 +1,13 @@
-import React, { Component } from 'react';
-import classNames from 'classnames';
-import { SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { Icon } from '../Icon/Icon';
-import { ButtonSelect } from '../Forms/Legacy/Select/ButtonSelect';
-import memoizeOne from 'memoize-one';
-import { GrafanaTheme } from '@grafana/data';
-import { withTheme } from '../../themes';
+import React, { PureComponent } from 'react';
+import formatDuration from 'date-fns/formatDuration';
+import { SelectableValue, parseDuration } from '@grafana/data';
+import { ButtonSelect } from '../Dropdown/ButtonSelect';
+import { ButtonGroup, ToolbarButton, ToolbarButtonVariant } from '../Button';
+import { selectors } from '@grafana/e2e-selectors';
 
 // Default intervals used in the refresh picker component
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
-
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
-  return {
-    selectButton: css`
-      label: selectButton;
-      .select-button-value {
-        color: ${theme.palette.orange};
-      }
-    `,
-  };
-});
+const offLabel = 'Auto refresh turned off. Choose refresh time interval';
 
 export interface Props {
   intervals?: string[];
@@ -29,33 +15,22 @@ export interface Props {
   onIntervalChanged: (interval: string) => void;
   value?: string;
   tooltip?: string;
-  hasLiveOption?: boolean;
-  // You can supply your own refresh button element. In that case onRefresh and tooltip are ignored.
-  refreshButton?: React.ReactNode;
-  buttonSelectClassName?: string;
-  theme: GrafanaTheme;
+  isLoading?: boolean;
+  isLive?: boolean;
+  text?: string;
+  noIntervalPicker?: boolean;
+  width?: string;
+  primary?: boolean;
 }
 
-export class RefreshPickerBase extends Component<Props> {
-  static offOption = { label: 'Off', value: '' };
-  static liveOption = { label: 'Live', value: 'LIVE' };
+export class RefreshPicker extends PureComponent<Props> {
+  static offOption = { label: 'Off', value: '', ariaLabel: 'Turn off auto refresh' };
+  static liveOption = { label: 'Live', value: 'LIVE', ariaLabel: 'Turn on live streaming' };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
 
   constructor(props: Props) {
     super(props);
   }
-
-  intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
-    const intervalsOrDefault = intervals || defaultIntervals;
-    const options = intervalsOrDefault.map(interval => ({ label: interval, value: interval }));
-
-    if (this.props.hasLiveOption) {
-      options.unshift(RefreshPicker.liveOption);
-    }
-
-    options.unshift(RefreshPicker.offOption);
-    return options;
-  };
 
   onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
@@ -65,69 +40,78 @@ export class RefreshPickerBase extends Component<Props> {
     }
   };
 
-  shouldComponentUpdate(nextProps: Props) {
-    const intervalsDiffer = nextProps.intervals?.some((interval, i) => this.props.intervals?.[i] !== interval);
-
-    return (
-      intervalsDiffer ||
-      this.props.onRefresh !== nextProps.onRefresh ||
-      this.props.onIntervalChanged !== nextProps.onIntervalChanged ||
-      this.props.value !== nextProps.value ||
-      this.props.tooltip !== nextProps.tooltip ||
-      this.props.hasLiveOption !== nextProps.hasLiveOption ||
-      this.props.refreshButton !== nextProps.refreshButton ||
-      this.props.buttonSelectClassName !== nextProps.buttonSelectClassName ||
-      this.props.theme !== nextProps.theme
-    );
+  getVariant(): ToolbarButtonVariant {
+    if (this.props.isLive) {
+      return 'primary';
+    }
+    if (this.props.isLoading) {
+      return 'destructive';
+    }
+    if (this.props.primary) {
+      return 'primary';
+    }
+    return 'default';
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName, theme } = this.props;
-    const options = this.intervalsToOptions(intervals);
-    const currentValue = value || '';
-    const selectedValue = options.find(item => item.value === currentValue) || RefreshPicker.offOption;
-    const styles = getStyles(theme);
+    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width } = this.props;
 
-    const cssClasses = classNames({
-      'refresh-picker': true,
-      'refresh-picker--off': selectedValue.label === RefreshPicker.offOption.label,
-      'refresh-picker--live': selectedValue === RefreshPicker.liveOption,
-    });
+    const currentValue = value || '';
+    const variant = this.getVariant();
+    const options = intervalsToOptions({ intervals });
+    const option = options.find(({ value }) => value === currentValue);
+    let selectedValue = option || RefreshPicker.offOption;
+
+    if (selectedValue.label === RefreshPicker.offOption.label) {
+      selectedValue = { value: '' };
+    }
 
     return (
-      <div className={cssClasses}>
-        <div className="refresh-picker-buttons">
-          {refreshButton ? (
-            refreshButton
-          ) : (
-            <Tooltip placement="top" content={tooltip!}>
-              <button
-                className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
-                onClick={onRefresh!}
-              >
-                <Icon name="sync" size="lg" />
-              </button>
-            </Tooltip>
-          )}
+      <ButtonGroup className="refresh-picker">
+        <ToolbarButton
+          tooltip={tooltip}
+          onClick={onRefresh}
+          variant={variant}
+          icon={isLoading ? 'fa fa-spinner' : 'sync'}
+          style={width ? { width } : undefined}
+          data-testid={selectors.components.RefreshPicker.runButtonV2}
+        >
+          {text}
+        </ToolbarButton>
+        {!noIntervalPicker && (
           <ButtonSelect
-            className={classNames('navbar-button--attached', styles.selectButton, buttonSelectClassName)}
             value={selectedValue}
-            label={selectedValue.label}
             options={options}
-            onChange={this.onChangeSelect}
-            maxMenuHeight={380}
+            onChange={this.onChangeSelect as any}
+            variant={variant}
+            data-testid={selectors.components.RefreshPicker.intervalButtonV2}
+            aria-label={
+              selectedValue.value === ''
+                ? offLabel
+                : `Choose refresh time interval with current interval ${selectedValue.ariaLabel} selected`
+            }
           />
-        </div>
-      </div>
+        )}
+      </ButtonGroup>
     );
   }
 }
 
-export const RefreshPicker = withTheme<
-  Props,
-  {
-    offOption: typeof RefreshPickerBase.offOption;
-    liveOption: typeof RefreshPickerBase.liveOption;
-    isLive: typeof RefreshPickerBase.isLive;
-  }
->(RefreshPickerBase);
+export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
+  SelectableValue<string>
+> {
+  const intervalsOrDefault = intervals || defaultIntervals;
+  const options = intervalsOrDefault.map((interval) => {
+    const duration = parseDuration(interval);
+    const ariaLabel = formatDuration(duration);
+
+    return {
+      label: interval,
+      value: interval,
+      ariaLabel: ariaLabel,
+    };
+  });
+
+  options.unshift(RefreshPicker.offOption);
+  return options;
+}

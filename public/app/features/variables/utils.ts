@@ -1,11 +1,14 @@
-import isString from 'lodash/isString';
-import { ScopedVars, VariableType } from '@grafana/data';
+import { isArray, isEqual } from 'lodash';
+import { ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { ALL_VARIABLE_TEXT } from './state/types';
-import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
+import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';
+import { safeStringifyValue } from 'app/core/utils/explore';
+import { StoreState } from '../../types';
+import { getState } from '../../store/store';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -51,12 +54,12 @@ export const getSearchFilterScopedVar = (args: {
 
 export function containsVariable(...args: any[]) {
   const variableName = args[args.length - 1];
-  args[0] = isString(args[0]) ? args[0] : Object['values'](args[0]).join(' ');
+  args[0] = typeof args[0] === 'string' ? args[0] : safeStringifyValue(args[0]);
   const variableString = args.slice(0, -1).join(' ');
   const matches = variableString.match(variableRegex);
   const isMatchingVariable =
     matches !== null
-      ? matches.find(match => {
+      ? matches.find((match) => {
           const varMatch = variableRegexExec(match);
           return varMatch !== null && varMatch.indexOf(variableName) > -1;
         })
@@ -74,15 +77,29 @@ export const isAllVariable = (variable: any): boolean => {
     return false;
   }
 
-  if (!variable.current.text) {
-    return false;
+  if (variable.current.value) {
+    const isArray = Array.isArray(variable.current.value);
+    if (isArray && variable.current.value.length && variable.current.value[0] === ALL_VARIABLE_VALUE) {
+      return true;
+    }
+
+    if (!isArray && variable.current.value === ALL_VARIABLE_VALUE) {
+      return true;
+    }
   }
 
-  if (Array.isArray(variable.current.text)) {
-    return variable.current.text.length ? variable.current.text[0] === ALL_VARIABLE_TEXT : false;
+  if (variable.current.text) {
+    const isArray = Array.isArray(variable.current.text);
+    if (isArray && variable.current.text.length && variable.current.text[0] === ALL_VARIABLE_TEXT) {
+      return true;
+    }
+
+    if (!isArray && variable.current.text === ALL_VARIABLE_TEXT) {
+      return true;
+    }
   }
 
-  return variable.current.text === ALL_VARIABLE_TEXT;
+  return false;
 };
 
 export const getCurrentText = (variable: any): string => {
@@ -123,7 +140,7 @@ export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = ge
 
 export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
   const queryOptions: any = { range: undefined, variable, searchFilter };
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     queryOptions.range = timeSrv.timeRange();
   }
 
@@ -151,9 +168,94 @@ export function getVariableRefresh(variable: VariableModel): VariableRefresh {
 export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
   return variableAdapters
     .list()
-    .filter(v => v.id !== 'system')
+    .filter((v) => v.id !== 'system')
     .map(({ id, name }) => ({
       label: name,
       value: id,
     }));
+}
+
+function getUrlValueForComparison(value: any): any {
+  if (isArray(value)) {
+    if (value.length === 0) {
+      value = undefined;
+    } else if (value.length === 1) {
+      value = value[0];
+    }
+  }
+
+  return value;
+}
+
+export interface UrlQueryType {
+  value: UrlQueryValue;
+  removed?: boolean;
+}
+
+export interface ExtendedUrlQueryMap extends Record<string, UrlQueryType> {}
+
+export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): ExtendedUrlQueryMap | undefined {
+  let count = 0;
+  const changes: ExtendedUrlQueryMap = {};
+
+  for (const key in query) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+
+    let oldValue = getUrlValueForComparison(old[key]);
+    let newValue = getUrlValueForComparison(query[key]);
+
+    if (!isEqual(newValue, oldValue)) {
+      changes[key] = { value: query[key] };
+      count++;
+    }
+  }
+
+  for (const key in old) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+
+    const value = old[key];
+
+    // ignore empty array values
+    if (isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    if (!query.hasOwnProperty(key)) {
+      changes[key] = { value: '', removed: true }; // removed
+      count++;
+    }
+  }
+  return count ? changes : undefined;
+}
+
+export function ensureStringValues(value: any | any[]): string | string[] {
+  if (Array.isArray(value)) {
+    return value.map(String);
+  }
+
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'number') {
+    return value.toString(10);
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'boolean') {
+    return value.toString();
+  }
+
+  return '';
+}
+
+export function hasOngoingTransaction(state: StoreState = getState()): boolean {
+  return state.templating.transaction.status !== TransactionStatus.NotStarted;
 }

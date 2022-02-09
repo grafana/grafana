@@ -1,27 +1,41 @@
 import React from 'react';
-import { DebugSection } from './DebugSection';
 import { mount } from 'enzyme';
-import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from '../../../../features/panel/panellinks/link_srv';
-import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { dateTime } from '@grafana/data';
-import { TemplateSrv } from '../../../../features/templating/template_srv';
+import { setTemplateSrv } from '@grafana/runtime';
+
+import { DebugSection } from './DebugSection';
+import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from '../../../../features/panel/panellinks/link_srv';
+
+// We do not need more here and TimeSrv is hard to setup fully.
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRangeForUrl() {
+      const from = dateTime().subtract(1, 'h');
+      const to = dateTime();
+      return { from, to, raw: { from, to } };
+    },
+  }),
+}));
 
 describe('DebugSection', () => {
   let originalLinkSrv: LinkService;
 
   // This needs to be setup so we can test interpolation in the debugger
   beforeAll(() => {
-    // We do not need more here and TimeSrv is hard to setup fully.
-    const timeSrvMock: TimeSrv = {
-      timeRangeForUrl() {
-        const from = dateTime().subtract(1, 'h');
-        const to = dateTime();
-        return { from, to, raw: { from, to } };
-      },
-    } as any;
-    const linkService = new LinkSrv(new TemplateSrv(), timeSrvMock);
+    const linkService = new LinkSrv();
     originalLinkSrv = getLinkSrv();
     setLinkSrv(linkService);
+  });
+
+  beforeEach(() => {
+    setTemplateSrv({
+      replace(target, scopedVars, format) {
+        return target ?? '';
+      },
+      getVariables() {
+        return [];
+      },
+    });
   });
 
   afterAll(() => {
@@ -66,11 +80,6 @@ describe('DebugSection', () => {
     expect(wrapper.find('table').length).toBe(1);
     // 3 rows + one header
     expect(wrapper.find('tr').length).toBe(4);
-    expect(
-      wrapper
-        .find('tr')
-        .at(1)
-        .contains('http://localhost/trace/1234')
-    ).toBeTruthy();
+    expect(wrapper.find('tr').at(1).contains('http://localhost/trace/${__value.raw}')).toBeTruthy();
   });
 });

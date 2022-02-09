@@ -1,6 +1,8 @@
-import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName, sortDataFrame } from '@grafana/data';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { XYDimensionConfig } from './types';
+import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName } from '@grafana/data';
+import { XYDimensionConfig } from './models.gen';
+
+// TODO: fix import
+import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 
 export enum DimensionError {
   NoData,
@@ -21,7 +23,7 @@ export function isGraphable(field: Field) {
   return field.type === FieldType.number;
 }
 
-export function getXYDimensions(cfg: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
+export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
   if (!data || !data.length) {
     return { error: DimensionError.NoData } as XYDimensions;
   }
@@ -47,11 +49,6 @@ export function getXYDimensions(cfg: XYDimensionConfig, data?: DataFrame[]): XYD
       xIndex = i;
       break;
     }
-  }
-
-  // Optionally sort
-  if (cfg.sort) {
-    frame = sortDataFrame(frame, xIndex);
   }
 
   let hasTime = false;
@@ -92,12 +89,14 @@ function getSimpleFieldMatcher(f: Field): FieldMatcher {
   if (!f) {
     return () => false;
   }
-  return field => f === field;
+  // the field may change if sorted
+  return (field) => f === field || !!(f.state && f.state === field.state);
 }
 
 function getSimpleFieldNotMatcher(f: Field): FieldMatcher {
   if (!f) {
     return () => false;
   }
-  return field => f !== field;
+  const m = getSimpleFieldMatcher(f);
+  return (field) => !m(field, undefined as any, undefined as any);
 }

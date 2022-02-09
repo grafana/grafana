@@ -26,7 +26,8 @@
   </div>
 
   <div class="gf-form" ng-show="ctrl.showHelp">
-    <pre class="gf-form-pre alert alert-info"><h6>Annotation Query Format</h6>
+    <div class="grafana-info-box">
+    <pre class="pre--no-style"><h6>Annotation Query Format</h6>
 An annotation is an event that is overlaid on top of graphs. The query can have up to four columns per row, the time column is mandatory. Annotation rendering is expensive so it is important to limit the number of rows returned.
 
 - column with alias: <b>time</b> for the annotation event time. Use epoch time or any native date data type.
@@ -50,5 +51,6 @@ Or build your own conditionals using these macros which just return the values:
 - $__unixEpochNanoFrom() -&gt;  1494410783152415214
 - $__unixEpochNanoTo() -&gt;  1494497183142514872
 		</pre>
+  </div>
   </div>
 </div>

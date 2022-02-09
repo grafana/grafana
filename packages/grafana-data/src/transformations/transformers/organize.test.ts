@@ -42,7 +42,7 @@ describe('OrganizeFields Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const organized = data[0];
         expect(organized.fields).toEqual([
@@ -101,7 +101,7 @@ describe('OrganizeFields Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const organized = data[0];
         expect(organized.fields).toEqual([

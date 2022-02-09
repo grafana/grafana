@@ -29,14 +29,9 @@ exports[`Render should render component 1`] = `
     <div
       className="cta-form"
     >
-      <button
-        className="cta-form__close btn btn-transparent"
+      <CloseButton
         onClick={[Function]}
-      >
-        <Icon
-          name="times"
-        />
-      </button>
+      />
       <h5>
         Add External Group
       </h5>
@@ -49,6 +44,7 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="gf-form-input width-30"
+            disabled={false}
             onChange={[Function]}
             placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
             type="text"
@@ -58,18 +54,18 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form"
         >
-          <button
-            className="btn btn-primary gf-form-btn"
+          <Button
             disabled={true}
             type="submit"
           >
             Add group
-          </button>
+          </Button>
         </div>
       </form>
     </div>
   </SlideDown>
   <EmptyListCTA
+    buttonDisabled={false}
     buttonIcon="users-alt"
     buttonTitle="Add Group"
     onClick={[Function]}
@@ -104,15 +100,16 @@ exports[`Render should render groups table 1`] = `
     <div
       className="page-action-bar__spacer"
     />
-    <button
-      className="btn btn-primary pull-right"
+    <Button
+      className="pull-right"
+      disabled={false}
       onClick={[Function]}
     >
       <Icon
         name="plus"
       />
        Add group
-    </button>
+    </Button>
   </div>
   <SlideDown
     in={false}
@@ -120,14 +117,9 @@ exports[`Render should render groups table 1`] = `
     <div
       className="cta-form"
     >
-      <button
-        className="cta-form__close btn btn-transparent"
+      <CloseButton
         onClick={[Function]}
-      >
-        <Icon
-          name="times"
-        />
-      </button>
+      />
       <h5>
         Add External Group
       </h5>
@@ -140,6 +132,7 @@ exports[`Render should render groups table 1`] = `
         >
           <Input
             className="gf-form-input width-30"
+            disabled={false}
             onChange={[Function]}
             placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
             type="text"
@@ -149,13 +142,12 @@ exports[`Render should render groups table 1`] = `
         <div
           className="gf-form"
         >
-          <button
-            className="btn btn-primary gf-form-btn"
+          <Button
             disabled={true}
             type="submit"
           >
             Add group
-          </button>
+          </Button>
         </div>
       </form>
     </div>
@@ -194,19 +186,16 @@ exports[`Render should render groups table 1`] = `
               }
             }
           >
-            <a
-              className="btn btn-danger btn-small"
+            <Button
+              disabled={false}
               onClick={[Function]}
+              size="sm"
+              variant="destructive"
             >
               <Icon
                 name="times"
-                style={
-                  Object {
-                    "marginBottom": 0,
-                  }
-                }
               />
-            </a>
+            </Button>
           </td>
         </tr>
         <tr
@@ -222,19 +211,16 @@ exports[`Render should render groups table 1`] = `
               }
             }
           >
-            <a
-              className="btn btn-danger btn-small"
+            <Button
+              disabled={false}
               onClick={[Function]}
+              size="sm"
+              variant="destructive"
             >
               <Icon
                 name="times"
-                style={
-                  Object {
-                    "marginBottom": 0,
-                  }
-                }
               />
-            </a>
+            </Button>
           </td>
         </tr>
         <tr
@@ -250,19 +236,16 @@ exports[`Render should render groups table 1`] = `
               }
             }
           >
-            <a
-              className="btn btn-danger btn-small"
+            <Button
+              disabled={false}
               onClick={[Function]}
+              size="sm"
+              variant="destructive"
             >
               <Icon
                 name="times"
-                style={
-                  Object {
-                    "marginBottom": 0,
-                  }
-                }
               />
-            </a>
+            </Button>
           </td>
         </tr>
       </tbody>

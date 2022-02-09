@@ -10,7 +10,7 @@ runtime=$((($(date +%s%N) - start)/1000000))
 
 echo -e "The job $CIRCLE_JOB took $runtime (ms)"
 
-if [ "${CIRCLE_BRANCH}" == "master" ]; then
+if [ "${CIRCLE_BRANCH}" == "main" ]; then
 exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB=$runtime"
 exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildoutcome.$CIRCLE_JOB=0"
 fi

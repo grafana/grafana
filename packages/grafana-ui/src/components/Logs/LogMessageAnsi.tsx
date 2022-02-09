@@ -1,5 +1,10 @@
+import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+import ansicolor from 'ansicolor';
 import React, { PureComponent } from 'react';
-import ansicolor from '../../utils/ansicolor';
+// @ts-ignore
+import Highlighter from 'react-highlight-words';
+import { withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 
 interface Style {
   [key: string]: string;
@@ -10,13 +15,19 @@ interface ParsedChunk {
   text: string;
 }
 
-function convertCSSToStyle(css: string): Style {
-  return css.split(/;\s*/).reduce((accumulated, line) => {
+function convertCSSToStyle(theme: GrafanaTheme2, css: string): Style {
+  return css.split(/;\s*/).reduce<Style>((accumulated, line) => {
+    // The ansicolor package returns this color if the chunk has the ANSI dim
+    // style (`\e[2m`), but it is nearly unreadable in the dark theme, so we use
+    // GrafanaTheme2 instead to style it in a way that works across all themes.
+    if (line === 'color:rgba(0,0,0,0.5)') {
+      return { color: theme.colors.text.secondary };
+    }
+
     const match = line.match(/([^:\s]+)\s*:\s*(.+)/);
 
     if (match && match[1] && match[2]) {
       const key = match[1].replace(/-([a-z])/g, (_, character) => character.toUpperCase());
-      // @ts-ignore
       accumulated[key] = match[2];
     }
 
@@ -24,8 +35,12 @@ function convertCSSToStyle(css: string): Style {
   }, {});
 }
 
-interface Props {
+interface Props extends Themeable2 {
   value: string;
+  highlight?: {
+    searchWords: string[];
+    highlightClassName: string;
+  };
 }
 
 interface State {
@@ -33,7 +48,7 @@ interface State {
   prevValue: string;
 }
 
-export class LogMessageAnsi extends PureComponent<Props, State> {
+export class UnThemedLogMessageAnsi extends PureComponent<Props, State> {
   state: State = {
     chunks: [],
     prevValue: '',
@@ -47,10 +62,10 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
     const parsed = ansicolor.parse(props.value);
 
     return {
-      chunks: parsed.spans.map(span => {
+      chunks: parsed.spans.map((span) => {
         return span.css
           ? {
-              style: convertCSSToStyle(span.css),
+              style: convertCSSToStyle(props.theme, span.css),
               text: span.text,
             }
           : { text: span.text };
@@ -62,14 +77,27 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
   render() {
     const { chunks } = this.state;
 
-    return chunks.map((chunk, index) =>
-      chunk.style ? (
-        <span key={index} style={chunk.style}>
-          {chunk.text}
-        </span>
+    return chunks.map((chunk, index) => {
+      const chunkText = this.props.highlight?.searchWords ? (
+        <Highlighter
+          textToHighlight={chunk.text}
+          searchWords={this.props.highlight.searchWords}
+          findChunks={findHighlightChunksInText}
+          highlightClassName={this.props.highlight.highlightClassName}
+        />
       ) : (
         chunk.text
-      )
-    );
+      );
+      return chunk.style ? (
+        <span key={index} style={chunk.style} data-testid="ansiLogLine">
+          {chunkText}
+        </span>
+      ) : (
+        chunkText
+      );
+    });
   }
 }
+
+export const LogMessageAnsi = withTheme2(UnThemedLogMessageAnsi);
+LogMessageAnsi.displayName = 'LogMessageAnsi';

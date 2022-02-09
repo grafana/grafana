@@ -71,7 +71,7 @@ export const searchReducer = (state: DashboardsSearchState, action: SearchAction
       if (id) {
         return {
           ...state,
-          results: state.results.map(result => (result.id === id ? { ...result, itemsFetching: true } : result)),
+          results: state.results.map((result) => (result.id === id ? { ...result, itemsFetching: true } : result)),
         };
       }
       return state;

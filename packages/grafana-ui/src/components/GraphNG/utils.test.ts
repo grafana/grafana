@@ -1,218 +1,205 @@
-import { ArrayVector, DataFrame, FieldType, toDataFrame } from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
-import { alignDataFrames } from './utils';
+import { preparePlotFrame } from './utils';
+import { preparePlotConfigBuilder } from '../TimeSeries/utils';
+import {
+  createTheme,
+  DashboardCursorSync,
+  DefaultTimeZone,
+  EventBusSrv,
+  FieldConfig,
+  FieldMatcherID,
+  fieldMatchers,
+  FieldType,
+  getDefaultTimeRange,
+  MutableDataFrame,
+} from '@grafana/data';
+import {
+  BarAlignment,
+  GraphDrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  LineInterpolation,
+  VisibilityMode,
+  StackingMode,
+} from '@grafana/schema';
 
-describe('alignDataFrames', () => {
-  describe('aligned frame', () => {
-    it('should align multiple data frames into one data frame', () => {
-      const data: DataFrame[] = [
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature A', type: FieldType.number, values: [1, 3, 5, 7] },
-          ],
-        }),
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature B', type: FieldType.number, values: [0, 2, 6, 7] },
-          ],
-        }),
-      ];
-
-      const aligned = alignDataFrames(data);
-
-      expect(aligned?.frame.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature A',
-            seriesIndex: 0,
-          },
-          name: 'temperature A',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature B',
-            seriesIndex: 1,
-          },
-          name: 'temperature B',
-          type: FieldType.number,
-          values: new ArrayVector([0, 2, 6, 7]),
-        },
-      ]);
-    });
-
-    it('should align multiple data frames into one data frame but only keep first time field', () => {
-      const data: DataFrame[] = [
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
-          ],
-        }),
-        toDataFrame({
-          fields: [
-            { name: 'time2', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature B', type: FieldType.number, values: [0, 2, 6, 7] },
-          ],
-        }),
-      ];
-
-      const aligned = alignDataFrames(data);
-
-      expect(aligned?.frame.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature',
-            seriesIndex: 0,
-          },
-          name: 'temperature',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature B',
-            seriesIndex: 1,
-          },
-          name: 'temperature B',
-          type: FieldType.number,
-          values: new ArrayVector([0, 2, 6, 7]),
-        },
-      ]);
-    });
-
-    it('should align multiple data frames into one data frame and skip non-numeric fields', () => {
-      const data: DataFrame[] = [
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
-            { name: 'state', type: FieldType.string, values: ['on', 'off', 'off', 'on'] },
-          ],
-        }),
-      ];
-
-      const aligned = alignDataFrames(data);
-
-      expect(aligned?.frame.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature',
-            seriesIndex: 0,
-          },
-          name: 'temperature',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-      ]);
-    });
-
-    it('should align multiple data frames into one data frame and skip non-numeric fields', () => {
-      const data: DataFrame[] = [
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
-            { name: 'state', type: FieldType.string, values: ['on', 'off', 'off', 'on'] },
-          ],
-        }),
-      ];
-
-      const aligned = alignDataFrames(data);
-
-      expect(aligned?.frame.fields).toEqual([
-        {
-          config: {},
-          state: {},
-          name: 'time',
-          type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000]),
-        },
-        {
-          config: {},
-          state: {
-            displayName: 'temperature',
-            seriesIndex: 0,
-          },
-          name: 'temperature',
-          type: FieldType.number,
-          values: new ArrayVector([1, 3, 5, 7]),
-        },
-      ]);
-    });
+function mockDataFrame() {
+  const df1 = new MutableDataFrame({
+    refId: 'A',
+    fields: [{ name: 'ts', type: FieldType.time, values: [1, 2, 3] }],
+  });
+  const df2 = new MutableDataFrame({
+    refId: 'B',
+    fields: [{ name: 'ts', type: FieldType.time, values: [1, 2, 4] }],
   });
 
-  describe('getDataFrameFieldIndex', () => {
-    let aligned: AlignedFrameWithGapTest | null;
+  const f1Config: FieldConfig<GraphFieldConfig> = {
+    displayName: 'Metric 1',
+    decimals: 2,
+    custom: {
+      drawStyle: GraphDrawStyle.Line,
+      gradientMode: GraphGradientMode.Opacity,
+      lineColor: '#ff0000',
+      lineWidth: 2,
+      lineInterpolation: LineInterpolation.Linear,
+      lineStyle: {
+        fill: 'dash',
+        dash: [1, 2],
+      },
+      spanNulls: false,
+      fillColor: '#ff0000',
+      fillOpacity: 0.1,
+      showPoints: VisibilityMode.Always,
+      stacking: {
+        group: 'A',
+        mode: StackingMode.Normal,
+      },
+    },
+  };
 
-    beforeAll(() => {
-      const data: DataFrame[] = [
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature A', type: FieldType.number, values: [1, 3, 5, 7] },
-          ],
-        }),
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature B', type: FieldType.number, values: [0, 2, 6, 7] },
-            { name: 'humidity', type: FieldType.number, values: [0, 2, 6, 7] },
-          ],
-        }),
-        toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature C', type: FieldType.number, values: [0, 2, 6, 7] },
-          ],
-        }),
-      ];
+  const f2Config: FieldConfig<GraphFieldConfig> = {
+    displayName: 'Metric 2',
+    decimals: 2,
+    custom: {
+      drawStyle: GraphDrawStyle.Bars,
+      gradientMode: GraphGradientMode.Hue,
+      lineColor: '#ff0000',
+      lineWidth: 2,
+      lineInterpolation: LineInterpolation.Linear,
+      lineStyle: {
+        fill: 'dash',
+        dash: [1, 2],
+      },
+      barAlignment: BarAlignment.Before,
+      fillColor: '#ff0000',
+      fillOpacity: 0.1,
+      showPoints: VisibilityMode.Always,
+      stacking: {
+        group: 'A',
+        mode: StackingMode.Normal,
+      },
+    },
+  };
 
-      aligned = alignDataFrames(data);
-    });
+  const f3Config: FieldConfig<GraphFieldConfig> = {
+    displayName: 'Metric 3',
+    decimals: 2,
+    custom: {
+      drawStyle: GraphDrawStyle.Line,
+      gradientMode: GraphGradientMode.Opacity,
+      lineColor: '#ff0000',
+      lineWidth: 2,
+      lineInterpolation: LineInterpolation.Linear,
+      lineStyle: {
+        fill: 'dash',
+        dash: [1, 2],
+      },
+      spanNulls: false,
+      fillColor: '#ff0000',
+      fillOpacity: 0.1,
+      showPoints: VisibilityMode.Always,
+      stacking: {
+        group: 'B',
+        mode: StackingMode.Normal,
+      },
+    },
+  };
+  const f4Config: FieldConfig<GraphFieldConfig> = {
+    displayName: 'Metric 4',
+    decimals: 2,
+    custom: {
+      drawStyle: GraphDrawStyle.Bars,
+      gradientMode: GraphGradientMode.Hue,
+      lineColor: '#ff0000',
+      lineWidth: 2,
+      lineInterpolation: LineInterpolation.Linear,
+      lineStyle: {
+        fill: 'dash',
+        dash: [1, 2],
+      },
+      barAlignment: BarAlignment.Before,
+      fillColor: '#ff0000',
+      fillOpacity: 0.1,
+      showPoints: VisibilityMode.Always,
+      stacking: {
+        group: 'B',
+        mode: StackingMode.Normal,
+      },
+    },
+  };
+  const f5Config: FieldConfig<GraphFieldConfig> = {
+    displayName: 'Metric 4',
+    decimals: 2,
+    custom: {
+      drawStyle: GraphDrawStyle.Bars,
+      gradientMode: GraphGradientMode.Hue,
+      lineColor: '#ff0000',
+      lineWidth: 2,
+      lineInterpolation: LineInterpolation.Linear,
+      lineStyle: {
+        fill: 'dash',
+        dash: [1, 2],
+      },
+      barAlignment: BarAlignment.Before,
+      fillColor: '#ff0000',
+      fillOpacity: 0.1,
+      showPoints: VisibilityMode.Always,
+      stacking: {
+        group: 'B',
+        mode: StackingMode.None,
+      },
+    },
+  };
 
-    it.each`
-      yDim | index
-      ${1} | ${[0, 1]}
-      ${2} | ${[1, 1]}
-      ${3} | ${[1, 2]}
-      ${4} | ${[2, 1]}
-    `('should return correct index for yDim', ({ yDim, index }) => {
-      const [frameIndex, fieldIndex] = index;
+  df1.addField({
+    name: 'metric1',
+    type: FieldType.number,
+    config: f1Config,
+  });
 
-      expect(aligned?.getDataFrameFieldIndex(yDim)).toEqual({
-        frameIndex,
-        fieldIndex,
-      });
-    });
+  df2.addField({
+    name: 'metric2',
+    type: FieldType.number,
+    config: f2Config,
+  });
+  df2.addField({
+    name: 'metric3',
+    type: FieldType.number,
+    config: f3Config,
+  });
+  df2.addField({
+    name: 'metric4',
+    type: FieldType.number,
+    config: f4Config,
+  });
+  df2.addField({
+    name: 'metric5',
+    type: FieldType.number,
+    config: f5Config,
+  });
+
+  return preparePlotFrame([df1, df2], {
+    x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+    y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+  });
+}
+
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
+  DefaultTimeZone: 'utc',
+}));
+
+describe('GraphNG utils', () => {
+  test('preparePlotConfigBuilder', () => {
+    const frame = mockDataFrame();
+    const result = preparePlotConfigBuilder({
+      frame: frame!,
+      theme: createTheme(),
+      timeZone: DefaultTimeZone,
+      getTimeRange: getDefaultTimeRange,
+      eventBus: new EventBusSrv(),
+      sync: () => DashboardCursorSync.Tooltip,
+      allFrames: [frame!],
+    }).getConfig();
+    expect(result).toMatchSnapshot();
   });
 });

@@ -1,41 +1,36 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
-import { isDateTime, dateTime } from '@grafana/data';
+import { dateTime, isDateTime } from '@grafana/data';
+import * as H from 'history';
+import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+import { beforeEach } from '../../../../test/lib/common';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
-    on: () => {},
+    subscribe: () => {},
   },
 }));
 
 describe('timeSrv', () => {
-  const rootScope = {
-    $on: jest.fn(),
-    onAppEvent: jest.fn(),
-    appEvent: jest.fn(),
-  };
-
-  const timer = {
-    register: jest.fn(),
-    cancel: jest.fn(),
-    cancelAll: jest.fn(),
-  };
-
-  let location = {
-    search: jest.fn(() => ({})),
-  };
-
   let timeSrv: TimeSrv;
-
-  const _dashboard: any = {
-    time: { from: 'now-6h', to: 'now' },
-    getTimezone: jest.fn(() => 'browser'),
-  };
+  let _dashboard: any;
+  let locationUpdates: H.Location[] = [];
 
   beforeEach(() => {
-    timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+    _dashboard = {
+      time: { from: 'now-6h', to: 'now' },
+      getTimezone: jest.fn(() => 'browser'),
+      refresh: false,
+      timeRangeUpdated: jest.fn(() => {}),
+    };
+
+    timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
-    _dashboard.refresh = false;
+
+    locationUpdates = [];
+    const history = new HistoryWrapper();
+    history.getHistory().listen((x) => locationUpdates.push(x));
+    setLocationService(history);
   });
 
   describe('timeRange', () => {
@@ -56,14 +51,10 @@ describe('timeSrv', () => {
 
   describe('init time from url', () => {
     it('should handle relative times', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: 'now-2d',
-          to: 'now',
-        })),
-      };
+      locationService.push('/d/id?from=now-2d&to=now');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-2d');
@@ -71,14 +62,9 @@ describe('timeSrv', () => {
     });
 
     it('should handle formatted dates', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '20140410T052010',
-          to: '20140520T031022',
-        })),
-      };
+      locationService.push('/d/id?from=20140410T052010&to=20140520T031022');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -87,14 +73,9 @@ describe('timeSrv', () => {
     });
 
     it('should ignore refresh if time absolute', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '20140410T052010',
-          to: '20140520T031022',
-        })),
-      };
+      locationService.push('/d/id?from=20140410T052010&to=20140520T031022');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       // dashboard saved with refresh on
       _dashboard.refresh = true;
@@ -104,14 +85,9 @@ describe('timeSrv', () => {
     });
 
     it('should handle formatted dates without time', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '20140410',
-          to: '20140520',
-        })),
-      };
+      locationService.push('/d/id?from=20140410&to=20140520');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -120,14 +96,9 @@ describe('timeSrv', () => {
     });
 
     it('should handle epochs', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '1410337646373',
-          to: '1410337665699',
-        })),
-      };
+      locationService.push('/d/id?from=1410337646373&to=1410337665699');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -136,14 +107,9 @@ describe('timeSrv', () => {
     });
 
     it('should handle epochs that look like formatted date without time', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '20149999',
-          to: '20159999',
-        })),
-      };
+      locationService.push('/d/id?from=20149999&to=20159999');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -152,14 +118,9 @@ describe('timeSrv', () => {
     });
 
     it('should handle epochs that look like formatted date', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '201499991234567',
-          to: '201599991234567',
-        })),
-      };
+      locationService.push('/d/id?from=201499991234567&to=201599991234567');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -168,14 +129,9 @@ describe('timeSrv', () => {
     });
 
     it('should handle bad dates', () => {
-      location = {
-        search: jest.fn(() => ({
-          from: '20151126T00010%3C%2Fp%3E%3Cspan%20class',
-          to: 'now',
-        })),
-      };
+      locationService.push('/d/id?from=20151126T00010%3C%2Fp%3E%3Cspan%20class&to=now');
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
       _dashboard.time.from = 'now-6h';
       timeSrv.init(_dashboard);
@@ -183,36 +139,60 @@ describe('timeSrv', () => {
       expect(timeSrv.time.to).toEqual('now');
     });
 
+    it('should handle refresh_intervals=null when refresh is enabled', () => {
+      locationService.push('/d/id?refresh=30s');
+
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+      _dashboard.timepicker = {
+        refresh_intervals: null,
+      };
+      expect(() => timeSrv.init(_dashboard)).not.toThrow();
+    });
+
     describe('data point windowing', () => {
       it('handles time window specfied as interval string', () => {
-        location = {
-          search: jest.fn(() => ({
-            time: '1410337645000',
-            'time.window': '10s',
-          })),
-        };
+        locationService.push('/d/id?time=1410337645000&time.window=10s');
 
-        timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
         expect(time.from.valueOf()).toEqual(1410337640000);
         expect(time.to.valueOf()).toEqual(1410337650000);
       });
-      it('handles time window specified in ms', () => {
-        location = {
-          search: jest.fn(() => ({
-            time: '1410337645000',
-            'time.window': '10000',
-          })),
-        };
 
-        timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+      it('handles time window specified in ms', () => {
+        locationService.push('/d/id?time=1410337645000&time.window=10000');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
         expect(time.from.valueOf()).toEqual(1410337640000);
         expect(time.to.valueOf()).toEqual(1410337650000);
+      });
+
+      it('corrects inverted from/to dates in ms', () => {
+        locationService.push('/d/id?from=1621436828909&to=1621436818909');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.from.valueOf()).toEqual(1621436818909);
+        expect(time.to.valueOf()).toEqual(1621436828909);
+      });
+
+      it('corrects inverted from/to dates as relative times', () => {
+        locationService.push('/d/id?from=now&to=now-1h');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.raw.from).toBe('now-1h');
+        expect(time.raw.to).toBe('now');
       });
     });
   });
@@ -247,6 +227,82 @@ describe('timeSrv', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
       expect(_dashboard.refresh).toBe('10s');
+    });
+
+    it('should update location only once for consecutive calls with the same range', () => {
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+
+      expect(locationUpdates.length).toBe(1);
+    });
+
+    it('should update location so that bool params are preserved', () => {
+      locationService.partial({ kiosk: true });
+
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+      timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+
+      expect(locationUpdates[1].search).toEqual('?kiosk&from=now-1h&to=now-10s');
+    });
+  });
+
+  describe('pauseAutoRefresh', () => {
+    it('should set refresh to empty value', () => {
+      _dashboard.refresh = '10s';
+      timeSrv.pauseAutoRefresh();
+      expect(_dashboard.refresh).toBe('');
+    });
+
+    it('should set previousAutoRefresh value', () => {
+      _dashboard.refresh = '10s';
+      timeSrv.pauseAutoRefresh();
+      expect(timeSrv.previousAutoRefresh).toBe('10s');
+    });
+  });
+
+  describe('resumeAutoRefresh', () => {
+    it('should set refresh to empty value', () => {
+      timeSrv.previousAutoRefresh = '10s';
+      timeSrv.resumeAutoRefresh();
+      expect(_dashboard.refresh).toBe('10s');
+    });
+  });
+
+  describe('isRefreshOutsideThreshold', () => {
+    const originalNow = Date.now;
+
+    beforeEach(() => {
+      Date.now = jest.fn(() => 60000);
+    });
+
+    afterEach(() => {
+      Date.now = originalNow;
+    });
+
+    describe('when called and current time range is absolute', () => {
+      it('then it should return false', () => {
+        timeSrv.setTime({ from: dateTime(), to: dateTime() });
+
+        expect(timeSrv.isRefreshOutsideThreshold(0, 0.05)).toBe(false);
+      });
+    });
+
+    describe('when called and current time range is relative', () => {
+      describe('and last refresh is within threshold', () => {
+        it('then it should return false', () => {
+          timeSrv.setTime({ from: 'now-1m', to: 'now' });
+
+          expect(timeSrv.isRefreshOutsideThreshold(57001, 0.05)).toBe(false);
+        });
+      });
+
+      describe('and last refresh is outside the threshold', () => {
+        it('then it should return true', () => {
+          timeSrv.setTime({ from: 'now-1m', to: 'now' });
+
+          expect(timeSrv.isRefreshOutsideThreshold(57000, 0.05)).toBe(true);
+        });
+      });
     });
   });
 });

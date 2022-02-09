@@ -38,6 +38,17 @@ func (r RoleType) Includes(other RoleType) bool {
 	return r == other
 }
 
+func (r RoleType) Children() []RoleType {
+	switch r {
+	case ROLE_ADMIN:
+		return []RoleType{ROLE_EDITOR, ROLE_VIEWER}
+	case ROLE_EDITOR:
+		return []RoleType{ROLE_VIEWER}
+	default:
+		return nil
+	}
+}
+
 func (r *RoleType) UnmarshalJSON(data []byte) error {
 	var str string
 	err := json.Unmarshal(data, &str)
@@ -96,24 +107,46 @@ type UpdateOrgUserCommand struct {
 // QUERIES
 
 type GetOrgUsersQuery struct {
-	OrgId int64
-	Query string
-	Limit int
+	UserID           int64
+	OrgId            int64
+	Query            string
+	Limit            int
+	IsServiceAccount bool
 
+	User   *SignedInUser
 	Result []*OrgUserDTO
+}
+
+type SearchOrgUsersQuery struct {
+	OrgID            int64
+	Query            string
+	Page             int
+	Limit            int
+	IsServiceAccount bool
+
+	User   *SignedInUser
+	Result SearchOrgUsersQueryResult
+}
+
+type SearchOrgUsersQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
 }
 
 // ----------------------
 // Projections and DTOs
 
 type OrgUserDTO struct {
-	OrgId         int64     `json:"orgId"`
-	UserId        int64     `json:"userId"`
-	Email         string    `json:"email"`
-	Name          string    `json:"name"`
-	AvatarUrl     string    `json:"avatarUrl"`
-	Login         string    `json:"login"`
-	Role          string    `json:"role"`
-	LastSeenAt    time.Time `json:"lastSeenAt"`
-	LastSeenAtAge string    `json:"lastSeenAtAge"`
+	OrgId         int64           `json:"orgId"`
+	UserId        int64           `json:"userId"`
+	Email         string          `json:"email"`
+	Name          string          `json:"name"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	Login         string          `json:"login"`
+	Role          string          `json:"role"`
+	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	LastSeenAtAge string          `json:"lastSeenAtAge"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

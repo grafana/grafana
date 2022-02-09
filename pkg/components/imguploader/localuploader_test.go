@@ -4,15 +4,15 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUploadToLocal(t *testing.T) {
-	Convey("[Integration test] for external_image_store.local", t, func() {
+	t.Run("[Integration test] for external_image_store.local", func(t *testing.T) {
 		localUploader, _ := NewLocalImageUploader()
 		path, err := localUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
-		So(err, ShouldBeNil)
-		So(path, ShouldContainSubstring, "/public/img/attachments")
+		require.NoError(t, err)
+		require.Contains(t, path, "/public/img/attachments")
 	})
 }

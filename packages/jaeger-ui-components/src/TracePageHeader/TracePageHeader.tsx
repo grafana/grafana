@@ -13,34 +13,27 @@
 // limitations under the License.
 
 import * as React from 'react';
-import _get from 'lodash/get';
-import _maxBy from 'lodash/maxBy';
-import _values from 'lodash/values';
+import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
+import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import SpanGraph from './SpanGraph';
 import TracePageSearchBar from './TracePageSearchBar';
-import { autoColor, Theme, TUpdateViewRangeTimeFunction, useTheme, ViewRange, ViewRangeTimeUpdate } from '..';
+import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
-import { TNil } from '../types';
-import { Trace } from '@grafana/data';
-import { formatDatetime, formatDuration } from '../utils/date';
+import { Trace } from '../types/trace';
+import { formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
 
 import ExternalLinks from '../common/ExternalLinks';
-import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
-import { useMemo } from 'react';
 
-const getStyles = createStyle((theme: Theme) => {
-  const TracePageHeaderOverviewItemValueDetail = css`
-    label: TracePageHeaderOverviewItemValueDetail;
-    color: #aaa;
-  `;
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageHeader: css`
       label: TracePageHeader;
@@ -107,7 +100,7 @@ const getStyles = createStyle((theme: Theme) => {
       font-size: 1.7em;
       line-height: 1em;
       margin: 0 0 0 0.5em;
-      padding: 0.5em 0;
+      padding-bottom: 0.5em;
     `,
     TracePageHeaderTitleCollapsible: css`
       label: TracePageHeaderTitleCollapsible;
@@ -118,10 +111,16 @@ const getStyles = createStyle((theme: Theme) => {
       border-bottom: 1px solid #e4e4e4;
       padding: 0.25rem 0.5rem !important;
     `,
-    TracePageHeaderOverviewItemValueDetail,
+    TracePageHeaderOverviewItemValueDetail: cx(
+      css`
+        label: TracePageHeaderOverviewItemValueDetail;
+        color: #aaa;
+      `,
+      'trace-item-value-detail'
+    ),
     TracePageHeaderOverviewItemValue: css`
       label: TracePageHeaderOverviewItemValue;
-      &:hover > .${TracePageHeaderOverviewItemValueDetail} {
+      &:hover > .trace-item-value-detail {
         color: unset;
       }
     `,
@@ -135,7 +134,7 @@ const getStyles = createStyle((theme: Theme) => {
       white-space: nowrap;
     `,
   };
-});
+};
 
 type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
@@ -149,28 +148,27 @@ type TracePageHeaderEmbedProps = {
   prevResult: () => void;
   resultCount: number;
   slimView: boolean;
-  textFilter: string | TNil;
   trace: Trace;
-  traceGraphView: boolean;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
-  hideSearchButtons?: boolean;
+  timeZone: TimeZone;
 };
 
 export const HEADER_ITEMS = [
   {
     key: 'timestamp',
-    label: 'Trace Start',
-    renderer(trace: Trace, styles?: ReturnType<typeof getStyles>) {
-      const dateStr = formatDatetime(trace.startTime);
+    label: 'Trace Start:',
+    renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
+      // Convert date from micro to milli seconds
+      const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (
-        <span className={styles?.TracePageHeaderOverviewItemValue}>
+        <span className={styles.TracePageHeaderOverviewItemValue}>
           {match[1]}
-          <span className={styles?.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
+          <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
         </span>
       ) : (
         dateStr
@@ -179,22 +177,22 @@ export const HEADER_ITEMS = [
   },
   {
     key: 'duration',
-    label: 'Duration',
+    label: 'Duration:',
     renderer: (trace: Trace) => formatDuration(trace.duration),
   },
   {
     key: 'service-count',
-    label: 'Services',
-    renderer: (trace: Trace) => new Set(_values(trace.processes).map(p => p.serviceName)).size,
+    label: 'Services:',
+    renderer: (trace: Trace) => new Set(_values(trace.processes).map((p) => p.serviceName)).size,
   },
   {
     key: 'depth',
-    label: 'Depth',
+    label: 'Depth:',
     renderer: (trace: Trace) => _get(_maxBy(trace.spans, 'depth'), 'depth', 0) + 1,
   },
   {
     key: 'span-count',
-    label: 'Total Spans',
+    label: 'Total Spans:',
     renderer: (trace: Trace) => trace.spans.length,
   },
 ];
@@ -211,19 +209,17 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     prevResult,
     resultCount,
     slimView,
-    textFilter,
     trace,
-    traceGraphView,
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
     searchValue,
     onSearchValueChange,
-    hideSearchButtons,
+    timeZone,
   } = props;
 
-  const styles = getStyles(useTheme());
-  const links = useMemo(() => {
+  const styles = useStyles2(getStyles);
+  const links = React.useMemo(() => {
     if (!trace) {
       return [];
     }
@@ -237,9 +233,9 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const summaryItems =
     !hideSummary &&
     !slimView &&
-    HEADER_ITEMS.map(item => {
+    HEADER_ITEMS.map((item) => {
       const { renderer, ...rest } = item;
-      return { ...rest, value: renderer(trace, styles) };
+      return { ...rest, value: renderer(trace, timeZone, styles) };
     });
 
   const title = (
@@ -277,11 +273,10 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
           nextResult={nextResult}
           prevResult={prevResult}
           resultCount={resultCount}
-          textFilter={textFilter}
-          navigable={!traceGraphView}
+          // TODO: we can change this when we have scroll to span functionality
+          navigable={false}
           searchValue={searchValue}
           onSearchValueChange={onSearchValueChange}
-          hideSearchButtons={hideSearchButtons}
         />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}

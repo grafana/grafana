@@ -1,16 +1,24 @@
 import React, { Component } from 'react';
-
 import { Select, Table } from '@grafana/ui';
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { Options } from './types';
-import { css } from 'emotion';
+import {
+  DataFrame,
+  FieldMatcherID,
+  getDataSourceRef,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+} from '@grafana/data';
+import { PanelOptions } from './models.gen';
+import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { getFooterCells } from './footer';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 export class TablePanel extends Component<Props> {
   constructor(props: Props) {
@@ -25,11 +33,11 @@ export class TablePanel extends Component<Props> {
     const propId = 'custom.width';
 
     // look for existing override
-    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+    const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
 
     if (override) {
       // look for existing property
-      const property = override.properties.find(prop => prop.id === propId);
+      const property = override.properties.find((prop) => prop.id === propId);
       if (property) {
         property.value = width;
       } else {
@@ -67,20 +75,25 @@ export class TablePanel extends Component<Props> {
 
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
-    const panelModel = getDashboardSrv()
-      .getCurrent()
-      .getPanelById(this.props.id);
-    const datasource = panelModel?.datasource;
-
-    if (!datasource) {
+    const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
+    if (!panelModel) {
       return;
     }
 
-    dispatch(applyFilterFromTable({ datasource, key, operator, value }));
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(panelModel.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+    if (!datasourceRef) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
   };
 
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
+    const footerValues = options.footer?.show ? getFooterCells(frame, options.footer) : undefined;
 
     return (
       <Table
@@ -88,36 +101,37 @@ export class TablePanel extends Component<Props> {
         width={width}
         data={frame}
         noHeader={!options.showHeader}
+        showTypeIcons={options.showTypeIcons}
         resizable={true}
         initialSortBy={options.sortBy}
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
+        footerValues={footerValues}
       />
     );
   }
 
-  getCurrentFrameIndex() {
-    const { data, options } = this.props;
-    const count = data.series?.length;
-    return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
+  getCurrentFrameIndex(frames: DataFrame[], options: PanelOptions) {
+    return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
   }
 
   render() {
-    const { data, height, width } = this.props;
+    const { data, height, width, options } = this.props;
 
-    const count = data.series?.length;
-    const hasFields = data.series[0]?.fields.length;
+    const frames = data.series;
+    const count = frames?.length;
+    const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {
-      return <div>No data</div>;
+      return <div className={tableStyles.noData}>No data</div>;
     }
 
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
       const padding = 8 * 2;
-      const currentIndex = this.getCurrentFrameIndex();
-      const names = data.series.map((frame, index) => {
+      const currentIndex = this.getCurrentFrameIndex(frames, options);
+      const names = frames.map((frame, index) => {
         return {
           label: getFrameDisplayName(frame),
           value: index,
@@ -126,15 +140,20 @@ export class TablePanel extends Component<Props> {
 
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
+          {this.renderTable(data.series[currentIndex], width, height - inputHeight + padding)}
           <div className={tableStyles.selectWrapper}>
-            <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
+            <Select
+              menuShouldPortal
+              options={names}
+              value={names[currentIndex]}
+              onChange={this.onChangeTableSelection}
+            />
           </div>
         </div>
       );
     }
 
-    return this.renderTable(data.series[0], width, height - 12);
+    return this.renderTable(data.series[0], width, height);
   }
 }
 
@@ -143,6 +162,13 @@ const tableStyles = {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    height: 100%;
+  `,
+  noData: css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     height: 100%;
   `,
   selectWrapper: css`

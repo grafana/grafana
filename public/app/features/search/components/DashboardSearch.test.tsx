@@ -1,11 +1,15 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { locationService, setEchoSrv } from '@grafana/runtime';
+import { selectOptionInTest } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
 import * as SearchSrv from 'app/core/services/search_srv';
 import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+import { Echo } from 'app/core/services/echo/Echo';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -13,7 +17,7 @@ jest.mock('app/core/services/search_srv');
 const { mockSearch } = SearchSrv as typeof MockSearchSrv;
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  jest.useFakeTimers('modern');
   mockSearch.mockClear();
 });
 
@@ -27,7 +31,7 @@ const setup = (testProps?: Partial<Props>) => {
     ...testProps,
   };
   render(<DashboardSearch {...props} />);
-  jest.runAllTimers();
+  jest.runOnlyPendingTimers();
 };
 
 /**
@@ -35,7 +39,12 @@ const setup = (testProps?: Partial<Props>) => {
  * calls inside useDebounce hook
  */
 describe('DashboardSearch', () => {
+  beforeAll(() => {
+    setEchoSrv(new Echo());
+  });
+
   it('should call search api with default query when initialised', async () => {
+    locationService.push('/');
     setup();
 
     await waitFor(() => screen.getByPlaceholderText('Search dashboards by name'));
@@ -50,16 +59,18 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
   it('should call api with updated query on query change', async () => {
+    locationService.push('/');
     setup();
 
     const input = await screen.findByPlaceholderText('Search dashboards by name');
     await act((async () => {
       await fireEvent.input(input, { target: { value: 'Test' } });
-      jest.runAllTimers();
+      jest.runOnlyPendingTimers();
     }) as any);
 
     expect(mockSearch).toHaveBeenCalledWith({
@@ -71,10 +82,12 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
   it("should render 'No results' message when there are no dashboards", async () => {
+    locationService.push('/');
     setup();
 
     const message = await screen.findByText('No dashboards matching your query were found.');
@@ -84,22 +97,22 @@ describe('DashboardSearch', () => {
   it('should render search results', async () => {
     mockSearch.mockResolvedValueOnce(searchResults);
 
+    locationService.push('/');
     setup();
-    const section = await screen.findAllByLabelText('Search section');
+
+    const section = await screen.findAllByTestId(selectors.components.Search.sectionV2);
     expect(section).toHaveLength(2);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
+    expect(screen.getAllByTestId(selectors.components.Search.itemsV2)).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {
+    locationService.push('/');
     setup();
 
     await waitFor(() => screen.getByLabelText('Tag filter'));
-    // Get the actual element for the underlying Select component, since Select doesn't accept aria- props
-    const tagComponent = screen.getByLabelText('Tag filter').querySelector('div') as Node;
-    fireEvent.keyDown(tagComponent, { keyCode: 40 });
 
-    const firstTag = await screen.findByText('tag1');
-    userEvent.click(firstTag);
+    const tagComponent = screen.getByLabelText('Tag filter');
+    await selectOptionInTest(tagComponent, 'tag1');
 
     expect(tagComponent).toBeInTheDocument();
 
@@ -113,13 +126,14 @@ describe('DashboardSearch', () => {
         folderIds: [],
         layout: SearchLayout.Folders,
         sort: undefined,
+        prevSort: null,
       })
     );
   });
 
   it('should call search api with provided search params', async () => {
-    const params = { query: 'test query', tag: ['tag1'], sort: { value: 'asc' } };
-    setup({ params });
+    locationService.partial({ query: 'test query', tag: ['tag1'], sort: 'asc' });
+    setup({});
 
     await waitFor(() => {
       expect(mockSearch).toHaveBeenCalledTimes(1);

@@ -1,5 +1,13 @@
 apiVersion: 1
 
+deleteDatasources:
+  - name: gdev-influxdb
+  - name: gdev-influxdb-telegraf
+  - name: gdev-influxdb2
+  - name: gdev-influxdb2-influxql
+  - name: gdev-loki-0.3
+  - name: gdev-loki-0.4
+
 datasources:
   - name: gdev-graphite
     type: graphite
@@ -8,41 +16,69 @@ datasources:
     jsonData:
       graphiteVersion: "1.1"
 
+  - name: gdev-graphite-1.0
+    type: graphite
+    access: proxy
+    url: http://localhost:8280
+    jsonData:
+      graphiteVersion: "1.0"
+
+  - name: gdev-graphite-0.9
+    type: graphite
+    access: proxy
+    url: http://localhost:8380
+    jsonData:
+      graphiteVersion: "0.9"
+
   - name: gdev-prometheus
     type: prometheus
     access: proxy
     url: http://localhost:9090
+    jsonData:
+      manageAlerts: false
 
   - name: gdev-slow-prometheus
     type: prometheus
     access: proxy
     url: http://localhost:3011
+    jsonData:
+      manageAlerts: false
 
   - name: gdev-testdata
     isDefault: true
     type: testdata
 
-  - name: gdev-influxdb
+  - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
     database: site
     user: grafana
-    url: http://localhost:8086
-    jsonData:
-      timeInterval: "15s"
+    url: http://localhost:8087
     secureJsonData:
       password: grafana
 
-  - name: gdev-influxdb-telegraf
+  - name: gdev-influxdb-flux
     type: influxdb
     access: proxy
-    database: telegraf
+    url: http://localhost:8086
     user: grafana
+    secureJsonData:
+      token: mytoken
+      password: grafana12345
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
+
+  - name: gdev-influxdb-influxql
+    type: influxdb
+    access: proxy
+    database: mybucket
     url: http://localhost:8086
     jsonData:
-      timeInterval: "10s"
+      httpHeaderName1: "Authorization"
     secureJsonData:
-      password: grafana
+      httpHeaderValue1: "Token mytoken"
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -51,6 +87,14 @@ datasources:
     jsonData:
       tsdbResolution: 1
       tsdbVersion: 1
+
+  - name: gdev-opentsdb-v2.3
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 3
 
   - name: gdev-elasticsearch-v2-metrics
     type: elasticsearch
@@ -91,6 +135,26 @@ datasources:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 5
+
+  - name: gdev-elasticsearch-v56-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:13200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 56
+
+  - name: gdev-elasticsearch-v56-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:13200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 56
 
   - name: gdev-elasticsearch-v6-metrics
     type: elasticsearch
@@ -191,6 +255,17 @@ datasources:
     secureJsonData:
       password: Password!
 
+  - name: gdev-mssql-tls
+    type: mssql
+    url: localhost:1434
+    database: grafana
+    user: grafana
+    jsonData:
+      encrypt: "true"
+      tlsSkipVerify: true
+    secureJsonData:
+      password: Password!
+
   - name: gdev-mssql-ds-tests
     type: mssql
     url: localhost:1433
@@ -227,26 +302,13 @@ datasources:
       defaultRegion: eu-west-2
       customMetricsNamespaces: "CWAgent"
 
-  # Keep to test old /api/prom API
-  - name: gdev-loki-0.3
-    type: loki
-    access: proxy
-    url: http://localhost:3103
-    editable: false
-
-  # First version with new v1 API (remove once v1 is out)
-  - name: gdev-loki-0.4
-    type: loki
-    access: proxy
-    url: http://localhost:3104
-    editable: false
-
   - name: gdev-loki
     type: loki
     access: proxy
     url: http://localhost:3100
     editable: false
     jsonData:
+      manageAlerts: false
       derivedFields:
         - name: "traceID"
           matcherRegex: "traceID=(\\w+)"
@@ -269,4 +331,11 @@ datasources:
     uid: gdev-zipkin
     access: proxy
     url: http://localhost:9411
+    editable: false
+
+  - name: gdev-tempo
+    type: tempo
+    uid: gdev-tempo
+    access: proxy
+    url: http://localhost:3101
     editable: false

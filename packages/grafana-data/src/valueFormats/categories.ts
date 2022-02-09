@@ -1,4 +1,12 @@
-import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
+import {
+  locale,
+  scaledUnits,
+  simpleCountUnit,
+  toFixedUnit,
+  ValueFormatCategory,
+  stringFormater,
+  booleanValueFormatter,
+} from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -163,8 +171,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kibibits/sec', id: 'Kibits', fn: binaryPrefix('b/s', 1) },
       { name: 'kilobytes/sec', id: 'KBs', fn: SIPrefix('B/s', 1) },
       { name: 'kilobits/sec', id: 'Kbits', fn: SIPrefix('b/s', 1) },
-      { name: 'mibibytes/sec', id: 'MiBs', fn: binaryPrefix('B/s', 2) },
-      { name: 'mibibits/sec', id: 'Mibits', fn: binaryPrefix('b/s', 2) },
+      { name: 'mebibytes/sec', id: 'MiBs', fn: binaryPrefix('B/s', 2) },
+      { name: 'mebibits/sec', id: 'Mibits', fn: binaryPrefix('b/s', 2) },
       { name: 'megabytes/sec', id: 'MBs', fn: SIPrefix('B/s', 2) },
       { name: 'megabits/sec', id: 'Mbits', fn: SIPrefix('b/s', 2) },
       { name: 'gibibytes/sec', id: 'GiBs', fn: binaryPrefix('B/s', 3) },
@@ -175,8 +183,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'tebibits/sec', id: 'Tibits', fn: binaryPrefix('b/s', 4) },
       { name: 'terabytes/sec', id: 'TBs', fn: SIPrefix('B/s', 4) },
       { name: 'terabits/sec', id: 'Tbits', fn: SIPrefix('b/s', 4) },
-      { name: 'petibytes/sec', id: 'PiBs', fn: binaryPrefix('B/s', 5) },
-      { name: 'petibits/sec', id: 'Pibits', fn: binaryPrefix('b/s', 5) },
+      { name: 'pebibytes/sec', id: 'PiBs', fn: binaryPrefix('B/s', 5) },
+      { name: 'pebibits/sec', id: 'Pibits', fn: binaryPrefix('b/s', 5) },
       { name: 'petabytes/sec', id: 'PBs', fn: SIPrefix('B/s', 5) },
       { name: 'petabits/sec', id: 'Pbits', fn: SIPrefix('b/s', 5) },
     ],
@@ -207,10 +215,10 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Gigawatt (GW)', id: 'gwatt', fn: SIPrefix('W', 3) },
       { name: 'Milliwatt (mW)', id: 'mwatt', fn: SIPrefix('W', -1) },
       { name: 'Watt per square meter (W/m²)', id: 'Wm2', fn: toFixedUnit('W/m²') },
-      { name: 'Volt-ampere (VA)', id: 'voltamp', fn: SIPrefix('VA') },
-      { name: 'Kilovolt-ampere (kVA)', id: 'kvoltamp', fn: SIPrefix('VA', 1) },
-      { name: 'Volt-ampere reactive (var)', id: 'voltampreact', fn: SIPrefix('var') },
-      { name: 'Kilovolt-ampere reactive (kvar)', id: 'kvoltampreact', fn: SIPrefix('var', 1) },
+      { name: 'Volt-Ampere (VA)', id: 'voltamp', fn: SIPrefix('VA') },
+      { name: 'Kilovolt-Ampere (kVA)', id: 'kvoltamp', fn: SIPrefix('VA', 1) },
+      { name: 'Volt-Ampere reactive (VAr)', id: 'voltampreact', fn: SIPrefix('VAr') },
+      { name: 'Kilovolt-Ampere reactive (kVAr)', id: 'kvoltampreact', fn: SIPrefix('VAr', 1) },
       { name: 'Watt-hour (Wh)', id: 'watth', fn: SIPrefix('Wh') },
       { name: 'Watt-hour per Kilogram (Wh/kg)', id: 'watthperkg', fn: SIPrefix('Wh/kg') },
       { name: 'Kilowatt-hour (kWh)', id: 'kwatth', fn: SIPrefix('Wh', 1) },
@@ -280,6 +288,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'milligram (mg)', id: 'massmg', fn: SIPrefix('g', -1) },
       { name: 'gram (g)', id: 'massg', fn: SIPrefix('g') },
+      { name: 'pound (lb)', id: 'masslb', fn: toFixedUnit('lb') },
       { name: 'kilogram (kg)', id: 'masskg', fn: SIPrefix('g', 1) },
       { name: 'metric ton (t)', id: 'masst', fn: toFixedUnit('t') },
     ],
@@ -288,6 +297,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Length',
     formats: [
       { name: 'millimeter (mm)', id: 'lengthmm', fn: SIPrefix('m', -1) },
+      { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
       { name: 'meter (m)', id: 'lengthm', fn: SIPrefix('m') },
       { name: 'kilometer (km)', id: 'lengthkm', fn: SIPrefix('m', 1) },
@@ -395,6 +405,14 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Normal cubic meter', id: 'Nm3', fn: toFixedUnit('Nm³') },
       { name: 'cubic decimeter', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
+    ],
+  },
+  {
+    name: 'Boolean',
+    formats: [
+      { name: 'True / False', id: 'bool', fn: booleanValueFormatter('True', 'False') },
+      { name: 'Yes / No', id: 'bool_yes_no', fn: booleanValueFormatter('Yes', 'No') },
+      { name: 'On / Off', id: 'bool_on_off', fn: booleanValueFormatter('On', 'Off') },
     ],
   },
 ];

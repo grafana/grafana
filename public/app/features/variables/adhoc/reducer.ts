@@ -1,15 +1,11 @@
-import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
-import { getInstanceState, VariablePayload } from '../state/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+
+import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
+import { getInstanceState, initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 
 export interface AdHocVariabelFilterUpdate {
   index: number;
   filter: AdHocVariableFilter;
-}
-export interface AdHocVariableEditorState {
-  infoText: string;
-  dataSources: Array<{ text: string; value: string }>;
 }
 
 export const initialAdHocVariableModelState: AdHocVariableModel = {

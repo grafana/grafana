@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
-  const items = showAttributeMapping ? groups : groups.filter(item => item.orgRole);
+  const items = showAttributeMapping ? groups : groups.filter((item) => item.orgRole);
 
   return (
     <div className="gf-form-group">

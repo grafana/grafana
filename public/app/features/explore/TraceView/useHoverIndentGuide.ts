@@ -11,7 +11,7 @@ export function useHoverIndentGuide() {
   const [hoverIndentGuideIds, setHoverIndentGuideIds] = useState(new Set<string>());
 
   const addHoverIndentGuideId = useCallback(function addHoverIndentGuideId(spanID: string) {
-    setHoverIndentGuideIds(prevState => {
+    setHoverIndentGuideIds((prevState) => {
       const newHoverIndentGuideIds = new Set(prevState);
       newHoverIndentGuideIds.add(spanID);
       return newHoverIndentGuideIds;
@@ -19,7 +19,7 @@ export function useHoverIndentGuide() {
   }, []);
 
   const removeHoverIndentGuideId = useCallback(function removeHoverIndentGuideId(spanID: string) {
-    setHoverIndentGuideIds(prevState => {
+    setHoverIndentGuideIds((prevState) => {
       const newHoverIndentGuideIds = new Set(prevState);
       newHoverIndentGuideIds.delete(spanID);
       return newHoverIndentGuideIds;

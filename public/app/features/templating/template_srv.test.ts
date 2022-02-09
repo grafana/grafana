@@ -1,7 +1,21 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
+import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
+import { VariableAdapter, variableAdapters } from '../variables/adapters';
+import { createQueryVariableAdapter } from '../variables/query/adapter';
+import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
+import { VariableModel } from '../variables/types';
+import { FormatRegistryID } from './formatRegistry';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter() as unknown as VariableAdapter<VariableModel>,
+  createAdHocVariableAdapter() as unknown as VariableAdapter<VariableModel>,
+]);
 
 describe('templateSrv', () => {
+  silenceConsoleOutput();
   let _templateSrv: any;
 
   describe('init', () => {
@@ -107,9 +121,17 @@ describe('templateSrv', () => {
           name: 'ds',
           current: { value: 'logstash', text: 'logstash' },
         },
-        { type: 'adhoc', name: 'test', datasource: 'oogle', filters: [1] },
-        { type: 'adhoc', name: 'test2', datasource: '$ds', filters: [2] },
+        { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
+        { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
       ]);
+      setDataSourceSrv(
+        new MockDataSourceSrv({
+          oogle: mockDataSource({
+            name: 'oogle',
+            uid: 'oogle',
+          }),
+        })
+      );
     });
 
     it('should return filters if datasourceName match', () => {
@@ -223,6 +245,11 @@ describe('templateSrv', () => {
       const target = _templateSrv.replace('${test:pipe},$test', {}, 'glob');
       expect(target).toBe('value1|value2,{value1,value2}');
     });
+
+    it('should replace ${test:queryparam} with correct query parameter', () => {
+      const target = _templateSrv.replace('${test:queryparam}', {});
+      expect(target).toBe('var-test=All');
+    });
   });
 
   describe('variable with all option and custom value', () => {
@@ -253,9 +280,19 @@ describe('templateSrv', () => {
       expect(target).toBe('this.*.filters');
     });
 
+    it('should replace ${test:text} with "all" value', () => {
+      const target = _templateSrv.replace('this.${test:text}.filters', {});
+      expect(target).toBe('this.All.filters');
+    });
+
     it('should not escape custom all value', () => {
       const target = _templateSrv.replace('this.$test', {}, 'regex');
       expect(target).toBe('this.*');
+    });
+
+    it('should replace ${test:queryparam} with correct query parameter', () => {
+      const target = _templateSrv.replace('${test:queryparam}', {});
+      expect(target).toBe('var-test=All');
     });
   });
 
@@ -524,6 +561,13 @@ describe('templateSrv', () => {
           current: { value: '$__all', text: '' },
           options: [{ value: '$__all' }, { value: 'db1', text: 'Database 1' }, { value: 'db2', text: 'Database 2' }],
         },
+        {
+          type: 'custom',
+          name: 'custom_all_value',
+          allValue: 'CUSTOM_ALL',
+          current: { value: '$__all', text: '' },
+          options: [{ value: '$__all' }, { value: 'A-Value', text: 'This A' }, { value: 'B-Value', text: 'This B' }],
+        },
       ]);
       _templateSrv.updateIndex();
     });
@@ -541,6 +585,11 @@ describe('templateSrv', () => {
     it('should replace $__all with All', () => {
       const target = _templateSrv.replaceWithText('Db: $databases');
       expect(target).toBe('Db: All');
+    });
+
+    it('should replace $__all with All for values with custom all', () => {
+      const target = _templateSrv.replaceWithText('Custom: $custom_all_value');
+      expect(target).toBe('Custom: All');
     });
   });
 
@@ -619,6 +668,143 @@ describe('templateSrv', () => {
       });
 
       expect(passedValue).toBe('hello');
+    });
+  });
+
+  describe('adhoc variables', () => {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv([
+        {
+          type: 'adhoc',
+          name: 'adhoc',
+          filters: [
+            {
+              condition: '',
+              key: 'alertstate',
+              operator: '=',
+              value: 'firing',
+            },
+            {
+              condition: '',
+              key: 'alertname',
+              operator: '=',
+              value: 'ExampleAlertAlwaysFiring',
+            },
+          ],
+        },
+      ]);
+    });
+
+    it(`should not be handled by any registry items except for queryparam`, () => {
+      const registryItems = Object.values(FormatRegistryID);
+      for (const registryItem of registryItems) {
+        if (registryItem === FormatRegistryID.queryParam) {
+          continue;
+        }
+
+        const firstTarget = _templateSrv.replace(`\${adhoc:${registryItem}}`, {});
+        expect(firstTarget).toBe('');
+
+        const secondTarget = _templateSrv.replace('${adhoc}', {}, registryItem);
+        expect(secondTarget).toBe('');
+      }
+    });
+  });
+
+  describe('queryparam', () => {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv([
+        {
+          type: 'query',
+          name: 'single',
+          current: { value: 'value1' },
+          options: [{ value: 'value1' }, { value: 'value2' }],
+        },
+        {
+          type: 'query',
+          name: 'multi',
+          current: { value: ['value1', 'value2'] },
+          options: [{ value: 'value1' }, { value: 'value2' }],
+        },
+        {
+          type: 'adhoc',
+          name: 'adhoc',
+          filters: [
+            {
+              condition: '',
+              key: 'alertstate',
+              operator: '=',
+              value: 'firing',
+            },
+            {
+              condition: '',
+              key: 'alertname',
+              operator: '=',
+              value: 'ExampleAlertAlwaysFiring',
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('query variable with single value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${single:queryparam}`, {});
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with single value with queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${single:queryparam}`, { single: { value: 'value1', text: 'value1' } });
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with single value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${single}', {}, 'queryparam');
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with single value and queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace('${single}', { single: { value: 'value1', text: 'value1' } }, 'queryparam');
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with multi value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${multi:queryparam}`, {});
+      expect(target).toBe('var-multi=value1&var-multi=value2');
+    });
+
+    it('query variable with multi value with queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${multi:queryparam}`, { multi: { value: 'value2', text: 'value2' } });
+      expect(target).toBe('var-multi=value2');
+    });
+
+    it('query variable with multi value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${multi}', {}, 'queryparam');
+      expect(target).toBe('var-multi=value1&var-multi=value2');
+    });
+
+    it('query variable with multi value and queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace('${multi}', { multi: { value: 'value2', text: 'value2' } }, 'queryparam');
+      expect(target).toBe('var-multi=value2');
+    });
+
+    it('query variable with adhoc value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${adhoc:queryparam}`, {});
+      expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
+    });
+
+    it('query variable with adhoc value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${adhoc:queryparam}`, { adhoc: { value: 'value2', text: 'value2' } });
+      expect(target).toBe('var-adhoc=value2');
+    });
+
+    it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${adhoc}', {}, 'queryparam');
+      expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
+    });
+
+    it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${adhoc}', { adhoc: { value: 'value2', text: 'value2' } }, 'queryparam');
+      expect(target).toBe('var-adhoc=value2');
     });
   });
 });

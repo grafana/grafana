@@ -1,6 +1,5 @@
 import execa = require('execa');
 import { promises as fs } from 'fs';
-// @ts-ignore
 import * as path from 'path';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
@@ -46,7 +45,7 @@ const moveFiles = (fromPath: string, toPath: string) => {
   const files = ['README.md', 'CHANGELOG.md', 'index.js'];
 
   return useSpinner(`Moving ${files.join(', ')} files`, () => {
-    const promises = files.map(file => fs.copyFile(`${fromPath}/${file}`, `${toPath}/${file}`));
+    const promises = files.map((file) => fs.copyFile(`${fromPath}/${file}`, `${toPath}/${file}`));
     return Promise.all(promises);
   });
 };
@@ -57,7 +56,7 @@ const moveStaticFiles = async (packageRoot: string, pkg: any) => {
       const staticFiles = await globby(`${packageRoot}/src/**/*.{png,svg,gif,jpg}`);
       const pathSearch = new RegExp(`^${packageRoot}/src`);
       const pathReplace = `${packageRoot}/compiled`;
-      const promises = staticFiles.map(file => fs.copyFile(file, file.replace(pathSearch, pathReplace)));
+      const promises = staticFiles.map((file) => fs.copyFile(file, file.replace(pathSearch, pathReplace)));
       await Promise.all(promises);
     });
   }
@@ -72,7 +71,7 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
     throw new Error('Provide packages with -s, --scope <packages>');
   }
 
-  const scopes = scope.split(',').map(async s => {
+  const scopes = scope.split(',').map(async (s) => {
     const packageRoot = path.resolve(__dirname, `../../../../grafana-${s}`);
     const packageDist = `${packageRoot}/dist`;
     const pkg = require(`${packageRoot}/package.json`);

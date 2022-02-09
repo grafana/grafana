@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,7 +42,7 @@ func TestGroupSplit(t *testing.T) {
 }
 
 func TestInitJaegerCfg_Default(t *testing.T) {
-	ts := &TracingService{}
+	ts := &Opentracing{}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -49,7 +50,7 @@ func TestInitJaegerCfg_Default(t *testing.T) {
 }
 
 func TestInitJaegerCfg_Enabled(t *testing.T) {
-	ts := &TracingService{enabled: true}
+	ts := &Opentracing{enabled: true}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -65,7 +66,7 @@ func TestInitJaegerCfg_DisabledViaEnv(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	ts := &TracingService{enabled: true}
+	ts := &Opentracing{enabled: true}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -80,7 +81,7 @@ func TestInitJaegerCfg_EnabledViaEnv(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	ts := &TracingService{enabled: false}
+	ts := &Opentracing{enabled: false}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -95,7 +96,45 @@ func TestInitJaegerCfg_InvalidEnvVar(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	ts := &TracingService{}
+	ts := &Opentracing{}
 	_, err = ts.initJaegerCfg()
 	require.EqualError(t, err, "cannot parse env var JAEGER_DISABLED=totallybogus: strconv.ParseBool: parsing \"totallybogus\": invalid syntax")
+}
+
+func TestInitJaegerCfg_EnabledViaHost(t *testing.T) {
+	require.NoError(t, os.Setenv("JAEGER_AGENT_HOST", "example.com"))
+	defer func() {
+		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
+	}()
+
+	cfg := setting.NewCfg()
+	ts := &Opentracing{Cfg: cfg}
+	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
+	require.NoError(t, err)
+	require.NoError(t, ts.parseSettings())
+	jaegerCfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
+
+	assert.False(t, jaegerCfg.Disabled)
+	assert.Equal(t, "example.com:6831", jaegerCfg.Reporter.LocalAgentHostPort)
+}
+
+func TestInitJaegerCfg_EnabledViaHostPort(t *testing.T) {
+	require.NoError(t, os.Setenv("JAEGER_AGENT_HOST", "example.com"))
+	require.NoError(t, os.Setenv("JAEGER_AGENT_PORT", "12345"))
+	defer func() {
+		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
+		require.NoError(t, os.Unsetenv("JAEGER_AGENT_PORT"))
+	}()
+
+	cfg := setting.NewCfg()
+	ts := &Opentracing{Cfg: cfg}
+	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
+	require.NoError(t, err)
+	require.NoError(t, ts.parseSettings())
+	jaegerCfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
+
+	assert.False(t, jaegerCfg.Disabled)
+	assert.Equal(t, "example.com:12345", jaegerCfg.Reporter.LocalAgentHostPort)
 }

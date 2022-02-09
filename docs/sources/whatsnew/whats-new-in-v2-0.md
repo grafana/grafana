@@ -20,7 +20,7 @@ If you are interested in how to migrate from Grafana V1.x to V2.0, please read o
 
 Grafana now ships with its own required backend server. Also completely open-source, it's written in Go and has a full HTTP API.
 
-In addition to new features, the backend server makes it much easier to set up and enjoy Grafana. Grafana 2.0 now ships as cross platform binaries with no dependencies. Authentication is built in, and Grafana is now capable of proxying connections to Data Sources.  There are no longer any CORS (Cross Origin Resource Sharing) issues requiring messy workarounds. Elasticsearch is no longer required just to store dashboards.
+In addition to new features, the backend server makes it much easier to set up and enjoy Grafana. Grafana 2.0 now ships as cross platform binaries with no dependencies. Authentication is built in, and Grafana is now capable of proxying connections to Data Sources. There are no longer any CORS (Cross Origin Resource Sharing) issues requiring messy workarounds. Elasticsearch is no longer required just to store dashboards.
 
 ## User and Organization permissions
 
@@ -53,11 +53,11 @@ even zoom in). Also they are fast to load as they aren't actually connected to a
 
 They're a great way to communicate about a particular incident with specific people who aren't users of your Grafana instance. You can also use them to show off your dashboards over the Internet.
 
-![](/img/docs/v2/dashboard_snapshot_dialog.png)
+![](/static/img/docs/v2/dashboard_snapshot_dialog.png)
 
 ### Publish snapshots
 
-You can publish snapshots locally or to [snapshot.raintank.io](http://snapshot.raintank.io). snapshot.raintank is a free service provided by [raintank](http://raintank.io) for hosting external Grafana snapshots.
+You can publish snapshots locally or to [snapshots.raintank.io](https://snapshots.raintank.io). snapshots.raintank.io is a free service provided by [Grafana Labs](https://grafana.com) for hosting external Grafana snapshots.
 
 Either way, anyone with the link (and access to your Grafana instance for local snapshots) can view it.
 
@@ -65,11 +65,11 @@ Either way, anyone with the link (and access to your Grafana instance for local 
 
 In Grafana v2.x you can now override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. You can also add a time shift to individual panels. This allows you to show metrics from different time periods or days at the same time.
 
-![](/img/docs/v2/panel_time_override.jpg)
+![](/static/img/docs/v2/panel_time_override.jpg)
 
 You control these overrides in panel editor mode and the new tab `Time Range`.
 
-![](/img/docs/v2/time_range_tab.jpg)
+![](/static/img/docs/v2/time_range_tab.jpg)
 
 When you zoom or change the Dashboard time to a custom absolute time range, all panel overrides will be disabled. The panel relative time override is only active when the dashboard time is also relative. The panel timeshift override however is always active, even when the dashboard time is absolute.
 
@@ -82,11 +82,11 @@ Currently you can only override the dashboard time with relative time ranges, no
 
 You can embed a single panel on another web page or your own application using the panel share dialog.
 
-Below you should see an iframe with a graph panel (taken from a Dashboard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
+Below you should see an iframe with a graph panel (taken from a Dashboard snapshot at [snapshots.raintank.io](http://snapshots.raintank.io).
 
 Try hovering or zooming on the panel below!
 
-<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshots.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
 
 This feature makes it easy to include interactive visualizations from your Grafana instance anywhere you want.
 
@@ -94,7 +94,7 @@ This feature makes it easy to include interactive visualizations from your Grafa
 
 The top header has gotten a major streamlining in Grafana V2.0.
 
-<img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
+<img class="no-shadow" src="/static/img/docs/v2/v2_top_nav_annotated.png">
 
 1. `Side menubar toggle` Toggle the side menubar on or off. This allows you to focus on the data presented on the Dashboard. The side menubar provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
 1. `Dashboard dropdown` The main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage the Playlist.
@@ -119,7 +119,7 @@ You can easily collapse or re-open the side menubar at any time by clicking the 
 
 ## New search view and starring dashboards
 
-![](/img/docs/v2/dashboard_search.jpg)
+![](/static/img/docs/v2/dashboard_search.jpg)
 
 The dashboard search view has gotten a big overhaul. You can now see and filter by which dashboard you have personally starred.
 
@@ -128,11 +128,11 @@ The dashboard search view has gotten a big overhaul. You can now see and filter 
 The Graph panel now supports 3 logarithmic scales, `log base 10`, `log base 32`, `log base 1024`. Logarithmic y-axis scales are very useful when rendering many series of different order of magnitude on the same scale (eg.
 latency, network traffic, and storage)
 
-![](/img/docs/v2/graph_logbase10_ms.png)
+![](/static/img/docs/v2/graph_logbase10_ms.png)
 
 ## Dashlist panel
 
-![](/img/docs/v2/dashlist_starred.png)
+![](/static/img/docs/v2/dashlist_starred.png)
 
 The dashlist is a new panel in Grafana v2.0. It allows you to show your personal starred dashboards, as well as do custom searches based on search strings or tags.
 
@@ -151,7 +151,7 @@ In addition, connections to Data Sources can be better controlled and secured, a
 A commonly reported problem has been graphs dipping to zero at the end, because metric data for the last interval has yet to be written to the Data Source. These graphs then "self correct" once the data comes in, but can look deceiving or alarming at times.
 
 You can avoid this problem by adding a `now delay` in `Dashboard Settings` > `Time Picker` tab. This new feature will cause Grafana to ignore the most recent data up to the set delay.
-![](/img/docs/v2/timepicker_now_delay.jpg)
+![](/static/img/docs/v2/timepicker_now_delay.jpg)
 
 The delay that may be necessary depends on how much latency you have in your collection pipeline.
 
@@ -159,7 +159,7 @@ The delay that may be necessary depends on how much latency you have in your col
 
 Grafana v2.0 protects Users from accidentally overwriting each others Dashboard changes. Similar protections are in place if you try to create a new Dashboard with the same name as an existing one.
 
-![](/img/docs/v2/overwrite_protection.jpg)
+![](/static/img/docs/v2/overwrite_protection.jpg)
 
 These protections are only the first step; we will be building out additional capabilities around dashboard versioning and management in future versions of Grafana.
 
@@ -175,4 +175,4 @@ Grafana now supports server-side PNG rendering. From the Panel share dialog you 
 
 > **Note:** This requires that your Data Source is accessible from your Grafana instance.
 
-![](/img/docs/v2/share_dialog_image_highlight.jpg)
+![](/static/img/docs/v2/share_dialog_image_highlight.jpg)

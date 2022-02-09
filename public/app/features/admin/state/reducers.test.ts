@@ -17,15 +17,9 @@ import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
-  syncInfo: null,
-  user: null,
-  ldapError: null,
-  connectionError: null,
-  userError: null,
 });
 
 const makeInitialUserAdminState = (): UserAdminState => ({
-  user: null,
   sessions: [],
   orgs: [],
   isLoading: true,
@@ -38,6 +32,8 @@ const makeInitialUserListAdminState = (): UserListAdminState => ({
   perPage: 50,
   totalPages: 1,
   showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: true }],
+  isLoading: false,
 });
 
 const getTestUserMapping = (): LdapUser => ({
@@ -81,7 +77,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: (null as unknown) as string,
+                error: null as unknown as string,
               },
             ])
           )
@@ -92,10 +88,10 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: (null as unknown) as string,
+                error: null as unknown as string,
               },
             ],
-            ldapError: null,
+            ldapError: undefined,
           });
       });
     });
@@ -167,7 +163,7 @@ describe('LDAP page reducer', () => {
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
           user: getTestUserMapping(),
-          userError: null,
+          userError: undefined,
         });
     });
   });
@@ -189,7 +185,7 @@ describe('LDAP page reducer', () => {
         )
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
-          user: null,
+          user: undefined,
           userError: {
             title: 'User not found',
             body: 'Cannot find user',
@@ -208,7 +204,7 @@ describe('LDAP page reducer', () => {
         .whenActionIsDispatched(clearUserMappingInfoAction())
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
-          user: null,
+          user: undefined,
         });
     });
   });

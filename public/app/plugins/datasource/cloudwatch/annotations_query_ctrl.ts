@@ -1,13 +1,15 @@
-import _ from 'lodash';
-import { AnnotationQuery } from './types';
+import { defaultsDeep } from 'lodash';
+import { CloudWatchAnnotationQuery } from './types';
 
 export class CloudWatchAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  annotation: any;
+  declare annotation: any;
 
   /** @ngInject */
-  constructor() {
-    _.defaultsDeep(this.annotation, {
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
+
+    defaultsDeep(this.annotation, {
       namespace: '',
       metricName: '',
       expression: '',
@@ -15,7 +17,7 @@ export class CloudWatchAnnotationsQueryCtrl {
       region: 'default',
       id: '',
       alias: '',
-      statistics: ['Average'],
+      statistic: 'Average',
       matchExact: true,
       prefixMatching: false,
       actionPrefix: '',
@@ -25,7 +27,7 @@ export class CloudWatchAnnotationsQueryCtrl {
     this.onChange = this.onChange.bind(this);
   }
 
-  onChange(query: AnnotationQuery) {
+  onChange(query: CloudWatchAnnotationQuery) {
     Object.assign(this.annotation, query);
   }
 }

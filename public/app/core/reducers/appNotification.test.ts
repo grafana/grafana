@@ -116,4 +116,46 @@ describe('notify', () => {
 
     expect(result).toEqual(expectedResult);
   });
+
+  it('Dedupe identical alerts', () => {
+    const initialState = {
+      appNotifications: [
+        {
+          id: 'id1',
+          severity: AppNotificationSeverity.Success,
+          icon: 'success',
+          title: 'test',
+          text: 'test alert',
+          timeout: AppNotificationTimeout.Success,
+        },
+      ],
+    };
+
+    const result = appNotificationsReducer(
+      initialState,
+      notifyApp({
+        id: 'id2',
+        severity: AppNotificationSeverity.Success,
+        icon: 'success',
+        title: 'test',
+        text: 'test alert',
+        timeout: AppNotificationTimeout.Success,
+      })
+    );
+
+    const expectedResult = {
+      appNotifications: [
+        {
+          id: 'id1',
+          severity: AppNotificationSeverity.Success,
+          icon: 'success',
+          title: 'test',
+          text: 'test alert',
+          timeout: AppNotificationTimeout.Success,
+        },
+      ],
+    };
+
+    expect(result).toEqual(expectedResult);
+  });
 });

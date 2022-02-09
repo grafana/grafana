@@ -1,12 +1,34 @@
 // Libraries
-import _, { defaults } from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import {
+  AnnotationQuery,
+  DataLink,
+  DataLinkBuiltInVars,
+  DataQuery,
+  DataSourceRef,
+  DataTransformerConfig,
+  FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+  getActiveThreshold,
+  getDataSourceRef,
+  isDataSourceRef,
+  MappingType,
+  PanelPlugin,
+  SpecialValueMatch,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  ThresholdsConfig,
+  urlUtil,
+  ValueMap,
+  ValueMapping,
+} from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -16,10 +38,28 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { isConstant, isMulti, isQuery } from 'app/features/variables/guard';
+import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableHide, VariableTag } from '../../variables/types';
+import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
+import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
+import {
+  migrateCloudWatchQuery,
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
+} from 'app/plugins/datasource/cloudwatch/migrations';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
 
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -30,8 +70,8 @@ export class DashboardMigrator {
   updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
-    const panelUpgrades = [];
-    this.dashboard.schemaVersion = 27;
+    const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
+    this.dashboard.schemaVersion = 35;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -51,11 +91,12 @@ export class DashboardMigrator {
         if (panel.type === 'graphite') {
           panel.type = 'graph';
         }
+
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
 
-        if (_.isBoolean(panel.legend)) {
+        if (isBoolean(panel.legend)) {
           panel.legend = { show: panel.legend };
         }
 
@@ -86,18 +127,22 @@ export class DashboardMigrator {
           panel.y_formats[1] = panel.y2_format;
           delete panel.y2_format;
         }
+
+        return panel;
       });
     }
 
     // schema version 3 changes
     if (oldVersion < 3) {
-      // ensure panel ids
+      // ensure panel IDs
       let maxId = this.dashboard.getNextPanelId();
       panelUpgrades.push((panel: any) => {
         if (!panel.id) {
           panel.id = maxId;
           maxId += 1;
         }
+
+        return panel;
       });
     }
 
@@ -106,18 +151,22 @@ export class DashboardMigrator {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
-        _.each(panel.aliasYAxis, (value, key) => {
+
+        each(panel.aliasYAxis, (value, key) => {
           panel.seriesOverrides = [{ alias: key, yaxis: value }];
         });
+
         delete panel.aliasYAxis;
+
+        return panel;
       });
     }
 
     if (oldVersion < 6) {
-      // move pulldowns to new schema
-      const annotations: any = _.find(old.pulldowns, { type: 'annotations' });
+      // move drop-downs to new schema
+      const annotations: any = find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -150,24 +199,26 @@ export class DashboardMigrator {
 
       // ensure query refIds
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, target => {
+        each(panel.targets, (target) => {
           if (!target.refId) {
             target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
           }
         });
+
+        return panel;
       });
     }
 
     if (oldVersion < 8) {
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, target => {
+        each(panel.targets, (target) => {
           // update old influxdb query schema
           if (target.fields && target.tags && target.groupBy) {
             if (target.rawQuery) {
               delete target.fields;
               delete target.fill;
             } else {
-              target.select = _.map(target.fields, field => {
+              target.select = map(target.fields, (field) => {
                 const parts = [];
                 parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
@@ -180,7 +231,7 @@ export class DashboardMigrator {
                 return parts;
               });
               delete target.fields;
-              _.each(target.groupBy, part => {
+              each(target.groupBy, (part) => {
                 if (part.type === 'time' && part.interval) {
                   part.params = [part.interval];
                   delete part.interval;
@@ -198,6 +249,8 @@ export class DashboardMigrator {
             }
           }
         });
+
+        return panel;
       });
     }
 
@@ -206,7 +259,7 @@ export class DashboardMigrator {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return;
+          return panel;
         }
 
         if (panel.thresholds) {
@@ -217,6 +270,8 @@ export class DashboardMigrator {
             panel.thresholds = k.join(',');
           }
         }
+
+        return panel;
       });
     }
 
@@ -225,22 +280,24 @@ export class DashboardMigrator {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
-          return;
+          return panel;
         }
 
-        _.each(panel.styles, style => {
+        each(panel.styles, (style) => {
           if (style.thresholds && style.thresholds.length >= 3) {
             const k = style.thresholds;
             k.shift();
             style.thresholds = k;
           }
         });
+
+        return panel;
       });
     }
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.getVariables(), (templateVariable: any) => {
+      each(this.dashboard.getVariables(), (templateVariable: any) => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -259,10 +316,10 @@ export class DashboardMigrator {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
         if (!panel.grid) {
-          return;
+          return panel;
         }
 
         if (!panel.yaxes) {
@@ -301,6 +358,8 @@ export class DashboardMigrator {
           delete panel['y-axis'];
           delete panel['x-axis'];
         }
+
+        return panel;
       });
     }
 
@@ -308,10 +367,10 @@ export class DashboardMigrator {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
         if (!panel.grid) {
-          return;
+          return panel;
         }
 
         if (!panel.thresholds) {
@@ -346,8 +405,8 @@ export class DashboardMigrator {
           }
         }
 
-        if (_.isNumber(t1.value)) {
-          if (_.isNumber(t2.value)) {
+        if (isNumber(t1.value)) {
+          if (isNumber(t2.value)) {
             if (t1.value > t2.value) {
               t1.op = t2.op = 'lt';
               panel.thresholds.push(t1);
@@ -368,6 +427,8 @@ export class DashboardMigrator {
         delete panel.grid.threshold2;
         delete panel.grid.threshold2Color;
         delete panel.grid.thresholdLine;
+
+        return panel;
       });
     }
 
@@ -388,12 +449,15 @@ export class DashboardMigrator {
           // (ie. [1,2,3,4,6,12,24] for 24 columns)
           panel.maxPerRow =
             factors[
-              _.findIndex(factors, o => {
+              findIndex(factors, (o) => {
                 return o > max;
               }) - 1
             ];
         }
+
         delete panel.minSpan;
+
+        return panel;
       });
     }
 
@@ -424,15 +488,19 @@ export class DashboardMigrator {
           delete panel.options.suffix;
           delete panel['options-gauge'];
         }
+
+        return panel;
       });
     }
 
     if (oldVersion < 19) {
       // migrate change to gauge options
       panelUpgrades.push((panel: any) => {
-        if (panel.links && _.isArray(panel.links)) {
+        if (panel.links && isArray(panel.links)) {
           panel.links = panel.links.map(upgradePanelLink);
         }
+
+        return panel;
       });
     }
 
@@ -445,13 +513,13 @@ export class DashboardMigrator {
       };
       panelUpgrades.push((panel: any) => {
         // For graph panel
-        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+        if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
         if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
-          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+          if (panel.options.fieldOptions.defaults.links && isArray(panel.options.fieldOptions.defaults.links)) {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
           if (panel.options.fieldOptions.defaults.title) {
@@ -460,6 +528,8 @@ export class DashboardMigrator {
             );
           }
         }
+
+        return panel;
       });
     }
 
@@ -472,28 +542,32 @@ export class DashboardMigrator {
       };
       panelUpgrades.push((panel: any) => {
         // For graph panel
-        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+        if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
         if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
-          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+          if (panel.options.fieldOptions.defaults.links && isArray(panel.options.fieldOptions.defaults.links)) {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
         }
+
+        return panel;
       });
     }
 
     if (oldVersion < 22) {
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
-          return;
+          return panel;
         }
 
-        _.each(panel.styles, style => {
+        each(panel.styles, (style) => {
           style.align = 'auto';
         });
+
+        return panel;
       });
     }
 
@@ -513,65 +587,31 @@ export class DashboardMigrator {
       panelUpgrades.push((panel: any) => {
         const wasAngularTable = panel.type === 'table';
         if (wasAngularTable && !panel.styles) {
-          return; // styles are missing so assumes default settings
+          return panel; // styles are missing so assumes default settings
         }
         const wasReactTable = panel.table === 'table2';
         if (!wasAngularTable || wasReactTable) {
-          return;
+          return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
+        return panel;
       });
     }
 
     if (oldVersion < 25) {
-      for (const variable of this.dashboard.templating.list) {
-        if (!isQuery(variable)) {
-          continue;
-        }
-
-        const { tags, current } = variable;
-        if (!Array.isArray(tags)) {
-          variable.tags = [];
-          continue;
-        }
-
-        const currentTags = current?.tags ?? [];
-        const currents = currentTags.reduce((all, tag) => {
-          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
-            all[tag.text] = tag;
-          }
-          return all;
-        }, {} as Record<string, VariableTag>);
-
-        const newTags: VariableTag[] = [];
-
-        for (const tag of tags) {
-          if (typeof tag === 'object') {
-            // new format let's assume it's correct
-            newTags.push(tag);
-            continue;
-          }
-
-          if (typeof tag !== 'string') {
-            // something that we do not support
-            continue;
-          }
-
-          newTags.push(defaults(currents[tag], { text: tag, selected: false }));
-        }
-        variable.tags = newTags;
-      }
+      // tags are removed in version 28
     }
 
     if (oldVersion < 26) {
       panelUpgrades.push((panel: any) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
-          return;
+          return panel;
         }
 
         panel.type = 'text';
         delete panel.options.angular;
+        return panel;
       });
     }
 
@@ -590,17 +630,148 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 28) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'singlestat') {
+          return migrateSinglestat(panel);
+        }
+
+        return panel;
+      });
+
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.tags) {
+          delete variable.tags;
+        }
+
+        if (variable.tagsQuery) {
+          delete variable.tagsQuery;
+        }
+
+        if (variable.tagValuesQuery) {
+          delete variable.tagValuesQuery;
+        }
+
+        if (variable.useTags) {
+          delete variable.useTags;
+        }
+      }
+    }
+
+    if (oldVersion < 29) {
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.type !== 'query') {
+          continue;
+        }
+
+        if (variable.refresh !== 1 && variable.refresh !== 2) {
+          variable.refresh = 1;
+        }
+
+        if (variable.options?.length) {
+          variable.options = [];
+        }
+      }
+    }
+
+    if (oldVersion < 30) {
+      panelUpgrades.push(upgradeValueMappingsForPanel);
+      panelUpgrades.push(migrateTooltipOptions);
+    }
+
+    if (oldVersion < 31) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.transformations) {
+          for (const t of panel.transformations) {
+            if (t.id === labelsToFieldsTransformer.id) {
+              return appendTransformerAfter(panel, labelsToFieldsTransformer.id, {
+                id: mergeTransformer.id,
+                options: {},
+              });
+            }
+          }
+        }
+        return panel;
+      });
+    }
+
+    if (oldVersion < 32) {
+      // CloudWatch migrations have been moved to version 34
+    }
+
+    // Replace datasource name with reference, uid and type
+    if (oldVersion < 33) {
+      panelUpgrades.push((panel) => {
+        panel.datasource = migrateDatasourceNameToRef(panel.datasource);
+
+        if (!panel.targets) {
+          return panel;
+        }
+
+        for (const target of panel.targets) {
+          const targetRef = migrateDatasourceNameToRef(target.datasource);
+          if (targetRef != null) {
+            target.datasource = targetRef;
+          }
+        }
+
+        return panel;
+      });
+    }
+
+    if (oldVersion < 34) {
+      panelUpgrades.push((panel: PanelModel) => {
+        this.migrateCloudWatchQueries(panel);
+        return panel;
+      });
+
+      this.migrateCloudWatchAnnotationQuery();
+    }
+
+    if (oldVersion < 35) {
+      panelUpgrades.push(ensureXAxisVisibility);
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
 
     for (j = 0; j < this.dashboard.panels.length; j++) {
       for (k = 0; k < panelUpgrades.length; k++) {
-        panelUpgrades[k].call(this, this.dashboard.panels[j]);
+        this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
         if (this.dashboard.panels[j].panels) {
           for (n = 0; n < this.dashboard.panels[j].panels.length; n++) {
-            panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
+            this.dashboard.panels[j].panels[n] = panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
           }
+        }
+      }
+    }
+  }
+
+  // Migrates metric queries and/or annotation queries that use more than one statistic.
+  // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
+  // New queries, that were created during migration, are put at the end of the array.
+  migrateCloudWatchQueries(panel: PanelModel) {
+    for (const target of panel.targets || []) {
+      if (isCloudWatchQuery(target)) {
+        migrateCloudWatchQuery(target);
+        if (target.hasOwnProperty('statistics')) {
+          // New queries, that were created during migration, are put at the end of the array.
+          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
+          for (const newQuery of newQueries) {
+            panel.targets.push(newQuery);
+          }
+        }
+      }
+    }
+  }
+
+  migrateCloudWatchAnnotationQuery() {
+    for (const annotation of this.dashboard.annotations.list) {
+      if (isLegacyCloudWatchAnnotationQuery(annotation)) {
+        const newAnnotationQueries = migrateMultipleStatsAnnotationQuery(annotation);
+        for (const newAnnotationQuery of newAnnotationQueries) {
+          this.dashboard.annotations.list.push(newAnnotationQuery);
         }
       }
     }
@@ -610,10 +781,10 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = _.max(
-      _.flattenDeep(
-        _.map(old.rows, row => {
-          return _.map(row.panels, 'id');
+    const maxPanelId = max(
+      flattenDeep(
+        map(old.rows, (row) => {
+          return map(row.panels, 'id');
         })
       )
     );
@@ -624,7 +795,7 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(old.rows, row => row.collapse || row.showTitle || row.repeat);
+    const showRows = some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
 
     for (const row of old.rows) {
       if (row.repeatIteration) {
@@ -697,7 +868,7 @@ export class DashboardMigrator {
 }
 
 function getGridHeight(height: number | string) {
-  if (_.isString(height)) {
+  if (isString(height)) {
     height = parseInt(height.replace('px', ''), 10);
   }
 
@@ -769,7 +940,7 @@ class RowArea {
     }
 
     if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
-      const yPos = _.max(this.area.slice(startPlace));
+      const yPos = max(this.area.slice(startPlace));
       place = {
         x: startPlace,
         y: yPos,
@@ -843,4 +1014,234 @@ function updateVariablesSyntax(text: string) {
     }
     return match;
   });
+}
+
+function migrateSinglestat(panel: PanelModel) {
+  // If   'grafana-singlestat-panel' exists, move to that
+  if (config.panels['grafana-singlestat-panel']) {
+    panel.type = 'grafana-singlestat-panel';
+    return panel;
+  }
+
+  let returnSaveModel = false;
+
+  if (!panel.changePlugin) {
+    returnSaveModel = true;
+    panel = new PanelModel(panel);
+  }
+
+  // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
+  // And since this plugin no longer exist we just fake it here
+  panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
+
+  // Otheriwse use gauge or stat panel
+  if ((panel as any).gauge?.show) {
+    gaugePanelPlugin.meta = config.panels['gauge'];
+    panel.changePlugin(gaugePanelPlugin);
+  } else {
+    statPanelPlugin.meta = config.panels['stat'];
+    panel.changePlugin(statPanelPlugin);
+  }
+
+  if (returnSaveModel) {
+    return panel.getSaveModel();
+  }
+
+  return panel;
+}
+
+export function migrateDatasourceNameToRef(nameOrRef?: string | DataSourceRef | null): DataSourceRef | null {
+  if (nameOrRef == null || nameOrRef === 'default') {
+    return null;
+  }
+
+  if (isDataSourceRef(nameOrRef)) {
+    return nameOrRef;
+  }
+
+  const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
+  if (!ds) {
+    return { uid: nameOrRef as string }; // not found
+  }
+
+  return getDataSourceRef(ds);
+}
+
+// mutates transformations appending a new transformer after the existing one
+function appendTransformerAfter(panel: PanelModel, id: string, cfg: DataTransformerConfig) {
+  if (panel.transformations) {
+    const transformations: DataTransformerConfig[] = [];
+    for (const t of panel.transformations) {
+      transformations.push(t);
+      if (t.id === id) {
+        transformations.push({ ...cfg });
+      }
+    }
+    panel.transformations = transformations;
+  }
+  return panel;
+}
+
+function upgradeValueMappingsForPanel(panel: PanelModel) {
+  const fieldConfig = panel.fieldConfig;
+  if (!fieldConfig) {
+    return panel;
+  }
+
+  if (fieldConfig.defaults && fieldConfig.defaults.mappings) {
+    fieldConfig.defaults.mappings = upgradeValueMappings(
+      fieldConfig.defaults.mappings,
+      fieldConfig.defaults.thresholds
+    );
+  }
+
+  // Protect against no overrides
+  if (Array.isArray(fieldConfig.overrides)) {
+    for (const override of fieldConfig.overrides) {
+      for (const prop of override.properties) {
+        if (prop.id === 'mappings') {
+          prop.value = upgradeValueMappings(prop.value);
+        }
+      }
+    }
+  }
+
+  return panel;
+}
+
+function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
+  return (
+    target.hasOwnProperty('dimensions') &&
+    target.hasOwnProperty('namespace') &&
+    target.hasOwnProperty('region') &&
+    target.hasOwnProperty('metricName')
+  );
+}
+
+function isLegacyCloudWatchAnnotationQuery(target: AnnotationQuery<DataQuery>): target is CloudWatchAnnotationQuery {
+  return (
+    target.hasOwnProperty('dimensions') &&
+    target.hasOwnProperty('namespace') &&
+    target.hasOwnProperty('region') &&
+    target.hasOwnProperty('prefixMatching') &&
+    target.hasOwnProperty('statistics')
+  );
+}
+
+function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {
+  if (!oldMappings) {
+    return undefined;
+  }
+
+  const valueMaps: ValueMap = { type: MappingType.ValueToText, options: {} };
+  const newMappings: ValueMapping[] = [];
+
+  for (const old of oldMappings) {
+    // when migrating singlestat to stat/gauge, mappings are handled by panel type change handler used in that migration
+    if (old.type && old.options) {
+      // collect al value->text mappings in a single value map object. These are migrated by panel change handler as a separate value maps
+      if (old.type === MappingType.ValueToText) {
+        valueMaps.options = {
+          ...valueMaps.options,
+          ...old.options,
+        };
+      } else {
+        newMappings.push(old);
+      }
+      continue;
+    }
+
+    // Use the color we would have picked from thesholds
+    let color: string | undefined = undefined;
+    const numeric = parseFloat(old.text);
+    if (thresholds && !isNaN(numeric)) {
+      const level = getActiveThreshold(numeric, thresholds.steps);
+      if (level && level.color) {
+        color = level.color;
+      }
+    }
+
+    switch (old.type) {
+      case 1: // MappingType.ValueToText:
+        if (old.value != null) {
+          if (old.value === 'null') {
+            newMappings.push({
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: old.text, color },
+              },
+            });
+          } else {
+            valueMaps.options[String(old.value)] = {
+              text: old.text,
+              color,
+            };
+          }
+        }
+        break;
+      case 2: // MappingType.RangeToText:
+        newMappings.push({
+          type: MappingType.RangeToText,
+          options: {
+            from: +old.from,
+            to: +old.to,
+            result: { text: old.text, color },
+          },
+        });
+        break;
+    }
+  }
+
+  if (Object.keys(valueMaps.options).length > 0) {
+    newMappings.unshift(valueMaps);
+  }
+
+  return newMappings;
+}
+
+function migrateTooltipOptions(panel: PanelModel) {
+  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+    if (panel.options.tooltipOptions) {
+      panel.options = {
+        ...panel.options,
+        tooltip: panel.options.tooltipOptions,
+      };
+      delete panel.options.tooltipOptions;
+    }
+  }
+
+  return panel;
+}
+
+// This migration is performed when there is a time series panel with all axes configured to be hidden
+// To avoid breaking dashboards we add override that persists x-axis visibility
+function ensureXAxisVisibility(panel: PanelModel) {
+  if (panel.type === 'timeseries') {
+    if (
+      (panel.fieldConfig as FieldConfigSource<GraphFieldConfig>)?.defaults.custom?.axisPlacement ===
+      AxisPlacement.Hidden
+    ) {
+      panel.fieldConfig = {
+        ...panel.fieldConfig,
+        overrides: [
+          ...panel.fieldConfig.overrides,
+          {
+            matcher: {
+              id: FieldMatcherID.byType,
+              options: FieldType.time,
+            },
+            properties: [
+              {
+                id: 'custom.axisPlacement',
+                value: AxisPlacement.Auto,
+              },
+            ],
+          },
+        ],
+      };
+    }
+  }
+
+  return panel;
 }

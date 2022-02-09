@@ -129,22 +129,18 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 }
 
 func (e *State) unarySeries(s Series, op string) (Series, error) {
-	newSeries := NewSeries(e.RefID, s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullable, s.Len())
+	newSeries := NewSeries(e.RefID, s.GetLabels(), s.Len())
 	for i := 0; i < s.Len(); i++ {
 		t, f := s.GetPoint(i)
 		if f == nil {
-			if err := newSeries.SetPoint(i, t, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, nil)
 			continue
 		}
 		newF, err := unaryOp(op, *f)
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.SetPoint(i, t, &newF); err != nil {
-			return newSeries, err
-		}
+		newSeries.SetPoint(i, t, &newF)
 	}
 	return newSeries, nil
 }
@@ -431,15 +427,13 @@ func (e *State) biScalarNumber(labels data.Labels, op string, number Number, sca
 }
 
 func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVal *float64, seriesFirst bool) (Series, error) {
-	newSeries := NewSeries(e.RefID, labels, s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullable, s.Len())
+	newSeries := NewSeries(e.RefID, labels, s.Len())
 	var err error
 	for i := 0; i < s.Len(); i++ {
 		nF := math.NaN()
 		t, f := s.GetPoint(i)
 		if f == nil || scalarVal == nil {
-			if err := newSeries.SetPoint(i, t, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, nil)
 			continue
 		}
 		if seriesFirst {
@@ -450,9 +444,7 @@ func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVa
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.SetPoint(i, t, &nF); err != nil {
-			return newSeries, err
-		}
+		newSeries.SetPoint(i, t, &nF)
 	}
 	return newSeries, nil
 }
@@ -464,15 +456,10 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 	bPoints := make(map[string]*float64)
 	for i := 0; i < bSeries.Len(); i++ {
 		t, f := bSeries.GetPoint(i)
-		if t != nil {
-			bPoints[t.UTC().String()] = f
-		}
+		bPoints[t.UTC().String()] = f
 	}
 
-	newSeries := NewSeries(
-		e.RefID, labels, aSeries.TimeIdx, aSeries.TimeIsNullable || bSeries.TimeIsNullable, aSeries.ValueIdx,
-		aSeries.ValueIsNullable || bSeries.ValueIsNullable, 0,
-	)
+	newSeries := NewSeries(e.RefID, labels, 0)
 	for aIdx := 0; aIdx < aSeries.Len(); aIdx++ {
 		aTime, aF := aSeries.GetPoint(aIdx)
 		bF, ok := bPoints[aTime.UTC().String()]
@@ -480,18 +467,14 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 			continue
 		}
 		if aF == nil || bF == nil {
-			if err := newSeries.AppendPoint(aIdx, aTime, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.AppendPoint(aTime, nil)
 			continue
 		}
 		nF, err := binaryOp(op, *aF, *bF)
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.AppendPoint(aIdx, aTime, &nF); err != nil {
-			return newSeries, err
-		}
+		newSeries.AppendPoint(aTime, &nF)
 	}
 	return newSeries, nil
 }

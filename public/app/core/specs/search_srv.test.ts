@@ -48,7 +48,7 @@ describe('SearchSrv', () => {
 
       impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
 
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -80,7 +80,7 @@ describe('SearchSrv', () => {
 
         impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
 
-        return searchSrv.search({ query: '' }).then(res => {
+        return searchSrv.search({ query: '' }).then((res) => {
           results = res;
         });
       });
@@ -99,7 +99,7 @@ describe('SearchSrv', () => {
     beforeEach(() => {
       searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }])));
 
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -127,7 +127,7 @@ describe('SearchSrv', () => {
       );
 
       impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -179,7 +179,7 @@ describe('SearchSrv', () => {
           )
       );
 
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -218,7 +218,7 @@ describe('SearchSrv', () => {
         )
       );
 
-      return searchSrv.search({ query: 'search' }).then(res => {
+      return searchSrv.search({ query: 'search' }).then((res) => {
         results = res;
       });
     });

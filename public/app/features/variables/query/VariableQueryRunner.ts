@@ -1,5 +1,5 @@
 import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
-import { catchError, filter, finalize, first, mergeMap, takeUntil } from 'rxjs/operators';
+import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
 import {
   CoreApp,
   DataQuery,
@@ -7,6 +7,7 @@ import {
   DataSourceApi,
   getDefaultTimeRange,
   LoadingState,
+  PanelData,
   ScopedVars,
 } from '@grafana/data';
 
@@ -20,13 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { QueryRunners } from './queryRunners';
 import { runRequest } from '../../query/state/runRequest';
-import {
-  runUpdateTagsRequest,
-  toMetricFindValues,
-  updateOptionsState,
-  updateTagsState,
-  validateVariableSelection,
-} from './operators';
+import { toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
@@ -80,7 +75,7 @@ export class VariableQueryRunner {
   }
 
   getResponse(identifier: VariableIdentifier): Observable<UpdateOptionsResults> {
-    return this.updateOptionsResults.asObservable().pipe(filter(result => result.identifier === identifier));
+    return this.updateOptionsResults.asObservable().pipe(filter((result) => result.identifier === identifier));
   }
 
   cancelRequest(identifier: VariableIdentifier): void {
@@ -119,26 +114,26 @@ export class VariableQueryRunner {
         .runRequest(runnerArgs, request)
         .pipe(
           filter(() => {
-            // lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
+            // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
             const afterUid = getState().templating.transaction.uid;
+
             return beforeUid === afterUid;
           }),
-          first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
-          mergeMap(data => {
+          filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
+          take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
+          mergeMap((data: PanelData) => {
             if (data.state === LoadingState.Error) {
-              return throwError(data.error);
+              return throwError(() => data.error);
             }
 
             return of(data);
           }),
           toMetricFindValues(),
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
-          runUpdateTagsRequest({ variable, datasource, searchFilter }),
-          updateTagsState({ variable, dispatch }),
           validateVariableSelection({ variable, dispatch, searchFilter }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
-              filter(args => {
+              filter((args) => {
                 let cancelRequest = false;
 
                 if (args.identifier.id === identifier.id) {
@@ -150,13 +145,13 @@ export class VariableQueryRunner {
               })
             )
           ),
-          catchError(error => {
+          catchError((error) => {
             if (error.cancelled) {
               return of({});
             }
 
             this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
-            return throwError(error);
+            return throwError(() => error);
           }),
           finalize(() => {
             this.updateOptionsResults.next({ identifier, state: LoadingState.Done });

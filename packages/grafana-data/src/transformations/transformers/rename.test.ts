@@ -36,7 +36,7 @@ describe('Rename Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const renamed = data[0];
         expect(renamed.fields).toEqual([
@@ -103,7 +103,7 @@ describe('Rename Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const renamed = data[0];
         expect(renamed.fields).toEqual([
@@ -164,7 +164,7 @@ describe('Rename Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const renamed = data[0];
         expect(renamed.fields).toEqual([

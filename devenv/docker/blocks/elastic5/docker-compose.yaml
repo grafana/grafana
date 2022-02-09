@@ -1,5 +1,5 @@
   elasticsearch5:
-    image: elasticsearch:5
+    image: elasticsearch:5.0.2
     command: elasticsearch
     ports:
       - '10200:9200'

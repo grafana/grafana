@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { IntervalVariableModel } from '../types';
@@ -8,6 +8,7 @@ import { VariableTextField } from '../editor/VariableTextField';
 import { VariableSwitchField } from '../editor/VariableSwitchField';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends VariableEditorProps<IntervalVariableModel> {}
 
@@ -20,17 +21,17 @@ export class IntervalVariableEditor extends PureComponent<Props> {
     });
   };
 
-  onQueryChanged = (event: ChangeEvent<HTMLInputElement>) => {
+  onQueryChanged = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
-  onQueryBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onQueryBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
@@ -43,25 +44,25 @@ export class IntervalVariableEditor extends PureComponent<Props> {
     });
   };
 
-  onAutoMinChanged = (event: ChangeEvent<HTMLInputElement>) => {
+  onAutoMinChanged = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'auto_min',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
 
   render() {
     const { variable } = this.props;
-    const stepOptions = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map(count => ({
+    const stepOptions = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map((count) => ({
       label: `${count}`,
       value: count,
     }));
-    const stepValue = stepOptions.find(o => o.value === variable.auto_count) ?? stepOptions[0];
+    const stepValue = stepOptions.find((o) => o.value === variable.auto_count) ?? stepOptions[0];
 
     return (
       <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Interval Options" />
+        <VariableSectionHeader name="Interval options" />
         <VerticalGroup spacing="none">
           <VariableTextField
             value={this.props.variable.query}
@@ -70,14 +71,15 @@ export class IntervalVariableEditor extends PureComponent<Props> {
             onChange={this.onQueryChanged}
             onBlur={this.onQueryBlur}
             labelWidth={20}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.intervalsValueInput}
             grow
             required
           />
           <InlineFieldRow>
             <VariableSwitchField
               value={this.props.variable.auto}
-              name="Auto Option"
-              tooltip="Interval will be dynamically calculated by dividing time range by the count specified"
+              name="Auto option"
+              tooltip="Dynamically calculates interval by dividing time range by the count specified."
               onChange={this.onAutoChange}
             />
             {this.props.variable.auto ? (
@@ -87,7 +89,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
                   value={stepValue}
                   options={stepOptions}
                   onChange={this.onAutoCountChanged}
-                  tooltip="How many times should the current time range be divided to calculate the value"
+                  tooltip="How many times the current time range should be divided to calculate the value."
                   labelWidth={7}
                   width={9}
                 />
@@ -96,7 +98,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
                   name="Min interval"
                   placeholder="10s"
                   onChange={this.onAutoMinChanged}
-                  tooltip="The calculated value will not go below this threshold"
+                  tooltip="The calculated value will not go below this threshold."
                   labelWidth={13}
                   width={11}
                 />

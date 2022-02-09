@@ -3,7 +3,9 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -12,7 +14,16 @@ import (
 
 // interpolateString accepts template data and return a string with substitutions
 func interpolateString(text string, data templateData) (string, error) {
-	t, err := template.New("content").Parse(text)
+	extraFuncs := map[string]interface{}{
+		"orEmpty": func(v interface{}) interface{} {
+			if v == nil {
+				return ""
+			}
+			return v
+		},
+	}
+
+	t, err := template.New("content").Funcs(extraFuncs).Parse(text)
 	if err != nil {
 		return "", fmt.Errorf("could not parse template %s", text)
 	}
@@ -27,7 +38,7 @@ func interpolateString(text string, data templateData) (string, error) {
 }
 
 // addHeaders interpolates route headers and injects them into the request headers
-func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
+func addHeaders(reqHeaders *http.Header, route *plugins.Route, data templateData) error {
 	for _, header := range route.Headers {
 		interpolated, err := interpolateString(header.Content, data)
 		if err != nil {
@@ -40,7 +51,7 @@ func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data tem
 }
 
 // addQueryString interpolates route params and injects them into the request object
-func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+func addQueryString(req *http.Request, route *plugins.Route, data templateData) error {
 	q := req.URL.Query()
 	for _, param := range route.URLParams {
 		interpolatedName, err := interpolateString(param.Name, data)
@@ -56,6 +67,20 @@ func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templ
 		q.Add(interpolatedName, interpolatedContent)
 	}
 	req.URL.RawQuery = q.Encode()
+
+	return nil
+}
+
+func setBodyContent(req *http.Request, route *plugins.Route, data templateData) error {
+	if route.Body != nil {
+		interpolatedBody, err := interpolateString(string(route.Body), data)
+		if err != nil {
+			return err
+		}
+
+		req.Body = ioutil.NopCloser(strings.NewReader(interpolatedBody))
+		req.ContentLength = int64(len(interpolatedBody))
+	}
 
 	return nil
 }

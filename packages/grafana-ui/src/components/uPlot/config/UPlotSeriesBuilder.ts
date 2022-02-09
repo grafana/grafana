@@ -1,45 +1,87 @@
-import tinycolor from 'tinycolor2';
-import uPlot, { Series } from 'uplot';
-import { getCanvasContext } from '../../../utils/measureText';
 import {
-  DrawStyle,
-  LineConfig,
+  colorManipulator,
+  DataFrameFieldIndex,
+  FALLBACK_COLOR,
+  FieldColorMode,
+  FieldColorModeId,
+  GrafanaTheme2,
+  ThresholdsConfig,
+} from '@grafana/data';
+import uPlot, { Series } from 'uplot';
+import {
+  BarAlignment,
+  BarConfig,
+  GraphDrawStyle,
   FillConfig,
-  PointsConfig,
-  PointVisibility,
+  GraphGradientMode,
+  LineConfig,
   LineInterpolation,
-  FillGradientMode,
-} from '../config';
+  PointsConfig,
+  VisibilityMode,
+} from '@grafana/schema';
 import { PlotConfigBuilder } from '../types';
+import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
 
-export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
-  drawStyle: DrawStyle;
+export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
   scaleKey: string;
+  pxAlign?: boolean;
+  gradientMode?: GraphGradientMode;
+
+  facets?: uPlot.Series.Facet[];
+
+  /** Used when gradientMode is set to Scheme */
+  thresholds?: ThresholdsConfig;
+  colorMode?: FieldColorMode;
+  hardMin?: number | null;
+  hardMax?: number | null;
+  softMin?: number | null;
+  softMax?: number | null;
+
+  drawStyle?: GraphDrawStyle;
+  pathBuilder?: Series.PathBuilder | null;
+  pointsFilter?: Series.Points.Filter | null;
+  pointsBuilder?: Series.Points.Show | null;
   show?: boolean;
+  dataFrameFieldIndex?: DataFrameFieldIndex;
+  theme: GrafanaTheme2;
+  value?: uPlot.Series.Value;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const {
+      facets,
       drawStyle,
+      pathBuilder,
+      pointsBuilder,
+      pointsFilter,
       lineInterpolation,
-      lineColor,
       lineWidth,
       lineStyle,
+      barAlignment,
+      barWidthFactor,
+      barMaxWidth,
       showPoints,
-      pointColor,
       pointSize,
       scaleKey,
+      pxAlign,
       spanNulls,
       show = true,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
 
-    if (drawStyle === DrawStyle.Points) {
+    let lineColor = this.getLineColor();
+
+    // GraphDrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
+    lineConfig.stroke = lineColor;
+
+    if (pathBuilder != null) {
+      lineConfig.paths = pathBuilder;
+      lineConfig.width = lineWidth;
+    } else if (drawStyle === GraphDrawStyle.Points) {
       lineConfig.paths = () => null;
-    } else {
-      lineConfig.stroke = lineColor;
+    } else if (drawStyle != null) {
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
@@ -48,37 +90,55 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         lineConfig.dash = lineStyle.dash ?? [10, 10];
       }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
+        let pathsBuilder = mapDrawStyleToPathBuilder(
+          drawStyle,
+          lineInterpolation,
+          barAlignment,
+          barWidthFactor,
+          barMaxWidth
+        );
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
 
+    const useColor: uPlot.Series.Stroke =
+      // @ts-ignore
+      typeof lineColor === 'string' ? lineColor : (u, seriesIdx) => u.series[seriesIdx]._stroke;
+
     const pointsConfig: Partial<Series> = {
       points: {
-        stroke: pointColor,
-        fill: pointColor,
-        size: pointSize,
+        stroke: useColor,
+        fill: useColor,
+        size: !pointSize || pointSize < lineWidth! ? undefined : pointSize,
+        filter: pointsFilter,
       },
     };
 
-    // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (drawStyle === DrawStyle.Points) {
-      pointsConfig.points!.show = true;
+    if (pointsBuilder != null) {
+      pointsConfig.points!.show = pointsBuilder;
     } else {
-      if (showPoints === PointVisibility.Auto) {
-        if (drawStyle === DrawStyle.Bars) {
-          pointsConfig.points!.show = false;
-        }
-      } else if (showPoints === PointVisibility.Never) {
-        pointsConfig.points!.show = false;
-      } else if (showPoints === PointVisibility.Always) {
+      // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
+      if (drawStyle === GraphDrawStyle.Points) {
         pointsConfig.points!.show = true;
+      } else {
+        if (showPoints === VisibilityMode.Auto) {
+          if (drawStyle === GraphDrawStyle.Bars) {
+            pointsConfig.points!.show = false;
+          }
+        } else if (showPoints === VisibilityMode.Never) {
+          pointsConfig.points!.show = false;
+        } else if (showPoints === VisibilityMode.Always) {
+          pointsConfig.points!.show = true;
+        }
       }
     }
 
     return {
       scale: scaleKey,
-      spanGaps: spanNulls,
+      facets,
+      spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
+      value: () => '',
+      pxAlign,
       show,
       fill: this.getFill(),
       ...lineConfig,
@@ -86,28 +146,52 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
   }
 
-  getFill(): Series.Fill | undefined {
-    const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
+  private getLineColor(): Series.Stroke {
+    const { lineColor, gradientMode, colorMode, thresholds, theme, hardMin, hardMax, softMin, softMax } = this.props;
+
+    if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
+      return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
+    }
+
+    return lineColor ?? FALLBACK_COLOR;
+  }
+
+  private getFill(): Series.Fill | undefined {
+    const {
+      lineColor,
+      fillColor,
+      gradientMode,
+      fillOpacity,
+      colorMode,
+      thresholds,
+      theme,
+      hardMin,
+      hardMax,
+      softMin,
+      softMax,
+    } = this.props;
 
     if (fillColor) {
       return fillColor;
     }
 
-    const mode = fillGradient ?? FillGradientMode.None;
-    let fillOpacityNumber = fillOpacity ?? 0;
+    const mode = gradientMode ?? GraphGradientMode.None;
+    const opacityPercent = (fillOpacity ?? 0) / 100;
 
-    if (mode !== FillGradientMode.None) {
-      return getCanvasGradient({
-        color: (fillColor ?? lineColor)!,
-        opacity: fillOpacityNumber / 100,
-        mode,
-      });
-    }
-
-    if (fillOpacityNumber > 0) {
-      return tinycolor(lineColor)
-        .setAlpha(fillOpacityNumber / 100)
-        .toString();
+    switch (mode) {
+      case GraphGradientMode.Opacity:
+        return getOpacityGradientFn((fillColor ?? lineColor)!, opacityPercent);
+      case GraphGradientMode.Hue:
+        return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
+      case GraphGradientMode.Scheme:
+        if (colorMode?.id !== FieldColorModeId.Fixed) {
+          return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
+        }
+      // intentional fall-through to handle Scheme with Fixed color
+      default:
+        if (opacityPercent > 0) {
+          return colorManipulator.alpha(lineColor ?? '', opacityPercent);
+        }
     }
 
     return undefined;
@@ -115,28 +199,27 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 }
 
 interface PathBuilders {
-  bars: Series.PathBuilder;
   linear: Series.PathBuilder;
   smooth: Series.PathBuilder;
   stepBefore: Series.PathBuilder;
   stepAfter: Series.PathBuilder;
+  [key: string]: Series.PathBuilder;
 }
 
 let builders: PathBuilders | undefined = undefined;
 
 function mapDrawStyleToPathBuilder(
-  style: DrawStyle,
+  style: GraphDrawStyle,
   lineInterpolation?: LineInterpolation,
-  opts?: any
+  barAlignment = 0,
+  barWidthFactor = 0.6,
+  barMaxWidth = Infinity
 ): Series.PathBuilder {
-  // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
-  if (!builders) {
-    const pathBuilders = uPlot.paths;
-    const barWidthFactor = 0.6;
-    const barMaxWidth = Infinity;
+  const pathBuilders = uPlot.paths;
 
+  if (!builders) {
+    // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
     builders = {
-      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
       stepBefore: pathBuilders.stepped!({ align: -1 }),
@@ -144,10 +227,19 @@ function mapDrawStyleToPathBuilder(
     };
   }
 
-  if (style === DrawStyle.Bars) {
-    return builders.bars;
-  }
-  if (style === DrawStyle.Line) {
+  if (style === GraphDrawStyle.Bars) {
+    // each bars pathBuilder is lazy-initialized and globally cached by a key composed of its options
+    let barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
+
+    if (!builders[barsCfgKey]) {
+      builders[barsCfgKey] = pathBuilders.bars!({
+        size: [barWidthFactor, barMaxWidth],
+        align: barAlignment as BarAlignment,
+      });
+    }
+
+    return builders[barsCfgKey];
+  } else if (style === GraphDrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
       return builders.stepBefore;
     }
@@ -160,51 +252,4 @@ function mapDrawStyleToPathBuilder(
   }
 
   return builders.linear; // the default
-}
-
-interface AreaGradientOptions {
-  color: string;
-  mode: FillGradientMode;
-  opacity: number;
-}
-
-function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: number) => CanvasGradient {
-  return (plot: uPlot, seriesIdx: number) => {
-    const { color, mode, opacity } = opts;
-
-    const ctx = getCanvasContext();
-    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-
-    switch (mode) {
-      case FillGradientMode.Hue:
-        const color1 = tinycolor(color)
-          .spin(-25)
-          .darken(30)
-          .setAlpha(opacity)
-          .toRgbString();
-        const color2 = tinycolor(color)
-          .spin(25)
-          .lighten(35)
-          .setAlpha(opacity)
-          .toRgbString();
-        gradient.addColorStop(0, color2);
-        gradient.addColorStop(1, color1);
-
-      case FillGradientMode.Opacity:
-      default:
-        gradient.addColorStop(
-          0,
-          tinycolor(color)
-            .setAlpha(opacity)
-            .toRgbString()
-        );
-        gradient.addColorStop(
-          1,
-          tinycolor(color)
-            .setAlpha(0)
-            .toRgbString()
-        );
-        return gradient;
-    }
-  };
 }

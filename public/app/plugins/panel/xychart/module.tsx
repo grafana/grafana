@@ -1,62 +1,69 @@
 import { PanelPlugin } from '@grafana/data';
-import { DrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { XYChartPanel } from './XYChartPanel';
-import { Options } from './types';
+import { commonOptionsBuilder } from '@grafana/ui';
+import { defaultScatterConfig, XYChartOptions, ScatterFieldConfig } from './models.gen';
+import { getScatterFieldConfig } from './config';
 import { XYDimsEditor } from './XYDimsEditor';
-import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
+import { XYChartPanel2 } from './XYChartPanel2';
+import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
-  .useFieldConfig(
-    getGraphFieldConfig({
-      ...defaultGraphConfig,
-      drawStyle: DrawStyle.Points,
-    })
-  )
-  .setPanelOptions(builder => {
+export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChartPanel2)
+  .useFieldConfig(getScatterFieldConfig(defaultScatterConfig))
+  .setPanelOptions((builder) => {
     builder
+      .addRadio({
+        path: 'mode',
+        name: 'Mode',
+        defaultValue: 'single',
+        settings: {
+          options: [
+            { value: 'xy', label: 'XY', description: 'No changes to saved model since 8.0' },
+            { value: 'explicit', label: 'Explicit' },
+          ],
+        },
+      })
       .addCustomEditor({
         id: 'xyPlotConfig',
         path: 'dims',
         name: 'Data',
         editor: XYDimsEditor,
+        showIf: (cfg) => cfg.mode === 'xy',
       })
-      .addRadio({
-        path: 'tooltipOptions.mode',
-        name: 'Tooltip mode',
-        description: '',
-        defaultValue: 'single',
-        settings: {
-          options: [
-            { value: 'single', label: 'Single' },
-            { value: 'multi', label: 'All' },
-            { value: 'none', label: 'Hidden' },
-          ],
-        },
+      .addFieldNamePicker({
+        path: 'series[0].x',
+        name: 'X Field',
+        showIf: (cfg) => cfg.mode === 'explicit',
       })
-      .addRadio({
-        path: 'legend.displayMode',
-        name: 'Legend mode',
-        description: '',
-        defaultValue: LegendDisplayMode.List,
-        settings: {
-          options: [
-            { value: LegendDisplayMode.List, label: 'List' },
-            { value: LegendDisplayMode.Table, label: 'Table' },
-            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
-          ],
-        },
+      .addFieldNamePicker({
+        path: 'series[0].y',
+        name: 'Y Field',
+        showIf: (cfg) => cfg.mode === 'explicit',
       })
-      .addRadio({
-        path: 'legend.placement',
-        name: 'Legend placement',
-        description: '',
-        defaultValue: 'bottom',
+      .addCustomEditor({
+        id: 'seriesZerox.pointColor',
+        path: 'series[0].pointColor',
+        name: 'Point color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {},
+        showIf: (cfg) => cfg.mode === 'explicit',
+      })
+      .addCustomEditor({
+        id: 'seriesZerox.pointSize',
+        path: 'series[0].pointSize',
+        name: 'Point size',
+        editor: ScaleDimensionEditor,
         settings: {
-          options: [
-            { value: 'bottom', label: 'Bottom' },
-            { value: 'right', label: 'Right' },
-          ],
+          min: 1,
+          max: 50,
         },
-        showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
+        defaultValue: {
+          fixed: 5,
+          min: 1,
+          max: 50,
+        },
+        showIf: (cfg) => cfg.mode === 'explicit',
       });
+
+    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
   });

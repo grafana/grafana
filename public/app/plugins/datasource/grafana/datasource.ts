@@ -1,81 +1,181 @@
-import _ from 'lodash';
+import { from, merge, Observable, of } from 'rxjs';
 import {
-  AnnotationEvent,
+  DataSourceWithBackend,
+  getBackendSrv,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  StreamingFrameOptions,
+} from '@grafana/runtime';
+import {
+  AnnotationQuery,
   AnnotationQueryRequest,
+  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
-  LiveChannelScope,
+  DataSourceRef,
+  isValidLiveChannelAddress,
+  MutableDataFrame,
+  parseLiveChannelAddress,
+  toDataFrame,
 } from '@grafana/data';
 
-import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurementsObserver } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
+import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { isString } from 'lodash';
+import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
+import { map } from 'rxjs/operators';
 
 let counter = 100;
 
-export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
+export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
+    this.annotations = {
+      QueryEditor: AnnotationQueryEditor,
+      prepareAnnotation(json: any): AnnotationQuery<GrafanaAnnotationQuery> {
+        // Previously, these properties lived outside of target
+        // This should handle migrating them
+        json.target = json.target ?? {
+          type: json.type ?? GrafanaAnnotationType.Dashboard,
+          limit: json.limit ?? 100,
+          tags: json.tags ?? [],
+          matchAny: json.matchAny ?? false,
+        }; // using spread syntax caused an infinite loop in StandardAnnotationQueryEditor
+        return json;
+      },
+      prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
+        let datasource: DataSourceRef | undefined | null = undefined;
+        if (isString(anno.datasource)) {
+          const ref = migrateDatasourceNameToRef(anno.datasource);
+          if (ref) {
+            datasource = ref;
+          }
+        } else {
+          datasource = anno.datasource as DataSourceRef;
+        }
+
+        return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };
+      },
+    };
   }
 
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
-    const queries: Array<Observable<DataQueryResponse>> = [];
+    const results: Array<Observable<DataQueryResponse>> = [];
+    const targets: GrafanaQuery[] = [];
+    const templateSrv = getTemplateSrv();
     for (const target of request.targets) {
+      if (target.queryType === GrafanaQueryType.Annotations) {
+        return from(
+          this.getAnnotations({
+            range: request.range,
+            rangeRaw: request.range.raw,
+            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
+            dashboard: getDashboardSrv().getCurrent(),
+          })
+        );
+      }
       if (target.hide) {
         continue;
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
-        const { channel, measurements } = target;
-        if (channel) {
-          queries.push(
-            getLiveMeasurementsObserver(
-              {
-                scope: LiveChannelScope.Grafana,
-                namespace: 'measurements',
-                path: channel,
-              },
-              `${request.requestId}.${counter++}`,
-              measurements
-            )
-          );
+        let channel = templateSrv.replace(target.channel, request.scopedVars);
+        const { filter } = target;
+
+        // Help migrate pre-release channel paths saved in dashboards
+        // NOTE: this should be removed before V8 is released
+        if (channel && channel.startsWith('telegraf/')) {
+          channel = 'stream/' + channel;
+          target.channel = channel; // mutate the current query object so it is saved with `stream/` prefix
         }
+
+        const addr = parseLiveChannelAddress(channel);
+        if (!isValidLiveChannelAddress(addr)) {
+          continue;
+        }
+        const buffer: Partial<StreamingFrameOptions> = {
+          maxLength: request.maxDataPoints ?? 500,
+        };
+        if (target.buffer) {
+          buffer.maxDelta = target.buffer;
+          buffer.maxLength = buffer.maxLength! * 2; //??
+        } else if (request.rangeRaw?.to === 'now') {
+          buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+        }
+
+        results.push(
+          getGrafanaLiveSrv().getDataStream({
+            key: `${request.requestId}.${counter++}`,
+            addr: addr!,
+            filter,
+            buffer,
+          })
+        );
       } else {
-        queries.push(getRandomWalk(request));
+        if (!target.queryType) {
+          target.queryType = GrafanaQueryType.RandomWalk;
+        }
+        targets.push(target);
       }
     }
-    // With a single query just return the results
-    if (queries.length === 1) {
-      return queries[0];
+
+    if (targets.length) {
+      results.push(
+        super.query({
+          ...request,
+          targets,
+        })
+      );
     }
-    if (queries.length > 1) {
-      // HELP!!!
-      return queries[0];
+
+    if (results.length) {
+      // With a single query just return the results
+      if (results.length === 1) {
+        return results[0];
+      }
+      return merge(...results);
     }
     return of(); // nothing
+  }
+
+  listFiles(path: string): Observable<DataFrameView<FileElement>> {
+    return this.query({
+      targets: [
+        {
+          refId: 'A',
+          queryType: GrafanaQueryType.List,
+          path,
+        },
+      ],
+    } as any).pipe(
+      map((v) => {
+        const frame = v.data[0] ?? new MutableDataFrame();
+        return new DataFrameView<FileElement>(frame);
+      })
+    );
   }
 
   metricFindQuery(options: any) {
     return Promise.resolve([]);
   }
 
-  annotationQuery(options: AnnotationQueryRequest<GrafanaQuery>): Promise<AnnotationEvent[]> {
+  async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
-    const annotation = (options.annotation as unknown) as GrafanaAnnotationQuery;
+    const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
+    const target = annotation.target!;
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
-      limit: annotation.limit,
-      tags: annotation.tags,
-      matchAny: annotation.matchAny,
+      limit: target.limit,
+      tags: target.tags,
+      matchAny: target.matchAny,
     };
 
-    if (annotation.type === GrafanaAnnotationType.Dashboard) {
+    if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
-        return Promise.resolve([]);
+        return Promise.resolve({ data: [] });
       }
       // filter by dashboard id
       params.dashboardId = options.dashboard.id;
@@ -83,8 +183,8 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       delete params.tags;
     } else {
       // require at least one tag
-      if (!Array.isArray(annotation.tags) || annotation.tags.length === 0) {
-        return Promise.resolve([]);
+      if (!Array.isArray(target.tags) || target.tags.length === 0) {
+        return Promise.resolve({ data: [] });
       }
       const delimiter = '__delimiter__';
       const tags = [];
@@ -103,11 +203,12 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       params.tags = tags;
     }
 
-    return getBackendSrv().get(
+    const annotations = await getBackendSrv().get(
       '/api/annotations',
       params,
       `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.id}`
     );
+    return { data: [toDataFrame(annotations)] };
   }
 
   testDatasource() {
@@ -115,31 +216,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   }
 }
 
-// Note that the query does not actually matter
-function getRandomWalk(request: DataQueryRequest): Observable<DataQueryResponse> {
-  const { intervalMs, maxDataPoints, range, requestId } = request;
-
-  // Yes, this implementation ignores multiple targets!  But that matches existing behavior
-  const params: Record<string, any> = {
-    intervalMs,
-    maxDataPoints,
-    from: range.from.valueOf(),
-    to: range.to.valueOf(),
-  };
-
-  return getBackendSrv()
-    .fetch({
-      url: '/api/tsdb/testdata/random-walk',
-      method: 'GET',
-      params,
-      requestId,
-    })
-    .pipe(
-      map((rsp: any) => {
-        return toDataQueryResponse(rsp);
-      }),
-      catchError(err => {
-        return of(toDataQueryResponse(err));
-      })
-    );
+export interface FileElement {
+  name: string;
+  ['media-type']: string;
 }

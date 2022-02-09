@@ -5,17 +5,15 @@ import { QueryVariableModel } from '../types';
 import { ThunkDispatch } from '../../../types';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { validateVariableSelectionState } from '../state/actions';
-import { DataSourceApi, FieldType, getFieldDisplayName, MetricFindValue, PanelData } from '@grafana/data';
-import { updateVariableOptions, updateVariableTags } from './reducer';
-import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
-
-const metricFindValueProps = ['text', 'Text', 'value', 'Value'];
+import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
+import { updateVariableOptions } from './reducer';
+import { getTemplatedRegex } from '../utils';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
-  return source =>
+  return (source) =>
     source.pipe(
-      map(panelData => {
+      map((panelData) => {
         const frames = panelData.series;
         if (!frames || !frames.length) {
           return [];
@@ -25,6 +23,7 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
           return frames;
         }
 
+        const processedDataFrames = getProcessedDataFrames(frames);
         const metrics: MetricFindValue[] = [];
 
         let valueIndex = -1;
@@ -32,7 +31,7 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
         let stringIndex = -1;
         let expandableIndex = -1;
 
-        for (const frame of frames) {
+        for (const frame of processedDataFrames) {
           for (let index = 0; index < frame.fields.length; index++) {
             const field = frame.fields[index];
             const fieldName = getFieldDisplayName(field, frame, frames).toLowerCase();
@@ -99,53 +98,13 @@ export function updateOptionsState(args: {
   dispatch: ThunkDispatch;
   getTemplatedRegexFunc: typeof getTemplatedRegex;
 }): OperatorFunction<MetricFindValue[], void> {
-  return source =>
+  return (source) =>
     source.pipe(
-      map(results => {
+      map((results) => {
         const { variable, dispatch, getTemplatedRegexFunc } = args;
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
         dispatch(updateVariableOptions(payload));
-      })
-    );
-}
-
-export function runUpdateTagsRequest(
-  args: {
-    variable: QueryVariableModel;
-    datasource: DataSourceApi;
-    searchFilter?: string;
-  },
-  timeSrv: TimeSrv = getTimeSrv()
-): OperatorFunction<void, MetricFindValue[]> {
-  return source =>
-    source.pipe(
-      mergeMap(() => {
-        const { datasource, searchFilter, variable } = args;
-
-        if (variable.useTags && datasource.metricFindQuery) {
-          return from(
-            datasource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
-          );
-        }
-
-        return of([]);
-      })
-    );
-}
-
-export function updateTagsState(args: {
-  variable: QueryVariableModel;
-  dispatch: ThunkDispatch;
-}): OperatorFunction<MetricFindValue[], void> {
-  return source =>
-    source.pipe(
-      map(tagResults => {
-        const { dispatch, variable } = args;
-
-        if (variable.useTags) {
-          dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-        }
       })
     );
 }
@@ -155,14 +114,14 @@ export function validateVariableSelection(args: {
   dispatch: ThunkDispatch;
   searchFilter?: string;
 }): OperatorFunction<void, void> {
-  return source =>
+  return (source) =>
     source.pipe(
       mergeMap(() => {
         const { dispatch, variable, searchFilter } = args;
 
         // If we are searching options there is no need to validate selection state
         // This condition was added to as validateVariableSelectionState will update the current value of the variable
-        // So after search and selection the current value is already update so no setValue, refresh & url update is performed
+        // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
           return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
@@ -183,5 +142,30 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
   }
 
   const firstValue: any = data[0];
-  return metricFindValueProps.some(prop => firstValue.hasOwnProperty(prop) && typeof firstValue[prop] === 'string');
+
+  if (isDataFrame(firstValue)) {
+    return false;
+  }
+
+  for (const firstValueKey in firstValue) {
+    if (!firstValue.hasOwnProperty(firstValueKey)) {
+      continue;
+    }
+
+    if (
+      firstValue[firstValueKey] !== null &&
+      typeof firstValue[firstValueKey] !== 'string' &&
+      typeof firstValue[firstValueKey] !== 'number'
+    ) {
+      continue;
+    }
+
+    const key = firstValueKey.toLowerCase();
+
+    if (key === 'text' || key === 'value') {
+      return true;
+    }
+  }
+
+  return false;
 }

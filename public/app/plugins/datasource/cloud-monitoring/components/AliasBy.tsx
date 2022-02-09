@@ -1,13 +1,17 @@
-import React, { FunctionComponent, useState } from 'react';
+import { Input } from '@grafana/ui';
 import { debounce } from 'lodash';
-import { QueryInlineField } from '.';
+import React, { FunctionComponent, useState } from 'react';
+
+import { QueryEditorRow } from '.';
+import { INPUT_WIDTH } from '../constants';
 
 export interface Props {
+  refId: string;
   onChange: (alias: any) => void;
   value?: string;
 }
 
-export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
+export const AliasBy: FunctionComponent<Props> = ({ refId, value = '', onChange }) => {
   const [alias, setAlias] = useState(value ?? '');
 
   const propagateOnChange = debounce(onChange, 1000);
@@ -18,8 +22,8 @@ export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
   };
 
   return (
-    <QueryInlineField label="Alias By">
-      <input type="text" className="gf-form-input width-26" value={alias} onChange={onChange} />
-    </QueryInlineField>
+    <QueryEditorRow label="Alias by" htmlFor={`${refId}-alias-by`}>
+      <Input id={`${refId}-alias-by`} width={INPUT_WIDTH} value={alias} onChange={onChange} />
+    </QueryEditorRow>
   );
 };

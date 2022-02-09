@@ -1,8 +1,8 @@
-import React, { useContext } from 'react';
-import { stylesFactory, ThemeContext } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
-import { IconButton } from '../IconButton/IconButton';
+import React from 'react';
+import { useStyles2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css, cx } from '@emotion/css';
+import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
 export interface FilterPillProps {
@@ -13,48 +13,45 @@ export interface FilterPillProps {
 }
 
 export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick, icon = 'check' }) => {
-  const theme = useContext(ThemeContext);
-  const styles = getFilterPillStyles(theme, selected);
+  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.wrapper} onClick={onClick}>
-      <IconButton
-        name={icon}
-        onClick={e => {
-          e.stopPropagation();
-          onClick(e);
-        }}
-        className={styles.icon}
-        surface="header"
-      />
-      <span className={styles.label}>{label}</span>
+    <div className={cx(styles.wrapper, selected && styles.selected)} onClick={onClick}>
+      <span>{label}</span>
+      {selected && <Icon name={icon} className={styles.icon} />}
     </div>
   );
 };
 
-const getFilterPillStyles = stylesFactory((theme: GrafanaTheme, isSelected: boolean) => {
-  const labelColor = isSelected ? theme.colors.text : theme.colors.textWeak;
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-      background: ${theme.colors.bg2};
-      border-radius: ${theme.border.radius.sm};
-      padding: 0 ${theme.spacing.md} 0 ${theme.spacing.xs};
-      font-weight: ${theme.typography.weight.semibold};
+      padding: ${theme.spacing(0.25)} ${theme.spacing(1)};
+      background: ${theme.colors.background.secondary};
+      border-radius: ${theme.shape.borderRadius(8)};
+      padding: ${theme.spacing(0, 2)};
+      font-weight: ${theme.typography.fontWeightMedium};
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.secondary};
       display: flex;
       align-items: center;
       height: 32px;
       cursor: pointer;
+
+      &:hover {
+        background: ${theme.colors.action.hover};
+        color: ${theme.colors.text.primary};
+      }
+    `,
+    selected: css`
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.action.selected};
+
+      &:hover {
+        background: ${theme.colors.action.focus};
+      }
     `,
     icon: css`
-      margin-right: ${theme.spacing.sm};
-      margin-left: ${theme.spacing.xs};
-      color: ${labelColor};
-    `,
-    label: css`
-      color: ${labelColor};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
-});
+};

@@ -11,14 +11,15 @@ import {
   UserOrg,
   UserSession,
   UserListAdminState,
+  UserFilter,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],
-  syncInfo: null,
-  user: null,
-  connectionError: null,
-  userError: null,
+  syncInfo: undefined,
+  user: undefined,
+  connectionError: undefined,
+  userError: undefined,
 };
 
 const ldapSlice = createSlice({
@@ -27,7 +28,7 @@ const ldapSlice = createSlice({
   reducers: {
     ldapConnectionInfoLoadedAction: (state, action: PayloadAction<LdapConnectionInfo>): LdapState => ({
       ...state,
-      ldapError: null,
+      ldapError: undefined,
       connectionInfo: action.payload,
     }),
     ldapFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
@@ -41,20 +42,20 @@ const ldapSlice = createSlice({
     userMappingInfoLoadedAction: (state, action: PayloadAction<LdapUser>): LdapState => ({
       ...state,
       user: action.payload,
-      userError: null,
+      userError: undefined,
     }),
     userMappingInfoFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
       ...state,
-      user: null,
+      user: undefined,
       userError: action.payload,
     }),
     clearUserMappingInfoAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      user: null,
+      user: undefined,
     }),
     clearUserErrorAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      userError: null,
+      userError: undefined,
     }),
   },
 });
@@ -74,11 +75,11 @@ export const ldapReducer = ldapSlice.reducer;
 // UserAdminPage
 
 const initialUserAdminState: UserAdminState = {
-  user: null,
+  user: undefined,
   sessions: [],
   orgs: [],
   isLoading: true,
-  error: null,
+  error: undefined,
 };
 
 export const userAdminSlice = createSlice({
@@ -128,6 +129,8 @@ const initialUserListAdminState: UserListAdminState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: false }],
+  isLoading: false,
 };
 
 interface UsersFetched {
@@ -151,7 +154,14 @@ export const userListAdminSlice = createSlice({
         totalPages,
         perPage,
         showPaging: totalPages > 1,
+        isLoading: false,
       };
+    },
+    usersFetchBegin: (state) => {
+      return { ...state, isLoading: true };
+    },
+    usersFetchEnd: (state) => {
+      return { ...state, isLoading: false };
     },
     queryChanged: (state, action: PayloadAction<string>) => ({
       ...state,
@@ -162,10 +172,25 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    filterChanged: (state, action: PayloadAction<UserFilter>) => {
+      const { name, value } = action.payload;
+
+      if (state.filters.some((filter) => filter.name === name)) {
+        return {
+          ...state,
+          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
+        };
+      }
+      return {
+        ...state,
+        filters: [...state.filters, action.payload],
+      };
+    },
   },
 });
 
-export const { usersFetched, queryChanged, pageChanged } = userListAdminSlice.actions;
+export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged } =
+  userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
 export default {

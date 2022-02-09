@@ -18,20 +18,18 @@ func TestIndexView(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableCSP: true,
 		})
-		sqlStore := testinfra.SetUpDatabase(t, grafDir)
-		addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+
+		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)
-
-		assert.Regexp(t, "script-src 'unsafe-eval' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline';img-src 'self' data:;base-uri 'self';connect-src 'self' grafana.com;manifest-src 'self';media-src 'none';form-action 'self';", resp.Header.Get("Content-Security-Policy"))
+		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
 
 	t.Run("CSP disabled", func(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t)
-		sqlStore := testinfra.SetUpDatabase(t, grafDir)
-		addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)

@@ -1,21 +1,21 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
-import { LogMessageAnsi, Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
-import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
+import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
     label: logs-rows-live;
-    font-family: ${theme.typography.fontFamily.monospace};
-    font-size: ${theme.typography.size.sm};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-size: ${theme.typography.bodySmall.fontSize};
     display: flex;
     flex-flow: column nowrap;
     height: 60vh;
-    overflow-y: auto;
+    overflow-y: scroll;
     :first-child {
       margin-top: auto !important;
     }
@@ -23,15 +23,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFade: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.palette.blue95)
-      .setAlpha(0.25)
-      .toString()};
+    background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${tinycolor(theme.palette.blue95)
-          .setAlpha(0.25)
-          .toString()};
+        background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
       }
       to {
         background-color: transparent;
@@ -39,20 +35,20 @@ const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
   logsRowsIndicator: css`
-    font-size: ${theme.typography.size.md};
-    padding-top: ${theme.spacing.sm};
+    font-size: ${theme.typography.h6.fontSize};
+    padding-top: ${theme.spacing(1)};
     display: flex;
     align-items: center;
   `,
   button: css`
-    margin-right: ${theme.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `,
   fullWidth: css`
     width: 100%;
   `,
 });
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   timeZone: TimeZone;
   stopLive: () => void;
@@ -68,32 +64,12 @@ interface State {
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
-  private lastScrollPos: number | null = null;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       logRowsToRender: props.logRows,
     };
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (!prevProps.isPaused && this.props.isPaused) {
-      // So we paused the view and we changed the content size, but we want to keep the relative offset from the bottom.
-      if (this.lastScrollPos && this.scrollContainerRef.current) {
-        // There is last scroll pos from when user scrolled up a bit so go to that position.
-        const { clientHeight, scrollHeight } = this.scrollContainerRef.current;
-        const scrollTop = scrollHeight - (this.lastScrollPos + clientHeight);
-        this.scrollContainerRef.current.scrollTo(0, scrollTop);
-        this.lastScrollPos = null;
-      } else {
-        // We do not have any position to jump to su the assumption is user just clicked pause. We can just scroll
-        // to the bottom.
-        if (this.liveEndDiv) {
-          this.liveEndDiv.scrollIntoView(false);
-        }
-      }
-    }
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
@@ -120,7 +96,6 @@ class LiveLogs extends PureComponent<Props, State> {
     const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
     if (distanceFromBottom >= 5 && !isPaused) {
       onPause();
-      this.lastScrollPos = distanceFromBottom;
     }
   };
 
@@ -156,27 +131,27 @@ class LiveLogs extends PureComponent<Props, State> {
               );
             })}
             <tr
-              ref={element => {
+              ref={(element) => {
                 this.liveEndDiv = element;
                 // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
                 // default.
                 if (this.liveEndDiv && !isPaused) {
-                  this.liveEndDiv.scrollIntoView(false);
+                  this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
                 }
               }}
             />
           </tbody>
         </table>
-        <div className={cx([styles.logsRowsIndicator])}>
-          <button onClick={isPaused ? onResume : onPause} className={cx('btn btn-secondary', styles.button)}>
+        <div className={styles.logsRowsIndicator}>
+          <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
             <Icon name={isPaused ? 'play' : 'pause'} />
             &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
-          </button>
-          <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
+          </Button>
+          <Button variant="secondary" onClick={this.props.stopLive} className={styles.button}>
             <Icon name="square-shape" size="lg" type="mono" />
             &nbsp; Exit live mode
-          </button>
+          </Button>
           {isPaused || (
             <span>
               Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
@@ -188,4 +163,4 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 }
 
-export const LiveLogsWithTheme = withTheme(LiveLogs);
+export const LiveLogsWithTheme = withTheme2(LiveLogs);

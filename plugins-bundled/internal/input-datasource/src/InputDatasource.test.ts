@@ -19,6 +19,7 @@ describe('InputDatasource', () => {
     type: 'x',
     name: 'xxx',
     meta: {} as PluginMeta,
+    access: 'proxy',
     jsonData: {
       data,
     },
@@ -31,7 +32,7 @@ describe('InputDatasource', () => {
         targets: [{ refId: 'Z' }],
       });
 
-      return ds.query(options).then(rsp => {
+      return ds.query(options).then((rsp) => {
         expect(rsp.data.length).toBe(1);
 
         const series: DataFrame = rsp.data[0];
@@ -43,7 +44,7 @@ describe('InputDatasource', () => {
 
   test('DataFrame descriptions', () => {
     expect(describeDataFrame([])).toEqual('');
-    expect(describeDataFrame((null as unknown) as Array<DataFrameDTO | DataFrame>)).toEqual('');
+    expect(describeDataFrame(null as unknown as Array<DataFrameDTO | DataFrame>)).toEqual('');
     expect(
       describeDataFrame([
         new MutableDataFrame({

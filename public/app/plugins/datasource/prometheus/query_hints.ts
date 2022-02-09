@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { size } from 'lodash';
 import { QueryHint, QueryFix } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';
 
@@ -38,9 +38,9 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
 
     if (metricMetadataKeys.length > 0) {
       counterNameMetric =
-        metricMetadataKeys.find(metricName => {
+        metricMetadataKeys.find((metricName) => {
           // Only considering first type information, could be non-deterministic
-          const metadata = metricsMetadata[metricName][0];
+          const metadata = metricsMetadata[metricName];
           if (metadata.type.toLowerCase() === 'counter') {
             const metricRegex = new RegExp(`\\b${metricName}\\b`);
             if (query.match(metricRegex)) {
@@ -90,19 +90,19 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
       }
       return acc;
     }, {});
-    if (_.size(mappingForQuery) > 0) {
+    if (size(mappingForQuery) > 0) {
       const label = 'Query contains recording rules.';
       hints.push({
         type: 'EXPAND_RULES',
         label,
-        fix: ({
+        fix: {
           label: 'Expand rules',
           action: {
             type: 'EXPAND_RULES',
             query,
             mapping: mappingForQuery,
           },
-        } as any) as QueryFix,
+        } as any as QueryFix,
       });
     }
   }
@@ -123,6 +123,27 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
         } as QueryFix,
       });
     }
+  }
+
+  return hints;
+}
+
+export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
+  const hints = [];
+  // Hint if using Loki as Prometheus data source
+  if (datasource.directUrl.includes('/loki') && !datasource.languageProvider.metrics.length) {
+    hints.push({
+      label: `Using Loki as a Prometheus data source is no longer supported. You must use the Loki data source for your Loki instance.`,
+      type: 'INFO',
+    });
+  }
+
+  // Hint for big disabled lookups
+  if (datasource.lookupsDisabled) {
+    hints.push({
+      label: `Labels and metrics lookup was disabled in data source settings.`,
+      type: 'INFO',
+    });
   }
 
   return hints;

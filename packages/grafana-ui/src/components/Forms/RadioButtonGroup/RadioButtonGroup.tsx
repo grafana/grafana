@@ -1,62 +1,36 @@
-import React, { useCallback, useRef } from 'react';
-import { css, cx } from 'emotion';
-import uniqueId from 'lodash/uniqueId';
-import { SelectableValue } from '@grafana/data';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { css, cx } from '@emotion/css';
+import { uniqueId } from 'lodash';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
+import { useStyles2 } from '../../../themes';
 
-const getRadioButtonGroupStyles = () => {
-  return {
-    wrapper: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      position: relative;
-    `,
-    radioGroup: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-
-      label {
-        border-radius: 0px;
-
-        &:first-of-type {
-          border-radius: 2px 0px 0px 2px;
-        }
-
-        &:last-of-type {
-          border-radius: 0px 2px 2px 0px;
-        }
-      }
-    `,
-    icon: css`
-      margin-right: 6px;
-    `,
-  };
-};
-
-interface RadioButtonGroupProps<T> {
+export interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
-  onChange?: (value?: T) => void;
+  onChange?: (value: T) => void;
+  onClick?: (value: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export function RadioButtonGroup<T>({
   options,
   value,
   onChange,
+  onClick,
   disabled,
   disabledOptions,
   size = 'md',
   className,
   fullWidth = false,
+  autoFocus = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -68,12 +42,29 @@ export function RadioButtonGroup<T>({
     },
     [onChange]
   );
+  const handleOnClick = useCallback(
+    (option: SelectableValue) => {
+      return () => {
+        if (onClick) {
+          onClick(option.value);
+        }
+      };
+    },
+    [onClick]
+  );
   const id = uniqueId('radiogroup-');
   const groupName = useRef(id);
-  const styles = getRadioButtonGroupStyles();
+  const styles = useStyles2(getStyles);
+
+  const activeButtonRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (autoFocus && activeButtonRef.current) {
+      activeButtonRef.current.focus();
+    }
+  }, [autoFocus]);
 
   return (
-    <div className={cx(styles.radioGroup, className)}>
+    <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
       {options.map((o, i) => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
         return (
@@ -82,13 +73,17 @@ export function RadioButtonGroup<T>({
             disabled={isItemDisabled || disabled}
             active={value === o.value}
             key={`o.label-${i}`}
+            aria-label={o.ariaLabel}
             onChange={handleOnChange(o)}
+            onClick={handleOnClick(o)}
             id={`option-${o.value}-${id}`}
             name={groupName.current}
-            fullWidth={fullWidth}
             description={o.description}
+            fullWidth={fullWidth}
+            ref={value === o.value ? activeButtonRef : undefined}
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
+            {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}
             {o.label}
           </RadioButton>
         );
@@ -98,3 +93,27 @@ export function RadioButtonGroup<T>({
 }
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    radioGroup: css({
+      display: 'inline-flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      border: `1px solid ${theme.components.input.borderColor}`,
+      borderRadius: theme.shape.borderRadius(),
+      padding: '2px',
+    }),
+    fullWidth: css({
+      display: 'flex',
+    }),
+    icon: css`
+      margin-right: 6px;
+    `,
+    img: css`
+      width: ${theme.spacing(2)};
+      height: ${theme.spacing(2)};
+      margin-right: ${theme.spacing(1)};
+    `,
+  };
+};

@@ -1,6 +1,8 @@
 import { getStatsGroups } from './getStatsGroups';
 
 describe('GroupListener', () => {
+  // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-examples.html
+  // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-view-metrics.html
   it('should correctly parse groups in stats query', () => {
     const testQueries = [
       {
@@ -59,6 +61,17 @@ describe('GroupListener', () => {
       {
         query: `stats count(*)`,
         expected: [],
+      },
+      {
+        query: `filter responseCode="SERVFAIL" | stats count(*) by queryName.0.1 as f0, bin(5m)`,
+        expected: ['f0', 'bin(5m)'],
+      },
+      {
+        query: `fields @timestamp, @message
+      | filter @message like /dial tcp /
+      | parse log /dial tcp (?<ip>[\d\.]+)\:(?<port>\d+)\: (?<reason>[^\\\"]+)/
+      | stats count() by bin($__interval), reason`,
+        expected: ['bin($__interval)', 'reason'],
       },
     ];
 

@@ -9,14 +9,18 @@ describe('HeatmapCtrl', () => {
     get: () => {},
   };
 
-  const $scope = {
-    $on: () => {},
-  };
-
   HeatmapCtrl.prototype.panel = {
     events: {
       on: () => {},
       emit: () => {},
+    },
+  };
+
+  const $scope = {
+    $on: () => {},
+    $parent: {
+      panel: HeatmapCtrl.prototype.panel,
+      dashboard: {},
     },
   };
 
@@ -49,9 +53,7 @@ describe('HeatmapCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: dateTime()
-          .subtract(1, 'days')
-          .valueOf(),
+        from: dateTime().subtract(1, 'days').valueOf(),
         to: dateTime().valueOf(),
       };
 

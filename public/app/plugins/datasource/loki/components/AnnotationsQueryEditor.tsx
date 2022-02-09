@@ -1,50 +1,46 @@
 // Libraries
 import React, { memo } from 'react';
-
 // Types
 import { LokiQuery } from '../types';
-import { useLokiLabels } from './useLokiLabels';
-import { LokiQueryFieldForm } from './LokiQueryFieldForm';
+import { LokiQueryField } from './LokiQueryField';
+import { LokiOptionFields } from './LokiOptionFields';
 import LokiDatasource from '../datasource';
 
 interface Props {
   expr: string;
+  maxLines?: number;
+  instant?: boolean;
   datasource: LokiDatasource;
-  onChange: (expr: string) => void;
+  onChange: (query: LokiQuery) => void;
 }
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const { expr, datasource, onChange } = props;
+  const { expr, maxLines, instant, datasource, onChange } = props;
 
-  // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
-  const absolute = {
-    from: Date.now() - 10000,
-    to: Date.now(),
-  };
-
-  const { setActiveOption, refreshLabels, logLabelOptions, labelsLoaded } = useLokiLabels(
-    datasource.languageProvider,
-    absolute
-  );
-
-  const query: LokiQuery = {
+  const queryWithRefId: LokiQuery = {
     refId: '',
     expr,
+    maxLines,
+    instant,
   };
-
   return (
     <div className="gf-form-group">
-      <LokiQueryFieldForm
+      <LokiQueryField
         datasource={datasource}
-        query={query}
-        onChange={(query: LokiQuery) => onChange(query.expr)}
+        query={queryWithRefId}
+        onChange={onChange}
         onRunQuery={() => {}}
+        onBlur={() => {}}
         history={[]}
-        onLoadOptions={setActiveOption}
-        onLabelsRefresh={refreshLabels}
-        absoluteRange={absolute}
-        labelsLoaded={labelsLoaded}
-        logLabelOptions={logLabelOptions}
+        ExtraFieldElement={
+          <LokiOptionFields
+            lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
+            resolution={queryWithRefId.resolution || 1}
+            query={queryWithRefId}
+            onRunQuery={() => {}}
+            onChange={onChange}
+          />
+        }
       />
     </div>
   );

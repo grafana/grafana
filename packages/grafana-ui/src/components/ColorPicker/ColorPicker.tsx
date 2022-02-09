@@ -1,13 +1,14 @@
 import React, { Component, createRef } from 'react';
-import omit from 'lodash/omit';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { getColorForTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
-import { withTheme } from '../../themes/ThemeContext';
-import { ColorPickerTrigger } from './ColorPickerTrigger';
+import { css } from '@emotion/css';
+import { withTheme2, stylesFactory } from '../../themes';
+import { ColorSwatch } from './ColorSwatch';
+import { closePopover } from '../../utils/closePopover';
 
 /**
  * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
@@ -40,8 +41,9 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
 
     render() {
       const { theme, children } = this.props;
+      const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
-        ...omit(this.props, 'children'),
+        ...{ ...this.props, children: null },
         onChange: this.onColorChange,
       });
 
@@ -54,9 +56,10 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                   <Popover
                     {...popperProps}
                     referenceElement={this.pickerTriggerRef.current}
-                    wrapperClassName="ColorPicker"
+                    wrapperClassName={styles.colorPicker}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
+                    onKeyDown={(event) => closePopover(event, hidePopper)}
                   />
                 )}
 
@@ -70,11 +73,11 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     hideColorPicker: hidePopper,
                   })
                 ) : (
-                  <ColorPickerTrigger
+                  <ColorSwatch
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    color={getColorForTheme(this.props.color || '#000000', theme)}
+                    color={theme.visualization.getColorByName(this.props.color || '#000000')}
                   />
                 )}
               </>
@@ -86,5 +89,34 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export const ColorPicker = withTheme(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
-export const SeriesColorPicker = withTheme(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
+export const ColorPicker = withTheme2(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
+export const SeriesColorPicker = withTheme2(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    colorPicker: css`
+      position: absolute;
+      z-index: ${theme.zIndex.tooltip};
+      color: ${theme.colors.text.primary};
+      max-width: 400px;
+      font-size: ${theme.typography.size.sm};
+      // !important because these styles are also provided to popper via .popper classes from Tooltip component
+      // hope to get rid of those soon
+      padding: 15px !important;
+      & [data-placement^='top'] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      & [data-placement^='bottom'] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      & [data-placement^='left'] {
+        padding-top: 0 !important;
+      }
+      & [data-placement^='right'] {
+        padding-top: 0 !important;
+      }
+    `,
+  };
+});

@@ -2,9 +2,9 @@ import { ReducerID } from '../fieldReducer';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { reduceFields, reduceTransformer } from './reduce';
+import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
 import { transformDataFrame } from '../transformDataFrame';
-import { Field, FieldType } from '../../types';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { ArrayVector } from '../../vector';
 import { notTimeFieldMatcher } from '../matchers/predicates';
 import { DataFrameView } from '../../dataframe';
@@ -57,7 +57,7 @@ describe('Reducer Transformer', () => {
     };
 
     await expect(transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields])).toEmitValuesWith(
-      received => {
+      (received) => {
         const processed = received[0];
         const expected: Field[] = [
           {
@@ -108,7 +108,7 @@ describe('Reducer Transformer', () => {
     };
 
     await expect(transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField])).toEmitValuesWith(
-      received => {
+      (received) => {
         const processed = received[0];
         const expected: Field[] = [
           {
@@ -158,7 +158,7 @@ describe('Reducer Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithMultipleFields])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithMultipleFields])).toEmitValuesWith((received) => {
       const processed = received[0];
       const expected: Field[] = [
         {
@@ -207,7 +207,7 @@ describe('Reducer Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
       const expected: Field[] = [
         {
@@ -273,5 +273,177 @@ describe('Reducer Transformer', () => {
         "temperature": 6,
       }
     `);
+  });
+
+  it('reduces multiple data frames with decimal display name (https://github.com/grafana/grafana/issues/31580)', async () => {
+    const cfg = {
+      id: DataTransformerID.reduce,
+      options: {
+        reducers: [ReducerID.max],
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'a',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'value', type: FieldType.number, values: [3, 4, 5, 6], state: { displayName: 'a' } },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      name: '2021',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'value', type: FieldType.number, values: [7, 8, 9, 10], state: { displayName: '2021' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Field',
+          type: FieldType.string,
+          values: new ArrayVector(['a', '2021']),
+          config: {},
+        },
+        {
+          name: 'Max',
+          type: FieldType.number,
+          values: new ArrayVector([6, 10]),
+          config: {},
+        },
+      ];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].length).toEqual(2);
+      expect(processed[0].fields).toEqual(expected);
+    });
+  });
+
+  it('reduces multiple data frames with decimal fields name (https://github.com/grafana/grafana/issues/31580)', async () => {
+    const cfg = {
+      id: DataTransformerID.reduce,
+      options: {
+        reducers: [ReducerID.max],
+      },
+    };
+
+    const seriesA = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'a', type: FieldType.number, values: [3, 4, 5, 6] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: '2021', type: FieldType.number, values: [7, 8, 9, 10] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      const expected: Field[] = [
+        {
+          name: 'Field',
+          type: FieldType.string,
+          values: new ArrayVector(['a', '2021']),
+          config: {},
+        },
+        {
+          name: 'Max',
+          type: FieldType.number,
+          values: new ArrayVector([6, 10]),
+          config: {},
+        },
+      ];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].length).toEqual(2);
+      expect(processed[0].fields).toEqual(expected);
+    });
+  });
+
+  it('reduces keeping label field', async () => {
+    const cfg: DataTransformerConfig<ReduceTransformerOptions> = {
+      id: DataTransformerID.reduce,
+      options: {
+        reducers: [ReducerID.max],
+        labelsToFields: true,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'value', labels: { state: 'CA' }, type: FieldType.number, values: [3, 4, 5, 6] },
+        { name: 'value', labels: { state: 'NY' }, type: FieldType.number, values: [3, 4, 5, 6] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'value', labels: { state: 'CA', country: 'USA' }, type: FieldType.number, values: [3, 4, 5, 6] },
+        { name: 'value', labels: { country: 'USA' }, type: FieldType.number, values: [3, 4, 5, 6] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "Field",
+            "type": "string",
+            "values": Array [
+              "value",
+              "value",
+              "value",
+              "value",
+            ],
+          },
+          Object {
+            "config": Object {},
+            "name": "state",
+            "type": "string",
+            "values": Array [
+              "CA",
+              "NY",
+              "CA",
+              ,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "name": "country",
+            "type": "string",
+            "values": Array [
+              ,
+              ,
+              "USA",
+              "USA",
+            ],
+          },
+          Object {
+            "config": Object {},
+            "name": "Max",
+            "type": "number",
+            "values": Array [
+              6,
+              6,
+              6,
+              6,
+            ],
+          },
+        ]
+      `);
+    });
   });
 });

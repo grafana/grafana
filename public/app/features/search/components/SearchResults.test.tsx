@@ -1,7 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { SearchResults, Props } from './SearchResults';
-import { searchResults, generalFolder } from '../testData';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Props, SearchResults } from './SearchResults';
+import { generalFolder, searchResults } from '../testData';
 import { SearchLayout } from '../types';
 
 beforeEach(() => {
@@ -25,14 +27,33 @@ const setup = (propOverrides?: Partial<Props>) => {
 describe('SearchResults', () => {
   it('should render result items', () => {
     setup();
-    expect(screen.getAllByLabelText('Search section')).toHaveLength(2);
+    expect(screen.getAllByTestId(selectors.components.Search.sectionV2)).toHaveLength(2);
   });
 
   it('should render section items for expanded section', () => {
     setup();
-    expect(screen.getAllByLabelText(/collapse folder/i)).toHaveLength(1);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
-    expect(screen.getAllByLabelText(/dashboard search item/i)).toHaveLength(2);
+    expect(screen.getAllByText('General', { exact: false })[0]).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.itemsV2)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardItem('Test 1'))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardItem('Test 2'))).toBeInTheDocument();
+
+    // Check search cards aren't in the DOM
+    expect(screen.queryByTestId(selectors.components.Search.cards)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardCard('Test 1'))).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardCard('Test 2'))).not.toBeInTheDocument();
+  });
+
+  it('should render search card items for expanded section when showPreviews is enabled', () => {
+    setup({ showPreviews: true });
+    expect(screen.getAllByText('General', { exact: false })[0]).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.cards)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardCard('Test 1'))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Search.dashboardCard('Test 2'))).toBeInTheDocument();
+
+    // Check search items aren't in the DOM
+    expect(screen.queryByTestId(selectors.components.Search.itemsV2)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardItem('Test 1'))).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Search.dashboardItem('Test 2'))).not.toBeInTheDocument();
   });
 
   it('should not render checkboxes for non-editable results', () => {
@@ -49,8 +70,16 @@ describe('SearchResults', () => {
     const mockOnToggleSection = jest.fn();
     setup({ onToggleSection: mockOnToggleSection });
 
-    fireEvent.click(screen.getByLabelText('Collapse folder 0'));
-    expect(mockOnToggleSection).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getAllByText('General', { exact: false })[0]);
     expect(mockOnToggleSection).toHaveBeenCalledWith(generalFolder);
+  });
+
+  it('should not throw an error if the search results have an empty title', () => {
+    const mockOnToggleSection = jest.fn();
+    const searchResultsEmptyTitle = searchResults.slice();
+    searchResultsEmptyTitle[0].title = '';
+    expect(() => {
+      setup({ results: searchResultsEmptyTitle, onToggleSection: mockOnToggleSection });
+    }).not.toThrowError();
   });
 });

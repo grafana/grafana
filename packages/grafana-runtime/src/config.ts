@@ -1,17 +1,24 @@
-import merge from 'lodash/merge';
-import { getTheme } from '@grafana/ui';
+import { merge } from 'lodash';
 import {
   BuildInfo,
+  createTheme,
   DataSourceInstanceSettings,
   FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
-  GrafanaThemeType,
+  GrafanaTheme2,
   LicenseInfo,
+  MapLayerOptions,
   PanelPluginMeta,
+  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
+
+export interface AzureSettings {
+  cloud?: string;
+  managedIdentityEnabled: boolean;
+}
 
 export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -28,7 +35,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngInfo = '';
   allowOrgCreate = false;
   disableLoginForm = false;
-  defaultDatasource = '';
+  defaultDatasource = ''; // UID
   alertingEnabled = false;
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
@@ -38,6 +45,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
+  samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: any;
@@ -49,17 +57,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  liveEnabled = true;
   theme: GrafanaTheme;
-  pluginsToPreload: string[] = [];
-  featureToggles: FeatureToggles = {
-    live: false,
-    expressions: false,
-    meta: false,
-    ngalert: false,
-    panelLibrary: false,
-  };
+  theme2: GrafanaTheme2;
+  pluginsToPreload: PreloadPlugin[] = [];
+  featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -68,10 +73,36 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
-  marketplaceUrl?: string;
+  pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
+  pluginAdminEnabled = true;
+  pluginAdminExternalManageEnabled = false;
+  pluginCatalogHiddenPlugins: string[] = [];
+  expressionsEnabled = false;
+  customTheme?: any;
+  awsAllowedAuthProviders: string[] = [];
+  awsAssumeRoleEnabled = false;
+  azure: AzureSettings = {
+    managedIdentityEnabled: false,
+  };
+  caching = {
+    enabled: false,
+  };
+  geomapDefaultBaseLayerConfig?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled = false;
+  applicationInsightsConnectionString?: string;
+  applicationInsightsEndpointUrl?: string;
+  recordedQueries = {
+    enabled: true,
+  };
+  featureHighlights = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
-    this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
+    const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
+    this.theme2 = createTheme({ colors: { mode } });
+    this.theme = this.theme2.v1;
 
     const defaults = {
       datasources: {},
@@ -86,7 +117,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
         version: 'v1.0',
         commit: '1',
         env: 'production',
-        isEnterprise: false,
       },
       viewersCanEdit: false,
       editorsCanAdmin: false,

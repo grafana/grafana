@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type evalHandler interface {
@@ -59,5 +60,5 @@ type ConditionResult struct {
 
 // Condition is responsible for evaluating an alert condition.
 type Condition interface {
-	Eval(result *EvalContext) (*ConditionResult, error)
+	Eval(result *EvalContext, requestHandler legacydata.RequestHandler) (*ConditionResult, error)
 }

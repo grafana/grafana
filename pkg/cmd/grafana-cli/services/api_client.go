@@ -28,7 +28,8 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
-			return models.Plugin{}, errutil.Wrap("Failed to find requested plugin, check if the plugin_id is correct", err)
+			return models.Plugin{}, errutil.Wrap(
+				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
 		}
 		return models.Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
@@ -173,10 +174,10 @@ func createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req.Header.Set("grafana-version", grafanaVersion)
+	req.Header.Set("grafana-version", GrafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)
 	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
+	req.Header.Set("User-Agent", "grafana "+GrafanaVersion)
 
 	return req, err
 }

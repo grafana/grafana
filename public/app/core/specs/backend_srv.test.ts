@@ -5,8 +5,9 @@ import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
 import { ContextSrv, User } from '../services/context_srv';
-import { describe, expect } from '../../../test/lib/common';
 import { BackendSrvRequest, FetchError } from '@grafana/runtime';
+import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
+import { ShowModalReactEvent } from '../../types/events';
 
 const getTestContext = (overides?: object) => {
   const defaults = {
@@ -35,19 +36,20 @@ const getTestContext = (overides?: object) => {
     return of(mockedResponse);
   });
 
-  const appEventsMock: EventBusExtended = ({
+  const appEventsMock: EventBusExtended = {
     emit: jest.fn(),
-  } as any) as EventBusExtended;
+    publish: jest.fn(),
+  } as any as EventBusExtended;
 
-  const user: User = ({
+  const user: User = {
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
-  } as any) as User;
-  const contextSrvMock: ContextSrv = ({
+  } as any as User;
+  const contextSrvMock: ContextSrv = {
     user,
-  } as any) as ContextSrv;
+  } as any as ContextSrv;
   const logoutMock = jest.fn();
-  const parseRequestOptionsMock = jest.fn().mockImplementation(options => options);
+  const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
   const backendSrv = new BackendSrv({
     fromFetch: fromFetchMock,
@@ -151,7 +153,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
       it('then it should retry', async () => {
-        jest.useFakeTimers();
+        jest.useFakeTimers('modern');
         const url = '/api/dashboard/';
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
@@ -167,7 +169,7 @@ describe('backendSrv', () => {
 
         await backendSrv
           .request({ url, method: 'GET', retry: 0 })
-          .catch(error => {
+          .catch((error) => {
             expect(error.status).toBe(401);
             expect(error.statusText).toBe('UnAuthorized');
             expect(error.data).toEqual({ message: 'UnAuthorized' });
@@ -177,7 +179,7 @@ describe('backendSrv', () => {
             expectRequestCallChain({ url, method: 'GET', retry: 0 });
             jest.advanceTimersByTime(50);
           })
-          .catch(error => {
+          .catch((error) => {
             expect(error).toEqual({ message: 'UnAuthorized' });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
@@ -185,9 +187,39 @@ describe('backendSrv', () => {
       });
     });
 
+    describe('when making an unsuccessful call because of soft token revocation', () => {
+      it('then it should dispatch show Token Revoked modal event', async () => {
+        const url = '/api/dashboard/';
+        const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: 'UnAuthorized',
+          data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
+          url,
+        });
+
+        backendSrv.loginPing = jest.fn();
+
+        await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
+          expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.publish).toHaveBeenCalledWith(
+            new ShowModalReactEvent({
+              component: TokenRevokedModal,
+              props: {
+                maxConcurrentSessions: 3,
+              },
+            })
+          );
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
+          expect(logoutMock).not.toHaveBeenCalled();
+          expectRequestCallChain({ url, method: 'GET', retry: 0 });
+        });
+      });
+    });
+
     describe('when making an unsuccessful call and conditions for retry are favorable and retry throws', () => {
       it('then it throw error', async () => {
-        jest.useFakeTimers();
+        jest.useFakeTimers('modern');
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
@@ -202,7 +234,7 @@ describe('backendSrv', () => {
 
         await backendSrv
           .request({ url, method: 'GET', retry: 0 })
-          .catch(error => {
+          .catch((error) => {
             expect(error.status).toBe(403);
             expect(error.statusText).toBe('Forbidden');
             expect(error.data).toEqual({ message: 'Forbidden' });
@@ -212,7 +244,7 @@ describe('backendSrv', () => {
             expectRequestCallChain({ url, method: 'GET', retry: 0 });
             jest.advanceTimersByTime(50);
           })
-          .catch(error => {
+          .catch((error) => {
             expect(error).toEqual({ message: 'Forbidden' });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['Forbidden', '']);
@@ -242,7 +274,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful 422 call', () => {
       it('then it should emit Validation failed message', async () => {
-        jest.useFakeTimers();
+        jest.useFakeTimers('modern');
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 422,
@@ -253,7 +285,7 @@ describe('backendSrv', () => {
 
         await backendSrv
           .request({ url, method: 'GET' })
-          .catch(error => {
+          .catch((error) => {
             expect(error.status).toBe(422);
             expect(error.statusText).toBe('Unprocessable Entity');
             expect(error.data).toEqual({ message: 'Unprocessable Entity' });
@@ -262,7 +294,7 @@ describe('backendSrv', () => {
             expectRequestCallChain({ url, method: 'GET' });
             jest.advanceTimersByTime(50);
           })
-          .catch(error => {
+          .catch((error) => {
             expect(error).toEqual({ message: 'Unprocessable Entity' });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, [
@@ -275,7 +307,7 @@ describe('backendSrv', () => {
 
     describe('when making an unsuccessful call and we handle the error', () => {
       it('then it should not emit message', async () => {
-        jest.useFakeTimers();
+        jest.useFakeTimers('modern');
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 404,
@@ -284,7 +316,7 @@ describe('backendSrv', () => {
         });
         const url = '/api/dashboard/';
 
-        await backendSrv.request({ url, method: 'GET' }).catch(error => {
+        await backendSrv.request({ url, method: 'GET' }).catch((error) => {
           expect(error.status).toBe(404);
           expect(error.statusText).toBe('Not found');
           expect(error.data).toEqual({ message: 'Not found' });
@@ -306,7 +338,7 @@ describe('backendSrv', () => {
         const { backendSrv, fromFetchMock } = getTestContext({ url });
         const unsubscribe = jest.fn();
         const slowData = { message: 'Slow Request' };
-        const slowFetch = new Observable(subscriber => {
+        const slowFetch = new Observable((subscriber) => {
           subscriber.next({
             ok: true,
             status: 200,
@@ -340,7 +372,7 @@ describe('backendSrv', () => {
         };
 
         let slowError: any = null;
-        backendSrv.request(options).catch(err => {
+        backendSrv.request(options).catch((err) => {
           slowError = err;
         });
 
@@ -379,15 +411,45 @@ describe('backendSrv', () => {
 
         let inspectorPacket: any = null;
         backendSrv.getInspectorStream().subscribe({
-          next: rsp => (inspectorPacket = rsp),
+          next: (rsp) => (inspectorPacket = rsp),
         });
 
-        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch(error => {
+        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
           expect(error.status).toBe(401);
           expect(error.statusText).toBe('UnAuthorized');
           expect(error.data).toEqual({ message: 'UnAuthorized' });
           expect(inspectorPacket).toBe(error);
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+          expect(logoutMock).not.toHaveBeenCalled();
+          expectRequestCallChain({ url, method: 'GET', retry: 0 });
+        });
+      });
+    });
+
+    describe('when making an unsuccessful call because of soft token revocation', () => {
+      it('then it should dispatch show Token Revoked modal event', async () => {
+        const { backendSrv, logoutMock, appEventsMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: 'UnAuthorized',
+          data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
+        });
+
+        backendSrv.loginPing = jest.fn();
+
+        const url = '/api/dashboard/';
+
+        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
+          expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.publish).toHaveBeenCalledWith(
+            new ShowModalReactEvent({
+              component: TokenRevokedModal,
+              props: {
+                maxConcurrentSessions: 3,
+              },
+            })
+          );
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain({ url, method: 'GET', retry: 0 });
         });
@@ -413,7 +475,7 @@ describe('backendSrv', () => {
           .fn()
           .mockRejectedValue({ status: 403, statusText: 'Forbidden', data: { message: 'Forbidden' } });
 
-        await backendSrv.datasourceRequest(options).catch(error => {
+        await backendSrv.datasourceRequest(options).catch((error) => {
           expect(error.status).toBe(403);
           expect(error.statusText).toBe('Forbidden');
           expect(error.data).toEqual({ message: 'Forbidden' });
@@ -438,7 +500,7 @@ describe('backendSrv', () => {
           method: 'GET',
         };
 
-        await backendSrv.datasourceRequest(options).catch(error => {
+        await backendSrv.datasourceRequest(options).catch((error) => {
           expect(error).toEqual({
             status: 500,
             statusText: 'Internal Server Error',
@@ -470,10 +532,10 @@ describe('backendSrv', () => {
 
         let inspectorPacket: any = null;
         backendSrv.getInspectorStream().subscribe({
-          next: rsp => (inspectorPacket = rsp),
+          next: (rsp) => (inspectorPacket = rsp),
         });
 
-        await backendSrv.datasourceRequest(options).catch(error => {
+        await backendSrv.datasourceRequest(options).catch((error) => {
           expect(error).toEqual({
             status: 403,
             statusText: 'Forbidden',
@@ -496,7 +558,7 @@ describe('backendSrv', () => {
       const url = '/api/dashboard/';
 
       const getRequestObservable = (message: string, unsubscribe: any) =>
-        new Observable(subscriber => {
+        new Observable((subscriber) => {
           subscriber.next({
             ok: true,
             status: 200,

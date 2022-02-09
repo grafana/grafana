@@ -9,7 +9,6 @@ const setup = (propOverrides?: Partial<Props>) => {
     query: {
       ts: 1,
       datasourceName: 'Test datasource',
-      datasourceId: 'datasource 1',
       starred: false,
       comment: '',
       queries: [
@@ -17,7 +16,6 @@ const setup = (propOverrides?: Partial<Props>) => {
         { expr: 'query2', refId: 'B' } as DataQuery,
         { expr: 'query3', refId: 'C' } as DataQuery,
       ],
-      sessionName: '',
     },
     dsImg: '/app/img',
     isRemoved: false,
@@ -37,7 +35,6 @@ const setup = (propOverrides?: Partial<Props>) => {
 const starredQueryWithComment = {
   ts: 1,
   datasourceName: 'Test datasource',
-  datasourceId: 'datasource 1',
   starred: true,
   comment: 'test comment',
   queries: [
@@ -45,31 +42,15 @@ const starredQueryWithComment = {
     { query: 'query2', refId: 'B' },
     { query: 'query3', refId: 'C' },
   ],
-  sessionName: '',
 };
 
 describe('RichHistoryCard', () => {
   it('should render all queries', () => {
     const wrapper = setup();
     expect(wrapper.find({ 'aria-label': 'Query text' })).toHaveLength(3);
-    expect(
-      wrapper
-        .find({ 'aria-label': 'Query text' })
-        .at(0)
-        .text()
-    ).toEqual('{"expr":"query1"}');
-    expect(
-      wrapper
-        .find({ 'aria-label': 'Query text' })
-        .at(1)
-        .text()
-    ).toEqual('{"expr":"query2"}');
-    expect(
-      wrapper
-        .find({ 'aria-label': 'Query text' })
-        .at(2)
-        .text()
-    ).toEqual('{"expr":"query3"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(0).text()).toEqual('{"expr":"query1"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(1).text()).toEqual('{"expr":"query2"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(2).text()).toEqual('{"expr":"query3"}');
   });
   it('should render data source icon', () => {
     const wrapper = setup();

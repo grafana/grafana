@@ -3,32 +3,43 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) Response {
+func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
+	cmd := dtos.CreateShortURLCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
 	cmd.Path = strings.TrimSpace(cmd.Path)
 
 	if path.IsAbs(cmd.Path) {
 		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return Error(400, "Path should be relative", nil)
+		return response.Error(400, "Path should be relative", nil)
+	}
+	if strings.Contains(cmd.Path, "../") {
+		hs.log.Error("Invalid short URL path", "path", cmd.Path)
+		return response.Error(400, "Invalid path", nil)
 	}
 
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return Error(500, "Failed to create short URL", err)
+		return response.Error(500, "Failed to create short URL", err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgId)
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
@@ -36,11 +47,11 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		URL: url,
 	}
 
-	return JSON(200, dto)
+	return response.JSON(200, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
-	shortURLUID := c.Params(":uid")
+	shortURLUID := web.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {
 		return

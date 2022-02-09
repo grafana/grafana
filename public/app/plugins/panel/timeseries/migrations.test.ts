@@ -1,7 +1,18 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { graphPanelChangedHandler } from './migrations';
+import { cloneDeep } from 'lodash';
+import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 describe('Graph Migrations', () => {
+  let prevFieldConfig: FieldConfigSource;
+
+  beforeEach(() => {
+    prevFieldConfig = {
+      defaults: {},
+      overrides: [],
+    };
+  });
+
   it('simple bars', () => {
     const old: any = {
       angular: {
@@ -9,7 +20,7 @@ describe('Graph Migrations', () => {
       },
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -18,7 +29,16 @@ describe('Graph Migrations', () => {
       angular: stairscase,
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+
+    prevFieldConfig = {
+      defaults: {
+        custom: {},
+        unit: 'areaF2',
+        displayName: 'DISPLAY NAME',
+      },
+      overrides: [],
+    };
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -27,7 +47,7 @@ describe('Graph Migrations', () => {
       angular: twoYAxis,
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -36,20 +56,445 @@ describe('Graph Migrations', () => {
       angular: stepedColordLine,
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
+  });
+
+  it('preserves colors from series overrides', () => {
+    const old: any = {
+      angular: customColor,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+    expect(panel).toMatchSnapshot();
+  });
+
+  it('preserves series overrides using a regex alias', () => {
+    const old: any = {
+      angular: customColorRegex,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+    expect(panel).toMatchSnapshot();
+  });
+
+  describe('legend', () => {
+    test('without values', () => {
+      const old: any = {
+        angular: {
+          legend: {
+            show: true,
+            values: false,
+            min: false,
+            max: false,
+            current: false,
+            total: false,
+            avg: false,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel).toMatchSnapshot();
+    });
+    test('with single value', () => {
+      const old: any = {
+        angular: {
+          legend: {
+            show: true,
+            values: true,
+            min: false,
+            max: false,
+            current: false,
+            total: true,
+            avg: false,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel).toMatchSnapshot();
+    });
+    test('with multiple values', () => {
+      const old: any = {
+        angular: legend,
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel).toMatchSnapshot();
+    });
+  });
+
+  describe('stacking', () => {
+    test('simple', () => {
+      const old: any = {
+        angular: stacking,
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel).toMatchSnapshot();
+    });
+    test('groups', () => {
+      const old: any = {
+        angular: stackingGroups,
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel).toMatchSnapshot();
+    });
+  });
+
+  describe('thresholds', () => {
+    test('Only gt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'critical',
+              fill: true,
+              line: false,
+              op: 'gt',
+              value: 80,
+              yaxis: 'left',
+            },
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: false,
+              op: 'gt',
+              value: 50,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "transparent",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "orange",
+            "value": 50,
+          },
+          Object {
+            "color": "red",
+            "value": 80,
+          },
+        ]
+      `);
+    });
+
+    test('gt & lt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'critical',
+              fill: true,
+              line: true,
+              op: 'gt',
+              value: 80,
+              yaxis: 'left',
+            },
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: true,
+              op: 'lt',
+              value: 40,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "orange",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "transparent",
+            "value": 40,
+          },
+          Object {
+            "color": "red",
+            "value": 80,
+          },
+        ]
+      `);
+    });
+
+    test('Only lt thresholds', () => {
+      const old: any = {
+        angular: {
+          thresholds: [
+            {
+              colorMode: 'warning',
+              fill: true,
+              line: true,
+              op: 'lt',
+              value: 40,
+              yaxis: 'left',
+            },
+          ],
+        },
+      };
+
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
+      expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "color": "orange",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "transparent",
+            "value": 40,
+          },
+        ]
+      `);
+    });
+
+    test('hide series', () => {
+      const panel = {} as PanelModel;
+      panel.fieldConfig = {
+        defaults: {
+          custom: {
+            hideFrom: {
+              tooltip: false,
+              graph: false,
+              legend: false,
+            },
+          },
+        },
+        overrides: [
+          {
+            matcher: {
+              id: 'byNames',
+              options: {
+                mode: 'exclude',
+                names: ['Bedroom'],
+                prefix: 'All except:',
+                readOnly: true,
+              },
+            },
+            properties: [
+              {
+                id: 'custom.hideFrom',
+                value: {
+                  graph: true,
+                  legend: false,
+                  tooltip: false,
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      panel.options = graphPanelChangedHandler(panel, 'graph', {}, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.hideFrom).toEqual({ viz: false, legend: false, tooltip: false });
+      expect(panel.fieldConfig.overrides[0].properties[0].value).toEqual({ viz: true, legend: false, tooltip: false });
+    });
+  });
+
+  describe('tooltip', () => {
+    test('tooltip mode', () => {
+      const single: any = {
+        angular: {
+          tooltip: {
+            shared: false,
+          },
+        },
+      };
+      const multi: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+          },
+        },
+      };
+
+      const panel1 = {} as PanelModel;
+      const panel2 = {} as PanelModel;
+
+      panel1.options = graphPanelChangedHandler(panel1, 'graph', single, prevFieldConfig);
+      panel2.options = graphPanelChangedHandler(panel2, 'graph', multi, prevFieldConfig);
+
+      expect(panel1.options.tooltip.mode).toBe(TooltipDisplayMode.Single);
+      expect(panel2.options.tooltip.mode).toBe(TooltipDisplayMode.Multi);
+    });
+
+    test('sort order', () => {
+      const none: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+            sort: 0,
+          },
+        },
+      };
+
+      const asc: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+            sort: 1,
+          },
+        },
+      };
+
+      const desc: any = {
+        angular: {
+          tooltip: {
+            shared: true,
+            sort: 2,
+          },
+        },
+      };
+
+      const singleModeWithUnnecessaryOption: any = {
+        angular: {
+          tooltip: {
+            shared: false,
+            sort: 2,
+          },
+        },
+      };
+
+      const panel1 = {} as PanelModel;
+      const panel2 = {} as PanelModel;
+      const panel3 = {} as PanelModel;
+      const panel4 = {} as PanelModel;
+
+      panel1.options = graphPanelChangedHandler(panel1, 'graph', none, prevFieldConfig);
+      panel2.options = graphPanelChangedHandler(panel2, 'graph', asc, prevFieldConfig);
+      panel3.options = graphPanelChangedHandler(panel3, 'graph', desc, prevFieldConfig);
+      panel4.options = graphPanelChangedHandler(panel4, 'graph', singleModeWithUnnecessaryOption, prevFieldConfig);
+
+      expect(panel1.options.tooltip.sort).toBe(SortOrder.None);
+      expect(panel2.options.tooltip.sort).toBe(SortOrder.Ascending);
+      expect(panel3.options.tooltip.sort).toBe(SortOrder.Descending);
+      expect(panel4.options.tooltip.sort).toBe(SortOrder.None);
+    });
+  });
+
+  describe('x axis', () => {
+    test('should hide x axis', () => {
+      const old: any = {
+        angular: {
+          xaxis: {
+            show: false,
+            mode: 'time',
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig).toMatchSnapshot();
+    });
   });
 });
 
-const stairscase = {
-  fieldConfig: {
-    defaults: {
-      custom: {},
-      unit: 'areaF2',
-      displayName: 'DISPLAY NAME',
-    },
-    overrides: [],
+const customColor = {
+  aliasColors: {},
+  dashLength: 10,
+  fill: 5,
+  fillGradient: 6,
+  legend: {
+    avg: true,
+    current: true,
+    max: true,
+    min: true,
+    show: true,
+    total: true,
+    values: true,
+    alignAsTable: true,
   },
+  lines: true,
+  linewidth: 1,
+  nullPointMode: 'null',
+  options: {
+    alertThreshold: true,
+  },
+  pointradius: 2,
+  seriesOverrides: [
+    {
+      $$hashKey: 'object:12',
+      alias: 'A-series',
+      color: 'rgba(165, 72, 170, 0.77)',
+    },
+  ],
+  spaceLength: 10,
+  steppedLine: true,
+  thresholds: [],
+  timeRegions: [],
+  title: 'Panel Title',
+  tooltip: {
+    shared: true,
+    sort: 0,
+    value_type: 'individual',
+  },
+  type: 'graph',
+  xaxis: {
+    buckets: null,
+    mode: 'time',
+    name: null,
+    show: true,
+    values: [],
+  },
+  yaxes: [
+    {
+      $$hashKey: 'object:42',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: false,
+    },
+    {
+      $$hashKey: 'object:43',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+  ],
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  timeFrom: null,
+  timeShift: null,
+  bars: false,
+  dashes: false,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: false,
+  decimals: 1,
+  datasource: null,
+};
+
+const customColorRegex = cloneDeep(customColor);
+customColorRegex.seriesOverrides[0].alias = '/^A-/';
+
+const stairscase = {
   aliasColors: {},
   dashLength: 10,
   fill: 5,
@@ -285,6 +730,100 @@ const stepedColordLine = {
       $$hashKey: 'object:39',
       format: 'short',
       label: null,
+      logBase: 10,
+      max: null,
+      min: null,
+      show: true,
+    },
+  ],
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  bars: false,
+  dashes: false,
+  fillGradient: 0,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: false,
+  timeFrom: null,
+  timeShift: null,
+  datasource: null,
+};
+
+const legend = {
+  aliasColors: {
+    'A-series': 'red',
+  },
+  dashLength: 10,
+  fieldConfig: {
+    defaults: {
+      custom: {},
+    },
+    overrides: [],
+  },
+  fill: 5,
+  gridPos: {
+    h: 9,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 2,
+  legend: {
+    avg: true,
+    current: true,
+    max: false,
+    min: false,
+    show: true,
+    total: true,
+    values: true,
+    alignAsTable: true,
+  },
+  lines: true,
+  linewidth: 5,
+  maxDataPoints: 20,
+  nullPointMode: 'null',
+  options: {
+    alertThreshold: true,
+  },
+  pluginVersion: '7.4.0-pre',
+  pointradius: 2,
+  renderer: 'flot',
+  seriesOverrides: [],
+  spaceLength: 10,
+  steppedLine: true,
+  thresholds: [],
+  timeRegions: [],
+  title: 'Panel Title',
+  tooltip: {
+    shared: true,
+    sort: 0,
+    value_type: 'individual',
+  },
+  type: 'graph',
+  xaxis: {
+    buckets: null,
+    mode: 'time',
+    name: null,
+    show: true,
+    values: [],
+  },
+  yaxes: [
+    {
+      $$hashKey: 'object:38',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+    {
+      $$hashKey: 'object:39',
+      format: 'short',
+      label: null,
       logBase: 1,
       max: null,
       min: null,
@@ -302,6 +841,203 @@ const stepedColordLine = {
   percentage: false,
   points: false,
   stack: false,
+  timeFrom: null,
+  timeShift: null,
+  datasource: null,
+};
+
+const stacking = {
+  aliasColors: {
+    'A-series': 'red',
+  },
+  dashLength: 10,
+  fieldConfig: {
+    defaults: {
+      custom: {},
+    },
+    overrides: [],
+  },
+  fill: 5,
+  gridPos: {
+    h: 9,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 2,
+  legend: {
+    avg: true,
+    current: true,
+    max: false,
+    min: false,
+    show: true,
+    total: true,
+    values: true,
+    alignAsTable: true,
+  },
+  lines: true,
+  linewidth: 5,
+  maxDataPoints: 20,
+  nullPointMode: 'null',
+  options: {
+    alertThreshold: true,
+  },
+  pluginVersion: '7.4.0-pre',
+  pointradius: 2,
+  renderer: 'flot',
+  seriesOverrides: [],
+  spaceLength: 10,
+  steppedLine: true,
+  thresholds: [],
+  timeRegions: [],
+  title: 'Panel Title',
+  tooltip: {
+    shared: true,
+    sort: 0,
+    value_type: 'individual',
+  },
+  type: 'graph',
+  xaxis: {
+    buckets: null,
+    mode: 'time',
+    name: null,
+    show: true,
+    values: [],
+  },
+  yaxes: [
+    {
+      $$hashKey: 'object:38',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+    {
+      $$hashKey: 'object:39',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+  ],
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  bars: false,
+  dashes: false,
+  fillGradient: 0,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: true,
+  timeFrom: null,
+  timeShift: null,
+  datasource: null,
+};
+
+const stackingGroups = {
+  aliasColors: {
+    'A-series': 'red',
+  },
+  dashLength: 10,
+  fieldConfig: {
+    defaults: {
+      custom: {},
+    },
+    overrides: [],
+  },
+  fill: 5,
+  gridPos: {
+    h: 9,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 2,
+  legend: {
+    avg: true,
+    current: true,
+    max: false,
+    min: false,
+    show: true,
+    total: true,
+    values: true,
+    alignAsTable: true,
+  },
+  lines: true,
+  linewidth: 5,
+  maxDataPoints: 20,
+  nullPointMode: 'null',
+  options: {
+    alertThreshold: true,
+  },
+  pluginVersion: '7.4.0-pre',
+  pointradius: 2,
+  renderer: 'flot',
+  seriesOverrides: [
+    {
+      alias: 'A-series',
+      stack: 'A',
+    },
+    {
+      alias: 'B-series',
+      stack: 'A',
+    },
+  ],
+  spaceLength: 10,
+  steppedLine: true,
+  thresholds: [],
+  timeRegions: [],
+  title: 'Panel Title',
+  tooltip: {
+    shared: true,
+    sort: 0,
+    value_type: 'individual',
+  },
+  type: 'graph',
+  xaxis: {
+    buckets: null,
+    mode: 'time',
+    name: null,
+    show: true,
+    values: [],
+  },
+  yaxes: [
+    {
+      $$hashKey: 'object:38',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+    {
+      $$hashKey: 'object:39',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+  ],
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  bars: false,
+  dashes: false,
+  fillGradient: 0,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: true,
   timeFrom: null,
   timeShift: null,
   datasource: null,

@@ -1,44 +1,50 @@
-import { toDataQueryError } from '@grafana/runtime';
+import { Subscription } from 'rxjs';
+import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/data';
+
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
-import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
+import { hasOngoingTransaction } from '../utils';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
+      if (!hasOngoingTransaction(getState())) {
+        // we might have cancelled a batch so then variable state is removed
+        return;
+      }
+
+      const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
-      // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();
         const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = getVariableQueryRunner()
-          .getResponse(identifier)
-          .subscribe(observer);
+        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
         subscription.add(responseSubscription);
 
         getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
       });
     } catch (err) {
       const error = toDataQueryError(err);
-      if (getState().templating.editor.id === variableInState.id) {
+      if (getState().templating.editor.id === identifier.id) {
         dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
       }
 
@@ -47,54 +53,62 @@ export const updateQueryVariableOptions = (
   };
 };
 
-export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
-  const variable = getVariable<QueryVariableModel>(identifier.id, getState());
-  await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
-};
+export const initQueryVariableEditor =
+  (identifier: VariableIdentifier): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+    await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
+  };
 
 export const changeQueryVariableDataSource = (
   identifier: VariableIdentifier,
-  name: string | null
+  name: DataSourceRef | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
+      const extendedEditorState = getQueryVariableEditorState(getState().templating.editor);
+      const previousDatasource = extendedEditorState?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
-      dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
+
+      if (previousDatasource && previousDatasource.type !== dataSource?.type) {
+        dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })));
+      }
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);
-      dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
+
+      dispatch(
+        changeVariableEditorExtended({
+          dataSource: dataSource,
+          VariableQueryEditor: VariableQueryEditor,
+        })
+      );
     } catch (err) {
       console.error(err);
     }
   };
 };
 
-export const changeQueryVariableQuery = (
-  identifier: VariableIdentifier,
-  query: any,
-  definition?: string
-): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  if (hasSelfReferencingQuery(variableInState.name, query)) {
-    const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
-    dispatch(addVariableEditorError({ errorProp: 'query', errorText }));
-    return;
-  }
+export const changeQueryVariableQuery =
+  (identifier: VariableIdentifier, query: any, definition?: string): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
+    if (hasSelfReferencingQuery(variableInState.name, query)) {
+      const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
+      dispatch(addVariableEditorError({ errorProp: 'query', errorText }));
+      return;
+    }
 
-  dispatch(removeVariableEditorError({ errorProp: 'query' }));
-  dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+    dispatch(removeVariableEditorError({ errorProp: 'query' }));
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
 
-  if (definition) {
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
-  } else if (typeof query === 'string') {
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })));
-  }
+    if (definition) {
+      dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
+    } else if (typeof query === 'string') {
+      dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })));
+    }
 
-  await dispatch(updateOptions(identifier));
-};
+    await dispatch(updateOptions(identifier));
+  };
 
 export function hasSelfReferencingQuery(name: string, query: any): boolean {
   if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {

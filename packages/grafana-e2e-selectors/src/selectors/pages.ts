@@ -1,5 +1,10 @@
 import { Components } from './components';
 
+/**
+ * Selectors grouped/defined in Pages
+ *
+ * @alpha
+ */
 export const Pages = {
   Login: {
     url: '/login',
@@ -14,6 +19,7 @@ export const Pages = {
   DataSource: {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
+    readOnly: 'Data source settings page read only message',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
   },
@@ -23,7 +29,9 @@ export const Pages = {
   },
   AddDataSource: {
     url: '/datasources/new',
+    /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
@@ -31,21 +39,27 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     addNewPanel: 'Add new panel',
+    addNewRow: 'Add new row',
+    addNewPanelLibrary: 'Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
-    Toolbar: {
-      toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
-      navBar: () => '.navbar',
+    DashNav: {
+      /**
+       * @deprecated use navV2 from Grafana 8.3 instead
+       */
+      nav: 'Dashboard navigation',
+      navV2: 'data-testid Dashboard navigation',
     },
     SubMenu: {
-      submenuItem: 'Dashboard template variables submenu item',
-      submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
+      submenu: 'Dashboard submenu',
+      submenuItem: 'data-testid template variable',
+      submenuItemLabels: (item: string) => `data-testid Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
-        `Dashboard template variables Variable Value DropDown value link text ${item}`,
-      submenuItemValueDropDownDropDown: 'Dashboard template variables Variable Value DropDown DropDown',
+        `data-testid Dashboard template variables Variable Value DropDown value link text ${item}`,
+      submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
-        `Dashboard template variables Variable Value DropDown option text ${item}`,
+        `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
     },
     Settings: {
       General: {
@@ -53,17 +67,31 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        /**
+         * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
+         */
         timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },
       Annotations: {
         List: {
-          addAnnotationCTA: 'Call to action button Add Annotation Query',
+          /**
+           * @deprecated use addAnnotationCTAV2 from Grafana 8.3 instead
+           */
+          addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
+          addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
+        },
+        Settings: {
+          name: 'Annotations settings name input',
         },
       },
       Variables: {
         List: {
-          addVariableCTA: 'Call to action button Add variable',
+          /**
+           * @deprecated use addVariableCTAV2 from Grafana 8.3 instead
+           */
+          addVariableCTA: Components.CallToActionCard.button('Add variable'),
+          addVariableCTAV2: Components.CallToActionCard.buttonV2('Add variable'),
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
@@ -77,22 +105,33 @@ export const Pages = {
           General: {
             headerLink: 'Variable editor Header link',
             modeLabelNew: 'Variable editor Header mode New',
+            /**
+             * @deprecated
+             */
             modeLabelEdit: 'Variable editor Header mode Edit',
             generalNameInput: 'Variable editor Form Name field',
+            generalNameInputV2: 'data-testid Variable editor Form Name field',
             generalTypeSelect: 'Variable editor Form Type select',
+            generalTypeSelectV2: 'data-testid Variable editor Form Type select',
             generalLabelInput: 'Variable editor Form Label field',
+            generalLabelInputV2: 'data-testid Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
+            generalHideSelectV2: 'data-testid Variable editor Form Hide select',
             selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
+            selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
+            queryOptionsRefreshSelectV2: 'data-testid Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
+            queryOptionsRegExInputV2: 'data-testid Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
+            queryOptionsSortSelectV2: 'data-testid Variable editor Form Query Sort select',
             queryOptionsQueryInput: 'Variable editor Form Default Variable Query Editor textarea',
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
@@ -100,9 +139,20 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+            constantOptionsQueryInputV2: 'data-testid Variable editor Form Constant Query field',
+          },
+          DatasourceVariable: {
+            datasourceSelect: 'data-testid datasource variable datasource type',
           },
           TextBoxVariable: {
             textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
+            textBoxOptionsQueryInputV2: 'data-testid Variable editor Form TextBox Query field',
+          },
+          CustomVariable: {
+            customValueInput: 'data-testid custom-variable-input',
+          },
+          IntervalVariable: {
+            intervalsValueInput: 'data-testid interval variable intervals input',
           },
         },
       },
@@ -110,6 +160,9 @@ export const Pages = {
   },
   Dashboards: {
     url: '/dashboards',
+    /**
+     * @deprecated use components.Search.dashboardItem from Grafana 8.3 instead
+     */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
   SaveDashboardAsModal: {
@@ -127,13 +180,10 @@ export const Pages = {
   Explore: {
     url: '/explore',
     General: {
-      container: 'Explore',
+      container: 'data-testid Explore',
       graph: 'Explore Graph',
-      runButton: 'Run button',
       table: 'Explore Table',
-    },
-    Toolbar: {
-      navBar: () => '.explore-toolbar',
+      scrollBar: () => '.scrollbar-view',
     },
   },
   SoloPanel: {
@@ -148,5 +198,16 @@ export const Pages = {
   PluginPage: {
     page: 'Plugin page',
     signatureInfo: 'Plugin signature info',
+    disabledInfo: 'Plugin disabled info',
+  },
+  PlaylistForm: {
+    name: 'Playlist name',
+    interval: 'Playlist interval',
+    itemRow: 'Playlist item row',
+    itemIdType: 'Playlist item dashboard by ID type',
+    itemTagType: 'Playlist item dashboard by Tag type',
+    itemMoveUp: 'Move playlist item order up',
+    itemMoveDown: 'Move playlist item order down',
+    itemDelete: 'Delete playlist item',
   },
 };

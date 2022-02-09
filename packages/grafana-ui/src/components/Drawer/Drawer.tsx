@@ -1,12 +1,15 @@
-import React, { CSSProperties, FC, ReactNode, useState } from 'react';
-import { GrafanaTheme } from '@grafana/data';
+import React, { CSSProperties, FC, ReactNode, useState, useEffect } from 'react';
+import { GrafanaTheme2 } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { FocusScope } from '@react-aria/focus';
+import { useDialog } from '@react-aria/dialog';
+import { useOverlay } from '@react-aria/overlays';
 
 export interface Props {
   children: ReactNode;
@@ -30,22 +33,39 @@ export interface Props {
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, scrollableContent: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, scrollableContent: boolean) => {
   return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    `,
     drawer: css`
       .drawer-content {
-        background-color: ${theme.colors.bodyBg};
+        background-color: ${theme.colors.background.primary};
         display: flex;
         flex-direction: column;
         overflow: hidden;
       }
+      &.drawer-open .drawer-mask {
+        background-color: ${theme.components.overlay.background};
+        backdrop-filter: blur(1px);
+        opacity: 1;
+      }
+      .drawer-mask {
+        background-color: ${theme.components.overlay.background};
+        backdrop-filter: blur(1px);
+      }
+      .drawer-open .drawer-content-wrapper {
+        box-shadow: ${theme.shadows.z3};
+      }
       z-index: ${theme.zIndex.dropdown};
     `,
     header: css`
-      background-color: ${theme.colors.bg2};
+      background-color: ${theme.colors.background.canvas};
       z-index: 1;
       flex-grow: 0;
-      padding-top: ${theme.spacing.xs};
+      padding-top: ${theme.spacing(0.5)};
     `,
     actions: css`
       display: flex;
@@ -53,18 +73,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scrollableContent: boolean
       justify-content: flex-end;
     `,
     titleWrapper: css`
-      margin-bottom: ${theme.spacing.lg};
-      padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing(3)};
+      padding: ${theme.spacing(0, 1, 0, 3)};
+      overflow-wrap: break-word;
     `,
     titleSpacing: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     content: css`
-      padding: ${theme.spacing.md};
-      flex-grow: 1;
+      padding: ${theme.spacing(2)};
+      flex: 1;
       overflow: ${!scrollableContent ? 'hidden' : 'auto'};
       z-index: 0;
-      height: 100%;
     `,
   };
 });
@@ -80,21 +100,35 @@ export const Drawer: FC<Props> = ({
   width = '40%',
   expandable = false,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const drawerStyles = getStyles(theme, scrollableContent);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const currentWidth = isExpanded ? '100%' : width;
+  const overlayRef = React.useRef(null);
+  const { dialogProps, titleProps } = useDialog({}, overlayRef);
+  const { overlayProps } = useOverlay(
+    {
+      isDismissable: true,
+    },
+    overlayRef
+  );
+
+  // RcDrawer v4.x needs to be mounted in advance for animations to play.
+  useEffect(() => {
+    setIsOpen(true);
+  }, []);
 
   return (
     <RcDrawer
       level={null}
       handler={false}
-      open={true}
+      open={isOpen}
       onClose={onClose}
       maskClosable={closeOnMaskClick}
       placement="right"
       width={currentWidth}
-      getContainer={inline ? false : 'body'}
+      getContainer={inline ? undefined : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
       aria-label={
@@ -103,46 +137,50 @@ export const Drawer: FC<Props> = ({
           : selectors.components.Drawer.General.title('no title')
       }
     >
-      {typeof title === 'string' && (
-        <div className={drawerStyles.header}>
-          <div className={drawerStyles.actions}>
-            {expandable && !isExpanded && (
-              <IconButton
-                name="angle-left"
-                size="xl"
-                onClick={() => setIsExpanded(true)}
-                surface="header"
-                aria-label={selectors.components.Drawer.General.expand}
-              />
-            )}
-            {expandable && isExpanded && (
-              <IconButton
-                name="angle-right"
-                size="xl"
-                onClick={() => setIsExpanded(false)}
-                surface="header"
-                aria-label={selectors.components.Drawer.General.contract}
-              />
-            )}
-            <IconButton
-              name="times"
-              size="xl"
-              onClick={onClose}
-              surface="header"
-              aria-label={selectors.components.Drawer.General.close}
-            />
-          </div>
-          <div className={drawerStyles.titleWrapper}>
-            <h3>{title}</h3>
-            {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-            {typeof subtitle !== 'string' && subtitle}
+      <FocusScope restoreFocus contain autoFocus>
+        <div className={drawerStyles.container} {...overlayProps} {...dialogProps} ref={overlayRef}>
+          {typeof title === 'string' && (
+            <div className={drawerStyles.header}>
+              <div className={drawerStyles.actions}>
+                {expandable && !isExpanded && (
+                  <IconButton
+                    name="angle-left"
+                    size="xl"
+                    onClick={() => setIsExpanded(true)}
+                    surface="header"
+                    aria-label={selectors.components.Drawer.General.expand}
+                  />
+                )}
+                {expandable && isExpanded && (
+                  <IconButton
+                    name="angle-right"
+                    size="xl"
+                    onClick={() => setIsExpanded(false)}
+                    surface="header"
+                    aria-label={selectors.components.Drawer.General.contract}
+                  />
+                )}
+                <IconButton
+                  name="times"
+                  size="xl"
+                  onClick={onClose}
+                  surface="header"
+                  aria-label={selectors.components.Drawer.General.close}
+                />
+              </div>
+              <div className={drawerStyles.titleWrapper}>
+                <h3 {...titleProps}>{title}</h3>
+                {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+                {typeof subtitle !== 'string' && subtitle}
+              </div>
+            </div>
+          )}
+          {typeof title !== 'string' && title}
+          <div className={drawerStyles.content}>
+            {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
           </div>
         </div>
-      )}
-      {typeof title !== 'string' && title}
-      <div className={drawerStyles.content}>
-        {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
-      </div>
+      </FocusScope>
     </RcDrawer>
   );
 };

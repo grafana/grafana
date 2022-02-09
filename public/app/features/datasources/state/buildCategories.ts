@@ -1,6 +1,6 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { config, featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
-import { config } from '../../../core/config';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
@@ -12,7 +12,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
     { id: 'iot', title: 'Industrial & IoT', plugins: [] },
     { id: 'other', title: 'Others', plugins: [] },
-  ].filter(item => item);
+  ].filter((item) => item);
 
   const categoryIndex: Record<string, DataSourcePluginCategory> = {};
   const pluginIndex: Record<string, DataSourcePluginMeta> = {};
@@ -23,14 +23,12 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     categoryIndex[category.id] = category;
   }
 
-  const { edition, hasValidLicense } = config.licenseInfo;
-
   for (const plugin of plugins) {
-    const enterprisePlugin = enterprisePlugins.find(item => item.id === plugin.id);
+    const enterprisePlugin = enterprisePlugins.find((item) => item.id === plugin.id);
     // Force category for enterprise plugins
     if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
-      plugin.unlicensed = edition !== 'Open Source' && !hasValidLicense;
+      plugin.unlicensed = !featureEnabled('enterprise.plugins');
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
@@ -41,7 +39,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
       }
     }
 
-    const category = categories.find(item => item.id === plugin.category) || categoryIndex['other'];
+    const category = categories.find((item) => item.id === plugin.category) || categoryIndex['other'];
     category.plugins.push(plugin);
     // add to plugin index
     pluginIndex[plugin.id] = plugin;
@@ -66,7 +64,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
   }
 
   // Only show categories with plugins
-  return categories.filter(c => c.plugins.length > 0);
+  return categories.filter((c) => c.plugins.length > 0);
 }
 
 function sortPlugins(plugins: DataSourcePluginMeta[]) {
@@ -99,62 +97,98 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
     getPhantomPlugin({
       id: 'grafana-splunk-datasource',
       name: 'Splunk',
-      description: 'Visualize & explore Splunk logs',
+      description: 'Visualize and explore Splunk logs',
       imgUrl: 'public/img/plugins/splunk_logo_128.png',
     }),
     getPhantomPlugin({
       id: 'grafana-oracle-datasource',
       name: 'Oracle',
-      description: 'Visualize & explore Oracle SQL',
+      description: 'Visualize and explore Oracle SQL',
       imgUrl: 'public/img/plugins/oracle.png',
     }),
     getPhantomPlugin({
       id: 'grafana-dynatrace-datasource',
       name: 'Dynatrace',
-      description: 'Visualize & explore Dynatrace data',
+      description: 'Visualize and explore Dynatrace data',
       imgUrl: 'public/img/plugins/dynatrace.png',
     }),
     getPhantomPlugin({
       id: 'grafana-servicenow-datasource',
-      description: 'ServiceNow integration & data source',
+      description: 'ServiceNow integration and data source',
       name: 'ServiceNow',
       imgUrl: 'public/img/plugins/servicenow.svg',
     }),
     getPhantomPlugin({
       id: 'grafana-datadog-datasource',
-      description: 'DataDog integration & data source',
+      description: 'DataDog integration and data source',
       name: 'DataDog',
       imgUrl: 'public/img/plugins/datadog.png',
     }),
     getPhantomPlugin({
       id: 'grafana-newrelic-datasource',
-      description: 'New Relic integration & data source',
+      description: 'New Relic integration and data source',
       name: 'New Relic',
       imgUrl: 'public/img/plugins/newrelic.svg',
     }),
     getPhantomPlugin({
       id: 'grafana-mongodb-datasource',
-      description: 'MongoDB integration & data source',
+      description: 'MongoDB integration and data source',
       name: 'MongoDB',
       imgUrl: 'public/img/plugins/mongodb.svg',
     }),
     getPhantomPlugin({
       id: 'grafana-snowflake-datasource',
-      description: 'Snowflake integration & data source',
+      description: 'Snowflake integration and data source',
       name: 'Snowflake',
       imgUrl: 'public/img/plugins/snowflake.svg',
     }),
     getPhantomPlugin({
       id: 'grafana-wavefront-datasource',
-      description: 'Wavefront integration & data source',
+      description: 'Wavefront integration and data source',
       name: 'Wavefront',
       imgUrl: 'public/img/plugins/wavefront.svg',
     }),
     getPhantomPlugin({
       id: 'dlopes7-appdynamics-datasource',
-      description: 'AppDynamics integration & data source',
+      description: 'AppDynamics integration and data source',
       name: 'AppDynamics',
       imgUrl: 'public/img/plugins/appdynamics.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-saphana-datasource',
+      description: 'SAP HANA® integration and data source',
+      name: 'SAP HANA®',
+      imgUrl: 'public/img/plugins/sap_hana.png',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-honeycomb-datasource',
+      description: 'Honeycomb integration and datasource',
+      name: 'Honeycomb',
+      imgUrl: 'public/img/plugins/honeycomb.png',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-salesforce-datasource',
+      description: 'Salesforce integration and datasource',
+      name: 'Salesforce',
+      imgUrl: 'public/img/plugins/salesforce.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-jira-datasource',
+      description: 'Jira integration and datasource',
+      name: 'Jira',
+      imgUrl: 'public/img/plugins/jira_logo.png',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-gitlab-datasource',
+      description: 'GitLab integration and datasource',
+      name: 'GitLab',
+      imgUrl: 'public/img/plugins/gitlab.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-splunk-monitoring-datasource',
+      description: 'SignalFx integration and datasource',
+      name: 'Splunk Infrastructure Monitoring',
+      imgUrl: 'public/img/plugins/signalfx-logo.svg',
     }),
   ];
 }
@@ -167,7 +201,7 @@ function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
     module: 'phantom',
     baseUrl: '',
     info: {
-      description: 'Hosted Graphite, Prometheus and Loki',
+      description: 'Hosted Graphite, Prometheus, and Loki',
       logos: { small: 'public/img/grafana_icon.svg', large: 'asd' },
       author: { name: 'Grafana Labs' },
       links: [
@@ -203,7 +237,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: config.marketplaceUrl + options.id,
+          url: config.pluginCatalogURL + options.id,
           name: 'Install now',
         },
       ],

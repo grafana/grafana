@@ -21,7 +21,7 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
     // set up transports to post events to grafana backend and/or Sentry
     this.transports = [];
     if (options.dsn) {
-      this.transports.push(new FetchTransport({ dsn: options.dsn }));
+      this.transports.push(new FetchTransport({ dsn: options.dsn }, fetch));
     }
     if (options.customEndpoint) {
       this.transports.push(new CustomEndpointTransport({ endpoint: options.customEndpoint }));
@@ -35,6 +35,11 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
       dsn: options.dsn || 'https://examplePublicKey@o0.ingest.sentry.io/0',
       sampleRate: options.sampleRate,
       transport: EchoSrvTransport, // will dump errors to EchoSrv
+      ignoreErrors: [
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed',
+        'Non-Error exception captured with keys',
+      ],
     };
 
     if (options.user) {
@@ -48,7 +53,7 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
   }
 
   addEvent = (e: SentryEchoEvent) => {
-    this.transports.forEach(t => t.sendEvent(e.payload));
+    this.transports.forEach((t) => t.sendEvent(e.payload));
   };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be

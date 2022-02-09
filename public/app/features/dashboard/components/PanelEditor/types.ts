@@ -1,4 +1,5 @@
-import { DataFrame, FieldConfigSource, PanelPlugin } from '@grafana/data';
+import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
+import { DashboardModel, PanelModel } from '../../state';
 
 export interface PanelEditorTab {
   id: string;
@@ -20,10 +21,23 @@ export enum DisplayMode {
   Exact = 2,
 }
 
+export enum PanelEditTableToggle {
+  Off = 0,
+  Table = 1,
+}
+
 export const displayModes = [
   { value: DisplayMode.Fill, label: 'Fill', description: 'Use all available space' },
-  { value: DisplayMode.Fit, label: 'Fit', description: 'Fit in the space keeping ratio' },
-  { value: DisplayMode.Exact, label: 'Exact', description: 'Same size as the dashboard' },
+  { value: DisplayMode.Exact, label: 'Actual', description: 'Make same size as on the dashboard' },
+];
+
+export const panelEditTableModes = [
+  {
+    value: PanelEditTableToggle.Off,
+    label: 'Visualization',
+    description: 'Show using selected visualization',
+  },
+  { value: PanelEditTableToggle.Table, label: 'Table', description: 'Show raw data in table form' },
 ];
 
 /** @internal */
@@ -33,4 +47,28 @@ export interface Props {
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
+}
+
+export interface OptionPaneRenderProps {
+  panel: PanelModel;
+  plugin: PanelPlugin;
+  data?: PanelData;
+  dashboard: DashboardModel;
+  instanceState: any;
+  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
+  onPanelOptionsChanged: (options: any) => void;
+  onFieldConfigsChange: (config: FieldConfigSource) => void;
+}
+
+export interface OptionPaneItemOverrideInfo {
+  type: 'data' | 'rule';
+  onClick?: () => void;
+  tooltip: string;
+  description: string;
+}
+
+export enum VisualizationSelectPaneTab {
+  Visualizations,
+  LibraryPanels,
+  Suggestions,
 }

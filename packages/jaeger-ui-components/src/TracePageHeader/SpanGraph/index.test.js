@@ -66,11 +66,23 @@ describe('<SpanGraph>', () => {
 
   it('passes items to CanvasSpanGraph', () => {
     const canvasGraph = wrapper.find(CanvasSpanGraph).first();
-    const items = trace.spans.map(span => ({
+    const items = trace.spans.map((span) => ({
       valueOffset: span.relativeStartTime,
       valueWidth: span.duration,
       serviceName: span.process.serviceName,
     }));
     expect(canvasGraph.prop('items')).toEqual(items);
+  });
+
+  it('does not regenerate CanvasSpanGraph without new trace', () => {
+    const canvasGraph = wrapper.find(CanvasSpanGraph).first();
+    const items = canvasGraph.prop('items');
+
+    wrapper.instance().forceUpdate();
+
+    const newCanvasGraph = wrapper.find(CanvasSpanGraph).first();
+    const newItems = newCanvasGraph.prop('items');
+
+    expect(newItems).toBe(items);
   });
 });

@@ -61,4 +61,27 @@ describe('Stat Panel Migrations', () => {
     const options = statPanelChangedHandler(panel, 'singlestat', old);
     expect(options.textMode).toBe(BigValueTextMode.Name);
   });
+
+  it('use no color unless one was configured', () => {
+    let old: any = {
+      angular: {
+        valueName: 'name',
+      },
+    };
+
+    let panel = {} as PanelModel;
+    let options = statPanelChangedHandler(panel, 'singlestat', old);
+    expect(options.colorMode).toBe(BigValueColorMode.None);
+
+    old = {
+      angular: {
+        valueName: 'name',
+        colorBackground: true,
+      },
+    };
+
+    panel = {} as PanelModel;
+    options = statPanelChangedHandler(panel, 'singlestat', old);
+    expect(options.colorMode).toBe(BigValueColorMode.Background);
+  });
 });

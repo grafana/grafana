@@ -1,38 +1,34 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
+	return &CacheServiceImpl{
+		CacheService: cacheService,
+		SQLStore:     sqlStore,
+	}
+}
+
 type CacheService interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
-	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
-	CacheService *localcache.CacheService `inject:""`
-	SQLStore     *sqlstore.SQLStore       `inject:""`
-}
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "DatasourceCacheService",
-		Instance:     &CacheServiceImpl{},
-		InitPriority: registry.Low,
-	})
-}
-
-func (dc *CacheServiceImpl) Init() error {
-	return nil
+	CacheService *localcache.CacheService
+	SQLStore     *sqlstore.SQLStore
 }
 
 func (dc *CacheServiceImpl) GetDatasource(
+	ctx context.Context,
 	datasourceID int64,
 	user *models.SignedInUser,
 	skipCache bool,
@@ -49,10 +45,14 @@ func (dc *CacheServiceImpl) GetDatasource(
 	}
 
 	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
-	ds, err := dc.SQLStore.GetDataSource("", datasourceID, "", user.OrgId)
+
+	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
+	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
+
+	ds := query.Result
 
 	if ds.Uid != "" {
 		dc.CacheService.Set(uidKey(ds.OrgId, ds.Uid), ds, time.Second*5)
@@ -62,6 +62,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 }
 
 func (dc *CacheServiceImpl) GetDatasourceByUID(
+	ctx context.Context,
 	datasourceUID string,
 	user *models.SignedInUser,
 	skipCache bool,
@@ -84,10 +85,13 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	}
 
 	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
-	ds, err := dc.SQLStore.GetDataSource(datasourceUID, 0, "", user.OrgId)
+	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
+	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
+
+	ds := query.Result
 
 	dc.CacheService.Set(uidCacheKey, ds, time.Second*5)
 	dc.CacheService.Set(idKey(ds.Id), ds, time.Second*5)

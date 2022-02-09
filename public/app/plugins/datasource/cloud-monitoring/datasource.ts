@@ -1,27 +1,33 @@
-import _ from 'lodash';
-
+import { chunk, flatten, isString, isArray } from 'lodash';
+import { from, lastValueFrom, Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import {
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceInstanceSettings,
   ScopedVars,
   SelectableValue,
-  DataQueryResponse,
 } from '@grafana/data';
+import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
-import API from './api';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import {
+  CloudMonitoringOptions,
+  CloudMonitoringQuery,
+  EditorMode,
+  Filter,
+  MetricDescriptor,
+  QueryType,
+  PostResponse,
+  Aggregation,
+} from './types';
 import { CloudMonitoringVariableSupport } from './variables';
-import { catchError, map, mergeMap } from 'rxjs/operators';
-import { from, Observable, of, throwError } from 'rxjs';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
   CloudMonitoringOptions
 > {
-  api: API;
   authenticationType: string;
   intervalMs: number;
 
@@ -32,16 +38,16 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
-    this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
     this.variables = new CloudMonitoringVariableSupport(this);
+    this.intervalMs = 0;
   }
 
   getVariables() {
-    return this.templateSrv.getVariables().map(v => `$${v.name}`);
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
   query(request: DataQueryRequest<CloudMonitoringQuery>): Observable<DataQueryResponse> {
-    request.targets = request.targets.map(t => ({
+    request.targets = request.targets.map((t) => ({
       ...this.migrateQuery(t),
       intervalMs: request.intervalMs,
     }));
@@ -55,14 +61,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       {
         refId: 'annotationQuery',
         type: 'annotationQuery',
-        datasourceId: this.id,
+        datasource: this.getRef(),
         view: 'FULL',
         crossSeriesReducer: 'REDUCE_NONE',
         perSeriesAligner: 'ALIGN_NONE',
         metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
         title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
         text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
-        tags: this.templateSrv.replace(annotation.target.tags, options.scopedVars || {}),
         projectName: this.templateSrv.replace(
           annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
           options.scopedVars || {}
@@ -71,28 +76,40 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       },
     ];
 
-    return this.api
-      .post({
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      })
-      .pipe(
-        map(({ data }) => {
-          const results = data.results['annotationQuery'].tables[0].rows.map((v: any) => {
-            return {
-              annotation: annotation,
-              time: Date.parse(v[0]),
-              title: v[1],
-              tags: [],
-              text: v[3],
-            } as any;
-          });
-
-          return results;
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<PostResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries,
+          },
         })
-      )
-      .toPromise();
+        .pipe(
+          map(({ data }) => {
+            const dataQueryResponse = toDataQueryResponse({
+              data: data,
+            });
+            const df: any = [];
+            if (dataQueryResponse.data.length !== 0) {
+              for (let i = 0; i < dataQueryResponse.data.length; i++) {
+                for (let j = 0; j < dataQueryResponse.data[i].fields[0].values.length; j++) {
+                  df.push({
+                    annotation: annotation,
+                    time: Date.parse(dataQueryResponse.data[i].fields[0].values.get(j)),
+                    title: dataQueryResponse.data[i].fields[1].values.get(j),
+                    tags: [],
+                    text: dataQueryResponse.data[i].fields[3].values.get(j),
+                  });
+                }
+              }
+            }
+            return df;
+          })
+        )
+    );
   }
 
   applyTemplateVariables(
@@ -100,7 +117,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     scopedVars: ScopedVars
   ): Record<string, any> {
     return {
-      datasourceId: this.id,
+      datasource: this.getRef(),
       refId,
       intervalMs: this.intervalMs,
       type: 'timeSeriesQuery',
@@ -114,23 +131,24 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
+        editorMode: metricQuery.editorMode,
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
     };
   }
 
-  async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
+  async getLabels(metricType: string, refId: string, projectName: string, aggregation?: Aggregation) {
     const options = {
       targets: [
         {
           refId,
-          datasourceId: this.id,
+          datasource: this.getRef(),
           queryType: QueryType.METRICS,
           metricQuery: {
             projectName: this.templateSrv.replace(projectName),
             metricType: this.templateSrv.replace(metricType),
-            groupBys: this.interpolateGroupBys(groupBys || [], {}),
-            crossSeriesReducer: 'REDUCE_NONE',
+            groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
+            crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
             view: 'HEADERS',
           },
         },
@@ -141,83 +159,53 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     const queries = options.targets;
 
     if (!queries.length) {
-      return of({ results: [] }).toPromise();
+      return lastValueFrom(of({ results: [] }));
     }
 
-    return from(this.ensureGCEDefaultProject())
-      .pipe(
+    return lastValueFrom(
+      from(this.ensureGCEDefaultProject()).pipe(
         mergeMap(() => {
-          return this.api.post({
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries,
+          return getBackendSrv().fetch<PostResponse>({
+            url: '/api/ds/query',
+            method: 'POST',
+            data: {
+              from: options.range.from.valueOf().toString(),
+              to: options.range.to.valueOf().toString(),
+              queries,
+            },
           });
         }),
         map(({ data }) => {
-          return data;
-        }),
-        map(response => {
-          const result = response.results[refId];
-          return result && result.meta ? result.meta.labels : {};
+          const dataQueryResponse = toDataQueryResponse({
+            data: data,
+          });
+          const labels = dataQueryResponse?.data
+            .map((f) => f.meta?.custom?.labels)
+            .filter((p) => !!p)
+            .reduce((acc, labels) => {
+              for (let key in labels) {
+                if (!acc[key]) {
+                  acc[key] = new Set<string>();
+                }
+                if (labels[key]) {
+                  acc[key].add(labels[key]);
+                }
+              }
+              return acc;
+            }, {});
+          return Object.fromEntries(
+            Object.entries(labels).map((l: any) => {
+              l[1] = Array.from(l[1]);
+              return l;
+            })
+          );
         })
       )
-      .toPromise();
-  }
-
-  async testDatasource() {
-    let status, message;
-    const defaultErrorMessage = 'Cannot connect to Google Cloud Monitoring API';
-    try {
-      await this.ensureGCEDefaultProject();
-      const response = await this.api.test(this.getDefaultProject());
-      if (response.status === 200) {
-        status = 'success';
-        message = 'Successfully queried the Google Cloud Monitoring API.';
-      } else {
-        status = 'error';
-        message = response.statusText ? response.statusText : defaultErrorMessage;
-      }
-    } catch (error) {
-      status = 'error';
-      if (_.isString(error)) {
-        message = error;
-      } else {
-        message = 'Google Cloud Monitoring: ';
-        message += error.statusText ? error.statusText : defaultErrorMessage;
-        if (error.data && error.data.error && error.data.error.code) {
-          message += ': ' + error.data.error.code + '. ' + error.data.error.message;
-        }
-      }
-    } finally {
-      return {
-        status,
-        message,
-      };
-    }
+    );
   }
 
   async getGCEDefaultProject() {
-    return this.api
-      .post({
-        queries: [
-          {
-            refId: 'getGCEDefaultProject',
-            type: 'getGCEDefaultProject',
-            datasourceId: this.id,
-          },
-        ],
-      })
-      .pipe(
-        map(({ data }) => {
-          return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
-            ? data.results.getGCEDefaultProject.meta.defaultProject
-            : '';
-        }),
-        catchError(err => {
-          return throwError(err.data.error);
-        })
-      )
-      .toPromise();
+    return this.getResource(`gceDefaultProject`);
   }
 
   getDefaultProject(): string {
@@ -241,26 +229,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    return this.api.get(`${this.templateSrv.replace(projectName)}/metricDescriptors`, {
-      responseMap: (m: any) => {
-        const [service] = m.type.split('/');
-        const [serviceShortName] = service.split('.');
-        m.service = service;
-        m.serviceShortName = serviceShortName;
-        m.displayName = m.displayName || m.type;
-
-        return m;
-      },
-    }) as Promise<MetricDescriptor[]>;
+    return this.getResource(
+      `metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`
+    ) as Promise<MetricDescriptor[]>;
   }
 
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
-    return this.api.get(`${this.templateSrv.replace(projectName)}/services`, {
-      responseMap: ({ name }: { name: string }) => ({
-        value: name.match(/([^\/]*)\/*$/)![1],
-        label: name.match(/([^\/]*)\/*$/)![1],
-      }),
-    });
+    return this.getResource(`services/v3/projects/${this.templateSrv.replace(projectName)}/services?pageSize=1000`);
   }
 
   async getServiceLevelObjectives(projectName: string, serviceId: string): Promise<Array<SelectableValue<string>>> {
@@ -268,23 +243,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return Promise.resolve([]);
     }
     let { projectName: p, serviceId: s } = this.interpolateProps({ projectName, serviceId });
-    return this.api.get(`${p}/services/${s}/serviceLevelObjectives`, {
-      responseMap: ({ name, displayName, goal }: { name: string; displayName: string; goal: number }) => ({
-        value: name.match(/([^\/]*)\/*$/)![1],
-        label: displayName,
-        goal,
-      }),
-    });
+    return this.getResource(`slo-services/v3/projects/${p}/services/${s}/serviceLevelObjectives`);
   }
 
-  getProjects() {
-    return this.api.get(`projects`, {
-      responseMap: ({ projectId, name }: { projectId: string; name: string }) => ({
-        value: projectId,
-        label: name,
-      }),
-      baseUrl: `${this.instanceSettings.url!}/cloudresourcemanager/v1/`,
-    });
+  getProjects(): Promise<Array<SelectableValue<string>>> {
+    return this.getResource(`projects`);
   }
 
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
@@ -309,7 +272,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return Object.entries(object).reduce((acc, [key, value]) => {
       return {
         ...acc,
-        [key]: value && _.isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
+        [key]: value && isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
       };
     }, {} as T);
   }
@@ -324,30 +287,38 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!selectorName && !!serviceId && !!sloId && !!projectName;
     }
 
+    if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
+      return !!query.metricQuery.projectName && !!query.metricQuery.query;
+    }
+
     const { metricType } = query.metricQuery;
 
     return !!metricType;
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map(query => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
+    return queries.map(
+      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
+    );
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
-    const completeFilter = _.chunk(filters, 4)
+    const completeFilter: Filter[] = chunk(filters, 4)
       .map(([key, operator, value, condition]) => ({
         key,
         operator,
         value,
         ...(condition && { condition }),
       }))
-      .reduce((res, filter) => (filter.value ? [...res, filter] : res), []);
+      .filter((item) => item.value);
 
-    const filterArray = _.flatten(
+    const filterArray = flatten(
       completeFilter.map(({ key, operator, value, condition }: Filter) => [
         this.templateSrv.replace(key, scopedVars || {}),
         operator,
-        this.templateSrv.replace(value, scopedVars || {}, 'regex'),
+        this.templateSrv.replace(value, scopedVars || {}, (value: string | string[]) => {
+          return isArray(value) && value.length ? `(${value.join('|')})` : value;
+        }),
         ...(condition ? [condition] : []),
       ])
     );
@@ -357,7 +328,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {
     let interpolatedGroupBys: string[] = [];
-    (groupBys || []).forEach(gb => {
+    (groupBys || []).forEach((gb) => {
       const interpolated = this.templateSrv.replace(gb, scopedVars || {}, 'csv').split(',');
       if (Array.isArray(interpolated)) {
         interpolatedGroupBys = interpolatedGroupBys.concat(interpolated);

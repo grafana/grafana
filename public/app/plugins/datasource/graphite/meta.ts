@@ -73,7 +73,7 @@ export function parseSchemaRetentions(spec: string): RetentionInfo[] {
   if (!spec) {
     return [];
   }
-  return spec.split(',').map(str => {
+  return spec.split(',').map((str) => {
     const vals = str.split(':');
     return {
       interval: vals[0],

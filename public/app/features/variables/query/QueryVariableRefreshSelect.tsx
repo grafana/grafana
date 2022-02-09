@@ -10,13 +10,12 @@ interface Props {
 }
 
 const REFRESH_OPTIONS = [
-  { label: 'Never', value: VariableRefresh.never },
-  { label: 'On Dashboard Load', value: VariableRefresh.onDashboardLoad },
-  { label: 'On Time Range Change', value: VariableRefresh.onTimeRangeChanged },
+  { label: 'On dashboard load', value: VariableRefresh.onDashboardLoad },
+  { label: 'On time range change', value: VariableRefresh.onTimeRangeChanged },
 ];
 
 export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChildren<Props>) {
-  const value = useMemo(() => REFRESH_OPTIONS.find(o => o.value === refresh) ?? REFRESH_OPTIONS[0], [refresh]);
+  const value = useMemo(() => REFRESH_OPTIONS.find((o) => o.value === refresh) ?? REFRESH_OPTIONS[0], [refresh]);
 
   return (
     <VariableSelectField
@@ -25,7 +24,7 @@ export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChild
       options={REFRESH_OPTIONS}
       onChange={onChange}
       labelWidth={10}
-      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
+      testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
       tooltip="When to update the values of this variable."
     />
   );

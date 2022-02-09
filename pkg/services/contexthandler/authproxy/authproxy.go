@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -44,7 +45,7 @@ var isLDAPEnabled = func(cfg *setting.Cfg) bool {
 var newLDAP = multildap.New
 
 // supportedHeaders states the supported headers configuration fields
-var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
+var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role"}
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -151,7 +152,7 @@ func HashCacheKey(key string) (string, error) {
 
 // getKey forms a key for the cache based on the headers received as part of the authentication flow.
 // Our configuration supports multiple headers. The main header contains the email or username.
-// And the additional ones that allow us to specify extra attributes: Name, Email or Groups.
+// And the additional ones that allow us to specify extra attributes: Name, Email, Role, or Groups.
 func (auth *AuthProxy) getKey() (string, error) {
 	key := strings.TrimSpace(auth.header) // start the key with the main header
 
@@ -203,7 +204,7 @@ func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
 		return 0, err
 	}
 	logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
-	userID, err := auth.remoteCache.Get(cacheKey)
+	userID, err := auth.remoteCache.Get(auth.ctx.Req.Context(), cacheKey)
 	if err != nil {
 		logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
@@ -220,7 +221,7 @@ func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 		return err
 	}
 	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
-	if err := auth.remoteCache.Delete(cacheKey); err != nil {
+	if err := auth.remoteCache.Delete(auth.ctx.Req.Context(), cacheKey); err != nil {
 		return err
 	}
 
@@ -247,7 +248,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
-	if err := bus.Dispatch(upsert); err != nil {
+	if err := bus.Dispatch(auth.ctx.Req.Context(), upsert); err != nil {
 		return 0, err
 	}
 
@@ -277,9 +278,23 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	}
 
 	auth.headersIterator(func(field string, header string) {
-		if field == "Groups" {
+		switch field {
+		case "Groups":
 			extUser.Groups = util.SplitString(header)
-		} else {
+		case "Role":
+			// If Role header is specified, we update the user role of the default org
+			if header != "" {
+				rt := models.RoleType(header)
+				if rt.IsValid() {
+					extUser.OrgRoles = map[int64]models.RoleType{}
+					orgID := int64(1)
+					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+						orgID = int64(setting.AutoAssignOrgId)
+					}
+					extUser.OrgRoles[orgID] = rt
+				}
+			}
+		default:
 			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(header)
 		}
 	})
@@ -290,7 +305,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		ExternalUser:  extUser,
 	}
 
-	err := bus.Dispatch(upsert)
+	err := bus.Dispatch(auth.ctx.Req.Context(), upsert)
 	if err != nil {
 		return 0, err
 	}
@@ -319,7 +334,7 @@ func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, erro
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.Dispatch(context.Background(), query); err != nil {
 		return nil, err
 	}
 
@@ -334,14 +349,14 @@ func (auth *AuthProxy) Remember(id int64) error {
 	}
 
 	// Check if user already in cache
-	userID, err := auth.remoteCache.Get(key)
+	userID, err := auth.remoteCache.Get(auth.ctx.Req.Context(), key)
 	if err == nil && userID != nil {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	if err := auth.remoteCache.Set(key, id, expiration); err != nil {
+	if err := auth.remoteCache.Set(auth.ctx.Req.Context(), key, id, expiration); err != nil {
 		return err
 	}
 

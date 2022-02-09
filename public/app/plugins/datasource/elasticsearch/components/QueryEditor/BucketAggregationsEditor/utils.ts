@@ -1,12 +1,13 @@
 import { BucketsConfiguration } from '../../../types';
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
+import { InternalTimeZones, SelectableValue } from '@grafana/data';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
     label: 'Terms',
     requiresField: true,
     defaultSettings: {
-      min_doc_count: '0',
+      min_doc_count: '1',
       size: '10',
       order: 'desc',
       orderBy: '_term',
@@ -33,6 +34,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
       interval: 'auto',
       min_doc_count: '0',
       trimEdges: '0',
+      timeZone: InternalTimeZones.utc,
     },
   },
   histogram: {
@@ -45,8 +47,12 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
 };
 
-// TODO: Define better types for the following
-export const orderOptions = [
+export const orderByOptions: Array<SelectableValue<string>> = [
+  { label: 'Term value', value: '_term' },
+  { label: 'Doc Count', value: '_count' },
+];
+
+export const orderOptions: Array<SelectableValue<string>> = [
   { label: 'Top', value: 'desc' },
   { label: 'Bottom', value: 'asc' },
 ];
@@ -60,20 +66,4 @@ export const sizeOptions = [
   { label: '10', value: '10' },
   { label: '15', value: '15' },
   { label: '20', value: '20' },
-];
-
-export const orderByOptions = [
-  { label: 'Term value', value: '_term' },
-  { label: 'Doc Count', value: '_count' },
-];
-
-export const intervalOptions = [
-  { label: 'auto', value: 'auto' },
-  { label: '10s', value: '10s' },
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '10m', value: '10m' },
-  { label: '20m', value: '20m' },
-  { label: '1h', value: '1h' },
-  { label: '1d', value: '1d' },
 ];

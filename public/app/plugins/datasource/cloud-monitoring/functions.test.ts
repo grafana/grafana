@@ -1,5 +1,5 @@
 import { getAlignmentOptionsByMetric } from './functions';
-import { ValueTypes, MetricKind } from './constants';
+import { ValueTypes, MetricKind } from './types';
 
 describe('functions', () => {
   let result: any;

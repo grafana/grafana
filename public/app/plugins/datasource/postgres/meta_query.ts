@@ -1,4 +1,4 @@
-import QueryModel from './postgres_query';
+import QueryModel from './postgres_query_model';
 
 export class PostgresMetaQuery {
   constructor(private target: { table: string; timeColumn: string }, private queryModel: QueryModel) {}
@@ -127,12 +127,12 @@ table_schema IN (
         break;
       }
       case 'value': {
-        query += " AND data_type IN ('bigint','integer','double precision','real')";
+        query += " AND data_type IN ('bigint','integer','double precision','real','numeric')";
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
         break;
       }
       case 'group': {
-        query += " AND data_type IN ('text','character','character varying')";
+        query += " AND data_type IN ('text','character','character varying','uuid')";
         break;
       }
     }

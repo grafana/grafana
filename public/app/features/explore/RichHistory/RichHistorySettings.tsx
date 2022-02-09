@@ -1,15 +1,19 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
-import { GrafanaTheme, AppEvents } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
+import { ShowConfirmModalEvent } from '../../../types/events';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
 
 export interface RichHistorySettingsProps {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
-  onChangeRetentionPeriod: (option: { label: string; value: number }) => void;
+  onChangeRetentionPeriod: (option: SelectableValue<number>) => void;
   toggleStarredTabAsFirstTab: () => void;
   toggleactiveDatasourceOnly: () => void;
   deleteRichHistory: () => void;
@@ -18,7 +22,6 @@ export interface RichHistorySettingsProps {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
-      padding-left: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       .space-between {
         margin-bottom: ${theme.spacing.lg};
@@ -56,30 +59,37 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
   } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
-  const selectedOption = retentionPeriodOptions.find(v => v.value === retentionPeriod);
+  const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to permanently delete your query history?',
-      yesText: 'Delete',
-      icon: 'trash-alt',
-      onConfirm: () => {
-        deleteRichHistory();
-        appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Are you sure you want to permanently delete your query history?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          deleteRichHistory();
+          dispatch(notifyApp(createSuccessNotification('Query history deleted')));
+        },
+      })
+    );
   };
 
   return (
     <div className={styles.container}>
       <Field
         label="History time span"
-        description="Select the period of time for which Grafana will save your query history"
+        description={`Select the period of time for which Grafana will save your query history. Up to ${MAX_HISTORY_ITEMS} entries will be stored.`}
         className="space-between"
       >
         <div className={styles.input}>
-          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
+          <Select
+            menuShouldPortal
+            value={selectedOption}
+            options={retentionPeriodOptions}
+            onChange={onChangeRetentionPeriod}
+          ></Select>
         </div>
       </Field>
       <Field label="Default active tab" description=" " className="space-between">

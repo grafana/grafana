@@ -8,10 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -23,19 +25,23 @@ var (
 	ErrFolderNameMissing = errors.New("folder name missing")
 )
 
-// FileReader is responsible for reading dashboards from disc and
+// FileReader is responsible for reading dashboards from disk and
 // insert/update dashboards to the Grafana database using
-// `dashboards.DashboardProvisioningService`
+// `dashboards.DashboardProvisioningService`.
 type FileReader struct {
 	Cfg                          *config
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	FoldersFromFilesStructure    bool
+
+	mux                     sync.RWMutex
+	usageTracker            *usageTracker
+	dbWriteAccessRestricted bool
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -56,18 +62,19 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboards.NewProvisioningService(),
+		dashboardProvisioningService: dashboards.NewProvisioningService(store),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
+		usageTracker:                 newUsageTracker(),
 	}, nil
 }
 
-// pollChanges periodically runs startWalkingDisk based on interval specified in the config.
+// pollChanges periodically runs walkDisk based on interval specified in the config.
 func (fr *FileReader) pollChanges(ctx context.Context) {
 	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
 		case <-ticker.C:
-			if err := fr.startWalkingDisk(); err != nil {
+			if err := fr.walkDisk(ctx); err != nil {
 				fr.log.Error("failed to search for dashboards", "error", err)
 			}
 		case <-ctx.Done():
@@ -76,65 +83,84 @@ func (fr *FileReader) pollChanges(ctx context.Context) {
 	}
 }
 
-// startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
-// to the database.
-func (fr *FileReader) startWalkingDisk() error {
+// walkDisk traverses the file system for the defined path, reading dashboard definition files,
+// and applies any change to the database.
+func (fr *FileReader) walkDisk(ctx context.Context) error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
 	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
 		return err
 	}
 
-	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardProvisioningService, fr.Cfg.Name)
+	provisionedDashboardRefs, err := getProvisionedDashboardsByPath(fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
 		return err
 	}
 
+	// Find relevant files
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk))
-	if err != nil {
+	if err := filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk)); err != nil {
 		return err
 	}
 
-	fr.handleMissingDashboardFiles(provisionedDashboardRefs, filesFoundOnDisk)
+	fr.handleMissingDashboardFiles(ctx, provisionedDashboardRefs, filesFoundOnDisk)
 
-	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
-
+	usageTracker := newUsageTracker()
 	if fr.FoldersFromFilesStructure {
-		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, &sanityChecker)
+		err = fr.storeDashboardsInFoldersFromFileStructure(ctx, filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, usageTracker)
 	} else {
-		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, &sanityChecker)
+		err = fr.storeDashboardsInFolder(ctx, filesFoundOnDisk, provisionedDashboardRefs, usageTracker)
 	}
 	if err != nil {
 		return err
 	}
 
-	sanityChecker.logWarnings(fr.log)
+	fr.mux.Lock()
+	defer fr.mux.Unlock()
 
+	fr.usageTracker = usageTracker
 	return nil
 }
 
+func (fr *FileReader) changeWritePermissions(restrict bool) {
+	fr.mux.Lock()
+	defer fr.mux.Unlock()
+
+	fr.dbWriteAccessRestricted = restrict
+}
+
+func (fr *FileReader) isDatabaseAccessRestricted() bool {
+	fr.mux.RLock()
+	defer fr.mux.RUnlock()
+
+	return fr.dbWriteAccessRestricted
+}
+
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
-func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
-	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
+func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
+	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
+	folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
 	}
 
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
-		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
-		sanityChecker.track(provisioningMetadata)
+		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
+			continue
 		}
+
+		usageTracker.track(provisioningMetadata)
 	}
 	return nil
 }
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
-// in grafana as they are in on the filesystem
-func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, sanityChecker *provisioningSanityChecker) error {
+// in Grafana as they are in on the filesystem.
+func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
+	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
 		folderName := ""
 
@@ -143,13 +169,13 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
-		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
+		folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
 
-		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
-		sanityChecker.track(provisioningMetadata)
+		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
+		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 		}
@@ -158,31 +184,32 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
-func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
+func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provisionedDashboardRefs map[string]*models.DashboardProvisioning,
+	filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
-	var dashboardToDelete []int64
+	var dashboardsToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
 		_, existsOnDisk := filesFoundOnDisk[path]
 		if !existsOnDisk {
-			dashboardToDelete = append(dashboardToDelete, provisioningData.DashboardId)
+			dashboardsToDelete = append(dashboardsToDelete, provisioningData.DashboardId)
 		}
 	}
 
 	if fr.Cfg.DisableDeletion {
 		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
 		// so afterwards the dashboard is considered unprovisioned.
-		for _, dashboardID := range dashboardToDelete {
+		for _, dashboardID := range dashboardsToDelete {
 			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardID)
+			err := fr.dashboardProvisioningService.UnprovisionDashboard(ctx, dashboardID)
 			if err != nil {
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}
 		}
 	} else {
-		// delete dashboard that are missing json file
-		for _, dashboardID := range dashboardToDelete {
-			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardID)
-			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardID, fr.Cfg.OrgID)
+		// delete dashboards missing JSON file
+		for _, dashboardID := range dashboardsToDelete {
+			fr.log.Debug("deleting provisioned dashboard, missing on disk", "id", dashboardID)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(ctx, dashboardID, fr.Cfg.OrgID)
 			if err != nil {
 				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
 			}
@@ -191,7 +218,8 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 }
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
-func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID int64, fileInfo os.FileInfo,
+	provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
@@ -199,7 +227,6 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 	}
 
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
-	upToDate := alreadyProvisioned && provisionedData.Updated >= resolvedFileInfo.ModTime().Unix()
 
 	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderID)
 	if err != nil {
@@ -207,11 +234,12 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 		return provisioningMetadata, nil
 	}
 
-	if provisionedData != nil && jsonFile.checkSum == provisionedData.CheckSum {
-		upToDate = true
+	upToDate := alreadyProvisioned
+	if provisionedData != nil {
+		upToDate = jsonFile.checkSum == provisionedData.CheckSum
 	}
 
-	// keeps track of what uid's and title's we have already provisioned
+	// keeps track of which UIDs and titles we have already provisioned
 	dash := jsonFile.dashboard
 	provisioningMetadata.uid = dash.Dashboard.Uid
 	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderId}
@@ -229,19 +257,27 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 		dash.Dashboard.SetId(provisionedData.DashboardId)
 	}
 
-	fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
-	dp := &models.DashboardProvisioning{
-		ExternalId: path,
-		Name:       fr.Cfg.Name,
-		Updated:    resolvedFileInfo.ModTime().Unix(),
-		CheckSum:   jsonFile.checkSum,
+	if !fr.isDatabaseAccessRestricted() {
+		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
+		dp := &models.DashboardProvisioning{
+			ExternalId: path,
+			Name:       fr.Cfg.Name,
+			Updated:    resolvedFileInfo.ModTime().Unix(),
+			CheckSum:   jsonFile.checkSum,
+		}
+		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
+			return provisioningMetadata, err
+		}
+	} else {
+		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
+			"file", path, "folderId", dash.Dashboard.FolderId)
 	}
 
-	_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
-	return provisioningMetadata, err
+	return provisioningMetadata, nil
 }
 
-func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningService, name string) (map[string]*models.DashboardProvisioning, error) {
+func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningService, name string) (
+	map[string]*models.DashboardProvisioning, error) {
 	arr, err := service.GetProvisionedDashboardData(name)
 	if err != nil {
 		return nil, err
@@ -255,13 +291,13 @@ func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningServi
 	return byPath, nil
 }
 
-func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
+func getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
 	if folderName == "" {
 		return 0, ErrFolderNameMissing
 	}
 
 	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
-	err := bus.Dispatch(cmd)
+	err := bus.Dispatch(ctx, cmd)
 
 	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 		return 0, err
@@ -276,7 +312,7 @@ func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningSe
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
 		dash.Dashboard.SetUid(cfg.FolderUID)
-		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
+		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return 0, err
 		}
@@ -404,6 +440,13 @@ func (fr *FileReader) resolvedPath() string {
 	return path
 }
 
+func (fr *FileReader) getUsageTracker() *usageTracker {
+	fr.mux.RLock()
+	defer fr.mux.RUnlock()
+
+	return fr.usageTracker
+}
+
 type provisioningMetadata struct {
 	uid      string
 	identity dashboardIdentity
@@ -415,42 +458,26 @@ type dashboardIdentity struct {
 }
 
 func (d *dashboardIdentity) Exists() bool {
-	return len(d.title) > 0 && d.folderID > 0
+	return len(d.title) > 0
 }
 
-func newProvisioningSanityChecker(provisioningProvider string) provisioningSanityChecker {
-	return provisioningSanityChecker{
-		provisioningProvider: provisioningProvider,
-		uidUsage:             map[string]uint8{},
-		titleUsage:           map[dashboardIdentity]uint8{},
+func newUsageTracker() *usageTracker {
+	return &usageTracker{
+		uidUsage:   map[string]uint8{},
+		titleUsage: map[dashboardIdentity]uint8{},
 	}
 }
 
-type provisioningSanityChecker struct {
-	provisioningProvider string
-	uidUsage             map[string]uint8
-	titleUsage           map[dashboardIdentity]uint8
+type usageTracker struct {
+	uidUsage   map[string]uint8
+	titleUsage map[dashboardIdentity]uint8
 }
 
-func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
+func (t *usageTracker) track(pm provisioningMetadata) {
 	if len(pm.uid) > 0 {
-		checker.uidUsage[pm.uid]++
+		t.uidUsage[pm.uid]++
 	}
 	if pm.identity.Exists() {
-		checker.titleUsage[pm.identity]++
-	}
-}
-
-func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
-	for uid, times := range checker.uidUsage {
-		if times > 1 {
-			log.Error("the same 'uid' is used more than once", "uid", uid, "provider", checker.provisioningProvider)
-		}
-	}
-
-	for identity, times := range checker.titleUsage {
-		if times > 1 {
-			log.Error("the same 'title' is used more than once", "title", identity.title, "provider", checker.provisioningProvider)
-		}
+		t.titleUsage[pm.identity]++
 	}
 }

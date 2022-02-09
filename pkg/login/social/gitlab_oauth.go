@@ -13,8 +13,9 @@ import (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups []string
-	apiUrl        string
+	allowedGroups     []string
+	apiUrl            string
+	roleAttributePath string
 }
 
 func (s *SocialGitlab) Type() int {
@@ -114,12 +115,18 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	groups := s.GetGroups(client)
 
+	role, err := s.extractRole(response.Body)
+	if err != nil {
+		s.log.Error("Failed to extract role", "error", err)
+	}
+
 	userInfo := &BasicUserInfo{
 		Id:     fmt.Sprintf("%d", data.Id),
 		Name:   data.Name,
 		Login:  data.Username,
 		Email:  data.Email,
 		Groups: groups,
+		Role:   role,
 	}
 
 	if !s.IsGroupMember(groups) {
@@ -127,4 +134,17 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	return userInfo, nil
+}
+
+func (s *SocialGitlab) extractRole(rawJSON []byte) (string, error) {
+	if s.roleAttributePath == "" {
+		return "", nil
+	}
+
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
+
+	if err != nil {
+		return "", err
+	}
+	return role, nil
 }

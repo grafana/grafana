@@ -8,7 +8,6 @@ import {
   LokiMatrixResult,
 } from './types';
 import * as ResultTransformer from './result_transformer';
-import { enhanceDataFrame, lokiPointsToTimeseriesPoints } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -67,16 +66,16 @@ describe('loki result transformer', () => {
 
   describe('lokiStreamResultToDataFrame', () => {
     it('converts streams to series', () => {
-      const data = streamResult.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
       expect(data.length).toBe(2);
       expect(data[0].fields[1].labels!['foo']).toEqual('bar');
       expect(data[0].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
       expect(data[0].fields[1].values.get(0)).toEqual(streamResult[0].values[0][1]);
-      expect(data[0].fields[2].values.get(0)).toEqual('2b431b8a98b80b3b2c2f4cd2444ae6cb');
+      expect(data[0].fields[2].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc');
       expect(data[1].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.031Z');
       expect(data[1].fields[1].values.get(0)).toEqual(streamResult[1].values[0][1]);
-      expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0');
+      expect(data[1].fields[2].values.get(0)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1');
     });
 
     it('should always generate unique ids for logs', () => {
@@ -101,13 +100,20 @@ describe('loki result transformer', () => {
         },
       ];
 
-      const data = streamResultWithDuplicateLogs.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = streamResultWithDuplicateLogs.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
 
-      expect(data[0].fields[2].values.get(0)).toEqual('65cee200875f58ee1430d8bd2e8b74e7');
-      expect(data[0].fields[2].values.get(1)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_1');
-      expect(data[0].fields[2].values.get(2)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
-      expect(data[0].fields[2].values.get(3)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
-      expect(data[1].fields[2].values.get(0)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_3');
+      expect(data[0].fields[2].values.get(0)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa');
+      expect(data[0].fields[2].values.get(1)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_1');
+      expect(data[0].fields[2].values.get(2)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
+      expect(data[0].fields[2].values.get(3)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
+      expect(data[1].fields[2].values.get(0)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_3');
+    });
+
+    it('should append refId to the unique ids if refId is provided', () => {
+      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
+      expect(data.length).toBe(2);
+      expect(data[0].fields[2].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
+      expect(data[1].fields[2].values.get(0)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
     });
   });
 
@@ -125,9 +131,9 @@ describe('loki result transformer', () => {
       });
 
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
-      dataFrames.forEach(frame => {
+      dataFrames.forEach((frame) => {
         expect(
-          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+          frame.fields.filter((field) => field.name === 'test' && field.type === 'string').length
         ).toBeGreaterThanOrEqual(1);
       });
     });
@@ -163,10 +169,9 @@ describe('loki result transformer', () => {
       expect(data.get(0)).toEqual({
         ts: '2020-02-12T15:05:14.265Z',
         tsNs: '1581519914265798400',
-        line:
-          't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
+        line: 't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server version=6.7.0-pre commit=6f09bc9fb4 branch=issue-21929 compiled=2020-02-11T20:43:28+0000',
         labels: { filename: '/var/log/grafana/grafana.log' },
-        id: '19e8e093d70122b3b53cb6e24efd6e2d',
+        id: '07f0607c-04ee-51bd-8a0c-fc0f85d37489',
       });
     });
 
@@ -196,33 +201,34 @@ describe('loki result transformer', () => {
       data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
       data.addField({ name: 'id', type: FieldType.string });
+      data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
-      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3');
-      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1');
-      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d');
-      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e');
-      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2');
-      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1');
+      expect(data.get(0).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_C');
+      expect(data.get(1).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_1_C');
+      expect(data.get(2).id).toEqual('3ca99d6b-3ab5-5970-93c0-eb3c9449088e_C');
+      expect(data.get(3).id).toEqual('ec9bea1d-70cb-556c-8519-d5d6ae18c004_C');
+      expect(data.get(4).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_2_C');
+      expect(data.get(5).id).toEqual('3ca99d6b-3ab5-5970-93c0-eb3c9449088e_1_C');
     });
   });
 
   describe('createMetricLabel', () => {
     it('should create correct label based on passed variables', () => {
-      const label = ResultTransformer.createMetricLabel({}, ({
+      const label = ResultTransformer.createMetricLabel({}, {
         scopedVars: { testLabel: { selected: true, text: 'label1', value: 'label1' } },
         legendFormat: '{{$testLabel}}',
-      } as unknown) as TransformerOptions);
+      } as unknown as TransformerOptions);
       expect(label).toBe('label1');
     });
   });
 
   describe('lokiResultsToTableModel', () => {
     it('should correctly set the type of the label column to be a string', () => {
-      const lokiResultWithIntLabel = ([
+      const lokiResultWithIntLabel = [
         { metric: { test: 1 }, value: [1610367143, 10] },
         { metric: { test: 2 }, value: [1610367144, 20] },
-      ] as unknown) as LokiMatrixResult[];
+      ] as unknown as LokiMatrixResult[];
 
       const table = ResultTransformer.lokiResultsToTableModel(lokiResultWithIntLabel, 1, 'A', {});
       expect(table.columns[0].type).toBe('time');
@@ -235,7 +241,7 @@ describe('loki result transformer', () => {
 describe('enhanceDataFrame', () => {
   it('adds links to fields', () => {
     const df = new MutableDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
-    enhanceDataFrame(df, {
+    ResultTransformer.enhanceDataFrame(df, {
       derivedFields: [
         {
           matcherRegex: 'trace1=(\\w+)',
@@ -253,6 +259,7 @@ describe('enhanceDataFrame', () => {
           name: 'trace2',
           url: 'test',
           datasourceUid: 'uid2',
+          urlDisplayLabel: 'Custom Label',
         },
       ],
     });
@@ -272,7 +279,7 @@ describe('enhanceDataFrame', () => {
       url: '',
     });
     expect(fc.getFieldByName('trace2')!.config.links![1]).toEqual({
-      title: '',
+      title: 'Custom Label',
       internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',
     });
@@ -283,8 +290,6 @@ describe('enhanceDataFrame', () => {
      * NOTE on time parameters:
      * - Input time series data has timestamps in sec (like Prometheus)
      * - Output time series has timestamps in ms (as expected for the chart lib)
-     * - Start/end parameters are in ns (as expected for Loki)
-     * - Step is in sec (like in Prometheus)
      */
     const data: Array<[number, string]> = [
       [1, '1'],
@@ -293,12 +298,10 @@ describe('enhanceDataFrame', () => {
     ];
 
     it('returns data as is if step, start, and end align', () => {
-      const options: Partial<TransformerOptions> = { start: 1 * 1e9, end: 4 * 1e9, step: 1 };
-      const result = lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
+      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data);
       expect(result).toEqual([
         [1, 1000],
         [0, 2000],
-        [null, 3000],
         [1, 4000],
       ]);
     });

@@ -6,7 +6,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    splitted: false,
+    isSmall: false,
     loading: false,
     isLive: false,
     onRun: jest.fn(),
@@ -29,7 +29,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
     },
   }),
 }));
-const getTimeSrvMock = (getTimeSrv as any) as jest.Mock<TimeSrv>;
+const getTimeSrvMock = getTimeSrv as any as jest.Mock<TimeSrv>;
 
 beforeEach(() => {
   getTimeSrvMock.mockClear();

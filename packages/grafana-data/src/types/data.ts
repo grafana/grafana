@@ -1,6 +1,9 @@
-import { FieldConfig } from './dataFrame';
+import { DataFrameDTO, FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { PanelPluginDataSupport } from '.';
+import { DataTopic } from './query';
+import { DataFrameType } from './dataFrameTypes';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -16,16 +19,15 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export enum DataTopic {
-  Annotations = 'annotations',
-}
-
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
+// Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
 /**
  * @public
  */
 export interface QueryResultMeta {
+  type?: DataFrameType;
+
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
 
@@ -40,6 +42,9 @@ export interface QueryResultMeta {
 
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
+
+  /** The path for live stream updates for this frame */
+  channel?: string;
 
   /**
    * Optionally identify which topic the frame should be assigned to.
@@ -123,7 +128,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
@@ -163,6 +167,9 @@ export enum NullValueMode {
  * Describes and API for exposing panel specific data configurations.
  */
 export interface DataConfigSource {
+  configRev?: number;
+  getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
+  snapshotData?: DataFrameDTO[];
 }

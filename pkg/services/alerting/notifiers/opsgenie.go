@@ -1,14 +1,22 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	sendTags    = "tags"
+	sendDetails = "details"
+	sendBoth    = "both"
 )
 
 func init() {
@@ -47,19 +55,39 @@ func init() {
 				Description:  "Allow the alert priority to be set using the og_priority tag",
 				PropertyName: "overridePriority",
 			},
+			{
+				Label:   "Send notification tags as",
+				Element: alerting.ElementTypeSelect,
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: sendTags,
+						Label: "Tags",
+					},
+					{
+						Value: sendDetails,
+						Label: "Extra Properties",
+					},
+					{
+						Value: sendBoth,
+						Label: "Tags & Extra Properties",
+					},
+				},
+				Description:  "Send the notification tags to Opsgenie as either Extra Properties, Tags or both",
+				PropertyName: "sendTagsAs",
+			},
 		},
 	})
 }
 
-var (
+const (
 	opsgenieAlertURL = "https://api.opsgenie.com/v2/alerts"
 )
 
 // NewOpsGenieNotifier is the constructor for OpsGenie.
-func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewOpsGenieNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
+	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString(), setting.SecretKey)
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
@@ -68,12 +96,20 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		apiURL = opsgenieAlertURL
 	}
 
+	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(sendTags)
+	if sendTagsAs != sendTags && sendTagsAs != sendDetails && sendTagsAs != sendBoth {
+		return nil, alerting.ValidationError{
+			Reason: fmt.Sprintf("Invalid value for sendTagsAs: %q", sendTagsAs),
+		}
+	}
+
 	return &OpsGenieNotifier{
-		NotifierBase:     NewNotifierBase(model),
+		NotifierBase:     NewNotifierBase(model, ns),
 		APIKey:           apiKey,
 		APIUrl:           apiURL,
 		AutoClose:        autoClose,
 		OverridePriority: overridePriority,
+		SendTagsAs:       sendTagsAs,
 		log:              log.New("alerting.notifier.opsgenie"),
 	}, nil
 }
@@ -86,6 +122,7 @@ type OpsGenieNotifier struct {
 	APIUrl           string
 	AutoClose        bool
 	OverridePriority bool
+	SendTagsAs       string
 	log              log.Logger
 }
 
@@ -131,14 +168,18 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		details.Set("image", evalContext.ImagePublicURL)
 	}
 
-	bodyJSON.Set("details", details)
-
 	tags := make([]string, 0)
 	for _, tag := range evalContext.Rule.AlertRuleTags {
-		if len(tag.Value) > 0 {
-			tags = append(tags, fmt.Sprintf("%s:%s", tag.Key, tag.Value))
-		} else {
-			tags = append(tags, tag.Key)
+		if on.sendDetails() {
+			details.Set(tag.Key, tag.Value)
+		}
+
+		if on.sendTags() {
+			if len(tag.Value) > 0 {
+				tags = append(tags, fmt.Sprintf("%s:%s", tag.Key, tag.Value))
+			} else {
+				tags = append(tags, tag.Key)
+			}
 		}
 		if tag.Key == "og_priority" {
 			if on.OverridePriority {
@@ -150,6 +191,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		}
 	}
 	bodyJSON.Set("tags", tags)
+	bodyJSON.Set("details", details)
 
 	body, _ := bodyJSON.MarshalJSON()
 
@@ -163,7 +205,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		},
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := on.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		on.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
 	}
 
@@ -187,10 +229,18 @@ func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error 
 		},
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := on.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		on.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
 		return err
 	}
 
 	return nil
+}
+
+func (on *OpsGenieNotifier) sendDetails() bool {
+	return on.SendTagsAs == sendDetails || on.SendTagsAs == sendBoth
+}
+
+func (on *OpsGenieNotifier) sendTags() bool {
+	return on.SendTagsAs == sendTags || on.SendTagsAs == sendBoth
 }

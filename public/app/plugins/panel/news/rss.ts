@@ -17,13 +17,18 @@ export async function loadRSSFeed(url: string): Promise<RssFeed> {
     return '';
   };
 
-  doc.querySelectorAll('item').forEach(node => {
+  doc.querySelectorAll('item').forEach((node) => {
     const item: RssItem = {
       title: getProperty(node, 'title'),
       link: getProperty(node, 'link'),
       content: getProperty(node, 'description'),
       pubDate: getProperty(node, 'pubDate'),
     };
+
+    const imageNode = node.querySelector("meta[property='og:image']");
+    if (imageNode) {
+      item.ogImage = imageNode.getAttribute('content');
+    }
 
     feed.items.push(item);
   });

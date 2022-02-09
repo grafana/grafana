@@ -26,7 +26,7 @@ describe('filterByName transformer', () => {
       options: {},
     };
 
-    await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields.length).toBe(4);
@@ -44,7 +44,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);
@@ -62,7 +62,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);
@@ -79,7 +79,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(1);
@@ -97,7 +97,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);
@@ -115,7 +115,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);
@@ -132,7 +132,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(1);
@@ -151,7 +151,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);
@@ -170,7 +170,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);
@@ -187,7 +187,7 @@ describe('filterByName transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(1);

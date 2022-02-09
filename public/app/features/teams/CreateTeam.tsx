@@ -1,92 +1,60 @@
 import React, { PureComponent } from 'react';
 import Page from 'app/core/components/Page/Page';
-import { hot } from 'react-hot-loader';
-import { Button, LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
+import { Button, Form, Field, Input, FieldSet, Label, Tooltip, Icon } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { updateLocation } from '../../core/actions';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { connect } from 'react-redux';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
 export interface Props {
   navModel: NavModel;
-  updateLocation: typeof updateLocation;
 }
 
-interface State {
+interface TeamDTO {
   name: string;
   email: string;
 }
 
-export class CreateTeam extends PureComponent<Props, State> {
-  state: State = {
-    name: '',
-    email: '',
-  };
-
-  create = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const { name, email } = this.state;
-
-    const result = await getBackendSrv().post('/api/teams', { name, email });
+export class CreateTeam extends PureComponent<Props> {
+  create = async (formModel: TeamDTO) => {
+    const result = await getBackendSrv().post('/api/teams', formModel);
     if (result.teamId) {
-      this.props.updateLocation({ path: `/org/teams/edit/${result.teamId}` });
+      locationService.push(`/org/teams/edit/${result.teamId}`);
     }
   };
-
-  onEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      email: event.target.value,
-    });
-  };
-
-  onNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      name: event.target.value,
-    });
-  };
-
   render() {
     const { navModel } = this.props;
-    const { name, email } = this.state;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <>
-            <h3 className="page-sub-heading">New Team</h3>
-
-            <form className="gf-form-group" onSubmit={this.create}>
-              <FormField
-                className="gf-form"
-                label="Name"
-                value={name}
-                onChange={this.onNameChange}
-                inputWidth={30}
-                labelWidth={10}
-                required
-              />
-              <FormField
-                type="email"
-                className="gf-form"
-                label="Email"
-                value={email}
-                onChange={this.onEmailChange}
-                inputWidth={30}
-                labelWidth={10}
-                placeholder="email@test.com"
-                tooltip="This is optional and is primarily used for allowing custom team avatars."
-              />
-              <div className="gf-form-button-row">
-                <Button type="submit" variant="primary">
-                  Create
-                </Button>
-              </div>
-            </form>
-          </>
+          <Form onSubmit={this.create}>
+            {({ register }) => (
+              <FieldSet label="New Team">
+                <Field label="Name">
+                  <Input {...register('name', { required: true })} id="team-name" width={60} />
+                </Field>
+                <Field
+                  label={
+                    <Label>
+                      <span>Email</span>
+                      <Tooltip content="This is optional and is primarily used for allowing custom team avatars.">
+                        <Icon name="info-circle" style={{ marginLeft: 6 }} />
+                      </Tooltip>
+                    </Label>
+                  }
+                >
+                  <Input {...register('email')} type="email" placeholder="email@test.com" width={60} />
+                </Field>
+                <div className="gf-form-button-row">
+                  <Button type="submit" variant="primary">
+                    Create
+                  </Button>
+                </div>
+              </FieldSet>
+            )}
+          </Form>
         </Page.Contents>
       </Page>
     );
@@ -99,8 +67,4 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-const mapDispatchToProps = {
-  updateLocation,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(CreateTeam));
+export default connect(mapStateToProps)(CreateTeam);

@@ -10,7 +10,7 @@ const isNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   get: () => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
-      return value === null;
+      return value == null;
     };
   },
   getOptionsDisplayText: () => {
@@ -27,7 +27,7 @@ const isNotNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   get: () => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
-      return value !== null;
+      return value != null;
     };
   },
   getOptionsDisplayText: () => {

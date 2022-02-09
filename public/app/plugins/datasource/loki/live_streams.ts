@@ -36,8 +36,9 @@ export class LiveStreams {
     data.addField({ name: 'labels', type: FieldType.other }); // The labels for each line
     data.addField({ name: 'id', type: FieldType.string });
     data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
+    data.refId = target.refId;
 
-    stream = webSocket(target.url).pipe(
+    stream = webSocket<LokiTailResponse>(target.url).pipe(
       map((response: LokiTailResponse) => {
         appendResponseToBufferedData(response, data);
         return [data];
@@ -59,7 +60,7 @@ export class LiveStreams {
               // Retry every 5s
               return timer(retryInterval);
             }
-            return throwError(`error: ${error.reason}`);
+            return throwError(error);
           })
         )
       ),

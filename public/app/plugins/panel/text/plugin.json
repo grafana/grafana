@@ -6,6 +6,7 @@
   "skipDataQuery": true,
 
   "info": {
+    "description": "Supports markdown and html content",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

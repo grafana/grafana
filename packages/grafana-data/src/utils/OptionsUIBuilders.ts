@@ -1,6 +1,5 @@
 import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
-import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
-import { FieldType } from '../types/dataFrame';
+import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
@@ -16,7 +15,10 @@ import {
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,
+  FieldNamePickerConfigSettings,
+  StandardEditorContext,
 } from '../field';
+import { PanelOptionsSupplier } from '../panel/PanelPlugin';
 
 /**
  * Fluent API for declarative creation of field config option editors
@@ -33,7 +35,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('number').editor as any,
       editor: standardEditorsRegistry.get('number').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -45,7 +47,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('slider').editor as any,
       editor: standardEditorsRegistry.get('slider').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -57,7 +59,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('text').editor as any,
       editor: standardEditorsRegistry.get('text').editor as any,
       process: stringOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.string,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -129,6 +131,54 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 }
 
+export interface NestedValueAccess {
+  getValue: (path: string) => any;
+  onChange: (path: string, value: any) => void;
+  getContext?: (parent: StandardEditorContext<any, any>) => StandardEditorContext<any, any>;
+}
+export interface NestedPanelOptions<TSub = any> {
+  path: string;
+  category?: string[];
+  defaultValue?: TSub;
+  build: PanelOptionsSupplier<TSub>;
+  values?: (parent: NestedValueAccess) => NestedValueAccess;
+}
+
+export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<TSub, any, any, any> {
+  path = '';
+  category?: string[];
+  defaultValue?: TSub;
+  id = 'nested-panel-options';
+  name = 'nested';
+  editor = () => null;
+
+  constructor(public cfg: NestedPanelOptions<TSub>) {
+    this.path = cfg.path;
+    this.category = cfg.category;
+    this.defaultValue = cfg.defaultValue;
+  }
+
+  getBuilder = () => {
+    return this.cfg.build;
+  };
+
+  getNestedValueAccess = (parent: NestedValueAccess) => {
+    const values = this.cfg.values;
+    if (values) {
+      return values(parent);
+    }
+    // by default prefix the path
+    return {
+      getValue: (path: string) => parent.getValue(`${this.path}.${path}`),
+      onChange: (path: string, value: any) => parent.onChange(`${this.path}.${path}`, value),
+    };
+  };
+}
+
+export function isNestedPanelOptions(item: any): item is NestedPanelOptionsBuilder {
+  return item.id === 'nested-panel-options';
+}
+
 /**
  * Fluent API for declarative creation of panel options
  */
@@ -137,6 +187,11 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   StandardEditorProps,
   PanelOptionsEditorItem<TOptions>
 > {
+  addNestedOptions<Sub>(opts: NestedPanelOptions<Sub>) {
+    const s = new NestedPanelOptionsBuilder<Sub>(opts);
+    return this.addCustomEditor(s);
+  }
+
   addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
@@ -178,6 +233,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       ...config,
       id: config.path,
       editor: standardEditorsRegistry.get('select').editor as any,
+    });
+  }
+
+  addMultiSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
+  ) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('multi-select').editor as any,
     });
   }
 
@@ -224,6 +289,26 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       ...config,
       id: config.path,
       editor: standardEditorsRegistry.get('unit').editor as any,
+    });
+  }
+
+  addFieldNamePicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('field-name').editor as any,
+    });
+  }
+
+  addDashboardPicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('dashboard-uid').editor as any, // added at runtime
     });
   }
 }

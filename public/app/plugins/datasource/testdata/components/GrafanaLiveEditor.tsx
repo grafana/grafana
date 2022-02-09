@@ -14,6 +14,16 @@ const liveTestDataChannels = [
     value: 'random-flakey-stream',
     description: 'Stream that returns data in random intervals',
   },
+  {
+    label: 'random-labeled-stream',
+    value: 'random-labeled-stream',
+    description: 'Value with moving labels',
+  },
+  {
+    label: 'random-20Hz-stream',
+    value: 'random-20Hz-stream',
+    description: 'Random stream with points in 20Hz',
+  },
 ];
 
 export const GrafanaLiveEditor = ({ onChange, query }: EditorProps) => {
@@ -25,11 +35,12 @@ export const GrafanaLiveEditor = ({ onChange, query }: EditorProps) => {
     <InlineFieldRow>
       <InlineField label="Channel" labelWidth={14}>
         <Select
+          menuShouldPortal
           width={32}
           onChange={onChannelChange}
           placeholder="Select channel"
           options={liveTestDataChannels}
-          value={liveTestDataChannels.find(f => f.value === query.channel)}
+          value={liveTestDataChannels.find((f) => f.value === query.channel)}
         />
       </InlineField>
     </InlineFieldRow>

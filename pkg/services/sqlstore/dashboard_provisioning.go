@@ -1,18 +1,16 @@
 package sqlstore
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandler("sql", GetProvisionedDashboardDataQuery)
-	bus.AddHandler("sql", SaveProvisionedDashboard)
-	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
+func (ss *SQLStore) addDashboardProvisioningQueryAndCommandHandlers() {
 	bus.AddHandler("sql", UnprovisionDashboard)
-	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
+	bus.AddHandler("sql", ss.DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {
@@ -22,77 +20,98 @@ type DashboardExtras struct {
 	Value       string
 }
 
-func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-	result := &models.DashboardProvisioning{}
-
-	exist, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)
+func (ss *SQLStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+	var data models.DashboardProvisioning
+	exists, err := x.Where("dashboard_id = ?", dashboardID).Get(&data)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if exist {
-		cmd.Result = result
+	if exists {
+		return &data, nil
 	}
-	return nil
+	return nil, nil
 }
 
-func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		err := saveDashboard(sess, cmd.DashboardCmd)
-
+func (ss *SQLStore) GetProvisionedDataByDashboardUID(orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+	var provisionedDashboard models.DashboardProvisioning
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		var dashboard models.Dashboard
+		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
 		if err != nil {
 			return err
 		}
-
-		cmd.Result = cmd.DashboardCmd.Result
-		if cmd.DashboardProvisioning.Updated == 0 {
-			cmd.DashboardProvisioning.Updated = cmd.Result.Updated.Unix()
+		if !exists {
+			return models.
+				ErrDashboardNotFound
 		}
-
-		return saveProvisionedData(sess, cmd.DashboardProvisioning, cmd.Result)
+		exists, err = sess.Where("dashboard_id = ?", dashboard.Id).Get(&provisionedDashboard)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.ErrProvisionedDashboardNotFound
+		}
+		return nil
 	})
+	return &provisionedDashboard, err
 }
 
-func saveProvisionedData(sess *DBSession, cmd *models.DashboardProvisioning, dashboard *models.Dashboard) error {
+func (ss *SQLStore) SaveProvisionedDashboard(cmd models.SaveDashboardCommand,
+	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		if err := saveDashboard(sess, &cmd); err != nil {
+			return err
+		}
+
+		if provisioning.Updated == 0 {
+			provisioning.Updated = cmd.Result.Updated.Unix()
+		}
+
+		return saveProvisionedData(sess, provisioning, cmd.Result)
+	})
+
+	return cmd.Result, err
+}
+
+func saveProvisionedData(sess *DBSession, provisioning *models.DashboardProvisioning, dashboard *models.Dashboard) error {
 	result := &models.DashboardProvisioning{}
 
-	exist, err := sess.Where("dashboard_id=? AND name = ?", dashboard.Id, cmd.Name).Get(result)
+	exist, err := sess.Where("dashboard_id=? AND name = ?", dashboard.Id, provisioning.Name).Get(result)
 	if err != nil {
 		return err
 	}
 
-	cmd.Id = result.Id
-	cmd.DashboardId = dashboard.Id
+	provisioning.Id = result.Id
+	provisioning.DashboardId = dashboard.Id
 
 	if exist {
-		_, err = sess.ID(result.Id).Update(cmd)
+		_, err = sess.ID(result.Id).Update(provisioning)
 	} else {
-		_, err = sess.Insert(cmd)
+		_, err = sess.Insert(provisioning)
 	}
 
 	return err
 }
 
-func GetProvisionedDashboardDataQuery(cmd *models.GetProvisionedDashboardDataQuery) error {
+func (ss *SQLStore) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	var result []*models.DashboardProvisioning
-
-	if err := x.Where("name = ?", cmd.Name).Find(&result); err != nil {
-		return err
+	if err := ss.engine.Where("name = ?", name).Find(&result); err != nil {
+		return nil, err
 	}
 
-	cmd.Result = result
-	return nil
+	return result, nil
 }
 
 // UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
 // The dashboard will still have `created_by = -1` to see it was not created by any particular user.
-func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
+func UnprovisionDashboard(ctx context.Context, cmd *models.UnprovisionDashboardCommand) error {
 	if _, err := x.Where("dashboard_id = ?", cmd.Id).Delete(&models.DashboardProvisioning{}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+func (ss *SQLStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
 	var result []*models.DashboardProvisioning
 
 	convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
@@ -106,7 +125,7 @@ func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDa
 	}
 
 	for _, deleteDashCommand := range result {
-		err := DeleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		err := ss.DeleteDashboard(ctx, &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
 		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 			return err
 		}

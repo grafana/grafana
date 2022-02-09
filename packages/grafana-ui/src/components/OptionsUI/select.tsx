@@ -53,7 +53,7 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     const { value, onChange, item } = this.props;
 
     const { settings } = item;
-    let current = options.find(v => v.value === value);
+    let current = options.find((v) => v.value === value);
     if (!current && value) {
       current = {
         label: `${value}`,
@@ -62,11 +62,13 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     }
     return (
       <Select<T>
+        menuShouldPortal
         isLoading={isLoading}
         value={current}
         defaultValue={value}
         allowCustomValue={settings?.allowCustomValue}
-        onChange={e => onChange(e.value)}
+        isClearable={settings?.isClearable}
+        onChange={(e) => onChange(e?.value)}
         options={options}
       />
     );

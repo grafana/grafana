@@ -30,7 +30,7 @@ describe('applyPanelTimeOverrides', () => {
       timeFrom: '2h',
     };
 
-    // @ts-ignore: PanelModel type incositency
+    // @ts-ignore: PanelModel type inconsistency
     const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
 
     expect(overrides.timeRange.from.toISOString()).toBe(dateTime([2019, 1, 11, 12]).toISOString());
@@ -47,7 +47,7 @@ describe('applyPanelTimeOverrides', () => {
     const expectedFromDate = dateTime([2019, 1, 11, 10, 0, 0]).toDate();
     const expectedToDate = dateTime([2019, 1, 11, 16, 0, 0]).toDate();
 
-    // @ts-ignore: PanelModel type incositency
+    // @ts-ignore: PanelModel type inconsistency
     const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
 
     expect(overrides.timeRange.from.toISOString()).toBe(expectedFromDate.toISOString());
@@ -65,7 +65,7 @@ describe('applyPanelTimeOverrides', () => {
     const expectedFromDate = dateTime([2019, 1, 11, 10, 0, 0]).toDate();
     const expectedToDate = dateTime([2019, 1, 11, 12, 0, 0]).toDate();
 
-    // @ts-ignore: PanelModel type incositency
+    // @ts-ignore: PanelModel type inconsistency
     const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
 
     expect(overrides.timeRange.from.toISOString()).toBe(expectedFromDate.toISOString());
@@ -84,7 +84,7 @@ describe('applyPanelTimeOverrides', () => {
   it('Calculate panel height with panel plugin zeroChromePadding', () => {
     const panelModel = new PanelModel({});
     panelModel.pluginLoaded(
-      getPanelPlugin({ id: 'table' }, (null as unknown) as ComponentClass<PanelProps>, null).setNoPadding()
+      getPanelPlugin({ id: 'table' }, null as unknown as ComponentClass<PanelProps>, null).setNoPadding()
     );
 
     const height = calculateInnerPanelHeight(panelModel, 100);

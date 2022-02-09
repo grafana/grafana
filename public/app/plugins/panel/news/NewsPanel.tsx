@@ -9,12 +9,15 @@ import { feedToDataFrame } from './utils';
 import { loadRSSFeed } from './rss';
 
 // Types
-import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme, textUtil } from '@grafana/data';
-import { NewsOptions, NewsItem } from './types';
+import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
+import { NewsItem } from './types';
+import { PanelOptions } from './models.gen';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
-import { css } from 'emotion';
+import { css, cx } from '@emotion/css';
+import { RefreshEvent } from '@grafana/runtime';
+import { Unsubscribable } from 'rxjs';
 
-interface Props extends PanelProps<NewsOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   news?: DataFrameView<NewsItem>;
@@ -22,14 +25,20 @@ interface State {
 }
 
 export class NewsPanel extends PureComponent<Props, State> {
+  private refreshSubscription: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
-
+    this.refreshSubscription = this.props.eventBus.subscribe(RefreshEvent, this.loadChannel.bind(this));
     this.state = {};
   }
 
   componentDidMount(): void {
     this.loadChannel();
+  }
+
+  componentWillUnmount(): void {
+    this.refreshSubscription.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props): void {
@@ -62,8 +71,11 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   render() {
+    const { width } = this.props;
+    const { showImage } = this.props.options;
     const { isError, news } = this.state;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
+    const useWideLayout = width > 600;
 
     if (isError) {
       return <div>Error Loading News</div>;
@@ -76,18 +88,34 @@ export class NewsPanel extends PureComponent<Props, State> {
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         {news.map((item, index) => {
           return (
-            <div key={index} className={styles.item}>
-              <a
-                className={styles.link}
-                href={textUtil.sanitizeUrl(item.link)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className={styles.title}>{item.title}</div>
-                <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
-              </a>
-              <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
-            </div>
+            <article key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
+              {showImage && item.ogImage && (
+                <a
+                  tabIndex={-1}
+                  href={textUtil.sanitizeUrl(item.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
+                  aria-hidden
+                >
+                  <img src={item.ogImage} alt={item.title} />
+                </a>
+              )}
+              <div className={styles.body}>
+                <time className={styles.date} dateTime={dateTimeFormat(item.date, { format: 'MMM DD' })}>
+                  {dateTimeFormat(item.date, { format: 'MMM DD' })}{' '}
+                </time>
+                <a
+                  className={styles.link}
+                  href={textUtil.sanitizeUrl(item.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <h3 className={styles.title}>{item.title}</h3>
+                </a>
+                <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
+              </div>
+            </article>
           );
         })}
       </CustomScrollbar>
@@ -95,29 +123,57 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   container: css`
     height: 100%;
   `,
   item: css`
-    padding: ${theme.spacing.sm};
+    display: flex;
+    padding: ${theme.spacing(1)};
     position: relative;
     margin-bottom: 4px;
-    margin-right: ${theme.spacing.sm};
-    border-bottom: 2px solid ${theme.colors.border1};
+    margin-right: ${theme.spacing(1)};
+    border-bottom: 2px solid ${theme.colors.border.weak};
+    background: ${theme.colors.background.primary};
+    flex-direction: column;
+    flex-shrink: 0;
+  `,
+  itemWide: css`
+    flex-direction: row;
+  `,
+  body: css`
+    display: flex;
+    flex-direction: column;
+  `,
+  socialImage: css`
+    display: flex;
+    align-items: center;
+    margin-bottom: ${theme.spacing(1)};
+    > img {
+      width: 100%;
+      border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
+    }
+  `,
+  socialImageWide: css`
+    margin-right: ${theme.spacing(2)};
+    margin-bottom: 0;
+    > img {
+      width: 250px;
+      border-radius: ${theme.shape.borderRadius()};
+    }
   `,
   link: css`
-    color: ${theme.colors.linkExternal};
+    color: ${theme.colors.text.link};
+    display: inline-block;
 
     &:hover {
-      color: ${theme.colors.linkExternal};
+      color: ${theme.colors.text.link};
       text-decoration: underline;
     }
   `,
   title: css`
-    max-width: calc(100% - 70px);
     font-size: 16px;
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   content: css`
     p {
@@ -126,15 +182,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     }
   `,
   date: css`
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: ${theme.colors.panelBg};
-    width: 55px;
-    text-align: right;
-    padding: ${theme.spacing.xs};
+    margin-bottom: ${theme.spacing(0.5)};
     font-weight: 500;
     border-radius: 0 0 0 3px;
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
   `,
 }));

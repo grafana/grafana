@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type response struct {
@@ -33,7 +32,7 @@ type SearchDebugInfo struct {
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    tsdb.Interval
+	Interval    intervalv2.Interval
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query
@@ -137,8 +136,8 @@ func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 type RangeFilter struct {
 	Filter
 	Key    string
-	Gte    string
-	Lte    string
+	Gte    int64
+	Lte    int64
 	Format string
 }
 
@@ -240,11 +239,13 @@ type HistogramAgg struct {
 type DateHistogramAgg struct {
 	Field          string          `json:"field"`
 	Interval       string          `json:"interval,omitempty"`
+	FixedInterval  string          `json:"fixed_interval,omitempty"`
 	MinDocCount    int             `json:"min_doc_count"`
 	Missing        *string         `json:"missing,omitempty"`
 	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
 	Format         string          `json:"format"`
 	Offset         string          `json:"offset,omitempty"`
+	TimeZone       string          `json:"time_zone,omitempty"`
 }
 
 // FiltersAggregation represents a filters aggregation
@@ -263,8 +264,8 @@ type TermsAggregation struct {
 
 // ExtendedBounds represents extended bounds
 type ExtendedBounds struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 // GeoHashGridAggregation represents a geo hash grid aggregation
@@ -275,14 +276,45 @@ type GeoHashGridAggregation struct {
 
 // MetricAggregation represents a metric aggregation
 type MetricAggregation struct {
+	Type     string
 	Field    string
 	Settings map[string]interface{}
 }
 
 // MarshalJSON returns the JSON encoding of the metric aggregation
 func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{
-		"field": a.Field,
+	if a.Type == "top_metrics" {
+		root := map[string]interface{}{}
+		var rootMetrics []map[string]string
+
+		order, hasOrder := a.Settings["order"]
+		orderBy, hasOrderBy := a.Settings["orderBy"]
+
+		root["size"] = "1"
+
+		metrics, hasMetrics := a.Settings["metrics"].([]interface{})
+		if hasMetrics {
+			for _, v := range metrics {
+				metricValue := map[string]string{"field": v.(string)}
+				rootMetrics = append(rootMetrics, metricValue)
+			}
+			root["metrics"] = rootMetrics
+		}
+
+		if hasOrderBy && hasOrder {
+			root["sort"] = []map[string]interface{}{
+				{
+					orderBy.(string): order,
+				},
+			}
+		}
+
+		return json.Marshal(root)
+	}
+	root := map[string]interface{}{}
+
+	if a.Field != "" {
+		root["field"] = a.Field
 	}
 
 	for k, v := range a.Settings {

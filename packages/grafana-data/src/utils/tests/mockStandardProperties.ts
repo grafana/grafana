@@ -1,4 +1,4 @@
-import { identityOverrideProcessor } from '../../field';
+import { displayNameOverrideProcessor, identityOverrideProcessor } from '../../field';
 import { ThresholdsMode } from '../../types';
 
 export const mockStandardProperties = () => {
@@ -9,7 +9,7 @@ export const mockStandardProperties = () => {
     description: "Field's display name",
     editor: () => null,
     override: () => null,
-    process: identityOverrideProcessor,
+    process: displayNameOverrideProcessor,
     settings: {
       placeholder: 'none',
       expandTemplateVars: true,

@@ -5,7 +5,10 @@ import {
   MetricAggregation,
   PipelineMetricAggregationType,
 } from './aggregations';
-import { defaultPipelineVariable } from './SettingsEditor/BucketScriptSettingsEditor/utils';
+import {
+  defaultPipelineVariable,
+  generatePipelineVariableName,
+} from './SettingsEditor/BucketScriptSettingsEditor/utils';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -109,7 +112,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     label: 'Moving Average',
     requiresField: true,
     isPipelineAgg: true,
-    minVersion: 2,
+    versionRange: '>=2.0.0 <8.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -118,7 +121,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         model: 'simple',
-        window: 5,
+        window: '5',
       },
     },
   },
@@ -132,14 +135,14 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: false,
     hasMeta: false,
     hasSettings: true,
-    minVersion: 70,
+    versionRange: '>=7.0.0',
     defaults: {},
   },
   derivative: {
     label: 'Derivative',
     requiresField: true,
     isPipelineAgg: true,
-    minVersion: 2,
+    versionRange: '>=2.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -151,19 +154,23 @@ export const metricAggregationConfig: MetricsConfiguration = {
     label: 'Serial Difference',
     requiresField: true,
     isPipelineAgg: true,
-    minVersion: 2,
+    versionRange: '>=2.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
-    defaults: {},
+    defaults: {
+      settings: {
+        lag: '1',
+      },
+    },
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
     requiresField: true,
     isPipelineAgg: true,
-    minVersion: 2,
+    versionRange: '>=2.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -177,12 +184,12 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: true,
     supportsMissing: false,
     supportsMultipleBucketPaths: true,
-    minVersion: 2,
+    versionRange: '>=2.0.0',
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
-      pipelineVariables: [defaultPipelineVariable()],
+      pipelineVariables: [defaultPipelineVariable(generatePipelineVariableName([]))],
     },
   },
   raw_document: {
@@ -208,7 +215,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
-    hasSettings: false,
+    hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
@@ -223,8 +230,43 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
-    hasSettings: false,
+    hasSettings: true,
+    isSingleMetric: true,
     supportsInlineScript: false,
+    hasMeta: false,
+    defaults: {
+      settings: {
+        limit: '500',
+      },
+    },
+  },
+  top_metrics: {
+    label: 'Top Metrics',
+    xpack: true,
+    requiresField: false,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    versionRange: '>=7.7.0',
+    hasMeta: false,
+    defaults: {
+      settings: {
+        order: 'desc',
+      },
+    },
+  },
+  rate: {
+    label: 'Rate',
+    xpack: true,
+    versionRange: '>=7.10.0',
+    requiresField: true,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: true,
     hasMeta: false,
     defaults: {},
   },
@@ -261,14 +303,14 @@ export const pipelineOptions: PipelineOptions = {
  * @param metrics
  */
 export const getChildren = (metric: MetricAggregation, metrics: MetricAggregation[]): MetricAggregation[] => {
-  const children = metrics.filter(m => {
+  const children = metrics.filter((m) => {
     // TODO: Check this.
     if (isPipelineAggregationWithMultipleBucketPaths(m)) {
-      return m.pipelineVariables?.some(pv => pv.pipelineAgg === metric.id);
+      return m.pipelineVariables?.some((pv) => pv.pipelineAgg === metric.id);
     }
 
     return isMetricAggregationWithField(m) && metric.id === m.field;
   });
 
-  return [...children, ...children.flatMap(child => getChildren(child, metrics))];
+  return [...children, ...children.flatMap((child) => getChildren(child, metrics))];
 };

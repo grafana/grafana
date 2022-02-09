@@ -14,7 +14,7 @@ import {
   standardTransformers,
 } from '@grafana/data';
 
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -35,8 +35,8 @@ export const standardAnnotationSupport: AnnotationSupport = {
   },
 
   /**
-   * Convert the stored JSON model and environment to a standard datasource query object.
-   * This query will be executed in the datasource and the results converted into events.
+   * Convert the stored JSON model and environment to a standard data source query object.
+   * This query will be executed in the data source and the results converted into events.
    * Returning an undefined result will quietly skip query execution
    */
   prepareQuery: (anno: AnnotationQuery) => anno.target,
@@ -54,9 +54,9 @@ export const standardAnnotationSupport: AnnotationSupport = {
  */
 
 export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
-  return source =>
+  return (source) =>
     source.pipe(
-      mergeMap(data => {
+      mergeMap((data) => {
         if (!data?.length) {
           return of(undefined);
         }
@@ -67,7 +67,7 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
 
         return of(data).pipe(
           standardTransformers.mergeTransformer.operator({}),
-          map(d => d[0])
+          map((d) => d[0])
         );
       })
     );
@@ -90,10 +90,11 @@ export interface AnnotationFieldInfo {
   help?: string;
 }
 
+// These fields get added to the standard UI
 export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'time',
-    field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.time),
+    field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.time),
     placeholder: 'time, or the first time field',
   },
   { key: 'timeEnd', help: 'When this field is defined, the annotation will be treated as a range' },
@@ -102,13 +103,27 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   },
   {
     key: 'text',
-    field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.string),
+    field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.string),
     placeholder: 'text, or the first text field',
   },
   { key: 'tags', split: ',', help: 'The results will be split on comma (,)' },
-  // { key: 'userId' },
-  // { key: 'login' },
-  // { key: 'email' },
+  {
+    key: 'id',
+  },
+];
+
+// Given legacy infrastructure, alert events are passed though the same annotation
+// pipeline, but include fields that should not be exposed generally
+const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+  ...annotationEventNames,
+  { key: 'userId' },
+  { key: 'login' },
+  { key: 'email' },
+  { key: 'prevState' },
+  { key: 'newState' },
+  { key: 'data' as any },
+  { key: 'panelId' },
+  { key: 'alertId' },
 ];
 
 export function getAnnotationsFromData(
@@ -117,7 +132,7 @@ export function getAnnotationsFromData(
 ): Observable<AnnotationEvent[]> {
   return of(data).pipe(
     singleFrameFromPanelData(),
-    map(frame => {
+    map((frame) => {
       if (!frame?.length) {
         return [];
       }
@@ -137,7 +152,7 @@ export function getAnnotationsFromData(
 
       const fields: AnnotationEventFieldSetter[] = [];
 
-      for (const evts of annotationEventNames) {
+      for (const evts of alertEventAndAnnotationFields) {
         const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
 
         if (opt.source === AnnotationEventFieldSource.Skip) {

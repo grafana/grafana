@@ -10,6 +10,7 @@ import {
   removeDashboardPermission,
   updateDashboardPermission,
 } from '../../state/actions';
+import { checkFolderPermissions } from '../../../folders/state/actions';
 import { DashboardModel } from '../../state/DashboardModel';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
@@ -17,6 +18,7 @@ import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo'
 
 const mapStateToProps = (state: StoreState) => ({
   permissions: state.dashboard.permissions,
+  canViewFolderPermissions: state.folder.canViewFolderPermissions,
 });
 
 const mapDispatchToProps = {
@@ -24,6 +26,7 @@ const mapDispatchToProps = {
   addDashboardPermission,
   removeDashboardPermission,
   updateDashboardPermission,
+  checkFolderPermissions,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -49,6 +52,9 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
 
   componentDidMount() {
     this.props.getDashboardPermissions(this.props.dashboard.id);
+    if (this.props.dashboard.meta.folderUid) {
+      this.props.checkFolderPermissions(this.props.dashboard.meta.folderUid);
+    }
   }
 
   onOpenAddPermissions = () => {
@@ -72,12 +78,13 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   };
 
   getFolder() {
-    const { dashboard } = this.props;
+    const { dashboard, canViewFolderPermissions } = this.props;
 
     return {
       id: dashboard.meta.folderId,
       title: dashboard.meta.folderTitle,
       url: dashboard.meta.folderUrl,
+      canViewFolderPermissions,
     };
   }
 
@@ -91,20 +98,18 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
     const { isAdding } = this.state;
 
     return hasUnsavedFolderChange ? (
-      <h5>You have changed folder, please save to view permissions.</h5>
+      <h5>You have changed a folder, please save to view permissions.</h5>
     ) : (
       <div>
-        <div className="dashboard-settings__header">
-          <div className="page-action-bar">
-            <h3 className="d-inline-block">Permissions</h3>
-            <Tooltip placement="auto" content={<PermissionsInfo />}>
-              <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
-            </Tooltip>
-            <div className="page-action-bar__spacer" />
-            <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
-              Add Permission
-            </Button>
-          </div>
+        <div className="page-action-bar">
+          <h3 className="page-sub-heading">Permissions</h3>
+          <Tooltip placement="auto" content={<PermissionsInfo />}>
+            <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
+          </Tooltip>
+          <div className="page-action-bar__spacer" />
+          <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+            Add permission
+          </Button>
         </div>
         <SlideDown in={isAdding}>
           <AddPermission onAddPermission={this.onAddPermission} onCancel={this.onCancelAddPermission} />

@@ -13,18 +13,17 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
+import { useStyles2 } from '@grafana/ui';
 
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { TraceSpanReference } from '@grafana/data';
+import { TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
-
-import { createStyle } from '../../Theme';
 import { uAlignIcon } from '../../uberUtilityStyles';
 
-const getStyles = createStyle(() => {
+const getStyles = () => {
   return {
     ReferencesList: css`
       background: #fff;
@@ -63,7 +62,7 @@ const getStyles = createStyle(() => {
       }
     `,
   };
-});
+};
 
 type AccordianReferencesProps = {
   data: TraceSpanReference[];
@@ -82,12 +81,12 @@ type ReferenceItemProps = {
 // export for test
 export function References(props: ReferenceItemProps) {
   const { data, focusSpan } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.ReferencesList)}>
       <ul className={styles.list}>
-        {data.map(reference => {
+        {data.map((reference) => {
           return (
             <li className={styles.item} key={`${reference.spanID}`}>
               <ReferenceLink reference={reference} focusSpan={focusSpan}>

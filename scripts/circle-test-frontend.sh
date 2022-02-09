@@ -14,7 +14,7 @@ seconds=$((end - start))
 
 exit_if_fail ./scripts/ci-frontend-metrics.sh
 
-if [ "${CIRCLE_BRANCH}" == "master" ]; then
+if [ "${CIRCLE_BRANCH}" == "main" ]; then
 	exit_if_fail ./scripts/ci-metrics-publisher.sh grafana.ci-performance.frontend-tests=$seconds
 fi
 

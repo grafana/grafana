@@ -1,15 +1,15 @@
-import InfluxDatasource from '../datasource';
+import { lastValueFrom, of } from 'rxjs';
+import { FetchResponse } from '@grafana/runtime';
 
+import InfluxDatasource from '../datasource';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { of } from 'rxjs';
-import { FetchResponse } from '@grafana/runtime';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -112,7 +112,7 @@ describe('InfluxDataSource', () => {
       });
 
       try {
-        await ctx.ds.query(queryOptions).toPromise();
+        await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
         expect(err.message).toBe('InfluxDB Error: Query timeout');
       }
@@ -171,6 +171,57 @@ describe('InfluxDataSource', () => {
       it('should not have q as a query parameter', () => {
         expect(requestQueryParameter).not.toHaveProperty('q');
       });
+    });
+  });
+
+  describe('Interpolating query variables for dashboard->explore', () => {
+    const templateSrv: any = { replace: jest.fn() };
+    const instanceSettings: any = {};
+    const ds = new InfluxDatasource(instanceSettings, templateSrv);
+    const text = 'interpolationText';
+
+    it('Should interpolate all variables', () => {
+      const query = {
+        refId: 'x',
+        measurement: '$interpolationVar',
+        policy: '$interpolationVar',
+        limit: '$interpolationVar',
+        slimit: '$interpolationVar',
+        tz: '$interpolationVar',
+        tags: [
+          {
+            key: 'cpu',
+            operator: '=~',
+            value: '/^$interpolationVar$/',
+          },
+        ],
+        groupBy: [
+          {
+            params: ['$interpolationVar'],
+            type: 'tag',
+          },
+        ],
+        select: [
+          [
+            {
+              params: ['$interpolationVar'],
+              type: 'field',
+            },
+          ],
+        ],
+      };
+      templateSrv.replace.mockReturnValue(text);
+
+      const queries = ds.interpolateVariablesInQueries([query], { interpolationVar: { text: text, value: text } });
+      expect(templateSrv.replace).toBeCalledTimes(8);
+      expect(queries[0].measurement).toBe(text);
+      expect(queries[0].policy).toBe(text);
+      expect(queries[0].limit).toBe(text);
+      expect(queries[0].slimit).toBe(text);
+      expect(queries[0].tz).toBe(text);
+      expect(queries[0].tags![0].value).toBe(text);
+      expect(queries[0].groupBy![0].params![0]).toBe(text);
+      expect(queries[0].select![0][0].params![0]).toBe(text);
     });
   });
 });
