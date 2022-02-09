@@ -217,7 +217,7 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
+	wire.Bind(new(alerting.AlertStore), new(*mockstore.SQLStoreMock)),
 
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
