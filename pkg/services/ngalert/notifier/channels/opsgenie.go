@@ -56,7 +56,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, ns notifications.Webh
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
 	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
-	apiURL := model.Settings.Get("apiUrl").MustString()
+	apiURL := model.Settings.Get("apiUrl").MustString(OpsgenieAlertURL)
 	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
 
 	return &OpsgenieNotifier{

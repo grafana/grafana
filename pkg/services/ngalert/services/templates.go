@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"errors"
@@ -38,7 +39,7 @@ var (
 )
 
 type AMStore interface {
-	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(context.Context, *models.GetLatestAlertmanagerConfigurationQuery) error
 	UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
@@ -161,7 +162,7 @@ func (templateStore *EmbeddedTemplateService) getCurrentConfig(orgID int64) (*ap
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := templateStore.amStore.GetLatestAlertmanagerConfiguration(query)
+	err := templateStore.amStore.GetLatestAlertmanagerConfiguration(context.Background(), query)
 	if err != nil {
 		return nil, "", err
 	}

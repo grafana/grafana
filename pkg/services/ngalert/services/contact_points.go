@@ -328,7 +328,7 @@ func (ecp *EmbeddedContactPointService) getCurrentConfig(orgID int64) (*apimodel
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := ecp.amStore.GetLatestAlertmanagerConfiguration(query)
+	err := ecp.amStore.GetLatestAlertmanagerConfiguration(context.Background(), query)
 	if err != nil {
 		return nil, "", err
 	}

@@ -37,7 +37,7 @@ func ValidateContactPointReceiver(channelType string, settings *simplejson.Json)
 			uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
 			_, err := url.Parse(uS)
 			if err != nil {
-				return false, errors.New("invalid url property in settings")
+				return false, fmt.Errorf("invalid url property in settings: %w", err)
 			}
 		}
 		return true, nil
@@ -167,6 +167,7 @@ func ValidateContactPointReceiver(channelType string, settings *simplejson.Json)
 		if chatID == "" {
 			return false, errors.New("could not find Chat Id in settings")
 		}
+		return true, nil
 	case "threema":
 		gatewayID := settings.Get("gateway_id").MustString()
 		if gatewayID == "" {
@@ -189,6 +190,7 @@ func ValidateContactPointReceiver(channelType string, settings *simplejson.Json)
 		if apiSecret == "" {
 			return false, errors.New("could not find Threema API secret in settings")
 		}
+		return true, nil
 	case "victorops":
 		url := settings.Get("url").MustString()
 		if url == "" {
@@ -200,11 +202,13 @@ func ValidateContactPointReceiver(channelType string, settings *simplejson.Json)
 		if url == "" {
 			return false, errors.New("could not find url property in settings")
 		}
+		return true, nil
 	case "wecom":
 		url := settings.Get("url").MustString()
 		if url == "" {
 			return false, errors.New("could not find webhook URL in settings")
 		}
+		return true, nil
 	}
 	return false, fmt.Errorf("contact point has an unknown type '%s'", channelType)
 }

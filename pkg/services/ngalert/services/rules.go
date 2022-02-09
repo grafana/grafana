@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -28,7 +30,7 @@ func (service *GrafanaRuleService) GetRule(orgID int64, uid string) (models.Aler
 		UID:   uid,
 		OrgID: orgID,
 	}
-	err := service.store.GetAlertRuleByUID(query)
+	err := service.store.GetAlertRuleByUID(context.Background(), query)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -40,7 +42,7 @@ func (service *GrafanaRuleService) GetRules(orgID int64) ([]*models.AlertRule, e
 	query := &models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
-	err := service.store.GetOrgAlertRules(query)
+	err := service.store.GetOrgAlertRules(context.Background(), query)
 	if err != nil {
 		return []*models.AlertRule{}, err
 	}
@@ -49,7 +51,7 @@ func (service *GrafanaRuleService) GetRules(orgID int64) ([]*models.AlertRule, e
 }
 
 func (service *GrafanaRuleService) CreateRule(rule models.AlertRule) error {
-	return service.store.UpsertAlertRules([]store.UpsertRule{
+	return service.store.UpsertAlertRules(context.Background(), []store.UpsertRule{
 		{
 			New: rule,
 		},
@@ -61,7 +63,7 @@ func (service *GrafanaRuleService) UpdateRule(rule models.AlertRule) error {
 	if err != nil {
 		return err
 	}
-	return service.store.UpsertAlertRules([]store.UpsertRule{
+	return service.store.UpsertAlertRules(context.Background(), []store.UpsertRule{
 		{
 			New:      rule,
 			Existing: &existingRule,
@@ -70,5 +72,5 @@ func (service *GrafanaRuleService) UpdateRule(rule models.AlertRule) error {
 }
 
 func (service *GrafanaRuleService) DeleteRule(orgID int64, uid string) error {
-	return service.store.DeleteAlertRuleByUID(orgID, uid)
+	return service.store.DeleteAlertRuleByUID(context.Background(), orgID, uid)
 }
