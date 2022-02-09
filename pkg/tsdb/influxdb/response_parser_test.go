@@ -167,7 +167,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					"series": [
 						{
 							"name": "cpu",
-							"columns": ["time","mean"]
+							"columns": ["time","mean"],
+							"values": [
+								[111,222],
+								[111,222],
+								[111,null]
+							]
 						}
 					]
 				}
