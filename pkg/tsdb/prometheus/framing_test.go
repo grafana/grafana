@@ -132,5 +132,5 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 	}
 
 	s := Service{tracer: tracer}
-	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query}, true)
+	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 }

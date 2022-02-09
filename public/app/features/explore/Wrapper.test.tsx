@@ -103,7 +103,6 @@ describe('Wrapper', () => {
     });
 
     expect(store.getState().explore.richHistory[0]).toMatchObject({
-      datasourceId: '1',
       datasourceName: 'loki',
       queries: [{ expr: '{ label="value"}', refId: 'A' }],
     });
@@ -280,9 +279,7 @@ describe('Wrapper', () => {
     // to work
     await screen.findByText(`loki Editor input: { label="value"}`);
 
-    store.dispatch(
-      splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any
-    );
+    store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
 
     // Editor renders the new query
     await screen.findByText(`elastic Editor input: error`);
@@ -313,10 +310,15 @@ describe('Wrapper', () => {
     // to work
     await screen.findByText(`loki Editor input: { label="value"}`);
 
-    store.dispatch(
-      splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any
-    );
+    store.dispatch(splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
     await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
+  });
+
+  it('removes `from` and `to` parameters from url when first mounted', () => {
+    setup({ searchParams: 'from=1&to=2&orgId=1' });
+
+    expect(locationService.getSearchObject()).toEqual(expect.not.objectContaining({ from: '1', to: '2' }));
+    expect(locationService.getSearchObject()).toEqual(expect.objectContaining({ orgId: '1' }));
   });
 });
 
@@ -324,6 +326,7 @@ type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceAp
 type SetupOptions = {
   datasources?: DatasourceSetup[];
   query?: any;
+  searchParams?: string;
 };
 
 function setup(options?: SetupOptions): { datasources: { [name: string]: DataSourceApi }; store: EnhancedStore } {
@@ -372,7 +375,7 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
     },
   };
 
-  locationService.push({ pathname: '/explore' });
+  locationService.push({ pathname: '/explore', search: options?.searchParams });
 
   if (options?.query) {
     locationService.partial(options.query);

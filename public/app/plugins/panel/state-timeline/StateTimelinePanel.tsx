@@ -24,17 +24,15 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   const theme = useTheme2();
   const { sync } = usePanelContext();
 
-  const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, options.mergeValues ?? true, theme), [
-    data,
-    options.mergeValues,
-    theme,
-  ]);
+  const { frames, warn } = useMemo(
+    () => prepareTimelineFields(data?.series, options.mergeValues ?? true, theme),
+    [data, options.mergeValues, theme]
+  );
 
-  const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend, theme), [
-    frames,
-    options.legend,
-    theme,
-  ]);
+  const legendItems = useMemo(
+    () => prepareTimelineLegendItems(frames, options.legend, theme),
+    [frames, options.legend, theme]
+  );
 
   const renderCustomTooltip = useCallback(
     (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {

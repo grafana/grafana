@@ -47,7 +47,7 @@ const dummyProps: Props = {
   queryResponse: {
     state: LoadingState.NotStarted,
     series: [],
-    request: ({
+    request: {
       requestId: '1',
       dashboardId: 0,
       interval: '1s',
@@ -65,7 +65,7 @@ const dummyProps: Props = {
       timezone: 'UTC',
       app: CoreApp.Explore,
       startTime: 0,
-    } as unknown) as DataQueryRequest,
+    } as unknown as DataQueryRequest,
     error: {} as DataQueryError,
     timeRange: {
       from: toUtc('2019-01-01 10:00:00'),

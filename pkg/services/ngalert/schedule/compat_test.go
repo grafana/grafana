@@ -100,11 +100,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Annotations = randomMapOfStrings()
 					expectedValueString := util.GenerateShortUID()
-					alertState.Results = []state.Evaluation{
-						{
-							EvaluationString: expectedValueString,
-						},
-					}
+					alertState.LastEvaluationString = expectedValueString
 
 					result := stateToPostableAlert(alertState, appURL)
 

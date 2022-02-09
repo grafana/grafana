@@ -17,6 +17,7 @@ import { mapValues } from 'lodash';
 import { StreamingFrameAction } from '@grafana/runtime';
 import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 import { StreamingDataFrame } from '../data/StreamingDataFrame';
+import mockConsole, { RestoreConsole } from 'jest-mock-console';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
@@ -119,6 +120,16 @@ const dummyErrorMessage = 'dummy-error';
 describe('LiveDataStream', () => {
   jest.useFakeTimers();
 
+  let restoreConsole: RestoreConsole | undefined;
+
+  beforeEach(() => {
+    restoreConsole = mockConsole();
+  });
+
+  afterEach(() => {
+    restoreConsole?.();
+  });
+
   const expectValueCollectionState = <T>(
     valuesCollection: ValuesCollection<T>,
     state: { errors: number; values: number; complete: boolean }
@@ -128,17 +139,16 @@ describe('LiveDataStream', () => {
     expect(valuesCollection.complete).toEqual(state.complete);
   };
 
-  const expectResponse = <T extends StreamingResponseDataType>(state: LoadingState) => (
-    res: DataQueryResponse,
-    streamingDataType: T
-  ) => {
-    expect(res.state).toEqual(state);
+  const expectResponse =
+    <T extends StreamingResponseDataType>(state: LoadingState) =>
+    (res: DataQueryResponse, streamingDataType: T) => {
+      expect(res.state).toEqual(state);
 
-    expect(res.data).toHaveLength(1);
+      expect(res.data).toHaveLength(1);
 
-    const firstData = res.data[0];
-    expect(isStreamingResponseData(firstData, streamingDataType)).toEqual(true);
-  };
+      const firstData = res.data[0];
+      expect(isStreamingResponseData(firstData, streamingDataType)).toEqual(true);
+    };
 
   const expectStreamingResponse = expectResponse(LoadingState.Streaming);
   const expectErrorResponse = expectResponse(LoadingState.Error);
