@@ -103,7 +103,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
+    const exploreState = JSON.stringify(state);
     url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
 
@@ -223,7 +223,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     queries: [],
     range: DEFAULT_RANGE,
     mode: null,
-    originPanelId: null,
   };
 
   if (!parsed) {
@@ -245,13 +244,10 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(
-    (segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode', '__panelsState')
-  );
+  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
-  const originPanelId = parsedSegments.find((segment) => isSegment(segment, 'originPanelId'));
   const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, originPanelId, panelsState };
+  return { datasource, queries, range, panelsState };
 }
 
 export function generateKey(index = 0): string {
