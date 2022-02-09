@@ -1,4 +1,19 @@
-package chats
+package chatmodel
+
+const (
+	// ContentTypeOrg is reserved for future use for per-org discussions.
+	ContentTypeOrg = 1
+	// ContentTypeDashboard used for dashboard-wide discussions.
+	ContentTypeDashboard = 2
+	// ContentTypeAnnotation used for annotation discussions.
+	ContentTypeAnnotation = 3
+)
+
+var RegisteredContentTypes = map[int]struct{}{
+	ContentTypeOrg:        {},
+	ContentTypeDashboard:  {},
+	ContentTypeAnnotation: {},
+}
 
 type Chat struct {
 	Id            int64

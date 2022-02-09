@@ -13,19 +13,12 @@ import (
 	"sync"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
-	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -34,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -44,11 +38,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -68,7 +68,8 @@ type CoreGrafanaScope struct {
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
-	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles) (*GrafanaLive, error) {
+	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
+	bus bus.Bus) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -80,6 +81,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
 		queryDataService:      queryDataService,
+		bus:                   bus,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -237,7 +239,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["chat"] = &features.ChatHandler{}
+	g.GrafanaScope.Features["chat"] = features.NewChatHandler(g.bus, g.Features)
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -402,6 +404,7 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
+	bus                   bus.Bus
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller

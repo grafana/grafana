@@ -2,13 +2,25 @@ package features
 
 import (
 	"context"
+	"strconv"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 // ChatHandler manages all the `grafana/chat/*` channels.
-type ChatHandler struct{}
+type ChatHandler struct {
+	permissionChecker *chatmodel.PermissionChecker
+}
+
+func NewChatHandler(bus bus.Bus, toggles featuremgmt.FeatureToggles) *ChatHandler {
+	return &ChatHandler{permissionChecker: chatmodel.NewPermissionChecker(bus, toggles)}
+}
 
 // GetHandlerForPath called on init.
 func (h *ChatHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
@@ -17,6 +29,22 @@ func (h *ChatHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error)
 
 // OnSubscribe for now allows anyone to subscribe to any chat.
 func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	parts := strings.Split(e.Path, "/")
+	if len(parts) != 2 {
+		return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
+	}
+	contentTypeID, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
+	}
+	objectID := parts[1]
+	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgId, user, int(contentTypeID), objectID)
+	if err != nil {
+		return models.SubscribeReply{}, 0, err
+	}
+	if !ok {
+		return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
+	}
 	return models.SubscribeReply{
 		Presence:  true,
 		JoinLeave: true,
@@ -24,6 +52,6 @@ func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser
 }
 
 // OnPublish is not used for chats.
-func (h *ChatHandler) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (h *ChatHandler) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }

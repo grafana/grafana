@@ -6,37 +6,30 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	"github.com/grafana/grafana/pkg/services/annotations"
-
-	"github.com/grafana/grafana/pkg/services/guardian"
-
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func messagesToDto(messages []*Message, userMap map[int64]*models.UserSearchHitDTO) []*MessageDto {
-	result := make([]*MessageDto, 0, len(messages))
+func messagesToDto(messages []*chatmodel.Message, userMap map[int64]*models.UserSearchHitDTO) []*chatmodel.MessageDto {
+	result := make([]*chatmodel.MessageDto, 0, len(messages))
 	for _, m := range messages {
 		result = append(result, messageToDto(m, userMap))
 	}
 	return result
 }
 
-func messageToDto(m *Message, userMap map[int64]*models.UserSearchHitDTO) *MessageDto {
-	var u *MessageUser
+func messageToDto(m *chatmodel.Message, userMap map[int64]*models.UserSearchHitDTO) *chatmodel.MessageDto {
+	var u *chatmodel.MessageUser
 	if m.UserId > 0 {
 		user, ok := userMap[m.UserId]
 		if !ok {
 			// TODO: insert dummy object?
 			panic("no user")
 		}
-		u = &MessageUser{
+		u = &chatmodel.MessageUser{
 			Id:        user.Id,
 			Name:      user.Name,
 			Login:     user.Login,
@@ -83,64 +76,12 @@ type SendMessageCmd struct {
 
 var ErrPermissionDenied = errors.New("permission denied")
 
-func getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd SendMessageCmd) (*chatmodel.MessageDto, error) {
+	ok, err := s.permissions.CheckWritePermissions(ctx, orgId, signedInUser, cmd.ContentTypeId, cmd.ObjectId)
+	if err != nil {
 		return nil, err
 	}
-	return query.Result, nil
-}
-
-func getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Id: id, OrgId: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
-		return nil, err
-	}
-	return query.Result, nil
-}
-
-func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd SendMessageCmd) (*MessageDto, error) {
-	switch cmd.ContentTypeId {
-	case ContentTypeOrg:
-		return nil, ErrPermissionDenied
-	case ContentTypeDashboard:
-		if !s.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
-			return nil, ErrPermissionDenied
-		}
-		dash, err := getDashboardByUid(ctx, orgId, cmd.ObjectId)
-		if err != nil {
-			return nil, err
-		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
-		if ok, err := guard.CanEdit(); err != nil || !ok {
-			return nil, ErrPermissionDenied
-		}
-	case ContentTypeAnnotation:
-		if !s.features.IsEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
-			return nil, ErrPermissionDenied
-		}
-		repo := annotations.GetRepository()
-		annotationID, err := strconv.ParseInt(cmd.ObjectId, 10, 64)
-		if err != nil {
-			return nil, ErrPermissionDenied
-		}
-		items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
-		if err != nil || len(items) != 1 {
-			return nil, ErrPermissionDenied
-		}
-		dashboardID := items[0].DashboardId
-		if dashboardID == 0 {
-			return nil, ErrPermissionDenied
-		}
-		dash, err := getDashboardById(ctx, orgId, dashboardID)
-		if err != nil {
-			return nil, err
-		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
-		if ok, err := guard.CanEdit(); err != nil || !ok {
-			return nil, ErrPermissionDenied
-		}
-	default:
+	if !ok {
 		return nil, ErrPermissionDenied
 	}
 
@@ -169,48 +110,12 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *mo
 	return mDto, nil
 }
 
-func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetMessagesCmd) ([]*MessageDto, error) {
-	switch cmd.ContentTypeId {
-	case ContentTypeOrg:
-		return nil, ErrPermissionDenied
-	case ContentTypeDashboard:
-		if !s.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
-			return nil, ErrPermissionDenied
-		}
-		dash, err := getDashboardByUid(ctx, orgId, cmd.ObjectId)
-		if err != nil {
-			return nil, err
-		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
-		if ok, err := guard.CanView(); err != nil || !ok {
-			return nil, ErrPermissionDenied
-		}
-	case ContentTypeAnnotation:
-		if !s.features.IsEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
-			return nil, ErrPermissionDenied
-		}
-		repo := annotations.GetRepository()
-		annotationID, err := strconv.ParseInt(cmd.ObjectId, 10, 64)
-		if err != nil {
-			return nil, ErrPermissionDenied
-		}
-		items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
-		if err != nil || len(items) != 1 {
-			return nil, ErrPermissionDenied
-		}
-		dashboardID := items[0].DashboardId
-		if dashboardID == 0 {
-			return nil, ErrPermissionDenied
-		}
-		dash, err := getDashboardById(ctx, orgId, dashboardID)
-		if err != nil {
-			return nil, err
-		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
-		if ok, err := guard.CanView(); err != nil || !ok {
-			return nil, ErrPermissionDenied
-		}
-	default:
+func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetMessagesCmd) ([]*chatmodel.MessageDto, error) {
+	ok, err := s.permissions.CheckReadPermissions(ctx, orgId, signedInUser, cmd.ContentTypeId, cmd.ObjectId)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
 		return nil, ErrPermissionDenied
 	}
 

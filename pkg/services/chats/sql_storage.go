@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -12,7 +14,7 @@ type sqlStorage struct {
 }
 
 func checkContentType(contentTypeId int) bool {
-	_, ok := registeredContentTypes[contentTypeId]
+	_, ok := chatmodel.RegisteredContentTypes[contentTypeId]
 	return ok
 }
 
@@ -20,7 +22,7 @@ func checkObjectId(objectId string) bool {
 	return objectId != ""
 }
 
-func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, objectId string, userId int64, content string) (*Message, error) {
+func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, objectId string, userId int64, content string) (*chatmodel.Message, error) {
 	if !checkContentType(ctId) {
 		return nil, errUnknownContentType
 	}
@@ -31,10 +33,10 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 		return nil, errEmptyContent
 	}
 
-	var result *Message
+	var result *chatmodel.Message
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		chat := Chat{
+		chat := chatmodel.Chat{
 			OrgId:         orgId,
 			ContentTypeId: ctId,
 			ObjectId:      objectId,
@@ -56,7 +58,7 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 			}
 			chatId = chat.Id
 		}
-		message := Message{
+		message := chatmodel.Message{
 			ChatId:  chatId,
 			UserId:  userId,
 			Content: content,
@@ -72,7 +74,7 @@ func (s *sqlStorage) CreateMessage(ctx context.Context, orgId int64, ctId int, o
 	})
 }
 
-func (s *sqlStorage) GetMessages(ctx context.Context, orgId int64, ctId int, objectId string, _ GetMessagesFilter) ([]*Message, error) {
+func (s *sqlStorage) GetMessages(ctx context.Context, orgId int64, ctId int, objectId string, _ GetMessagesFilter) ([]*chatmodel.Message, error) {
 	if !checkContentType(ctId) {
 		return nil, errUnknownContentType
 	}
@@ -80,10 +82,10 @@ func (s *sqlStorage) GetMessages(ctx context.Context, orgId int64, ctId int, obj
 		return nil, errEmptyObjectId
 	}
 
-	var result []*Message
+	var result []*chatmodel.Message
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		chat := Chat{
+		chat := chatmodel.Chat{
 			OrgId:         orgId,
 			ContentTypeId: ctId,
 			ObjectId:      objectId,

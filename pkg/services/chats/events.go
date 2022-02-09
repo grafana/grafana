@@ -1,5 +1,7 @@
 package chats
 
+import "github.com/grafana/grafana/pkg/services/chats/chatmodel"
+
 type ChatEventType string
 
 const (
@@ -8,6 +10,6 @@ const (
 
 // ChatEvent represents chat event structure.
 type ChatEvent struct {
-	Event          ChatEventType `json:"event"`
-	MessageCreated *MessageDto   `json:"messageCreated"`
+	Event          ChatEventType         `json:"event"`
+	MessageCreated *chatmodel.MessageDto `json:"messageCreated"`
 }
