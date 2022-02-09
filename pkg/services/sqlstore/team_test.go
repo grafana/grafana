@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTeamCommandsAndQueries(t *testing.T) {
@@ -414,6 +415,110 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
 				for _, team := range tt.query.Result.Teams {
 					assert.Contains(t, tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.Id))
+				}
+			}
+		})
+	}
+}
+
+// TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
+// team members based on the signed in user permissions
+func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
+	testOrgID := int64(2)
+	userIds := make([]int64, 4)
+
+	// Seed 2 teams with 2 members
+	setup := func(store *SQLStore) {
+
+		team1, errCreateTeam := store.CreateTeam("group1 name", "test1@example.org", testOrgID)
+		require.NoError(t, errCreateTeam)
+		team2, errCreateTeam := store.CreateTeam("group2 name", "test2@example.org", testOrgID)
+		require.NoError(t, errCreateTeam)
+
+		for i := 0; i < 4; i++ {
+			userCmd := models.CreateUserCommand{
+				Email: fmt.Sprint("user", i, "@example.org"),
+				Name:  fmt.Sprint("user", i),
+				Login: fmt.Sprint("loginuser", i),
+			}
+			user, errCreateUser := store.CreateUser(context.Background(), userCmd)
+			require.NoError(t, errCreateUser)
+			userIds[i] = user.Id
+		}
+
+		errAddMember := store.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
+		require.NoError(t, errAddMember)
+		errAddMember = store.AddTeamMember(userIds[1], testOrgID, team1.Id, false, 0)
+		require.NoError(t, errAddMember)
+		errAddMember = store.AddTeamMember(userIds[2], testOrgID, team2.Id, false, 0)
+		require.NoError(t, errAddMember)
+		errAddMember = store.AddTeamMember(userIds[3], testOrgID, team2.Id, false, 0)
+		require.NoError(t, errAddMember)
+	}
+
+	store := InitTestDB(t)
+	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
+
+	setup(store)
+
+	type getTeamMembersTestCase struct {
+		desc             string
+		query            *models.GetTeamMembersQuery
+		expectedNumUsers int
+	}
+
+	tests := []getTeamMembersTestCase{
+		{
+			desc: "should return all team members",
+			query: &models.GetTeamMembersQuery{
+				OrgId: testOrgID,
+				SignedInUser: &models.SignedInUser{
+					OrgId:       testOrgID,
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
+				},
+			},
+			expectedNumUsers: 4,
+		},
+		{
+			desc: "should return no team members",
+			query: &models.GetTeamMembersQuery{
+				OrgId: testOrgID,
+				SignedInUser: &models.SignedInUser{
+					OrgId:       testOrgID,
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {""}}},
+				},
+			},
+			expectedNumUsers: 0,
+		},
+		{
+
+			desc: "should return some team members",
+			query: &models.GetTeamMembersQuery{
+				OrgId: testOrgID,
+				SignedInUser: &models.SignedInUser{
+					OrgId: testOrgID,
+					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {
+						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[0])),
+						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[2])),
+						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[3])),
+					}}},
+				},
+			},
+			expectedNumUsers: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			err := store.GetTeamMembers(context.Background(), tt.query)
+			require.NoError(t, err)
+			assert.Len(t, tt.query.Result, tt.expectedNumUsers)
+
+			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionOrgUsersRead) {
+				for _, member := range tt.query.Result {
+					assert.Contains(t,
+						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionOrgUsersRead],
+						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserId)),
+					)
 				}
 			}
 		})
