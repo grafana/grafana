@@ -35,13 +35,13 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 		{
 			name:              "Error in initing: missing URL",
 			settings:          `{}`,
-			expectedInitError: `failed to validate receiver of type "alertmanager": could not find url property in settings`,
+			expectedInitError: `failed to validate receiver of type "prometheus-alertmanager": could not find url property in settings`,
 		}, {
 			name: "Error in initing: invalid URL",
 			settings: `{
 				"url": "://alertmanager.com"
 			}`,
-			expectedInitError: `failed to validate receiver "Alertmanager" of type "alertmanager": invalid url property in settings: parse "://alertmanager.com/api/v1/alerts": missing protocol scheme`,
+			expectedInitError: `failed to validate receiver "Alertmanager" of type "prometheus-alertmanager": invalid url property in settings: parse "://alertmanager.com/api/v1/alerts": missing protocol scheme`,
 			receiverName:      "Alertmanager",
 		},
 	}
@@ -53,7 +53,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 
 			m := &NotificationChannelConfig{
 				Name:           c.receiverName,
-				Type:           "alertmanager",
+				Type:           "prometheus-alertmanager",
 				Settings:       settingsJSON,
 				SecureSettings: secureSettings,
 			}
@@ -136,7 +136,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 
 			m := &NotificationChannelConfig{
 				Name:           c.receiverName,
-				Type:           "alertmanager",
+				Type:           "prometheus-alertmanager",
 				Settings:       settingsJSON,
 				SecureSettings: secureSettings,
 			}

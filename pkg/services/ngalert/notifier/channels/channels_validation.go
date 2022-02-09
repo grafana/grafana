@@ -22,7 +22,7 @@ func ValidateContactPointReceiverWithSecure(channelType string, settings *simple
 
 func ValidateContactPointReceiver(channelType string, settings *simplejson.Json) (bool, error) {
 	switch strings.ToLower(channelType) {
-	case "alertmanager":
+	case "prometheus-alertmanager":
 		urlStr := settings.Get("url").MustString()
 		if urlStr == "" {
 			return false, errors.New("could not find url property in settings")
