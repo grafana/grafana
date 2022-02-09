@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,7 +24,7 @@ func (f FakeAlertingStore) Setup(orgID int64) {
 	f.orgsWithConfig[orgID] = true
 }
 
-func (f FakeAlertingStore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
+func (f FakeAlertingStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
 	if _, ok := f.orgsWithConfig[query.OrgID]; ok {
 		return nil
 	}
