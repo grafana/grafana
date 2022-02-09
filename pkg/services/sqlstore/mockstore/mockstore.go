@@ -25,7 +25,12 @@ type SQLStoreMock struct {
 	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList          []*models.UserOrgDTO
 	ExpectedOrgListResponse      OrgListResponse
-	ExpectedError                error
+	ExpectedDashboardSnapshot    *models.DashboardSnapshot
+	ExpectedTeamsByUser          []*models.TeamDTO
+	ExpectedSearchOrgList        []*models.OrgDTO
+	ExpectedDatasources          []*models.DataSource
+
+	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -49,6 +54,7 @@ func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.
 }
 
 func (m *SQLStoreMock) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
+	query.Result = m.ExpectedDashboardSnapshot
 	return m.ExpectedError
 }
 
@@ -213,7 +219,7 @@ func (m *SQLStoreMock) GetTeamById(ctx context.Context, query *models.GetTeamByI
 }
 
 func (m *SQLStoreMock) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	query.Result = []*models.TeamDTO{}
+	query.Result = m.ExpectedTeamsByUser
 	return m.ExpectedError
 }
 
@@ -483,6 +489,7 @@ func (m *SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataS
 }
 
 func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	query.Result = m.ExpectedDatasources
 	return m.ExpectedError
 }
 
@@ -499,10 +506,12 @@ func (m *SQLStoreMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteD
 }
 
 func (m *SQLStoreMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
@@ -627,5 +636,10 @@ func (m *SQLStoreMock) ExpireOldUserInvites(ctx context.Context, cmd *models.Exp
 }
 
 func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
+	query.Result = m.ExpectedSearchOrgList
 	return m.ExpectedError
 }

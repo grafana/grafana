@@ -66,18 +66,6 @@ func getTeamMemberCount(filteredUsers []string) string {
 	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
 }
 
-func getTeamSearchSQLBase(filteredUsers []string) string {
-	return `SELECT
-		team.id AS id,
-		team.org_id,
-		team.name AS name,
-		team.email AS email,
-		team_member.permission, ` +
-		getTeamMemberCount(filteredUsers) +
-		` FROM team AS team
-		INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ? `
-}
-
 func getTeamSelectSQLBase(filteredUsers []string) string {
 	return `SELECT
 		team.id as id,
@@ -200,17 +188,15 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 	params := make([]interface{}, 0)
 
 	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
-	if query.UserIdFilter > 0 {
-		sql.WriteString(getTeamSearchSQLBase(filteredUsers))
-		for _, user := range filteredUsers {
-			params = append(params, user)
-		}
+	sql.WriteString(getTeamSelectSQLBase(filteredUsers))
+
+	for _, user := range filteredUsers {
+		params = append(params, user)
+	}
+
+	if query.UserIdFilter != models.FilterIgnoreUser {
+		sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
 		params = append(params, query.UserIdFilter)
-	} else {
-		sql.WriteString(getTeamSelectSQLBase(filteredUsers))
-		for _, user := range filteredUsers {
-			params = append(params, user)
-		}
 	}
 
 	sql.WriteString(` WHERE team.org_id = ?`)
@@ -226,6 +212,19 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		params = append(params, query.Name)
 	}
 
+	var (
+		acFilter ac.SQLFilter
+		err      error
+	)
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		acFilter, err = ac.Filter(ctx, "team.id", "teams", ac.ActionTeamsRead, query.SignedInUser)
+		if err != nil {
+			return err
+		}
+		sql.WriteString(` and` + acFilter.Where)
+		params = append(params, acFilter.Args...)
+	}
+
 	sql.WriteString(` order by team.name asc`)
 
 	if query.Limit != 0 {
@@ -239,12 +238,31 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 
 	team := models.Team{}
 	countSess := x.Table("team")
+	countSess.Where("team.org_id=?", query.OrgId)
+
 	if query.Query != "" {
 		countSess.Where(`name `+dialect.LikeStr()+` ?`, queryWithWildcards)
 	}
 
 	if query.Name != "" {
 		countSess.Where("name=?", query.Name)
+	}
+
+	// If we're not retrieving all results, then only search for teams that this user has access to
+	if query.UserIdFilter != models.FilterIgnoreUser {
+		countSess.
+			Where(`
+			team.id IN (
+				SELECT
+				team_id
+				FROM team_member
+				WHERE team_member.user_id = ?
+			)`, query.UserIdFilter)
+	}
+
+	// Only count teams user can see
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		countSess.Where(acFilter.Where, acFilter.Args...)
 	}
 
 	count, err := countSess.Count(&team)
@@ -261,6 +279,11 @@ func (ss *SQLStore) GetTeamById(ctx context.Context, query *models.GetTeamByIdQu
 	sql.WriteString(getTeamSelectSQLBase(filteredUsers))
 	for _, user := range filteredUsers {
 		params = append(params, user)
+	}
+
+	if query.UserIdFilter != models.FilterIgnoreUser {
+		sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
+		params = append(params, query.UserIdFilter)
 	}
 
 	sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
