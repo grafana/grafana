@@ -50,7 +50,7 @@ describe('NavBarItem', () => {
     });
 
     describe('and clicking on the menu trigger button', () => {
-      it('then the onClick handler should be called', async () => {
+      it('then the onClick handler should be called', () => {
         getTestContext();
 
         act(() => {
