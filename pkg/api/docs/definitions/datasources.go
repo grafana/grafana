@@ -200,7 +200,7 @@ import (
 //
 // Query metrics.
 //
-// TODO Please refer to updated API queryMetricsWithExpressions instead
+// Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead
 //
 // Queries a data source having backend implementation.
 //

@@ -6331,7 +6331,7 @@
     },
     "/tsdb/query": {
       "post": {
-        "description": "TODO Please refer to updated API queryMetricsWithExpressions instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
+        "description": "Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead\n\nQueries a data source having backend implementation.\n\nMost of Grafana’s builtin data sources have backend implementation.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
         "tags": ["datasources"],
         "summary": "Query metrics.",
         "operationId": "queryDatasource",
