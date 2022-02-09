@@ -74,7 +74,7 @@ func readDashboard(stream io.Reader, datasource datasourceLookup) *dashboardInfo
 
 		case "annotations":
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-				if "list" == sub {
+				if sub == "list" {
 					for iter.ReadArray() {
 						v := iter.Read()
 						fmt.Printf("[dash.anno] %v\n", v)
@@ -86,7 +86,7 @@ func readDashboard(stream io.Reader, datasource datasourceLookup) *dashboardInfo
 
 		case "templating":
 			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-				if "list" == sub {
+				if sub == "list" {
 					for iter.ReadArray() {
 						for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
 							if k == "name" {

@@ -17,6 +17,8 @@ func TestReadDashboard(t *testing.T) {
 	}
 
 	for _, input := range inputs {
+		// nolint:gosec
+		// We can ignore the gosec G304 warning because this is a test with hardcoded input values
 		f, err := os.Open("../../../../devenv/dev-dashboards/" + input)
 		require.NoError(t, err)
 
