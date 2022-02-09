@@ -5,7 +5,7 @@ import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 import { RichHistoryQuery } from '../../types';
 
 export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
-  let datasource = find(
+  const datasource = find(
     getDataSourceSrv().getList(),
     (settings: DataSourceInstanceSettings) => settings.name === dto.datasourceName
   );
