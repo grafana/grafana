@@ -27,11 +27,9 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", GetDashboardsBySlug)
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
@@ -40,6 +38,7 @@ func init() {
 func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetDashboard)
 	bus.AddHandler("sql", ss.GetDashboardUIDById)
+	bus.AddHandler("sql", ss.GetDashboardTags)
 	bus.AddHandler("sql", ss.SearchDashboards)
 	bus.AddHandler("sql", ss.DeleteDashboard)
 	bus.AddHandler("sql", ss.GetDashboards)
@@ -375,7 +374,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 	}
 }
 
-func GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
 	sql := `SELECT
 					  COUNT(*) as count,
 						term
@@ -598,17 +597,6 @@ func GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByI
 	}
 
 	query.Result = slug.Slug
-	return nil
-}
-
-func GetDashboardsBySlug(ctx context.Context, query *models.GetDashboardsBySlugQuery) error {
-	var dashboards []*models.Dashboard
-
-	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
-		return err
-	}
-
-	query.Result = dashboards
 	return nil
 }
 

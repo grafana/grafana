@@ -1,5 +1,5 @@
 import { KeyboardEvent, useReducer } from 'react';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { DashboardQuery, DashboardSearchItemType, DashboardSection } from '../types';
 import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
@@ -58,9 +58,7 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
           if (selectedItem.type === DashboardSearchItemType.DashFolder) {
             onToggleSection(selectedItem as DashboardSection);
           } else {
-            getLocationSrv().update({
-              path: locationUtil.stripBaseFromUrl(selectedItem.url),
-            });
+            locationService.push(locationUtil.stripBaseFromUrl(selectedItem.url));
             // Delay closing to prevent current page flicker
             setTimeout(onCloseSearch, 0);
           }

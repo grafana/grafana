@@ -42,10 +42,10 @@ func (e UnknownReceiverError) Error() string {
 	return fmt.Sprintf("unknown receiver: %s", e.UID)
 }
 
-func (srv AlertmanagerSrv) loadSecureSettings(orgId int64, receivers []*apimodels.PostableApiReceiver) error {
+func (srv AlertmanagerSrv) loadSecureSettings(ctx context.Context, orgId int64, receivers []*apimodels.PostableApiReceiver) error {
 	// Get the last known working configuration
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
-	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+	if err := srv.store.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration: %w", err)
@@ -159,7 +159,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 		return errResp
 	}
 
-	if err := am.SaveAndApplyDefaultConfig(); err != nil {
+	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
 		srv.log.Error("unable to save and apply default alertmanager configuration", "err", err)
 		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
 	}
@@ -193,7 +193,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	}
 
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
-	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+	if err := srv.store.GetLatestAlertmanagerConfiguration(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
@@ -340,14 +340,14 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 
 	// Get the last known working configuration
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
-	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+	if err := srv.store.GetLatestAlertmanagerConfiguration(c.Req.Context(), &query); err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
 		}
 	}
 
-	if err := srv.loadSecureSettings(c.OrgId, body.AlertmanagerConfig.Receivers); err != nil {
+	if err := srv.loadSecureSettings(c.Req.Context(), c.OrgId, body.AlertmanagerConfig.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -367,7 +367,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		}
 	}
 
-	if err := am.SaveAndApplyConfig(&body); err != nil {
+	if err := am.SaveAndApplyConfig(c.Req.Context(), &body); err != nil {
 		srv.log.Error("unable to save and apply alertmanager configuration", "err", err)
 		return ErrResp(http.StatusBadRequest, err, "failed to save and apply Alertmanager configuration")
 	}
@@ -384,7 +384,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 		return accessForbiddenResp()
 	}
 
-	if err := srv.loadSecureSettings(c.OrgId, body.Receivers); err != nil {
+	if err := srv.loadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")

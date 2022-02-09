@@ -24,6 +24,11 @@ export enum GraphDrawStyle {
   Points = 'points',
 }
 
+export enum GraphTransform {
+  Constant = 'constant',
+  NegativeY = 'negative-Y',
+}
+
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -256,6 +261,7 @@ export interface GraphFieldConfig
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  transform?: GraphTransform;
 }
 
 export interface VizLegendOptions {

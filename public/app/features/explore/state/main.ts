@@ -237,7 +237,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       stopQueryState(rightState.querySubscription);
     }
 
-    if (payload.force || !Number.isInteger(state.left.originPanelId)) {
+    if (payload.force) {
       return initialExploreState;
     }
 
@@ -246,7 +246,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       left: {
         ...initialExploreItemState,
         queries: state.left.queries,
-        originPanelId: state.left.originPanelId,
       },
     };
   }

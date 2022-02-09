@@ -47,12 +47,11 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, showLabel, label, value, id, ...props }, ref) => {
+  ({ transparent, className, showLabel, label, value, id, ...props }, ref) => {
     const theme = useTheme2();
     const styles = getSwitchStyles(theme, transparent);
-
     return (
-      <div className={styles.inlineContainer}>
+      <div className={cx(styles.inlineContainer, className)}>
         {showLabel && (
           <label
             htmlFor={id}
