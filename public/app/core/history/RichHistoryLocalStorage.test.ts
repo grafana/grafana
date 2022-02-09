@@ -23,24 +23,28 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const mockItem: RichHistoryQuery = {
+interface MockQuery extends DataQuery {
+  query: string;
+}
+
+const mockItem: RichHistoryQuery<MockQuery> = {
   id: '2',
   createdAt: 2,
   starred: true,
   datasourceUid: 'dev-test-uid',
   datasourceName: 'dev-test',
   comment: 'test',
-  queries: [{ refId: 'ref', query: 'query-test' } as DataQuery],
+  queries: [{ refId: 'ref', query: 'query-test' }],
 };
 
-const mockItem2: RichHistoryQuery = {
+const mockItem2: RichHistoryQuery<MockQuery> = {
   id: '3',
   createdAt: 3,
   starred: true,
   datasourceUid: 'dev-test-2-uid',
   datasourceName: 'dev-test-2',
   comment: 'test-2',
-  queries: [{ refId: 'ref-2', query: 'query-2' } as DataQuery],
+  queries: [{ refId: 'ref-2', query: 'query-2' }],
 };
 
 describe('RichHistoryLocalStorage', () => {

@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaTheme, DataSourceApi } from '@grafana/data';
+import { GrafanaTheme, DataSourceApi, DataQuery } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -36,13 +36,13 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps {
-  query: RichHistoryQuery;
+interface OwnProps<T extends DataQuery = DataQuery> {
+  query: RichHistoryQuery<T>;
   dsImg: string;
   isRemoved: boolean;
 }
 
-export type Props = ConnectedProps<typeof connector> & OwnProps;
+export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */

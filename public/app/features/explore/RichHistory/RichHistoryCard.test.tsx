@@ -6,8 +6,12 @@ import { DataSourceApi, DataQuery } from '@grafana/data';
 
 const updateRichHistoryMock = jest.fn();
 
-const setup = (propOverrides?: Partial<Props>) => {
-  const props: Props = {
+interface MockQuery extends DataQuery {
+  query: string;
+}
+
+const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
+  const props: Props<MockQuery> = {
     query: {
       id: '1',
       createdAt: 1,
@@ -16,9 +20,9 @@ const setup = (propOverrides?: Partial<Props>) => {
       starred: false,
       comment: '',
       queries: [
-        { expr: 'query1', refId: 'A' } as DataQuery,
-        { expr: 'query2', refId: 'B' } as DataQuery,
-        { expr: 'query3', refId: 'C' } as DataQuery,
+        { query: 'query1', refId: 'A' },
+        { query: 'query2', refId: 'B' },
+        { query: 'query3', refId: 'C' },
       ],
     },
     dsImg: '/app/img',
@@ -36,7 +40,7 @@ const setup = (propOverrides?: Partial<Props>) => {
   return wrapper;
 };
 
-const starredQueryWithComment: RichHistoryQuery = {
+const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
   id: '1',
   createdAt: 1,
   datasourceUid: 'Test datasource uid',
@@ -44,9 +48,9 @@ const starredQueryWithComment: RichHistoryQuery = {
   starred: true,
   comment: 'test comment',
   queries: [
-    { query: 'query1', refId: 'A' } as DataQuery,
-    { query: 'query2', refId: 'B' } as DataQuery,
-    { query: 'query3', refId: 'C' } as DataQuery,
+    { query: 'query1', refId: 'A' },
+    { query: 'query2', refId: 'B' },
+    { query: 'query3', refId: 'C' },
   ],
 };
 
@@ -54,9 +58,9 @@ describe('RichHistoryCard', () => {
   it('should render all queries', () => {
     const wrapper = setup();
     expect(wrapper.find({ 'aria-label': 'Query text' })).toHaveLength(3);
-    expect(wrapper.find({ 'aria-label': 'Query text' }).at(0).text()).toEqual('{"expr":"query1"}');
-    expect(wrapper.find({ 'aria-label': 'Query text' }).at(1).text()).toEqual('{"expr":"query2"}');
-    expect(wrapper.find({ 'aria-label': 'Query text' }).at(2).text()).toEqual('{"expr":"query3"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(0).text()).toEqual('{"query":"query1"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(1).text()).toEqual('{"query":"query2"}');
+    expect(wrapper.find({ 'aria-label': 'Query text' }).at(2).text()).toEqual('{"query":"query3"}');
   });
   it('should render data source icon', () => {
     const wrapper = setup();
