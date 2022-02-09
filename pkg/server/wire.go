@@ -149,6 +149,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Store), new(*authinfodatabase.AuthInfoStore)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
+	searchV2.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
