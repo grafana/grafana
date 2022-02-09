@@ -1,4 +1,4 @@
-import { ThunkResult } from '../../../types';
+import { ServiceAccountDTO, ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import { serviceAccountLoaded, serviceAccountsLoaded, serviceAccountTokensLoaded } from './reducers';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -45,10 +45,9 @@ export function loadServiceAccounts(): ThunkResult<void> {
   };
 }
 
-export function updateServiceAccount(saID: number): ThunkResult<void> {
+export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
-    // TODO: implement on backend
-    await getBackendSrv().patch(`${BASE_URL}/${saID}`, {});
+    await getBackendSrv().patch(`/api/org/users/${serviceAccount.id}`, { role: serviceAccount.role });
     dispatch(loadServiceAccounts());
   };
 }
