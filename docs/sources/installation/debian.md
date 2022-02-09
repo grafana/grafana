@@ -38,19 +38,19 @@ If you install from the APT repository, then Grafana is automatically updated ev
 ```bash
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
-sudo wget -q -O /usr/share/keyrings/grafana.key https://packages.grafana.com/gpg.key
+wget -qO - https://packages.grafana.com/gpg.key | sudo gpg --dearmor --output /usr/share/keyrings/grafana.gpg
 ```
 
 Add this repository for stable releases:
 
 ```bash
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/enterprise/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://packages.grafana.com/enterprise/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
 ```
 
 Add this repository if you want beta releases:
 
 ```bash
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/enterprise/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://packages.grafana.com/enterprise/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
 ```
 
 After you add the repository:
@@ -65,19 +65,19 @@ sudo apt-get install grafana-enterprise
 ```bash
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
-sudo wget -q -O /usr/share/keyrings/grafana.key https://packages.grafana.com/gpg.key
+wget -qO - https://packages.grafana.com/gpg.key | sudo gpg --dearmor --output /usr/share/keyrings/grafana.gpg
 ```
 
 Add this repository for stable releases:
 
 ```bash
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
 ```
 
 Add this repository if you want beta releases:
 
 ```bash
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
 ```
 
 After you add the repository:
