@@ -341,6 +341,108 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "CreateDashboardSnapshotCommand": {
+   "properties": {
+    "Result": {
+     "$ref": "#/definitions/DashboardSnapshot"
+    },
+    "dashboard": {
+     "$ref": "#/definitions/Json"
+    },
+    "deleteKey": {
+     "description": "Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`.",
+     "type": "string",
+     "x-go-name": "DeleteKey"
+    },
+    "expires": {
+     "default": 0,
+     "description": "When the snapshot should expire in seconds in seconds. Default is never to expire.",
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Expires"
+    },
+    "external": {
+     "default": false,
+     "description": "these are passed when storing an external snapshot ref\nSave the snapshot on an external server rather than locally.",
+     "type": "boolean",
+     "x-go-name": "External"
+    },
+    "key": {
+     "description": "Define the unique key. Required if `external` is `true`.",
+     "type": "string",
+     "x-go-name": "Key"
+    },
+    "name": {
+     "description": "Snapshot name",
+     "type": "string",
+     "x-go-name": "Name"
+    }
+   },
+   "required": [
+    "dashboard"
+   ],
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
+  },
+  "DashboardSnapshot": {
+   "description": "DashboardSnapshot model",
+   "properties": {
+    "Created": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "Dashboard": {
+     "$ref": "#/definitions/Json"
+    },
+    "DashboardEncrypted": {
+     "items": {
+      "format": "uint8",
+      "type": "integer"
+     },
+     "type": "array"
+    },
+    "DeleteKey": {
+     "type": "string"
+    },
+    "Expires": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "External": {
+     "type": "boolean"
+    },
+    "ExternalDeleteUrl": {
+     "type": "string"
+    },
+    "ExternalUrl": {
+     "type": "string"
+    },
+    "Id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Key": {
+     "type": "string"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "OrgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Updated": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "UserId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
+  },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
    "format": "date-time",
@@ -381,6 +483,12 @@
    ],
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "DsPermissionType": {
+   "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+   "format": "int64",
+   "type": "integer",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
   },
   "Duration": {
    "format": "int64",
@@ -766,10 +874,11 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "Alerting",
+      "Error"
      ],
      "type": "string",
-     "x-go-enum-desc": "Alerting AlertingErrState",
+     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
      "x-go-name": "ExecErrState"
     },
     "id": {
@@ -1727,10 +1836,11 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "Alerting",
+      "Error"
      ],
      "type": "string",
-     "x-go-enum-desc": "Alerting AlertingErrState",
+     "x-go-enum-desc": "Alerting AlertingErrState\nError ErrorErrState",
      "x-go-name": "ExecErrState"
     },
     "no_data_state": {
@@ -2908,7 +3018,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -2930,7 +3039,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
    "items": {
@@ -3183,11 +3294,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableSilences",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "labelSet": {
    "additionalProperties": {

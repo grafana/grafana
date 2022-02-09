@@ -35,6 +35,23 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
 
 variableAdapters.setInit(() => [createAdHocVariableAdapter()]);
 
+const datasources = [
+  { ...createDatasource('default', true, true), value: null },
+  createDatasource('elasticsearch-v1'),
+  createDatasource('loki', false),
+  createDatasource('influx'),
+  createDatasource('google-sheets', false),
+  createDatasource('elasticsearch-v7'),
+];
+
+const expectedDatasources = [
+  { text: '', value: {} },
+  { text: 'default (default)', value: { uid: 'default', type: 'default' } },
+  { text: 'elasticsearch-v1', value: { uid: 'elasticsearch-v1', type: 'elasticsearch-v1' } },
+  { text: 'influx', value: { uid: 'influx', type: 'influx' } },
+  { text: 'elasticsearch-v7', value: { uid: 'elasticsearch-v7', type: 'elasticsearch-v7' } },
+];
+
 describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and filter already exist', () => {
     it('then correct actions are dispatched', async () => {
@@ -350,15 +367,6 @@ describe('adhoc actions', () => {
 
   describe('when initAdHocVariableEditor is dispatched', () => {
     it('then correct actions are dispatched', async () => {
-      const datasources = [
-        { ...createDatasource('default', true, true), value: null },
-        createDatasource('elasticsearch-v1'),
-        createDatasource('loki', false),
-        createDatasource('influx'),
-        createDatasource('google-sheets', false),
-        createDatasource('elasticsearch-v7'),
-      ];
-
       getList.mockRestore();
       getList.mockReturnValue(datasources);
 
@@ -366,41 +374,32 @@ describe('adhoc actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(initAdHocVariableEditor());
 
-      const expectedDatasources = [
-        { text: '', value: {} },
-        { text: 'default (default)', value: { uid: 'default', type: 'default' } },
-        { text: 'elasticsearch-v1', value: { uid: 'elasticsearch-v1', type: 'elasticsearch-v1' } },
-        { text: 'influx', value: { uid: 'influx', type: 'influx' } },
-        { text: 'elasticsearch-v7', value: { uid: 'elasticsearch-v7', type: 'elasticsearch-v7' } },
-      ];
-
-      tester.thenDispatchedActionsShouldEqual(
-        changeVariableEditorExtended({ propName: 'dataSources', propValue: expectedDatasources })
-      );
+      tester.thenDispatchedActionsShouldEqual(changeVariableEditorExtended({ dataSources: expectedDatasources }));
     });
   });
 
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = { uid: 'mysql' };
-      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource({ uid: 'influxdb' }).build();
 
       getDatasource.mockRestore();
       getDatasource.mockResolvedValue(null);
+      getList.mockRestore();
+      getList.mockReturnValue(datasources);
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
+        .whenActionIsDispatched(initAdHocVariableEditor())
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText }),
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
         changeVariableEditorExtended({
-          propName: 'infoText',
-          propValue: 'This data source does not support ad hoc filters yet.',
+          infoText: 'This data source does not support ad hoc filters yet.',
+          dataSources: expectedDatasources,
         })
       );
     });
@@ -416,16 +415,19 @@ describe('adhoc actions', () => {
       getDatasource.mockResolvedValue({
         getTagKeys: () => {},
       });
+      getList.mockRestore();
+      getList.mockReturnValue(datasources);
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
+        .whenActionIsDispatched(initAdHocVariableEditor())
         .whenAsyncActionIsDispatched(changeVariableDatasource(datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        changeVariableEditorExtended({ propName: 'infoText', propValue: loadingText }),
-        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
+        changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
+        changeVariableEditorExtended({ infoText: loadingText, dataSources: expectedDatasources })
       );
     });
   });

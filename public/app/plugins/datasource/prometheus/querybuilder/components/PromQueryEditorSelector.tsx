@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
 import { PromQueryEditor } from '../../components/PromQueryEditor';
@@ -12,6 +12,8 @@ import { QueryEditorMode } from '../shared/types';
 import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
+import { QueryPreview } from './QueryPreview';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -36,21 +38,14 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     });
   };
 
-  const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {
+  const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, instant: isEnabled, exemplar: false });
-    onRunQuery();
-  };
-
-  const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, exemplar: isEnabled });
+    onChange({ ...query, editorPreview: isEnabled });
     onRunQuery();
   };
 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-  const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
 
   return (
     <>
@@ -67,10 +62,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <QueryHeaderSwitch label="Instant" value={query.instant} onChange={onInstantChange} />
-        {showExemplarSwitch && (
-          <QueryHeaderSwitch label="Exemplars" value={query.exemplar} onChange={onExemplarChange} />
-        )}
         {editorMode === QueryEditorMode.Builder && (
           <>
             <InlineSelect
@@ -87,19 +78,31 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             />
           </>
         )}
+        <QueryHeaderSwitch
+          label="Preview"
+          value={query.editorPreview}
+          onChange={onQueryPreviewChange}
+          disabled={editorMode !== QueryEditorMode.Builder}
+        />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
-      {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
-      {editorMode === QueryEditorMode.Builder && (
-        <PromQueryBuilder
-          query={visualQuery}
-          datasource={props.datasource}
-          onChange={onChangeViewModel}
-          onRunQuery={props.onRunQuery}
-        />
-      )}
-      {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
+      <EditorRows>
+        {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
+        {editorMode === QueryEditorMode.Builder && (
+          <>
+            <PromQueryBuilder
+              query={visualQuery}
+              datasource={props.datasource}
+              onChange={onChangeViewModel}
+              onRunQuery={props.onRunQuery}
+            />
+            {query.editorPreview && <QueryPreview query={visualQuery} />}
+            <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
+          </>
+        )}
+        {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
+      </EditorRows>
     </>
   );
 });

@@ -1,15 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { isNumber, sortBy, toLower, uniqBy } from 'lodash';
-import { DataSourceApi, MetricFindValue, stringToJsRegex } from '@grafana/data';
+import { MetricFindValue, stringToJsRegex } from '@grafana/data';
 
-import {
-  initialVariableModelState,
-  QueryVariableModel,
-  VariableOption,
-  VariableQueryEditorType,
-  VariableRefresh,
-  VariableSort,
-} from '../types';
+import { initialVariableModelState, QueryVariableModel, VariableOption, VariableRefresh, VariableSort } from '../types';
 
 import { getInstanceState, initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT, NONE_VARIABLE_VALUE } from '../constants';
@@ -17,11 +10,6 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT, NONE_VARIABL
 interface VariableOptionsUpdate {
   templatedRegex: string;
   results: MetricFindValue[];
-}
-
-export interface QueryVariableEditorState {
-  VariableQueryEditor: VariableQueryEditorType;
-  dataSource: DataSourceApi | null;
 }
 
 export const initialQueryVariableModelState: QueryVariableModel = {

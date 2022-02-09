@@ -106,6 +106,7 @@ type Store interface {
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
 	GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error)
 	SearchDashboards(ctx context.Context, query *search.FindPersistedDashboardsQuery) error
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
@@ -150,4 +151,5 @@ type Store interface {
 	GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error
 	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
+	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 }

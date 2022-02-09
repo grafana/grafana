@@ -25,11 +25,12 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceaccountForm) (user *models.User, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceaccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
 	// create a new service account - "user" with empty permissions
+	generatedLogin := "Service-Account-" + uuid.New().String()
 	cmd := models.CreateUserCommand{
-		Login:            "Service-Account-" + uuid.New().String(),
-		Name:             sa.Name + "-Service-Account-" + uuid.New().String(),
+		Login:            generatedLogin,
+		Name:             sa.Name,
 		OrgId:            sa.OrgID,
 		IsServiceAccount: true,
 	}
@@ -37,7 +38,13 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
-	return newuser, nil
+	return &serviceaccounts.ServiceAccountDTO{
+		Id:     newuser.Id,
+		Name:   newuser.Name,
+		Login:  newuser.Login,
+		OrgId:  newuser.OrgId,
+		Tokens: 0,
+	}, nil
 }
 
 func (s *ServiceAccountsStoreImpl) DeleteServiceAccount(ctx context.Context, orgID, serviceaccountID int64) error {
@@ -130,33 +137,52 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	})
 	return result, err
 }
-func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*models.OrgUserDTO, error) {
+
+func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgID, serviceAccountID int64) ([]*serviceaccounts.ServiceAccountDTO, error) {
 	query := models.GetOrgUsersQuery{OrgId: orgID, IsServiceAccount: true}
 	if serviceAccountID > 0 {
 		query.UserID = serviceAccountID
 	}
 
-	err := s.sqlStore.GetOrgUsers(ctx, &query)
-	if err != nil {
+	if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
 		return nil, err
 	}
 
-	return query.Result, err
+	saDTOs := make([]*serviceaccounts.ServiceAccountDTO, len(query.Result))
+	for i, user := range query.Result {
+		saDTOs[i] = &serviceaccounts.ServiceAccountDTO{
+			Id:    user.UserId,
+			OrgId: user.OrgId,
+			Name:  user.Name,
+			Login: user.Login,
+			Role:  user.Role,
+		}
+		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
+		if err != nil {
+			return nil, err
+		}
+		saDTOs[i].Tokens = int64(len(tokens))
+	}
+
+	return saDTOs, nil
 }
 
 // RetrieveServiceAccountByID returns a service account by its ID
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*models.OrgUserDTO, error) {
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	query := models.GetOrgUsersQuery{UserID: serviceAccountID, OrgId: orgID, IsServiceAccount: true}
 	err := s.sqlStore.GetOrgUsers(ctx, &query)
 	if err != nil {
 		return nil, err
 	}
-
 	if len(query.Result) != 1 {
 		return nil, serviceaccounts.ErrServiceAccountNotFound
 	}
-
-	return query.Result[0], err
+	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
+		Id:    query.Result[0].UserId,
+		Name:  query.Result[0].Name,
+		Login: query.Result[0].Login,
+	}
+	return saProfile, err
 }
 
 func contains(s []int64, e int64) bool {

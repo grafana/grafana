@@ -42,6 +42,8 @@ type ResourcePermissionsService interface {
 	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*ResourcePermission, error)
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
+	// SetPermissions sets several permissions on resource for either built-in role, team or user
+	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 }
 
 type User struct {
