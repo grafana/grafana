@@ -83,5 +83,11 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		}
 	}
 
-	return &httputil.ReverseProxy{Director: director}
+	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse}
+}
+
+func modifyResponse(resp *http.Response) error {
+	proxyutil.SetProxyResponseHeaders(resp.Header)
+
+	return nil
 }

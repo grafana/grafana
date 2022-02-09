@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,6 +38,14 @@ func (m *mockAuthInfoService) LookupAndUpdate(ctx context.Context, query *models
 }
 func (m *mockAuthInfoService) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	m.LatestUserID = query.UserId
+	return m.ExpectedError
+}
+
+func (m *mockAuthInfoService) SetAuthInfo(ctx context.Context, query *models.SetAuthInfoCommand) error {
+	return m.ExpectedError
+}
+
+func (m *mockAuthInfoService) UpdateAuthInfo(ctx context.Context, query *models.UpdateAuthInfoCommand) error {
 	return m.ExpectedError
 }
 
@@ -281,6 +288,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -339,6 +347,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -445,13 +454,19 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := HTTPServer{
-			Bus:   bus.GetBus(),
-			Login: fakeLoginService{expected: cmd},
+			Bus: bus.GetBus(),
+			Login: loginservice.LoginServiceMock{
+				ExpectedUserForm:    cmd,
+				NoExistingOrgId:     nonExistingOrgID,
+				AlreadyExitingLogin: existingTestLogin,
+				GeneratedUserId:     testUserID,
+			},
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 
@@ -462,26 +477,4 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 
 		fn(sc)
 	})
-}
-
-type fakeLoginService struct {
-	login.Service
-	expected dtos.AdminCreateUserForm
-}
-
-func (s fakeLoginService) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
-	if cmd.OrgId == nonExistingOrgID {
-		return nil, models.ErrOrgNotFound
-	}
-
-	if cmd.Login == existingTestLogin {
-		return nil, models.ErrUserAlreadyExists
-	}
-
-	if s.expected.Login == cmd.Login && s.expected.Email == cmd.Email &&
-		s.expected.Password == cmd.Password && s.expected.Name == cmd.Name && s.expected.OrgId == cmd.OrgId {
-		return &models.User{Id: testUserID}, nil
-	}
-
-	return nil, errors.New("unexpected cmd")
 }

@@ -1,6 +1,6 @@
 import { orderIdsByCalcs, preparePlotData, timeFormatToTemplate } from './utils';
 import { FieldType, MutableDataFrame } from '@grafana/data';
-import { StackingMode } from '@grafana/schema';
+import { GraphTransform, StackingMode } from '@grafana/schema';
 
 describe('timeFormatToTemplate', () => {
   it.each`
@@ -53,6 +53,76 @@ describe('preparePlotData', () => {
     `);
   });
 
+  describe('transforms', () => {
+    it('negative-y transform', () => {
+      const df = new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+          { name: 'a', values: [-10, 20, 10] },
+          { name: 'b', values: [10, 10, 10] },
+          { name: 'c', values: [20, 20, 20], config: { custom: { transform: GraphTransform.NegativeY } } },
+        ],
+      });
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+          ],
+          Array [
+            10,
+            10,
+            10,
+          ],
+          Array [
+            -20,
+            -20,
+            -20,
+          ],
+        ]
+      `);
+    });
+    it('constant transform', () => {
+      const df = new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+          { name: 'a', values: [-10, 20, 10], config: { custom: { transform: GraphTransform.Constant } } },
+          { name: 'b', values: [10, 10, 10] },
+          { name: 'c', values: [20, 20, 20] },
+        ],
+      });
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            -10,
+            -10,
+          ],
+          Array [
+            10,
+            10,
+            10,
+          ],
+          Array [
+            20,
+            20,
+            20,
+          ],
+        ]
+      `);
+    });
+  });
   describe('stacking', () => {
     it('none', () => {
       const df = new MutableDataFrame({
@@ -143,6 +213,67 @@ describe('preparePlotData', () => {
             20,
             50,
             40,
+          ],
+        ]
+      `);
+    });
+
+    it('standard with negative y transform', () => {
+      const df = new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+          {
+            name: 'a',
+            values: [-10, 20, 10],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+          },
+          {
+            name: 'b',
+            values: [10, 10, 10],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+          },
+          {
+            name: 'c',
+            values: [20, 20, 20],
+            config: {
+              custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' }, transform: GraphTransform.NegativeY },
+            },
+          },
+          {
+            name: 'd',
+            values: [10, 10, 10],
+            config: {
+              custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' }, transform: GraphTransform.NegativeY },
+            },
+          },
+        ],
+      });
+      expect(preparePlotData([df])).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+          ],
+          Array [
+            0,
+            30,
+            20,
+          ],
+          Array [
+            -20,
+            -20,
+            -20,
+          ],
+          Array [
+            -30,
+            -30,
+            -30,
           ],
         ]
       `);

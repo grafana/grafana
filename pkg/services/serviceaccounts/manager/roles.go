@@ -19,6 +19,10 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 					Scope:  serviceaccounts.ScopeAll,
 				},
 				{
+					Action: serviceaccounts.ActionWrite,
+					Scope:  serviceaccounts.ScopeAll,
+				},
+				{
 					Action: serviceaccounts.ActionCreate,
 				},
 				{

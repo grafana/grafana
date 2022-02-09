@@ -39,6 +39,7 @@ vendor/
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
+/devenv/docker/blocks/saml-enterprise
 
 /tmp
 tools/phantomjs/phantomjs
