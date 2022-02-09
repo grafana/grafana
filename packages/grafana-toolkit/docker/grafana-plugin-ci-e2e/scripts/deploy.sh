@@ -5,7 +5,7 @@ source "/etc/profile"
 source "./deploy-slim.sh"
 source "./deploy-common.sh"
 
-NODEVER="v14.17.3"
+NODEVER="v16.13.2"
 # Install Node
 wget -O - "https://nodejs.org/dist/${NODEVER}/node-${NODEVER}-linux-x64.tar.xz" | tar Jvxf - -C "/tmp"
 
@@ -41,7 +41,7 @@ chmod 755 /usr/local/bin/golangci-lint
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "5e72323531a2d1842d81ec784a2b4ed789cc9c8ecf0213d4f701855fa13d1bfb"
+    "9fbe34cd207924d8f51ac0f3ffa690df4169e055cd7134a2370f6650f5b356e1"
 chmod 755 /usr/local/bin/cc-test-reporter
 
 wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/grabpl"

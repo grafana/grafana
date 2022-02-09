@@ -26,7 +26,6 @@ import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
-import { TNil } from '../types';
 import { Trace } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
@@ -149,22 +148,19 @@ type TracePageHeaderEmbedProps = {
   prevResult: () => void;
   resultCount: number;
   slimView: boolean;
-  textFilter: string | TNil;
   trace: Trace;
-  traceGraphView: boolean;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
-  hideSearchButtons?: boolean;
   timeZone: TimeZone;
 };
 
 export const HEADER_ITEMS = [
   {
     key: 'timestamp',
-    label: 'Trace Start',
+    label: 'Trace Start:',
     renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
       // Convert date from micro to milli seconds
       const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
@@ -181,22 +177,22 @@ export const HEADER_ITEMS = [
   },
   {
     key: 'duration',
-    label: 'Duration',
+    label: 'Duration:',
     renderer: (trace: Trace) => formatDuration(trace.duration),
   },
   {
     key: 'service-count',
-    label: 'Services',
+    label: 'Services:',
     renderer: (trace: Trace) => new Set(_values(trace.processes).map((p) => p.serviceName)).size,
   },
   {
     key: 'depth',
-    label: 'Depth',
+    label: 'Depth:',
     renderer: (trace: Trace) => _get(_maxBy(trace.spans, 'depth'), 'depth', 0) + 1,
   },
   {
     key: 'span-count',
-    label: 'Total Spans',
+    label: 'Total Spans:',
     renderer: (trace: Trace) => trace.spans.length,
   },
 ];
@@ -213,15 +209,12 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     prevResult,
     resultCount,
     slimView,
-    textFilter,
     trace,
-    traceGraphView,
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
     searchValue,
     onSearchValueChange,
-    hideSearchButtons,
     timeZone,
   } = props;
 
@@ -280,11 +273,10 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
           nextResult={nextResult}
           prevResult={prevResult}
           resultCount={resultCount}
-          textFilter={textFilter}
-          navigable={!traceGraphView}
+          // TODO: we can change this when we have scroll to span functionality
+          navigable={false}
           searchValue={searchValue}
           onSearchValueChange={onSearchValueChange}
-          hideSearchButtons={hideSearchButtons}
         />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
