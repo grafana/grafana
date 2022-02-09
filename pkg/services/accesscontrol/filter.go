@@ -11,20 +11,26 @@ import (
 
 var sqlIDAcceptList = map[string]struct{}{
 	"org_user.user_id": {},
+	"role.id":          {},
+	"team.id":          {},
+	"\"user\".\"id\"":  {}, // For Postgres
+	"`user`.`id`":      {}, // For MySQL and SQLite
 }
 
-const denyQuery = " 1 = 0"
-const allowAllQuery = " 1 = 1"
+var (
+	denyQuery     = SQLFilter{" 1 = 0", nil}
+	allowAllQuery = SQLFilter{" 1 = 1", nil}
+)
 
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes for a certain action will be compared against prefix:id:sqlID where prefix is the scope prefix and sqlID
 // is the id to generate scope from e.g. user.id
-func Filter(ctx context.Context, sqlID, prefix, action string, user *models.SignedInUser) (string, []interface{}, error) {
+func Filter(ctx context.Context, sqlID, prefix, action string, user *models.SignedInUser) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
-		return denyQuery, nil, errors.New("sqlID is not in the accept list")
+		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
-	if user.Permissions == nil || user.Permissions[user.OrgId] == nil {
-		return denyQuery, nil, errors.New("missing permissions")
+	if user == nil || user.Permissions == nil || user.Permissions[user.OrgId] == nil {
+		return denyQuery, errors.New("missing permissions")
 	}
 
 	var hasWildcard bool
@@ -42,11 +48,11 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 	}
 
 	if hasWildcard {
-		return allowAllQuery, nil, nil
+		return allowAllQuery, nil
 	}
 
 	if len(ids) == 0 {
-		return denyQuery, nil, nil
+		return denyQuery, nil
 	}
 
 	query := strings.Builder{}
@@ -57,7 +63,7 @@ func Filter(ctx context.Context, sqlID, prefix, action string, user *models.Sign
 	query.WriteString(strings.Repeat(",?", len(ids)-1))
 	query.WriteRune(')')
 
-	return query.String(), ids, nil
+	return SQLFilter{query.String(), ids}, nil
 }
 
 func parseScopeID(scope string) (int64, error) {

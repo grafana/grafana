@@ -55,6 +55,10 @@ const (
 	// show service
 	FlagTempoServiceGraph = "tempoServiceGraph"
 
+	// FlagLokiBackendMode
+	// Loki datasource works as backend datasource
+	FlagLokiBackendMode = "lokiBackendMode"
+
 	// FlagFullRangeLogsVolume
 	// Show full range logs volume in explore
 	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
@@ -66,6 +70,10 @@ const (
 	// FlagPrometheusAzureAuth
 	// Use azure authentication for prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
+
+	// FlagInfluxdbBackendMigration
+	// Query InfluxDB InfluxQL without the proxy
+	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
 	// FlagNewNavigation
 	// Try the next gen navigation model
@@ -82,4 +90,12 @@ const (
 	// FlagValidatedQueries
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
+
+	// FlagSwaggerUi
+	// Serves swagger UI
+	FlagSwaggerUi = "swaggerUi"
+
+	// FlagFeatureHighlights
+	// Highlight Enterprise features
+	FlagFeatureHighlights = "featureHighlights"
 )

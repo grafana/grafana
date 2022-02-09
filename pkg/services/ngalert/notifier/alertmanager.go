@@ -232,7 +232,7 @@ func (am *Alertmanager) StopAndWait() {
 
 // SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
+func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
@@ -248,7 +248,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 		return err
 	}
 
-	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
+	err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
 		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
 		}
@@ -263,7 +263,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 
 // SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
@@ -278,7 +278,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 		OrgID:                     am.orgID,
 	}
 
-	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
+	err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
 		if err := am.applyConfig(cfg, rawConfig); err != nil {
 			return err
 		}

@@ -37,11 +37,18 @@ type ResourcePermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
-	SetUserPermission(ctx context.Context, orgID, userID int64, resourceID, permission string) (*ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
 	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*ResourcePermission, error)
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
+	// SetPermissions sets several permissions on resource for either built-in role, team or user
+	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
+}
+
+type User struct {
+	ID         int64
+	IsExternal bool
 }
 
 // Metadata contains user accesses for a given resource

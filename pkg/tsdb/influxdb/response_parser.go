@@ -19,32 +19,27 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$(\s*([\@\w-]+?))*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryDataResponse {
+func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
-	queryRes := backend.DataResponse{}
 
 	response, jsonErr := parseJSON(buf)
 	if jsonErr != nil {
-		queryRes.Error = jsonErr
-		resp.Responses["A"] = queryRes
+		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
 		return resp
 	}
 
 	if response.Error != "" {
-		queryRes.Error = fmt.Errorf(response.Error)
-		resp.Responses["A"] = queryRes
+		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf(response.Error)}
 		return resp
 	}
 
-	frames := data.Frames{}
-	for _, result := range response.Results {
-		frames = append(frames, transformRows(result.Series, query)...)
+	for i, result := range response.Results {
 		if result.Error != "" {
-			queryRes.Error = fmt.Errorf(result.Error)
+			resp.Responses[queries[i].RefID] = backend.DataResponse{Error: fmt.Errorf(result.Error)}
+		} else {
+			resp.Responses[queries[i].RefID] = backend.DataResponse{Frames: transformRows(result.Series, queries[i])}
 		}
 	}
-	queryRes.Frames = frames
-	resp.Responses["A"] = queryRes
 
 	return resp
 }
@@ -58,7 +53,7 @@ func parseJSON(buf io.ReadCloser) (Response, error) {
 	return response, err
 }
 
-func transformRows(rows []Row, query *Query) data.Frames {
+func transformRows(rows []Row, query Query) data.Frames {
 	frames := data.Frames{}
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {
@@ -121,7 +116,7 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 	return frame
 }
 
-func formatFrameName(row Row, column string, query *Query) string {
+func formatFrameName(row Row, column string, query Query) string {
 	if query.Alias == "" {
 		return buildFrameNameFromQuery(row, column)
 	}

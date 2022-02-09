@@ -29,6 +29,10 @@ type Service interface {
 	EmailSender
 }
 
+type Store interface {
+	GetUserByLogin(context.Context, *models.GetUserByLoginQuery) error
+}
+
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
@@ -44,8 +48,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer) (*Notification
 		mailer:       mailer,
 	}
 
-	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.validateResetPasswordCode)
+	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
+	ns.Bus.AddHandler(ns.ValidateResetPasswordCode)
 	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
 
 	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
@@ -163,7 +167,7 @@ func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd 
 	return nil
 }
 
-func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
+func (ns *NotificationService) SendResetPasswordEmail(ctx context.Context, cmd *models.SendResetPasswordEmailCommand) error {
 	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
 	if err != nil {
 		return err
@@ -178,18 +182,20 @@ func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *
 	})
 }
 
-func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery) error {
+type GetUserByLoginFunc = func(c context.Context, login string) (*models.User, error)
+
+func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, query *models.ValidateResetPasswordCodeQuery, userByLogin GetUserByLoginFunc) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
 		return models.ErrInvalidEmailCode
 	}
 
-	userQuery := models.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.Dispatch(ctx, &userQuery); err != nil {
+	user, err := userByLogin(ctx, login)
+	if err != nil {
 		return err
 	}
 
-	validEmailCode, err := validateUserEmailCode(ns.Cfg, userQuery.Result, query.Code)
+	validEmailCode, err := validateUserEmailCode(ns.Cfg, user, query.Code)
 	if err != nil {
 		return err
 	}
@@ -197,7 +203,7 @@ func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, qu
 		return models.ErrInvalidEmailCode
 	}
 
-	query.Result = userQuery.Result
+	query.Result = user
 	return nil
 }
 

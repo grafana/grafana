@@ -8,6 +8,7 @@
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana-server/",
       "env": {},
+      "cwd": "${workspaceFolder}",
       "args": ["--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {

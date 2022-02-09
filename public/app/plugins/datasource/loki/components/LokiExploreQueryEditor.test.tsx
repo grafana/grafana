@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
-import LokiExploreQueryEditor from './LokiExploreQueryEditor';
+import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
 import { LokiOptionFields } from './LokiOptionFields';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
