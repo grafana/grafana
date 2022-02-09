@@ -109,10 +109,12 @@ myOldFunction(name: string) {
 
 ### Communicate
 
-Reach out to @grafana/plugins-platform-frontend to help finding which plugins are using the code that is just about to change, so we try making it smoother by communicating it to them.
+Reach out to **@grafana/plugins-platform-frontend** to help finding which plugins are using the code that is just about to change, so we try making it smoother by communicating it to them.
 
 ---
 
 ## I still have questions, who can help me out?
 
-We are here to help. Please either ping us in the pull request by using the @grafana/plugins-platform-frontend handle or reach out to us on the internal Slack in #grafana-plugins-platform.
+We are here to help. 
+
+Please either ping us in the pull request by using the **@grafana/plugins-platform-frontend** handle or reach out to us on the internal Slack in `#grafana-plugins-platform`.
