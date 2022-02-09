@@ -1,6 +1,6 @@
-import {DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID} from '@grafana/data';
-import {StreamingFrameAction, StreamingFrameOptions} from '@grafana/runtime';
-import {closestIdx, getStreamingFrameOptions, StreamingDataFrame} from './StreamingDataFrame';
+import { DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID } from '@grafana/data';
+import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
+import { closestIdx, getStreamingFrameOptions, StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
   describe('closestIdx', function () {
@@ -569,7 +569,7 @@ describe('Streaming JSON', () => {
     expect(val).toEqual(200);
     expect(stream.length).toEqual(2);
 
-    const copy = ({ ...stream } as any) as DataFrame;
+    const copy = { ...stream } as any as DataFrame;
     expect(copy.length).toEqual(2);
   });
 

@@ -14,7 +14,7 @@ import {
   toFilteredDataFrameDTO,
 } from '@grafana/data';
 import {join} from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import {StreamingFrameAction, StreamingFrameOptions,} from '@grafana/runtime/src/services/live';
+import {StreamingFrameAction, StreamingFrameOptions} from '@grafana/runtime/src/services/live';
 import {renderLegendFormat} from 'app/plugins/datasource/prometheus/legend';
 import {AlignedData} from 'uplot';
 
@@ -230,7 +230,7 @@ export class StreamingDataFrame implements DataFrame {
         });
         if (displayNameFormat) {
           this.fields.forEach((f) => {
-            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
+            const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...f.labels };
             f.config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           });
         }
@@ -240,7 +240,7 @@ export class StreamingDataFrame implements DataFrame {
         this.fields = niceSchemaFields.map((f) => {
           const config = f.config ?? {};
           if (displayNameFormat) {
-            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
+            const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...f.labels };
             config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
           return {
@@ -408,7 +408,7 @@ export class StreamingDataFrame implements DataFrame {
         if (i > 0) {
           f.labels = parsedLabels;
           if (displayNameFormat) {
-            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...parsedLabels};
+            const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...parsedLabels };
             f.config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
         }
@@ -418,7 +418,7 @@ export class StreamingDataFrame implements DataFrame {
         let proto = this.schemaFields[i] as Field;
         const config = proto.config ?? {};
         if (displayNameFormat) {
-          const labels = {[PROM_STYLE_METRIC_LABEL]:proto.name, ...parsedLabels};
+          const labels = { [PROM_STYLE_METRIC_LABEL]: proto.name, ...parsedLabels };
           config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
         }
         this.fields.push({
@@ -431,7 +431,7 @@ export class StreamingDataFrame implements DataFrame {
     }
 
     this.labels.add(label);
-  };
+  }
 
   getOptions = (): Readonly<StreamingFrameOptions> => this.options;
 }
