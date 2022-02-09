@@ -53,7 +53,7 @@ import {
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
-import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
+import { withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
@@ -62,10 +62,11 @@ import {
   isPrometheusRuleIdentifier,
   isRulerNotSupportedResponse,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute, isFetchError } from '../utils/alertmanager';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
+import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -636,7 +637,8 @@ export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk<boolean, 
             (isFetchError(e) &&
               (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
                 e.data.message?.includes('page not found'))) || // ruler api disabled
-            e.message?.includes('404 from rules config endpoint') // ruler api disabled
+            e.message?.includes('404 from rules config endpoint') || // ruler api disabled
+            e.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
           ) {
             return false;
           }
