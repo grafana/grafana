@@ -100,6 +100,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				{
 					"series": [
 						{
+							"refId": "metricFindQuery",
 							"name": "cpu",
 							"values": [
 								["cpu"],
@@ -113,7 +114,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		var queries []Query
+		queries = append(queries, Query{RefID: "metricFindQuery"})
 		newField := data.NewField("value", nil, []string{
 			"cpu", "disk", "logs",
 		})
@@ -121,7 +123,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 
-		result := parser.Parse(prepare(response), query)
+		result := parser.Parse(prepare(response), queries)
 
 		frame := result.Responses["metricFindQuery"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -148,7 +150,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query2 := &Query{RawQuery: "SHOW TAG VALUES"}
+		var queries2 []Query
+		queries2 = append(queries2, Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
 		newField2 := data.NewField("value", nil, []string{
 			"cpu-total", "cpu0", "cpu1",
 		})
@@ -156,7 +159,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField2,
 		)
 
-		result2 := parser.Parse(prepare(response2), query2)
+		result2 := parser.Parse(prepare(response2), queries2)
 
 		frame2 := result2.Responses["metricFindQuery"]
 		if diff := cmp.Diff(testFrame2, frame2.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
