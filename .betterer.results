@@ -110,16 +110,16 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TracePageHeader/TracePageHeader.test.js:3669774385": [
       [15, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:603024460": [
+    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:1298620967": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:793239444": [
       [15, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:4109042839": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:2288177454": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:3432452743": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2545268168": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:2454947085": [
@@ -137,7 +137,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianText.test.js:2881451220": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.test.js:3195274899": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.test.js:2159985979": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/TextList.test.js:3713828679": [
@@ -173,13 +173,13 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:4107025050": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/common/CopyIcon.test.js:4031960966": [
+    "packages/jaeger-ui-components/src/common/CopyIcon.test.js:3119664776": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/common/NewWindowIcon.test.js:3878561197": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/common/UiFindInput.test.js:1804666688": [
+    "packages/jaeger-ui-components/src/common/UiFindInput.test.js:2258975438": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/url/ReferenceLink.test.js:830986413": [
