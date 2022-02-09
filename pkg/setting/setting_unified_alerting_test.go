@@ -252,10 +252,8 @@ func TestMinInterval(t *testing.T) {
 			}
 			cfg := NewCfg()
 			cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
-
 			err := cfg.ReadUnifiedAlertingSettings(f)
 			testCase.verifyCfg(t, cfg, err)
 		})
 	}
-
 }
