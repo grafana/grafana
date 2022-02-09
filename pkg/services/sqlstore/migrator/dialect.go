@@ -58,8 +58,13 @@ type Dialect interface {
 	IsUniqueConstraintViolation(err error) bool
 	ErrorMessage(err error) string
 	IsDeadlock(err error) bool
-	Lock(*xorm.Session) error
-	Unlock(*xorm.Session) error
+	Lock(LockCfg) error
+	Unlock(LockCfg) error
+}
+
+type LockCfg struct {
+	Session *xorm.Session
+	Timeout int
 }
 
 type dialectFunc func(*xorm.Engine) Dialect
@@ -296,10 +301,10 @@ func (b *BaseDialect) UpsertSQL(tableName string, keyCols, updateCols []string) 
 	return ""
 }
 
-func (b *BaseDialect) Lock(_ *xorm.Session) error {
+func (b *BaseDialect) Lock(_ LockCfg) error {
 	return nil
 }
 
-func (b *BaseDialect) Unlock(_ *xorm.Session) error {
+func (b *BaseDialect) Unlock(_ LockCfg) error {
 	return nil
 }

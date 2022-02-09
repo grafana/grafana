@@ -160,7 +160,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
 	ss.migrations.AddMigration(migrator)
 
-	return migrator.Start(isDatabaseLockingEnabled)
+	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
 }
 
 // Sync syncs changes to the database.
@@ -442,6 +442,7 @@ func (ss *SQLStore) readConfig() error {
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 	return nil
 }
 
@@ -621,23 +622,24 @@ func IsTestDBMSSQL() bool {
 }
 
 type DatabaseConfig struct {
-	Type             string
-	Host             string
-	Name             string
-	User             string
-	Pwd              string
-	Path             string
-	SslMode          string
-	CaCertPath       string
-	ClientKeyPath    string
-	ClientCertPath   string
-	ServerCertName   string
-	ConnectionString string
-	IsolationLevel   string
-	MaxOpenConn      int
-	MaxIdleConn      int
-	ConnMaxLifetime  int
-	CacheMode        string
-	UrlQueryParams   map[string][]string
-	SkipMigrations   bool
+	Type                        string
+	Host                        string
+	Name                        string
+	User                        string
+	Pwd                         string
+	Path                        string
+	SslMode                     string
+	CaCertPath                  string
+	ClientKeyPath               string
+	ClientCertPath              string
+	ServerCertName              string
+	ConnectionString            string
+	IsolationLevel              string
+	MaxOpenConn                 int
+	MaxIdleConn                 int
+	ConnMaxLifetime             int
+	CacheMode                   string
+	UrlQueryParams              map[string][]string
+	SkipMigrations              bool
+	MigrationLockAttemptTimeout int
 }

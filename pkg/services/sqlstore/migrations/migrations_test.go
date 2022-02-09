@@ -38,7 +38,7 @@ func TestMigrations(t *testing.T) {
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)
 
-	err = mg.Start(false)
+	err = mg.Start(false, 0)
 	require.NoError(t, err)
 
 	has, err := x.SQL(query).Get(&result)
@@ -50,7 +50,7 @@ func TestMigrations(t *testing.T) {
 	mg = NewMigrator(x, &setting.Cfg{})
 	migrations.AddMigration(mg)
 
-	err = mg.Start(false)
+	err = mg.Start(false, 0)
 	require.NoError(t, err)
 
 	has, err = x.SQL(query).Get(&result)
@@ -77,16 +77,18 @@ func TestMigrationLock(t *testing.T) {
 		sess.Close()
 	})
 
+	cfg := LockCfg{Session: sess}
+
 	t.Run("obtaining lock should succeed", func(t *testing.T) {
-		err := dialect.Lock(sess)
+		err := dialect.Lock(cfg)
 		require.NoError(t, err)
 
 		t.Run("releasing previously obtained lock should succeed", func(t *testing.T) {
-			err := dialect.Unlock(sess)
+			err := dialect.Unlock(cfg)
 			require.NoError(t, err)
 
 			t.Run("releasing already released lock should fail", func(t *testing.T) {
-				err := dialect.Unlock(sess)
+				err := dialect.Unlock(cfg)
 				require.Error(t, err)
 				assert.ErrorIs(t, err, ErrReleaseLockDB)
 			})
@@ -94,17 +96,17 @@ func TestMigrationLock(t *testing.T) {
 	})
 
 	t.Run("obtaining lock twice should succeed", func(t *testing.T) {
-		err = dialect.Lock(sess)
+		err = dialect.Lock(cfg)
 		require.NoError(t, err)
 
-		err = dialect.Lock(sess)
+		err = dialect.Lock(cfg)
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := dialect.Unlock(sess)
+			err := dialect.Unlock(cfg)
 			require.NoError(t, err)
 
-			err = dialect.Unlock(sess)
+			err = dialect.Unlock(cfg)
 			require.NoError(t, err)
 		})
 	})
@@ -116,35 +118,35 @@ func TestMigrationLock(t *testing.T) {
 
 		d2 := NewDialect(x2)
 
-		err = dialect.Lock(sess)
+		err = dialect.Lock(cfg)
 		require.NoError(t, err)
 
-		err = d2.Lock(sess2)
+		err = d2.Lock(LockCfg{Session: sess2})
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrLockDB)
 
 		t.Cleanup(func() {
-			err := dialect.Unlock(sess)
+			err := dialect.Unlock(cfg)
 			require.NoError(t, err)
 		})
 	})
 
 	t.Run("obtaining lock for a another database should succeed", func(t *testing.T) {
-		err := dialect.Lock(sess)
+		err := dialect.Lock(cfg)
 		require.NoError(t, err)
 
 		x, err := xorm.NewEngine(testDB.DriverName, replaceDBName(t, testDB.ConnStr, dbType))
 		require.NoError(t, err)
 
 		d := NewDialect(x)
-		err = d.Lock(sess)
+		err = d.Lock(cfg)
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := dialect.Unlock(sess)
+			err := dialect.Unlock(cfg)
 			require.NoError(t, err)
 
-			err = d.Unlock(sess)
+			err = d.Unlock(cfg)
 			require.NoError(t, err)
 		})
 	})
@@ -170,7 +172,7 @@ func TestMigratorLocking(t *testing.T) {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
-				err = mg.Start(true)
+				err = mg.Start(true, 0)
 				if err != nil {
 					if errors.Is(err, ErrMigratorIsLocked) {
 						atomic.AddInt64(&errorNum, 1)
@@ -217,7 +219,7 @@ func TestDatabaseLocking(t *testing.T) {
 				mg, err := reg.get(i)
 				require.NoError(t, err)
 				t.Parallel()
-				err = mg.Start(true)
+				err = mg.Start(true, 0)
 				if err != nil {
 					assert.ErrorIs(t, err, ErrLockDB)
 					if errors.Is(err, ErrLockDB) {

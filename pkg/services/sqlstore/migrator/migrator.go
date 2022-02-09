@@ -94,21 +94,21 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
-func (mg *Migrator) Start(isDatabaseLockingEnabled bool) (err error) {
+func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
 	if !isDatabaseLockingEnabled {
 		return mg.run()
 	}
 
 	return mg.InTransaction(func(sess *xorm.Session) error {
 		mg.Logger.Info("Locking database")
-		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, sess); err != nil {
+		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, LockCfg{Session: sess, Timeout: lockAttemptTimeout}); err != nil {
 			mg.Logger.Error("Failed to lock database", "error", err)
 			return err
 		}
 
 		defer func() {
 			mg.Logger.Info("Unlocking database")
-			unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, sess)
+			unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, LockCfg{Session: sess})
 			if unlockErr != nil {
 				mg.Logger.Error("Failed to unlock database", "error", unlockErr)
 			}
@@ -244,11 +244,11 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	return nil
 }
 
-func casRestoreOnErr(lock *atomic.Bool, o, n bool, casErr error, f func(*xorm.Session) error, session *xorm.Session) error {
+func casRestoreOnErr(lock *atomic.Bool, o, n bool, casErr error, f func(LockCfg) error, lockCfg LockCfg) error {
 	if !lock.CAS(o, n) {
 		return casErr
 	}
-	if err := f(session); err != nil {
+	if err := f(lockCfg); err != nil {
 		// Automatically unlock/lock on error
 		lock.Store(o)
 		return err

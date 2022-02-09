@@ -231,7 +231,7 @@ func (db *MySQLDialect) UpsertSQL(tableName string, keyCols, updateCols []string
 	return s
 }
 
-func (db *MySQLDialect) Lock(sess *xorm.Session) error {
+func (db *MySQLDialect) Lock(cfg LockCfg) error {
 	query := "SELECT GET_LOCK(?, ?)"
 	var success sql.NullBool
 
@@ -247,7 +247,7 @@ func (db *MySQLDialect) Lock(sess *xorm.Session) error {
 	// or NULL if an error occurred
 	// starting from MySQL 5.7 it is even possible for a given session to acquire multiple locks for the same name
 	// however other sessions cannot acquire a lock with that name until the acquiring session releases all its locks for the name.
-	_, err = sess.SQL(query, lockName, 0).Get(&success)
+	_, err = cfg.Session.SQL(query, lockName, cfg.Timeout).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -257,7 +257,7 @@ func (db *MySQLDialect) Lock(sess *xorm.Session) error {
 	return nil
 }
 
-func (db *MySQLDialect) Unlock(sess *xorm.Session) error {
+func (db *MySQLDialect) Unlock(cfg LockCfg) error {
 	query := "SELECT RELEASE_LOCK(?)"
 	var success sql.NullBool
 
@@ -270,7 +270,7 @@ func (db *MySQLDialect) Unlock(sess *xorm.Session) error {
 	// it returns 1 if the lock was released,
 	// 0 if the lock was not established by this thread (in which case the lock is not released),
 	// and NULL if the named lock did not exist (it was never obtained by a call to GET_LOCK() or if it has previously been released)
-	_, err = sess.SQL(query, lockName).Get(&success)
+	_, err = cfg.Session.SQL(query, lockName).Get(&success)
 	if err != nil {
 		return err
 	}

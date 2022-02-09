@@ -260,7 +260,7 @@ func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []str
 	return s
 }
 
-func (db *PostgresDialect) Lock(sess *xorm.Session) error {
+func (db *PostgresDialect) Lock(cfg LockCfg) error {
 	// trying to obtain the lock for a resource identified by a 64-bit or 32-bit key value
 	// the lock is exclusive: multiple lock requests stack, so that if the same resource is locked three times
 	// it must then be unlocked three times to be released for other sessions' use.
@@ -273,7 +273,7 @@ func (db *PostgresDialect) Lock(sess *xorm.Session) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate advisory lock key: %w", err)
 	}
-	_, err = sess.SQL(query, key).Get(&success)
+	_, err = cfg.Session.SQL(query, key).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -284,7 +284,7 @@ func (db *PostgresDialect) Lock(sess *xorm.Session) error {
 	return nil
 }
 
-func (db *PostgresDialect) Unlock(sess *xorm.Session) error {
+func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 	// trying to release a previously-acquired exclusive session level advisory lock.
 	// it will either return true if the lock is successfully released or
 	// false if the lock was not held (in addition an SQL warning will be reported by the server)
@@ -295,7 +295,7 @@ func (db *PostgresDialect) Unlock(sess *xorm.Session) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate advisory lock key: %w", err)
 	}
-	_, err = sess.SQL(query, key).Get(&success)
+	_, err = cfg.Session.SQL(query, key).Get(&success)
 	if err != nil {
 		return err
 	}
