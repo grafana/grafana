@@ -222,10 +222,13 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
 		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(uaCfg.BaseInterval.Seconds()))) * time.Second
-		if legacyMinInterval != uaCfg.BaseInterval {
+		if legacyMinInterval > uaCfg.BaseInterval {
 			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+			uaMinInterval = legacyMinInterval
+		} else {
+			// if legacy interval is smaller than the base interval, adjust it to the base interval
+			uaMinInterval = uaCfg.BaseInterval
 		}
-		uaMinInterval = legacyMinInterval
 	}
 
 	if uaMinInterval < uaCfg.BaseInterval {
