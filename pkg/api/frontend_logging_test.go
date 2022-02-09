@@ -92,6 +92,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 		handler := routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
+			c.Req.Header.Add("Content-Type", "application/json")
 			return loggingHandler(c)
 		})
 
