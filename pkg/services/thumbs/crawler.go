@@ -100,6 +100,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	}
 
 	if len(items) == 0 {
+		r.queueMutex.Unlock()
 		return nil
 	}
 
