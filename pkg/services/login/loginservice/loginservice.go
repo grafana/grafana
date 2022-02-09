@@ -16,7 +16,7 @@ var (
 	logger = log.New("login.ext_user")
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
+func ProvideService(sqlStore sqlstore.Store, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
 		Bus:             bus,

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
+
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
@@ -14,15 +15,31 @@ import { PromQueryBuilder } from './PromQueryBuilder';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { QueryPreview } from './QueryPreview';
+import { buildVisualQueryFromString } from '../parsing';
+import { PromQuery } from '../../types';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
   const [visualQuery, setVisualQuery] = useState<PromVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
+  const [parseModalOpen, setParseModalOpen] = useState(false);
+  const [pendingChange, setPendingChange] = useState<PromQuery | undefined>(undefined);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      onChange({ ...query, editorMode: newMetricEditorMode });
+      const change = { ...query, editorMode: newMetricEditorMode };
+      if (newMetricEditorMode === QueryEditorMode.Builder) {
+        const result = buildVisualQueryFromString(query.expr);
+        change.visualQuery = result.query;
+        // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
+        if (result.errors.length) {
+          setParseModalOpen(true);
+          setPendingChange(change);
+          return;
+        }
+        setVisualQuery(change.visualQuery);
+      }
+      onChange(change);
     },
     [onChange, query]
   );
@@ -49,6 +66,18 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   return (
     <>
+      <ConfirmModal
+        isOpen={parseModalOpen}
+        title="Query parsing"
+        body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
+        confirmText="Continue"
+        onConfirm={() => {
+          setVisualQuery(pendingChange!.visualQuery!);
+          onChange(pendingChange!);
+          setParseModalOpen(false);
+        }}
+        onDismiss={() => setParseModalOpen(false)}
+      />
       <EditorHeader>
         <FlexItem grow={1} />
         <Button

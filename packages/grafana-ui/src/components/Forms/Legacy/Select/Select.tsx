@@ -14,7 +14,7 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { PopoverContent, Tooltip } from '../../../Tooltip/Tooltip';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ThemeContext } from '../../../../themes';
 

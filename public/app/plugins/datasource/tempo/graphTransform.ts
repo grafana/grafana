@@ -303,8 +303,8 @@ function convertToDataFrames(
       // any requests itself.
       [Fields.mainStat]: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
-      [Fields.arc + 'success']: node.total ? (node.total - (node.failed || 0)) / node.total : 1,
-      [Fields.arc + 'failed']: node.total ? (node.failed || 0) / node.total : 0,
+      [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
+      [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {

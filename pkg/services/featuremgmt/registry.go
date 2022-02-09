@@ -95,6 +95,12 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "newNavigation",
 			Description: "Try the next gen navigation model",
 			State:       FeatureStateAlpha,
