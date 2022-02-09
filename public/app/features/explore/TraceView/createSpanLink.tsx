@@ -11,7 +11,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SpanLinkDef, SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
