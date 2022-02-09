@@ -3,7 +3,7 @@ import { Placement, VirtualElement } from '@popperjs/core';
 import { Manager, Popper as ReactPopper, PopperArrowProps } from 'react-popper';
 import { Portal } from '../Portal/Portal';
 import Transition from 'react-transition-group/Transition';
-import { PopoverContent } from './Tooltip';
+import { PopoverContent } from './types';
 
 const defaultTransitionStyles = {
   transitionProperty: 'opacity',
