@@ -166,18 +166,16 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 
 func (hs *thumbService) GetSystemRequirements(c *models.ReqContext) {
 	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
-
 	if err != nil {
 		tlog.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
-		c.JSON(500, map[string]string{"error": "unknown"})
+	}
+
+	if err != nil || res.IsSupported {
+		c.JSON(200, map[string]interface{}{"met": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
 		return
 	}
 
-	if res.IsSupported {
-		c.JSON(200, map[string]interface{}{"met": true})
-	} else {
-		c.JSON(200, map[string]interface{}{"met": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
-	}
+	c.JSON(200, map[string]interface{}{"met": true})
 }
 
 // Hack for now -- lets you upload images explicitly
