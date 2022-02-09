@@ -96,7 +96,7 @@ Whenever possible try to deprecate first what you are about to remove or change.
  * @deprecated -- this is no longer necessary and will be removed in Grafana 9.0.0
  */
 myOldFunction(name: string) {
-    deprecationWarning('NameOfMyObject', 'myOldFunction', 'myNewFunction');
+    deprecationWarning('MyFile', 'myOldFunction', 'myNewFunction');
     // ...
 }
 ```
@@ -104,7 +104,7 @@ myOldFunction(name: string) {
 1. Add a deprecation comment `// @deprecated`
 2. Add info in the comment about **when it is going to be removed**
 3. Add info in the comment about **what should be used instead**
-4. In case it's a function or a method, use `deprecationWarning(<object name>, <old name>, <new name>)` to raise attention during runtime as well
+4. In case it's a function or a method, use `deprecationWarning(<file name>, <old name>, <new name>)` to raise attention during runtime as well
 5. Update the [migration guide](../docs/sources/developers/plugins/migration-guide.md) with your instructions
 
 ### Communicate
