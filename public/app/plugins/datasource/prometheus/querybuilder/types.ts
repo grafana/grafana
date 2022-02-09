@@ -18,7 +18,8 @@ export enum PromVisualQueryOperationCategory {
   RangeFunctions = 'Range functions',
   Functions = 'Functions',
   BinaryOps = 'Binary operations',
-  Uncategorized = 'Uncategorized',
+  Trigonometric = 'Trigonometric',
+  Time = 'Time Functions',
 }
 
 export enum PromOperationId {
