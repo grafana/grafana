@@ -73,7 +73,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 				if timestampErr == nil {
 					timeArray = append(timeArray, timestamp)
 					if valType == "string" {
-						value := fmt.Sprint(valuePair[columnIndex])
+						value := valuePair[columnIndex].(string)
 						stringArray = append(stringArray, value)
 					} else if valType == "json.Number" {
 						value := parseNumber(valuePair[columnIndex])
