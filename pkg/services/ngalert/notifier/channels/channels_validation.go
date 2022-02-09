@@ -20,6 +20,7 @@ func ValidateContactPointReceiverWithSecure(channelType string, settings *simple
 	return ValidateContactPointReceiver(channelType, &copy)
 }
 
+//nolint:gocyclo
 func ValidateContactPointReceiver(channelType string, settings *simplejson.Json) (bool, error) {
 	switch strings.ToLower(channelType) {
 	case "prometheus-alertmanager":
