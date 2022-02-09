@@ -23,27 +23,23 @@ export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore
 // Action creators
 //
 
-export const updateRichHistory = (
-  id: string,
-  property: string,
-  updatedProperty?: string | boolean
-): ThunkResult<void> => {
+export const starHistoryItem = (id: string, starred: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    // Side-effect: Saving rich history
-    let nextRichHistory;
-    if (property === 'starred') {
-      nextRichHistory = await updateStarredInRichHistory(
-        getState().explore.richHistory,
-        id,
-        updatedProperty as boolean
-      );
-    }
-    if (property === 'comment') {
-      nextRichHistory = await updateCommentInRichHistory(getState().explore.richHistory, id, updatedProperty as string);
-    }
-    if (property === 'delete') {
-      nextRichHistory = await deleteQueryInRichHistory(getState().explore.richHistory, id);
-    }
+    const nextRichHistory = await updateStarredInRichHistory(getState().explore.richHistory, id, starred);
+    dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+  };
+};
+
+export const commentHistoryItem = (id: string, comment?: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const nextRichHistory = await updateCommentInRichHistory(getState().explore.richHistory, id, comment);
+    dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+  };
+};
+
+export const deleteHistoryItem = (id: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const nextRichHistory = await deleteQueryInRichHistory(getState().explore.richHistory, id);
     dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
   };
 };

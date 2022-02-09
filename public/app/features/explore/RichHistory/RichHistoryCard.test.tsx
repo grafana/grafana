@@ -4,7 +4,7 @@ import { RichHistoryCard, Props } from './RichHistoryCard';
 import { ExploreId, RichHistoryQuery } from '../../../types/explore';
 import { DataSourceApi, DataQuery } from '@grafana/data';
 
-const updateRichHistoryMock = jest.fn();
+const starRichHistoryMock = jest.fn();
 
 interface MockQuery extends DataQuery {
   query: string;
@@ -28,7 +28,9 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     dsImg: '/app/img',
     isRemoved: false,
     changeDatasource: jest.fn(),
-    updateRichHistory: updateRichHistoryMock,
+    starHistoryItem: starRichHistoryMock,
+    commentHistoryItem: jest.fn(),
+    deleteHistoryItem: jest.fn(),
     setQueries: jest.fn(),
     exploreId: ExploreId.left,
     datasourceInstance: { name: 'Datasource' } as DataSourceApi,
@@ -133,14 +135,14 @@ describe('RichHistoryCard', () => {
       const starButton = wrapper.find({ title: 'Star query' });
       expect(starButton).toHaveLength(1);
       starButton.simulate('click');
-      expect(updateRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, 'starred', true);
+      expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, true);
     });
     it('should have title "Unstar query", if not starred', () => {
       const wrapper = setup({ query: starredQueryWithComment });
       const starButton = wrapper.find({ title: 'Unstar query' });
       expect(starButton).toHaveLength(1);
       starButton.simulate('click');
-      expect(updateRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, 'starred', false);
+      expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, false);
     });
   });
 });

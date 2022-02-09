@@ -14,7 +14,7 @@ import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
 
-import { updateRichHistory } from '../state/history';
+import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
 import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
@@ -30,7 +30,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   changeDatasource,
-  updateRichHistory,
+  deleteHistoryItem,
+  commentHistoryItem,
+  starHistoryItem,
   setQueries,
 };
 
@@ -143,8 +145,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
 });
 
 export function RichHistoryCard(props: Props) {
-  const { query, dsImg, isRemoved, updateRichHistory, changeDatasource, exploreId, datasourceInstance, setQueries } =
-    props;
+  const {
+    query,
+    dsImg,
+    isRemoved,
+    commentHistoryItem,
+    starHistoryItem,
+    deleteHistoryItem,
+    changeDatasource,
+    exploreId,
+    datasourceInstance,
+    setQueries,
+  } = props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
   const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);
@@ -192,25 +204,25 @@ export function RichHistoryCard(props: Props) {
           yesText: 'Delete',
           icon: 'trash-alt',
           onConfirm: () => {
-            updateRichHistory(query.id, 'delete');
+            deleteHistoryItem(query.id);
             dispatch(notifyApp(createSuccessNotification('Query deleted')));
           },
         })
       );
     } else {
-      updateRichHistory(query.id, 'delete');
+      deleteHistoryItem(query.id);
       dispatch(notifyApp(createSuccessNotification('Query deleted')));
     }
   };
 
   const onStarrQuery = () => {
-    updateRichHistory(query.id, 'starred', !query.starred);
+    starHistoryItem(query.id, !query.starred);
   };
 
   const toggleActiveUpdateComment = () => setActiveUpdateComment(!activeUpdateComment);
 
   const onUpdateComment = () => {
-    updateRichHistory(query.id, 'comment', comment);
+    commentHistoryItem(query.id, comment);
     setActiveUpdateComment(false);
   };
 
