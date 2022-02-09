@@ -1,5 +1,5 @@
 import React, { HTMLAttributes } from 'react';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -57,7 +57,11 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={state.close} parent={document} includeButtonPress={false}>
             <FocusScope contain autoFocus restoreFocus>
-              <Menu onClose={state.close} {...menuProps}>
+              {/*
+                tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
+                see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
+              */}
+              <Menu tabIndex={-1} onClose={state.close} {...menuProps}>
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}

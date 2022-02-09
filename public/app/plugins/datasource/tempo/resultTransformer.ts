@@ -307,9 +307,9 @@ export function transformFromOTLP(
 /**
  * Transforms trace dataframes to the OpenTelemetry format
  */
-export function transformToOTLP(
-  data: MutableDataFrame
-): { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } {
+export function transformToOTLP(data: MutableDataFrame): {
+  batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[];
+} {
   let result: { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } = {
     batches: [],
   };

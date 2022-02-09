@@ -1,6 +1,7 @@
+import { WithAccessControlMetadata } from '@grafana/data';
 import { TeamPermissionLevel } from './acl';
 
-export interface Team {
+export interface Team extends WithAccessControlMetadata {
   id: number;
   name: string;
   avatarUrl: string;

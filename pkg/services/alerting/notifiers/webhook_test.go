@@ -22,7 +22,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err = NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		_, err = NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.Error(t, err)
 	})
 
@@ -37,7 +37,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		not, err := NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+		not, err := NewWebHookNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 		require.NoError(t, err)
 		webhookNotifier := not.(*WebhookNotifier)
 

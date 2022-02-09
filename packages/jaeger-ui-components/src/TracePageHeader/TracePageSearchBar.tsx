@@ -16,13 +16,11 @@ import * as React from 'react';
 import cx from 'classnames';
 import IoAndroidLocate from 'react-icons/lib/io/android-locate';
 import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import * as markers from './TracePageSearchBar.markers';
 import UiFindInput from '../common/UiFindInput';
-import { TNil } from '../types';
 
-import { UIButton, UIInputGroup } from '../uiElementsContext';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 // eslint-disable-next-line no-duplicate-imports
 import { memo } from 'react';
@@ -61,7 +59,6 @@ export const getStyles = () => {
 };
 
 type TracePageSearchBarProps = {
-  textFilter: string | TNil;
   prevResult: () => void;
   nextResult: () => void;
   clearSearch: () => void;
@@ -70,7 +67,6 @@ type TracePageSearchBarProps = {
   navigable: boolean;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
-  hideSearchButtons?: boolean;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
@@ -81,16 +77,14 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     nextResult,
     prevResult,
     resultCount,
-    textFilter,
     onSearchValueChange,
     searchValue,
-    hideSearchButtons,
   } = props;
   const styles = useStyles2(getStyles);
 
-  const count = textFilter ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
+  const count = searchValue ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
 
-  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !textFilter });
+  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
     'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
@@ -100,47 +94,41 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
 
   return (
     <div className={styles.TracePageSearchBar}>
-      {/* style inline because compact overwrites the display */}
-      <UIInputGroup className={ubJustifyEnd} compact style={{ display: 'flex' }}>
+      <span className={ubJustifyEnd} style={{ display: 'flex' }}>
         <UiFindInput onChange={onSearchValueChange} value={searchValue} inputProps={uiFindInputInputProps} />
-        {!hideSearchButtons && (
-          <>
-            {navigable && (
-              <>
-                <UIButton
-                  className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
-                  disabled={!textFilter}
-                  htmlType="button"
-                  onClick={focusUiFindMatches}
-                >
-                  <IoAndroidLocate />
-                </UIButton>
-                <UIButton
-                  className={btnClass}
-                  disabled={!textFilter}
-                  htmlType="button"
-                  icon="up"
-                  onClick={prevResult}
-                />
-                <UIButton
-                  className={btnClass}
-                  disabled={!textFilter}
-                  htmlType="button"
-                  icon="down"
-                  onClick={nextResult}
-                />
-              </>
-            )}
-            <UIButton
-              className={btnClass}
-              disabled={!textFilter}
-              htmlType="button"
-              icon="close"
-              onClick={clearSearch}
-            />
-          </>
-        )}
-      </UIInputGroup>
+        <>
+          {navigable && (
+            <>
+              <Button
+                className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
+                disabled={!searchValue}
+                type="button"
+                onClick={focusUiFindMatches}
+              >
+                <IoAndroidLocate />
+              </Button>
+              <Button className={btnClass} disabled={!searchValue} type="button" icon="arrow-up" onClick={prevResult} />
+              <Button
+                className={btnClass}
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-down"
+                onClick={nextResult}
+              />
+            </>
+          )}
+          <Button
+            variant={'secondary'}
+            fill={'text'}
+            // className={btnClass}
+            disabled={!searchValue}
+            type="button"
+            icon="times"
+            onClick={clearSearch}
+            title={'Clear search'}
+          />
+        </>
+      </span>
     </div>
   );
 });

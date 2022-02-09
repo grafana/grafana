@@ -359,13 +359,13 @@ type SaveDashboardCommand struct {
 
 	UpdatedAt time.Time
 
-	Result *Dashboard
+	Result *Dashboard `json:"-"`
 }
 
 type TrimDashboardCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
 	Meta      *simplejson.Json `json:"meta"`
-	Result    *Dashboard
+	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {

@@ -34,10 +34,10 @@ export class ShareEmbed extends PureComponent<Props, State> {
   }
 
   buildIframeHtml = () => {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const { useCurrentTimeRange, selectedTheme } = this.state;
 
-    const iframeHtml = buildIframeHtml(useCurrentTimeRange, selectedTheme, panel);
+    const iframeHtml = buildIframeHtml(useCurrentTimeRange, dashboard.uid, selectedTheme, panel);
     this.setState({ iframeHtml });
   };
 
@@ -92,6 +92,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
                 the user viewing that page need to be signed into Grafana for the graph to load."
         >
           <TextArea
+            data-testid="share-embed-html"
             id="share-panel-embed-embed-html-textarea"
             rows={5}
             value={iframeHtml}

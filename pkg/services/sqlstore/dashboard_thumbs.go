@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (ss *SQLStore) GetThumbnail(ctx context.Context, query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
 		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {
 			return err
@@ -21,8 +21,8 @@ func (ss *SQLStore) GetThumbnail(query *models.GetDashboardThumbnailCommand) (*m
 	return query.Result, err
 }
 
-func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil && !errors.Is(err, models.ErrDashboardThumbnailNotFound) {
@@ -65,8 +65,8 @@ func (ss *SQLStore) SaveThumbnail(cmd *models.SaveDashboardThumbnailCommand) (*m
 	return cmd.Result, err
 }
 
-func (ss *SQLStore) UpdateThumbnailState(cmd *models.UpdateThumbnailStateCommand) error {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (ss *SQLStore) UpdateThumbnailState(ctx context.Context, cmd *models.UpdateThumbnailStateCommand) error {
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
 		if err != nil {
@@ -81,8 +81,8 @@ func (ss *SQLStore) UpdateThumbnailState(cmd *models.UpdateThumbnailStateCommand
 	return err
 }
 
-func (ss *SQLStore) FindDashboardsWithStaleThumbnails(cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
-	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
 		sess.Table("dashboard")
 		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id")
 		sess.Where("dashboard.is_folder = ?", dialect.BooleanStr(false))

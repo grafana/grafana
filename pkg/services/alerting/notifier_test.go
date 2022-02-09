@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,17 +22,18 @@ import (
 
 func TestNotificationService(t *testing.T) {
 	testRule := &Rule{Name: "Test", Message: "Something is bad"}
-	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{})
+	store := &AlertStoreMock{}
+	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{}, store)
 
 	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
-	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{})
+	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Tags: map[string]string{
 			"instance": "localhost:3000",
 			"quantile": "0.99",
 		},
 	}}
-	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{})
+	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store)
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
 		evalCtx, true, func(sc *scenarioContext) {
@@ -177,7 +179,9 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
+		store := evalCtx.Store.(*AlertStoreMock)
+
+		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 			query.Result = []*models.AlertNotification{
 				{
 					Id:   1,
@@ -188,9 +192,9 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 				},
 			}
 			return nil
-		})
+		}
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
+		store.getOrCreateNotificationState = func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
 			query.Result = &models.AlertNotificationState{
 				AlertId:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
@@ -199,7 +203,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 				State:                        models.AlertNotificationStateUnknown,
 			}
 			return nil
-		})
+		}
 
 		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 			return nil
@@ -263,7 +267,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			},
 		}
 
-		scenarioCtx.notificationService = newNotificationService(renderService, nil)
+		scenarioCtx.notificationService = newNotificationService(renderService, store, nil, nil)
 		fn(scenarioCtx)
 	})
 }
@@ -279,7 +283,7 @@ type testNotifier struct {
 	Frequency             time.Duration
 }
 
-func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn) (Notifier, error) {
+func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
 	uploadImage := true
 	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {

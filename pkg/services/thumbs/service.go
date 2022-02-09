@@ -47,13 +47,13 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rende
 	thumbnailRepo := newThumbnailRepo(store)
 	return &thumbService{
 		renderingService: renderService,
-		crawler:          newSimpleCrawler(renderService, gl, thumbnailRepo),
+		renderer:         newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo:    thumbnailRepo,
 	}
 }
 
 type thumbService struct {
-	crawler          dashRenderer
+	renderer         dashRenderer
 	thumbnailRepo    thumbnailRepo
 	renderingService rendering.Service
 }
@@ -117,7 +117,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 		return
 	}
 
-	err = hs.thumbnailRepo.updateThumbnailState(body.State, models.DashboardThumbnailMeta{
+	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
@@ -140,7 +140,7 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.getThumbnail(models.DashboardThumbnailMeta{
+	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
@@ -220,7 +220,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		return
 	}
 
-	_, err = hs.thumbnailRepo.saveFromBytes(fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
+	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), models.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
@@ -249,7 +249,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 	if cmd.Mode == "" {
 		cmd.Mode = CrawlerModeThumbs
 	}
-	msg, err := hs.crawler.Start(c, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
+	msg, err := hs.renderer.Start(c, cmd.Mode, cmd.Theme, models.ThumbnailKindDefault)
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
@@ -257,7 +257,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 }
 
 func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
-	msg, err := hs.crawler.Stop()
+	msg, err := hs.renderer.Stop()
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
@@ -265,7 +265,7 @@ func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 }
 
 func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
-	msg, err := hs.crawler.Status()
+	msg, err := hs.renderer.Status()
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}

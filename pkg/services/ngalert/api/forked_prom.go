@@ -10,12 +10,13 @@ import (
 )
 
 type ForkedPrometheusApi struct {
-	ProxySvc, GrafanaSvc PrometheusApiService
-	DatasourceCache      datasources.CacheService
+	ProxySvc        *LotexProm
+	GrafanaSvc      *PrometheusSrv
+	DatasourceCache datasources.CacheService
 }
 
 // NewForkedProm implements a set of routes that proxy to various Prometheus-compatible backends.
-func NewForkedProm(datasourceCache datasources.CacheService, proxy, grafana PrometheusApiService) *ForkedPrometheusApi {
+func NewForkedProm(datasourceCache datasources.CacheService, proxy *LotexProm, grafana *PrometheusSrv) *ForkedPrometheusApi {
 	return &ForkedPrometheusApi{
 		ProxySvc:        proxy,
 		GrafanaSvc:      grafana,
@@ -30,8 +31,6 @@ func (f *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) 
 	}
 
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaSvc.RouteGetAlertStatuses(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.ProxySvc.RouteGetAlertStatuses(ctx)
 	default:
@@ -46,11 +45,17 @@ func (f *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext) r
 	}
 
 	switch t {
-	case apimodels.GrafanaBackend:
-		return f.GrafanaSvc.RouteGetRuleStatuses(ctx)
 	case apimodels.LoTexRulerBackend:
 		return f.ProxySvc.RouteGetRuleStatuses(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
+}
+
+func (f *ForkedPrometheusApi) forkRouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteGetAlertStatuses(ctx)
+}
+
+func (f *ForkedPrometheusApi) forkRouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteGetRuleStatuses(ctx)
 }

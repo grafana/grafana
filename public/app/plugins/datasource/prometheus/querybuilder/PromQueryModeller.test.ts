@@ -1,4 +1,5 @@
 import { PromQueryModeller } from './PromQueryModeller';
+import { PromOperationId } from './types';
 
 describe('PromQueryModeller', () => {
   const modeller = new PromQueryModeller();
@@ -41,7 +42,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: 'histogram_quantile', params: [0.86] }],
+        operations: [{ id: PromOperationId.HistogramQuantile, params: [0.86] }],
       })
     ).toBe('histogram_quantile(0.86, metric)');
   });
@@ -51,7 +52,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: 'label_replace', params: ['server', '$1', 'instance', 'as(.*)d'] }],
+        operations: [{ id: PromOperationId.LabelReplace, params: ['server', '$1', 'instance', 'as(.*)d'] }],
       })
     ).toBe('label_replace(metric, "server", "$1", "instance", "as(.*)d")');
   });
@@ -94,7 +95,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: 'rate', params: ['auto'] }],
+        operations: [{ id: PromOperationId.Rate, params: ['auto'] }],
       })
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
@@ -104,7 +105,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: 'increase', params: ['auto'] }],
+        operations: [{ id: PromOperationId.Increase, params: ['auto'] }],
       })
     ).toBe('increase(metric{pod="A"}[$__rate_interval])');
   });
@@ -114,7 +115,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: 'rate', params: ['10m'] }],
+        operations: [{ id: PromOperationId.Rate, params: ['10m'] }],
       })
     ).toBe('rate(metric{pod="A"}[10m])');
   });
@@ -124,7 +125,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: '__multiply_by', params: [1000] }],
+        operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
       })
     ).toBe('metric * 1000');
   });

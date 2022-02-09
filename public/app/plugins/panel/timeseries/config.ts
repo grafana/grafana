@@ -16,6 +16,7 @@ import {
   VisibilityMode,
   StackingMode,
   GraphTresholdsStyleMode,
+  GraphTransform,
 } from '@grafana/schema';
 
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
@@ -181,6 +182,29 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         });
 
       commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);
+
+      builder.addSelect({
+        category: categoryStyles,
+        name: 'Transform',
+        path: 'transform',
+        settings: {
+          options: [
+            {
+              label: 'Constant',
+              value: GraphTransform.Constant,
+              description: 'The first value will be shown as a constant line',
+            },
+            {
+              label: 'Negative Y',
+              value: GraphTransform.NegativeY,
+              description: 'Flip the results to negative values on the y axis',
+            },
+          ],
+          isClearable: true,
+        },
+        hideFromDefaults: true,
+      });
+
       commonOptionsBuilder.addAxisConfig(builder, cfg);
       commonOptionsBuilder.addHideFrom(builder);
 
