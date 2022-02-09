@@ -1,9 +1,29 @@
 import { ServiceAccountDTO, ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { serviceAccountLoaded, serviceAccountsLoaded, serviceAccountTokensLoaded } from './reducers';
+import {
+  acOptionsLoaded,
+  builtInRolesLoaded,
+  serviceAccountLoaded,
+  serviceAccountsLoaded,
+  serviceAccountTokensLoaded,
+} from './reducers';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 const BASE_URL = `/api/serviceaccounts`;
+
+export function fetchACOptions(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      const options = await fetchRoleOptions();
+      const builtInRoles = await fetchBuiltinRoles();
+      dispatch(acOptionsLoaded(options));
+      dispatch(builtInRolesLoaded(builtInRoles));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
 
 export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {

@@ -1,5 +1,5 @@
 import { WithAccessControlMetadata } from '@grafana/data';
-import { ApiKey, OrgRole } from '.';
+import { ApiKey, OrgRole, Role } from '.';
 
 export interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;
@@ -45,4 +45,6 @@ export interface ServiceAccountsState {
   searchQuery: string;
   searchPage: number;
   isLoading: boolean;
+  roleOptions: Role[];
+  builtInRoles: Record<string, Role[]>;
 }
