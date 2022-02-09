@@ -408,7 +408,6 @@ func (hs *HTTPServer) setDashboardPermissions(c *models.ReqContext, cmd models.S
 		if err != nil {
 			return err
 		}
-
 	} else if hs.Cfg.EditorsCanAdmin {
 		if err := dashSvc.MakeUserAdmin(c.Req.Context(), cmd.OrgId, cmd.UserId, dash.Id, !inFolder); err != nil {
 			return err
