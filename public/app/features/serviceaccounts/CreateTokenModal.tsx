@@ -76,7 +76,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
             </Field>
             <RadioButtonGroup
               className={styles.modalRow}
-              options={expirationOptions}
+              options={EXPIRATION_OPTIONS}
               value={isWithExpirationDate}
               onChange={setIsWithExpirationDate}
               size="md"
