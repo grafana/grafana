@@ -316,6 +316,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -372,6 +373,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -473,6 +475,7 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 
