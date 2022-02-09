@@ -9,7 +9,6 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string;
   queries: T[];
   range: RawTimeRange;
-  originPanelId?: number;
   context?: string;
   panelsState?: ExplorePanelsState;
 }
