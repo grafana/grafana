@@ -115,6 +115,6 @@ Reach out to **@grafana/plugins-platform-frontend** to help finding which plugin
 
 ## I still have questions, who can help me out?
 
-We are here to help. 
+We are here to help.
 
 Please either ping us in the pull request by using the **@grafana/plugins-platform-frontend** handle or reach out to us on the internal Slack in `#grafana-plugins-platform`.
