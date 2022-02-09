@@ -5,7 +5,6 @@ import { dateTime } from '@grafana/data';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { fetchSilences, fetchAlerts, createOrUpdateSilence } from './api/alertmanager';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { configureStore } from 'app/store/configureStore';
 import Silences from './Silences';
 import { mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv, mockSilence } from './mocks';
@@ -21,9 +20,9 @@ const TEST_TIMEOUT = 60000;
 
 const mocks = {
   api: {
-    fetchSilences: typeAsJestMock(fetchSilences),
-    fetchAlerts: typeAsJestMock(fetchAlerts),
-    createOrUpdateSilence: typeAsJestMock(createOrUpdateSilence),
+    fetchSilences: jest.mocked(fetchSilences),
+    fetchAlerts: jest.mocked(fetchAlerts),
+    createOrUpdateSilence: jest.mocked(createOrUpdateSilence),
   },
 };
 

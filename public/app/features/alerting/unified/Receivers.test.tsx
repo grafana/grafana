@@ -6,7 +6,6 @@ import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { act, render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import {
   mockDataSource,
@@ -31,14 +30,14 @@ jest.mock('./api/grafana');
 jest.mock('./utils/config');
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
 
   api: {
-    fetchConfig: typeAsJestMock(fetchAlertManagerConfig),
-    fetchStatus: typeAsJestMock(fetchStatus),
-    updateConfig: typeAsJestMock(updateAlertManagerConfig),
-    fetchNotifiers: typeAsJestMock(fetchNotifiers),
-    testReceivers: typeAsJestMock(testReceivers),
+    fetchConfig: jest.mocked(fetchAlertManagerConfig),
+    fetchStatus: jest.mocked(fetchStatus),
+    updateConfig: jest.mocked(updateAlertManagerConfig),
+    fetchNotifiers: jest.mocked(fetchNotifiers),
+    testReceivers: jest.mocked(testReceivers),
   },
 };
 
