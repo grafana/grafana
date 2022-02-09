@@ -152,6 +152,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	}
 
 	r.walkFinished()
+	r.broadcastStatus()
 	return err
 }
 
