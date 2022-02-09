@@ -240,9 +240,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return out;
   };
 
+  const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
+  const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
+
   let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
   let barsColors: Array<null | { fill: Array<string | null>; stroke: Array<string | null> }> = [];
-  let barRects: Rect[] = [];
+  let scaleFactor = 1;
+  let labels: ValueLabelTable = {};
+  let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
+  let labelOffset = LABEL_OFFSET_MAX;
 
   // minimum available space for labels between bar end and plotting area bound (in canvas pixels)
   let vSpace = Infinity;
@@ -284,6 +290,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       top -= u.bbox.top;
 
       let val = u.data[seriesIdx][dataIdx]!;
+      let autoFontSize = 14;
 
       // accum min space abvailable for labels
       if (isXHorizontal) {
@@ -296,7 +303,106 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
       qt.add(barRect);
-      barRects.push(barRect);
+
+      if (showValue !== VisibilityMode.Never) {
+        // Format Values and calculate label offsets
+        const text = formatValue(
+          seriesIdx,
+          rawValue(seriesIdx, dataIdx)! / (pctStacked ? alignedTotals![seriesIdx][dataIdx]! : 1)
+        );
+        labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? wid : hgt)));
+
+        if (labels[dataIdx] === undefined) {
+          labels[dataIdx] = {};
+        }
+        labels[dataIdx][seriesIdx] = { text: text };
+
+        // Calculate font size when it's set to be automatic
+        if (hasAutoValueSize) {
+          const { fontSize: calculatedSize, textMetrics } = calculateFontSizeWithMetrics(
+            labels[dataIdx][seriesIdx].text,
+            hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
+            vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
+            1
+          );
+
+          // Save text metrics
+          labels[dataIdx][seriesIdx].textMetrics = textMetrics;
+
+          // Retrieve the new font size and use it
+          autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
+
+          // Calculate the scaling factor for bouding boxes
+          // Take into account the fact that calculateFontSize
+          // uses 14px measurement so we need to adjust the scale factor
+          scaleFactor = (autoFontSize / fontSize) * (autoFontSize / 14);
+
+          // Update the end font-size
+          fontSize = autoFontSize;
+        } else {
+          const text = labels[dataIdx][seriesIdx].text;
+          labels[dataIdx][seriesIdx].textMetrics = measureText(text, fontSize);
+        }
+
+        let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
+        let curAlign: CanvasTextAlign | undefined = undefined,
+          curBaseline: CanvasTextBaseline | undefined = undefined;
+        let value = rawValue(seriesIdx, dataIdx);
+
+        if (value != null) {
+          let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
+          let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'alphabetic') : 'middle';
+
+          if (align !== curAlign) {
+            u.ctx.textAlign = curAlign = align;
+          }
+
+          if (baseline !== curBaseline) {
+            u.ctx.textBaseline = curBaseline = baseline;
+          }
+
+          // Calculate final co-ordinates for text position
+          const x =
+            u.bbox.left + (isXHorizontal ? lft + wid / 2 : value < 0 ? lft - labelOffset : lft + wid + labelOffset);
+          const y =
+            u.bbox.top +
+            (isXHorizontal ? (value < 0 ? top + hgt + labelOffset : top - labelOffset) : top + hgt / 2 - middleShift);
+
+          // Retrieve textMetrics with necessary default values
+          // These _shouldn't_ be undefined at this point
+          // but they _could_ be.
+          const {
+            textMetrics = {
+              width: 1,
+              actualBoundingBoxAscent: 1,
+              actualBoundingBoxDescent: 1,
+            },
+          } = labels[dataIdx][seriesIdx];
+
+          // Adjust bounding boxes based on text scale
+          // factor and orientation (which changes the baseline)
+          let xAdjust = 0,
+            yAdjust = 0;
+          if (isXHorizontal) {
+            // Adjust for baseline which is "top" in this case
+            xAdjust = (textMetrics.width * scaleFactor) / 2;
+            yAdjust = (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor;
+          } else {
+            // Adjust from the baseline which is "middle" in this case
+            yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
+          }
+
+          // Construct final bounding box for the label text
+          labels[dataIdx][seriesIdx].x = x;
+          labels[dataIdx][seriesIdx].y = y;
+          labels[dataIdx][seriesIdx].bbox = {
+            x: x - xAdjust,
+            y: y - yAdjust,
+            w: textMetrics.width * scaleFactor,
+            h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
+          };
+        }
+      }
     },
   });
 
@@ -344,142 +450,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
     }
 
-    barRects.length = 0;
     vSpace = hSpace = Infinity;
   };
 
-  const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
-  const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
-
   // uPlot hook to draw the labels on the bar chart.
   const draw = (u: uPlot) => {
-    if (showValue === VisibilityMode.Never) {
+    if (showValue === VisibilityMode.Never || fontSize < VALUE_MIN_FONT_SIZE) {
       return;
-    }
-    // pre-cache formatted labels
-    // let texts = Array(barRects.length);
-    let labelOffset = LABEL_OFFSET_MAX;
-    let labels: ValueLabelTable = {};
-
-    barRects.forEach((r) => {
-      const { didx, sidx } = r;
-      const text = formatValue(sidx, rawValue(sidx, didx)! / (pctStacked ? alignedTotals![sidx][didx]! : 1));
-      labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
-
-      if (labels[didx] === undefined) {
-        labels[didx] = {};
-      }
-      labels[didx][sidx] = { text: text };
-    });
-
-    let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
-    let autoFontSize = fontSize;
-    let scaleFactor = 1;
-
-    if (showValue === VisibilityMode.Auto) {
-      barRects.forEach((r) => {
-        const { didx, sidx } = r;
-
-        if (hasAutoValueSize) {
-          const { fontSize: calculatedSize, textMetrics } = calculateFontSizeWithMetrics(
-            labels[didx][sidx].text,
-            hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
-            vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
-            1
-          );
-
-          // Save text metrics
-          labels[didx][sidx].textMetrics = textMetrics;
-
-          // Retrieve the new font size and use it
-          // to calculate scaling ratio
-          autoFontSize = Math.round(Math.min(fontSize, VALUE_MAX_FONT_SIZE, calculatedSize));
-          scaleFactor = autoFontSize / fontSize;
-
-          // Take into account the fact that calculateFontSize
-          // uses 14px measurement so we need to adjust
-          // the scaleFactor in this instance
-          scaleFactor *= autoFontSize / 14;
-
-          // Update the end font-size
-          fontSize = autoFontSize;
-
-          if (fontSize < VALUE_MIN_FONT_SIZE) {
-            return;
-          }
-        } else {
-          const text = labels[didx][sidx].text;
-          labels[didx][sidx].textMetrics = measureText(text, fontSize);
-        }
-      });
     }
 
     u.ctx.save();
-
     u.ctx.fillStyle = theme.colors.text.primary;
     u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
-
-    let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
-    let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
-
-    barRects.forEach((r) => {
-      const { didx, sidx } = r;
-      let value = rawValue(sidx, didx);
-
-      if (value != null) {
-        let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
-        let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'alphabetic') : 'middle';
-
-        if (align !== curAlign) {
-          u.ctx.textAlign = curAlign = align;
-        }
-
-        if (baseline !== curBaseline) {
-          u.ctx.textBaseline = curBaseline = baseline;
-        }
-
-        // Calculate final co-ordinates for text position
-        const x =
-          u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset);
-        const y =
-          u.bbox.top +
-          (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift);
-
-        // Retrieve textMetrics with necessary default values
-        // These _shouldn't_ be undefined at this point
-        // but they _could_ be.
-        const {
-          textMetrics = {
-            width: 1,
-            actualBoundingBoxAscent: 1,
-            actualBoundingBoxDescent: 1,
-          },
-        } = labels[didx][sidx];
-
-        // Adjust bounding boxes based on text scale
-        // factor and orientation (which changes the baseline)
-        let xAdjust = 0,
-          yAdjust = 0;
-        if (isXHorizontal) {
-          // Adjust for baseline which is "top" in this case
-          xAdjust = (textMetrics.width * scaleFactor) / 2;
-          yAdjust = (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor;
-        } else {
-          // Adjust from the baseline which is "middle" in this case
-          yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
-        }
-
-        // Construct final bounding box for the label text
-        labels[didx][sidx].x = x;
-        labels[didx][sidx].y = y;
-        labels[didx][sidx].bbox = {
-          x: x - xAdjust,
-          y: y - yAdjust,
-          w: textMetrics.width * scaleFactor,
-          h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
-        };
-      }
-    });
 
     for (const didx in labels) {
       for (const sidx in labels[didx]) {
