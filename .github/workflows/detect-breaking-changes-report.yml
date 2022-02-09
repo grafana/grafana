@@ -99,6 +99,21 @@ jobs:
         number: ${{ github.event.workflow_run.pull_requests[0].number }}
         delete: true
 
+    # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
+    - name: Post to Slack
+      id: slack
+      if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "pr_link": "${{ github.event.workflow_run.pull_requests[0].url }}",
+            "pr_number": "${{ github.event.workflow_run.pull_requests[0].number }}",
+            "job_link": "${{ steps.levitate-run.outputs.job_link }}",
+            "message": "${{ steps.levitate-run.outputs.message }}"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
 
     - name: Add "breaking change" label
       if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}

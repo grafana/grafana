@@ -12,14 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
-	encryptionService encryption.Internal
-	log               log.Logger
+	encryptionService   encryption.Internal
+	notificationService *notifications.NotificationService
+	log                 log.Logger
 }
 
 func (cr *configReader) readConfig(ctx context.Context, path string) ([]*notificationsAsConfig, error) {
@@ -175,7 +177,7 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 				Settings:       notification.SettingsToJSON(),
 				SecureSettings: encryptedSecureSettings,
 				Type:           notification.Type,
-			}, cr.encryptionService.GetDecryptedValue)
+			}, cr.encryptionService.GetDecryptedValue, cr.notificationService)
 
 			if err != nil {
 				return err

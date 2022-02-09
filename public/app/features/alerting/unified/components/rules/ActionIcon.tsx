@@ -1,6 +1,5 @@
 import { Icon, IconName, useStyles, Tooltip } from '@grafana/ui';
-import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
-import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
+import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
 import { Link } from 'react-router-dom';
@@ -56,21 +55,24 @@ interface GoToProps {
   url: string;
   label?: string;
   target?: string;
+  children?: React.ReactNode;
 }
 
-const GoTo: FC<GoToProps> = ({ url, label, target, children }) => {
+const GoTo = React.forwardRef<HTMLAnchorElement, GoToProps>(({ url, label, target, children }, ref) => {
   const absoluteUrl = url?.startsWith('http');
 
   return absoluteUrl ? (
-    <a aria-label={label} href={url} target={target}>
+    <a ref={ref} aria-label={label} href={url} target={target}>
       {children}
     </a>
   ) : (
-    <Link aria-label={label} to={url} target={target}>
+    <Link ref={ref} aria-label={label} to={url} target={target}>
       {children}
     </Link>
   );
-};
+});
+
+GoTo.displayName = 'GoTo';
 
 export const getStyle = () => css`
   cursor: pointer;

@@ -127,12 +127,16 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
   dispatch(cancelVariables());
 };
 
-export const updateTimeZoneDashboard = (timeZone: TimeZone): ThunkResult<void> => (dispatch) => {
-  dispatch(updateTimeZoneForSession(timeZone));
-  getTimeSrv().refreshDashboard();
-};
+export const updateTimeZoneDashboard =
+  (timeZone: TimeZone): ThunkResult<void> =>
+  (dispatch) => {
+    dispatch(updateTimeZoneForSession(timeZone));
+    getTimeSrv().refreshDashboard();
+  };
 
-export const updateWeekStartDashboard = (weekStart: string): ThunkResult<void> => (dispatch) => {
-  dispatch(updateWeekStartForSession(weekStart));
-  getTimeSrv().refreshDashboard();
-};
+export const updateWeekStartDashboard =
+  (weekStart: string): ThunkResult<void> =>
+  (dispatch) => {
+    dispatch(updateWeekStartForSession(weekStart));
+    getTimeSrv().refreshDashboard();
+  };
