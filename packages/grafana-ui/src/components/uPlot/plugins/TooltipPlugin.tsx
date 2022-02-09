@@ -231,6 +231,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
         const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
         const display = field.display!(v);
+
         sortIdx.push([series.length, v]);
         series.push({
           color: display.color || FALLBACK_COLOR,

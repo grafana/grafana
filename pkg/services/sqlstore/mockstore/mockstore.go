@@ -8,10 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type OrgListResponse []struct {
+	OrgId    int64
+	Response error
+}
 type SQLStoreMock struct {
-	LastGetAlertsQuery *models.GetAlertsQuery
-	LatestUserId       int64
-
+	LastGetAlertsQuery           *models.GetAlertsQuery
+	LatestUserId                 int64
 	ExpectedUser                 *models.User
 	ExpectedDatasource           *models.DataSource
 	ExpectedAlert                *models.Alert
@@ -20,6 +23,12 @@ type SQLStoreMock struct {
 	ExpectedDashboards           []*models.Dashboard
 	ExpectedDashboardVersion     *models.DashboardVersion
 	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
+	ExpectedUserOrgList          []*models.UserOrgDTO
+	ExpectedOrgListResponse      OrgListResponse
+	ExpectedDashboardSnapshot    *models.DashboardSnapshot
+	ExpectedTeamsByUser          []*models.TeamDTO
+	ExpectedSearchOrgList        []*models.OrgDTO
+	ExpectedDatasources          []*models.DataSource
 
 	ExpectedError error
 }
@@ -45,6 +54,7 @@ func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.
 }
 
 func (m *SQLStoreMock) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
+	query.Result = m.ExpectedDashboardSnapshot
 	return m.ExpectedError
 }
 
@@ -150,6 +160,7 @@ func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUser
 }
 
 func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error {
+	query.Result = m.ExpectedUserOrgList
 	return m.ExpectedError
 }
 
@@ -208,7 +219,7 @@ func (m *SQLStoreMock) GetTeamById(ctx context.Context, query *models.GetTeamByI
 }
 
 func (m *SQLStoreMock) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	query.Result = []*models.TeamDTO{}
+	query.Result = m.ExpectedTeamsByUser
 	return m.ExpectedError
 }
 
@@ -424,7 +435,9 @@ func (m *SQLStoreMock) SearchOrgUsers(ctx context.Context, query *models.SearchO
 }
 
 func (m *SQLStoreMock) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error {
-	return m.ExpectedError
+	testData := m.ExpectedOrgListResponse[0]
+	m.ExpectedOrgListResponse = m.ExpectedOrgListResponse[1:]
+	return testData.Response
 }
 
 func (m *SQLStoreMock) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
@@ -472,6 +485,7 @@ func (m *SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataS
 }
 
 func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	query.Result = m.ExpectedDatasources
 	return m.ExpectedError
 }
 
@@ -488,10 +502,12 @@ func (m *SQLStoreMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteD
 }
 
 func (m *SQLStoreMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
@@ -616,5 +632,10 @@ func (m *SQLStoreMock) ExpireOldUserInvites(ctx context.Context, cmd *models.Exp
 }
 
 func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
+	query.Result = m.ExpectedSearchOrgList
 	return m.ExpectedError
 }

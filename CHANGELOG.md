@@ -18,6 +18,15 @@
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
 
 <!-- 8.4.0-beta1 END -->
+<!-- 8.3.5 START -->
+
+# 8.3.5 (2022-02-08)
+
+- **Security**: Fixes CVE-2022-21702. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21703. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21713. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+
+<!-- 8.3.5 END -->
 <!-- 8.3.4 START -->
 
 # 8.3.4 (2022-01-17)
@@ -1279,7 +1288,15 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 - **AGPL License:** Update license from Apache 2.0 to the GNU Affero General Public License (AGPL). [#33184](https://github.com/grafana/grafana/pull/33184)
 
 <!-- 8.0.0-beta1 END -->
+<!-- 7.5.15 START -->
 
+# 7.5.15 (2022-02-08)
+
+- **Security**: Fixes CVE-2022-21702. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21703. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21713. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+
+<!-- 7.5.15 END -->
 <!-- 7.5.13 START -->
 
 # 7.5.13 (2022-01-18)
