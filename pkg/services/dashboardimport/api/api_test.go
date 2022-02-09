@@ -44,6 +44,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req.Header.Add("Content-Type", "application/json")
 			resp, err := s.Send(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
@@ -58,6 +59,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req.Header.Add("Content-Type", "application/json")
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
@@ -74,6 +76,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req.Header.Add("Content-Type", "application/json")
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
@@ -91,6 +94,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewRequest(http.MethodPost, "/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
+			req.Header.Add("Content-Type", "application/json")
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
@@ -133,6 +137,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewRequest(http.MethodPost, "/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
+			req.Header.Add("Content-Type", "application/json")
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})
@@ -161,6 +166,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewRequest(http.MethodPost, "/api/dashboards/import", bytes.NewReader(jsonBytes))
+			req.Header.Add("Content-Type", "application/json")
 			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
 				UserId: 1,
 			})

@@ -21,6 +21,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type TeamGuardianMock struct {
+	result error
+}
+
+func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error {
+	return t.result
+}
+
 func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	const testOrgID int64 = 1
 	var userCmd models.CreateUserCommand
@@ -44,9 +52,10 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
-		Cfg:      settings,
-		License:  &licensing.OSSLicensingService{},
-		SQLStore: sqlStore,
+		Cfg:          settings,
+		License:      &licensing.OSSLicensingService{},
+		SQLStore:     sqlStore,
+		teamGuardian: &TeamGuardianMock{},
 	}
 	mock := mockstore.NewSQLStoreMock()
 

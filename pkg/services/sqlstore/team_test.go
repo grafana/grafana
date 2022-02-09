@@ -9,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -343,4 +346,76 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestSQLStore_SearchTeams(t *testing.T) {
+	type searchTeamsTestCase struct {
+		desc             string
+		query            *models.SearchTeamsQuery
+		expectedNumUsers int
+	}
+
+	tests := []searchTeamsTestCase{
+		{
+			desc: "should return all teams",
+			query: &models.SearchTeamsQuery{
+				OrgId: 1,
+				SignedInUser: &models.SignedInUser{
+					OrgId:       1,
+					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
+				},
+			},
+			expectedNumUsers: 10,
+		},
+		{
+			desc: "should return no teams",
+			query: &models.SearchTeamsQuery{
+				OrgId: 1,
+				SignedInUser: &models.SignedInUser{
+					OrgId:       1,
+					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {""}}},
+				},
+			},
+			expectedNumUsers: 0,
+		},
+		{
+			desc: "should return some teams",
+			query: &models.SearchTeamsQuery{
+				OrgId: 1,
+				SignedInUser: &models.SignedInUser{
+					OrgId: 1,
+					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {
+						"teams:id:1",
+						"teams:id:5",
+						"teams:id:9",
+					}}},
+				},
+			},
+			expectedNumUsers: 3,
+		},
+	}
+
+	store := InitTestDB(t)
+	store.Cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol).IsEnabled
+
+	// Seed 10 teams
+	for i := 1; i <= 10; i++ {
+		_, err := store.CreateTeam(fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
+		require.NoError(t, err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			err := store.SearchTeams(context.Background(), tt.query)
+			require.NoError(t, err)
+			assert.Len(t, tt.query.Result.Teams, tt.expectedNumUsers)
+			assert.Equal(t, tt.query.Result.TotalCount, int64(tt.expectedNumUsers))
+
+			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
+				for _, team := range tt.query.Result.Teams {
+					assert.Contains(t, tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.Id))
+				}
+			}
+		})
+	}
 }

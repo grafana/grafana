@@ -107,9 +107,10 @@ jobs:
       with:
         payload: |
           {
-            "pr_link": "${{ github.event.workflow_run.pull_requests[0].url }}",
+            "pr_link": "${{ github.event.workflow_run.pull_requests[0].html_url }}",
             "pr_number": "${{ github.event.workflow_run.pull_requests[0].number }}",
             "job_link": "${{ steps.levitate-run.outputs.job_link }}",
+            "reporting_job_link": "${{ github.event.workflow_run.html_url }}",
             "message": "${{ steps.levitate-run.outputs.message }}"
           }
       env:
