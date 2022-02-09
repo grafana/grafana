@@ -6,7 +6,7 @@ interface WithContextMenuProps {
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
   /** A function that returns an array of menu items */
   renderMenuItems: () => React.ReactNode;
-  /** Enable focus on first Menu element on openning the menu */
+  /** On menu open focus the first element */
   focusOnOpen?: boolean;
 }
 
