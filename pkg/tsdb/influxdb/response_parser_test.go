@@ -54,9 +54,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 							"columns": ["time","mean","path","isActive"],
 							"tags": {"datacenter": "America"},
 							"values": [
-								[111,222,"path val",true],
-								[111,222,"path val",false],
-								[111,null,"path val",true]
+								[111,222,"/usr/path",true],
+								[111,222,"/usr/path",false],
+								[111,null,"/usr/path",true]
 							]
 						}
 					]
@@ -85,7 +85,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		stringField := data.NewField("value", labels, []string{
-			"path val", "path val", "path val",
+			"/usr/path", "/usr/path", "/usr/path",
 		})
 		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path { datacenter: America }"}
 		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
@@ -123,7 +123,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		if diff := cmp.Diff(stringFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
-		if diff := cmp.Diff(boolFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+		if diff := cmp.Diff(boolFrame, frame.Frames[2], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
