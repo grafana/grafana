@@ -58,9 +58,7 @@ function returnVariables(expr: string) {
  *
  * It traverses the tree and uses sort of state machine to update update the query model. The query model is modified
  * during the traversal and sent to each handler as context.
- * Right now this can handle interval variables but no others or errors.
  *
- * TODO: deal with incomplete query, errors and template variables
  * @param expr
  */
 export function buildVisualQueryFromString(expr: string): Context {
@@ -95,6 +93,7 @@ interface Context {
   errors: ParsingError[];
 }
 
+// This is used for error type for some reason
 const ErrorName = '⚠';
 
 /**
@@ -138,7 +137,6 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    // This is used for error type for some reason
     case ErrorName: {
       if (isIntervalVariableError(node)) {
         break;
