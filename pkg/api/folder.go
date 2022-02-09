@@ -103,7 +103,6 @@ func (hs *HTTPServer) setFolderPermission(c *models.ReqContext, folderID int64, 
 		if err != nil {
 			return err
 		}
-
 	} else if hs.Cfg.EditorsCanAdmin {
 		if err := dashSvc.MakeUserAdmin(c.Req.Context(), c.OrgId, c.UserId, folderID, true); err != nil {
 			return err
