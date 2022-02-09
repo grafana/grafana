@@ -5,12 +5,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-var errDatasourceNotFound = errors.New("unknown datasource")
 
 type DatasourceReconciler struct {
 	cli rest.Interface
@@ -63,7 +62,7 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 
 	_, err = d.sto.Get(ctx, string(ds.UID))
 	if err != nil {
-		if !errors.Is(err, errDatasourceNotFound) {
+		if !errors.Is(err, models.ErrDataSourceNotFound) {
 			return reconcile.Result{
 				Requeue:      true,
 				RequeueAfter: 1 * time.Minute,
