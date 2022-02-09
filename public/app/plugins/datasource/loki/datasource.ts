@@ -70,12 +70,6 @@ export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
 
-/**
- * Loki's logs volume query may be expensive as it requires counting all logs in the selected range. If such query
- * takes too much time it may need be made more specific to limit number of logs processed under the hood.
- */
-const LOGS_VOLUME_TIMEOUT = 10000;
-
 const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
 
@@ -150,7 +144,6 @@ export class LokiDatasource
       });
 
     return queryLogsVolume(this, logsVolumeRequest, {
-      timeout: LOGS_VOLUME_TIMEOUT,
       extractLevel,
       range: request.range,
       targets: request.targets,
