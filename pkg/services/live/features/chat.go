@@ -5,10 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -18,8 +16,8 @@ type ChatHandler struct {
 	permissionChecker *chatmodel.PermissionChecker
 }
 
-func NewChatHandler(bus bus.Bus, toggles featuremgmt.FeatureToggles) *ChatHandler {
-	return &ChatHandler{permissionChecker: chatmodel.NewPermissionChecker(bus, toggles)}
+func NewChatHandler(permissionChecker *chatmodel.PermissionChecker) *ChatHandler {
+	return &ChatHandler{permissionChecker: permissionChecker}
 }
 
 // GetHandlerForPath called on init.
