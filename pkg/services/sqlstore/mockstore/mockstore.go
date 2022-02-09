@@ -29,6 +29,7 @@ type SQLStoreMock struct {
 	ExpectedTeamsByUser          []*models.TeamDTO
 	ExpectedSearchOrgList        []*models.OrgDTO
 	ExpectedDatasources          []*models.DataSource
+	ExpectedOrg                  models.Org
 
 	ExpectedError error
 }
@@ -67,11 +68,11 @@ func (m *SQLStoreMock) SearchDashboardSnapshots(query *models.GetDashboardSnapsh
 }
 
 func (m *SQLStoreMock) GetOrgByName(name string) (*models.Org, error) {
-	return nil, m.ExpectedError
+	return &m.ExpectedOrg, m.ExpectedError
 }
 
 func (m *SQLStoreMock) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return models.Org{}, nil
+	return m.ExpectedOrg, nil
 }
 
 func (m *SQLStoreMock) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {

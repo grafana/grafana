@@ -35,7 +35,7 @@ const (
 const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
-	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore,
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
 	tracer tracing.Tracer) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
@@ -55,7 +55,7 @@ type ContextHandler struct {
 	JWTAuthService   models.JWTService
 	RemoteCache      *remotecache.RemoteCache
 	RenderService    rendering.Service
-	SQLStore         *sqlstore.SQLStore
+	SQLStore         sqlstore.Store
 	tracer           tracing.Tracer
 	// GetTime returns the current time.
 	// Stubbable by tests.

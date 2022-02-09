@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -331,13 +331,15 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
-		org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
-		require.NoError(t, err)
+		sqlStore := mockstore.NewSQLStoreMock()
+		sqlStore.ExpectedOrg = models.Org{
+			Name: sc.cfg.AnonymousOrgName,
+			Id:   1,
+		}
 
 		sc.fakeReq("GET", "/").exec()
 
 		assert.Equal(t, int64(0), sc.context.UserId)
-		assert.Equal(t, org.Id, sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	}, func(cfg *setting.Cfg) {
@@ -674,7 +676,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		}
 
 		sc := &scenarioContext{t: t, cfg: cfg}
-
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 		exists, err := fs.Exists(viewsPath)
@@ -719,15 +720,15 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := mockstore.NewSQLStoreMock()
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
-	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
-	require.NoError(t, err)
+
+	remoteCacheSvc := remotecache.NewFakeStore(t)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
