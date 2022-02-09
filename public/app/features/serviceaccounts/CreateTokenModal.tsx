@@ -78,7 +78,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
               className={styles.modalRow}
               options={expirationOptions}
               value={isWithExpirationDate}
-              onChange={(v) => setIsWithExpirationDate(v)}
+              onChange={setIsWithExpirationDate}
               size="md"
             />
             {isWithExpirationDate && (

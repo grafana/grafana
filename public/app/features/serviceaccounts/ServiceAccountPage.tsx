@@ -74,7 +74,7 @@ const ServiceAccountPageUnconnected = ({
         name,
         role: OrgRole.Viewer,
       },
-      (key: string) => setNewToken(key)
+      setNewToken
     );
   };
 
