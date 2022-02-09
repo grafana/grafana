@@ -116,6 +116,11 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
                   isPaused={this.props.isPaused}
                   onPause={controls.pause}
                   onResume={controls.resume}
+                  getFieldLinks={this.getFieldLinks}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  showContextToggle={this.showContextToggle}
+                  getRowContext={this.getLogRowContext}
                 />
               )}
             </LiveTailControls>
