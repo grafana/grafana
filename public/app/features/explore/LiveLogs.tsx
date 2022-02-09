@@ -242,13 +242,39 @@ class LiveLogs extends PureComponent<Props, State> {
     } = this.state;
 
     const styles = getStyles(theme, true); // TODO: JOEY
-    // const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
+    const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
     const filteredLogs = this.filterRows(this.rowsToRender(), hiddenLogLevels);
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
 
     return (
       <div>
-        <div className={styles.logsSection}>
+        <table className={styles.fullWidth}>
+          <tbody
+            onScroll={isPaused ? undefined : this.onScroll}
+            className={cx(['logs-rows', styles.logsRowsLive])}
+            ref={this.scrollContainerRef}
+          >
+            {this.rowsToRender().map((row: LogRowModel) => {
+              return (
+                <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
+                  <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
+                  <td className={cx(logsRowMessage)}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
+                </tr>
+              );
+            })}
+            <tr
+              ref={(element) => {
+                this.liveEndDiv = element;
+                // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
+                // default.
+                if (this.liveEndDiv && !isPaused) {
+                  this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
+                }
+              }}
+            />
+          </tbody>
+        </table>
+        {/* <div className={styles.logsSection}>
           <div className={styles.logRows}>
             <LogRows
               logRows={this.rowsToRender()}
@@ -272,7 +298,7 @@ class LiveLogs extends PureComponent<Props, State> {
               onClickHideDetectedField={this.hideDetectedField}
             />
           </div>
-        </div>
+        </div> */}
         <div className={styles.logsRowsIndicator}>
           <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
             <Icon name={isPaused ? 'play' : 'pause'} />
