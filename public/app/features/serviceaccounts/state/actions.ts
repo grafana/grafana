@@ -1,6 +1,7 @@
 import { ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import { serviceAccountLoaded, serviceAccountsLoaded, serviceAccountTokensLoaded } from './reducers';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 const BASE_URL = `/api/serviceaccounts`;
 
@@ -36,7 +37,7 @@ export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
 export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const response = await getBackendSrv().get(BASE_URL);
+      const response = await getBackendSrv().get(BASE_URL, accessControlQueryParam());
       dispatch(serviceAccountsLoaded(response));
     } catch (error) {
       console.error(error);

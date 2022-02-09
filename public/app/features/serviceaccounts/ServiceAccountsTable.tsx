@@ -17,7 +17,6 @@ export interface Props {
 const ServiceAccountsTable: FC<Props> = (props) => {
   const { serviceAccounts, orgId, onRoleChange, onRemoveServiceAccount } = props;
   const canUpdateRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
-  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
   const rolePickerDisabled = !canUpdateRole;
 
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -85,7 +84,7 @@ const ServiceAccountsTable: FC<Props> = (props) => {
                 </td>
 
                 <td className="width-8">
-                  {contextSrv.accessControlEnabled() ? (
+                  {contextSrv.licensedAccessControlEnabled() ? (
                     <UserRolePicker
                       userId={serviceAccount.serviceAccountId}
                       orgId={orgId}
@@ -104,7 +103,7 @@ const ServiceAccountsTable: FC<Props> = (props) => {
                     />
                   )}
                 </td>
-                {canRemoveFromOrg && (
+                {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, serviceAccount) && (
                   <td>
                     <Button
                       size="sm"
