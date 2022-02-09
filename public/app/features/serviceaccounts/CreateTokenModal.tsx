@@ -16,7 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-const expirationOptions = [
+const EXPIRATION_OPTIONS = [
   { label: 'No expiration', value: false },
   { label: 'Set expiration date', value: true },
 ];
