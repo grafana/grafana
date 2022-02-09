@@ -157,9 +157,9 @@ describe('richHistory', () => {
     it('it should append new items even when the limit is exceeded', async () => {
       Date.now = jest.fn(() => 2);
 
-      richHistoryStorageMock.addToRichHistory = jest.fn((r) => {
+      richHistoryStorageMock.addToRichHistory = jest.fn((query) => {
         return Promise.resolve({
-          richHistoryQuery: { ...r, id: 'GENERATED ID', createdAt: Date.now() },
+          richHistoryQuery: { ...query, id: 'GENERATED ID', createdAt: Date.now() },
           warning: {
             type: RichHistoryStorageWarning.LimitExceeded,
             message: 'Limit exceeded',
