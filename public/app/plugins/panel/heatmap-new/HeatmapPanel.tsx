@@ -1,20 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { PanelProps } from '@grafana/data';
-import {
-  AxisPlacement,
-  ScaleDirection,
-  //ScaleDistribution,
-  ScaleOrientation,
-  UPlotChart,
-  UPlotConfigBuilder,
-  useTheme2,
-  VizLayout,
-} from '@grafana/ui';
+import { UPlotChart, useTheme2, VizLayout } from '@grafana/ui';
 import { prepareHeatmapData } from './fields';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { PanelOptions } from './models.gen';
-import { countsToFills, heatmapPaths } from './render';
 import { quantizeScheme } from './palettes';
+import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -36,64 +27,23 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
+  const onhover = useCallback(
+    (evt?: HeatmapHoverEvent) => {
+      // console.log('onhover', evt);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [options, data.structureRev]
+  );
+
   const builder = useMemo(() => {
-    let builder = new UPlotConfigBuilder(timeZone);
-
-    builder.setMode(2);
-
-    builder.addScale({
-      scaleKey: 'x',
-      isTime: true,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
-      range: [timeRange.from.valueOf(), timeRange.to.valueOf()],
-    });
-
-    builder.addAxis({
-      scaleKey: 'x',
-      placement: AxisPlacement.Bottom,
-      theme: theme,
-    });
-
-    builder.addScale({
-      scaleKey: 'y',
-      isTime: false,
-      // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
-      orientation: ScaleOrientation.Vertical,
-      direction: ScaleDirection.Up,
-    });
-
-    builder.addAxis({
-      scaleKey: 'y',
-      placement: AxisPlacement.Left,
-      theme: theme,
-    });
-
-    builder.addSeries({
-      facets: [
-        {
-          scale: 'x',
-          auto: true,
-          sorted: 1,
-        },
-        {
-          scale: 'y',
-          auto: true,
-        },
-      ],
-      pathBuilder: heatmapPaths({
-        disp: {
-          fill: {
-            values: (u, seriesIdx) => countsToFills(u, seriesIdx, palette),
-            index: palette,
-          },
-        },
-      }) as any,
+    return prepConfig({
+      data: info,
       theme,
-      scaleKey: '', // facets' scales used (above)
+      onhover,
+      timeZone,
+      timeRange,
+      palette,
     });
-
-    return builder;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
