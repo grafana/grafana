@@ -137,11 +137,11 @@ func TestGetFilters(t *testing.T) {
           oauth.generic_oauth:debug \
           ; oauth.okta:debug \
           ; tsdb.postgres:debug \
-          ; tsdb.mssql:debug \
-          ; provisioning.plugins:debug \
+          ;tsdb.mssql:debug \
+          #provisioning.plugins:debug \
           provisioning.dashboard:debug \
           data-proxy-log:debug \
-          ; oauthtoken:debug \
+          ;oauthtoken:debug \
           plugins.backend:debug \
           tsdb.elasticsearch.client:debug \
           server:debug \

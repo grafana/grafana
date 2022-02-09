@@ -254,8 +254,10 @@ func getFilters(filterStrArray []string) map[string]level.Option {
 	for i := 0; i < len(filterStrArray); i++ {
 		filterStr := strings.TrimSpace(filterStrArray[i])
 
-		if filterStr == ";" || filterStr == "#" {
-			i++
+		if strings.HasPrefix(filterStr, ";") || strings.HasPrefix(filterStr, "#") {
+			if len(filterStr) == 1 {
+				i++
+			}
 			continue
 		}
 
