@@ -3,7 +3,7 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
@@ -57,13 +57,15 @@ const mocks = {
 const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) => {
   const store = configureStore();
 
-  return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <PanelAlertTabContent dashboard={dashboard} panel={panel} />
-      </Router>
-    </Provider>
-  );
+  return act(async () => {
+    render(
+      <Provider store={store}>
+        <Router history={locationService.getHistory()}>
+          <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+        </Router>
+      </Provider>
+    );
+  });
 };
 
 const rules = [
