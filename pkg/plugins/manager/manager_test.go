@@ -356,7 +356,7 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 
 				t.Run("Unimplemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return method not implemented error", func(t *testing.T) {
-						_, err = ctx.manager.CollectMetrics(context.Background(), testPluginID)
+						_, err = ctx.manager.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 					})
 
@@ -368,13 +368,13 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 
 				t.Run("Implemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return expected result", func(t *testing.T) {
-						ctx.pluginClient.CollectMetricsHandlerFunc = func(ctx context.Context) (*backend.CollectMetricsResult, error) {
+						ctx.pluginClient.CollectMetricsHandlerFunc = func(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 							return &backend.CollectMetricsResult{
 								PrometheusMetrics: []byte("hello"),
 							}, nil
 						}
 
-						res, err := ctx.manager.CollectMetrics(context.Background(), testPluginID)
+						res, err := ctx.manager.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.NoError(t, err)
 						require.NotNil(t, res)
 						require.Equal(t, "hello", string(res.PrometheusMetrics))
@@ -651,9 +651,9 @@ func (pc *fakePluginClient) kill() {
 	pc.exited = true
 }
 
-func (pc *fakePluginClient) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (pc *fakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if pc.CollectMetricsHandlerFunc != nil {
-		return pc.CollectMetricsHandlerFunc(ctx)
+		return pc.CollectMetricsHandlerFunc(ctx, req)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented
