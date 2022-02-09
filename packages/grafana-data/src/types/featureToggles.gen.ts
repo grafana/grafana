@@ -39,8 +39,6 @@ export interface FeatureToggles {
   validatedQueries?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
-  liveDiscussions?: boolean;
-  liveOrgDiscussions?: boolean;
   liveDashboardDiscussions?: boolean;
   liveAnnotationDiscussions?: boolean;
 }

@@ -198,18 +198,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Children:   dashboardChildLinks,
 	})
 
-	if hs.Features.IsEnabled(featuremgmt.FlagLiveOrgDiscussions) {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Chat",
-			Id:         "chat",
-			SubTitle:   "Organization-wide chat – discuss here everything",
-			Icon:       "chat",
-			Url:        hs.Cfg.AppSubURL + "/chat",
-			SortWeight: dtos.WeightChat,
-			Section:    dtos.NavSectionCore,
-		})
-	}
-
 	canExplore := func(context *models.ReqContext) bool {
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
 	}

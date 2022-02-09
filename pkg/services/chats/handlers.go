@@ -102,12 +102,7 @@ func getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashb
 func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd SendMessageCmd) (*MessageDto, error) {
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
-		if !s.features.IsEnabled(featuremgmt.FlagLiveOrgDiscussions) {
-			return nil, ErrPermissionDenied
-		}
-		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
-			return nil, ErrPermissionDenied
-		}
+		return nil, ErrPermissionDenied
 	case ContentTypeDashboard:
 		if !s.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
 			return nil, ErrPermissionDenied
@@ -177,12 +172,7 @@ func (s *Service) SendMessage(ctx context.Context, orgId int64, signedInUser *mo
 func (s *Service) GetMessages(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetMessagesCmd) ([]*MessageDto, error) {
 	switch cmd.ContentTypeId {
 	case ContentTypeOrg:
-		if !s.features.IsEnabled(featuremgmt.FlagLiveOrgDiscussions) {
-			return nil, ErrPermissionDenied
-		}
-		if strconv.FormatInt(orgId, 10) != cmd.ObjectId {
-			return nil, ErrPermissionDenied
-		}
+		return nil, ErrPermissionDenied
 	case ContentTypeDashboard:
 		if !s.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
 			return nil, ErrPermissionDenied

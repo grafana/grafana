@@ -42,7 +42,6 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
-	WeightChat
 	WeightPlugin
 	WeightConfig
 	WeightAdmin

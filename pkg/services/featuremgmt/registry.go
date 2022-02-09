@@ -127,23 +127,13 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "liveDiscussions",
-			Description: "Enable Live discussions feature",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "liveOrgDiscussions",
-			Description: "Enable organization-wide Live discussions",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "liveDashboardDiscussions",
-			Description: "Enable dashboard-wide discussions",
+			Description: "Enable dashboard-wide Live discussions",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "liveAnnotationDiscussions",
-			Description: "Enable annotation discussions",
+			Description: "Enable annotation Live discussions",
 			State:       FeatureStateAlpha,
 		},
 	}

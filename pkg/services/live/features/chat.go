@@ -7,15 +7,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// ChatHandler manages all the `grafana/chat/*` channels
+// ChatHandler manages all the `grafana/chat/*` channels.
 type ChatHandler struct{}
 
-// GetHandlerForPath called on init
+// GetHandlerForPath called on init.
 func (h *ChatHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return h, nil // all chats share the same handler
 }
 
-// OnSubscribe for now allows anyone to subscribe to any chat
+// OnSubscribe for now allows anyone to subscribe to any chat.
 func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	return models.SubscribeReply{
 		Presence:  true,
@@ -23,7 +23,7 @@ func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser
 	}, backend.SubscribeStreamStatusOK, nil
 }
 
-// OnPublish is called when someone begins to edit a chat
+// OnPublish is not used for chats.
 func (h *ChatHandler) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }

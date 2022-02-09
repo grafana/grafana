@@ -77,7 +77,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	}
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveDiscussions) {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveDashboardDiscussions) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
 			addChatMigrations(mg)
 			addChatMessageMigrations(mg)
 		}

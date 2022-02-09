@@ -8,8 +8,11 @@ import (
 type GetMessagesFilter struct{}
 
 const (
-	ContentTypeOrg        = 1
-	ContentTypeDashboard  = 2
+	// ContentTypeOrg is reserved for future use for per-org discussions.
+	ContentTypeOrg = 1
+	// ContentTypeDashboard used for dashboard-wide discussions.
+	ContentTypeDashboard = 2
+	// ContentTypeAnnotation used for annotation discussions.
 	ContentTypeAnnotation = 3
 )
 

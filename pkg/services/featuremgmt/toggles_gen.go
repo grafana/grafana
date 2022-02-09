@@ -95,19 +95,11 @@ const (
 	// Highlight Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
 
-	// FlagLiveDiscussions
-	// Enable Live discussions feature
-	FlagLiveDiscussions = "liveDiscussions"
-
-	// FlagLiveOrgDiscussions
-	// Enable organization-wide Live discussions
-	FlagLiveOrgDiscussions = "liveOrgDiscussions"
-
 	// FlagLiveDashboardDiscussions
-	// Enable dashboard-wide discussions
+	// Enable dashboard-wide Live discussions
 	FlagLiveDashboardDiscussions = "liveDashboardDiscussions"
 
 	// FlagLiveAnnotationDiscussions
-	// Enable annotation discussions
+	// Enable annotation Live discussions
 	FlagLiveAnnotationDiscussions = "liveAnnotationDiscussions"
 )
