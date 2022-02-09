@@ -34,6 +34,7 @@ type TeamStore interface {
 	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
 	GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembersQuery) error
+	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
 	AddOrUpdateTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
 }
 
