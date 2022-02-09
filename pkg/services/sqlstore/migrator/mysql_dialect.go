@@ -14,9 +14,6 @@ import (
 	"xorm.io/xorm"
 )
 
-// MySQL 5.7 and later enforces a maximum length on lock names of 64 characters.
-const max_allowed_lockname_length = 64
-
 type MySQLDialect struct {
 	BaseDialect
 }
@@ -291,9 +288,5 @@ func (db *MySQLDialect) getLockName() (string, error) {
 		return "", fmt.Errorf("failed to generate advisory lock key: %w", err)
 	}
 
-	if len(s) > max_allowed_lockname_length {
-		// what if there several databases with same prefix of 64 length or more?
-		s = s[:max_allowed_lockname_length]
-	}
 	return s, nil
 }
