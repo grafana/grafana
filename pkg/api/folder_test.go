@@ -13,6 +13,7 @@ import (
 	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -142,8 +143,9 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := HTTPServer{
-			Bus: bus.GetBus(),
-			Cfg: setting.NewCfg(),
+			Bus:      bus.GetBus(),
+			Cfg:      setting.NewCfg(),
+			Features: featuremgmt.WithFeatures(),
 		}
 
 		sc := setupScenarioContext(t, url)
