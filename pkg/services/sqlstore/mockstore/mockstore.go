@@ -25,6 +25,8 @@ type SQLStoreMock struct {
 	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList          []*models.UserOrgDTO
 	ExpectedOrgListResponse      OrgListResponse
+	ExpectedDashboardSnapshot    *models.DashboardSnapshot
+	ExpectedTeamsByUser          []*models.TeamDTO
 	ExpectedError                error
 }
 
@@ -49,6 +51,7 @@ func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.
 }
 
 func (m *SQLStoreMock) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
+	query.Result = m.ExpectedDashboardSnapshot
 	return m.ExpectedError
 }
 
@@ -213,7 +216,7 @@ func (m *SQLStoreMock) GetTeamById(ctx context.Context, query *models.GetTeamByI
 }
 
 func (m *SQLStoreMock) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	query.Result = []*models.TeamDTO{}
+	query.Result = m.ExpectedTeamsByUser
 	return m.ExpectedError
 }
 
