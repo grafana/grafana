@@ -152,7 +152,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 		r.log.Error("Crawl ended with an error", "err", err)
 	}
 
-	r.walkFinished()
+	r.crawlFinished()
 	r.broadcastStatus()
 	return err
 }
@@ -204,7 +204,7 @@ func (r *simpleCrawler) newSuccessResult() {
 	r.status.Last = time.Now()
 }
 
-func (r *simpleCrawler) walkFinished() {
+func (r *simpleCrawler) crawlFinished() {
 	r.statusMutex.Lock()
 	defer r.statusMutex.Unlock()
 
