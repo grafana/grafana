@@ -62,6 +62,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveConfig) {
 			addLiveChannelMigrations(mg)
 		}
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardPreviews) {
+			addDashboardThumbsMigrations(mg)
+		}
 	}
 
 	ualert.RerunDashAlertMigration(mg)
