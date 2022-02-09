@@ -58,6 +58,9 @@ export enum AccessControlAction {
 
   ActionRolesList = 'roles:list',
   ActionBuiltinRolesList = 'roles.builtin:list',
+  ActionTeamsRolesList = 'teams.roles:list',
+  ActionTeamsRolesAdd = 'teams.roles:add',
+  ActionTeamsRolesRemove = 'teams.roles:remove',
   ActionUserRolesList = 'users.roles:list',
 }
 

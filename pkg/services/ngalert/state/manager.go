@@ -51,11 +51,11 @@ func (st *Manager) Close() {
 	st.quit <- struct{}{}
 }
 
-func (st *Manager) Warm() {
+func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
 	st.ResetCache()
 
-	orgIds, err := st.instanceStore.FetchOrgIds()
+	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
 		st.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
@@ -66,7 +66,7 @@ func (st *Manager) Warm() {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
+		if err := st.ruleStore.GetOrgAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
@@ -79,7 +79,7 @@ func (st *Manager) Warm() {
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
-		if err := st.instanceStore.ListAlertInstances(&cmd); err != nil {
+		if err := st.instanceStore.ListAlertInstances(ctx, &cmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
@@ -147,7 +147,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(alertRule, processedResults)
+	st.staleResultsHandler(ctx, alertRule, processedResults)
 	return states
 }
 
@@ -279,7 +279,7 @@ func (st *Manager) createAlertAnnotation(ctx context.Context, new eval.State, al
 	}
 }
 
-func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.AlertRule, states map[string]*State) {
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
@@ -292,7 +292,7 @@ func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map
 				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			if err = st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
+			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
 		}
