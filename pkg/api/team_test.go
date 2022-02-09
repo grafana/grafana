@@ -36,6 +36,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.SQLStore = sqlstore.InitTestDB(t)
 		mock := &mockstore.SQLStoreMock{}
+		hs.Cfg.EditorsCanAdmin = true
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
 			require.NoError(t, err)
@@ -96,6 +97,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 
 			assert.Equal(t, 200, r.Status())
@@ -112,6 +114,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())
 			assert.False(t, stub.warnCalled)

@@ -144,6 +144,7 @@ func postAlertScenario(t *testing.T, hs *HTTPServer, desc string, url string, ro
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
