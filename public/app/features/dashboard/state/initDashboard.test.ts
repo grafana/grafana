@@ -54,7 +54,7 @@ interface ScenarioContext {
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
-
+const DASH_UID = 'DGmvKKxZz';
 function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
     const loaderSrv = {
@@ -84,6 +84,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
           templating: {
             list: [constantBuilder().build()],
           },
+          uid: DASH_UID,
         },
       })),
     };
@@ -101,7 +102,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     const ctx: ScenarioContext = {
       args: {
-        urlUid: 'DGmvKKxZz',
+        urlUid: DASH_UID,
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
       },
@@ -121,9 +122,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             queries: [],
           },
         },
-        ...getPreloadedState('DGmvKKxZz', {
+        ...getPreloadedState(DASH_UID, {
           variables: {},
-          transaction: { ...initialTransactionState, uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
+          transaction: { ...initialTransactionState, uid: DASH_UID, status: TransactionStatus.Completed },
         }),
       },
       setup: (fn: () => void) => {
@@ -286,5 +287,16 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   it('Should initialize timeSrv and dashboard query runner', () => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
+  });
+});
+
+describeInitScenario('Initializing snapshot dashboard', (ctx) => {
+  ctx.setup(() => {
+    ctx.args.urlUid = undefined;
+  });
+
+  it('Should send action initVariablesTransaction with correct payload', () => {
+    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+    expect(ctx.actions[2].payload.action.payload.uid).toBe(DASH_UID);
   });
 });
