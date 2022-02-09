@@ -13,7 +13,7 @@ These packages live in the `/packages` folder and contain packages like:
 - `@grafana/ui`
 - etc. ([View all available on npmjs.com](https://www.npmjs.com/org/grafana))
 
-**Any changes to these public packages that can either make dependent software to behave differently or make them not build are considered to be breaking.**
+Any change that causes dependent software to behave differently is considered to be breaking.
 
 ## What is Levitate?
 
@@ -23,9 +23,13 @@ It can list exported members of an NPM package or imports used by an NPM package
 **but we are mainly using it for comparing different versions of the same package to see changes in the exported members.**
 
 We have a Github workflow that runs against every pull request and comments a hint in case there are
-possible breaking changes. It also adds the `breaking change` label to the pull request.
+possible breaking changes. It also adds the `"breaking change"` label to the pull request.
 
-## I received a Levitate comment on my PR, what does it mean?
+
+## How does the CI workflow look like?
+<img src="./breaking-changes-workflow.png" alt="CI workflow" width="700" />
+
+## I received a comment on my PR, what does it mean?
 
 ![Levitate comment](./breaking-changes-comment-screenshot.png)
 
@@ -37,14 +41,17 @@ output of the tool which gives more detailed information on what triggered the n
 
 **Removed exported members** (consolve view):<br />
 This means that some previously exported members won't be available in the newer version of the package which can break dependent plugins.
+
 ![](./breaking-changes-console-screenshot-1.png)
 
 **Changed an existing member** (consolve view):<br />
 This means that a member was changed in a way that can break dependent plugins.
+
 ![](./breaking-changes-console-screenshot-2.png)
 
 **No breaking changes** (consolve view):<br />
 Seeing this does not mean that you made no changes, but that most probably none of them were breaking. You are good to go! 👏
+
 ![](./breaking-changes-console-screenshot-3.png)
 
 ## How can I decide if it is really a breaking change?
@@ -60,7 +67,7 @@ While it is correct (if anyone implements that interface introducing a new prope
 maybe it is an interface that is basically never implemented by other developers, in which case you
 can choose to ignore Levitate's message.
 
-**In the end Levitate's notifications are only warnings and it's always up to the author of the PR to make a decision that makes the most sense.**
+These notifications are only warnings though, and **in the end it's up to the author of the PR to make a decision that makes the most sense.**
 
 ## I know it's a breaking change, what's next?
 
@@ -91,6 +98,8 @@ myOldFunction(name: string) {
 ### Communicate
 
 Reach out to @grafana/plugins-platform-frontend to help finding which plugins are using the code that is just about to change, so we try making it smoother by communicating it to them.
+
+---
 
 ## I still have questions, who can help me out?
 
