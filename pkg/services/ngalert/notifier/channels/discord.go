@@ -31,13 +31,13 @@ func NewDiscordNotifier(model *NotificationChannelConfig, ns notifications.Webho
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 
 	avatarURL := model.Settings.Get("avatar_url").MustString()
 
 	discordURL := model.Settings.Get("url").MustString()
-	if discordURL == "" {
-		return nil, receiverInitError{Reason: "could not find webhook url property in settings", Cfg: *model}
-	}
 
 	useDiscordUsername := model.Settings.Get("use_discord_username").MustBool(false)
 

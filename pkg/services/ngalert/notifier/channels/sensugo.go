@@ -37,15 +37,13 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, ns notifications.Webho
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
 
+	url := model.Settings.Get("url").MustString()
+
 	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
-	if apikey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
-	}
 
 	return &SensuGoNotifier{
 		Base: NewBase(&models.AlertNotification{

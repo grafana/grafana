@@ -15,11 +15,11 @@ import (
 
 // NewWeComNotifier is the constructor for WeCom notifier.
 func NewWeComNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WeComNotifier, error) {
-	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
-
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find webhook URL in settings"}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
+
+	url := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 
 	return &WeComNotifier{
 		Base: NewBase(&models.AlertNotification{

@@ -60,20 +60,12 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	if err != nil {
 		return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("invalid URL %q", slackURL), Err: err}
 	}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: "recipient must be specified when using the Slack chat API",
-		}
-	}
-
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel),
-		}
-	}
 
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionUsers := []string{}
@@ -94,11 +86,6 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	}
 
 	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString())
-	if token == "" && apiURL.String() == SlackAPIEndpoint {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: "token must be specified when using the Slack chat API",
-		}
-	}
 
 	return &SlackNotifier{
 		Base: NewBase(&models.AlertNotification{

@@ -21,13 +21,9 @@ func NewDingDingNotifier(model *NotificationChannelConfig, ns notifications.Webh
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
-	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
-
-	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
 
 	return &DingDingNotifier{
 		Base: NewBase(&models.AlertNotification{
@@ -37,8 +33,8 @@ func NewDingDingNotifier(model *NotificationChannelConfig, ns notifications.Webh
 			DisableResolveMessage: model.DisableResolveMessage,
 			Settings:              model.Settings,
 		}),
-		MsgType: msgType,
-		URL:     url,
+		MsgType: model.Settings.Get("msgType").MustString(defaultDingdingMsgType),
+		URL:     model.Settings.Get("url").MustString(),
 		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:     log.New("alerting.notifier.dingding"),
 		tmpl:    t,

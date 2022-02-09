@@ -30,11 +30,11 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, ns notifications.We
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 
 	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
-	}
 
 	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 

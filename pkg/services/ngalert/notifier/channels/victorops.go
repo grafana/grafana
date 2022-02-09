@@ -31,11 +31,11 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.Web
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 
 	url := model.Settings.Get("url").MustString()
-	if url == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find victorops url property in settings"}
-	}
 
 	return &VictoropsNotifier{
 		Base: NewBase(&models.AlertNotification{

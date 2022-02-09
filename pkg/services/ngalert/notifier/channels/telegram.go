@@ -37,18 +37,13 @@ func NewTelegramNotifier(model *NotificationChannelConfig, ns notifications.Webh
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
-
-	if botToken == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Bot Token in settings"}
-	}
-
-	if chatID == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find Chat Id in settings"}
-	}
 
 	return &TelegramNotifier{
 		Base: NewBase(&models.AlertNotification{

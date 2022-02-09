@@ -29,11 +29,10 @@ func NewTeamsNotifier(model *NotificationChannelConfig, ns notifications.Webhook
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
-	u := model.Settings.Get("url").MustString()
-	if u == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
 	}
+	u := model.Settings.Get("url").MustString()
 
 	return &TeamsNotifier{
 		Base: NewBase(&models.AlertNotification{

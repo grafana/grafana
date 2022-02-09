@@ -12,6 +12,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/common"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/config"
@@ -37,7 +38,13 @@ var (
 )
 
 func (e *EmbeddedContactPoint) IsValid() (bool, error) {
-	return validateContactPointReceiver(e)
+	if e.Type == "" {
+		return false, ErrContactPointNoTypeSet
+	}
+	if e.Settings == nil {
+		return false, ErrContactPointNoSettingsSet
+	}
+	return channels.ValidateContactPointReceiver(e.Type, e.Settings)
 }
 
 func (e *EmbeddedContactPoint) secretKeys() ([]string, error) {

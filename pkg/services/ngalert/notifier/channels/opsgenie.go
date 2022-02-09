@@ -49,23 +49,15 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, ns notifications.Webh
 	if model.SecureSettings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
+	if valid, err := ValidateContactPointReceiverWithSecure(model.Type, model.Settings, model.SecureSettings, fn); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
+
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
 	apiKey := fn(context.Background(), model.SecureSettings, "apiKey", model.Settings.Get("apiKey").MustString())
 	apiURL := model.Settings.Get("apiUrl").MustString()
-	if apiKey == "" {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}
-	}
-	if apiURL == "" {
-		apiURL = OpsgenieAlertURL
-	}
-
 	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
-	if sendTagsAs != OpsgenieSendTags && sendTagsAs != OpsgenieSendDetails && sendTagsAs != OpsgenieSendBoth {
-		return nil, receiverInitError{Cfg: *model,
-			Reason: fmt.Sprintf("invalid value for sendTagsAs: %q", sendTagsAs),
-		}
-	}
 
 	return &OpsgenieNotifier{
 		Base: NewBase(&models.AlertNotification{

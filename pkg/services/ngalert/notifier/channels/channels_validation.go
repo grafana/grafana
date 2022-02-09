@@ -1,6 +1,7 @@
-package services
+package channels
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,20 +9,18 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
-func validateContactPointReceiver(e *EmbeddedContactPoint) (bool, error) {
-	if e.Type == "" {
-		return false, ErrContactPointNoTypeSet
+func ValidateContactPointReceiverWithSecure(channelType string, settings *simplejson.Json, secureSettings map[string][]byte, fn GetDecryptedValueFn) (bool, error) {
+	// create a flat map of settings
+	copy := *settings
+	for key := range secureSettings {
+		copy.Set(key, fn(context.Background(), secureSettings, key, settings.Get(key).MustString()))
 	}
-	if e.Settings == nil {
-		return false, ErrContactPointNoSettingsSet
-	}
-	return validateSettings(e.Type, e.Settings)
+	return ValidateContactPointReceiver(channelType, &copy)
 }
 
-func validateSettings(channelType string, settings *simplejson.Json) (bool, error) {
+func ValidateContactPointReceiver(channelType string, settings *simplejson.Json) (bool, error) {
 	switch strings.ToLower(channelType) {
 	case "alertmanager":
 		urlStr := settings.Get("url").MustString()
@@ -87,10 +86,10 @@ func validateSettings(channelType string, settings *simplejson.Json) (bool, erro
 		if apiKey == "" {
 			return false, errors.New("could not find api key property in settings")
 		}
-		sendTagsAs := settings.Get("sendTagsAs").MustString(channels.OpsgenieSendTags)
-		if sendTagsAs != channels.OpsgenieSendTags &&
-			sendTagsAs != channels.OpsgenieSendDetails &&
-			sendTagsAs != channels.OpsgenieSendBoth {
+		sendTagsAs := settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
+		if sendTagsAs != OpsgenieSendTags &&
+			sendTagsAs != OpsgenieSendDetails &&
+			sendTagsAs != OpsgenieSendBoth {
 			return false, fmt.Errorf("invalid value for sendTagsAs: %q", sendTagsAs)
 		}
 		return true, nil
@@ -132,14 +131,14 @@ func validateSettings(channelType string, settings *simplejson.Json) (bool, erro
 	case "slack":
 		slackURL := settings.Get("url").MustString()
 		if slackURL == "" {
-			slackURL = channels.SlackAPIEndpoint
+			slackURL = SlackAPIEndpoint
 		}
 		apiURL, err := url.Parse(slackURL)
 		if err != nil {
 			return false, fmt.Errorf("invalid URL %q", slackURL)
 		}
 		recipient := strings.TrimSpace(settings.Get("recipient").MustString())
-		if recipient == "" && apiURL.String() == channels.SlackAPIEndpoint {
+		if recipient == "" && apiURL.String() == SlackAPIEndpoint {
 			return false, errors.New("recipient must be specified when using the Slack chat API")
 		}
 
@@ -149,7 +148,7 @@ func validateSettings(channelType string, settings *simplejson.Json) (bool, erro
 		}
 
 		token := settings.Get("token").MustString()
-		if token == "" && apiURL.String() == channels.SlackAPIEndpoint {
+		if token == "" && apiURL.String() == SlackAPIEndpoint {
 			return false, errors.New("token must be specified when using the Slack chat API")
 		}
 		return true, nil

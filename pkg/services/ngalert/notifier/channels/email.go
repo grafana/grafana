@@ -32,13 +32,12 @@ func NewEmailNotifier(model *NotificationChannelConfig, ns notifications.EmailSe
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if valid, err := ValidateContactPointReceiver(model.Type, model.Settings); err != nil || !valid {
+		return nil, receiverInitError{Cfg: *model, Reason: err.Error()}
+	}
 
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
-
-	if addressesString == "" {
-		return nil, receiverInitError{Reason: "could not find addresses in settings", Cfg: *model}
-	}
 
 	// split addresses with a few different ways
 	addresses := util.SplitEmails(addressesString)
