@@ -443,12 +443,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   updateQueries(options: QueryGroupOptions) {
     const { dataSource } = options;
-    this.datasource = dataSource.default
-      ? null
-      : {
-          uid: dataSource.uid,
-          type: dataSource.type,
-        };
+    this.datasource = {
+      uid: dataSource.uid,
+      type: dataSource.type,
+    };
     this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
