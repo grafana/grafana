@@ -59,7 +59,7 @@ By default, data source queries are not cached. To enable query caching for a si
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
-To configure global settings for query caching, refer the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
+To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
 ## Disable query caching
 
