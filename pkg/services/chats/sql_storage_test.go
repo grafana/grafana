@@ -5,21 +5,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
 )
 
-type testFeatures struct{}
-
-func (t testFeatures) IsEnabled(flag string) bool {
-	return flag == featuremgmt.FlagLiveDashboardDiscussions || flag == featuremgmt.FlagLiveAnnotationDiscussions
-}
-
 func createSqlStorage(t *testing.T) Storage {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{Features: &testFeatures{}})
+	sqlStore := sqlstore.InitTestDB(t)
 	return &sqlStorage{
 		sql: sqlStore,
 	}
