@@ -340,8 +340,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           // Update the end font-size
           fontSize = autoFontSize;
         } else {
-          const text = labels[dataIdx][seriesIdx].text;
-          labels[dataIdx][seriesIdx].textMetrics = measureText(text, fontSize);
+          labels[dataIdx][seriesIdx].textMetrics = measureText(labels[dataIdx][seriesIdx].text, fontSize);
         }
 
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
@@ -450,6 +449,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
     }
 
+    labels = {};
     vSpace = hSpace = Infinity;
   };
 
