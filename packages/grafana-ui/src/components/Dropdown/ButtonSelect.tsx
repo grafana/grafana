@@ -1,5 +1,5 @@
 import React, { HTMLAttributes } from 'react';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';

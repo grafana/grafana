@@ -28,11 +28,14 @@ type CreateServiceaccountForm struct {
 }
 
 type ServiceAccountDTO struct {
-	Id     int64  `json:"id"`
-	Name   string `json:"name"`
-	Login  string `json:"login"`
-	OrgId  int64  `json:"orgId"`
-	Tokens int64  `json:"tokens"`
+	Id            int64           `json:"id"`
+	Name          string          `json:"name"`
+	Login         string          `json:"login"`
+	OrgId         int64           `json:"orgId"`
+	Tokens        int64           `json:"tokens"`
+	Role          string          `json:"role"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 type ServiceAccountProfileDTO struct {
