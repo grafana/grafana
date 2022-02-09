@@ -108,6 +108,11 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrDashboardThumbnailNotFound = DashboardErr{
+		Reason:     "Dashboard thumbnail not found",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 )
 
 // DashboardErr represents a dashboard error.
@@ -315,6 +320,11 @@ func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 // GetDashboardUrl returns the HTML url for a dashboard.
 func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
+}
+
+// GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
+func GetKioskModeDashboardUrl(uid string, slug string) string {
+	return fmt.Sprintf("%s?kiosk", GetDashboardUrl(uid, slug))
 }
 
 // GetFullDashboardUrl returns the full URL for a dashboard.
