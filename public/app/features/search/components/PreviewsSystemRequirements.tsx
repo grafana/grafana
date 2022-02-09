@@ -16,7 +16,7 @@ const getText = (requiredImageRendererPluginVersion?: string) => {
       title: 'Image renderer plugin needs to be updated',
       beforeLink: 'You must update the ',
       link: 'Grafana image renderer plugin',
-      afterLink: ` to ver ${requiredImageRendererPluginVersion} to use dashboard previews. Please contact your Grafana administrator to update the plugin`,
+      afterLink: ` to version ${requiredImageRendererPluginVersion} to enable dashboard previews. Please contact your Grafana administrator to update the plugin`,
     };
   }
 
@@ -24,7 +24,7 @@ const getText = (requiredImageRendererPluginVersion?: string) => {
     title: 'Image renderer plugin not installed',
     beforeLink: 'You must install the ',
     link: 'Grafana image renderer plugin',
-    afterLink: ` to use dashboard previews. Please contact your Grafana administrator to install the plugin.`,
+    afterLink: ` to enable dashboard previews. Please contact your Grafana administrator to install the plugin.`,
   };
 };
 
