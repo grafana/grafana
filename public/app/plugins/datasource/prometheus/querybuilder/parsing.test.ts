@@ -93,6 +93,31 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with aggregation without labels', () => {
+    const visQuery = {
+      metric: 'metric_name',
+      labels: [
+        {
+          label: 'instance',
+          op: '=',
+          value: 'internal:3000',
+        },
+      ],
+      operations: [
+        {
+          id: '__sum_without',
+          params: ['app', 'version'],
+        },
+      ],
+    };
+    expect(buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) without (app, version)')).toEqual(
+      noErrors(visQuery)
+    );
+    expect(buildVisualQueryFromString('sum without (app, version)(metric_name{instance="internal:3000"})')).toEqual(
+      noErrors(visQuery)
+    );
+  });
+
   it('parses aggregation with params', () => {
     expect(buildVisualQueryFromString('topk(5, http_requests_total)')).toEqual(
       noErrors({
