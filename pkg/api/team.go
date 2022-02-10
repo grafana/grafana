@@ -130,11 +130,17 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		page = 1
 	}
 
+	// Using accesscontrol the filtering is done based on user permissions
+	userIdFilter := models.FilterIgnoreUser
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+	}
+
 	query := models.SearchTeamsQuery{
 		OrgId:        c.OrgId,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
-		UserIdFilter: userFilter(hs.Cfg.EditorsCanAdmin, c),
+		UserIdFilter: userIdFilter,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
@@ -201,12 +207,18 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	// Using accesscontrol the filtering has already been performed at middleware layer
+	userIdFilter := models.FilterIgnoreUser
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+	}
+
 	query := models.GetTeamByIdQuery{
 		OrgId:        c.OrgId,
 		Id:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
-		UserIdFilter: userFilter(hs.Cfg.EditorsCanAdmin, c),
+		UserIdFilter: userIdFilter,
 	}
 
 	if err := hs.SQLStore.GetTeamById(c.Req.Context(), &query); err != nil {
