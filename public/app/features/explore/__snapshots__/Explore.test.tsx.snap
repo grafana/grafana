@@ -3,6 +3,7 @@
 exports[`Explore should render component 1`] = `
 <CustomScrollbar
   autoHeightMin="100%"
+  scrollRefCallback={[Function]}
 >
   <Connect(UnConnectedExploreToolbar)
     exploreId="left"

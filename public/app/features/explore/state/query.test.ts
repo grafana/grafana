@@ -3,17 +3,17 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
-  changeAutoLogsVolume,
+  cleanLogsVolumeAction,
   clearCache,
   importQueries,
-  loadLogsVolumeData,
   queryReducer,
   runQueries,
   scanStartAction,
   scanStopAction,
+  storeLogsVolumeDataProviderAction,
 } from './query';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { interval, Observable, of } from 'rxjs';
+import { EMPTY, interval, Observable, of } from 'rxjs';
 import {
   ArrayVector,
   DataFrame,
@@ -35,16 +35,6 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
 
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  config: {
-    ...((jest.requireActual('@grafana/runtime') as unknown) as any).config,
-    featureToggles: {
-      fullRangeLogsVolume: true,
-    },
-  },
-}));
-
 const t = toUtc();
 const testRange = {
   from: t,
@@ -63,6 +53,7 @@ const defaultInitialState = {
     [ExploreId.left]: {
       datasourceInstance: {
         query: jest.fn(),
+        getRef: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -72,6 +63,7 @@ const defaultInitialState = {
       eventBridge: { emit: () => {} } as any,
       queries: [{ expr: 'test' }] as any[],
       range: testRange,
+      history: [],
       refreshInterval: {
         label: 'Off',
         value: 0,
@@ -99,16 +91,25 @@ function setupQueryResponse(state: StoreState) {
 
 describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
-    setTimeSrv({
-      init() {},
-    } as any);
-    const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
       ...(defaultInitialState as any),
     });
     setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
+  });
+
+  it('should set state to done if query completes without emitting', async () => {
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
+      ...(defaultInitialState as any),
+    });
+    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    await dispatch(runQueries(ExploreId.left));
+    await new Promise((resolve) => setTimeout(() => resolve(''), 500));
+    expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
   });
 });
 
@@ -138,7 +139,12 @@ describe('running queries', () => {
       .givenThunk(cancelQueries)
       .whenThunkIsDispatched(exploreId);
 
-    expect(dispatchedActions).toEqual([scanStopAction({ exploreId }), cancelQueriesAction({ exploreId })]);
+    expect(dispatchedActions).toEqual([
+      scanStopAction({ exploreId }),
+      cancelQueriesAction({ exploreId }),
+      storeLogsVolumeDataProviderAction({ exploreId, logsVolumeDataProvider: undefined }),
+      cleanLogsVolumeAction({ exploreId }),
+    ]);
   });
 });
 
@@ -159,8 +165,8 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: 'postgres1', refId: 'refId_A' },
-            { datasource: 'postgres1', refId: 'refId_B' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
           ],
           { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
           { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
@@ -212,9 +218,9 @@ describe('reducer', () => {
   describe('query rows', () => {
     it('adds a new query row', () => {
       reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, ({
+        .givenReducer(queryReducer, {
           queries: [],
-        } as unknown) as ExploreItemState)
+        } as unknown as ExploreItemState)
         .whenActionIsDispatched(
           addQueryRowAction({
             exploreId: ExploreId.left,
@@ -222,10 +228,10 @@ describe('reducer', () => {
             index: 0,
           })
         )
-        .thenStateShouldEqual(({
+        .thenStateShouldEqual({
           queries: [{ refId: 'A', key: 'mockKey' }],
           queryKeys: ['mockKey-0'],
-        } as unknown) as ExploreItemState);
+        } as unknown as ExploreItemState);
     });
   });
 
@@ -320,17 +326,24 @@ describe('reducer', () => {
     });
   });
 
-  describe('logs volume', () => {
+  describe('log volume', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
+      unsubscribes: Function[],
       mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
+      unsubscribes = [];
       mockLogsVolumeDataProvider = () => {
-        return of(
-          { state: LoadingState.Loading, error: undefined, data: [] },
-          { state: LoadingState.Done, error: undefined, data: [{}] }
-        );
+        return {
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
+          },
+        } as unknown as Observable<DataQueryResponse>;
       };
 
       const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
@@ -338,9 +351,9 @@ describe('reducer', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            autoLoadLogsVolume: false,
             datasourceInstance: {
               query: jest.fn(),
+              getRef: jest.fn(),
               meta: {
                 id: 'something',
               },
@@ -354,101 +367,76 @@ describe('reducer', () => {
 
       dispatch = store.dispatch;
       getState = store.getState;
+
+      setupQueryResponse(getState());
     });
 
-    it('should not load logs volume automatically after running the query if auto-loading is disabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
+    it('should cancel any unfinished logs volume queries when a new query is run', async () => {
       await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-    });
-
-    it('should load logs volume automatically after running the query if auto-loading is enabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = true;
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('when auto-load is enabled after running the query it should load logs volume data after changing auto-load option', async () => {
-      setupQueryResponse(getState());
-
-      await dispatch(runQueries(ExploreId.left));
-
-      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(changeAutoLogsVolume(ExploreId.left, true));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(true);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should allow loading logs volume on demand if auto-load is disabled', async () => {
-      setupQueryResponse(getState());
-      getState().explore.autoLoadLogsVolume = false;
-
-      await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].logsVolumeData).not.toBeDefined();
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-
-      expect(getState().explore.autoLoadLogsVolume).toEqual(false);
-      expect(getState().explore[ExploreId.left].logsVolumeData).toMatchObject({
-        state: LoadingState.Done,
-        error: undefined,
-        data: [{}],
-      });
-    });
-
-    it('should cancel any unfinished logs volume queries', async () => {
-      setupQueryResponse(getState());
-      let unsubscribes: Function[] = [];
-
-      mockLogsVolumeDataProvider = () => {
-        return ({
-          subscribe: () => {
-            const unsubscribe = jest.fn();
-            unsubscribes.push(unsubscribe);
-            return {
-              unsubscribe,
-            };
-          },
-        } as unknown) as Observable<DataQueryResponse>;
-      };
-
-      await dispatch(runQueries(ExploreId.left));
-      // no subscriptions created yet
-      expect(unsubscribes).toHaveLength(0);
-
-      await dispatch(loadLogsVolumeData(ExploreId.left));
+      // first query is run automatically
       // loading in progress - one subscription created, not cleaned up yet
       expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).not.toBeCalled();
 
       setupQueryResponse(getState());
       await dispatch(runQueries(ExploreId.left));
-      // new query was run - first subscription is cleaned up, no new subscriptions yet
+      // a new query is run while log volume query is not resolve yet...
+      expect(unsubscribes[0]).toBeCalled();
+      // first subscription is cleaned up, a new subscription is created automatically
+      expect(unsubscribes).toHaveLength(2);
+      expect(unsubscribes[1]).not.toBeCalled();
+    });
+
+    it('should cancel log volume query when the main query is canceled', async () => {
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
+      expect(unsubscribes[0]).not.toBeCalled();
+
+      await dispatch(cancelQueries(ExploreId.left));
       expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).toBeCalled();
 
-      await dispatch(loadLogsVolumeData(ExploreId.left));
-      // new subscription is created, only the old was was cleaned up
-      expect(unsubscribes).toHaveLength(2);
-      expect(unsubscribes[0]).toBeCalled();
-      expect(unsubscribes[1]).not.toBeCalled();
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('should load logs volume after running the query', async () => {
+      await dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(1);
+    });
+
+    it('should clean any incomplete log volume data when main query is canceled', async () => {
+      mockLogsVolumeDataProvider = () => {
+        return of({ state: LoadingState.Loading, error: undefined, data: [] });
+      };
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
+      expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Loading);
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      await dispatch(cancelQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('keeps complete log volume data when main query is canceled', async () => {
+      mockLogsVolumeDataProvider = () => {
+        return of(
+          { state: LoadingState.Loading, error: undefined, data: [] },
+          { state: LoadingState.Done, error: undefined, data: [{}] }
+        );
+      };
+      await dispatch(runQueries(ExploreId.left));
+
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
+      expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Done);
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      await dispatch(cancelQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
+      expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Done);
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
     });
   });
 });

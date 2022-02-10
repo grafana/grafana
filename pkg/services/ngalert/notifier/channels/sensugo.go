@@ -5,21 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
 
 type SensuGoNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	log  log.Logger
+	ns   notifications.WebhookSender
 	tmpl *template.Template
 
 	URL       string
@@ -32,23 +30,25 @@ type SensuGoNotifier struct {
 }
 
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
-func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*SensuGoNotifier, error) {
+func NewSensuGoNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
-
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
 	}
 
-	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString(), setting.SecretKey)
+	apikey := fn(context.Background(), model.SecureSettings, "apikey", model.Settings.Get("apikey").MustString())
 	if apikey == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
 	}
 
 	return &SensuGoNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -64,6 +64,7 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template, 
 		APIKey:    apikey,
 		Message:   model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		log:       log.New("alerting.notifier.sensugo"),
+		ns:        ns,
 		tmpl:      t,
 	}, nil
 }
@@ -120,7 +121,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 				},
 			},
 			"output":   tmpl(sn.Message),
-			"issued":   time.Now().Unix(),
+			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
 			"handlers": handlers,
@@ -129,7 +130,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		sn.log.Debug("failed to template sensugo message", "err", tmplErr.Error())
+		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)
@@ -146,7 +147,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Authorization": fmt.Sprintf("Key %s", sn.APIKey),
 		},
 	}
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		sn.log.Error("Failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}

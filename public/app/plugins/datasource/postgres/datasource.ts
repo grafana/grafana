@@ -64,7 +64,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
       expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
-          datasource: this.name,
+          datasource: this.getRef(),
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
           rawQuery: true,
         };
@@ -82,7 +82,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     const queryModel = new PostgresQueryModel(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
     };
@@ -97,7 +97,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const query = {
       refId: options.annotation.name,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
@@ -137,7 +137,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const interpolatedQuery = {
       refId: refId,
-      datasourceId: this.id,
+      datasource: this.getRef(),
       rawSql,
       format: 'table',
     };
@@ -167,16 +167,37 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     );
   }
 
+  private _metaRequest(rawSql: string) {
+    const refId = 'meta';
+    const range = this.timeSrv.timeRange();
+    const query = {
+      refId: refId,
+      datasource: this.getRef(),
+      rawSql,
+      format: 'table',
+    };
+    return getBackendSrv().fetch<BackendDataSourceResponse>({
+      url: '/api/ds/query',
+      method: 'POST',
+      data: {
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
+        queries: [query],
+      },
+      requestId: refId,
+    });
+  }
+
   getVersion(): Promise<any> {
-    return this.metricFindQuery("SELECT current_setting('server_version_num')::int/100", {});
+    return lastValueFrom(this._metaRequest("SELECT current_setting('server_version_num')::int/100"));
   }
 
   getTimescaleDBVersion(): Promise<any> {
-    return this.metricFindQuery("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'", {});
+    return lastValueFrom(this._metaRequest("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'"));
   }
 
   testDatasource(): Promise<any> {
-    return this.metricFindQuery('SELECT 1', {})
+    return lastValueFrom(this._metaRequest('SELECT 1'))
       .then(() => {
         return { status: 'success', message: 'Database Connection OK' };
       })

@@ -6,6 +6,7 @@ export const smokeTestScenario = {
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
   skipScenario: false,
+  loginViaApi: false,
   scenario: () => {
     e2e.flows.openDashboard();
     e2e.components.PageToolbar.item('Add panel').click();
@@ -14,7 +15,7 @@ export const smokeTestScenario = {
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').click();
+        e2e().get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();

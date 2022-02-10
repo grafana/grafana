@@ -13,7 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
@@ -24,13 +29,14 @@ import (
 func TestService(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 
-	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
-
 	origSecret := setting.SecretKey
 	setting.SecretKey = "datasources_service_test"
 	t.Cleanup(func() {
 		setting.SecretKey = origSecret
 	})
+
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	s := ProvideService(bus.New(), sqlStore, secretsService, &acmock.Mock{})
 
 	var ds *models.DataSource
 
@@ -44,7 +50,7 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 
 		ds = cmd.Result
-		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, ds.SecureJsonData, setting.SecretKey)
+		decrypted, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
@@ -56,10 +62,76 @@ func TestService(t *testing.T) {
 		err := s.UpdateDataSource(ctx, &cmd)
 		require.NoError(t, err)
 
-		decrypted, err := s.EncryptionService.DecryptJsonData(ctx, cmd.Result.SecureJsonData, setting.SecretKey)
+		decrypted, err := s.SecretsService.DecryptJsonData(ctx, cmd.Result.SecureJsonData)
 		require.NoError(t, err)
 		require.Equal(t, sjd, decrypted)
 	})
+}
+
+type dataSourceMockRetriever struct {
+	res *models.DataSource
+}
+
+func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+	if query.Name == d.res.Name {
+		query.Result = d.res
+
+		return nil
+	}
+	return models.ErrDataSourceNotFound
+}
+
+func TestService_NameScopeResolver(t *testing.T) {
+	type testCaseResolver struct {
+		desc    string
+		given   string
+		want    string
+		wantErr error
+	}
+
+	testCases := []testCaseResolver{
+		{
+			desc:    "correct",
+			given:   "datasources:name:test-datasource",
+			want:    "datasources:id:1",
+			wantErr: nil,
+		},
+		{
+			desc:    "correct",
+			given:   "datasources:name:*",
+			want:    "datasources:id:*",
+			wantErr: nil,
+		},
+		{
+			desc:    "unknown datasource",
+			given:   "datasources:name:unknown-datasource",
+			want:    "",
+			wantErr: models.ErrDataSourceNotFound,
+		},
+		{
+			desc:    "malformed scope",
+			given:   "datasources:unknown-datasource",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+	}
+
+	testDataSource := &models.DataSource{Id: 1, Name: "test-datasource"}
+	prefix, resolver := NewNameScopeResolver(&dataSourceMockRetriever{testDataSource})
+	require.Equal(t, "datasources:name:", prefix)
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			resolved, err := resolver(context.Background(), 1, tc.given)
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.wantErr, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.want, resolved)
+			}
+		})
+	}
 }
 
 //nolint:goconst
@@ -78,7 +150,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		dsService := ProvideService(bus.New(), nil, ossencryption.ProvideService())
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
@@ -110,10 +183,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
-		tlsCaCert, err := encryptionService.Encrypt(context.Background(), []byte(caCert), "password")
+		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -160,13 +233,13 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
-		tlsClientCert, err := encryptionService.Encrypt(context.Background(), []byte(clientCert), "password")
+		tlsClientCert, err := secretsService.Encrypt(context.Background(), []byte(clientCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
-		tlsClientKey, err := encryptionService.Encrypt(context.Background(), []byte(clientKey), "password")
+		tlsClientKey, err := secretsService.Encrypt(context.Background(), []byte(clientKey), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -203,10 +276,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
-		tlsCaCert, err := encryptionService.Encrypt(context.Background(), []byte(caCert), "password")
+		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -240,8 +313,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 		ds := models.DataSource{
 			Id:       1,
@@ -271,10 +344,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
-		encryptedData, err := encryptionService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		encryptedData, err := secretsService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -330,8 +403,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 			"timeout": 19,
 		})
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 		ds := models.DataSource{
 			Id:       1,
@@ -363,8 +436,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 		ds := models.DataSource{
 			Type:     models.DS_ES,
@@ -397,8 +470,8 @@ func TestService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	encryptionService := ossencryption.ProvideService()
-	dsService := ProvideService(bus.New(), nil, encryptionService)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 	for _, tc := range testCases {
 		ds := &models.DataSource{
@@ -410,14 +483,14 @@ func TestService_getTimeout(t *testing.T) {
 
 func TestService_DecryptedValue(t *testing.T) {
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
-		encryptionService := ossencryption.ProvideService()
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
-		encryptedJsonData, err := encryptionService.EncryptJsonData(
+		encryptedJsonData, err := secretsService.EncryptJsonData(
 			context.Background(),
 			map[string]string{
 				"password": "password",
-			}, setting.SecretKey)
+			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -433,11 +506,11 @@ func TestService_DecryptedValue(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		encryptedJsonData, err = encryptionService.EncryptJsonData(
+		encryptedJsonData, err = secretsService.EncryptJsonData(
 			context.Background(),
 			map[string]string{
 				"password": "",
-			}, setting.SecretKey)
+			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds.SecureJsonData = encryptedJsonData
@@ -448,13 +521,13 @@ func TestService_DecryptedValue(t *testing.T) {
 	})
 
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
-		encryptionService := ossencryption.ProvideService()
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
-		encryptedJsonData, err := encryptionService.EncryptJsonData(
+		encryptedJsonData, err := secretsService.EncryptJsonData(
 			context.Background(),
 			map[string]string{
 				"password": "password",
-			}, setting.SecretKey)
+			}, secrets.WithoutScope())
 		require.NoError(t, err)
 
 		ds := models.DataSource{
@@ -465,18 +538,18 @@ func TestService_DecryptedValue(t *testing.T) {
 			SecureJsonData: encryptedJsonData,
 		}
 
-		dsService := ProvideService(bus.New(), nil, encryptionService)
+		dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 		// Populate cache
 		password, ok := dsService.DecryptedValue(&ds, "password")
 		require.True(t, ok)
 		require.Equal(t, "password", password)
 
-		ds.SecureJsonData, err = encryptionService.EncryptJsonData(
+		ds.SecureJsonData, err = secretsService.EncryptJsonData(
 			context.Background(),
 			map[string]string{
 				"password": "",
-			}, setting.SecretKey)
+			}, secrets.WithoutScope())
 		ds.Updated = time.Now()
 		require.NoError(t, err)
 
@@ -497,53 +570,32 @@ func TestService_HTTPClientOptions(t *testing.T) {
 	}
 
 	t.Run("Azure authentication", func(t *testing.T) {
-		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
+		t.Run("should be disabled if no Azure credentials configured", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
 
-			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
 			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
 		})
 
-		t.Run("should be enabled if enabled in JsonData without credentials configured", func(t *testing.T) {
+		t.Run("should be enabled if Azure credentials configured", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
 			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth": true,
-			})
-
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
-
-			opts, err := dsService.httpClientOptions(&ds)
-			require.NoError(t, err)
-
-			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
-			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
-		})
-
-		t.Run("should be enabled if enabled in JsonData with credentials configured", func(t *testing.T) {
-			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
-
-			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth": true,
 				"azureCredentials": map[string]interface{}{
 					"authType": "msi",
 				},
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)
-
-			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
 
 			require.Contains(t, opts.CustomOptions, "_azureCredentials")
 			credentials := opts.CustomOptions["_azureCredentials"]
@@ -551,36 +603,15 @@ func TestService_HTTPClientOptions(t *testing.T) {
 			assert.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
 		})
 
-		t.Run("should be disabled if disabled in JsonData even with credentials configured", func(t *testing.T) {
-			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
-
-			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth": false,
-				"azureCredentials": map[string]interface{}{
-					"authType": "msi",
-				},
-			})
-
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
-
-			opts, err := dsService.httpClientOptions(&ds)
-			require.NoError(t, err)
-
-			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
-			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
-		})
-
 		t.Run("should fail if credentials are invalid", func(t *testing.T) {
 			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
 
 			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
-				"azureAuth":        true,
 				"azureCredentials": "invalid",
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 			_, err := dsService.httpClientOptions(&ds)
 			assert.Error(t, err)
@@ -593,8 +624,8 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
 			})
 
-			encryptionService := ossencryption.ProvideService()
-			dsService := ProvideService(bus.New(), nil, encryptionService)
+			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			dsService := ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
 
 			opts, err := dsService.httpClientOptions(&ds)
 			require.NoError(t, err)

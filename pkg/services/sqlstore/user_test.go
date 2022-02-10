@@ -27,7 +27,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(context.Background(), &query)
+		err = ss.GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -37,7 +37,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsDisabled)
 
 		query = models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(context.Background(), &query)
+		err = ss.GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -60,7 +60,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(context.Background(), &query)
+		err = ss.GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -80,7 +80,7 @@ func TestUserDataAccess(t *testing.T) {
 		}()
 
 		orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-		err := CreateOrg(orgCmd)
+		err := CreateOrg(context.Background(), orgCmd)
 		require.Nil(t, err)
 
 		cmd := models.CreateUserCommand{
@@ -94,7 +94,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(context.Background(), &query)
+		err = ss.GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -245,13 +245,13 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = SavePreferences(&models.SavePreferencesCommand{
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
 			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
 		})
 		require.Nil(t, err)
 
 		// When the user is deleted
-		err = DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
+		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
 
 		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
@@ -267,7 +267,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, permQuery.Result, 0)
 
 		prefsQuery := &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = GetPreferences(prefsQuery)
+		err = ss.GetPreferences(context.Background(), prefsQuery)
 		require.Nil(t, err)
 
 		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
@@ -296,7 +296,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = SavePreferences(&models.SavePreferencesCommand{
+		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
 			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
 		})
 		require.Nil(t, err)
@@ -308,7 +308,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, query3.Result)
 		require.Equal(t, query3.OrgId, users[1].OrgId)
-		err = SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
+		err = ss.SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
 		require.Nil(t, err)
 		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].Id}
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
@@ -325,7 +325,7 @@ func TestUserDataAccess(t *testing.T) {
 			IsDisabled: true,
 		}
 
-		err = BatchDisableUsers(context.Background(), &disableCmd)
+		err = ss.BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
 		isDisabled = true
@@ -336,7 +336,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.EqualValues(t, query5.Result.TotalCount, 5)
 
 		// the user is deleted
-		err = DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
+		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
 
 		// delete connected org users and permissions
@@ -353,7 +353,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, permQuery.Result, 0)
 
 		prefsQuery = &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = GetPreferences(prefsQuery)
+		err = ss.GetPreferences(context.Background(), prefsQuery)
 		require.Nil(t, err)
 
 		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
@@ -378,7 +378,7 @@ func TestUserDataAccess(t *testing.T) {
 			IsDisabled: false,
 		}
 
-		err := BatchDisableUsers(context.Background(), &disableCmd)
+		err := ss.BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
 		isDisabled := false
@@ -410,7 +410,7 @@ func TestUserDataAccess(t *testing.T) {
 			IsDisabled: true,
 		}
 
-		err := BatchDisableUsers(context.Background(), &disableCmd)
+		err := ss.BatchDisableUsers(context.Background(), &disableCmd)
 		require.Nil(t, err)
 
 		query := models.SearchUsersQuery{}
@@ -469,7 +469,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		getUserError := GetUserById(context.Background(), &query)
+		getUserError := ss.GetUserById(context.Background(), &query)
 		require.Nil(t, getUserError)
 
 		require.True(t, query.Result.IsAdmin)

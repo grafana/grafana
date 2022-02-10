@@ -6,11 +6,16 @@ import { AccessControlAction } from 'app/types';
 import { getServerStats, ServerStat } from './state/apis';
 import { contextSrv } from '../../core/services/context_srv';
 import { Loader } from '../plugins/admin/components/Loader';
+import { config } from '@grafana/runtime';
+import { CrawlerStatus } from './CrawlerStatus';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
+
+  const hasAccessToDataSources = contextSrv.hasAccess(AccessControlAction.DataSourcesRead, contextSrv.isGrafanaAdmin);
+  const hasAccessToAdminUsers = contextSrv.hasAccess(AccessControlAction.UsersRead, contextSrv.isGrafanaAdmin);
 
   useEffect(() => {
     if (contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
@@ -53,9 +58,11 @@ export const ServerStats = () => {
             <StatCard
               content={[{ name: 'Data sources', value: stats.datasources }]}
               footer={
-                <LinkButton href={'/datasources'} variant={'secondary'}>
-                  Manage data sources
-                </LinkButton>
+                hasAccessToDataSources && (
+                  <LinkButton href={'/datasources'} variant={'secondary'}>
+                    Manage data sources
+                  </LinkButton>
+                )
               }
             />
             <StatCard
@@ -75,15 +82,19 @@ export const ServerStats = () => {
               { name: 'Active sessions', value: stats.activeSessions },
             ]}
             footer={
-              <LinkButton href={'/admin/users'} variant={'secondary'}>
-                Manage users
-              </LinkButton>
+              hasAccessToAdminUsers && (
+                <LinkButton href={'/admin/users'} variant={'secondary'}>
+                  Manage users
+                </LinkButton>
+              )
             }
           />
         </div>
       ) : (
         <p className={styles.notFound}>No stats found.</p>
       )}
+
+      {config.featureToggles.dashboardPreviews && <CrawlerStatus />}
     </>
   );
 };
@@ -129,7 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 type StatCardProps = {
   content: Array<Record<string, number | string>>;
-  footer?: JSX.Element;
+  footer?: JSX.Element | boolean;
 };
 
 const StatCard = ({ content, footer }: StatCardProps) => {

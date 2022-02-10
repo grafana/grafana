@@ -16,13 +16,15 @@ import (
 
 const flushInterval = 15 * time.Second
 
-type RemoteWriteConfig struct {
+type RemoteWriteFrameOutput struct {
+	mu sync.Mutex
+
 	// Endpoint to send streaming frames to.
-	Endpoint string `json:"endpoint"`
-	// User is a user for remote write request.
-	User string `json:"user"`
-	// Password for remote write endpoint.
-	Password string `json:"password"`
+	Endpoint string
+
+	// BasicAuth is an optional basic auth params.
+	BasicAuth *BasicAuth
+
 	// SampleMilliseconds allow defining an interval to sample points inside a channel
 	// when outputting to remote write endpoint (on __name__ label basis). For example
 	// when having a 20Hz stream and SampleMilliseconds 1000 then only one point in a
@@ -30,22 +32,20 @@ type RemoteWriteConfig struct {
 	// If not set - then no down-sampling will be performed. If SampleMilliseconds is
 	// greater than flushInterval then each flush will include a point as we only keeping
 	// track of timestamps in terms of each individual flush at the moment.
-	SampleMilliseconds int64 `json:"sampleMilliseconds"`
-}
+	SampleMilliseconds int64
 
-type RemoteWriteFrameOutput struct {
-	mu         sync.Mutex
-	config     RemoteWriteConfig
 	httpClient *http.Client
 	buffer     []prompb.TimeSeries
 }
 
-func NewRemoteWriteFrameOutput(config RemoteWriteConfig) *RemoteWriteFrameOutput {
+func NewRemoteWriteFrameOutput(endpoint string, basicAuth *BasicAuth, sampleMilliseconds int64) *RemoteWriteFrameOutput {
 	out := &RemoteWriteFrameOutput{
-		config:     config,
-		httpClient: &http.Client{Timeout: 2 * time.Second},
+		Endpoint:           endpoint,
+		BasicAuth:          basicAuth,
+		SampleMilliseconds: sampleMilliseconds,
+		httpClient:         &http.Client{Timeout: 2 * time.Second},
 	}
-	if config.Endpoint != "" {
+	if out.Endpoint != "" {
 		go out.flushPeriodically()
 	}
 	return out
@@ -104,7 +104,7 @@ func (out *RemoteWriteFrameOutput) sample(timeSeries []prompb.TimeSeries) []prom
 		// In-place filtering, see https://github.com/golang/go/wiki/SliceTricks#filter-in-place.
 		n := 0
 		for _, s := range ts.Samples {
-			if lastTimestamp == 0 || s.Timestamp > lastTimestamp+out.config.SampleMilliseconds {
+			if lastTimestamp == 0 || s.Timestamp > lastTimestamp+out.SampleMilliseconds {
 				ts.Samples[n] = s
 				n++
 				lastTimestamp = s.Timestamp
@@ -132,7 +132,7 @@ func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
 	}
 	logger.Debug("Remote write flush", "numTimeSeries", len(timeSeries), "numSamples", numSamples)
 
-	if out.config.SampleMilliseconds > 0 {
+	if out.SampleMilliseconds > 0 {
 		timeSeries = out.sample(timeSeries)
 		numSamples = 0
 		for _, ts := range timeSeries {
@@ -144,15 +144,17 @@ func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
 	if err != nil {
 		return fmt.Errorf("error converting time series to bytes: %v", err)
 	}
-	logger.Debug("Sending to remote write endpoint", "url", out.config.Endpoint, "bodyLength", len(remoteWriteData))
-	req, err := http.NewRequest(http.MethodPost, out.config.Endpoint, bytes.NewReader(remoteWriteData))
+	logger.Debug("Sending to remote write endpoint", "url", out.Endpoint, "bodyLength", len(remoteWriteData))
+	req, err := http.NewRequest(http.MethodPost, out.Endpoint, bytes.NewReader(remoteWriteData))
 	if err != nil {
 		return fmt.Errorf("error constructing remote write request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/x-protobuf")
 	req.Header.Set("Content-Encoding", "snappy")
 	req.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-	req.SetBasicAuth(out.config.User, out.config.Password)
+	if out.BasicAuth != nil {
+		req.SetBasicAuth(out.BasicAuth.User, out.BasicAuth.Password)
+	}
 
 	started := time.Now()
 	resp, err := out.httpClient.Do(req)
@@ -164,12 +166,12 @@ func (out *RemoteWriteFrameOutput) flush(timeSeries []prompb.TimeSeries) error {
 		logger.Error("Unexpected response code from remote write endpoint", "code", resp.StatusCode)
 		return errors.New("unexpected response code from remote write endpoint")
 	}
-	logger.Debug("Successfully sent to remote write endpoint", "url", out.config.Endpoint, "elapsed", time.Since(started))
+	logger.Debug("Successfully sent to remote write endpoint", "url", out.Endpoint, "elapsed", time.Since(started))
 	return nil
 }
 
 func (out *RemoteWriteFrameOutput) OutputFrame(_ context.Context, _ Vars, frame *data.Frame) ([]*ChannelFrame, error) {
-	if out.config.Endpoint == "" {
+	if out.Endpoint == "" {
 		logger.Debug("Skip sending to remote write: no url")
 		return nil, nil
 	}

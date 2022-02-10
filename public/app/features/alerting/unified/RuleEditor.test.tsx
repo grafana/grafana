@@ -11,7 +11,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { mockDataSource, MockDataSourceSrv } from './mocks';
 import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -39,13 +38,13 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
 
   api: {
-    fetchRulerRulesGroup: typeAsJestMock(fetchRulerRulesGroup),
-    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
-    fetchRulerRulesNamespace: typeAsJestMock(fetchRulerRulesNamespace),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
+    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
+    fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
   },
 };
 
@@ -126,26 +125,27 @@ describe('RuleEditor', () => {
     });
 
     await renderRuleEditor();
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
+    userEvent.type(await ui.inputs.name.find(), 'my great new rule');
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
-    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
-    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
+    userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
+    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
@@ -196,15 +196,16 @@ describe('RuleEditor', () => {
     await waitFor(() => expect(searchFolderMock).toHaveBeenCalled());
     await clickSelectOption(folderInput, 'Folder A');
 
-    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
-    await userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
-    await userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    userEvent.type(ui.inputs.labelKey(0).get(), 'severity');
+    userEvent.type(ui.inputs.labelValue(0).get(), 'warn');
+    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
@@ -265,33 +266,36 @@ describe('RuleEditor', () => {
     });
 
     await renderRuleEditor();
-    await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
+    userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed recording rule/);
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
-    userEvent.click(ui.buttons.addLabel.get());
+    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+    userEvent.click(ui.buttons.addLabel.get(), undefined, { skipPointerEventsCheck: true });
 
-    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
-    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+    userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
 
     // try to save, find out that recording rule name is invalid
     userEvent.click(ui.buttons.save.get());
-    expect(
-      await byText(
-        'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
-      ).find()
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        byText(
+          'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.'
+        ).get()
+      ).toBeInTheDocument()
+    );
     expect(mocks.api.setRulerRuleGroup).not.toBeCalled();
 
     // fix name and re-submit
-    await userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
+    userEvent.type(await ui.inputs.name.find(), '{selectall}{del}my:great:new:recording:rule');
     userEvent.click(ui.buttons.save.get());
 
     // save and check what was sent to backend
@@ -316,7 +320,7 @@ describe('RuleEditor', () => {
       uid: 'abcd',
       id: 1,
     };
-    jest.spyOn(api, 'searchFolders').mockResolvedValue([folder] as DashboardSearchHit[]);
+    const searchFolderMock = jest.spyOn(api, 'searchFolders').mockResolvedValue([folder] as DashboardSearchHit[]);
     const getFolderByUid = jest.fn().mockResolvedValue({
       ...folder,
       canSave: true,
@@ -329,9 +333,9 @@ describe('RuleEditor', () => {
       }),
     };
 
-    const backendSrv = ({
+    const backendSrv = {
       getFolderByUid,
-    } as any) as BackendSrv;
+    } as any as BackendSrv;
     setBackendSrv(backendSrv);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
@@ -363,6 +367,7 @@ describe('RuleEditor', () => {
     });
 
     await renderRuleEditor(uid);
+    await waitFor(() => expect(searchFolderMock).toHaveBeenCalled());
 
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();
@@ -373,12 +378,12 @@ describe('RuleEditor', () => {
 
     // add an annotation
     await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
-    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
-    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
+    userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
+    userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
 
     //add a label
-    await userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
-    await userEvent.type(ui.inputs.labelValue(2).get(), 'value');
+    userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
+    userEvent.type(ui.inputs.labelValue(2).get(), 'value');
 
     // save and check what was sent to backend
     userEvent.click(ui.buttons.save.get());
@@ -490,7 +495,7 @@ describe('RuleEditor', () => {
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    userEvent.click(byRole('combobox').get(dataSourceSelect));
     expect(await byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('cortex with ruler').query()).toBeInTheDocument();
     expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
@@ -501,6 +506,6 @@ describe('RuleEditor', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
+  userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText as string);
 };

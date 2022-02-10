@@ -51,9 +51,10 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   const setupFile = getSetupFile(setupFilePath);
   const shimsFile = getSetupFile(shimsFilePath);
 
-  const setupFiles = [setupFile, shimsFile, `${__dirname}/matchMedia.js`, 'jest-canvas-mock'].filter((f) => f);
+  const setupFiles = [setupFile, shimsFile, `${__dirname}/matchMedia.js`, require.resolve('jest-canvas-mock')].filter(
+    (f) => f
+  );
   const defaultJestConfig = {
-    preset: 'ts-jest',
     verbose: false,
     moduleDirectories: ['node_modules', 'src'],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -69,13 +70,13 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     reporters: [
       'default',
       [
-        'jest-junit',
+        require.resolve('jest-junit'),
         {
           outputDirectory: 'coverage',
         },
       ],
     ],
-    testEnvironment: 'jest-environment-jsdom-fifteen',
+    testEnvironment: require.resolve('jest-environment-jsdom-fifteen'),
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
@@ -83,6 +84,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     ],
     transform: {
       '^.+\\.js$': 'babel-jest',
+      '^.+\\.tsx?$': require.resolve('ts-jest'),
     },
     transformIgnorePatterns: [
       '[/\\\\\\\\]node_modules[/\\\\\\\\].+\\\\.(js|jsx|ts|tsx)$',

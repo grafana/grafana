@@ -3,21 +3,24 @@ package notifier
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/notifications"
 
-	gokit_log "github.com/go-kit/kit/log"
+	"github.com/prometheus/alertmanager/cluster"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -43,10 +46,12 @@ type MultiOrgAlertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
+	ns      notifications.Service
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager, l log.Logger,
+	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager,
+	ns notifications.Service, l log.Logger,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		logger:        l,
@@ -57,9 +62,10 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		kvStore:       kvStore,
 		decryptFn:     decryptFn,
 		metrics:       m,
+		ns:            ns,
 	}
 
-	clusterLogger := gokit_log.With(gokit_log.NewLogfmtLogger(logging.NewWrapper(l)), "component", "cluster")
+	clusterLogger := l.New("component", "cluster")
 	moa.peer = &NilPeer{}
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
 		peer, err := cluster.Create(
@@ -75,6 +81,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 			cluster.DefaultProbeTimeout,
 			cluster.DefaultProbeInterval,
 			nil,
+			true,
 		)
 
 		if err != nil {
@@ -167,10 +174,11 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			// To export them, we need to translate the metrics from each individual registry and,
 			// then aggregate them on the main registry.
 			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, m)
+			am, err := newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
 			}
+			moa.alertmanagers[orgID] = am
 			alertmanager = am
 		}
 
@@ -180,7 +188,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
 				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
 			}
-			err := alertmanager.SaveAndApplyDefaultConfig()
+			err := alertmanager.SaveAndApplyDefaultConfig(ctx)
 			if err != nil {
 				moa.logger.Error("failed to apply the default Alertmanager configuration", "org", orgID)
 				continue
@@ -213,6 +221,66 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
+		// Cleanup all the remaining resources from this alertmanager.
+		am.fileStore.CleanUp()
+	}
+
+	// We look for orphan directories and remove them. Orphan directories can
+	// occur when an organization is deleted and the node running Grafana is
+	// shutdown before the next sync is executed.
+	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
+}
+
+// cleanupOrphanLocalOrgState will check if there is any organization on
+// disk that is not part of the active organizations. If this is the case
+// it will delete the local state from disk.
+func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
+	activeOrganizations map[int64]struct{}) {
+	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
+	files, err := ioutil.ReadDir(dataDir)
+	if err != nil {
+		moa.logger.Error("failed to list local working directory", "dir", dataDir, "err", err)
+		return
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			moa.logger.Warn("ignoring unexpected file while scanning local working directory", "filename", filepath.Join(dataDir, file.Name()))
+			continue
+		}
+		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
+		if err != nil {
+			moa.logger.Error("unable to parse orgID from directory name", "name", file.Name(), "err", err)
+			continue
+		}
+		_, exists := activeOrganizations[orgID]
+		if !exists {
+			moa.logger.Info("found orphan organization directory", "orgID", orgID)
+			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
+			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
+			// Cleanup all the remaining resources from this alertmanager.
+			fileStore.CleanUp()
+		}
+	}
+	// Remove all orphaned items from kvstore by listing all existing items
+	// in our used namespace and comparing them to the currently active
+	// organizations.
+	storedFiles := []string{notificationLogFilename, silencesFilename}
+	for _, fileName := range storedFiles {
+		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
+		if err != nil {
+			moa.logger.Error("failed to fetch items from kvstore", "err", err,
+				"namespace", KVNamespace, "key", fileName)
+		}
+		for _, key := range keys {
+			if _, exists := activeOrganizations[key.OrgId]; exists {
+				continue
+			}
+			err = moa.kvStore.Del(ctx, key.OrgId, key.Namespace, key.Key)
+			if err != nil {
+				moa.logger.Error("failed to delete item from kvstore", "err", err,
+					"orgID", key.OrgId, "namespace", KVNamespace, "key", key.Key)
+			}
+		}
 	}
 }
 
@@ -246,7 +314,7 @@ func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, er
 	}
 
 	if !orgAM.Ready() {
-		return nil, ErrAlertmanagerNotReady
+		return orgAM, ErrAlertmanagerNotReady
 	}
 
 	return orgAM, nil

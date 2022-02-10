@@ -148,7 +148,7 @@ it('should call onChange', () => {
   const selectEl = screen.getByLabelText('My select');
   expect(selectEl).toBeInTheDocument();
 
-  await selectEvent.select(selectEl, 'Option 2');
+  await selectEvent.select(selectEl, 'Option 2', { container: document.body });
   expect(onChange).toHaveBeenCalledWith({
     label: 'Option 2',
     value: 2,

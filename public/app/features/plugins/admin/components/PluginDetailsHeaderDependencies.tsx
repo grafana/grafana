@@ -2,17 +2,24 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
-import { CatalogPlugin, PluginIconName } from '../types';
+import { Version, CatalogPlugin, PluginIconName } from '../types';
 
 type Props = {
   plugin: CatalogPlugin;
+  latestCompatibleVersion?: Version;
   className?: string;
 };
 
-export function PluginDetailsHeaderDependencies({ plugin, className }: Props): React.ReactElement | null {
+export function PluginDetailsHeaderDependencies({
+  plugin,
+  latestCompatibleVersion,
+  className,
+}: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const pluginDependencies = plugin.details?.pluginDependencies;
-  const grafanaDependency = plugin.details?.grafanaDependency;
+  const grafanaDependency = plugin.isInstalled
+    ? plugin.details?.grafanaDependency
+    : latestCompatibleVersion?.grafanaDependency || plugin.details?.grafanaDependency;
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 
   if (hasNoDependencyInfo) {

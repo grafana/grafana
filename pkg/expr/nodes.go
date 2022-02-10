@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"gonum.org/v1/gonum/graph/simple"
 )
@@ -19,6 +22,19 @@ var (
 	logger = log.New("expr")
 )
 
+type QueryError struct {
+	RefID string
+	Err   error
+}
+
+func (e QueryError) Error() string {
+	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+}
+
+func (e QueryError) Unwrap() error {
+	return e.Err
+}
+
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
@@ -26,23 +42,11 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID         string `json:"refId"`
-	Query         map[string]interface{}
-	QueryType     string
-	TimeRange     TimeRange
-	DatasourceUID string
-}
-
-func (rn *rawNode) GetDatasourceName() (string, error) {
-	rawDs, ok := rn.Query["datasource"]
-	if !ok {
-		return "", nil
-	}
-	dsName, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
-	}
-	return dsName, nil
+	RefID      string `json:"refId"`
+	Query      map[string]interface{}
+	QueryType  string
+	TimeRange  TimeRange
+	DataSource *models.DataSource
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -133,9 +137,8 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query         json.RawMessage
-	datasourceID  int64
-	datasourceUID string
+	query      json.RawMessage
+	datasource *models.DataSource
 
 	orgID      int64
 	queryType  string
@@ -168,21 +171,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 		maxDP:      defaultMaxDP,
 		timeRange:  rn.TimeRange,
 		request:    *req,
-	}
-
-	rawDsID, ok := rn.Query["datasourceId"]
-	switch ok {
-	case true:
-		floatDsID, ok := rawDsID.(float64)
-		if !ok {
-			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-		}
-		dsNode.datasourceID = int64(floatDsID)
-	default:
-		if rn.DatasourceUID == "" {
-			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
-		}
-		dsNode.datasourceUID = rn.DatasourceUID
+		datasource: rn.DataSource,
 	}
 
 	var floatIntervalMS float64
@@ -208,12 +197,14 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
+	if err != nil {
+		return mathexp.Results{}, errutil.Wrap("failed to convert datasource instance settings", err)
+	}
 	pc := backend.PluginContext{
-		OrgID: dn.orgID,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID:  dn.datasourceID,
-			UID: dn.datasourceUID,
-		},
+		OrgID:                      dn.orgID,
+		DataSourceInstanceSettings: dsInstanceSettings,
+		PluginID:                   dn.datasource.Type,
 	}
 
 	q := []backend.DataQuery{
@@ -230,12 +221,11 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		},
 	}
 
-	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 		Headers:       dn.request.Headers,
 	})
-
 	if err != nil {
 		return mathexp.Results{}, err
 	}
@@ -243,7 +233,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
 		if qr.Error != nil {
-			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
 		}
 
 		if len(qr.Frames) == 1 {
@@ -264,8 +254,16 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			}
 		}
 
+		dataSource := dn.datasource.Type
 		for _, frame := range qr.Frames {
 			logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
+			// the WideToMany() function to error out, which results in unhealthy alerts.
+			// This check should be removed once inconsistencies in data source responses are solved.
+			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == models.DS_INFLUXDB {
+				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
+				continue
+			}
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err

@@ -25,31 +25,6 @@ export enum LiveChannelType {
   JSON = 'json', // arbitray json message
 }
 
-/**
- * @alpha -- experimental
- */
-export interface LiveChannelConfig {
-  /**
-   * An optional description for the channel
-   */
-  description?: string;
-
-  /**
-   * What kind of data do you expect
-   */
-  type?: LiveChannelType;
-
-  /**
-   * The channel keeps track of who else is connected to the same channel
-   */
-  hasPresence?: boolean;
-
-  /**
-   * Allow users to write to the connection
-   */
-  canPublish?: boolean;
-}
-
 export enum LiveChannelConnectionState {
   /** The connection is not yet established */
   Pending = 'pending',
@@ -153,10 +128,22 @@ export interface LiveChannelPresenceStatus {
 /**
  * @alpha -- experimental
  */
+export type LiveChannelId = string;
+
+/**
+ * @alpha -- experimental
+ */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
   namespace: string; // depends on the scope
   path: string;
+
+  /**
+   * Additional metadata passed to a channel.  The backend will propigate this JSON object to
+   * each OnSubscribe and RunStream calls.  This value should be constant across multiple requests
+   * to the same channel path
+   */
+  data?: any;
 }
 
 /**
@@ -192,7 +179,7 @@ export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is Li
  *
  * @alpha -- experimental
  */
-export function toLiveChannelId(addr: LiveChannelAddress): string {
+export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
   if (!addr.scope) {
     return '';
   }
@@ -205,14 +192,4 @@ export function toLiveChannelId(addr: LiveChannelAddress): string {
     return id;
   }
   return id + '/' + addr.path;
-}
-
-/**
- * @alpha -- experimental
- */
-export interface LiveChannelSupport {
-  /**
-   * Get the channel handler for the path, or throw an error if invalid
-   */
-  getChannelConfig(path: string): LiveChannelConfig | undefined;
 }

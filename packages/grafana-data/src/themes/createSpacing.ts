@@ -17,7 +17,7 @@ export type ThemeSpacingArgument = number | string;
  * tslint:disable:unified-signatures */
 export interface ThemeSpacing {
   (): string;
-  (value: number): string;
+  (value: ThemeSpacingArgument): string;
   (topBottom: ThemeSpacingArgument, rightLeft: ThemeSpacingArgument): string;
   (top: ThemeSpacingArgument, rightLeft: ThemeSpacingArgument, bottom: ThemeSpacingArgument): string;
   (

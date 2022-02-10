@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func (p *TestDataPlugin) handleFlightPathScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleFlightPathScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {

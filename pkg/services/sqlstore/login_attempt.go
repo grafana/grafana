@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strconv"
 	"time"
 
@@ -10,14 +11,14 @@ import (
 
 var getTimeNow = time.Now
 
-func init() {
-	bus.AddHandler("sql", CreateLoginAttempt)
-	bus.AddHandler("sql", DeleteOldLoginAttempts)
+func (ss *SQLStore) addLoginAttemptQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.CreateLoginAttempt)
+	bus.AddHandler("sql", ss.DeleteOldLoginAttempts)
 	bus.AddHandler("sql", GetUserLoginAttemptCount)
 }
 
-func CreateLoginAttempt(cmd *models.CreateLoginAttemptCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		loginAttempt := models.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
@@ -34,8 +35,8 @@ func CreateLoginAttempt(cmd *models.CreateLoginAttemptCommand) error {
 	})
 }
 
-func DeleteOldLoginAttempts(cmd *models.DeleteOldLoginAttemptsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
 		result, err := sess.Query(sql, cmd.OlderThan.Unix())
@@ -64,7 +65,7 @@ func DeleteOldLoginAttempts(cmd *models.DeleteOldLoginAttemptsCommand) error {
 	})
 }
 
-func GetUserLoginAttemptCount(query *models.GetUserLoginAttemptCountQuery) error {
+func GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
 	loginAttempt := new(models.LoginAttempt)
 	total, err := x.
 		Where("username = ?", query.Username).

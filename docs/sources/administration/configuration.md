@@ -464,6 +464,27 @@ Analytics ID here. By default this feature is disabled.
 
 Google Tag Manager ID, only enabled if you enter an ID here.
 
+### rudderstack_write_key
+
+If you want to track Grafana usage via Rudderstack specify _your_ Rudderstack
+Write Key here. The `rudderstack_data_plane_url` must also be provided for this
+feature to be enabled. By default this feature is disabled.
+
+### rudderstack_data_plane_url
+
+Rudderstack data plane url that will receive Rudderstack events. The
+`rudderstack_write_key` must also be provided for this feature to be enabled.
+
+### rudderstack_sdk_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the Rudderstack SDK.
+
+### rudderstack_config_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the Rudderstack config.
+
 ### application_insights_connection_string
 
 If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
@@ -525,7 +546,7 @@ mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clic
 
 ### strict_transport_security
 
-Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS.
+Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. Only use this when HTTPS is enabled in your configuration, or when there is another upstream system that ensures your application does HTTPS (like a frontend load balancer). HSTS tells browsers that the site should only be accessed using HTTPS.
 
 ### strict_transport_security_max_age_seconds
 
@@ -565,11 +586,11 @@ Set to `false` to disable external snapshot publish endpoint (default `true`).
 
 ### external_snapshot_url
 
-Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io).
+Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots.raintank.io).
 
 ### external_snapshot_name
 
-Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`.
+Set name for external snapshot button. Defaults to `Publish to snapshots.raintank.io`.
 
 ### public_mode
 
@@ -610,7 +631,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages](/reference/admin).
+users from the [Grafana Admin Pages]({{< relref "../manage-users/server-admin/server-admin-manage-users.md" >}}).
 
 ### allow_org_create
 
@@ -735,6 +756,12 @@ Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 > Only available in Grafana 7.3+.
 
 Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
+
+### sigv4_verbose_logging
+
+> Only available in Grafana 8.4+.
+
+Set to `true` to enable verbose request signature logging when AWS Signature Version 4 Authentication is enabled. Default is `false`.
 
 <hr />
 
@@ -869,8 +896,6 @@ Email server settings.
 
 Enable this to allow Grafana to send email. Default is `false`.
 
-If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
-
 ### host
 
 Default is `localhost:25`.
@@ -881,7 +906,7 @@ In case of SMTP auth, default is `empty`.
 
 ### password
 
-In case of SMTP auth, default is `empty`.
+In case of SMTP auth, default is `empty`. If the password contains `#` or `;`, then you have to wrap it with triple quotes. Example: """#password;"""
 
 ### cert_file
 
@@ -1113,7 +1138,7 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+For more information about the Grafana alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
 ### enabled
 
@@ -1197,15 +1222,15 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
-Set to `false` to [enable Grafana 8 alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. Default is `true`.
+Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
 
 ### execute_alerts
 
-Turns off alert rule execution, but Alerting is still visible in the Grafana UI.
+Turns off alert rule execution, but alerting is still visible in the Grafana UI.
 
 ### error_or_timeout
 
@@ -1582,7 +1607,7 @@ We do _not_ recommend using this option. For more information, refer to [Plugin 
 
 ### plugin_admin_enabled
 
-Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
@@ -1593,6 +1618,10 @@ Set to `true` if you want to enable external management of plugins. Default is `
 ### plugin_catalog_url
 
 Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
+### plugin_catalog_hidden_plugins
+
+Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
 <hr>
 
@@ -1707,13 +1736,19 @@ Mode `reusable` will have one browser instance and will create a new incognito p
 
 ### rendering_clustering_mode
 
-When rendering_mode = clustered you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
+When rendering_mode = clustered, you can instruct how many browsers or incognito pages can execute concurrently. Default is `browser` and will cluster using browser instances.
 
 Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
+When rendering_mode = clustered, you can define the maximum number of browser instances/incognito pages that can execute concurrently. Default is `5`.
+
+### rendering_clustering_timeout
+
+> **Note**: Available in grafana-image-renderer v3.3.0 and later versions.
+
+When rendering_mode = clustered, you can specify the duration a rendering request can take before it will time out. Default is `30` seconds.
 
 ### rendering_viewport_max_width
 
@@ -1784,6 +1819,10 @@ Set this to `true` to have date formats automatically derived from your browser 
 ### default_timezone
 
 Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.
+
+### default_week_start
+
+Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
 ## [expressions]
 

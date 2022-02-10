@@ -5,9 +5,9 @@ import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 import { toLonLat } from 'ol/proj';
-import { GeomapPanel } from '../GeomapPanel';
+import { GeomapInstanceState } from '../GeomapPanel';
 
-export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions, GeomapPanel>> = ({
+export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions, GeomapInstanceState>> = ({
   value,
   onChange,
   context,
@@ -49,9 +49,9 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
         onChange({
           ...value,
           id: v.id,
-          lat: v.lat ?? value.lat,
-          lon: v.lon ?? value.lon,
-          zoom: v.zoom ?? value.zoom,
+          lat: v.lat ?? value?.lat,
+          lon: v.lon ?? value?.lon,
+          zoom: v.zoom ?? value?.zoom,
         });
       }
     },
@@ -99,7 +99,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
       <InlineFieldRow>
         <InlineField label="Zoom" labelWidth={labelWidth} grow={true}>
           <NumberInput
-            value={value.zoom ?? 1}
+            value={value?.zoom ?? 1}
             min={1}
             max={18}
             step={0.01}

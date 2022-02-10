@@ -42,7 +42,12 @@ const AnnotationsField: FC = () => {
                       <InputControl
                         name={`annotations[${index}].key`}
                         render={({ field: { ref, ...field } }) => (
-                          <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={18} />
+                          <AnnotationKeyInput
+                            {...field}
+                            aria-label={`Annotation detail ${index + 1}`}
+                            existingKeys={existingKeys(index)}
+                            width={18}
+                          />
                         )}
                         control={control}
                         rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}

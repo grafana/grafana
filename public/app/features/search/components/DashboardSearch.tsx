@@ -1,6 +1,6 @@
 import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
+import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
@@ -14,7 +14,10 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
-  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const { results, loading, onToggleSection, onKeyDown, showPreviews, onShowPreviewsChange } = useDashboardSearch(
+    query,
+    onCloseSearch
+  );
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -31,9 +34,11 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
           <ActionRow
             {...{
               onLayoutChange,
+              onShowPreviewsChange: (ev) => onShowPreviewsChange(ev.target.checked),
               onSortChange,
               onTagFilterChange,
               query,
+              showPreviews,
             }}
           />
           <CustomScrollbar>
@@ -44,6 +49,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
               editable={false}
               onToggleSection={onToggleSection}
               layout={query.layout}
+              showPreviews={showPreviews}
             />
           </CustomScrollbar>
         </div>

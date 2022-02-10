@@ -4,13 +4,11 @@ import { css } from '@emotion/css';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { DataSourceInstanceSettings, LoadingState, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
-import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
-import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
 import { toVariableIdentifier } from '../state/types';
@@ -21,9 +19,10 @@ import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
+import { getQueryVariableEditorState } from '../editor/selectors';
 
 const mapStateToProps = (state: StoreState) => ({
-  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
+  extended: getQueryVariableEditorState(state.templating.editor),
 });
 
 const mapDispatchToProps = {
@@ -68,7 +67,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   onDataSourceChange = (dsSettings: DataSourceInstanceSettings) => {
     this.props.onPropChange({
       propName: 'datasource',
-      propValue: dsSettings.isDefault ? null : dsSettings.name,
+      propValue: dsSettings.isDefault ? null : getDataSourceRef(dsSettings),
     });
   };
 
@@ -114,14 +113,15 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   renderQueryEditor = () => {
-    const { editor, variable } = this.props;
-    if (!editor.extended || !editor.extended.dataSource || !editor.extended.VariableQueryEditor) {
+    const { extended, variable } = this.props;
+
+    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
 
     const query = variable.query;
-    const datasource = editor.extended.dataSource;
-    const VariableQueryEditor = editor.extended.VariableQueryEditor;
+    const datasource = extended.dataSource;
+    const VariableQueryEditor = extended.VariableQueryEditor;
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
@@ -161,7 +161,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="none">
             <InlineFieldRow>
-              <InlineField label="Data source" labelWidth={20}>
+              <InlineField label="Data source" labelWidth={20} htmlFor="data-source-picker">
                 <DataSourcePicker
                   current={this.props.variable.datasource}
                   onChange={this.onDataSourceChange}
@@ -190,6 +190,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   Optional, if you want to extract part of a series name or metric node segment. Named capture groups
                   can be used to separate the display text and value (
                   <a
+                    className="external-link"
                     href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
                     target="__blank"
                   >
@@ -198,7 +199,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   ).
                 </div>
               }
-              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
+              testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
               grow
             />
             <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />

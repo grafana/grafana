@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
@@ -10,30 +10,23 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
-}));
-
-jest.mock('app/core/config', () => {
-  return {
+  config: {
     loginError: false,
     buildInfo: {
       version: 'v1.0',
       commit: '1',
       env: 'production',
       edition: 'Open Source',
-      isEnterprise: false,
     },
     licenseInfo: {
       stateInfo: '',
       licenseUrl: '',
     },
     appSubUrl: '',
-    getConfig: () => ({
-      autoAssignOrg: false,
-      verifyEmailEnabled: true,
-      appSubUrl: '',
-    }),
-  };
-});
+    autoAssignOrg: false,
+    verifyEmailEnabled: true,
+  },
+}));
 
 const props = {
   email: '',
@@ -65,13 +58,11 @@ describe('Signup Page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByText('Email is required')).toBeInTheDocument();
 
-    await act(async () => {
-      await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test');
-      expect(screen.queryByText('Email is invalid')).toBeInTheDocument();
+    userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test');
+    await waitFor(() => expect(screen.queryByText('Email is invalid')).toBeInTheDocument());
 
-      await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
-      expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument();
-    });
+    userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
+    await waitFor(() => expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument());
   });
   it('should pass validation checks for password and confirm password field', async () => {
     render(<SignupPage {...props} />);
@@ -80,14 +71,12 @@ describe('Signup Page', () => {
     expect(await screen.findByText('Password is required')).toBeInTheDocument();
     expect(await screen.findByText('Confirmed password is required')).toBeInTheDocument();
 
-    await act(async () => {
-      await userEvent.type(screen.getByLabelText('Password'), 'admin');
-      await userEvent.type(screen.getByLabelText('Confirm password'), 'a');
-      expect(screen.queryByText('Passwords must match!')).toBeInTheDocument();
+    userEvent.type(screen.getByLabelText('Password'), 'admin');
+    userEvent.type(screen.getByLabelText('Confirm password'), 'a');
+    await waitFor(() => expect(screen.queryByText('Passwords must match!')).toBeInTheDocument());
 
-      await userEvent.type(screen.getByLabelText('Confirm password'), 'dmin');
-      expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument();
-    });
+    userEvent.type(screen.getByLabelText('Confirm password'), 'dmin');
+    await waitFor(() => expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument());
   });
   it('should navigate to default url if signup is successful', async () => {
     Object.defineProperty(window, 'location', {
@@ -98,10 +87,10 @@ describe('Signup Page', () => {
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<SignupPage {...props} />);
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Your name' }), 'test-user');
-    await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
-    await userEvent.type(screen.getByLabelText('Password'), 'admin');
-    await userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
+    userEvent.type(screen.getByRole('textbox', { name: 'Your name' }), 'test-user');
+    userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
+    userEvent.type(screen.getByLabelText('Password'), 'admin');
+    userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() =>

@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 	"gopkg.in/yaml.v3"
 )
 
@@ -59,7 +60,12 @@ func (am *LotexAM) withAMReq(
 	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
-	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.ParamsInt64(":Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Recipient is invalid", err)
+	}
+
+	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")
@@ -140,7 +146,7 @@ func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response 
 		ctx,
 		http.MethodDelete,
 		"silence",
-		[]string{macaron.Params(ctx.Req)[":SilenceId"]},
+		[]string{web.Params(ctx.Req)[":SilenceId"]},
 		nil,
 		messageExtractor,
 		nil,
@@ -188,7 +194,7 @@ func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
 		ctx,
 		http.MethodGet,
 		"silence",
-		[]string{macaron.Params(ctx.Req)[":SilenceId"]},
+		[]string{web.Params(ctx.Req)[":SilenceId"]},
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
 		nil,
@@ -241,6 +247,6 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 	)
 }
 
-func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigParams) response.Response {
+func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigBodyParams) response.Response {
 	return NotImplementedResp
 }

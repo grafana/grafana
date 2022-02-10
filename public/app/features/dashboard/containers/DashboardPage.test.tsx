@@ -1,9 +1,10 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { UnthemedDashboardPage, Props } from './DashboardPage';
+import { Props, UnthemedDashboardPage } from './DashboardPage';
+import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { Router } from 'react-router-dom';
-import { locationService } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from '../state';
 import { configureStore } from '../../../store/configureStore';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
@@ -12,6 +13,14 @@ import { notifyApp } from 'app/core/actions';
 import { selectors } from '@grafana/e2e-selectors';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { createTheme } from '@grafana/data';
+import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+
+jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
+  const LazyLoader = ({ children }: Pick<LazyLoaderProps, 'children'>) => {
+    return <>{typeof children === 'function' ? children({ isInView: true }) : children}</>;
+  };
+  return { LazyLoader };
+});
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
   class GeneralSettings extends React.Component<{}, {}> {
@@ -23,6 +32,12 @@ jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings',
   return { GeneralSettings };
 });
 
+jest.mock('app/features/query/components/QueryGroup', () => {
+  return {
+    QueryGroup: () => null,
+  };
+});
+
 jest.mock('app/core/core', () => ({
   appEvents: {
     subscribe: () => {
@@ -30,6 +45,12 @@ jest.mock('app/core/core', () => ({
     },
   },
 }));
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  // The size of the children need to be small enough to be outside the view.
+  // So it does not trigger the query to be run by the PanelQueryRunner.
+  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+});
 
 interface ScenarioContext {
   dashboard?: DashboardModel | null;
@@ -195,6 +216,13 @@ describe('DashboardPage', () => {
   });
 
   dashboardPageScenario('When going into edit mode', (ctx) => {
+    setDataSourceSrv({
+      get: jest.fn().mockResolvedValue({}),
+      getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+      getList: jest.fn(),
+      reload: jest.fn(),
+    });
+
     ctx.setup(() => {
       ctx.mount({
         dashboard: getTestDashboard(),
@@ -253,22 +281,23 @@ describe('DashboardPage', () => {
     });
 
     it('should render dashboard page toolbar and submenu', () => {
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.DashNav.nav)).toHaveLength(1);
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
       expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(1);
     });
   });
 
   dashboardPageScenario('When in full kiosk mode', (ctx) => {
     ctx.setup(() => {
+      locationService.partial({ kiosk: true });
       ctx.mount({
-        queryParams: { kiosk: true },
+        queryParams: {},
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('should not render page toolbar and submenu', () => {
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.DashNav.nav)).toHaveLength(0);
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
       expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });

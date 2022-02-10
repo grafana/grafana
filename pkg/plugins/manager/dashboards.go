@@ -1,49 +1,55 @@
 package manager
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin := pm.GetPlugin(pluginID)
-	if plugin == nil {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
+func (m *PluginManager) GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
+	plugin, exists := m.Plugin(ctx, pluginID)
+	if !exists {
+		return nil, plugins.NotFoundError{PluginID: pluginID}
 	}
 
 	result := make([]*plugins.PluginDashboardInfoDTO, 0)
 
 	// load current dashboards
 	query := models.GetDashboardsByPluginIdQuery{OrgId: orgID, PluginId: pluginID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.Dispatch(ctx, &query); err != nil {
 		return nil, err
 	}
 
 	existingMatches := make(map[int64]bool)
 	for _, include := range plugin.Includes {
-		if include.Type != plugins.PluginTypeDashboard {
+		if include.Type != plugins.TypeDashboard {
 			continue
 		}
 
-		dashboard, err := pm.LoadPluginDashboard(plugin.Id, include.Path)
+		dashboard, err := m.LoadPluginDashboard(ctx, plugin.ID, include.Path)
 		if err != nil {
 			return nil, err
 		}
 
 		res := &plugins.PluginDashboardInfoDTO{}
+		res.UID = dashboard.Uid
 		res.Path = include.Path
-		res.PluginId = plugin.Id
+		res.PluginId = plugin.ID
 		res.Title = dashboard.Title
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
 
 		// find existing dashboard
 		for _, existingDash := range query.Result {
 			if existingDash.Slug == dashboard.Slug {
+				res.UID = existingDash.Uid
 				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
@@ -60,6 +66,7 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 	for _, dash := range query.Result {
 		if _, exists := existingMatches[dash.Id]; !exists {
 			result = append(result, &plugins.PluginDashboardInfoDTO{
+				UID:         dash.Uid,
 				Slug:        dash.Slug,
 				DashboardId: dash.Id,
 				Removed:     true,
@@ -70,17 +77,44 @@ func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*p
 	return result, nil
 }
 
-func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
-	plugin := pm.GetPlugin(pluginID)
-	if plugin == nil {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
+func (m *PluginManager) LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error) {
+	if len(strings.TrimSpace(pluginID)) == 0 {
+		return nil, fmt.Errorf("pluginID cannot be empty")
 	}
 
-	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
+	if len(strings.TrimSpace(path)) == 0 {
+		return nil, fmt.Errorf("path cannot be empty")
+	}
+
+	plugin, exists := m.Plugin(ctx, pluginID)
+	if !exists {
+		return nil, plugins.NotFoundError{PluginID: pluginID}
+	}
+
+	cleanPath, err := util.CleanRelativePath(path)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
+	}
+
+	dashboardFilePath := filepath.Join(plugin.PluginDir, cleanPath)
+
+	included := false
+	for _, include := range plugin.DashboardIncludes() {
+		if filepath.Join(plugin.PluginDir, include.Path) == dashboardFilePath {
+			included = true
+			break
+		}
+	}
+
+	if !included {
+		return nil, fmt.Errorf("dashboard not included in plugin")
+	}
+
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
-	// on plugin folder structure on disk and not user input. `path` comes from the
-	// `plugin.json` configuration file for the loaded plugin
+	// on plugin folder structure on disk and not user input. `path` input validation above
+	// should only allow paths defined in the plugin's plugin.json.
 	reader, err := os.Open(dashboardFilePath)
 	if err != nil {
 		return nil, err
@@ -88,7 +122,7 @@ func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Das
 
 	defer func() {
 		if err := reader.Close(); err != nil {
-			plog.Warn("Failed to close file", "path", dashboardFilePath, "err", err)
+			m.log.Warn("Failed to close file", "path", dashboardFilePath, "err", err)
 		}
 	}()
 

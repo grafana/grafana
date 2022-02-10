@@ -845,71 +845,19 @@ export const bigResponse = new MutableDataFrame({
     {
       name: 'startTime',
       values: [
-        1619712655875.4539,
-        1619712655875.4502,
-        1619712655875.592,
-        1619712655875.653,
-        1619712655875.731,
-        1619712655875.712,
-        1619712655875.6428,
-        1619712655875.5771,
-        1619712655875.5168,
-        1619712655875.488,
-        1619712655875.939,
-        1619712655875.959,
-        1619712655876.0051,
-        1619712655875.991,
-        1619712655875.9539,
-        1619712655875.9338,
-        1619712655875.917,
-        1619712655875.442,
-        1619712655876.365,
-        1619712655876.3809,
-        1619712655876.359,
-        1619712655876.331,
-        1619712655876.62,
-        1619712655876.629,
-        1619712655876.616,
-        1619712655876.592,
-        1619712655875.052,
-        1619712655874.819,
-        1619712655874.7021,
-        1619712655874.591,
+        1619712655875.4539, 1619712655875.4502, 1619712655875.592, 1619712655875.653, 1619712655875.731,
+        1619712655875.712, 1619712655875.6428, 1619712655875.5771, 1619712655875.5168, 1619712655875.488,
+        1619712655875.939, 1619712655875.959, 1619712655876.0051, 1619712655875.991, 1619712655875.9539,
+        1619712655875.9338, 1619712655875.917, 1619712655875.442, 1619712655876.365, 1619712655876.3809,
+        1619712655876.359, 1619712655876.331, 1619712655876.62, 1619712655876.629, 1619712655876.616, 1619712655876.592,
+        1619712655875.052, 1619712655874.819, 1619712655874.7021, 1619712655874.591,
       ],
     },
     {
       name: 'duration',
       values: [
-        0.004,
-        0.016,
-        0.039,
-        0.047,
-        0.063,
-        0.087,
-        0.163,
-        0.303,
-        0.384,
-        0.421,
-        0.012,
-        0.021,
-        0.033,
-        0.048,
-        0.092,
-        0.169,
-        0.197,
-        0.689,
-        0.012,
-        0.196,
-        0.225,
-        0.255,
-        0.007,
-        0.167,
-        0.189,
-        0.217,
-        13.918,
-        14.723,
-        14.984,
-        18.208,
+        0.004, 0.016, 0.039, 0.047, 0.063, 0.087, 0.163, 0.303, 0.384, 0.421, 0.012, 0.021, 0.033, 0.048, 0.092, 0.169,
+        0.197, 0.689, 0.012, 0.196, 0.225, 0.255, 0.007, 0.167, 0.189, 0.217, 13.918, 14.723, 14.984, 18.208,
       ],
     },
     {
@@ -1849,7 +1797,170 @@ export const bigResponse = new MutableDataFrame({
   ],
 });
 
-export const otlpDataFrame = new MutableDataFrame({
+export const otlpDataFrameFromResponse = new MutableDataFrame({
+  meta: {
+    preferredVisualisationType: 'trace',
+    custom: {
+      traceFormat: 'otlp',
+    },
+  },
+  creator: jest.fn(),
+  fields: [
+    {
+      name: 'traceID',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['60ba2abb44f13eae'],
+      state: {
+        displayName: 'traceID',
+      },
+    },
+    {
+      name: 'spanID',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['726b5e30102fc0d0'],
+      state: {
+        displayName: 'spanID',
+      },
+    },
+    {
+      name: 'parentSpanID',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['398f0f21a3db99ae'],
+      state: {
+        displayName: 'parentSpanID',
+      },
+    },
+    {
+      name: 'operationName',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['HTTP GET - root'],
+      state: {
+        displayName: 'operationName',
+      },
+    },
+    {
+      name: 'serviceName',
+      type: 'string',
+      config: {},
+      labels: undefined,
+      values: ['db'],
+      state: {
+        displayName: 'serviceName',
+      },
+    },
+    {
+      name: 'serviceTags',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [
+        [
+          {
+            key: 'service.name',
+            value: 'db',
+          },
+          {
+            key: 'job',
+            value: 'tns/db',
+          },
+          {
+            key: 'opencensus.exporterversion',
+            value: 'Jaeger-Go-2.22.1',
+          },
+          {
+            key: 'host.name',
+            value: '63d16772b4a2',
+          },
+          {
+            key: 'ip',
+            value: '0.0.0.0',
+          },
+          {
+            key: 'client-uuid',
+            value: '39fb01637a579639',
+          },
+        ],
+      ],
+      state: {
+        displayName: 'serviceTags',
+      },
+    },
+    {
+      name: 'startTime',
+      type: 'number',
+      config: {},
+      labels: undefined,
+      values: [1627471657255.809],
+      state: {
+        displayName: 'startTime',
+      },
+    },
+    {
+      name: 'duration',
+      type: 'number',
+      config: {},
+      labels: undefined,
+      values: [0.459008],
+      state: {
+        displayName: 'duration',
+      },
+    },
+    {
+      name: 'logs',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [[]],
+      state: {
+        displayName: 'logs',
+      },
+    },
+    {
+      name: 'tags',
+      type: 'other',
+      config: {},
+      labels: undefined,
+      values: [
+        [
+          {
+            key: 'http.status_code',
+            value: 200,
+          },
+          {
+            key: 'http.method',
+            value: 'GET',
+          },
+          {
+            key: 'http.url',
+            value: '/',
+          },
+          {
+            key: 'component',
+            value: 'net/http',
+          },
+          {
+            key: 'span.kind',
+            value: 'client',
+          },
+        ],
+      ],
+      state: {
+        displayName: 'tags',
+      },
+    },
+  ],
+  length: 1,
+} as any);
+
+export const otlpDataFrameToResponse = new MutableDataFrame({
   meta: {
     preferredVisualisationType: 'trace',
     custom: {
@@ -2015,6 +2126,56 @@ export const otlpResponse = {
           { key: 'client-uuid', value: { stringValue: '39fb01637a579639' } },
         ],
       },
+      instrumentationLibrarySpans: [
+        {
+          spans: [
+            {
+              traceId: 'AAAAAAAAAABguiq7RPE+rg==',
+              spanId: 'cmteMBAvwNA=',
+              parentSpanId: 'OY8PIaPbma4=',
+              name: 'HTTP GET - root',
+              kind: 'SPAN_KIND_CLIENT',
+              startTimeUnixNano: 1627471657255809000,
+              endTimeUnixNano: 1627471657256268000,
+              attributes: [
+                { key: 'http.status_code', value: { intValue: 200 } },
+                { key: 'http.method', value: { stringValue: 'GET' } },
+                { key: 'http.url', value: { stringValue: '/' } },
+                { key: 'component', value: { stringValue: 'net/http' } },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const tempoSearchResponse = {
+  traces: [
+    {
+      traceID: 'e641dcac1c3a0565',
+      rootServiceName: 'c10d7ca4e3a00354',
+      startTimeUnixNano: '1643356828724000000',
+      durationMs: 65,
+    },
+    {
+      traceID: 'c2983496a2b12544',
+      rootServiceName: '<root span not yet received>',
+      startTimeUnixNano: '1643342166678000000',
+      durationMs: 93,
+    },
+  ],
+  metrics: {
+    inspectedTraces: 2,
+    inspectedBytes: '83720',
+  },
+};
+
+export const badOTLPResponse = {
+  batches: [
+    {
+      resource: {},
       instrumentationLibrarySpans: [
         {
           spans: [

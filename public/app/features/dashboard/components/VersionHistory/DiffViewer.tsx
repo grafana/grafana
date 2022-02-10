@@ -41,6 +41,12 @@ export const DiffViewer: React.FC<ReactDiffViewerProps> = ({ oldValue, newValue 
     codeFold: {
       fontSize: theme.typography.size.sm,
     },
+    gutter: `
+      pre {
+        color: ${tinycolor(theme.colors.textFaint).setAlpha(1).toString()};
+        opacity: 0.61;
+      }
+    `,
   };
 
   return (

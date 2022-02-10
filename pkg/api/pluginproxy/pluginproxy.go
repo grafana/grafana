@@ -6,10 +6,10 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -21,16 +21,16 @@ type templateData struct {
 }
 
 // NewApiPluginProxy create a plugin proxy
-func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute,
-	appID string, cfg *setting.Cfg, encryptionService encryption.Service) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.Route,
+	appID string, cfg *setting.Cfg, store sqlstore.Store, secretsService secrets.Service) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := store.GetPluginSettingById(ctx.Req.Context(), &query); err != nil {
 			ctx.JsonApiErr(500, "Failed to fetch plugin settings", err)
 			return
 		}
 
-		secureJsonData, err := encryptionService.DecryptJsonData(ctx.Req.Context(), query.Result.SecureJsonData, setting.SecretKey)
+		secureJsonData, err := secretsService.DecryptJsonData(ctx.Req.Context(), query.Result.SecureJsonData)
 		if err != nil {
 			ctx.JsonApiErr(500, "Failed to decrypt plugin settings", err)
 			return
@@ -83,5 +83,11 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		}
 	}
 
-	return &httputil.ReverseProxy{Director: director}
+	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse}
+}
+
+func modifyResponse(resp *http.Response) error {
+	proxyutil.SetProxyResponseHeaders(resp.Header)
+
+	return nil
 }

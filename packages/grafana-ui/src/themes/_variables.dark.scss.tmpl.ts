@@ -10,6 +10,9 @@ export const darkThemeVarsTemplate = (theme: GrafanaTheme2) =>
 
 $theme-name: dark;
 
+$colors-action-hover: ${theme.colors.action.hover};
+$colors-action-selected: ${theme.colors.action.selected};
+
 // New Colors
 // -------------------------
 $blue-light: ${theme.colors.primary.text};
@@ -282,6 +285,7 @@ $alert-info-bg: ${theme.colors.warning.main};
 // -------------------------
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
+$tooltipExternalLinkColor: $external-link-color;
 $graph-tooltip-bg: $dark-1;
 
 $tooltipBackground: ${theme.components.tooltip.background};

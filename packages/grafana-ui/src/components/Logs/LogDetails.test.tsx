@@ -1,8 +1,9 @@
 import React from 'react';
+import { render, screen, within } from '@testing-library/react';
+import { Field, GrafanaTheme2, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
+
 import { LogDetails, Props } from './LogDetails';
-import { LogRowModel, LogLevel, MutableDataFrame, Field, GrafanaTheme2 } from '@grafana/data';
-import { mount } from 'enzyme';
-import { LogDetailsRow } from './LogDetailsRow';
+import { expect } from '../../../../../public/test/lib/common';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const props: Props = {
@@ -33,60 +34,70 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     ...(propOverrides || {}),
   };
 
-  return mount(<LogDetails {...props} />);
+  render(
+    <table>
+      <tbody>
+        <LogDetails {...props} />
+      </tbody>
+    </table>
+  );
 };
 
 describe('LogDetails', () => {
   describe('when labels are present', () => {
     it('should render heading', () => {
-      const wrapper = setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(wrapper.find({ 'aria-label': 'Log labels' }).hostNodes()).toHaveLength(1);
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.getAllByLabelText('Log labels')).toHaveLength(1);
     });
     it('should render labels', () => {
-      const wrapper = setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(wrapper.text().includes('key1label1key2label2')).toBe(true);
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'label1' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
     });
   });
   describe('when log row has error', () => {
     it('should not render log level border', () => {
-      const wrapper = setup({ hasError: true }, undefined);
-      expect(wrapper.find({ 'aria-label': 'Log level' }).html()).not.toContain('logs-row__level');
+      // Is this a good test case for RTL??
+      setup({ hasError: true }, undefined);
+      expect(screen.getByLabelText('Log level').classList.toString()).not.toContain('logs-row__level');
     });
   });
   describe('when row entry has parsable fields', () => {
     it('should render heading ', () => {
-      const wrapper = setup(undefined, { entry: 'test=successful' });
-      expect(wrapper.find({ title: 'Ad-hoc statistics' }).hostNodes()).toHaveLength(1);
+      setup(undefined, { entry: 'test=successful' });
+      expect(screen.getAllByTitle('Ad-hoc statistics')).toHaveLength(1);
     });
     it('should render detected fields', () => {
-      const wrapper = setup(undefined, { entry: 'test=successful' });
-      expect(wrapper.text().includes('testsuccessful')).toBe(true);
+      setup(undefined, { entry: 'test=successful' });
+      expect(screen.getByRole('cell', { name: 'test' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'successful' })).toBeInTheDocument();
     });
   });
   describe('when row entry have parsable fields and labels are present', () => {
     it('should render all headings', () => {
-      const wrapper = setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
-      expect(wrapper.find({ 'aria-label': 'Log labels' })).toHaveLength(1);
-      expect(wrapper.find({ 'aria-label': 'Detected fields' })).toHaveLength(1);
+      setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
+      expect(screen.getAllByLabelText('Log labels')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Detected fields')).toHaveLength(1);
     });
     it('should render all labels and detected fields', () => {
-      const wrapper = setup(undefined, {
-        entry: 'test=successful',
-        labels: { key: 'label' },
-      });
-      expect(wrapper.text().includes('keylabel')).toBe(true);
-      expect(wrapper.text().includes('testsuccessful')).toBe(true);
+      setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
+      expect(screen.getByRole('cell', { name: 'key' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'label' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'test' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'successful' })).toBeInTheDocument();
     });
   });
   describe('when row entry and labels are not present', () => {
     it('should render no details available message', () => {
-      const wrapper = setup(undefined, { entry: '' });
-      expect(wrapper.text().includes('No details available')).toBe(true);
+      setup(undefined, { entry: '' });
+      expect(screen.getByText('No details available')).toBeInTheDocument();
     });
     it('should not render headings', () => {
-      const wrapper = setup(undefined, { entry: '' });
-      expect(wrapper.find({ 'aria-label': 'Log labels' })).toHaveLength(0);
-      expect(wrapper.find({ 'aria-label': 'Detected fields' })).toHaveLength(0);
+      setup(undefined, { entry: '' });
+      expect(screen.queryAllByLabelText('Log labels')).toHaveLength(0);
+      expect(screen.queryAllByLabelText('Detected fields')).toHaveLength(0);
     });
   });
 
@@ -104,7 +115,7 @@ describe('LogDetails', () => {
         { name: 'userId', values: ['5678'] },
       ],
     });
-    const wrapper = setup(
+    setup(
       {
         getFieldLinks: (field: Field, rowIndex: number) => {
           if (field.config && field.config.links) {
@@ -122,10 +133,14 @@ describe('LogDetails', () => {
       },
       { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0 }
     );
-    expect(wrapper.find(LogDetailsRow).length).toBe(3);
-    const traceIdRow = wrapper.find(LogDetailsRow).filter({ parsedKey: 'traceId' });
-    expect(traceIdRow.length).toBe(1);
-    expect(traceIdRow.find('a').hostNodes().length).toBe(1);
-    expect((traceIdRow.find('a').getDOMNode() as HTMLAnchorElement).href).toBe('localhost:3210/1234');
+    expect(screen.getAllByRole('table')).toHaveLength(2);
+    const rowDetailsTable = screen.getAllByRole('table')[1];
+    const rowDetailRows = within(rowDetailsTable).getAllByRole('row');
+    expect(rowDetailRows).toHaveLength(4); // 3 LogDetailsRow + 1 header
+    const traceIdRow = within(rowDetailsTable).getByRole('cell', { name: 'traceId' }).closest('tr');
+    expect(traceIdRow).toBeInTheDocument();
+    const link = within(traceIdRow!).getByRole('link', { name: 'link' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', 'localhost:3210/1234');
   });
 });

@@ -10,18 +10,26 @@ interface Props {
   values: SelectableValue[];
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
+  caseSensitive?: boolean;
 }
 
 const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
-export const FilterList: FC<Props> = ({ options, values, onChange }) => {
+export const FilterList: FC<Props> = ({ options, values, caseSensitive, onChange }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');
+  const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
-    () => options.filter((option) => option.label?.toLowerCase().includes(searchFilter.toLowerCase())),
-    [options, searchFilter]
+    () =>
+      options.filter((option) => {
+        if (option.label === undefined) {
+          return false;
+        }
+        return regex.test(option.label);
+      }),
+    [options, regex]
   );
   const gutter = theme.spacing.gridSize;
   const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);

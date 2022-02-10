@@ -3,6 +3,8 @@ import { PanelPlugin } from '@grafana/data';
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { PanelOptions } from './models.gen';
 import { getElementEditor } from './editor/elementEditor';
+import { getLayerEditor } from './editor/layerEditor';
+import { GroupState } from 'app/features/canvas/runtime/group';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
@@ -13,17 +15,25 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
     builder.addBooleanSwitch({
       path: 'inlineEditing',
       name: 'Inline editing',
-      description: 'Enable editing while the panel is in dashboard mode',
+      description: 'Enable editing the panel directly',
       defaultValue: true,
     });
 
-    if (state?.selected) {
-      builder.addNestedOptions(
-        getElementEditor({
-          category: ['Selected element'],
-          element: state.selected,
-          scene: state.scene,
-        })
-      );
+    if (state) {
+      builder.addNestedOptions(getLayerEditor(state));
+
+      const selection = state.selected;
+      if (selection?.length === 1) {
+        const element = selection[0];
+        if (!(element instanceof GroupState)) {
+          builder.addNestedOptions(
+            getElementEditor({
+              category: [`Selected element (${element.options.name})`],
+              element,
+              scene: state.scene,
+            })
+          );
+        }
+      }
     }
   });

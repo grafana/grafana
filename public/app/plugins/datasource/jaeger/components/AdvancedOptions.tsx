@@ -37,6 +37,8 @@ export function AdvancedOptions({ query, onChange }: Props) {
           <InlineFieldRow>
             <InlineField label="Min Duration" labelWidth={21} grow>
               <Input
+                id="minDuration"
+                name="minDuration"
                 value={query.minDuration || ''}
                 placeholder={durationPlaceholder}
                 onChange={(v) =>
@@ -51,6 +53,8 @@ export function AdvancedOptions({ query, onChange }: Props) {
           <InlineFieldRow>
             <InlineField label="Max Duration" labelWidth={21} grow>
               <Input
+                id="maxDuration"
+                name="maxDuration"
                 value={query.maxDuration || ''}
                 placeholder={durationPlaceholder}
                 onChange={(v) =>
@@ -65,6 +69,8 @@ export function AdvancedOptions({ query, onChange }: Props) {
           <InlineFieldRow>
             <InlineField label="Limit" labelWidth={21} grow tooltip="Maximum numbers of returned results">
               <Input
+                id="limit"
+                name="limit"
                 value={query.limit || ''}
                 type="number"
                 onChange={(v) =>

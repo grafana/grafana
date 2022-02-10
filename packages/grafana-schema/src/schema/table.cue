@@ -11,4 +11,5 @@ TableFieldOptions: {
 	align:       FieldTextAlignment | *"auto"
 	displayMode: TableCellDisplayMode | *"auto"
 	hidden?:     bool // ?? default is missing or false ??
+	filterable?: bool
 } @cuetsy(kind="interface")

@@ -13,7 +13,7 @@ jest.mock('app/core/core', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -116,7 +116,7 @@ describe('SignupInvitedPage', () => {
     it('then correct form data should be posted', async () => {
       const { postSpy } = await setupTestContext();
 
-      await userEvent.type(screen.getByPlaceholderText(/password/i), 'pass@word1');
+      userEvent.type(screen.getByPlaceholderText(/password/i), 'pass@word1');
       userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
       await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(1));

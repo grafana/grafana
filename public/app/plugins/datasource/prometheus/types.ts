@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -17,21 +17,30 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  /** Code, Builder or Explain */
+  editorMode?: QueryEditorMode;
+  /** Controls if the query preview is shown */
+  editorPreview?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {
-  timeInterval: string;
-  queryTimeout: string;
-  httpMethod: string;
-  directUrl: string;
+  timeInterval?: string;
+  queryTimeout?: string;
+  httpMethod?: string;
+  directUrl?: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
 }
 
+export enum PromQueryType {
+  timeSeriesQuery = 'timeSeriesQuery',
+}
+
 export type ExemplarTraceIdDestination = {
   name: string;
   url?: string;
+  urlDisplayLabel?: string;
   datasourceUid?: string;
 };
 
@@ -108,10 +117,6 @@ export type PromValue = [number, any];
 export interface PromMetric {
   __name__?: string;
   [index: string]: any;
-}
-
-export function isFetchErrorResponse(response: any): response is FetchError {
-  return 'cancelled' in response;
 }
 
 export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {

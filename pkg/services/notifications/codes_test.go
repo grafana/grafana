@@ -5,34 +5,35 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEmailCodes(t *testing.T) {
-	Convey("When generating code", t, func() {
+	t.Run("When generating code", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.EmailCodeValidMinutes = 120
 
 		user := &models.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
 		code, err := createUserEmailCode(cfg, user, nil)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("getLoginForCode should return login", func() {
+		t.Run("getLoginForCode should return login", func(t *testing.T) {
 			login := getLoginForEmailCode(code)
-			So(login, ShouldEqual, "asd")
+			require.Equal(t, login, "asd")
 		})
 
-		Convey("Can verify valid code", func() {
+		t.Run("Can verify valid code", func(t *testing.T) {
 			isValid, err := validateUserEmailCode(cfg, user, code)
-			So(err, ShouldBeNil)
-			So(isValid, ShouldBeTrue)
+			require.NoError(t, err)
+			require.True(t, isValid)
 		})
 
-		Convey("Cannot verify in-valid code", func() {
+		t.Run("Cannot verify in-valid code", func(t *testing.T) {
 			code = "ASD"
 			isValid, err := validateUserEmailCode(cfg, user, code)
-			So(err, ShouldBeNil)
-			So(isValid, ShouldBeFalse)
+			require.NoError(t, err)
+			require.False(t, isValid)
 		})
 	})
 }

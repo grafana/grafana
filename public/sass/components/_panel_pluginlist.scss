@@ -14,7 +14,7 @@
 .pluginlist-icon {
   vertical-align: sub;
   font-size: $font-size-h1;
-  margin-right: $spacer / 2;
+  margin-right: calc($spacer / 2);
 }
 
 .pluginlist-image {
@@ -22,7 +22,7 @@
 }
 
 .pluginlist-title {
-  margin-right: $spacer / 3;
+  margin-right: calc($spacer / 3);
 }
 
 .pluginlist-version {

@@ -1,10 +1,12 @@
 import React from 'react';
-import { configureStore } from '../../store/configureStore';
-import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { ExploreId } from '../../types';
 import { DataQueryError, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { configureStore } from '../../store/configureStore';
+import { ResponseErrorContainer } from './ResponseErrorContainer';
+import { ExploreId } from '../../types';
 
 describe('ResponseErrorContainer', () => {
   it('shows error message if it does not contain refId', async () => {
@@ -12,7 +14,7 @@ describe('ResponseErrorContainer', () => {
     setup({
       message: errorMessage,
     });
-    const errorEl = screen.getByLabelText('Alert error');
+    const errorEl = screen.getByTestId(selectors.components.Alert.alertV2('error'));
     expect(errorEl).toBeInTheDocument();
     expect(errorEl).toHaveTextContent(errorMessage);
   });
@@ -23,7 +25,7 @@ describe('ResponseErrorContainer', () => {
       refId: 'someId',
       message: errorMessage,
     });
-    const errorEl = screen.getByLabelText('Alert error');
+    const errorEl = screen.getByTestId(selectors.components.Alert.alertV2('error'));
     expect(errorEl).toBeInTheDocument();
     expect(errorEl).toHaveTextContent(errorMessage);
   });
@@ -35,7 +37,7 @@ describe('ResponseErrorContainer', () => {
         message: 'test error',
       },
     });
-    const errorEl = screen.getByLabelText('Alert error');
+    const errorEl = screen.getByTestId(selectors.components.Alert.alertV2('error'));
     expect(errorEl).toBeInTheDocument();
     expect(errorEl).toHaveTextContent(errorMessage);
   });

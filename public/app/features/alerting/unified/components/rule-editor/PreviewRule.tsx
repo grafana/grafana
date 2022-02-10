@@ -94,6 +94,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css`
       margin-top: ${theme.spacing(2)};
+      max-width: ${theme.breakpoints.values.xxl}px;
     `,
   };
 }

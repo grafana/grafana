@@ -1,6 +1,6 @@
 import { AnyAction } from 'redux';
 import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery, ExploreUrlState, serializeStateToUrlParam, TimeRange, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { paneReducer } from './explorePane';
@@ -9,7 +9,6 @@ import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import store from '../../../core/store';
 
 //
 // Actions and Payloads
@@ -21,12 +20,8 @@ export interface SyncTimesPayload {
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-
-/**
- * Stores new value of auto-load logs volume switch. Used only internally. changeAutoLogsVolume() is used to
- * update auto-load and load logs volume if it hasn't been loaded.
- */
-export const storeAutoLoadLogsVolumeAction = createAction<boolean>('explore/storeAutoLoadLogsVolumeAction');
+export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
+export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 
 /**
  * Resets state for explore.
@@ -69,10 +64,10 @@ export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> =>
     const orgId = getState().user.orgId.toString();
     const urlStates: { [index: string]: string | null } = { orgId };
 
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
 
     if (right) {
-      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
+      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
     } else {
       urlStates.right = null;
     }
@@ -92,12 +87,7 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export function splitOpen<T extends DataQuery = any>(options?: {
-  datasourceUid: string;
-  query: T;
-  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
-  range?: TimeRange;
-}): ThunkResult<void> {
+export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
     const leftUrlState = getUrlStateFromPaneState(leftState);
@@ -109,13 +99,14 @@ export function splitOpen<T extends DataQuery = any>(options?: {
         datasource: datasourceName,
         queries: [options.query],
         range: options.range || leftState.range,
+        panelsState: options.panelsState,
       };
     }
 
-    const urlState = serializeStateToUrlParam(rightUrlState, true);
+    const urlState = serializeStateToUrlParam(rightUrlState);
     locationService.partial({ right: urlState }, true);
   };
-}
+};
 
 /**
  * Close the split view and save URL state. We need to update the state here because when closing we cannot just
@@ -143,11 +134,8 @@ export const navigateToExplore = (
   return async (dispatch) => {
     const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
-    const datasource = await datasourceSrv.get(panel.datasource);
     const path = await getExploreUrl({
       panel,
-      panelTargets: panel.targets,
-      panelDatasource: datasource,
       datasourceSrv,
       timeSrv: getTimeSrv(),
     });
@@ -161,8 +149,6 @@ export const navigateToExplore = (
   };
 };
 
-export const AUTO_LOAD_LOGS_VOLUME_SETTING_KEY = 'grafana.explore.logs.autoLoadLogsVolume';
-
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
@@ -172,7 +158,8 @@ export const initialExploreState: ExploreState = {
   left: initialExploreItemState,
   right: undefined,
   richHistory: [],
-  autoLoadLogsVolume: store.getBool(AUTO_LOAD_LOGS_VOLUME_SETTING_KEY, false),
+  richHistoryStorageFull: false,
+  richHistoryLimitExceededWarningShown: false,
 };
 
 /**
@@ -227,11 +214,17 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (storeAutoLoadLogsVolumeAction.match(action)) {
-    const autoLoadLogsVolume = action.payload;
+  if (richHistoryStorageFullAction.match(action)) {
     return {
       ...state,
-      autoLoadLogsVolume,
+      richHistoryStorageFull: true,
+    };
+  }
+
+  if (richHistoryLimitExceededAction.match(action)) {
+    return {
+      ...state,
+      richHistoryLimitExceededWarningShown: true,
     };
   }
 
@@ -244,7 +237,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       stopQueryState(rightState.querySubscription);
     }
 
-    if (payload.force || !Number.isInteger(state.left.originPanelId)) {
+    if (payload.force) {
       return initialExploreState;
     }
 
@@ -253,7 +246,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       left: {
         ...initialExploreItemState,
         queries: state.left.queries,
-        originPanelId: state.left.originPanelId,
       },
     };
   }

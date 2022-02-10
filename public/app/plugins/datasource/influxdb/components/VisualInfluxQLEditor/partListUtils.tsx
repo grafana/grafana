@@ -5,7 +5,7 @@ import InfluxQueryModel from '../../influx_query_model';
 import { unwrap } from './unwrap';
 import queryPart from '../../query_part';
 import { toSelectableValue } from './toSelectableValue';
-import { QueryPartDef } from '../../../../../core/components/query_part/query_part';
+import { QueryPartDef } from 'app/angular/components/query_part';
 
 type Categories = Record<string, QueryPartDef[]>;
 

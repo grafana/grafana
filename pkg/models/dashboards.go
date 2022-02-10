@@ -103,6 +103,16 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
+	ErrProvisionedDashboardNotFound = DashboardErr{
+		Reason:     "Dashboard is not provisioned",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
+	ErrDashboardThumbnailNotFound = DashboardErr{
+		Reason:     "Dashboard thumbnail not found",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 )
 
 // DashboardErr represents a dashboard error.
@@ -312,6 +322,11 @@ func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
+// GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
+func GetKioskModeDashboardUrl(uid string, slug string, theme Theme) string {
+	return fmt.Sprintf("%s?kiosk&theme=%s", GetDashboardUrl(uid, slug), string(theme))
+}
+
 // GetFullDashboardUrl returns the full URL for a dashboard.
 func GetFullDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)
@@ -344,13 +359,13 @@ type SaveDashboardCommand struct {
 
 	UpdatedAt time.Time
 
-	Result *Dashboard
+	Result *Dashboard `json:"-"`
 }
 
 type TrimDashboardCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
 	Meta      *simplejson.Json `json:"meta"`
-	Result    *Dashboard
+	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {

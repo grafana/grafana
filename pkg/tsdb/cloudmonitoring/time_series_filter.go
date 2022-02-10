@@ -10,102 +10,98 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/net/context/ctxhttp"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery plugins.DataQuery,
-	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesFilter.RefID}
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	dr := &backend.DataResponse{}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
-		defaultProject, err := e.getDefaultProject(ctx)
+		var err error
+		projectName, err = s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
-			queryResult.Error = err
-			return queryResult, cloudMonitoringResponse{}, "", nil
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
 		}
-		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries"), nil)
+	r, err := s.createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	req.URL.RawQuery = timeSeriesFilter.Params.Encode()
-	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
+	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
+	alignmentPeriod, ok := r.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {
 		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
-			queryResult.Meta.Set("alignmentPeriod", seconds)
+			if len(dr.Frames) == 0 {
+				dr.Frames = append(dr.Frames, data.NewFrame(""))
+			}
+			firstFrame := dr.Frames[0]
+			if firstFrame.Meta == nil {
+				firstFrame.SetMeta(&data.FrameMeta{
+					Custom: map[string]interface{}{
+						"alignmentPeriod": seconds,
+					},
+				})
+			}
 		}
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring query")
-	span.SetTag("target", timeSeriesFilter.Target)
-	span.SetTag("from", tsdbQuery.TimeRange.From)
-	span.SetTag("until", tsdbQuery.TimeRange.To)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
+	span.SetAttributes("target", timeSeriesFilter.Target, attribute.Key("target").String(timeSeriesFilter.Target))
+	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
+	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
+	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
+	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
 
-	defer span.Finish()
+	defer span.End()
+	tracer.Inject(ctx, r.Header, span)
 
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
-	}
-
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	r = r.WithContext(ctx)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	data, err := unmarshalResponse(res)
+	d, err := unmarshalResponse(res)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	return queryResult, data, req.URL.RawQuery, nil
+	return dr, d, r.URL.RawQuery, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *plugins.DataQueryResult,
+//nolint: gocyclo
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
-	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
+
 	for _, series := range response.TimeSeries {
 		seriesLabels := data.Labels{}
 		defaultMetricName := series.Metric.Type
-		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
+		labels := make(map[string]string)
+		labels["resource.type"] = series.Resource.Type
 		seriesLabels["resource.type"] = series.Resource.Type
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = timeSeriesFilter.RefID
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
-			Custom: map[string]interface{}{
-				"alignmentPeriod":  timeSeriesFilter.Params.Get("aggregation.alignmentPeriod"),
-				"perSeriesAligner": timeSeriesFilter.Params.Get("aggregation.perSeriesAligner"),
-			},
 		}
 
 		for key, value := range series.Metric.Labels {
-			if _, ok := labels["metric.label."+key]; !ok {
-				labels["metric.label."+key] = map[string]bool{}
-			}
-			labels["metric.label."+key][value] = true
+			labels["metric.label."+key] = value
 			seriesLabels["metric.label."+key] = value
 
 			if len(timeSeriesFilter.GroupBys) == 0 || containsLabel(timeSeriesFilter.GroupBys, "metric.label."+key) {
@@ -114,10 +110,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		}
 
 		for key, value := range series.Resource.Labels {
-			if _, ok := labels["resource.label."+key]; !ok {
-				labels["resource.label."+key] = map[string]bool{}
-			}
-			labels["resource.label."+key][value] = true
+			labels["resource.label."+key] = value
 			seriesLabels["resource.label."+key] = value
 
 			if containsLabel(timeSeriesFilter.GroupBys, "resource.label."+key) {
@@ -128,22 +121,19 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
 				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-				if _, ok := labels[key]; !ok {
-					labels[key] = map[string]bool{}
-				}
 
 				switch v := labelValue.(type) {
 				case string:
-					labels[key][v] = true
+					labels[key] = v
 					seriesLabels[key] = v
 				case bool:
 					strVal := strconv.FormatBool(v)
-					labels[key][strVal] = true
+					labels[key] = strVal
 					seriesLabels[key] = strVal
 				case []interface{}:
 					for _, v := range v {
 						strVal := v.(string)
-						labels[key][strVal] = true
+						labels[key] = strVal
 						if len(seriesLabels[key]) > 0 {
 							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
 						}
@@ -153,10 +143,20 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 			}
 		}
 
+		customFrameMeta := map[string]interface{}{}
+		customFrameMeta["alignmentPeriod"] = timeSeriesFilter.Params.Get("aggregation.alignmentPeriod")
+		customFrameMeta["perSeriesAligner"] = timeSeriesFilter.Params.Get("aggregation.perSeriesAligner")
+		customFrameMeta["labels"] = labels
+		customFrameMeta["groupBys"] = timeSeriesFilter.GroupBys
+		if frame.Meta != nil {
+			frame.Meta.Custom = customFrameMeta
+		} else {
+			frame.SetMeta(&data.FrameMeta{Custom: customFrameMeta})
+		}
+
 		// reverse the order to be ascending
 		if series.ValueType != "DISTRIBUTION" {
-			timeSeriesFilter.handleNonDistributionSeries(
-				series, defaultMetricName, seriesLabels, queryRes, frame)
+			timeSeriesFilter.handleNonDistributionSeries(series, defaultMetricName, seriesLabels, frame)
 			frames = append(frames, frame)
 			continue
 		}
@@ -214,12 +214,12 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 					setDisplayNameAsFieldName(valueField)
 
 					buckets[i] = &data.Frame{
-						Name: frameName,
+						Name:  frameName,
+						RefID: timeSeriesFilter.RefID,
 						Fields: []*data.Field{
 							timeField,
 							valueField,
 						},
-						RefID: timeSeriesFilter.RefID,
 					}
 				}
 			}
@@ -233,24 +233,13 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		frames = addConfigData(frames, dl, response.Unit)
 	}
 
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryRes.Frames = frames
 
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
-		}
-	}
-
-	queryRes.Meta.Set("labels", labelsByKey)
-	queryRes.Meta.Set("groupBys", timeSeriesFilter.GroupBys)
 	return nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries,
-	defaultMetricName string, seriesLabels map[string]string, queryRes *plugins.DataQueryResult,
-	frame *data.Frame) {
+	defaultMetricName string, seriesLabels map[string]string, frame *data.Frame) {
 	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
 		value := point.Value.DoubleValue
@@ -279,9 +268,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *plugins.DataQueryResult,
-	response cloudMonitoringResponse, title string, text string, tags string) error {
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
+	response cloudMonitoringResponse, title, text string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
@@ -297,18 +285,18 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 			annotation["time"] = append(annotation["time"], point.Interval.EndTime.UTC().Format(time.RFC3339))
 			annotation["title"] = append(annotation["title"], formatAnnotationText(title, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
-			annotation["tags"] = append(annotation["tags"], tags)
+			annotation["tags"] = append(annotation["tags"], "")
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
 		}
-		frames = append(frames, data.NewFrame(queryRes.RefID,
+		frames = append(frames, data.NewFrame(timeSeriesFilter.getRefID(),
 			data.NewField("time", nil, annotation["time"]),
 			data.NewField("title", nil, annotation["title"]),
 			data.NewField("tags", nil, annotation["tags"]),
 			data.NewField("text", nil, annotation["text"]),
 		))
 	}
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
+	dr.Frames = frames
 
 	return nil
 }

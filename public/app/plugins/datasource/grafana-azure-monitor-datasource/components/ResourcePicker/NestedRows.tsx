@@ -1,9 +1,10 @@
 import { cx } from '@emotion/css';
-import { Checkbox, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2, FadeTransition } from '@grafana/ui';
+import { Checkbox, FadeTransition, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { Space } from '../Space';
 import getStyles from './styles';
-import { ResourceRowType, ResourceRow, ResourceRowGroup } from './types';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow } from './utils';
 
 interface NestedRowsProps {
@@ -45,8 +46,7 @@ interface NestedRowProps {
 
 const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, requestNestedRows, onRowSelectedChange }) => {
   const styles = useStyles2(getStyles);
-  const initialOpenStatus = row.type === ResourceRowType.Subscription ? 'open' : 'closed';
-  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
+  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
   const isSelected = !!selectedRows.find((v) => v.id === row.id);
   const isDisabled = selectedRows.length > 0 && !isSelected;
@@ -58,8 +58,9 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
       return;
     }
     setRowStatus('loading');
-    await requestNestedRows(row);
-    setRowStatus('open');
+    requestNestedRows(row)
+      .then(() => setRowStatus('open'))
+      .catch(() => setRowStatus('closed'));
   };
 
   // opens the resource group on load of component if there was a previously saved selection
@@ -181,6 +182,17 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   );
 
   const checkboxId = `checkbox_${entry.id}`;
+
+  // Scroll to the selected element if it's not in the view
+  // Only do it once, when the component is mounted
+  useEffect(() => {
+    if (isSelected) {
+      document.getElementById(checkboxId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>

@@ -53,6 +53,10 @@ const RulesFilter = () => {
     setQueryParams({ dataSource: dataSourceValue.name });
   };
 
+  const clearDataSource = () => {
+    setQueryParams({ dataSource: null });
+  };
+
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     setQueryParams({ queryString: target.value || null });
@@ -84,13 +88,15 @@ const RulesFilter = () => {
   return (
     <div className={styles.container}>
       <div className={styles.inputWidth}>
-        <Label>Select data source</Label>
+        <Label>Search by data source</Label>
         <DataSourcePicker
           key={dataSourceKey}
           alerting
           noDefault
+          placeholder="All data sources"
           current={dataSource}
           onChange={handleDataSourceChange}
+          onClear={clearDataSource}
         />
       </div>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>

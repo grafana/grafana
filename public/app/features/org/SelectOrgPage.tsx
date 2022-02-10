@@ -1,9 +1,11 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import Page from 'app/core/components/Page/Page';
-import { getBackendSrv, config } from '@grafana/runtime';
-import { UserOrg } from 'app/types';
-import { useAsync } from 'react-use';
+import { config } from '@grafana/runtime';
+import { StoreState, UserOrg } from 'app/types';
+import { useEffectOnce } from 'react-use';
 import { Button, HorizontalGroup } from '@grafana/ui';
+import { getUserOrganizations, setUserOrganization } from './state/actions';
+import { connect, ConnectedProps } from 'react-redux';
 
 const navModel = {
   main: {
@@ -16,23 +18,31 @@ const navModel = {
   },
 };
 
-const getUserOrgs = async () => {
-  return await getBackendSrv().get('/api/user/orgs');
-};
-const setUserOrg = async (org: UserOrg) => {
-  return await getBackendSrv()
-    .post('/api/user/using/' + org.orgId)
-    .then(() => {
-      window.location.href = config.appSubUrl + '/';
-    });
+const mapStateToProps = (state: StoreState) => {
+  return {
+    userOrgs: state.organization.userOrgs,
+  };
 };
 
-export const SelectOrgPage: FC = () => {
-  const [orgs, setOrgs] = useState<UserOrg[]>();
+const mapDispatchToProps = {
+  setUserOrganization,
+  getUserOrganizations,
+};
 
-  useAsync(async () => {
-    setOrgs(await getUserOrgs());
-  }, []);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
+
+export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
+  const setUserOrg = async (org: UserOrg) => {
+    await setUserOrganization(org.orgId);
+    window.location.href = config.appSubUrl + '/';
+  };
+
+  useEffectOnce(() => {
+    getUserOrganizations();
+  });
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -42,8 +52,8 @@ export const SelectOrgPage: FC = () => {
             now. You can change this later at any time.
           </p>
           <HorizontalGroup wrap>
-            {orgs &&
-              orgs.map((org) => (
+            {userOrgs &&
+              userOrgs.map((org) => (
                 <Button key={org.orgId} icon="signin" onClick={() => setUserOrg(org)}>
                   {org.name}
                 </Button>
@@ -55,4 +65,4 @@ export const SelectOrgPage: FC = () => {
   );
 };
 
-export default SelectOrgPage;
+export default connector(SelectOrgPage);

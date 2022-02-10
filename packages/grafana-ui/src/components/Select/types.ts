@@ -1,7 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
+import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
+export type ActionMeta = SelectActionMeta<{}>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
@@ -9,6 +11,7 @@ export type InputActionMeta = {
 export interface SelectCommonProps<T> {
   /** Aria label applied to the input field */
   ['aria-label']?: string;
+  allowCreateWhileLoading?: boolean;
   allowCustomValue?: boolean;
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
@@ -20,6 +23,7 @@ export interface SelectCommonProps<T> {
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
+  formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
@@ -43,15 +47,14 @@ export interface SelectCommonProps<T> {
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';
   /**
-   * @deprecated
    * Setting to true will portal the menu to `document.body`.
-   * This property will soon be removed and portalling will be the default behavior.
+   * This property will soon default to true and portalling will be the default behavior.
    */
   menuShouldPortal?: boolean;
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
-  onChange: (value: SelectableValue<T>) => {} | void;
+  onChange: (value: SelectableValue<T>, actionMeta: ActionMeta) => {} | void;
   onCloseMenu?: () => void;
   /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;
@@ -68,14 +71,16 @@ export interface SelectCommonProps<T> {
   tabSelectsValue?: boolean;
   value?: SelectValue<T> | null;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
-  width?: number;
+  width?: number | 'auto';
   isOptionDisabled?: () => boolean;
   /** allowCustomValue must be enabled. Determines whether the "create new" option should be displayed based on the current input value, select value and options array. */
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: Readonly<Array<SelectableValue<T>>>
+    options: OptionsOrGroups<unknown, GroupBase<unknown>>
   ) => boolean;
+  /** Message to display isLoading=true*/
+  loadingMessage?: string;
 }
 
 export interface SelectAsyncProps<T> {
@@ -122,3 +127,5 @@ export interface SelectableOptGroup<T = any> {
 export type SelectOptions<T = any> =
   | SelectableValue<T>
   | Array<SelectableValue<T> | SelectableOptGroup<T> | Array<SelectableOptGroup<T>>>;
+
+export type FormatOptionLabelMeta<T> = { context: string; inputValue: string; selectValue: Array<SelectableValue<T>> };

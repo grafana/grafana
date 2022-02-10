@@ -1,18 +1,19 @@
 import React from 'react';
-import angular from 'angular';
-import { find, isEmpty, isString, set } from 'lodash';
+import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
+  DataQueryError,
   DataQueryErrorType,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  FieldType,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -31,6 +32,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
 import {
+  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
@@ -42,15 +44,23 @@ import {
   GetLogGroupFieldsResponse,
   isCloudWatchLogsQuery,
   LogAction,
+  MetricQueryType,
   MetricQuery,
   MetricRequest,
+  StartQueryRequest,
   TSDBResponse,
+  Dimensions,
+  MetricFindSuggestData,
+  CloudWatchLogsRequest,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
+import { runWithRetry } from './utils/logsRetry';
+import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -72,19 +82,24 @@ const displayAlert = (datasourceName: string, region: string) =>
 const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
-export const MAX_ATTEMPTS = 5;
-
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport {
+  implements DataSourceWithLogsContextSupport
+{
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
+  sqlCompletionItemProvider: SQLCompletionItemProvider;
+
+  metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
+
   tracingDataSourceUid?: string;
+  logsTimeout: string;
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
+
   debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
     displayAlert,
     AppNotificationTimeout.Error
@@ -106,10 +121,13 @@ export class CloudWatchDatasource
     this.datasourceName = instanceSettings.name;
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
+    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
-    options = angular.copy(options);
+    options = cloneDeep(options);
 
     let queries = options.targets.filter((item) => item.id !== '' || item.hide !== true);
     const { logQueries, metricsQueries } = this.getTargetsByQueryMode(queries);
@@ -155,27 +173,46 @@ export class CloudWatchDatasource
     }
 
     const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression,
+      queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames,
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
-    // This first starts the query which returns queryId which can be used to retrieve results.
-    return this.makeLogActionRequest('StartQuery', queryParams, {
-      scopedVars: options.scopedVars,
-      skipCache: true,
-    }).pipe(
-      mergeMap((dataFrames) =>
+    const startTime = new Date();
+    const timeoutFunc = () => {
+      return Date.now() >= startTime.valueOf() + rangeUtil.intervalToMs(this.logsTimeout);
+    };
+
+    return runWithRetry(
+      (targets: StartQueryRequest[]) => {
+        return this.makeLogActionRequest('StartQuery', targets, {
+          makeReplacements: true,
+          scopedVars: options.scopedVars,
+          skipCache: true,
+        });
+      },
+      queryParams,
+      timeoutFunc
+    ).pipe(
+      mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
         this.logsQuery(
-          dataFrames.map((dataFrame) => ({
+          frames.map((dataFrame) => ({
             queryId: dataFrame.fields[0].values.get(0),
             region: dataFrame.meta?.custom?.['Region'] ?? 'default',
             refId: dataFrame.refId!,
             statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
               .statsGroups,
-          }))
+          })),
+          timeoutFunc
+        ).pipe(
+          map((response: DataQueryResponse) => {
+            if (!response.error && error) {
+              response.error = error;
+            }
+            return response;
+          })
         )
       ),
       mergeMap((dataQueryResponse) => {
@@ -197,35 +234,59 @@ export class CloudWatchDatasource
     );
   };
 
+  filterMetricQuery({
+    region,
+    metricQueryType,
+    metricEditorMode,
+    expression,
+    metricName,
+    namespace,
+    sqlExpression,
+    statistic,
+    dimensions,
+    ...rest
+  }: CloudWatchMetricsQuery): boolean {
+    if (!region) {
+      return false;
+    }
+
+    if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Builder) {
+      return !!namespace && !!metricName && !!statistic;
+    } else if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Code) {
+      return !!expression;
+    } else if (metricQueryType === MetricQueryType.Query) {
+      // still TBD how to validate the visual query builder for SQL
+      return !!sqlExpression;
+    }
+
+    throw new Error('invalid metric editor mode');
+  }
+
   handleMetricQueries = (
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
     const validMetricsQueries = metricQueries
-      .filter(
-        (item) =>
-          (!!item.region && !!item.namespace && !!item.metricName && !!item.statistic) || item.expression?.length > 0
-      )
-      .map(
-        (item: CloudWatchMetricsQuery): MetricQuery => {
-          item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
-          item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
-          item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
-          item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-          item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
-          item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-          item.id = this.templateSrv.replace(item.id, options.scopedVars);
-          item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+      .filter(this.filterMetricQuery)
+      .map((item: CloudWatchMetricsQuery): MetricQuery => {
+        item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+        item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
+        item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
+        item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
+        item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
+        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+        item.id = this.templateSrv.replace(item.id, options.scopedVars);
+        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+        item.sqlExpression = this.templateSrv.replace(item.sqlExpression, options.scopedVars, 'raw');
 
-          return {
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            datasourceId: this.id,
-            type: 'timeSeriesQuery',
-            ...item,
-          };
-        }
-      );
+        return {
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          ...item,
+          type: 'timeSeriesQuery',
+          datasource: this.getRef(),
+        };
+      });
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {
@@ -252,7 +313,8 @@ export class CloudWatchDatasource
       limit?: number;
       region: string;
       statsGroups?: string[];
-    }>
+    }>,
+    timeoutFunc: () => boolean
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach((param) => {
@@ -305,7 +367,7 @@ export class CloudWatchDatasource
         }
       }),
       map(([dataFrames, failedAttempts]) => {
-        if (failedAttempts >= MAX_ATTEMPTS) {
+        if (timeoutFunc()) {
           for (const frame of dataFrames) {
             set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
           }
@@ -323,13 +385,12 @@ export class CloudWatchDatasource
           )
             ? LoadingState.Done
             : LoadingState.Loading,
-          error:
-            failedAttempts >= MAX_ATTEMPTS
-              ? {
-                  message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
-                  type: DataQueryErrorType.Timeout,
-                }
-              : undefined,
+          error: timeoutFunc()
+            ? {
+                message: `error: query timed out after ${failedAttempts} attempts`,
+                type: DataQueryErrorType.Timeout,
+              }
+            : undefined,
         };
       }),
       takeWhile(({ state }) => state !== LoadingState.Error && state !== LoadingState.Done, true)
@@ -444,9 +505,20 @@ export class CloudWatchDatasource
           return { data: [] };
         }
 
+        const lastError = findLast(res.results, (v) => !!v.error);
+
+        dataframes.forEach((frame) => {
+          frame.fields.forEach((field) => {
+            if (field.type === FieldType.time) {
+              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals
+              field.config.interval = frame.meta?.custom?.period * 1000;
+            }
+          });
+        });
+
         return {
           data: dataframes,
-          error: Object.values(res.results).reduce((acc, curr) => (curr.error ? { message: curr.error } : acc), null),
+          error: lastError ? { message: lastError.error } : null,
         };
       }),
       catchError((err) => {
@@ -472,7 +544,12 @@ export class CloudWatchDatasource
               (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []
           ) as string[];
-          regionsAffected.forEach((region) => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
+          regionsAffected.forEach((region) => {
+            const actualRegion = this.getActualRegion(region);
+            if (actualRegion) {
+              this.debouncedAlert(this.datasourceName, actualRegion);
+            }
+          });
         }
 
         return throwError(() => err);
@@ -480,7 +557,7 @@ export class CloudWatchDatasource
     );
   }
 
-  transformSuggestDataFromDataframes(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
+  transformSuggestDataFromDataframes(suggestData: TSDBResponse): MetricFindSuggestData[] {
     const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
     const table = toLegacyResponseData(frames[0]) as TableData;
 
@@ -491,7 +568,7 @@ export class CloudWatchDatasource
     }));
   }
 
-  doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
+  doMetricQueryRequest(subtype: string, parameters: any): Promise<MetricFindSuggestData[]> {
     const range = this.timeSrv.timeRange();
     return lastValueFrom(
       this.awsRequest(DS_QUERY_ENDPOINT, {
@@ -502,7 +579,7 @@ export class CloudWatchDatasource
             refId: 'metricFindQuery',
             intervalMs: 1, // dummy
             maxDataPoints: 1, // dummy
-            datasourceId: this.id,
+            datasource: this.getRef(),
             type: 'metricFindQuery',
             subtype: subtype,
             ...parameters,
@@ -518,7 +595,7 @@ export class CloudWatchDatasource
 
   makeLogActionRequest(
     subtype: LogAction,
-    queryParams: any[],
+    queryParams: CloudWatchLogsRequest[],
     options: {
       scopedVars?: ScopedVars;
       makeReplacements?: boolean;
@@ -533,11 +610,11 @@ export class CloudWatchDatasource
     const requestParams = {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
-      queries: queryParams.map((param: any) => ({
-        refId: 'A',
+      queries: queryParams.map((param: CloudWatchLogsRequest) => ({
+        refId: (param as StartQueryRequest).refId || 'A',
         intervalMs: 1, // dummy
         maxDataPoints: 1, // dummy
-        datasourceId: this.id,
+        datasource: this.getRef(),
         type: 'logAction',
         subtype: subtype,
         ...param,
@@ -545,18 +622,29 @@ export class CloudWatchDatasource
     };
 
     if (options.makeReplacements) {
-      requestParams.queries.forEach((query) => {
-        if (query.hasOwnProperty('queryString')) {
-          query.queryString = this.replace(query.queryString, options.scopedVars, true);
-        }
-        query.region = this.replace(query.region, options.scopedVars, true, 'region');
-        query.region = this.getActualRegion(query.region);
+      requestParams.queries.forEach((query: CloudWatchLogsRequest) => {
+        const fieldsToReplace: Array<
+          keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
+        > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
 
-        // interpolate log groups
-        if (query.logGroupNames) {
-          query.logGroupNames = query.logGroupNames.map((logGroup: string) =>
-            this.replace(logGroup, options.scopedVars, true, 'log groups')
-          );
+        const anyQuery: any = query;
+        for (const fieldName of fieldsToReplace) {
+          if (query.hasOwnProperty(fieldName)) {
+            if (Array.isArray(anyQuery[fieldName])) {
+              anyQuery[fieldName] = anyQuery[fieldName].map((val: string) =>
+                this.replace(val, options.scopedVars, true, fieldName)
+              );
+            } else {
+              anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
+            }
+          }
+        }
+        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
+        //  if you select different than default region in editor you will get results for autocomplete from wrong
+        //  region.
+        if (anyQuery.region) {
+          anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
+          anyQuery.region = this.getActualRegion(anyQuery.region);
         }
       });
     }
@@ -571,7 +659,11 @@ export class CloudWatchDatasource
 
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
-      catchError((err) => {
+      catchError((err: FetchError) => {
+        if (err.status === 400) {
+          throw err;
+        }
+
         if (err.data?.error) {
           throw err.data.error;
         } else if (err.data?.message) {
@@ -595,7 +687,7 @@ export class CloudWatchDatasource
     return this.doMetricQueryRequest('namespaces', null);
   }
 
-  async getMetrics(namespace: string, region?: string) {
+  async getMetrics(namespace: string | undefined, region?: string) {
     if (!namespace) {
       return [];
     }
@@ -606,7 +698,20 @@ export class CloudWatchDatasource
     });
   }
 
-  async getDimensionKeys(namespace: string, region: string) {
+  async getAllMetrics(region: string): Promise<Array<{ metricName: string; namespace: string }>> {
+    const values = await this.doMetricQueryRequest('all_metrics', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+    });
+
+    return values.map((v) => ({ metricName: v.label, namespace: v.text }));
+  }
+
+  async getDimensionKeys(
+    namespace: string | undefined,
+    region: string,
+    dimensionFilters: Dimensions = {},
+    metricName = ''
+  ) {
     if (!namespace) {
       return [];
     }
@@ -614,13 +719,15 @@ export class CloudWatchDatasource
     return this.doMetricQueryRequest('dimension_keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
+      dimensionFilters: this.convertDimensionFormat(dimensionFilters, {}),
+      metricName,
     });
   }
 
   async getDimensionValues(
     region: string,
-    namespace: string,
-    metricName: string,
+    namespace: string | undefined,
+    metricName: string | undefined,
     dimensionKey: string,
     filterDimensions: {}
   ) {
@@ -764,7 +871,7 @@ export class CloudWatchDatasource
         queries: [
           {
             refId: 'annotationQuery',
-            datasourceId: this.id,
+            datasource: this.getRef(),
             type: 'annotationQuery',
             ...parameters,
           },
@@ -804,7 +911,7 @@ export class CloudWatchDatasource
     const dimensions = {};
 
     try {
-      await this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions);
+      await this.getDimensionValues(region ?? '', namespace, metricName, 'ServiceName', dimensions);
       return {
         status: 'success',
         message: 'Data source is working',
@@ -849,7 +956,7 @@ export class CloudWatchDatasource
     return Math.round(date.valueOf() / 1000);
   }
 
-  convertDimensionFormat(dimensions: { [key: string]: string | string[] }, scopedVars: ScopedVars) {
+  convertDimensionFormat(dimensions: Dimensions, scopedVars: ScopedVars) {
     return Object.entries(dimensions).reduce((result, [key, value]) => {
       key = this.replace(key, scopedVars, true, 'dimension keys');
 
@@ -857,11 +964,15 @@ export class CloudWatchDatasource
         return { ...result, [key]: value };
       }
 
+      if (!value) {
+        return { ...result, [key]: null };
+      }
+
       const valueVar = this.templateSrv
         .getVariables()
         .find(({ name }) => name === this.templateSrv.getVariableName(value));
       if (valueVar) {
-        if (((valueVar as unknown) as VariableWithMultiSupport).multi) {
+        if ((valueVar as unknown as VariableWithMultiSupport).multi) {
           const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
           return { ...result, [key]: values };
         }
@@ -882,7 +993,7 @@ export class CloudWatchDatasource
       const variable = this.templateSrv
         .getVariables()
         .find(({ name }) => name === this.templateSrv.getVariableName(target));
-      if (variable && ((variable as unknown) as VariableWithMultiSupport).multi) {
+      if (variable && (variable as unknown as VariableWithMultiSupport).multi) {
         this.debouncedCustomAlert(
           'CloudWatch templating error',
           `Multi template variables are not supported for ${fieldName || target}`
@@ -937,13 +1048,14 @@ export class CloudWatchDatasource
   interpolateMetricsQueryVariables(
     query: CloudWatchMetricsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions'> {
+  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression'> {
     return {
       alias: this.replace(query.alias, scopedVars),
       metricName: this.replace(query.metricName, scopedVars),
       namespace: this.replace(query.namespace, scopedVars),
       period: this.replace(query.period, scopedVars),
-      dimensions: Object.entries(query.dimensions).reduce((prev, [key, value]) => {
+      sqlExpression: this.replace(query.sqlExpression, scopedVars),
+      dimensions: Object.entries(query.dimensions ?? {}).reduce((prev, [key, value]) => {
         if (Array.isArray(value)) {
           return { ...prev, [key]: value };
         }

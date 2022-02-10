@@ -38,7 +38,9 @@ All plugins is signed under a _signature level_. The signature level determines 
 
 ## Allow unsigned plugins
 
-We strongly recommend that you don't run unsigned plugins in your Grafana installation. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow_loading_unsigned_plugins" >}}).
+> **Note:** Unsigned plugins are not supported in Grafana Cloud.
+
+We strongly recommend that you don't run unsigned plugins in your Grafana instance. If you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration]({{< relref "../administration/configuration.md#allow_loading_unsigned_plugins" >}}).
 
 If you've allowed loading of an unsigned plugin, then Grafana writes a warning message to the server log:
 

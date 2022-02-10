@@ -1,16 +1,7 @@
-import { createSlice, PayloadAction, Draft } from '@reduxjs/toolkit';
-import {
-  DashboardAclDTO,
-  DashboardInitError,
-  DashboardInitPhase,
-  DashboardState,
-  PanelState,
-  QueriesToUpdateOnDashboardLoad,
-} from 'app/types';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 import { AngularComponent } from '@grafana/runtime';
-import { EDIT_PANEL_ID } from 'app/core/constants';
 import { processAclItems } from 'app/core/utils/acl';
-import { panelEditorReducer } from '../components/PanelEditor/state/reducers';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { PanelPlugin } from '@grafana/data';
@@ -20,12 +11,10 @@ export const initialState: DashboardState = {
   isInitSlow: false,
   getModel: () => null,
   permissions: [],
-  modifiedQueries: null,
-  panels: {},
   initError: null,
 };
 
-const dashbardSlice = createSlice({
+const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
@@ -45,12 +34,6 @@ const dashbardSlice = createSlice({
       state.getModel = () => action.payload;
       state.initPhase = DashboardInitPhase.Completed;
       state.isInitSlow = false;
-
-      for (const panel of action.payload.panels) {
-        state.panels[panel.id] = {
-          pluginId: panel.type,
-        };
-      }
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
       state.initPhase = DashboardInitPhase.Failed;
@@ -60,43 +43,16 @@ const dashbardSlice = createSlice({
       };
     },
     cleanUpDashboard: (state) => {
-      state.panels = {};
       state.initPhase = DashboardInitPhase.NotStarted;
       state.isInitSlow = false;
       state.initError = null;
       state.getModel = () => null;
     },
-    setDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction<QueriesToUpdateOnDashboardLoad>) => {
-      state.modifiedQueries = action.payload;
-    },
-    clearDashboardQueriesToUpdateOnLoad: (state) => {
-      state.modifiedQueries = null;
-    },
-    panelModelAndPluginReady: (state, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
-      updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
-    },
-    cleanUpEditPanel: (state) => {
-      delete state.panels[EDIT_PANEL_ID];
-    },
-    setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
-      updatePanelState(state, action.payload.panelId, { instanceState: action.payload.value });
-    },
-    setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
-      updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
-    },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
-      state.panels[action.payload.id] = { pluginId: action.payload.type };
+      //state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
   },
 });
-
-export function updatePanelState(state: Draft<DashboardState>, panelId: number, ps: Partial<PanelState>) {
-  if (!state.panels[panelId]) {
-    state.panels[panelId] = ps as PanelState;
-  } else {
-    Object.assign(state.panels[panelId], ps);
-  }
-}
 
 export interface PanelModelAndPluginReadyPayload {
   panelId: number;
@@ -121,18 +77,11 @@ export const {
   dashboardInitCompleted,
   dashboardInitServices,
   cleanUpDashboard,
-  setDashboardQueriesToUpdateOnLoad,
-  clearDashboardQueriesToUpdateOnLoad,
-  panelModelAndPluginReady,
   addPanel,
-  cleanUpEditPanel,
-  setPanelAngularComponent,
-  setPanelInstanceState,
-} = dashbardSlice.actions;
+} = dashboardSlice.actions;
 
-export const dashboardReducer = dashbardSlice.reducer;
+export const dashboardReducer = dashboardSlice.reducer;
 
 export default {
   dashboard: dashboardReducer,
-  panelEditor: panelEditorReducer,
 };

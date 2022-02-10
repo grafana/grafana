@@ -43,6 +43,7 @@ exports[`Render should render organization and preferences 1`] = `
         orgName="Cool org"
       />
       <SharedPreferences
+        disabled={false}
         resourceUri="org"
       />
     </VerticalGroup>

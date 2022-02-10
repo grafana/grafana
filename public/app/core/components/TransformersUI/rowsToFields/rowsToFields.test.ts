@@ -151,4 +151,26 @@ describe('Rows to fields', () => {
     expect(result.fields[0].name).toEqual('Stockholm');
     expect(result.fields[0].values.get(0)).toEqual(20);
   });
+
+  it('Can handle number fields as name field', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'SensorID', type: FieldType.number, values: [10, 20, 30] },
+        { name: 'Value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+
+    const result = rowsToFields(
+      {
+        mappings: [
+          { fieldName: 'SensorID', handlerKey: 'field.name' },
+          { fieldName: 'Value', handlerKey: 'field.value' },
+        ],
+      },
+      input
+    );
+
+    expect(result.fields[0].name).toEqual('10');
+    expect(result.fields[0].values.get(0)).toEqual(1);
+  });
 });

@@ -1,22 +1,25 @@
 import React, { ComponentProps } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { LogsSortOrder } from '@grafana/data';
 import LogsNavigation from './LogsNavigation';
 
 type LogsNavigationProps = ComponentProps<typeof LogsNavigation>;
+const defaultProps: LogsNavigationProps = {
+  absoluteRange: { from: 1637319381811, to: 1637322981811 },
+  timeZone: 'local',
+  queries: [],
+  loading: false,
+  logsSortOrder: undefined,
+  visibleRange: { from: 1637322959000, to: 1637322981811 },
+  onChangeTime: jest.fn(),
+  scrollToTopLogs: jest.fn(),
+  addResultsToCache: jest.fn(),
+  clearCache: jest.fn(),
+};
 
 const setup = (propOverrides?: object) => {
-  const props: LogsNavigationProps = {
-    absoluteRange: { from: 1619081645930, to: 1619081945930 },
-    timeZone: 'local',
-    queries: [],
-    loading: false,
-    logsSortOrder: undefined,
-    visibleRange: { from: 1619081941000, to: 1619081945930 },
-    onChangeTime: jest.fn(),
-    scrollToTopLogs: jest.fn(),
-    addResultsToCache: jest.fn(),
-    clearCache: jest.fn(),
+  const props = {
+    ...defaultProps,
     ...propOverrides,
   };
 
@@ -40,7 +43,7 @@ describe('LogsNavigation', () => {
     expect(Array.from(elements).map((el) => el.getAttribute('data-testid'))).toMatchObject(expectedOrder);
   });
 
-  it('should render 3 navigation buttons in correect order when flipped logs order', () => {
+  it('should render 3 navigation buttons in correct order when flipped logs order', () => {
     const { container } = setup({ logsSortOrder: LogsSortOrder.Ascending });
     const expectedOrder = ['olderLogsButton', 'newerLogsButton', 'scrollToTop'];
     const elements = container.querySelectorAll(
@@ -60,5 +63,24 @@ describe('LogsNavigation', () => {
   it('should render logs navigation pages section', () => {
     setup();
     expect(screen.getByTestId('logsNavigationPages')).toBeInTheDocument();
+  });
+
+  it('should correctly request older logs when flipped order', () => {
+    const onChangeTimeMock = jest.fn();
+    const { rerender } = setup({ onChangeTime: onChangeTimeMock });
+    fireEvent.click(screen.getByTestId('olderLogsButton'));
+    expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319359000, to: 1637322959000 });
+
+    rerender(
+      <LogsNavigation
+        {...defaultProps}
+        absoluteRange={{ from: 1637319359000, to: 1637322959000 }}
+        visibleRange={{ from: 1637322938000, to: 1637322959000 }}
+        onChangeTime={onChangeTimeMock}
+        logsSortOrder={LogsSortOrder.Ascending}
+      />
+    );
+    fireEvent.click(screen.getByTestId('olderLogsButton'));
+    expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319338000, to: 1637322938000 });
   });
 });

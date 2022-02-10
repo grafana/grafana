@@ -132,9 +132,9 @@ export interface LogsParser {
   getValueFromField: (field: string) => string;
   /**
    * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line unless it returns undefined.
+   * The parser accepts the line if it returns true.
    */
-  test: (line: string) => any;
+  test: (line: string) => boolean;
 }
 
 export enum LogsDedupDescription {

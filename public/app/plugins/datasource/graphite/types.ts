@@ -77,5 +77,6 @@ export type GraphiteQueryEditorDependencies = {
   range?: TimeRange;
   templateSrv: TemplateSrv;
   queries: DataQuery[];
-  refresh: (target: string) => void;
+  // schedule onChange/onRunQuery after the reducer actions finishes
+  refresh: () => void;
 };

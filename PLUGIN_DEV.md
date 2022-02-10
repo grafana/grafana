@@ -6,7 +6,7 @@ upgrading Grafana please check here before creating an issue.
 
 ## Plugin development resources
 
-- [Grafana plugin developer guide](http://docs.grafana.org/plugins/developing/development/)
+- [Grafana plugin developer guide](https://grafana.com/docs/grafana/latest/developers/plugins/)
 - [Webpack Grafana plugin template project](https://github.com/CorpGlory/grafana-plugin-template-webpack)
 - [Simple JSON datasource plugin](https://github.com/grafana/simple-json-datasource)
 

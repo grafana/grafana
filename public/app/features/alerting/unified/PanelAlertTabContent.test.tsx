@@ -3,7 +3,7 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
@@ -14,8 +14,7 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from './mocks';
-import { DataSourceType } from './utils/datasource';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules } from './api/ruler';
@@ -25,6 +24,7 @@ import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasour
 import { DataSourceApi } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromOptions } from 'app/plugins/datasource/prometheus/types';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
@@ -34,28 +34,37 @@ const dataSources = {
   prometheus: mockDataSource<PromOptions>({
     name: 'Prometheus',
     type: DataSourceType.Prometheus,
+    isDefault: false,
+  }),
+  default: mockDataSource<PromOptions>({
+    name: 'Default',
+    type: DataSourceType.Prometheus,
+    isDefault: true,
   }),
 };
 dataSources.prometheus.meta.alerting = true;
+dataSources.default.meta.alerting = true;
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
   api: {
-    fetchRules: typeAsJestMock(fetchRules),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    fetchRules: jest.mocked(fetchRules),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
   },
 };
 
 const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) => {
   const store = configureStore();
 
-  return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <PanelAlertTabContent dashboard={dashboard} panel={panel} />
-      </Router>
-    </Provider>
-  );
+  return act(async () => {
+    render(
+      <Provider store={store}>
+        <Router history={locationService.getHistory()}>
+          <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+        </Router>
+      </Provider>
+    );
+  });
 };
 
 const rules = [
@@ -139,17 +148,21 @@ const dashboard = {
     folderTitle: 'super folder',
   },
 } as DashboardModel;
-const panel = ({
-  datasource: dataSources.prometheus.uid,
+
+const panel = {
+  datasource: {
+    type: 'prometheus',
+    uid: dataSources.prometheus.uid,
+  },
   title: 'mypanel',
-  editSourceId: 34,
+  id: 34,
   targets: [
     {
       expr: 'sum(some_metric [$__interval])) by (app)',
       refId: 'A',
     },
   ],
-} as any) as PanelModel;
+} as any as PanelModel;
 
 const ui = {
   row: byTestId('row'),
@@ -161,27 +174,63 @@ describe('PanelAlertTabContent', () => {
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
-    dsService.datasources[dataSources.prometheus.name] = new PrometheusDatasource(
+    dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
       dataSources.prometheus
     ) as DataSourceApi<any, any>;
+    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi<
+      any,
+      any
+    >;
     setDataSourceSrv(dsService);
   });
 
   it('Will take into account panel maxDataPoints', async () => {
-    await renderAlertTabContent(dashboard, ({
+    await renderAlertTabContent(dashboard, {
       ...panel,
       maxDataPoints: 100,
       interval: '10s',
-    } as any) as PanelModel);
+    } as any as PanelModel);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults.queries[0].model).toEqual({
       expr: 'sum(some_metric [5m])) by (app)',
       refId: 'A',
-      datasource: 'Prometheus',
+      datasource: {
+        type: 'prometheus',
+        uid: 'mock-ds-2',
+      },
+      interval: '',
+      intervalMs: 300000,
+      maxDataPoints: 100,
+    });
+  });
+
+  it('Will work with default datasource', async () => {
+    await renderAlertTabContent(dashboard, {
+      ...panel,
+      datasource: undefined,
+      maxDataPoints: 100,
+      interval: '10s',
+    } as any as PanelModel);
+
+    const button = await ui.createButton.find();
+    const href = button.href;
+    const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
+    expect(match).toHaveLength(2);
+
+    const defaults = JSON.parse(decodeURIComponent(match![1]));
+    expect(defaults.queries[0].model).toEqual({
+      expr: 'sum(some_metric [5m])) by (app)',
+      refId: 'A',
+      datasource: {
+        type: 'prometheus',
+        uid: 'mock-ds-3',
+      },
       interval: '',
       intervalMs: 300000,
       maxDataPoints: 100,
@@ -189,21 +238,26 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account datasource minInterval', async () => {
-    ((getDatasourceSrv() as any) as MockDataSourceSrv).datasources[dataSources.prometheus.name].interval = '7m';
+    (getDatasourceSrv() as any as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
-    await renderAlertTabContent(dashboard, ({
+    await renderAlertTabContent(dashboard, {
       ...panel,
       maxDataPoints: 100,
-    } as any) as PanelModel);
+    } as any as PanelModel);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults.queries[0].model).toEqual({
       expr: 'sum(some_metric [7m])) by (app)',
       refId: 'A',
-      datasource: 'Prometheus',
+      datasource: {
+        type: 'prometheus',
+        uid: 'mock-ds-2',
+      },
       interval: '',
       intervalMs: 420000,
       maxDataPoints: 100,
@@ -220,10 +274,12 @@ describe('PanelAlertTabContent', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toHaveTextContent(/dashboardrule1/);
     expect(rows[0]).not.toHaveTextContent(/dashboardrule2/);
+
     const button = await ui.createButton.find();
     const href = button.href;
     const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
     expect(match).toHaveLength(2);
+
     const defaults = JSON.parse(decodeURIComponent(match![1]));
     expect(defaults).toEqual({
       type: 'grafana',
@@ -237,7 +293,10 @@ describe('PanelAlertTabContent', () => {
           model: {
             expr: 'sum(some_metric [15s])) by (app)',
             refId: 'A',
-            datasource: 'Prometheus',
+            datasource: {
+              type: 'prometheus',
+              uid: 'mock-ds-2',
+            },
             interval: '',
             intervalMs: 15000,
           },
@@ -250,7 +309,10 @@ describe('PanelAlertTabContent', () => {
             refId: 'B',
             hide: false,
             type: 'classic_conditions',
-            datasource: '__expr__',
+            datasource: {
+              type: ExpressionDatasourceRef.type,
+              uid: '-100',
+            },
             conditions: [
               {
                 type: 'query',
@@ -269,6 +331,15 @@ describe('PanelAlertTabContent', () => {
         { key: '__dashboardUid__', value: '12' },
         { key: '__panelId__', value: '34' },
       ],
+    });
+
+    expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      dashboardUID: dashboard.uid,
+      panelId: panel.id,
+    });
+    expect(mocks.api.fetchRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      dashboardUID: dashboard.uid,
+      panelId: panel.id,
     });
   });
 });

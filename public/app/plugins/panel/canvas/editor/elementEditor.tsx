@@ -1,10 +1,11 @@
-import { cloneDeep, get as lodashGet } from 'lodash';
+import { get as lodashGet } from 'lodash';
 import { optionBuilder } from './options';
 import { CanvasElementOptions, canvasElementRegistry, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { PlacementEditor } from './PlacementEditor';
 
 export interface CanvasEditorOptions {
   element: ElementState;
@@ -31,14 +32,15 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
             return;
           }
           options = {
-            ...options, // keep current options
+            ...options,
+            ...layer.getNewOptions(options),
             type: layer.id,
-            config: cloneDeep(layer.defaultConfig ?? {}),
           };
         } else {
           options = setOptionImmutably(options, path, value);
         }
-        opts.scene.onChange(opts.element.UID, options);
+        opts.element.onChange(options);
+        opts.element.updateData(opts.scene.context);
       },
     }),
 
@@ -61,15 +63,31 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
       // force clean layer configuration
       const layer = canvasElementRegistry.getIfExists(options?.type ?? DEFAULT_CANVAS_ELEMENT_CONFIG.type)!;
-      const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultConfig, ...options?.config } };
+      let currentOptions = options;
+      if (!currentOptions) {
+        currentOptions = {
+          ...layer.getNewOptions(options),
+          type: layer.id,
+          name: `Element ${Date.now()}.${Math.floor(Math.random() * 100)}`,
+        };
+      }
       const ctx = { ...context, options: currentOptions };
 
-      if (layer.registerOptionsUI) {
+      if (layer?.registerOptionsUI) {
         layer.registerOptionsUI(builder, ctx);
       }
 
       optionBuilder.addBackground(builder, ctx);
       optionBuilder.addBorder(builder, ctx);
+
+      builder.addCustomEditor({
+        category: ['Layout'],
+        id: 'content',
+        path: '__', // not used
+        name: 'Anchor',
+        editor: PlacementEditor,
+        settings: opts,
+      });
     },
   };
 }

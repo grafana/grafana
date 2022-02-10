@@ -1,8 +1,8 @@
-import { createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { getBackendSrv } from '@grafana/runtime';
 import { PanelPlugin } from '@grafana/data';
 import { StoreState, ThunkResult } from 'app/types';
-import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -14,6 +14,7 @@ import {
 import { STATE_PREFIX } from '../constants';
 import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
 import { CatalogPlugin, RemotePlugin } from '../types';
+import { invalidatePluginInCache } from '../../pluginCacheBuster';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
@@ -58,11 +59,17 @@ export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, asy
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk(
   `${STATE_PREFIX}/install`,
-  async ({ id, version, isUpdating = false }: { id: string; version: string; isUpdating?: boolean }, thunkApi) => {
-    const changes = isUpdating ? { isInstalled: true, hasUpdate: false } : { isInstalled: true };
+  async ({ id, version, isUpdating = false }: { id: string; version?: string; isUpdating?: boolean }, thunkApi) => {
+    const changes = isUpdating
+      ? { isInstalled: true, installedVersion: version, hasUpdate: false }
+      : { isInstalled: true, installedVersion: version };
     try {
-      await installPlugin(id, version);
+      await installPlugin(id);
       await updatePanels();
+
+      if (isUpdating) {
+        invalidatePluginInCache(id);
+      }
 
       return { id, changes } as Update<CatalogPlugin>;
     } catch (e) {
@@ -76,9 +83,11 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
     await uninstallPlugin(id);
     await updatePanels();
 
+    invalidatePluginInCache(id);
+
     return {
       id,
-      changes: { isInstalled: false },
+      changes: { isInstalled: false, installedVersion: undefined },
     } as Update<CatalogPlugin>;
   } catch (e) {
     return thunkApi.rejectWithValue('Unknown error.');
@@ -96,6 +105,8 @@ export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPlugin
   return getBackendSrv().get(url);
 });
 
+export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/panelPluginLoaded`);
+
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // It cannot be constructed with `createAsyncThunk()` as we need the return value on the call-site,
@@ -110,10 +121,7 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
 
       // second check to protect against raise condition
       if (!getStore().plugins.panels[id]) {
-        dispatch({
-          type: `${STATE_PREFIX}/loadPanelPlugin/fulfilled`,
-          payload: plugin,
-        });
+        dispatch(panelPluginLoaded(plugin));
       }
     }
 

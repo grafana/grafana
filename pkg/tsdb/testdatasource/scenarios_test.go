@@ -9,17 +9,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTestdataScenarios(t *testing.T) {
-	p := &TestDataPlugin{}
+	s := &Service{}
 
 	t.Run("random walk ", func(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
-			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
 			model := simplejson.New()
 			model.Set("startValue", 1.234)
@@ -42,7 +42,7 @@ func TestTestdataScenarios(t *testing.T) {
 				Queries:       []backend.DataQuery{query},
 			}
 
-			resp, err := p.handleRandomWalkScenario(context.Background(), req)
+			resp, err := s.handleRandomWalkScenario(context.Background(), req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
@@ -63,7 +63,7 @@ func TestTestdataScenarios(t *testing.T) {
 
 	t.Run("random walk table", func(t *testing.T) {
 		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
-			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
 			model := simplejson.New()
 			modelBytes, err := model.MarshalJSON()
@@ -85,7 +85,7 @@ func TestTestdataScenarios(t *testing.T) {
 				Queries:       []backend.DataQuery{query},
 			}
 
-			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			resp, err := s.handleRandomWalkTableScenario(context.Background(), req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
@@ -117,7 +117,7 @@ func TestTestdataScenarios(t *testing.T) {
 		})
 
 		t.Run("Should return a table with some nil values", func(t *testing.T) {
-			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
 			model := simplejson.New()
 			model.Set("withNil", true)
@@ -141,7 +141,7 @@ func TestTestdataScenarios(t *testing.T) {
 				Queries:       []backend.DataQuery{query},
 			}
 
-			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			resp, err := s.handleRandomWalkTableScenario(context.Background(), req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 

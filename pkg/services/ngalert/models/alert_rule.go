@@ -41,11 +41,16 @@ func (executionErrorState ExecutionErrorState) String() string {
 
 const (
 	AlertingErrState ExecutionErrorState = "Alerting"
+	ErrorErrState    ExecutionErrorState = "Error"
 )
 
 const (
 	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
+
+	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
+	DashboardUIDAnnotation = "__dashboardUid__"
+	PanelIDAnnotation      = "__panelId__"
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -98,6 +103,18 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 	}
 	alertRule.Updated = timeNow()
 	return nil
+}
+
+func (alertRule *AlertRule) ResourceType() string {
+	return "alertRule"
+}
+
+func (alertRule *AlertRule) ResourceID() string {
+	return alertRule.UID
+}
+
+func (alertRule *AlertRule) ResourceOrgID() int64 {
+	return alertRule.OrgID
 }
 
 // AlertRuleVersion is the model for alert rule versions in unified alerting.

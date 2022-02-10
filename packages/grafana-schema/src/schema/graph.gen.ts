@@ -24,6 +24,11 @@ export enum GraphDrawStyle {
   Points = 'points',
 }
 
+export enum GraphTransform {
+  Constant = 'constant',
+  NegativeY = 'negative-Y',
+}
+
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -239,6 +244,12 @@ export enum TooltipDisplayMode {
   Single = 'single',
 }
 
+export enum SortOrder {
+  Ascending = 'asc',
+  Descending = 'desc',
+  None = 'none',
+}
+
 export interface GraphFieldConfig
   extends LineConfig,
     FillConfig,
@@ -250,6 +261,7 @@ export interface GraphFieldConfig
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  transform?: GraphTransform;
 }
 
 export interface VizLegendOptions {
@@ -258,6 +270,8 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  sortBy?: string;
+  sortDesc?: boolean;
 }
 
 export enum BarGaugeDisplayMode {
@@ -272,6 +286,7 @@ export interface TableFieldOptions {
   hidden?: boolean;
   minWidth?: number;
   width?: number;
+  filterable?: boolean;
 }
 
 export const defaultTableFieldOptions: TableFieldOptions = {
@@ -281,4 +296,5 @@ export const defaultTableFieldOptions: TableFieldOptions = {
 
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
+  sort: SortOrder;
 }

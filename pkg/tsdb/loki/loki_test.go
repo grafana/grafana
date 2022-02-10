@@ -1,14 +1,11 @@
 package loki
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/loki/pkg/loghttp"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -40,80 +37,6 @@ func TestLoki(t *testing.T) {
 		}
 
 		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
-	})
-
-	t.Run("parsing query model with step", func(t *testing.T) {
-		queryContext := &backend.QueryDataRequest{
-			Queries: []backend.DataQuery{
-				{
-					JSON: []byte(`
-					{
-						"expr": "go_goroutines",
-						"format": "time_series",
-						"refId": "A"
-					}`,
-					),
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(-30 * time.Second),
-						To:   time.Now(),
-					},
-				},
-			},
-		}
-		service := &Service{
-			intervalCalculator: mockCalculator{
-				interval: intervalv2.Interval{
-					Value: time.Second * 30,
-				},
-			},
-		}
-		dsInfo := &datasourceInfo{}
-		models, err := service.parseQuery(dsInfo, queryContext)
-		require.NoError(t, err)
-		require.Equal(t, time.Second*30, models[0].Step)
-	})
-
-	t.Run("parsing query model without step parameter", func(t *testing.T) {
-		queryContext := &backend.QueryDataRequest{
-			Queries: []backend.DataQuery{
-				{
-					JSON: []byte(`
-					{
-						"expr": "go_goroutines",
-						"format": "time_series",
-						"refId": "A"
-					}`,
-					),
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(-48 * time.Hour),
-						To:   time.Now(),
-					},
-				},
-			},
-		}
-		service := &Service{
-			intervalCalculator: mockCalculator{
-				interval: intervalv2.Interval{
-					Value: time.Minute * 2,
-				},
-			},
-		}
-		dsInfo := &datasourceInfo{}
-		models, err := service.parseQuery(dsInfo, queryContext)
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*2, models[0].Step)
-
-		service = &Service{
-			intervalCalculator: mockCalculator{
-				interval: intervalv2.Interval{
-					Value: time.Second * 2,
-				},
-			},
-		}
-		models, err = service.parseQuery(dsInfo, queryContext)
-		require.NoError(t, err)
-		fmt.Println(models)
-		require.Equal(t, time.Second*2, models[0].Step)
 	})
 }
 
@@ -151,6 +74,7 @@ func TestParseResponse(t *testing.T) {
 
 		query := &lokiQuery{
 			LegendFormat: "legend {{app}}",
+			Step:         time.Second * 42,
 		}
 		frame, err := parseResponse(&value, query)
 		require.NoError(t, err)
@@ -164,6 +88,7 @@ func TestParseResponse(t *testing.T) {
 			time.Date(1970, 1, 1, 0, 0, 4, 0, time.UTC),
 			time.Date(1970, 1, 1, 0, 0, 5, 0, time.UTC),
 		})
+		field1.Config = &data.FieldConfig{Interval: float64(42000)}
 		field2 := data.NewField("value", labels, []float64{1, 2, 3, 4, 5})
 		field2.SetConfig(&data.FieldConfig{DisplayNameFromDS: "legend Application"})
 		testFrame := data.NewFrame("legend Application", field1, field2)
@@ -172,16 +97,36 @@ func TestParseResponse(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
-}
 
-type mockCalculator struct {
-	interval intervalv2.Interval
-}
+	t.Run("should set interval-attribute in response", func(t *testing.T) {
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+		}
+		value := loghttp.QueryResponse{
+			Data: loghttp.QueryResponseData{
+				Result: loghttp.Matrix{
+					p.SampleStream{
+						Values: values,
+					},
+				},
+			},
+		}
 
-func (m mockCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) intervalv2.Interval {
-	return m.interval
-}
+		query := &lokiQuery{
+			Step: time.Second * 42,
+		}
 
-func (m mockCalculator) CalculateSafeInterval(timerange backend.TimeRange, resolution int64) intervalv2.Interval {
-	return m.interval
+		frames, err := parseResponse(&value, query)
+		require.NoError(t, err)
+
+		// to keep the test simple, we assume the
+		// first field is the time-field
+		timeField := frames[0].Fields[0]
+		require.NotNil(t, timeField)
+		require.Equal(t, data.FieldTypeTime, timeField.Type())
+
+		timeFieldConfig := timeField.Config
+		require.NotNil(t, timeFieldConfig)
+		require.Equal(t, float64(42000), timeFieldConfig.Interval)
+	})
 }

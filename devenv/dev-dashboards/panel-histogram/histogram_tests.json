@@ -76,7 +76,10 @@
         "type": "histogram"
       },
       {
-        "datasource": "-- Dashboard --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "-- Dashboard --"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -409,11 +412,12 @@
         "type": "table"
       }
     ],
-    "schemaVersion": 30,
+    "schemaVersion": 33,
     "style": "dark",
     "tags": [
       "gdev",
-      "panel-tests"
+      "panel-tests",
+      "graph-ng"
     ],
     "templating": {
       "list": []

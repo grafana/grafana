@@ -10,12 +10,15 @@ import (
 )
 
 func init() {
-	bus.AddHandlerCtx("sql", GetSystemStats)
-	bus.AddHandlerCtx("sql", GetDataSourceStats)
-	bus.AddHandlerCtx("sql", GetDataSourceAccessStats)
-	bus.AddHandlerCtx("sql", GetAdminStats)
-	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
-	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
+	bus.AddHandler("sql", GetSystemStats)
+	bus.AddHandler("sql", GetDataSourceStats)
+	bus.AddHandler("sql", GetDataSourceAccessStats)
+	bus.AddHandler("sql", GetAlertNotifiersUsageStats)
+	bus.AddHandler("sql", GetSystemUserCountStats)
+}
+
+func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
+	bus.AddHandler("sql", ss.GetAdminStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30
@@ -52,11 +55,15 @@ func GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) erro
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
 
-	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
+	now := time.Now()
+	activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
 	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
 
-	dailyActiveUserDeadlineDate := time.Now().Add(-dailyActiveUserTimeLimit)
+	dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
 	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
+
+	monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
@@ -89,6 +96,7 @@ func GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) erro
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `) AS api_keys,`)
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, models.PanelElement)
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, models.VariableElement)
 
@@ -136,9 +144,11 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 	) AS ` + statName + `, `
 }
 
-func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
-	activeEndDate := time.Now().Add(-activeUserTimeLimit)
-	dailyActiveEndDate := time.Now().Add(-dailyActiveUserTimeLimit)
+func (ss *SQLStore) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+	now := time.Now()
+	activeEndDate := now.Add(-activeUserTimeLimit)
+	dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
+	monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
 	var rawSQL = `SELECT
 		(
@@ -185,6 +195,10 @@ func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error 
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
 		) AS daily_active_users,
+		(
+			SELECT COUNT(*)
+			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
+		) AS monthly_active_users,
 		` + roleCounterSQL(ctx) + `,
 		(
 			SELECT COUNT(*)
@@ -196,7 +210,7 @@ func GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error 
 		) AS daily_active_sessions`
 
 	var stats models.AdminStats
-	_, err := x.SQL(rawSQL, activeEndDate, dailyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
+	_, err := x.SQL(rawSQL, activeEndDate, dailyActiveEndDate, monthlyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
 	if err != nil {
 		return err
 	}

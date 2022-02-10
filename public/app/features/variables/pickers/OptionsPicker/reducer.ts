@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString, trim } from 'lodash';
 import { VariableOption, VariableWithOptions } from '../../types';
-import { ALL_VARIABLE_VALUE } from '../../state/types';
 import { isMulti, isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { containsSearchFilter } from '../../utils';
+import { ALL_VARIABLE_VALUE } from '../../constants';
 
 export interface ToggleOption {
   option?: VariableOption;
@@ -138,7 +138,7 @@ const optionsPickerSlice = createSlice({
       const { multi, selectedValues } = state;
 
       if (option) {
-        const selected = !selectedValues.find((o) => o.value === option.value);
+        const selected = !selectedValues.find((o) => o.value === option.value && o.text === option.text);
 
         if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
           if (selected || forceSelect) {
@@ -153,7 +153,7 @@ const optionsPickerSlice = createSlice({
           return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
         }
 
-        state.selectedValues = selectedValues.filter((o) => o.value !== option.value);
+        state.selectedValues = selectedValues.filter((o) => o.value !== option.value && o.text !== option.text);
       } else {
         state.selectedValues = [];
       }

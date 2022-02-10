@@ -9,10 +9,13 @@ import {
   TraceKeyValuePair,
   TraceLog,
   TraceSpanRow,
+  dateTimeFormat,
 } from '@grafana/data';
-import { SpanKind, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import formatDistance from 'date-fns/formatDistance';
+import differenceInHours from 'date-fns/differenceInHours';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { createGraphFrames } from './graphTransform';
 
 export function createTableFrame(
@@ -114,15 +117,25 @@ export function transformTraceList(
 
 // Don't forget to change the backend code when the id representation changed
 function transformBase64IDToHexString(base64: string) {
-  const buffer = Buffer.from(base64, 'base64');
-  const id = buffer.toString('hex');
-  return id.length > 16 ? id.slice(16) : id;
+  const raw = atob(base64);
+  let result = '';
+  for (let i = 0; i < raw.length; i++) {
+    const hex = raw.charCodeAt(i).toString(16);
+    result += hex.length === 2 ? hex : '0' + hex;
+  }
+
+  return result.length > 16 ? result.slice(16) : result;
 }
 
 function transformHexStringToBase64ID(hex: string) {
-  const buffer = Buffer.from(hex, 'hex');
-  const id = buffer.toString('base64');
-  return id;
+  const hexArray = hex.match(/\w{2}/g) || [];
+  return btoa(
+    hexArray
+      .map(function (a) {
+        return String.fromCharCode(parseInt(a, 16));
+      })
+      .join('')
+  );
 }
 
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
@@ -161,7 +174,7 @@ function resourceToProcess(resource: collectorTypes.opentelemetryProto.resource.
   }
 
   for (const attribute of resource.attributes) {
-    if (attribute.key === ResourceAttributes.SERVICE_NAME) {
+    if (attribute.key === SemanticResourceAttributes.SERVICE_NAME) {
       serviceName = attribute.value.stringValue || serviceName;
     }
     serviceTags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
@@ -206,13 +219,11 @@ function getSpanTags(
     }
   }
 
-  if (
-    span.kind !== undefined &&
-    span.kind !== collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind.SPAN_KIND_INTERNAL
-  ) {
+  if (span.kind !== undefined) {
+    const split = span.kind.toString().toLowerCase().split('_');
     spanTags.push({
       key: 'span.kind',
-      value: SpanKind[collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind[span.kind] as any].toLowerCase(),
+      value: split.length ? split[split.length - 1] : span.kind.toString(),
     });
   }
 
@@ -281,7 +292,8 @@ export function transformFromOTLP(
       }
     }
   } catch (error) {
-    return { error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] };
+    console.error(error);
+    return { error: { message: 'JSON is not valid OpenTelemetry format: ' + error }, data: [] };
   }
 
   let data = [frame];
@@ -295,9 +307,9 @@ export function transformFromOTLP(
 /**
  * Transforms trace dataframes to the OpenTelemetry format
  */
-export function transformToOTLP(
-  data: MutableDataFrame
-): { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } {
+export function transformToOTLP(data: MutableDataFrame): {
+  batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[];
+} {
   let result: { batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[] } = {
     batches: [],
   };
@@ -479,7 +491,12 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
     return emptyDataQueryResponse;
   }
 
-  parseJsonFields(frame);
+  try {
+    parseJsonFields(frame);
+  } catch (error) {
+    console.error(error);
+    return { error: { message: 'Unable to parse trace response: ' + error }, data: [] };
+  }
 
   let data = [...response.data];
   if (nodeGraph) {
@@ -516,7 +533,7 @@ function parseJsonFields(frame: DataFrame) {
   }
 }
 
-type SearchResponse = {
+export type SearchResponse = {
   traceID: string;
   rootServiceName: string;
   rootTraceName: string;
@@ -549,7 +566,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
         },
       },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
-      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
     ],
     meta: {
@@ -560,7 +577,9 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
     return frame;
   }
   // Show the most recent traces
-  const traceData = data.map(transformToTraceData).sort((a, b) => b?.startTime! - a?.startTime!);
+  const traceData = data
+    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
+    .map(transformToTraceData);
 
   for (const trace of traceData) {
     frame.add(trace);
@@ -577,9 +596,21 @@ function transformToTraceData(data: SearchResponse) {
   if (data.rootTraceName) {
     traceName += data.rootTraceName;
   }
+
+  const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
+
+  let startTime = dateTimeFormat(traceStartTime);
+
+  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
+      addSuffix: true,
+      includeSeconds: true,
+    });
+  }
+
   return {
     traceID: data.traceID,
-    startTime: parseInt(data.startTimeUnixNano, 10) / 1000 / 1000,
+    startTime: startTime,
     duration: data.durationMs,
     traceName,
   };

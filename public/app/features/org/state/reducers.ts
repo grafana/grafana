@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Organization, OrganizationState } from 'app/types';
+import { Organization, OrganizationState, UserOrg } from 'app/types';
 
 export const initialState: OrganizationState = {
   organization: {} as Organization,
+  userOrgs: [] as UserOrg[],
 };
 
 const organizationSlice = createSlice({
@@ -16,10 +17,13 @@ const organizationSlice = createSlice({
     setOrganizationName: (state, action: PayloadAction<string>): OrganizationState => {
       return { ...state, organization: { ...state.organization, name: action.payload } };
     },
+    userOrganizationsLoaded: (state, action: PayloadAction<UserOrg[]>): OrganizationState => {
+      return { ...state, userOrgs: action.payload };
+    },
   },
 });
 
-export const { setOrganizationName, organizationLoaded } = organizationSlice.actions;
+export const { setOrganizationName, organizationLoaded, userOrganizationsLoaded } = organizationSlice.actions;
 
 export const organizationReducer = organizationSlice.reducer;
 

@@ -155,6 +155,8 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
   );
 });
 
+DashboardPrompt.displayName = 'DashboardPrompt';
+
 function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null) {
   if (location) {
     setTimeout(() => locationService.push(location!), 10);

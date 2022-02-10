@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"math/rand"
 	"net/url"
 	"os"
 	"path"
@@ -15,8 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gopkg.in/ini.v1"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 const (
@@ -24,281 +23,280 @@ const (
 )
 
 func TestLoadingSettings(t *testing.T) {
-	Convey("Testing loading settings from ini file", t, func() {
-		skipStaticRootValidation = true
+	skipStaticRootValidation = true
 
-		Convey("Given the default ini files", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
-			So(err, ShouldBeNil)
+	t.Run("Given the default ini files", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		require.Nil(t, err)
 
-			So(cfg.AdminUser, ShouldEqual, "admin")
-			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
-		})
-
-		Convey("default.ini should have no semi-colon commented entries", func() {
-			file, err := os.Open("../../conf/defaults.ini")
-			if err != nil {
-				t.Errorf("failed to load defaults.ini file: %v", err)
-			}
-			defer func() {
-				err := file.Close()
-				So(err, ShouldBeNil)
-			}()
-
-			scanner := bufio.NewScanner(file)
-			for scanner.Scan() {
-				// This only catches values commented out with ";" and will not catch those that are commented out with "#".
-				if strings.HasPrefix(scanner.Text(), ";") {
-					t.Errorf("entries in defaults.ini must not be commented or environment variables will not work: %v", scanner.Text())
-				}
-			}
-		})
-
-		Convey("sample.ini should load successfully", func() {
-			customInitPath := CustomInitPath
-			CustomInitPath = "conf/sample.ini"
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
-			// Restore CustomInitPath to avoid side effects.
-			CustomInitPath = customInitPath
-		})
-
-		Convey("Should be able to override via environment variables", func() {
-			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-			require.NoError(t, err)
-
-			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
-
-			So(cfg.AdminUser, ShouldEqual, "superduper")
-			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
-			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
-		})
-
-		Convey("Should replace password when defined in environment", func() {
-			err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
-			require.NoError(t, err)
-
-			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
-
-			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
-		})
-
-		Convey("Should replace password in URL when url environment is defined", func() {
-			err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
-			require.NoError(t, err)
-
-			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
-
-			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
-		})
-
-		Convey("Should get property map from command line args array", func() {
-			props := getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
-
-			So(len(props), ShouldEqual, 2)
-			So(props["test"], ShouldEqual, "value")
-			So(props["map.test"], ShouldEqual, "1")
-		})
-
-		Convey("Should be able to override via command line", func() {
-			if runtime.GOOS == windows {
-				cfg := NewCfg()
-				err := cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Args:     []string{`cfg:paths.data=c:\tmp\data`, `cfg:paths.logs=c:\tmp\logs`},
-				})
-				So(err, ShouldBeNil)
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
-				So(cfg.LogsPath, ShouldEqual, `c:\tmp\logs`)
-			} else {
-				cfg := NewCfg()
-				err := cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, "/tmp/data")
-				So(cfg.LogsPath, ShouldEqual, "/tmp/logs")
-			}
-		})
-
-		Convey("Should be able to override defaults via command line", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-				Args: []string{
-					"cfg:default.server.domain=test2",
-				},
-				Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
-			})
-			So(err, ShouldBeNil)
-
-			So(cfg.Domain, ShouldEqual, "test2")
-		})
-
-		Convey("Defaults can be overridden in specified config file", func() {
-			if runtime.GOOS == windows {
-				cfg := NewCfg()
-				err := cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
-					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\override`)
-			} else {
-				cfg := NewCfg()
-				err := cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
-					Args:     []string{"cfg:default.paths.data=/tmp/data"},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, "/tmp/override")
-			}
-		})
-
-		Convey("Command line overrides specified config file", func() {
-			if runtime.GOOS == windows {
-				cfg := NewCfg()
-				err := cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
-					Args:     []string{`cfg:paths.data=c:\tmp\data`},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
-			} else {
-				cfg := NewCfg()
-				err := cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
-					Args:     []string{"cfg:paths.data=/tmp/data"},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, "/tmp/data")
-			}
-		})
-
-		Convey("Can use environment variables in config values", func() {
-			if runtime.GOOS == windows {
-				err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
-				require.NoError(t, err)
-				cfg := NewCfg()
-				err = cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
-			} else {
-				err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
-				require.NoError(t, err)
-				cfg := NewCfg()
-				err = cfg.Load(CommandLineArgs{
-					HomePath: "../../",
-					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
-				})
-				So(err, ShouldBeNil)
-
-				So(cfg.DataPath, ShouldEqual, "/tmp/env_override")
-			}
-		})
-
-		Convey("instance_name default to hostname even if hostname env is empty", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-			})
-			So(err, ShouldBeNil)
-
-			hostname, err := os.Hostname()
-			So(err, ShouldBeNil)
-			So(InstanceName, ShouldEqual, hostname)
-		})
-
-		Convey("Reading callback_url should add trailing slash", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
-			})
-			So(err, ShouldBeNil)
-
-			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
-		})
-
-		Convey("Only sync_ttl should return the value sync_ttl", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.proxy.sync_ttl=2"},
-			})
-			So(err, ShouldBeNil)
-
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 2)
-		})
-
-		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=5"},
-			})
-			So(err, ShouldBeNil)
-
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
-		})
-
-		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.proxy.sync_ttl=5"},
-			})
-			So(err, ShouldBeNil)
-
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
-		})
-
-		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=12", "cfg:auth.proxy.sync_ttl=5"},
-			})
-			So(err, ShouldBeNil)
-
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 12)
-		})
+		require.Equal(t, "admin", cfg.AdminUser)
+		require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
 	})
 
-	Convey("Test reading string values from .ini file", t, func() {
-		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
-		So(err, ShouldBeNil)
+	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
+		file, err := os.Open("../../conf/defaults.ini")
+		if err != nil {
+			t.Errorf("failed to load defaults.ini file: %v", err)
+		}
+		defer func() {
+			err := file.Close()
+			require.Nil(t, err)
+		}()
 
-		Convey("If key is found - should return value from ini file", func() {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			// This only catches values commented out with ";" and will not catch those that are commented out with "#".
+			if strings.HasPrefix(scanner.Text(), ";") {
+				t.Errorf("entries in defaults.ini must not be commented or environment variables will not work: %v", scanner.Text())
+			}
+		}
+	})
+
+	t.Run("sample.ini should load successfully", func(t *testing.T) {
+		customInitPath := CustomInitPath
+		CustomInitPath = "conf/sample.ini"
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+		// Restore CustomInitPath to avoid side effects.
+		CustomInitPath = customInitPath
+	})
+
+	t.Run("Should be able to override via environment variables", func(t *testing.T) {
+		err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		require.Equal(t, "superduper", cfg.AdminUser)
+		require.Equal(t, filepath.Join(HomePath, "data"), cfg.DataPath)
+		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
+	})
+
+	t.Run("Should replace password when defined in environment", func(t *testing.T) {
+		err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		require.Contains(t, appliedEnvOverrides, "GF_SECURITY_ADMIN_PASSWORD=*********")
+	})
+
+	t.Run("Should replace password in URL when url environment is defined", func(t *testing.T) {
+		err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		require.Contains(t, appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
+	})
+
+	t.Run("Should get property map from command line args array", func(t *testing.T) {
+		cfg := NewCfg()
+		props := cfg.getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
+
+		require.Equal(t, 2, len(props))
+		require.Equal(t, "value", props["test"])
+		require.Equal(t, "1", props["map.test"])
+	})
+
+	t.Run("Should be able to override via command line", func(t *testing.T) {
+		if runtime.GOOS == windows {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{`cfg:paths.data=c:\tmp\data`, `cfg:paths.logs=c:\tmp\logs`},
+			})
+			require.Nil(t, err)
+			require.Equal(t, `c:\tmp\data`, cfg.DataPath)
+			require.Equal(t, `c:\tmp\logs`, cfg.LogsPath)
+		} else {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, "/tmp/data", cfg.DataPath)
+			require.Equal(t, "/tmp/logs", cfg.LogsPath)
+		}
+	})
+
+	t.Run("Should be able to override defaults via command line", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args: []string{
+				"cfg:default.server.domain=test2",
+			},
+			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, "test2", cfg.Domain)
+	})
+
+	t.Run("Defaults can be overridden in specified config file", func(t *testing.T) {
+		if runtime.GOOS == windows {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
+				Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, `c:\tmp\override`, cfg.DataPath)
+		} else {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+				Args:     []string{"cfg:default.paths.data=/tmp/data"},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, "/tmp/override", cfg.DataPath)
+		}
+	})
+
+	t.Run("Command line overrides specified config file", func(t *testing.T) {
+		if runtime.GOOS == windows {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
+				Args:     []string{`cfg:paths.data=c:\tmp\data`},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, `c:\tmp\data`, cfg.DataPath)
+		} else {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+				Args:     []string{"cfg:paths.data=/tmp/data"},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, "/tmp/data", cfg.DataPath)
+		}
+	})
+
+	t.Run("Can use environment variables in config values", func(t *testing.T) {
+		if runtime.GOOS == windows {
+			err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+			require.NoError(t, err)
+			cfg := NewCfg()
+			err = cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, `c:\tmp\env_override`, cfg.DataPath)
+		} else {
+			err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+			require.NoError(t, err)
+			cfg := NewCfg()
+			err = cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
+			})
+			require.Nil(t, err)
+
+			require.Equal(t, "/tmp/env_override", cfg.DataPath)
+		}
+	})
+
+	t.Run("instance_name default to hostname even if hostname env is empty", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+		})
+		require.Nil(t, err)
+
+		hostname, err := os.Hostname()
+		require.Nil(t, err)
+		require.Equal(t, hostname, InstanceName)
+	})
+
+	t.Run("Reading callback_url should add trailing slash", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, "http://myserver/renderer/", cfg.RendererCallbackUrl)
+	})
+
+	t.Run("Only sync_ttl should return the value sync_ttl", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:auth.proxy.sync_ttl=2"},
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, 2, cfg.AuthProxySyncTTL)
+	})
+
+	t.Run("Only ldap_sync_ttl should return the value ldap_sync_ttl", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=5"},
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, 5, cfg.AuthProxySyncTTL)
+	})
+
+	t.Run("ldap_sync should override ldap_sync_ttl that is default value", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:auth.proxy.sync_ttl=5"},
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, 5, cfg.AuthProxySyncTTL)
+	})
+
+	t.Run("ldap_sync should not override ldap_sync_ttl that is different from default value", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=12", "cfg:auth.proxy.sync_ttl=5"},
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, 12, cfg.AuthProxySyncTTL)
+	})
+
+	t.Run("Test reading string values from .ini file", func(t *testing.T) {
+		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
+		require.Nil(t, err)
+
+		t.Run("If key is found - should return value from ini file", func(t *testing.T) {
 			value := valueAsString(iniFile.Section("server"), "alt_url", "")
-			So(value, ShouldEqual, "https://grafana.com/")
+			require.Equal(t, "https://grafana.com/", value)
 		})
 
-		Convey("If key is not found - should return default value", func() {
+		t.Run("If key is not found - should return default value", func(t *testing.T) {
 			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
-			So(value, ShouldEqual, "default_url_val")
+			require.Equal(t, "default_url_val", value)
 		})
 	})
 }
@@ -317,11 +315,12 @@ func TestParseAppURLAndSubURL(t *testing.T) {
 
 	for _, tc := range testCases {
 		f := ini.Empty()
+		cfg := NewCfg()
 		s, err := f.NewSection("server")
 		require.NoError(t, err)
 		_, err = s.NewKey("root_url", tc.rootURL)
 		require.NoError(t, err)
-		appURL, appSubURL, err := parseAppUrlAndSubUrl(s)
+		appURL, appSubURL, err := cfg.parseAppUrlAndSubUrl(s)
 		require.NoError(t, err)
 		require.Equal(t, tc.expectedAppURL, appURL)
 		require.Equal(t, tc.expectedAppSubURL, appSubURL)
@@ -430,17 +429,23 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 }
 
 func TestAlertingEnabled(t *testing.T) {
+	anyBoolean := func() bool {
+		return rand.Int63()%2 == 0
+	}
+
 	testCases := []struct {
 		desc                   string
 		unifiedAlertingEnabled string
 		legacyAlertingEnabled  string
 		featureToggleSet       bool
+		isEnterprise           bool
 		verifyCfg              func(*testing.T, Cfg, *ini.File)
 	}{
 		{
 			desc:                   "when legacy alerting is enabled and unified is disabled",
 			legacyAlertingEnabled:  "true",
 			unifiedAlertingEnabled: "false",
+			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -448,14 +453,17 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
-				assert.Equal(t, AlertingEnabled, true)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, true)
 			},
 		},
 		{
 			desc:                   "when legacy alerting is disabled and unified is enabled",
 			legacyAlertingEnabled:  "false",
 			unifiedAlertingEnabled: "true",
+			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -463,14 +471,17 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, false)
 			},
 		},
 		{
-			desc:                   "when both alerting are enabled, it should error",
+			desc:                   "when both alerting are enabled",
 			legacyAlertingEnabled:  "true",
 			unifiedAlertingEnabled: "true",
+			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -481,9 +492,10 @@ func TestAlertingEnabled(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "when legacy alerting is invalid and unified is disabled",
-			legacyAlertingEnabled:  "invalid",
+			desc:                   "when legacy alerting is invalid (or not defined) and unified is disabled",
+			legacyAlertingEnabled:  "",
 			unifiedAlertingEnabled: "false",
+			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -491,27 +503,35 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
-				assert.Equal(t, AlertingEnabled, true)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, true)
 			},
 		},
 		{
-			desc:                   "when legacy alerting is invalid and unified is enabled",
-			legacyAlertingEnabled:  "invalid",
+			desc:                   "when legacy alerting is invalid (or not defined) and unified is enabled",
+			legacyAlertingEnabled:  "",
 			unifiedAlertingEnabled: "true",
+			isEnterprise:           anyBoolean(),
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
 				err = cfg.readFeatureToggles(f)
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.Error(t, err)
+				require.NoError(t, err)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, false)
 			},
 		},
 		{
-			desc:                   "when legacy alerting is enabled and unified is invalid",
+			desc:                   "when legacy alerting is enabled and unified is invalid (or not defined) [OSS]",
 			legacyAlertingEnabled:  "true",
-			unifiedAlertingEnabled: "invalid",
+			unifiedAlertingEnabled: "",
+			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -519,45 +539,16 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
-				assert.Equal(t, AlertingEnabled, true)
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, true)
 			},
 		},
 		{
-			desc:                   "when legacy alerting is disabled and unified is invalid",
-			legacyAlertingEnabled:  "false",
-			unifiedAlertingEnabled: "invalid",
-			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
-				require.NoError(t, err)
-				err = cfg.readFeatureToggles(f)
-				require.NoError(t, err)
-				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
-				assert.Equal(t, AlertingEnabled, false)
-			},
-		},
-		{
-			desc:                   "when both are invalid",
-			legacyAlertingEnabled:  "invalid",
-			unifiedAlertingEnabled: "invalid",
-			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
-				require.NoError(t, err)
-				err = cfg.readFeatureToggles(f)
-				require.NoError(t, err)
-				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, false)
-				assert.Equal(t, AlertingEnabled, true)
-			},
-		},
-		{
-			desc:                   "when legacy alerting is enabled and unified is disabled and feature toggle is set",
+			desc:                   "when legacy alerting is enabled and unified is invalid (or not defined) [Enterprise]",
 			legacyAlertingEnabled:  "true",
-			unifiedAlertingEnabled: "false",
-			featureToggleSet:       true,
+			unifiedAlertingEnabled: "",
+			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -565,31 +556,17 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, true)
 			},
 		},
 		{
-			desc:                   "when legacy alerting is disabled and unified is disabled and feature toggle is set",
-			legacyAlertingEnabled:  "false",
-			unifiedAlertingEnabled: "false",
-			featureToggleSet:       true,
-			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
-				require.NoError(t, err)
-				err = cfg.readFeatureToggles(f)
-				require.NoError(t, err)
-				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
-			},
-		},
-		{
-			desc:                   "when legacy alerting is disabled and unified is invalid and feature toggle is set",
+			desc:                   "when legacy alerting is disabled and unified is invalid (or not defined) [OSS]",
 			legacyAlertingEnabled:  "false",
 			unifiedAlertingEnabled: "invalid",
-			featureToggleSet:       true,
+			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -597,15 +574,17 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, true)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, false)
 			},
 		},
 		{
-			desc:                   "when legacy alerting is invalid and unified is disabled and feature toggle is set",
-			legacyAlertingEnabled:  "invalid",
-			unifiedAlertingEnabled: "false",
-			featureToggleSet:       true,
+			desc:                   "when legacy alerting is disabled and unified is invalid (or not defined) [Enterprise]",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           true,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -613,29 +592,17 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, false)
 			},
 		},
 		{
-			desc:                   "when legacy alerting is invalid and unified is enabled and feature toggle is set",
-			legacyAlertingEnabled:  "invalid",
-			unifiedAlertingEnabled: "true",
-			featureToggleSet:       true,
-			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
-				err := readAlertingSettings(f)
-				require.NoError(t, err)
-				err = cfg.readFeatureToggles(f)
-				require.NoError(t, err)
-				err = cfg.ReadUnifiedAlertingSettings(f)
-				require.Error(t, err)
-			},
-		},
-		{
-			desc:                   "when both are invalid and feature toggle is set",
+			desc:                   "when both are invalid (or not defined) [OSS]",
 			legacyAlertingEnabled:  "invalid",
 			unifiedAlertingEnabled: "invalid",
-			featureToggleSet:       true,
+			isEnterprise:           false,
 			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
 				err := readAlertingSettings(f)
 				require.NoError(t, err)
@@ -643,16 +610,58 @@ func TestAlertingEnabled(t *testing.T) {
 				require.NoError(t, err)
 				err = cfg.ReadUnifiedAlertingSettings(f)
 				require.NoError(t, err)
-				assert.Equal(t, cfg.UnifiedAlerting.Enabled, true)
-				assert.Equal(t, AlertingEnabled, false)
+				assert.Nil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Nil(t, AlertingEnabled)
+			},
+		},
+		{
+			desc:                   "when both are invalid (or not defined) [Enterprise]",
+			legacyAlertingEnabled:  "invalid",
+			unifiedAlertingEnabled: "invalid",
+			isEnterprise:           true,
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, true)
+			},
+		},
+		{
+			desc:                   "when both are false",
+			legacyAlertingEnabled:  "false",
+			unifiedAlertingEnabled: "false",
+			isEnterprise:           anyBoolean(),
+			verifyCfg: func(t *testing.T, cfg Cfg, f *ini.File) {
+				err := readAlertingSettings(f)
+				require.NoError(t, err)
+				err = cfg.readFeatureToggles(f)
+				require.NoError(t, err)
+				err = cfg.ReadUnifiedAlertingSettings(f)
+				require.NoError(t, err)
+				assert.NotNil(t, cfg.UnifiedAlerting.Enabled)
+				assert.Equal(t, *cfg.UnifiedAlerting.Enabled, false)
+				assert.NotNil(t, AlertingEnabled)
+				assert.Equal(t, *AlertingEnabled, false)
 			},
 		},
 	}
 
+	var isEnterpriseOld = IsEnterprise
+	t.Cleanup(func() {
+		IsEnterprise = isEnterpriseOld
+	})
+
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			IsEnterprise = tc.isEnterprise
 			t.Cleanup(func() {
-				AlertingEnabled = false
+				AlertingEnabled = nil
 			})
 
 			f := ini.Empty()
@@ -666,13 +675,6 @@ func TestAlertingEnabled(t *testing.T) {
 			require.NoError(t, err)
 			_, err = alertingSec.NewKey("enabled", tc.legacyAlertingEnabled)
 			require.NoError(t, err)
-
-			if tc.featureToggleSet {
-				alertingSec, err := f.NewSection("feature_toggles")
-				require.NoError(t, err)
-				_, err = alertingSec.NewKey("enable", "ngalert")
-				require.NoError(t, err)
-			}
 
 			tc.verifyCfg(t, *cfg, f)
 		})

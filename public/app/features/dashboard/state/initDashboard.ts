@@ -8,7 +8,6 @@ import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp } from 'app/core/actions';
 import {
-  clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
@@ -18,11 +17,11 @@ import {
 // Types
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery, locationUtil } from '@grafana/data';
+import { locationUtil, setWeekStart } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
@@ -156,11 +155,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     timeSrv.init(dashboard);
 
-    if (storeState.dashboard.modifiedQueries) {
-      const { panelId, queries } = storeState.dashboard.modifiedQueries;
-      dashboard.meta.fromExplore = !!(panelId && queries);
-    }
-
     // template values service needs to initialize completely before the rest of the dashboard can load
     await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
 
@@ -195,11 +189,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.error(err);
     }
 
-    if (storeState.dashboard.modifiedQueries) {
-      const { panelId, queries } = storeState.dashboard.modifiedQueries;
-      updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
-    }
-
     // send open dashboard event
     if (args.routeName !== DashboardRoutes.New) {
       emitDashboardViewEvent(dashboard);
@@ -208,6 +197,13 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboardWatcher.watch(dashboard.uid);
     } else {
       dashboardWatcher.leave();
+    }
+
+    // set week start
+    if (dashboard.weekStart !== '') {
+      setWeekStart(dashboard.weekStart);
+    } else {
+      setWeekStart(config.bootData.user.weekStart);
     }
 
     // yay we are done
@@ -240,20 +236,4 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
   }
 
   return data;
-}
-
-function updateQueriesWhenComingFromExplore(
-  dispatch: ThunkDispatch,
-  dashboard: DashboardModel,
-  originPanelId: number,
-  queries: DataQuery[]
-) {
-  const panelArrId = dashboard.panels.findIndex((panel) => panel.id === originPanelId);
-
-  if (panelArrId > -1) {
-    dashboard.panels[panelArrId].targets = queries;
-  }
-
-  // Clear update state now that we're done
-  dispatch(clearDashboardQueriesToUpdateOnLoad());
 }

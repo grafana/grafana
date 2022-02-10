@@ -136,7 +136,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
             const seriesIdx = i + 1;
             const dataIdx = u.cursor.idx;
             pluginLog('ContextMenuPlugin', false, seriesIdx, dataIdx);
-            setPoint({ seriesIdx, dataIdx: dataIdx || null });
+            setPoint({ seriesIdx, dataIdx: dataIdx ?? null });
           });
         });
       }
@@ -239,7 +239,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     const { seriesIdx, dataIdx } = selection.point;
     const xFieldFmt = xField.display!;
 
-    if (seriesIdx && dataIdx) {
+    if (seriesIdx && dataIdx !== null) {
       const field = data.fields[seriesIdx];
 
       const displayValue = field.display!(field.values.get(dataIdx));

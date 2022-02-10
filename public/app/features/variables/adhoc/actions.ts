@@ -3,7 +3,7 @@ import { StoreState, ThunkResult } from 'app/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
-import { getNewVariabelIndex, getVariable } from '../state/selectors';
+import { getNewVariableIndex, getVariable } from '../state/selectors';
 import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import {
   AdHocVariabelFilterUpdate,
@@ -16,9 +16,11 @@ import {
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
 import { variableUpdated } from '../state/actions';
 import { isAdHoc } from '../guard';
+import { DataSourceRef, getDataSourceRef } from '@grafana/data';
+import { getAdhocVariableEditorState } from '../editor/selectors';
 
 export interface AdHocTableOptions {
-  datasource: string;
+  datasource: DataSourceRef;
   key: string;
   value: string;
   operator: string;
@@ -80,54 +82,49 @@ export const setFiltersFromUrl = (id: string, filters: AdHocVariableFilter[]): T
   };
 };
 
-export const changeVariableDatasource = (datasource?: string): ThunkResult<void> => {
+export const changeVariableDatasource = (datasource?: DataSourceRef): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { editor } = getState().templating;
+    const extended = getAdhocVariableEditorState(editor);
     const variable = getVariable(editor.id, getState());
-
-    const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
-
-    dispatch(
-      changeVariableEditorExtended({
-        propName: 'infoText',
-        propValue: loadingText,
-      })
-    );
     dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })));
 
     const ds = await getDatasourceSrv().get(datasource);
 
-    if (!ds || !ds.getTagKeys) {
-      dispatch(
-        changeVariableEditorExtended({
-          propName: 'infoText',
-          propValue: 'This data source does not support ad hoc filters yet.',
-        })
-      );
-    }
+    // TS TODO: ds is not typed to be optional - is this check unnecessary or is the type incorrect?
+    const message = ds?.getTagKeys
+      ? 'Ad hoc filters are applied automatically to all queries that target this data source'
+      : 'This data source does not support ad hoc filters yet.';
+
+    dispatch(
+      changeVariableEditorExtended({
+        infoText: message,
+        dataSources: extended?.dataSources ?? [],
+      })
+    );
   };
 };
 
 export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
-  const dataSources = getDatasourceSrv().getMetricSources();
+  const dataSources = getDatasourceSrv().getList({ metrics: true, variables: true });
   const selectable = dataSources.reduce(
-    (all: Array<{ text: string; value: string | null }>, ds) => {
+    (all: Array<{ text: string; value: DataSourceRef | null }>, ds) => {
       if (ds.meta.mixed) {
         return all;
       }
 
-      const text = ds.value === null ? `${ds.name} (default)` : ds.name;
-      all.push({ text: text, value: ds.value });
+      const text = ds.isDefault ? `${ds.name} (default)` : ds.name;
+      const value = getDataSourceRef(ds);
+      all.push({ text, value });
 
       return all;
     },
-    [{ text: '', value: '' }]
+    [{ text: '', value: {} }]
   );
 
   dispatch(
     changeVariableEditorExtended({
-      propName: 'dataSources',
-      propValue: selectable,
+      dataSources: selectable,
     })
   );
 };
@@ -142,19 +139,15 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
     };
 
     const global = false;
-    const index = getNewVariabelIndex(getState());
+    const index = getNewVariableIndex(getState());
     const identifier: VariableIdentifier = { type: 'adhoc', id: model.id };
 
-    dispatch(
-      addVariable(
-        toVariablePayload<AddVariable>(identifier, { global, model, index })
-      )
-    );
+    dispatch(addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })));
   };
 };
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel => {
   return Object.values(state.templating.variables).find(
-    (v) => isAdHoc(v) && v.datasource === options.datasource
+    (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
   ) as AdHocVariableModel;
 };

@@ -9,7 +9,7 @@ type ExternallyManagedButtonProps = {
 };
 
 export function ExternallyManagedButton({ pluginId, pluginStatus }: ExternallyManagedButtonProps) {
-  const externalManageLink = getExternalManageLink(pluginId);
+  const externalManageLink = `${getExternalManageLink(pluginId)}/?tab=installation`;
 
   if (pluginStatus === PluginStatus.UPDATE) {
     return (

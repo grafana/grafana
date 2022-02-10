@@ -107,19 +107,24 @@ type UpdateOrgUserCommand struct {
 // QUERIES
 
 type GetOrgUsersQuery struct {
-	OrgId int64
-	Query string
-	Limit int
+	UserID           int64
+	OrgId            int64
+	Query            string
+	Limit            int
+	IsServiceAccount bool
 
+	User   *SignedInUser
 	Result []*OrgUserDTO
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID int64
-	Query string
-	Page  int
-	Limit int
+	OrgID            int64
+	Query            string
+	Page             int
+	Limit            int
+	IsServiceAccount bool
 
+	User   *SignedInUser
 	Result SearchOrgUsersQueryResult
 }
 
@@ -134,13 +139,14 @@ type SearchOrgUsersQueryResult struct {
 // Projections and DTOs
 
 type OrgUserDTO struct {
-	OrgId         int64     `json:"orgId"`
-	UserId        int64     `json:"userId"`
-	Email         string    `json:"email"`
-	Name          string    `json:"name"`
-	AvatarUrl     string    `json:"avatarUrl"`
-	Login         string    `json:"login"`
-	Role          string    `json:"role"`
-	LastSeenAt    time.Time `json:"lastSeenAt"`
-	LastSeenAtAge string    `json:"lastSeenAtAge"`
+	OrgId         int64           `json:"orgId"`
+	UserId        int64           `json:"userId"`
+	Email         string          `json:"email"`
+	Name          string          `json:"name"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	Login         string          `json:"login"`
+	Role          string          `json:"role"`
+	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	LastSeenAtAge string          `json:"lastSeenAtAge"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

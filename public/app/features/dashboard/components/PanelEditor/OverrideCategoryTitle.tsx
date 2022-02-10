@@ -29,7 +29,7 @@ export const OverrideCategoryTitle: FC<OverrideCategoryTitleProps> = ({
     <div>
       <HorizontalGroup justify="space-between">
         <div>{overrideName}</div>
-        {isExpanded && <IconButton name="trash-alt" onClick={onOverrideRemove} title="Remove override" />}
+        <IconButton name="trash-alt" onClick={onOverrideRemove} title="Remove override" />
       </HorizontalGroup>
       {!isExpanded && (
         <div className={styles.overrideDetails}>

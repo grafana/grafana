@@ -29,7 +29,7 @@ func (s *BuiltinDataOutput) OutputData(ctx context.Context, vars Vars, data []by
 	if !ok {
 		return nil, errors.New("user not found in context")
 	}
-	handler, _, err := s.channelHandlerGetter.GetChannelHandler(u, vars.Channel)
+	handler, _, err := s.channelHandlerGetter.GetChannelHandler(ctx, u, vars.Channel)
 	if err != nil {
 		return nil, err
 	}

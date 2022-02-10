@@ -76,6 +76,7 @@ export class UserPicker extends Component<Props, State> {
           onChange={onSelected}
           placeholder="Start typing to search for user"
           noOptionsMessage="No users found"
+          aria-label="User picker"
         />
       </div>
     );

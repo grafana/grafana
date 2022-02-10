@@ -57,12 +57,12 @@ describe('InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
       userEvent.click(dataOptions);
-      const dataFrameInput = screen.getByRole('textbox', { name: /Select dataframe/i });
+      const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
     it('should show download logs button if logs data', () => {
-      const dataWithLogs = ([
+      const dataWithLogs = [
         {
           name: 'Data frame with logs',
           fields: [
@@ -75,7 +75,7 @@ describe('InspectDataTab', () => {
             preferredVisualisationType: 'logs',
           },
         },
-      ] as unknown) as DataFrame[];
+      ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
     });
@@ -84,7 +84,7 @@ describe('InspectDataTab', () => {
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
     it('should show download traces button if traces data', () => {
-      const dataWithtraces = ([
+      const dataWithtraces = [
         {
           name: 'Data frame with traces',
           fields: [
@@ -133,7 +133,7 @@ describe('InspectDataTab', () => {
             },
           },
         },
-      ] as unknown) as DataFrame[];
+      ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
       expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
     });

@@ -1,26 +1,26 @@
 // Library
-import React, { PureComponent, CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, PureComponent, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import {
-  TimeSeriesValue,
+  DisplayProcessor,
   DisplayValue,
-  formattedValueToString,
+  DisplayValueAlignmentFactors,
+  FALLBACK_COLOR,
+  FieldColorModeId,
+  FieldConfig,
   FormattedValue,
+  formattedValueToString,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
-  DisplayValueAlignmentFactors,
-  ThresholdsMode,
-  DisplayProcessor,
-  FieldConfig,
-  FieldColorModeId,
   getFieldColorMode,
-  FALLBACK_COLOR,
   TextDisplayOptions,
+  ThresholdsMode,
+  TimeSeriesValue,
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { measureText, calculateFontSize } from '../../utils/measureText';
+import { calculateFontSize, measureText } from '../../utils/measureText';
 import { Themeable2 } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -114,7 +114,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={styles.wrapper}>
         <FormattedValueDisplay
-          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={styles.value}
         />
@@ -126,14 +126,8 @@ export class BarGauge extends PureComponent<Props> {
 
   renderRetroBars(): ReactNode {
     const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
-    const {
-      valueHeight,
-      valueWidth,
-      maxBarHeight,
-      maxBarWidth,
-      wrapperWidth,
-      wrapperHeight,
-    } = calculateBarAndValueDimensions(this.props);
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
+      calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
@@ -195,7 +189,7 @@ export class BarGauge extends PureComponent<Props> {
       <div style={containerStyles}>
         {cells}
         <FormattedValueDisplay
-          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
           value={value}
           style={valueStyles}
         />
@@ -268,10 +262,13 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const titleFontSize = titleHeight / TITLE_LINE_HEIGHT;
   const textSize = measureText(title, titleFontSize);
 
+  // Do not allow title to take up more than 40% width
+  const textWidth = Math.min(textSize.width + 15, width * 0.4);
+
   return {
     fontSize: text?.titleSize ?? titleFontSize,
     height: 0,
-    width: textSize.width + 15,
+    width: textWidth,
     placement: 'left',
   };
 }
@@ -483,6 +480,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     // adjust so that filled in bar is at the bottom
     emptyBar.bottom = '-3px';
 
+    //adjust empty region to always have same width as colored bar
+    emptyBar.width = `${valueWidth}px`;
+
     if (isBasic) {
       // Basic styles
       barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
@@ -505,6 +505,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
+
+    //adjust empty region to always have same height as colored bar
+    emptyBar.height = `${valueHeight}px`;
 
     if (isBasic) {
       // Basic styles

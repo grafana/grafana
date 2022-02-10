@@ -12,17 +12,19 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
-	encryptionService encryption.Service
-	log               log.Logger
+	encryptionService   encryption.Internal
+	notificationService *notifications.NotificationService
+	log                 log.Logger
 }
 
-func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error) {
+func (cr *configReader) readConfig(ctx context.Context, path string) ([]*notificationsAsConfig, error) {
 	var notifications []*notificationsAsConfig
 	cr.log.Debug("Looking for alert notification provisioning files", "path", path)
 
@@ -51,7 +53,7 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 		return nil, err
 	}
 
-	if err := cr.checkOrgIDAndOrgName(notifications); err != nil {
+	if err := cr.checkOrgIDAndOrgName(ctx, notifications); err != nil {
 		return nil, err
 	}
 
@@ -81,7 +83,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func (cr *configReader) checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
+func (cr *configReader) checkOrgIDAndOrgName(ctx context.Context, notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
 			if notification.OrgID < 1 {
@@ -91,7 +93,7 @@ func (cr *configReader) checkOrgIDAndOrgName(notifications []*notificationsAsCon
 					notification.OrgID = 0
 				}
 			} else {
-				if err := utils.CheckOrgExists(notification.OrgID); err != nil {
+				if err := utils.CheckOrgExists(ctx, notification.OrgID); err != nil {
 					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}
@@ -175,7 +177,7 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 				Settings:       notification.SettingsToJSON(),
 				SecureSettings: encryptedSecureSettings,
 				Type:           notification.Type,
-			}, cr.encryptionService.GetDecryptedValue)
+			}, cr.encryptionService.GetDecryptedValue, cr.notificationService)
 
 			if err != nil {
 				return err

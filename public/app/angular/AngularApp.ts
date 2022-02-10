@@ -5,14 +5,15 @@ import 'angular-bindonce';
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-other/angular-strap';
 import { config } from 'app/core/config';
-import coreModule, { angularModules } from 'app/core/core_module';
+import coreModule, { angularModules } from 'app/angular/core_module';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { registerAngularDirectives } from 'app/core/core';
-import { initAngularRoutingBridge } from 'app/angular/bridgeReactAngularRouting';
-import { monkeyPatchInjectorWithPreAssignedBindings } from 'app/core/injectorMonkeyPatch';
+import { registerAngularDirectives } from './angular_wrappers';
+import { initAngularRoutingBridge } from './bridgeReactAngularRouting';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
 import { extend } from 'lodash';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv } from '@grafana/runtime';
+import { registerComponents } from './registerComponents';
 
 export class AngularApp {
   ngModuleDependencies: any[];
@@ -89,7 +90,11 @@ export class AngularApp {
     coreModule.factory('templateSrv', () => getTemplateSrv());
 
     registerAngularDirectives();
+    registerComponents();
     initAngularRoutingBridge();
+
+    // disable tool tip animation
+    $.fn.tooltip.defaults.animation = false;
   }
 
   useModule(module: angular.IModule) {
@@ -103,7 +108,7 @@ export class AngularApp {
   }
 
   bootstrap() {
-    const injector = angular.bootstrap(document, this.ngModuleDependencies);
+    const injector = angular.bootstrap(document.getElementById('ngRoot')!, this.ngModuleDependencies);
 
     monkeyPatchInjectorWithPreAssignedBindings(injector);
 

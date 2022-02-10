@@ -1,7 +1,9 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from './types';
+import { MetricEditorMode, CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricQueryType } from './types';
 
+// Migrates a metric query that use more than one statistic into multiple queries
+// E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsMetricsQuery(
   query: CloudWatchMetricsQuery,
   panelQueries: DataQuery[]
@@ -23,11 +25,14 @@ export function migrateMultipleStatsMetricsQuery(
   return newQueries;
 }
 
+// Migrates an annotation query that use more than one statistic into multiple queries
+// E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsAnnotationQuery(
   annotationQuery: CloudWatchAnnotationQuery
 ): Array<AnnotationQuery<DataQuery>> {
   const newAnnotations: CloudWatchAnnotationQuery[] = [];
-  if (annotationQuery?.statistics && annotationQuery?.statistics.length) {
+
+  if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
     for (const stat of annotationQuery.statistics.splice(1)) {
       const { statistics, name, ...newAnnotation } = annotationQuery;
       newAnnotations.push({ ...newAnnotation, statistic: stat, name: `${name} - ${stat}` });
@@ -41,4 +46,18 @@ export function migrateMultipleStatsAnnotationQuery(
   }
 
   return newAnnotations as Array<AnnotationQuery<DataQuery>>;
+}
+
+export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
+  if (!query.hasOwnProperty('metricQueryType')) {
+    query.metricQueryType = MetricQueryType.Search;
+  }
+
+  if (!query.hasOwnProperty('metricEditorMode')) {
+    if (query.metricQueryType === MetricQueryType.Query) {
+      query.metricEditorMode = MetricEditorMode.Code;
+    } else {
+      query.metricEditorMode = query.expression ? MetricEditorMode.Code : MetricEditorMode.Builder;
+    }
+  }
 }

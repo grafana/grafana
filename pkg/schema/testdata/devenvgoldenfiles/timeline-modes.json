@@ -71,7 +71,8 @@
 				"rowHeight": 0.9,
 				"showValue": "always",
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.5.0-pre",
@@ -256,7 +257,8 @@
 				"rowHeight": 0.9,
 				"showValue": "always",
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				}
 			},
 			"pluginVersion": "7.5.0-pre",
@@ -340,7 +342,8 @@
 				"rowHeight": 0.9,
 				"showValue": "always",
 				"tooltip": {
-					"mode": "single"
+					"mode": "single",
+					"sort": "none"
 				},
 				"alignValue": "left"
 			},
@@ -387,7 +390,7 @@
 		}
 	],
 	"refresh": false,
-	"schemaVersion": 30,
+	"schemaVersion": 33,
 	"style": "dark",
 	"tags": [
 		"gdev",

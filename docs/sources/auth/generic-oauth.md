@@ -41,6 +41,7 @@ tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
 tls_client_ca =
+use_pkce = true
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
@@ -91,6 +92,24 @@ You can set the user's display name with JMESPath using the `name_attribute_path
 
 > **Note:** `name_attribute_path` is available in Grafana 7.4+.
 
+### PKCE
+
+> Available in Grafana v8.3 and later versions.
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which introduces
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+You can enable PKCE in Grafana by setting `use_pkce` to `true` in the
+`[auth.generic_oauth]` section.
+
+```
+use_pkce = true
+```
+
+Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
+
 ## Set up OAuth2 with Auth0
 
 1. Create a new Client in Auth0
@@ -117,6 +136,7 @@ You can set the user's display name with JMESPath using the `name_attribute_path
    auth_url = https://<domain>/authorize
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
+   use_pkce = true
    ```
 
 ## Set up OAuth2 with Bitbucket

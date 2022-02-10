@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -15,12 +16,12 @@ func TestPluginProvisioner(t *testing.T) {
 		expectedErr := errors.New("test")
 		reader := &testConfigReader{err: expectedErr}
 		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
-		err := ap.applyChanges("")
+		err := ap.applyChanges(context.Background(), "")
 		require.Equal(t, expectedErr, err)
 	})
 
 	t.Run("Should apply configurations", func(t *testing.T) {
-		bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
 			if query.Name == "Org 4" {
 				query.Result = &models.Org{Id: 4}
 			}
@@ -28,7 +29,7 @@ func TestPluginProvisioner(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.AddHandler("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 			if query.PluginId == "test-plugin" && query.OrgId == 2 {
 				query.Result = &models.PluginSetting{
 					PluginVersion: "2.0.1",
@@ -41,7 +42,7 @@ func TestPluginProvisioner(t *testing.T) {
 
 		sentCommands := []*models.UpdatePluginSettingCmd{}
 
-		bus.AddHandler("test", func(cmd *models.UpdatePluginSettingCmd) error {
+		bus.AddHandler("test", func(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 			sentCommands = append(sentCommands, cmd)
 			return nil
 		})
@@ -58,7 +59,8 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 		reader := &testConfigReader{result: cfg}
 		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
-		err := ap.applyChanges("")
+
+		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
 		require.Len(t, sentCommands, 4)
 
@@ -90,6 +92,6 @@ type testConfigReader struct {
 	err    error
 }
 
-func (tcr *testConfigReader) readConfig(path string) ([]*pluginsAsConfig, error) {
+func (tcr *testConfigReader) readConfig(ctx context.Context, path string) ([]*pluginsAsConfig, error) {
 	return tcr.result, tcr.err
 }

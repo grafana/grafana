@@ -21,7 +21,6 @@ export interface Props {
   dashboard: DashboardModel;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
-  scrollTop: number;
 }
 
 export interface State {
@@ -34,6 +33,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private windowHeight = 1200;
   private windowWidth = 1920;
   private gridWidth = 0;
+  /** Used to keep track of mobile panel layout position */
+  private lastPanelBottom = 0;
 
   constructor(props: Props) {
     super(props);
@@ -123,35 +124,28 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  isInView(panel: PanelModel) {
-    if (panel.isViewing || panel.isEditing) {
-      return true;
+  getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
+    let top = 0;
+
+    // mobile layout
+    if (gridWidth < config.theme2.breakpoints.values.md) {
+      // In mobile layout panels are stacked so we just add the panel vertical margin to the last panel bottom position
+      top = this.lastPanelBottom + GRID_CELL_VMARGIN;
+    } else {
+      // For top position we need to add back the vertical margin removed by translateGridHeightToScreenHeight
+      top = translateGridHeightToScreenHeight(panel.gridPos.y) + GRID_CELL_VMARGIN;
     }
 
-    const scrollTop = this.props.scrollTop;
-    const panelTop = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
-    const panelBottom = panelTop + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    this.lastPanelBottom = top + translateGridHeightToScreenHeight(panel.gridPos.h);
 
-    // Show things that are almost in the view
-    const buffer = 100;
-
-    // The panel is above the viewport
-    if (scrollTop > panelBottom + buffer) {
-      return false;
-    }
-
-    const scrollViewBottom = scrollTop + this.windowHeight;
-
-    // Panel is below view
-    if (panelTop > scrollViewBottom + buffer) {
-      return false;
-    }
-
-    return !this.props.dashboard.otherPanelInFullscreen(panel);
+    return { top, bottom: this.lastPanelBottom };
   }
 
   renderPanels(gridWidth: number) {
     const panelElements = [];
+
+    // Reset last panel bottom
+    this.lastPanelBottom = 0;
 
     // This is to avoid layout re-flows, accessing window.innerHeight can trigger re-flow
     // We assume here that if width change height might have changed as well
@@ -163,9 +157,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-
-      // Update is in view state
-      panel.isInView = this.isInView(panel);
 
       panelElements.push(
         <GrafanaGridItem
@@ -179,7 +170,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height, panel.key);
+            return this.renderPanel(panel, width, height);
           }}
         </GrafanaGridItem>
       );
@@ -188,23 +179,23 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: any, height: any, itemKey: string) {
+  renderPanel(panel: PanelModel, width: any, height: any) {
     if (panel.type === 'row') {
-      return <DashboardRow key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
+      return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     if (panel.type === 'add-panel') {
-      return <AddPanelWidget key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
+      return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     return (
       <DashboardPanel
-        key={itemKey}
+        key={panel.key}
+        stateKey={panel.key}
         panel={panel}
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
         isViewing={panel.isViewing}
-        isInView={panel.isInView}
         width={width}
         height={height}
       />
@@ -214,48 +205,57 @@ export class DashboardGrid extends PureComponent<Props, State> {
   render() {
     const { dashboard } = this.props;
 
-    const autoSizerStyle: CSSProperties = {
-      width: '100%',
-      height: '100%',
-    };
-
+    /**
+     * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
+     * properly working. For more information go here:
+     * https://github.com/bvaughn/react-virtualized/blob/master/docs/usingAutoSizer.md#can-i-use-autosizer-within-a-flex-container
+     */
     return (
-      <AutoSizer style={autoSizerStyle} disableHeight>
-        {({ width }) => {
-          if (width === 0) {
-            return null;
-          }
+      <div style={{ flex: '1 1 auto', display: this.props.editPanel ? 'none' : undefined }}>
+        <AutoSizer disableHeight>
+          {({ width }) => {
+            if (width === 0) {
+              return null;
+            }
 
-          const draggable = width <= 769 ? false : dashboard.meta.canEdit;
+            const draggable = width <= 769 ? false : dashboard.meta.canEdit;
 
-          /*
+            /*
             Disable draggable if mobile device, solving an issue with unintentionally
             moving panels. https://github.com/grafana/grafana/issues/18497
             theme.breakpoints.md = 769
           */
 
-          return (
-            <ReactGridLayout
-              width={width}
-              isDraggable={draggable}
-              isResizable={dashboard.meta.canEdit}
-              containerPadding={[0, 0]}
-              useCSSTransforms={false}
-              margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-              cols={GRID_COLUMN_COUNT}
-              rowHeight={GRID_CELL_HEIGHT}
-              draggableHandle=".grid-drag-handle"
-              layout={this.buildLayout()}
-              onDragStop={this.onDragStop}
-              onResize={this.onResize}
-              onResizeStop={this.onResizeStop}
-              onLayoutChange={this.onLayoutChange}
-            >
-              {this.renderPanels(width)}
-            </ReactGridLayout>
-          );
-        }}
-      </AutoSizer>
+            return (
+              /**
+               * The children is using a width of 100% so we need to guarantee that it is wrapped
+               * in an element that has the calculated size given by the AutoSizer. The AutoSizer
+               * has a width of 0 and will let its content overflow its div.
+               */
+              <div style={{ width: `${width}px`, height: '100%' }}>
+                <ReactGridLayout
+                  width={width}
+                  isDraggable={draggable}
+                  isResizable={dashboard.meta.canEdit}
+                  containerPadding={[0, 0]}
+                  useCSSTransforms={false}
+                  margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+                  cols={GRID_COLUMN_COUNT}
+                  rowHeight={GRID_CELL_HEIGHT}
+                  draggableHandle=".grid-drag-handle"
+                  layout={this.buildLayout()}
+                  onDragStop={this.onDragStop}
+                  onResize={this.onResize}
+                  onResizeStop={this.onResizeStop}
+                  onLayoutChange={this.onLayoutChange}
+                >
+                  {this.renderPanels(width)}
+                </ReactGridLayout>
+              </div>
+            );
+          }}
+        </AutoSizer>
+      </div>
     );
   }
 }
@@ -281,17 +281,19 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
+    // In fullscreen view mode a single panel take up full width & 85% height
     width = gridWidth!;
     height = windowHeight * 0.85;
     style.height = height;
     style.width = '100%';
   } else if (windowWidth < theme.breakpoints.values.md) {
+    // Mobile layout is a bit different, every panel take up full width
     width = props.gridWidth!;
-    height = props.gridPos!.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    height = translateGridHeightToScreenHeight(gridPos!.h);
     style.height = height;
     style.width = '100%';
   } else {
-    // RGL passes width and height directly to children as style props.
+    // Normal grid layout. The grid framework passes width and height directly to children as style props.
     width = parseFloat(props.style.width);
     height = parseFloat(props.style.height);
   }
@@ -304,5 +306,12 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     </div>
   );
 });
+
+/**
+ * This translates grid height dimensions to real pixels
+ */
+function translateGridHeightToScreenHeight(gridHeight: number): number {
+  return gridHeight * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+}
 
 GrafanaGridItem.displayName = 'GridItemWithDimensions';

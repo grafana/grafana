@@ -1,7 +1,8 @@
-import type { Intent, Label } from './intent';
+import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 import { FUNCTIONS } from '../../../promql';
+import { escapeLabelValueInExactSelector } from '../../../language_utils';
 
 export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
 
@@ -23,6 +24,8 @@ type Metric = {
 export type DataProvider = {
   getHistory: () => Promise<string[]>;
   getAllMetricNames: () => Promise<Metric[]>;
+  getAllLabelNames: () => Promise<string[]>;
+  getLabelValues: (labelName: string) => Promise<string[]>;
   getSeries: (selector: string) => Promise<Record<string, string[]>>;
 };
 
@@ -46,6 +49,11 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   detail: f.detail,
   documentation: f.documentation,
 }));
+
+async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(dataProvider);
+  return [...FUNCTION_COMPLETIONS, ...metricNames];
+}
 
 const DURATION_COMPLETIONS: Completion[] = [
   '$__interval',
@@ -80,12 +88,31 @@ function makeSelector(metricName: string | undefined, labels: Label[]): string {
 
   // we transform the metricName to a label, if it exists
   if (metricName !== undefined) {
-    allLabels.push({ name: '__name__', value: metricName });
+    allLabels.push({ name: '__name__', value: metricName, op: '=' });
   }
 
-  const allLabelTexts = allLabels.map((label) => `${label.name}="${label.value}"`);
+  const allLabelTexts = allLabels.map(
+    (label) => `${label.name}${label.op}"${escapeLabelValueInExactSelector(label.value)}"`
+  );
 
   return `{${allLabelTexts.join(',')}}`;
+}
+
+async function getLabelNames(
+  metric: string | undefined,
+  otherLabels: Label[],
+  dataProvider: DataProvider
+): Promise<string[]> {
+  if (metric === undefined && otherLabels.length === 0) {
+    // if there is no filtering, we have to use a special endpoint
+    return dataProvider.getAllLabelNames();
+  } else {
+    const selector = makeSelector(metric, otherLabels);
+    const data = await dataProvider.getSeries(selector);
+    const possibleLabelNames = Object.keys(data); // all names from prometheus
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
+    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  }
 }
 
 async function getLabelNamesForCompletions(
@@ -95,11 +122,7 @@ async function getLabelNamesForCompletions(
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
-  const selector = makeSelector(metric, otherLabels);
-  const data = await dataProvider.getSeries(selector);
-  const possibleLabelNames = Object.keys(data); // all names from prometheus
-  const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-  const labelNames = possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  const labelNames = await getLabelNames(metric, otherLabels, dataProvider);
   return labelNames.map((text) => ({
     type: 'LABEL_NAME',
     label: text,
@@ -123,44 +146,64 @@ async function getLabelNamesForByCompletions(
   return getLabelNamesForCompletions(metric, '', false, otherLabels, dataProvider);
 }
 
-async function getLabelValuesForMetricCompletions(
+async function getLabelValues(
   metric: string | undefined,
   labelName: string,
   otherLabels: Label[],
   dataProvider: DataProvider
+): Promise<string[]> {
+  if (metric === undefined && otherLabels.length === 0) {
+    // if there is no filtering, we have to use a special endpoint
+    return dataProvider.getLabelValues(labelName);
+  } else {
+    const selector = makeSelector(metric, otherLabels);
+    const data = await dataProvider.getSeries(selector);
+    return data[labelName] ?? [];
+  }
+}
+
+async function getLabelValuesForMetricCompletions(
+  metric: string | undefined,
+  labelName: string,
+  betweenQuotes: boolean,
+  otherLabels: Label[],
+  dataProvider: DataProvider
 ): Promise<Completion[]> {
-  const selector = makeSelector(metric, otherLabels);
-  const data = await dataProvider.getSeries(selector);
-  const values = data[labelName] ?? [];
+  const values = await getLabelValues(metric, labelName, otherLabels, dataProvider);
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: `"${text}"`, // FIXME: escaping strange characters?
+    insertText: betweenQuotes ? text : `"${text}"`, // FIXME: escaping strange characters?
   }));
 }
 
-export async function getCompletions(intent: Intent, dataProvider: DataProvider): Promise<Completion[]> {
-  switch (intent.type) {
-    case 'ALL_DURATIONS':
+export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+  switch (situation.type) {
+    case 'IN_DURATION':
       return DURATION_COMPLETIONS;
-    case 'ALL_METRIC_NAMES':
-      return getAllMetricNamesCompletions(dataProvider);
-    case 'FUNCTIONS_AND_ALL_METRIC_NAMES': {
-      const metricNames = await getAllMetricNamesCompletions(dataProvider);
-      return [...FUNCTION_COMPLETIONS, ...metricNames];
+    case 'IN_FUNCTION':
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+    case 'AT_ROOT': {
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     }
-    case 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES': {
+    case 'EMPTY': {
       const metricNames = await getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames];
     }
-    case 'LABEL_NAMES_FOR_SELECTOR':
-      return getLabelNamesForSelectorCompletions(intent.metricName, intent.otherLabels, dataProvider);
-    case 'LABEL_NAMES_FOR_BY':
-      return getLabelNamesForByCompletions(intent.metricName, intent.otherLabels, dataProvider);
-    case 'LABEL_VALUES':
-      return getLabelValuesForMetricCompletions(intent.metricName, intent.labelName, intent.otherLabels, dataProvider);
+    case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
+      return getLabelNamesForSelectorCompletions(situation.metricName, situation.otherLabels, dataProvider);
+    case 'IN_GROUPING':
+      return getLabelNamesForByCompletions(situation.metricName, situation.otherLabels, dataProvider);
+    case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
+      return getLabelValuesForMetricCompletions(
+        situation.metricName,
+        situation.labelName,
+        situation.betweenQuotes,
+        situation.otherLabels,
+        dataProvider
+      );
     default:
-      throw new NeverCaseError(intent);
+      throw new NeverCaseError(situation);
   }
 }

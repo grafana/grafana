@@ -9,6 +9,11 @@ import {
   parseUrlFromOptions,
 } from './fetch';
 
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as unknown as object),
+  deprecationWarning: () => {},
+}));
+
 describe('parseUrlFromOptions', () => {
   it.each`
     params                                                      | url                | expected
@@ -130,7 +135,7 @@ describe('parseCredentials', () => {
 });
 
 describe('parseResponseBody', () => {
-  const rsp = ({} as unknown) as Response;
+  const rsp = {} as unknown as Response;
   it('parses json', async () => {
     const value = { hello: 'world' };
     const body = await parseResponseBody(

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e-selectors",
-  "version": "8.3.0-pre",
+  "version": "8.5.0-pre",
   "description": "Grafana End-to-End Test Selectors Library",
   "keywords": [
     "cli",
@@ -24,28 +24,18 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "16.0.0",
-    "@rollup/plugin-node-resolve": "10.0.0",
-    "@types/node": "13.7.7",
-    "@types/rollup-plugin-visualizer": "2.6.0",
-    "@types/systemjs": "^0.20.6",
-    "rollup": "2.33.3",
+    "@rollup/plugin-commonjs": "21.0.1",
+    "@rollup/plugin-node-resolve": "13.1.3",
+    "@types/node": "16.11.22",
+    "rimraf": "3.0.2",
+    "rollup": "2.67.1",
     "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2",
-    "rollup-plugin-typescript2": "0.29.0",
-    "rollup-plugin-visualizer": "4.2.0",
-    "ts-loader": "6.2.1",
-    "ts-node": "9.0.0"
+    "rollup-plugin-terser": "7.0.2"
   },
   "types": "src/index.ts",
   "dependencies": {
-    "@grafana/tsconfig": "^1.0.0-rc1",
-    "commander": "5.0.0",
-    "execa": "5.1.1",
-    "typescript": "4.4.3",
-    "yaml": "^1.8.3"
-  },
-  "volta": {
-    "extends": "../../package.json"
+    "@grafana/tsconfig": "^1.2.0-rc1",
+    "tslib": "2.3.1",
+    "typescript": "4.4.4"
   }
 }

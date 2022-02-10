@@ -3,12 +3,12 @@ package azuremonitor
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestURLBuilder(t *testing.T) {
-	Convey("AzureMonitor URL Builder", t, func() {
-		Convey("when metric definition is in the short form", func() {
+	t.Run("AzureMonitor URL Builder", func(t *testing.T) {
+		t.Run("when metric definition is in the short form", func(t *testing.T) {
 			ub := &urlBuilder{
 				DefaultSubscription: "default-sub",
 				ResourceGroup:       "rg",
@@ -17,10 +17,10 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.Build()
-			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics")
+			require.Equal(t, url, "default-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics")
 		})
 
-		Convey("when metric definition is in the short form and a subscription is defined", func() {
+		t.Run("when metric definition is in the short form and a subscription is defined", func(t *testing.T) {
 			ub := &urlBuilder{
 				DefaultSubscription: "default-sub",
 				Subscription:        "specified-sub",
@@ -30,10 +30,10 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.Build()
-			So(url, ShouldEqual, "specified-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics")
+			require.Equal(t, url, "specified-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics")
 		})
 
-		Convey("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func() {
+		t.Run("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func(t *testing.T) {
 			ub := &urlBuilder{
 				DefaultSubscription: "default-sub",
 				ResourceGroup:       "rg",
@@ -42,10 +42,10 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.Build()
-			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/providers/microsoft.insights/metrics")
+			require.Equal(t, url, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/providers/microsoft.insights/metrics")
 		})
 
-		Convey("when metric definition is Microsoft.Storage/storageAccounts/fileServices", func() {
+		t.Run("when metric definition is Microsoft.Storage/storageAccounts/fileServices", func(t *testing.T) {
 			ub := &urlBuilder{
 				DefaultSubscription: "default-sub",
 				ResourceGroup:       "rg",
@@ -54,10 +54,10 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.Build()
-			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/providers/microsoft.insights/metrics")
+			require.Equal(t, url, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/providers/microsoft.insights/metrics")
 		})
 
-		Convey("when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes", func() {
+		t.Run("when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes", func(t *testing.T) {
 			ub := &urlBuilder{
 				DefaultSubscription: "default-sub",
 				ResourceGroup:       "rg",
@@ -66,7 +66,7 @@ func TestURLBuilder(t *testing.T) {
 			}
 
 			url := ub.Build()
-			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics")
+			require.Equal(t, url, "default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics")
 		})
 	})
 }

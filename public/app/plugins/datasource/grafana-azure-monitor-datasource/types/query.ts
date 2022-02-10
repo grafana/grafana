@@ -1,4 +1,5 @@
 import { DataQuery } from '@grafana/data';
+import { GrafanaTemplateVariableQuery } from './templateVariables';
 
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
@@ -6,6 +7,7 @@ export enum AzureQueryType {
   InsightsAnalytics = 'Insights Analytics',
   LogAnalytics = 'Azure Log Analytics',
   AzureResourceGraph = 'Azure Resource Graph',
+  GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }
 
 /**
@@ -23,6 +25,7 @@ export interface AzureMonitorQuery extends DataQuery {
   azureMonitor?: AzureMetricQuery;
   azureLogAnalytics?: AzureLogsQuery;
   azureResourceGraph?: AzureResourceGraphQuery;
+  grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
 
   /** @deprecated App Insights/Insights Analytics deprecated in v8 */
   appInsights?: ApplicationInsightsQuery;

@@ -4,7 +4,9 @@
     "module": "commonjs",
     "outDir": "dist/src",
     "rootDirs": ["."],
-    "typeRoots": ["node_modules/@types"],
+    "paths": {
+      "@grafana/toolkit": ["."]
+    },
     "useUnknownInCatchVariables": false
   },
   "exclude": ["dist", "node_modules"],

@@ -16,6 +16,7 @@ import {
   VisibilityMode,
   StackingMode,
   GraphTresholdsStyleMode,
+  GraphTransform,
 } from '@grafana/schema';
 
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
@@ -95,6 +96,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             min: 0,
             max: 10,
             step: 1,
+            ariaLabelForHandle: 'Line width',
           },
           showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
         })
@@ -107,6 +109,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             min: 0,
             max: 100,
             step: 1,
+            ariaLabelForHandle: 'Fill opacity',
           },
           showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
         })
@@ -173,11 +176,35 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             min: 1,
             max: 40,
             step: 1,
+            ariaLabelForHandle: 'Point size',
           },
           showIf: (c) => c.showPoints !== VisibilityMode.Never || c.drawStyle === GraphDrawStyle.Points,
         });
 
       commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);
+
+      builder.addSelect({
+        category: categoryStyles,
+        name: 'Transform',
+        path: 'transform',
+        settings: {
+          options: [
+            {
+              label: 'Constant',
+              value: GraphTransform.Constant,
+              description: 'The first value will be shown as a constant line',
+            },
+            {
+              label: 'Negative Y',
+              value: GraphTransform.NegativeY,
+              description: 'Flip the results to negative values on the y axis',
+            },
+          ],
+          isClearable: true,
+        },
+        hideFromDefaults: true,
+      });
+
       commonOptionsBuilder.addAxisConfig(builder, cfg);
       commonOptionsBuilder.addHideFrom(builder);
 

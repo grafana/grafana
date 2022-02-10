@@ -1,0 +1,231 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": {
+        "h": 26,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "links": [],
+      "options": {
+        "maxItems": 100,
+        "query": "",
+        "showHeadings": true,
+        "showRecentlyViewed": true,
+        "showSearch": false,
+        "showStarred": true,
+        "tags": []
+      },
+      "pluginVersion": "8.1.0-pre",
+      "tags": [],
+      "title": "Starred",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "links": [],
+      "options": {
+        "maxItems": 1000,
+        "query": "",
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": [
+          "panel-tests"
+        ]
+      },
+      "pluginVersion": "8.1.0-pre",
+      "tags": [
+        "panel-tests"
+      ],
+      "title": "tag: panel-tests",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "links": [],
+      "options": {
+        "maxItems": 1000,
+        "query": "",
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": [
+          "gdev",
+          "demo"
+        ]
+      },
+      "pluginVersion": "8.1.0-pre",
+      "tags": [
+        "gdev",
+        "demo"
+      ],
+      "title": "tag: dashboard-demo",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 26,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 5,
+      "links": [],
+      "options": {
+        "maxItems": 1000,
+        "query": "",
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": [
+          "gdev",
+          "datasource-test"
+        ]
+      },
+      "pluginVersion": "8.1.0-pre",
+      "tags": [
+        "gdev",
+        "datasource-test"
+      ],
+      "title": "Data source tests",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 6,
+        "y": 13
+      },
+      "id": 4,
+      "links": [],
+      "options": {
+        "maxItems": 1000,
+        "query": "",
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": [
+          "templating",
+          "gdev"
+        ]
+      },
+      "pluginVersion": "8.1.0-pre",
+      "tags": [
+        "templating",
+        "gdev"
+      ],
+      "title": "tag: templating ",
+      "type": "dashlist"
+    },
+    {
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 12,
+        "y": 13
+      },
+      "id": 8,
+      "links": [],
+      "options": {
+        "maxItems": 1000,
+        "query": "",
+        "showHeadings": false,
+        "showRecentlyViewed": false,
+        "showSearch": true,
+        "showStarred": false,
+        "tags": [
+          "gdev",
+          "transform"
+        ]
+      },
+      "pluginVersion": "8.1.0-pre",
+      "tags": [
+        "gdev",
+        "demo"
+      ],
+      "title": "tag: transforms",
+      "type": "dashlist"
+    }
+  ],
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Grafana Dev Overview & Home",
+  "uid": "j6T00KRZz",
+  "version": 2
+}

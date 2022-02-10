@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -20,6 +20,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { VizLegendOptions } from '@grafana/schema';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -30,15 +31,13 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
-import { RefreshEvent, RenderEvent } from 'app/types/events';
+import { RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
-import { setPanelInstanceState } from '../state/reducers';
-import { store } from 'app/store/store';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -51,6 +50,7 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
+  onInstanceStateChange: (value: any) => void;
 }
 
 export interface State {
@@ -63,7 +63,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends Component<Props, State> {
+export class PanelChrome extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -80,8 +80,8 @@ export class PanelChrome extends Component<Props, State> {
       refreshWhenInView: false,
       context: {
         eventBus,
-        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         app: this.getPanelContextApp(),
+        sync: this.getSync,
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
         onAnnotationCreate: this.onAnnotationCreate,
@@ -89,21 +89,24 @@ export class PanelChrome extends Component<Props, State> {
         onAnnotationDelete: this.onAnnotationDelete,
         canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
         onInstanceStateChange: this.onInstanceStateChange,
+        onToggleLegendSort: this.onToggleLegendSort,
       },
       data: this.getInitialPanelDataState(),
     };
   }
 
+  // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
+  getSync = () => (this.props.isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip);
+
   onInstanceStateChange = (value: any) => {
+    this.props.onInstanceStateChange(value);
+
     this.setState({
       context: {
         ...this.state.context,
         instanceState: value,
       },
     });
-
-    // Set redux panel state so panel options can get notified
-    store.dispatch(setPanelInstanceState({ panelId: this.props.panel.id, value }));
   };
 
   getPanelContextApp() {
@@ -125,6 +128,35 @@ export class PanelChrome extends Component<Props, State> {
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
+  };
+
+  onToggleLegendSort = (sortKey: string) => {
+    const legendOptions: VizLegendOptions = this.props.panel.options.legend;
+
+    // We don't want to do anything when legend options are not available
+    if (!legendOptions) {
+      return;
+    }
+
+    let sortDesc = legendOptions.sortDesc;
+    let sortBy = legendOptions.sortBy;
+    if (sortKey !== sortBy) {
+      sortDesc = undefined;
+    }
+
+    // if already sort ascending, disable sorting
+    if (sortDesc === false) {
+      sortBy = undefined;
+      sortDesc = undefined;
+    } else {
+      sortDesc = !sortDesc;
+      sortBy = sortKey;
+    }
+
+    this.onOptionsChange({
+      ...this.props.panel.options,
+      legend: { ...legendOptions, sortBy, sortDesc },
+    });
   };
 
   getInitialPanelDataState(): PanelData {
@@ -189,17 +221,15 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, isEditing, width } = this.props;
+    const { isInView, width } = this.props;
     const { context } = this.state;
 
     const app = this.getPanelContextApp();
-    const sync = isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip;
 
-    if (context.sync !== sync || context.app !== app) {
+    if (context.app !== app) {
       this.setState({
         context: {
           ...context,
-          sync,
           app,
         },
       });
@@ -219,19 +249,6 @@ export class PanelChrome extends Component<Props, State> {
     if (width !== prevProps.width) {
       liveTimer.updateInterval(this);
     }
-  }
-
-  shouldComponentUpdate(prevProps: Props, prevState: State) {
-    const { plugin, panel } = this.props;
-
-    // If plugin changed we need to process fieldOverrides again
-    // We do this by asking panel query runner to resend last result
-    if (prevProps.plugin !== plugin) {
-      panel.getQueryRunner().resendLastResult();
-      return false;
-    }
-
-    return true;
   }
 
   // Updates the response with information from the stream
@@ -322,10 +339,15 @@ export class PanelChrome extends Component<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
-  onPanelError = (message: string) => {
-    if (this.state.errorMessage !== message) {
-      this.setState({ errorMessage: message });
+  onPanelError = (error: Error) => {
+    const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
+    if (this.state.errorMessage !== errorMessage) {
+      this.setState({ errorMessage });
     }
+  };
+
+  onPanelErrorRecover = () => {
+    this.setState({ errorMessage: undefined });
   };
 
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
@@ -471,11 +493,11 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    let alertState = config.unifiedAlertingEnabled ? undefined : data.alertState?.state;
+    const alertState = data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,
@@ -502,10 +524,13 @@ export class PanelChrome extends Component<Props, State> {
           alertState={alertState}
           data={data}
         />
-        <ErrorBoundary>
+        <ErrorBoundary
+          dependencies={[data, plugin, panel.getOptions()]}
+          onError={this.onPanelError}
+          onRecover={this.onPanelErrorRecover}
+        >
           {({ error }) => {
             if (error) {
-              this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
               return null;
             }
             return this.renderPanel(width, height);

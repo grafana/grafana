@@ -2,7 +2,6 @@ package elasticsearch
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -17,8 +16,8 @@ import (
 func TestExecuteTimeSeriesQuery(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
+	fromMs := from.UnixNano() / int64(time.Millisecond)
+	toMs := to.UnixNano() / int64(time.Millisecond)
 
 	t.Run("Test execute time series query", func(t *testing.T) {
 		t.Run("With defaults on es 2", func(t *testing.T) {
@@ -32,14 +31,14 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
 			require.Equal(t, rangeFilter.Key, c.timeField)
-			require.Equal(t, rangeFilter.Lte, toStr)
-			require.Equal(t, rangeFilter.Gte, fromStr)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 			require.Equal(t, sr.Aggs[0].Key, "2")
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			require.Equal(t, dateHistogramAgg.Field, "@timestamp")
-			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromStr)
-			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toStr)
+			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromMs)
+			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toMs)
 		})
 
 		t.Run("With defaults on es 5", func(t *testing.T) {
@@ -53,8 +52,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			require.Equal(t, sr.Query.Bool.Filters[0].(*es.RangeFilter).Key, c.timeField)
 			require.Equal(t, sr.Aggs[0].Key, "2")
-			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Min, fromStr)
-			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Max, toStr)
+			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Min, fromMs)
+			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Max, toMs)
 		})
 
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
@@ -402,6 +401,52 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, hAgg.Field, "@timestamp")
 			require.Equal(t, hAgg.Interval, "$__interval")
 			require.Equal(t, hAgg.MinDocCount, 2)
+
+			t.Run("Should not include time_zone when timeZone is utc", func(t *testing.T) {
+				c := newFakeClient("7.0.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"id": "2",
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"settings": {
+								"timeZone": "utc"
+							}
+						}
+					],
+					"metrics": [{"type": "count", "id": "1" }]
+				}`, from, to, 15*time.Second)
+				require.NoError(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Empty(t, dateHistogram.TimeZone)
+			})
+
+			t.Run("Should include time_zone when timeZone is not utc", func(t *testing.T) {
+				c := newFakeClient("7.0.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"id": "2",
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"settings": {
+								"timeZone": "America/Los_Angeles"
+							}
+						}
+					],
+					"metrics": [{"type": "count", "id": "1" }]
+				}`, from, to, 15*time.Second)
+				require.NoError(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				deteHistogram := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+				require.Equal(t, deteHistogram.TimeZone, "America/Los_Angeles")
+			})
 		})
 
 		t.Run("With histogram agg", func(t *testing.T) {
@@ -1003,6 +1048,62 @@ func TestSettingsCasting(t *testing.T) {
 
 			assert.Equal(t, 10, dateHistogramAgg.MinDocCount)
 		})
+
+		t.Run("interval parameter", func(t *testing.T) {
+			t.Run("Uses interval with ES < 8.0.0", func(t *testing.T) {
+				c := newFakeClient("7.7.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": {
+								"interval": "1d"
+							}
+						}
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" }
+					]
+				}`, from, to, 15*time.Second)
+				assert.Nil(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+				assert.Zero(t, dateHistogramAgg.FixedInterval)
+				assert.NotZero(t, dateHistogramAgg.Interval)
+			})
+
+			t.Run("Uses fixed_interval with ES >= 8.0.0", func(t *testing.T) {
+				c := newFakeClient("8.0.0")
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": {
+								"interval": "1d"
+							}
+						}
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" }
+					]
+				}`, from, to, 15*time.Second)
+				assert.Nil(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+				assert.NotZero(t, dateHistogramAgg.FixedInterval)
+				assert.Zero(t, dateHistogramAgg.Interval)
+			})
+		})
 	})
 
 	t.Run("Inline Script", func(t *testing.T) {
@@ -1135,7 +1236,6 @@ func newDataQuery(body string) (backend.QueryDataRequest, error) {
 	}, nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
 	*backend.QueryDataResponse, error) {
 	timeRange := backend.TimeRange{
@@ -1163,7 +1263,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 				"timeField": "@timestamp",
 				"query": "@metric:cpu",
 				"alias": "{{@hostname}} {{metric}}",
-        "interval": "10m",
+        		"interval": "10m",
 				"metrics": [
 					{
 						"field": "@value",

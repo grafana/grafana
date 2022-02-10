@@ -2,7 +2,7 @@ import { clone, filter, find, findIndex, indexOf, map } from 'lodash';
 import appEvents from 'app/core/app_events';
 import { PostgresMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
-import { SqlPart } from 'app/core/components/sql_part/sql_part';
+import { SqlPart } from 'app/angular/components/sql_part/sql_part';
 import PostgresQueryModel from './postgres_query_model';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
@@ -337,7 +337,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         for (const variable of this.templateSrv.getVariables()) {
           let value;
           value = '$' + variable.name;
-          if (config.templateQuoter && ((variable as unknown) as VariableWithMultiSupport).multi === false) {
+          if (config.templateQuoter && (variable as unknown as VariableWithMultiSupport).multi === false) {
             value = config.templateQuoter(value);
           }
 

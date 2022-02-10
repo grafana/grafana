@@ -37,7 +37,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register } = useFormContext();
+  const { control, watch, register, trigger, formState } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
@@ -66,23 +66,34 @@ export function ChannelSubForm<R extends ChannelValues>({
     [notifiers]
   );
 
+  const handleTest = async () => {
+    await trigger();
+    const isValid = Object.keys(formState.errors).length === 0;
+
+    if (isValid && onTest) {
+      onTest();
+    }
+  };
+
   const notifier = notifiers.find(({ type }) => type === selectedType);
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
   const mandatoryOptions = notifier?.options.filter((o) => o.required);
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
+  const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
+          <Field label="Contact point type" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Select
                   disabled={readOnly}
+                  inputId={contactPointTypeInputId}
                   menuShouldPortal
                   {...field}
                   width={37}
@@ -103,7 +114,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 size="xs"
                 variant="secondary"
                 type="button"
-                onClick={() => onTest()}
+                onClick={() => handleTest()}
                 icon={testingReceiver ? 'fa fa-spinner' : 'message'}
               >
                 Test

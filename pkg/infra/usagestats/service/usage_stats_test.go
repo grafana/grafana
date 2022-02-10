@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +42,7 @@ func TestMetrics(t *testing.T) {
 		setupSomeDataSourcePlugins(t, uss)
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{
 				Dashboards:                1,
 				Datasources:               2,
@@ -80,13 +80,14 @@ func TestMetrics(t *testing.T) {
 				DashboardsViewersCanEdit:  2,
 				FoldersViewersCanAdmin:    1,
 				FoldersViewersCanEdit:     5,
+				APIKeys:                   2,
 			}
 			getSystemStatsQuery = query
 			return nil
 		})
 
 		var getDataSourceStatsQuery *models.GetDataSourceStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{
 				{
 					Type:  models.DS_ES,
@@ -110,7 +111,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getESDatasSourcesQuery *models.GetDataSourcesByTypeQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{
 				{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -133,7 +134,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{
 				{
 					Type:   models.DS_ES,
@@ -181,7 +182,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{
 				{
 					Type:  "slack",
@@ -318,9 +319,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.Viewers, metrics.Get("stats.viewers.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
-			assert.Equal(t, uss.PluginManager.PanelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
-			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
+			assert.Equal(t, uss.appCount(context.Background()), metrics.Get("stats.plugins.apps.count").MustInt())
+			assert.Equal(t, uss.panelCount(context.Background()), metrics.Get("stats.plugins.panels.count").MustInt())
+			assert.Equal(t, uss.dataSourceCount(context.Background()), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveAdmins, metrics.Get("stats.active_admins.count").MustInt64())
@@ -345,6 +346,7 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanEdit, metrics.Get("stats.folders_viewers_can_edit.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanAdmin, metrics.Get("stats.folders_viewers_can_admin.count").MustInt64())
 			assert.Equal(t, 15, metrics.Get("stats.total_auth_token.count").MustInt())
+			assert.Equal(t, 2, metrics.Get("stats.api_keys.count").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
@@ -402,7 +404,7 @@ func TestMetrics(t *testing.T) {
 		uss.Cfg.MetricsEndpointEnabled = true
 		uss.Cfg.MetricsEndpointDisableTotalStats = false
 		getSystemStatsWasCalled := false
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			getSystemStatsWasCalled = true
 			return nil
@@ -449,11 +451,11 @@ func TestMetrics(t *testing.T) {
 		metricName := "stats.test_metric.count"
 
 		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
-			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+			uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 				return map[string]interface{}{metricName: 1}, nil
 			})
 
-			metrics, err := uss.externalMetrics[0]()
+			metrics, err := uss.externalMetrics[0](context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, map[string]interface{}{metricName: 1}, metrics)
 		})
@@ -463,27 +465,27 @@ func TestMetrics(t *testing.T) {
 		uss := createService(t, setting.Cfg{})
 		metricName := "stats.test_metric.count"
 
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{}
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{}
 			return nil
 		})
@@ -503,7 +505,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+			uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 				return map[string]interface{}{metricName: 1}, nil
 			})
 
@@ -520,26 +522,26 @@ func TestMetrics(t *testing.T) {
 		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 		extMetricName := "stats.test_external_metric.count"
 
-		uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+		uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 			return map[string]interface{}{extMetricName: 1}, nil
 		})
 
-		uss.registerExternalMetrics(metrics)
+		uss.registerExternalMetrics(context.Background(), metrics)
 
 		assert.Equal(t, 1, metrics[extMetricName])
 
 		t.Run("When loading a metric results to an error", func(t *testing.T) {
-			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+			uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 				return map[string]interface{}{extMetricName: 1}, nil
 			})
 			extErrorMetricName := "stats.test_external_metric_error.count"
 
 			t.Run("Should not add it to metrics", func(t *testing.T) {
-				uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 					return map[string]interface{}{extErrorMetricName: 1}, errors.New("some error")
 				})
 
-				uss.registerExternalMetrics(metrics)
+				uss.registerExternalMetrics(context.Background(), metrics)
 
 				extErrorMetric := metrics[extErrorMetricName]
 				extMetric := metrics[extMetricName]
@@ -552,57 +554,47 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
-type fakePluginManager struct {
-	manager.PluginManager
+type fakePluginStore struct {
+	plugins.Store
 
-	dataSources map[string]*plugins.DataSourcePlugin
-	panels      map[string]*plugins.PanelPlugin
+	plugins map[string]plugins.PluginDTO
 }
 
-func (pm *fakePluginManager) DataSourceCount() int {
-	return len(pm.dataSources)
+func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := pr.plugins[pluginID]
+
+	return p, exists
 }
 
-func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	return pm.dataSources[id]
-}
+func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	var result []plugins.PluginDTO
+	for _, v := range pr.plugins {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
+	}
 
-func (pm *fakePluginManager) PanelCount() int {
-	return len(pm.panels)
+	return result
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStats) {
 	t.Helper()
 
-	uss.PluginManager = &fakePluginManager{
-		dataSources: map[string]*plugins.DataSourcePlugin{
+	uss.pluginStore = &fakePluginStore{
+		plugins: map[string]plugins.PluginDTO{
 			models.DS_ES: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_PROMETHEUS: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_GRAPHITE: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 			models.DS_MYSQL: {
-				FrontendPluginBase: plugins.FrontendPluginBase{
-					PluginBase: plugins.PluginBase{
-						Signature: "internal",
-					},
-				},
+				Signature: "internal",
 			},
 		},
 	}
@@ -624,9 +616,10 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
 		Cfg:             &cfg,
 		SQLStore:        sqlStore,
 		externalMetrics: make([]usagestats.MetricsFunc, 0),
-		PluginManager:   &fakePluginManager{},
+		pluginStore:     &fakePluginStore{},
 		kvStore:         kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:             log.New("infra.usagestats"),
 		startTime:       time.Now().Add(-1 * time.Minute),
+		RouteRegister:   routing.NewRouteRegister(),
 	}
 }

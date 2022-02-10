@@ -42,11 +42,12 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
                     <Select
-                      menuShouldPortal
+                      aria-label="Default contact point"
                       {...field}
                       className={styles.input}
                       onChange={(value) => onChange(mapSelectValueToString(value))}
                       options={receivers}
+                      menuShouldPortal
                     />
                   )}
                   control={control}
@@ -72,6 +73,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <MultiSelect
+                  aria-label="Group by"
                   menuShouldPortal
                   {...field}
                   allowCustomValue
@@ -129,6 +131,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                         className={styles.input}
                         onChange={(value) => onChange(mapSelectValueToString(value))}
                         options={timeOptions}
+                        aria-label="Group wait type"
                       />
                     )}
                     control={control}
@@ -169,6 +172,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                         className={styles.input}
                         onChange={(value) => onChange(mapSelectValueToString(value))}
                         options={timeOptions}
+                        aria-label="Group interval type"
                       />
                     )}
                     control={control}
@@ -205,6 +209,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                         menuPlacement="top"
                         onChange={(value) => onChange(mapSelectValueToString(value))}
                         options={timeOptions}
+                        aria-label="Repeat interval type"
                       />
                     )}
                     control={control}

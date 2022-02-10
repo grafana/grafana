@@ -6,7 +6,6 @@ import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { act, render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import {
   mockDataSource,
@@ -31,14 +30,14 @@ jest.mock('./api/grafana');
 jest.mock('./utils/config');
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
 
   api: {
-    fetchConfig: typeAsJestMock(fetchAlertManagerConfig),
-    fetchStatus: typeAsJestMock(fetchStatus),
-    updateConfig: typeAsJestMock(updateAlertManagerConfig),
-    fetchNotifiers: typeAsJestMock(fetchNotifiers),
-    testReceivers: typeAsJestMock(testReceivers),
+    fetchConfig: jest.mocked(fetchAlertManagerConfig),
+    fetchStatus: jest.mocked(fetchStatus),
+    updateConfig: jest.mocked(updateAlertManagerConfig),
+    fetchNotifiers: jest.mocked(fetchNotifiers),
+    testReceivers: jest.mocked(testReceivers),
   },
 };
 
@@ -78,6 +77,13 @@ const ui = {
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
   testContactPointButton: byRole('button', { name: /Test/ }),
+  testContactPointModal: byRole('heading', { name: /test contact point/i }),
+  customContactPointOption: byRole('radio', { name: /custom/i }),
+  contactPointAnnotationSelect: (idx: number) => byTestId(`annotation-key-${idx}`),
+  contactPointAnnotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
+  contactPointLabelKey: (idx: number) => byTestId(`label-key-${idx}`),
+  contactPointLabelValue: (idx: number) => byTestId(`label-value-${idx}`),
+  testContactPoint: byRole('button', { name: /send test notification/i }),
   cancelButton: byTestId('cancel-button'),
 
   receiversTable: byTestId('receivers-table'),
@@ -106,7 +112,7 @@ const ui = {
 };
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
+  userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
@@ -167,38 +173,58 @@ describe('Receivers', () => {
     await renderReceivers();
 
     // go to new contact point page
-    userEvent.click(await ui.newContactPointButton.find());
+    await act(async () => {
+      userEvent.click(await ui.newContactPointButton.find());
+    });
 
     await byRole('heading', { name: /create contact point/i }).find();
+
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
-    // type in a name for the new receiver
-    await userEvent.type(ui.inputs.name.get(), 'my new receiver');
+    await act(async () => {
+      // type in a name for the new receiver
+      userEvent.type(ui.inputs.name.get(), 'my new receiver');
 
-    // enter some email
-    const email = ui.inputs.email.addresses.get();
-    userEvent.clear(email);
-    await userEvent.type(email, 'tester@grafana.com');
+      // enter some email
+      const email = ui.inputs.email.addresses.get();
+      userEvent.clear(email);
+      userEvent.type(email, 'tester@grafana.com');
 
-    // try to test the contact point
-    userEvent.click(ui.testContactPointButton.get());
+      // try to test the contact point
+      userEvent.click(await ui.testContactPointButton.find());
+    });
+
+    await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument(), { timeout: 1000 });
+    userEvent.click(ui.customContactPointOption.get());
+    await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
+
+    // enter custom annotations and labels
+    await clickSelectOption(ui.contactPointAnnotationSelect(0).get(), 'Description');
+    await userEvent.type(ui.contactPointAnnotationValue(0).get(), 'Test contact point');
+    await userEvent.type(ui.contactPointLabelKey(0).get(), 'foo');
+    await userEvent.type(ui.contactPointLabelValue(0).get(), 'bar');
+    userEvent.click(ui.testContactPoint.get());
 
     await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
 
-    expect(mocks.api.testReceivers).toHaveBeenCalledWith('grafana', [
-      {
-        grafana_managed_receiver_configs: [
-          {
-            disableResolveMessage: false,
-            name: 'test',
-            secureSettings: {},
-            settings: { addresses: 'tester@grafana.com', singleEmail: false },
-            type: 'email',
-          },
-        ],
-        name: 'test',
-      },
-    ]);
+    expect(mocks.api.testReceivers).toHaveBeenCalledWith(
+      'grafana',
+      [
+        {
+          grafana_managed_receiver_configs: [
+            {
+              disableResolveMessage: false,
+              name: 'test',
+              secureSettings: {},
+              settings: { addresses: 'tester@grafana.com', singleEmail: false },
+              type: 'email',
+            },
+          ],
+          name: 'test',
+        },
+      ],
+      { annotations: { description: 'Test contact point' }, labels: { foo: 'bar' } }
+    );
   });
 
   it('Grafana receiver can be created', async () => {
@@ -213,7 +239,7 @@ describe('Receivers', () => {
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
 
     // type in a name for the new receiver
-    await userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
+    userEvent.type(byPlaceholderText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
     await ui.inputs.email.addresses.find();
@@ -227,12 +253,12 @@ describe('Receivers', () => {
     const urlInput = ui.inputs.hipchat.url.get();
     const apiKeyInput = ui.inputs.hipchat.apiKey.get();
 
-    await userEvent.type(urlInput, 'http://hipchat');
-    await userEvent.type(apiKeyInput, 'foobarbaz');
+    userEvent.type(urlInput, 'http://hipchat');
+    userEvent.type(apiKeyInput, 'foobarbaz');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
-      await userEvent.click(ui.saveContactButton.get());
+      userEvent.click(await ui.saveContactButton.find());
     });
 
     // see that we're back to main page and proper api calls have been made
@@ -296,7 +322,7 @@ describe('Receivers', () => {
     await userEvent.click(byText(/Actions \(1\)/i).get(slackContainer));
     await userEvent.click(await byTestId('items.1.settings.actions.0.confirm.add-button').find());
     const confirmSubform = byTestId('items.1.settings.actions.0.confirm.container').get();
-    await userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
+    userEvent.type(byLabelText('Text').get(confirmSubform), 'confirm this');
 
     // delete a field
     await userEvent.click(byText(/Fields \(2\)/i).get(slackContainer));
@@ -306,7 +332,7 @@ describe('Receivers', () => {
     // add another channel
     await userEvent.click(ui.newContactPointTypeButton.get());
     await clickSelectOption(await byTestId('items.2.type').find(), 'Webhook');
-    await userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
+    userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
 
     // it seems react-hook-form does some async state updates after submit
     await act(async () => {
@@ -361,7 +387,7 @@ describe('Receivers', () => {
         ],
       },
     });
-  }, 10000);
+  });
 
   it('Prometheus Alertmanager receiver cannot be edited', async () => {
     mocks.api.fetchStatus.mockResolvedValue({
@@ -397,7 +423,7 @@ describe('Receivers', () => {
 
     expect(mocks.api.fetchConfig).not.toHaveBeenCalled();
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
-  }, 10000);
+  });
 
   it('Loads config from status endpoint if there is no user config', async () => {
     // loading an empty config with make it fetch config from status endpoint

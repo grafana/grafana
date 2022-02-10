@@ -4,6 +4,7 @@ import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
 import { GrafanaTheme2 } from '../themes';
 import { MapLayerOptions } from '../geo/layer';
+import { FeatureToggles } from './featureToggles.gen';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -13,12 +14,6 @@ import { MapLayerOptions } from '../geo/layer';
 export interface BuildInfo {
   version: string;
   commit: string;
-  /**
-   * Is set to true when running Grafana Enterprise edition.
-   *
-   * @deprecated use `licenseInfo.hasLicense` instead
-   */
-  isEnterprise: boolean;
   env: string;
   edition: GrafanaEdition;
   latestVersion: string;
@@ -36,36 +31,16 @@ export enum GrafanaEdition {
 }
 
 /**
- * Describes available feature toggles in Grafana. These can be configured via the
- * `conf/custom.ini` to enable features under development or not yet available in
- * stable version.
- *
- * @public
- */
-export interface FeatureToggles {
-  [name: string]: boolean;
-
-  trimDefaults: boolean;
-  accesscontrol: boolean;
-  tempoServiceGraph: boolean;
-  tempoSearch: boolean;
-  recordedQueries: boolean;
-  prometheusMonaco: boolean;
-  newNavigation: boolean;
-}
-
-/**
  * Describes the license information about the current running instance of Grafana.
  *
  * @public
  */
 export interface LicenseInfo {
-  hasLicense: boolean;
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
-  hasValidLicense: boolean;
   edition: GrafanaEdition;
+  enabledFeatures: { [key: string]: boolean };
 }
 
 /**
@@ -79,6 +54,16 @@ export interface SentryConfig {
   customEndpoint: string;
   sampleRate: number;
 }
+
+/**
+ * Describes the plugins that should be preloaded prior to start Grafana.
+ *
+ * @public
+ */
+export type PreloadPlugin = {
+  path: string;
+  version: string;
+};
 
 /**
  * Describes all the different Grafana configuration values available for an instance.
@@ -123,7 +108,7 @@ export interface GrafanaConfig {
   liveEnabled: boolean;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: string[];
+  pluginsToPreload: PreloadPlugin[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;

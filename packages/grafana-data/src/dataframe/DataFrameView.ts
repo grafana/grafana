@@ -19,7 +19,7 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
 
   constructor(private data: DataFrame) {
     super();
-    const obj = ({} as unknown) as T;
+    const obj = {} as unknown as T;
 
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
@@ -32,10 +32,12 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
         });
       }
 
-      Object.defineProperty(obj, i, {
-        enumerable: false, // Don't enumerate array index
-        get: getter,
-      });
+      if (!(obj as any).hasOwnProperty(i.toString())) {
+        Object.defineProperty(obj, i, {
+          enumerable: false, // Don't enumerate array index
+          get: getter,
+        });
+      }
     }
 
     this.obj = obj;
