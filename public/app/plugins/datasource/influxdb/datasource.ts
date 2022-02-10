@@ -1,4 +1,4 @@
-import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,8 +22,8 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
+  CoreApp,
 } from '@grafana/data';
-
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
@@ -32,6 +32,7 @@ import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { buildRawQuery } from './queryUtils';
+import config from 'app/core/config';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -113,6 +114,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   database: any;
   basicAuth: any;
   withCredentials: any;
+  access: 'direct' | 'proxy';
   interval: any;
   responseParser: any;
   httpMode: string;
@@ -135,6 +137,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
+    this.access = instanceSettings.access;
     const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
@@ -150,15 +153,56 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
+    // for not-flux queries we call `this.classicQuery`, and that
+    // handles the is-hidden situation.
+    // for the flux-case, we do the filtering here
+    const filteredRequest = {
+      ...request,
+      targets: request.targets.filter((t) => t.hide !== true),
+    };
+
     if (this.isFlux) {
-      // for not-flux queries we call `this.classicQuery`, and that
-      // handles the is-hidden situation.
-      // for the flux-case, we do the filtering here
-      const filteredRequest = {
-        ...request,
-        targets: request.targets.filter((t) => t.hide !== true),
-      };
       return super.query(filteredRequest);
+    }
+
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy' && request.app === CoreApp.Explore) {
+      return super.query(filteredRequest).pipe(
+        map((res) => {
+          if (res.error) {
+            throw {
+              message: 'InfluxDB Error: ' + res.error.message,
+              res,
+            };
+          }
+
+          const seriesList: any[] = [];
+
+          const groupedFrames = groupBy(res.data, (x) => x.refId);
+          if (Object.keys(groupedFrames).length > 0) {
+            filteredRequest.targets.forEach((target) => {
+              const filteredFrames = groupedFrames[target.refId] ?? [];
+              switch (target.resultFormat) {
+                case 'logs':
+                case 'table':
+                  seriesList.push(
+                    this.responseParser.getTable(filteredFrames, target, {
+                      preferredVisualisationType: target.resultFormat,
+                    })
+                  );
+                  break;
+                default: {
+                  for (let i = 0; i < filteredFrames.length; i++) {
+                    seriesList.push(filteredFrames[i]);
+                  }
+                  break;
+                }
+              }
+            });
+          }
+
+          return { data: seriesList };
+        })
+      );
     }
 
     // Fallback to classic query support
@@ -185,7 +229,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     // this only works in flux-mode, it should not be called in non-flux-mode
     if (!this.isFlux) {
-      throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
+      return query;
     }
 
     // We want to interpolate these variables on backend

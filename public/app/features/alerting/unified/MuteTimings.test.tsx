@@ -5,7 +5,6 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockDataSource, MockDataSourceSrv } from './mocks';
@@ -19,8 +18,8 @@ jest.mock('./api/alertmanager');
 
 const mocks = {
   api: {
-    fetchAlertManagerConfig: typeAsJestMock(fetchAlertManagerConfig),
-    updateAlertManagerConfig: typeAsJestMock(updateAlertManagerConfig),
+    fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
+    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
   },
 };
 
