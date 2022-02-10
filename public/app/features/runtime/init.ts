@@ -3,6 +3,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PerformanceMetrics } from 'app/core/services/PerformanceMetrics';
 
+const performanceMetrics = PerformanceMetrics.instance();
+
 /**
  * This will setup features that are accessible through the root window location
  *
@@ -44,11 +46,17 @@ export function initWindowRuntime() {
     },
 
     performanceMetrics: {
-      /** Gets stats collected by the LivePerformance service and stops further collection */
-      getStats: () => PerformanceMetrics.instance().stopAndGetStats(),
+      /** Gets stats collected by the PerformanceMetrics service and stops further collection */
+      getStats: () => {
+        window.grafanaPerformanceMetrics = undefined;
+        return performanceMetrics.stopAndGetStats();
+      },
 
-      /** Enables LivePerformance to collect stats */
-      start: () => PerformanceMetrics.instance().start(),
+      /** Enables collection of performance metrics */
+      start: () => {
+        window.grafanaPerformanceMetrics = performanceMetrics;
+        performanceMetrics.start();
+      },
     },
   };
 }
