@@ -1,5 +1,5 @@
 import { Alert, useStyles2 } from '@grafana/ui';
-import React, { FC } from 'react';
+import React from 'react';
 import { config } from '@grafana/runtime/src';
 import { css } from '@emotion/css';
 
@@ -25,7 +25,7 @@ const getText = (requiredImageRendererPluginVersion?: string) => {
   };
 };
 
-export const PreviewsSystemRequirements: FC<Props> = ({ showPreviews }) => {
+export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
   const styles = useStyles2(getStyles);
 
   const previewsEnabled = config.featureToggles.dashboardPreviews;
@@ -67,8 +67,6 @@ const getStyles = () => {
       display: flex;
       justify-content: center;
     `,
-    alert: css`
-      max-width: 800px;
-    `,
+    alert: css``,
   };
 };
