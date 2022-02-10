@@ -57,13 +57,15 @@ export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
     : 'Image renderer plugin not installed';
 
   return (
-    shouldDisplayRequirements && (
-      <div className={styles.wrapper}>
-        <Alert className={styles.alert} severity="info" title={title}>
-          <Message requiredImageRendererPluginVersion={requiredImageRendererPluginVersion} />
-        </Alert>
-      </div>
-    )
+    <>
+      {shouldDisplayRequirements && (
+        <div className={styles.wrapper}>
+          <Alert className={styles.alert} severity="info" title={title}>
+            <Message requiredImageRendererPluginVersion={requiredImageRendererPluginVersion} />
+          </Alert>
+        </div>
+      )}
+    </>
   );
 };
 
