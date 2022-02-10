@@ -29,7 +29,7 @@ const (
 	serviceaccountIDTokensDetailPath = "/api/serviceaccounts/%v/tokens/%v" // #nosec G101
 )
 
-func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64) *models.ApiKey {
+func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64, secondsToLive int64) *models.ApiKey {
 	key, err := apikeygen.New(orgID, keyName)
 	require.NoError(t, err)
 	cmd := models.AddApiKeyCommand{
@@ -37,7 +37,7 @@ func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64) *mo
 		Role:             "Viewer",
 		OrgId:            orgID,
 		Key:              key.HashedKey,
-		SecondsToLive:    0,
+		SecondsToLive:    secondsToLive,
 		ServiceAccountId: &saID,
 		Result:           &models.ApiKey{},
 	}
@@ -215,12 +215,84 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			token := createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id)
+			token := createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id, 1)
 
 			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.Id, token.Id)
 			bodyString := ""
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
 			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
+
+			actualCode := actual.Code
+			actualBody := map[string]interface{}{}
+
+			_ = json.Unmarshal(actual.Body.Bytes(), &actualBody)
+			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
+
+			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgId}
+			err := store.GetApiKeyByName(context.Background(), &query)
+			if actualCode == http.StatusOK {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestServiceAccountsAPI_ListTokens(t *testing.T) {
+	store := sqlstore.InitTestDB(t)
+	svcmock := tests.ServiceAccountMock{}
+	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
+
+	type testCreateSAToken struct {
+		desc         string
+		keyName      string
+		expectedCode int
+		body         map[string]interface{}
+		acmock       *accesscontrolmock.Mock
+	}
+
+	testCases := []testCreateSAToken{
+		{
+			desc:    "should be able to list serviceaccount that has expired",
+			keyName: "aaa",
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
+				},
+				false,
+			),
+			body: map[string]interface{}{
+				"id":                     6,
+				"name":                   "aaa",
+				"role":                   "Viewer",
+				"created":                "2022-02-09T11:13:30+01:00",
+				"expiration":             "2022-02-09T12:13:30+01:00",
+				"secondsUntilExpiration": 0,
+				"hasExpired":             true,
+			},
+			expectedCode: http.StatusOK,
+		},
+	}
+
+	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
+		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
+		require.NoError(t, err)
+		req.Header.Add("Content-Type", "application/json")
+		recorder := httptest.NewRecorder()
+		server.ServeHTTP(recorder, req)
+		return recorder
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			_ = createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id, 1000)
+
+			endpoint := fmt.Sprintf(serviceaccountIDPath, sa.Id)
+			bodyString := ""
+			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+			actual := requestResponse(server, http.MethodGet, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
 			actualBody := map[string]interface{}{}

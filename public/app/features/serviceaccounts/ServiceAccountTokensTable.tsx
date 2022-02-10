@@ -94,7 +94,7 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableRow: (hasExpired: boolean) => css`
+  tableRow: (hasExpired: boolean | undefined) => css`
     color: ${hasExpired ? theme.colors.text.secondary : theme.colors.text.primary};
   `,
   tooltipContainer: css`
