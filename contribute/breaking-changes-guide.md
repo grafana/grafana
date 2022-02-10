@@ -50,7 +50,7 @@ changes (as certain edge cases are still not covered by the tool), but as there 
 
 By clicking the links in the comment ("more info" or "Check console output") you can view more detailed information about what triggered the notification.
 
-**Removed exported members** (consolve view):<br />
+**Removed exported members** (console view):<br />
 This means that some previously exported members won't be available in the newer version of the package which can break dependent plugins.
 
 ![](./breaking-changes-console-screenshot-1.png)
