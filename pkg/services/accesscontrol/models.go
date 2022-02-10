@@ -352,3 +352,8 @@ var LicensingPageReaderAccess = EvalAny(
 	EvalPermission(ActionLicensingRead),
 	EvalPermission(ActionServerStatsRead),
 )
+
+var AnnotationCreateAccessEvaluator = EvalAll(
+	EvalPermission(ActionAnnotationsCreate),
+	EvalPermission(ActionAnnotationsTagsWrite),
+)
