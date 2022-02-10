@@ -32,6 +32,21 @@ export enum PromOperationId {
   MultiplyBy = '__multiply_by',
   DivideBy = '__divide_by',
   NestedQuery = '__nested_query',
+  Sum = 'sum',
+  Avg = 'avg',
+  Min = 'min',
+  Max = 'max',
+  Count = 'count',
+  Topk = 'topk',
+  SumOverTime = 'sum_over_time',
+  AvgOverTime = 'avg_over_time',
+  MinOverTime = 'min_over_time',
+  MaxOverTime = 'max_over_time',
+  CountOverTime = 'count_over_time',
+  LastOverTime = 'last_over_time',
+  PresentOverTime = 'present_over_time',
+  StddevOverTime = 'stddev_over_time',
+  StdvarOverTime = 'stdvar_over_time',
 }
 
 export interface PromQueryPattern {

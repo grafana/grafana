@@ -687,9 +687,9 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
-		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{}, backend.PluginContext{
+		response, err := executor.listMetrics(backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-		})
+		}, "default", &cloudwatch.ListMetricsInput{})
 		require.NoError(t, err)
 
 		expectedMetrics := client.MetricsPerPage * executor.cfg.AWSListMetricsPageLimit
@@ -702,9 +702,9 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
-		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{}, backend.PluginContext{
+		response, err := executor.listMetrics(backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-		})
+		}, "default", &cloudwatch.ListMetricsInput{})
 		require.NoError(t, err)
 
 		assert.Equal(t, len(metrics), len(response))

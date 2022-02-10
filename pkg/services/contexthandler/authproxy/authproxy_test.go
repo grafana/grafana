@@ -19,35 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeMultiLDAP struct {
-	multildap.MultiLDAP
-	ID          int64
-	userCalled  bool
-	loginCalled bool
-}
-
-func (m *fakeMultiLDAP) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
-) {
-	m.loginCalled = true
-	result := &models.ExternalUserInfo{
-		UserId: m.ID,
-	}
-	return result, nil
-}
-
-func (m *fakeMultiLDAP) User(login string) (
-	*models.ExternalUserInfo,
-	ldap.ServerConfig,
-	error,
-) {
-	m.userCalled = true
-	result := &models.ExternalUserInfo{
-		UserId: m.ID,
-	}
-	return result, ldap.ServerConfig{}, nil
-}
-
 const hdrName = "markelog"
 
 func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, cb func(*http.Request, *setting.Cfg)) *AuthProxy {
@@ -152,7 +123,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 			return true
 		}
 
-		stub := &fakeMultiLDAP{
+		stub := &multildap.MultiLDAPmock{
 			ID: id,
 		}
 
@@ -179,7 +150,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, id, gotID)
-		assert.True(t, stub.userCalled)
+		assert.True(t, stub.UserCalled)
 	})
 
 	t.Run("Gets nice error if LDAP is enabled, but not configured", func(t *testing.T) {
@@ -205,7 +176,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 
 		auth := prepareMiddleware(t, cache, nil)
 
-		stub := &fakeMultiLDAP{
+		stub := &multildap.MultiLDAPmock{
 			ID: id,
 		}
 
@@ -217,6 +188,6 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		require.EqualError(t, err, "failed to get the user")
 
 		assert.NotEqual(t, id, gotID)
-		assert.False(t, stub.loginCalled)
+		assert.False(t, stub.LoginCalled)
 	})
 }
