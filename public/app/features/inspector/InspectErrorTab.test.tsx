@@ -29,6 +29,14 @@ describe('InspectErrorTab', () => {
     expect(screen.getByText('"BadRequest"')).toBeInTheDocument();
     expect(screen.getByText('"Please provide below info when asking for support."')).toBeInTheDocument();
   });
+  it('should return error.message error.data does not exist nd error.message cannot be parsed', () => {
+    const error = {
+      message: '{ invalidJSON{',
+    };
+    const { container } = render(<InspectErrorTab error={error} />);
+    expect(container.childElementCount).toEqual(1);
+    expect(screen.getByText('{ invalidJSON{')).toBeInTheDocument();
+  });
   it('should return a jsonFormatter object of error if it has no .data and no .message', () => {
     const error = {
       status: '400',
