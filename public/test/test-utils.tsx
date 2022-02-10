@@ -8,7 +8,11 @@ function render(
   ui: React.ReactElement,
   {
     preloadedState,
-    store = configureStore({ reducer: createRootReducer(), preloadedState }),
+    store = configureStore({
+      reducer: createRootReducer(),
+      preloadedState,
+      middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+    }),
     ...renderOptions
   }: any = {}
 ) {

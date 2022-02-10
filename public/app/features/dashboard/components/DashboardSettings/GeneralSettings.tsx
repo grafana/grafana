@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 
+import { useDispatch } from 'app/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import {
   updateTimeZoneDashboard as updateTimeZone,
