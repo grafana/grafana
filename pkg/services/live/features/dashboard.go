@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type actionType string
@@ -39,6 +40,7 @@ type dashboardEvent struct {
 type DashboardHandler struct {
 	Publisher   models.ChannelPublisher
 	ClientCount models.ChannelClientCount
+	SQLStore    sqlstore.Store
 }
 
 // GetHandlerForPath called on init
@@ -68,7 +70,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 		}
 
 		dash := query.Result
-		guard := guardian.New(ctx, dash.Id, user.OrgId, user)
+		guard := guardian.New(ctx, dash.Id, user.OrgId, user, h.SQLStore)
 		if canView, err := guard.CanView(); err != nil || !canView {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
@@ -114,7 +116,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
-		guard := guardian.New(ctx, query.Result.Id, user.OrgId, user)
+		guard := guardian.New(ctx, query.Result.Id, user.OrgId, user, h.SQLStore)
 		canEdit, err := guard.CanEdit()
 		if err != nil {
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")

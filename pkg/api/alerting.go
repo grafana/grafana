@@ -524,7 +524,7 @@ func (hs *HTTPServer) PauseAlert(c *models.ReqContext) response.Response {
 		return response.Error(500, "Get Alert failed", err)
 	}
 
-	guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 		if err != nil {
 			return response.Error(500, "Error while checking permissions for Alert", err)

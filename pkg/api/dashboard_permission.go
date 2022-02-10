@@ -24,7 +24,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return rsp
 	}
 
-	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser, hs.SQLStore)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
@@ -75,7 +75,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return rsp
 	}
 
-	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}

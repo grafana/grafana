@@ -39,7 +39,7 @@ func (l *LibraryElementService) requirePermissionsOnFolder(ctx context.Context, 
 		return err
 	}
 
-	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+	g := guardian.New(ctx, folder.Id, user.OrgId, user, l.SQLStore)
 
 	canEdit, err := g.CanEdit()
 	if err != nil {

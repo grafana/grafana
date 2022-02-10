@@ -34,27 +34,14 @@ func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) 
 }
 func (mss *mockSearchService) SortOptions() []search.SortOption { return nil }
 
-func setUp(confs ...setUpConf) *HTTPServer {
+func setUp() *HTTPServer {
 	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
 	store := mockstore.NewSQLStoreMock()
 	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
 	store.ExpectedAlert = singleAlert
+	store.ExpectedTeamsByUser = []*models.TeamDTO{}
 
-	aclMockResp := []*models.DashboardAclInfoDTO{}
-	for _, c := range confs {
-		if c.aclMockResp != nil {
-			aclMockResp = c.aclMockResp
-		}
-	}
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-		query.Result = aclMockResp
-		return nil
-	})
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-		query.Result = []*models.TeamDTO{}
-		return nil
-	})
+	store.ExpectedDashboardAclInfoList = []*models.DashboardAclInfoDTO{}
 	return hs
 }
 
@@ -82,13 +69,10 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 		}
 		postAlertScenario(t, hs, "When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause",
 			models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
-				setUp(setUpConf{
-					aclMockResp: []*models.DashboardAclInfoDTO{
-						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-					},
-				})
-
+				hs.SQLStore.(*mockstore.SQLStoreMock).ExpectedDashboardAclInfoList = []*models.DashboardAclInfoDTO{
+					{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+					{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+				}
 				callPauseAlert(sc)
 				assert.Equal(t, 200, sc.resp.Code)
 			})

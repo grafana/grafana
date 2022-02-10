@@ -418,10 +418,10 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, routing.Wrap(DeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
-			annotationsRoute.Post("/", routing.Wrap(PostAnnotation))
-			annotationsRoute.Delete("/:annotationId", routing.Wrap(DeleteAnnotationByID))
-			annotationsRoute.Put("/:annotationId", routing.Wrap(UpdateAnnotation))
-			annotationsRoute.Patch("/:annotationId", routing.Wrap(PatchAnnotation))
+			annotationsRoute.Post("/", routing.Wrap(hs.PostAnnotation))
+			annotationsRoute.Delete("/:annotationId", routing.Wrap(hs.DeleteAnnotationByID))
+			annotationsRoute.Put("/:annotationId", routing.Wrap(hs.UpdateAnnotation))
+			annotationsRoute.Patch("/:annotationId", routing.Wrap(hs.PatchAnnotation))
 			annotationsRoute.Post("/graphite", reqEditorRole, routing.Wrap(PostGraphiteAnnotation))
 			annotationsRoute.Get("/tags", routing.Wrap(GetAnnotationTags))
 		})

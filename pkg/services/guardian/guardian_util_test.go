@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,12 +32,13 @@ type scenarioFunc func(c *scenarioContext)
 
 func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
+		sqlmock := mockstore.NewSQLStoreMock()
 		user := &models.SignedInUser{
 			UserId:  userID,
 			OrgId:   orgID,
 			OrgRole: role,
 		}
-		guard := New(context.Background(), dashboardID, orgID, user)
+		guard := New(context.Background(), dashboardID, orgID, user, sqlmock)
 
 		sc := &scenarioContext{
 			t:                t,
@@ -51,13 +53,14 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 
 func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
+		sqlmock := mockstore.NewSQLStoreMock()
 		user := &models.SignedInUser{
 			UserId:   0,
 			OrgId:    orgID,
 			OrgRole:  role,
 			ApiKeyId: 10,
 		}
-		guard := New(context.Background(), dashboardID, orgID, user)
+		guard := New(context.Background(), dashboardID, orgID, user, sqlmock)
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -74,41 +77,16 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
 		bus.ClearBusHandlers()
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-			if query.OrgID != sc.givenUser.OrgId {
-				sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgID)
-			}
-			if query.DashboardID != sc.givenDashboardID {
-				sc.reportFailure("Invalid dashboard id for GetDashboardAclInfoListQuery", sc.givenDashboardID, query.DashboardID)
-			}
-
-			query.Result = permissions
-			return nil
-		})
-
+		sqlmock := mockstore.NewSQLStoreMock()
 		teams := []*models.TeamDTO{}
-
 		for _, p := range permissions {
 			if p.TeamId > 0 {
 				teams = append(teams, &models.TeamDTO{Id: p.TeamId})
 			}
 		}
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-			if query.OrgId != sc.givenUser.OrgId {
-				sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
-			}
-			if query.UserId != sc.givenUser.UserId {
-				sc.reportFailure("Invalid user id for GetTeamsByUserQuery", sc.givenUser.UserId, query.UserId)
-			}
-
-			query.Result = teams
-			return nil
-		})
-
+		sqlmock.ExpectedTeamsByUser = teams
 		sc.permissionScenario = desc
-		sc.g = New(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser)
+		sc.g = New(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, sqlmock)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams

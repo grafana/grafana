@@ -46,7 +46,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
@@ -63,7 +63,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
@@ -85,7 +85,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		}
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
@@ -100,7 +100,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 

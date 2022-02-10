@@ -20,4 +20,7 @@ type Store interface {
 	UpdateDashboardACLCtx(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
+	// For the guardian services to work correctly
+	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error
+	GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error
 }

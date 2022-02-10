@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,6 +38,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
+			mock := mockstore.NewSQLStoreMock()
+			hs := &HTTPServer{
+				Cfg:      setting.NewCfg(),
+				SQLStore: mock,
+			}
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
 					cmd, func(sc *scenarioContext) {
@@ -55,13 +61,12 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					})
-
-				mock := mockstore.NewSQLStoreMock()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					}, mock)
@@ -70,6 +75,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
+			mock := mockstore.NewSQLStoreMock()
+			hs := &HTTPServer{
+				Cfg:      setting.NewCfg(),
+				SQLStore: mock,
+			}
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
 					cmd, func(sc *scenarioContext) {
@@ -91,7 +101,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					}, mock)
@@ -149,6 +159,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
+			mock := mockstore.NewSQLStoreMock()
+			hs := &HTTPServer{
+				Cfg:      setting.NewCfg(),
+				SQLStore: mock,
+			}
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					setUp()
@@ -173,7 +188,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUp()
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					}, mock)
@@ -182,6 +197,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
+			mock := mockstore.NewSQLStoreMock()
+			hs := &HTTPServer{
+				Cfg:      setting.NewCfg(),
+				SQLStore: mock,
+			}
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					setUp()
@@ -206,7 +226,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUp()
 						fakeAnnoRepo = &fakeAnnotationsRepo{}
 						annotations.SetRepository(fakeAnnoRepo)
-						sc.handlerFunc = DeleteAnnotationByID
+						sc.handlerFunc = hs.DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					}, mock)
@@ -275,7 +295,11 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 	cmd dtos.PostAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
-
+		mock := mockstore.NewSQLStoreMock()
+		hs := &HTTPServer{
+			Cfg:      setting.NewCfg(),
+			SQLStore: mock,
+		}
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -285,7 +309,7 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PostAnnotation(c)
+			return hs.PostAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -301,7 +325,11 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 	cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
-
+		mock := mockstore.NewSQLStoreMock()
+		hs := &HTTPServer{
+			Cfg:      setting.NewCfg(),
+			SQLStore: mock,
+		}
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -311,7 +339,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return UpdateAnnotation(c)
+			return hs.UpdateAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}
@@ -326,7 +354,11 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
-
+		mock := mockstore.NewSQLStoreMock()
+		hs := &HTTPServer{
+			Cfg:      setting.NewCfg(),
+			SQLStore: mock,
+		}
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
@@ -336,7 +368,7 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return PatchAnnotation(c)
+			return hs.PatchAnnotation(c)
 		})
 
 		fakeAnnoRepo = &fakeAnnotationsRepo{}

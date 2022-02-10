@@ -47,12 +47,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rende
 	return &thumbService{
 		renderer:      newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo: thumbnailRepo,
+		sqlstore:      store,
 	}
 }
 
 type thumbService struct {
 	renderer      dashRenderer
 	thumbnailRepo thumbnailRepo
+	sqlstore      *sqlstore.SQLStore
 }
 
 func (hs *thumbService) Enabled() bool {
@@ -260,7 +262,7 @@ func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bo
 		return 404
 	}
 
-	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser, hs.sqlstore)
 	if checkSave {
 		if canSave, err := guardian.CanSave(); err != nil || !canSave {
 			return 403 // forbidden

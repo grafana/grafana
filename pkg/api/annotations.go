@@ -54,12 +54,12 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PostAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
+	if canSave, err := hs.canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -160,7 +160,7 @@ func PostGraphiteAnnotation(c *models.ReqContext) response.Response {
 	})
 }
 
-func UpdateAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.UpdateAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -173,7 +173,7 @@ func UpdateAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	if resp := canSave(c, repo, annotationID); resp != nil {
+	if resp := hs.canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
 
@@ -194,7 +194,7 @@ func UpdateAnnotation(c *models.ReqContext) response.Response {
 	return response.Success("Annotation updated")
 }
 
-func PatchAnnotation(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PatchAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -206,7 +206,7 @@ func PatchAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	if resp := canSave(c, repo, annotationID); resp != nil {
+	if resp := hs.canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
 
@@ -270,14 +270,14 @@ func DeleteAnnotations(c *models.ReqContext) response.Response {
 	return response.Success("Annotations deleted")
 }
 
-func DeleteAnnotationByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	repo := annotations.GetRepository()
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	if resp := canSave(c, repo, annotationID); resp != nil {
+	if resp := hs.canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
 
@@ -292,13 +292,13 @@ func DeleteAnnotationByID(c *models.ReqContext) response.Response {
 	return response.Success("Annotation deleted")
 }
 
-func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error) {
+func (hs *HTTPServer) canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error) {
 	if dashboardID == 0 && !c.SignedInUser.HasRole(models.ROLE_EDITOR) {
 		return false, nil
 	}
 
 	if dashboardID != 0 {
-		guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+		guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser, hs.SQLStore)
 		if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 			return false, err
 		}
@@ -307,7 +307,7 @@ func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error)
 	return true, nil
 }
 
-func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int64) response.Response {
+func (hs *HTTPServer) canSave(c *models.ReqContext, repo annotations.Repository, annotationID int64) response.Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
 	if err != nil || len(items) == 0 {
 		return response.Error(500, "Could not find annotation to update", err)
@@ -315,7 +315,7 @@ func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int
 
 	dashboardID := items[0].DashboardId
 
-	if canSave, err := canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
+	if canSave, err := hs.canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 

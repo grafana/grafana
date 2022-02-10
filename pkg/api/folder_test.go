@@ -13,6 +13,7 @@ import (
 	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -142,8 +143,9 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := HTTPServer{
-			Bus: bus.GetBus(),
-			Cfg: setting.NewCfg(),
+			Bus:      bus.GetBus(),
+			Cfg:      setting.NewCfg(),
+			SQLStore: mockstore.NewSQLStoreMock(),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -179,7 +181,8 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg:      setting.NewCfg(),
+			SQLStore: mockstore.NewSQLStoreMock(),
 		}
 
 		sc := setupScenarioContext(t, url)

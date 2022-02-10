@@ -93,7 +93,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			return response.Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
 		}
 	}
-	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		return dashboardGuardianResponse(err)
 	}
@@ -223,7 +223,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	if rsp != nil {
 		return rsp
 	}
-	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -476,7 +476,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -518,7 +518,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 	}
 
-	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -560,13 +560,13 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	if err := web.Bind(c.Req, &apiOptions); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	guardianBase := guardian.New(c.Req.Context(), apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
+	guardianBase := guardian.New(c.Req.Context(), apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
-		guardianNew := guardian.New(c.Req.Context(), apiOptions.New.DashboardId, c.OrgId, c.SignedInUser)
+		guardianNew := guardian.New(c.Req.Context(), apiOptions.New.DashboardId, c.OrgId, c.SignedInUser, hs.SQLStore)
 		if canSave, err := guardianNew.CanSave(); err != nil || !canSave {
 			return dashboardGuardianResponse(err)
 		}
@@ -648,7 +648,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 		return rsp
 	}
 
-	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser, hs.SQLStore)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}

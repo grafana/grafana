@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -14,6 +13,11 @@ var (
 	ErrGuardianPermissionExists = errors.New("permission already exists")
 	ErrGuardianOverride         = errors.New("you can only override a permission to be higher")
 )
+
+type GuardianStore interface {
+	GetDashboardAclInfoList(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error
+	GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error
+}
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
 type DashboardGuardian interface {
@@ -35,23 +39,25 @@ type DashboardGuardian interface {
 }
 
 type dashboardGuardianImpl struct {
-	user   *models.SignedInUser
-	dashId int64
-	orgId  int64
-	acl    []*models.DashboardAclInfoDTO
-	teams  []*models.TeamDTO
-	log    log.Logger
-	ctx    context.Context
+	user          *models.SignedInUser
+	dashId        int64
+	orgId         int64
+	acl           []*models.DashboardAclInfoDTO
+	teams         []*models.TeamDTO
+	log           log.Logger
+	ctx           context.Context
+	guardianstore GuardianStore
 }
 
 // New factory for creating a new dashboard guardian instance
-var New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+var New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser, guardianstore GuardianStore) DashboardGuardian {
 	return &dashboardGuardianImpl{
-		user:   user,
-		dashId: dashId,
-		orgId:  orgId,
-		log:    log.New("dashboard.permissions"),
-		ctx:    ctx,
+		user:          user,
+		dashId:        dashId,
+		orgId:         orgId,
+		log:           log.New("dashboard.permissions"),
+		ctx:           ctx,
+		guardianstore: guardianstore,
 	}
 }
 
@@ -204,7 +210,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	}
 
 	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := bus.Dispatch(g.ctx, &query); err != nil {
+	if err := g.guardianstore.GetDashboardAclInfoList(g.ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -254,8 +260,7 @@ func (g *dashboardGuardianImpl) getTeams(ctx context.Context) ([]*models.TeamDTO
 	}
 
 	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
-	// TODO: Use bus.Dispatch(g.Ctx, &query) when GetTeamsByUserQuery supports context.
-	err := bus.Dispatch(ctx, &query)
+	err := g.guardianstore.GetTeamsByUser(ctx, &query)
 
 	g.teams = query.Result
 	return query.Result, err
@@ -307,6 +312,7 @@ type FakeDashboardGuardian struct {
 	CheckPermissionBeforeUpdateError error
 	GetAclValue                      []*models.DashboardAclInfoDTO
 	GetHiddenAclValue                []*models.DashboardAcl
+	GStore                           GuardianStore
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
@@ -347,10 +353,11 @@ func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 // nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
-	New = func(_ context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+	New = func(_ context.Context, dashId int64, orgId int64, user *models.SignedInUser, guardianstore GuardianStore) DashboardGuardian {
 		mock.OrgId = orgId
 		mock.DashId = dashId
 		mock.User = user
+		mock.GStore = guardianstore
 		return mock
 	}
 }

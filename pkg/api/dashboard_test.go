@@ -128,11 +128,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = aclMockResp
-				return nil
-			})
+			mockSQLStore.ExpectedDashboardAclInfoList = aclMockResp
 		}
 
 		// This tests two scenarios:
@@ -235,11 +231,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					UserId:      200,
 				},
 			}
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = aclMockResp
-				return nil
-			})
+			mockSQLStore.ExpectedDashboardAclInfoList = aclMockResp
 		}
 
 		// This tests six scenarios:
@@ -335,10 +327,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			setUpInner := func() {
 				setUp()
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
@@ -395,10 +384,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
 
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 
 				origCanEdit := setting.ViewersCanEdit
 				t.Cleanup(func() {
@@ -436,10 +422,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_ADMIN},
 				}
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -484,10 +467,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
-				bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-					query.Result = mockResult
-					return nil
-				})
+				mockSQLStore.ExpectedDashboardAclInfoList = mockResult
 			}
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -732,10 +712,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		sqlmock := mockstore.SQLStoreMock{ExpectedDashboardVersions: dashboardvs}
 		setUp := func() {
 			mockResult := []*models.DashboardAclInfoDTO{}
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = mockResult
-				return nil
-			})
+			sqlmock.ExpectedDashboardAclInfoList = mockResult
 		}
 
 		cmd := dtos.CalculateDiffOptions{
@@ -851,6 +828,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
+		mockSQLStore := mockstore.NewSQLStoreMock()
 		setUp := func() {
 			origGetProvisionedData := dashboards.GetProvisionedData
 			t.Cleanup(func() {
@@ -860,14 +838,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return &models.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}, nil
 			}
 
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
-				query.Result = []*models.DashboardAclInfoDTO{
-					{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
-				}
-				return nil
-			})
+			mockSQLStore.ExpectedDashboardAclInfoList = []*models.DashboardAclInfoDTO{
+				{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
+			}
 		}
-		mockSQLStore := mockstore.NewSQLStoreMock()
+
 		dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
 		require.NoError(t, err)
 		mockSQLStore.ExpectedDashboard = &models.Dashboard{Id: 1, Data: dataValue}
