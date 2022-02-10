@@ -230,12 +230,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 // /api/plugins/:pluginId/metrics
 func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
-	if !exists {
-		return response.Error(404, "Plugin not found", nil)
-	}
-
-	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), plugin.ID)
+	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
@@ -613,6 +608,9 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 					w.Header().Add(k, v)
 				}
 			}
+
+			proxyutil.SetProxyResponseHeaders(w.Header())
+
 			w.WriteHeader(resp.Status)
 		}
 

@@ -86,6 +86,14 @@ describe('PromQueryEditorSelector', () => {
       refId: 'A',
       expr: defaultQuery.expr,
       editorMode: QueryEditorMode.Builder,
+      visualQuery: {
+        labels: [
+          { label: 'label1', op: '=', value: 'foo' },
+          { label: 'label2', op: '=', value: 'bar' },
+        ],
+        metric: 'metric',
+        operations: [],
+      },
     });
   });
 
@@ -135,6 +143,30 @@ describe('PromQueryEditorSelector', () => {
       editorMode: QueryEditorMode.Explain,
     });
   });
+
+  it('parses query when changing to builder mode', async () => {
+    const { rerender } = renderWithProps({
+      refId: 'A',
+      expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+      editorMode: QueryEditorMode.Code,
+    });
+    switchToMode(QueryEditorMode.Builder);
+    rerender(
+      <PromQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
+          editorMode: QueryEditorMode.Builder,
+        }}
+      />
+    );
+
+    await screen.findByText('test_metric');
+    expect(screen.getByText('host.docker.internal:3000')).toBeInTheDocument();
+    expect(screen.getByText('Rate')).toBeInTheDocument();
+    expect(screen.getByText('$__interval')).toBeInTheDocument();
+  });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
@@ -145,8 +177,8 @@ function renderWithProps(overrides?: Partial<PromQuery>) {
   const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
 
-  render(<PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
-  return { onChange };
+  const stuff = render(<PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
+  return { onChange, ...stuff };
 }
 
 function expectCodeEditor() {

@@ -142,10 +142,11 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 	if serviceAccountID > 0 {
 		query.UserID = serviceAccountID
 	}
-	err := s.sqlStore.GetOrgUsers(ctx, &query)
-	if err != nil {
+
+	if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
 		return nil, err
 	}
+
 	saDTOs := make([]*serviceaccounts.ServiceAccountDTO, len(query.Result))
 	for i, user := range query.Result {
 		saDTOs[i] = &serviceaccounts.ServiceAccountDTO{
@@ -153,6 +154,7 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 			OrgId: user.OrgId,
 			Name:  user.Name,
 			Login: user.Login,
+			Role:  user.Role,
 		}
 		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
 		if err != nil {
@@ -160,7 +162,8 @@ func (s *ServiceAccountsStoreImpl) ListServiceAccounts(ctx context.Context, orgI
 		}
 		saDTOs[i].Tokens = int64(len(tokens))
 	}
-	return saDTOs, err
+
+	return saDTOs, nil
 }
 
 // RetrieveServiceAccountByID returns a service account by its ID

@@ -32,8 +32,8 @@ type Scheduler interface {
 
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig() error
+	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -51,7 +51,7 @@ type Alertmanager interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
 // API handlers.

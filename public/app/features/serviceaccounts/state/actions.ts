@@ -1,8 +1,29 @@
-import { ThunkResult } from '../../../types';
+import { ServiceAccountDTO, ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
-import { serviceAccountLoaded, serviceAccountsLoaded, serviceAccountTokensLoaded } from './reducers';
+import {
+  acOptionsLoaded,
+  builtInRolesLoaded,
+  serviceAccountLoaded,
+  serviceAccountsLoaded,
+  serviceAccountTokensLoaded,
+} from './reducers';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 
 const BASE_URL = `/api/serviceaccounts`;
+
+export function fetchACOptions(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      const options = await fetchRoleOptions();
+      dispatch(acOptionsLoaded(options));
+      const builtInRoles = await fetchBuiltinRoles();
+      dispatch(builtInRolesLoaded(builtInRoles));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
 
 export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -12,6 +33,18 @@ export function loadServiceAccount(saID: number): ThunkResult<void> {
     } catch (error) {
       console.error(error);
     }
+  };
+}
+
+export function createServiceAccountToken(
+  saID: number,
+  data: any,
+  onTokenCreated: (key: string) => void
+): ThunkResult<void> {
+  return async (dispatch) => {
+    const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, data);
+    onTokenCreated(result.key);
+    dispatch(loadServiceAccountTokens(saID));
   };
 }
 
@@ -36,7 +69,7 @@ export function loadServiceAccountTokens(saID: number): ThunkResult<void> {
 export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const response = await getBackendSrv().get(BASE_URL);
+      const response = await getBackendSrv().get(BASE_URL, accessControlQueryParam());
       dispatch(serviceAccountsLoaded(response));
     } catch (error) {
       console.error(error);
@@ -44,10 +77,9 @@ export function loadServiceAccounts(): ThunkResult<void> {
   };
 }
 
-export function updateServiceAccount(saID: number): ThunkResult<void> {
+export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
-    // TODO: implement on backend
-    await getBackendSrv().patch(`${BASE_URL}/${saID}`, {});
+    await getBackendSrv().patch(`/api/org/users/${serviceAccount.id}`, { role: serviceAccount.role });
     dispatch(loadServiceAccounts());
   };
 }

@@ -26,6 +26,8 @@ export enum AccessControlAction {
   UsersQuotasUpdate = 'users.quotas:update',
 
   ServiceAccountsCreate = 'serviceaccounts:create',
+  ServiceAccountsWrite = 'serviceaccounts:write',
+  ServiceAccountsDelete = 'serviceaccounts:delete',
 
   OrgsRead = 'orgs:read',
   OrgsPreferencesRead = 'orgs.preferences:read',
@@ -60,6 +62,9 @@ export enum AccessControlAction {
 
   ActionRolesList = 'roles:list',
   ActionBuiltinRolesList = 'roles.builtin:list',
+  ActionTeamsRolesList = 'teams.roles:list',
+  ActionTeamsRolesAdd = 'teams.roles:add',
+  ActionTeamsRolesRemove = 'teams.roles:remove',
   ActionUserRolesList = 'users.roles:list',
 }
 
