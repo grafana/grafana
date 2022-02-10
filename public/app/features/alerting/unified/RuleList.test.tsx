@@ -4,7 +4,6 @@ import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import RuleList from './RuleList';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
@@ -39,14 +38,14 @@ jest.mock('app/core/core', () => ({
 }));
 
 const mocks = {
-  getAllDataSourcesMock: typeAsJestMock(getAllDataSources),
+  getAllDataSourcesMock: jest.mocked(getAllDataSources),
 
   api: {
-    fetchRules: typeAsJestMock(fetchRules),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
-    deleteGroup: typeAsJestMock(deleteRulerRulesGroup),
-    deleteNamespace: typeAsJestMock(deleteNamespace),
-    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
+    fetchRules: jest.mocked(fetchRules),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
+    deleteGroup: jest.mocked(deleteRulerRulesGroup),
+    deleteNamespace: jest.mocked(deleteNamespace),
+    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
   },
 };
 
