@@ -15,7 +15,7 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
-  const { results, loading, onToggleSection, onKeyDown, showPreviews, onShowPreviewsChange } = useDashboardSearch(
+  const { results, loading, onToggleSection, onKeyDown, showPreviews, setShowPreviews } = useDashboardSearch(
     query,
     onCloseSearch
   );
@@ -35,14 +35,14 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
           <ActionRow
             {...{
               onLayoutChange,
-              onShowPreviewsChange: (ev) => onShowPreviewsChange(ev.target.checked),
+              setShowPreviews,
               onSortChange,
               onTagFilterChange,
               query,
               showPreviews,
             }}
           />
-          <PreviewsSystemRequirements showPreviews={showPreviews} />
+          <PreviewsSystemRequirements showPreviews={showPreviews} onRemove={() => setShowPreviews(false)} />
           <CustomScrollbar>
             <SearchResults
               results={results}

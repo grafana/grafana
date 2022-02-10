@@ -5,6 +5,8 @@ import { css } from '@emotion/css';
 
 export interface Props {
   showPreviews?: boolean;
+  /** On click handler for alert button, mostly used for dismissing the alert */
+  onRemove?: (event: React.MouseEvent) => void;
 }
 
 const MessageLink = ({ text }: { text: string }) => (
@@ -37,7 +39,7 @@ const Message = ({ requiredImageRendererPluginVersion }: { requiredImageRenderer
   );
 };
 
-export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
+export const PreviewsSystemRequirements = ({ showPreviews, onRemove }: Props) => {
   const styles = useStyles2(getStyles);
 
   const previewsEnabled = config.featureToggles.dashboardPreviews;
@@ -60,7 +62,7 @@ export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
     <>
       {shouldDisplayRequirements && (
         <div className={styles.wrapper}>
-          <Alert className={styles.alert} severity="info" title={title}>
+          <Alert className={styles.alert} severity="info" title={title} onRemove={onRemove}>
             <Message requiredImageRendererPluginVersion={requiredImageRendererPluginVersion} />
           </Alert>
         </div>
