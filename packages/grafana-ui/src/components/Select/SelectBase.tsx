@@ -119,6 +119,7 @@ export function SelectBase<T>({
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
+  // TODO change this to default to true for Grafana 9
   menuShouldPortal = false,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -140,9 +141,6 @@ export function SelectBase<T>({
   isValidNewOption,
   formatOptionLabel,
 }: SelectBaseProps<T>) {
-  if (menuShouldPortal === false) {
-    deprecationWarning('SelectBase', 'menuShouldPortal={false}', 'menuShouldPortal={true}');
-  }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
