@@ -67,7 +67,28 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
       renderer: getAggregationByRenderer(name),
       addOperationHandler: defaultAddOperationHandler,
       paramChangedHandler: getLastLabelRemovedHandler(name),
-      explainHandler: getAggregationExplainer(name),
+      explainHandler: getAggregationExplainer(name, 'by'),
+      hideFromList: true,
+    },
+    {
+      id: `__${name}_without`,
+      name: `${getPromAndLokiOperationDisplayName(name)} without`,
+      params: [
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          editor: LabelParamEditor,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'aggregations by',
+      category: PromVisualQueryOperationCategory.Aggregations,
+      renderer: getAggregationWithoutRenderer(name),
+      addOperationHandler: defaultAddOperationHandler,
+      paramChangedHandler: getLastLabelRemovedHandler(name),
+      explainHandler: getAggregationExplainer(name, 'without'),
       hideFromList: true,
     },
   ];
@@ -94,14 +115,24 @@ function getAggregationByRenderer(aggregation: string) {
   };
 }
 
+function getAggregationWithoutRenderer(aggregation: string) {
+  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    return `${aggregation} without(${model.params.join(', ')}) (${innerExpr})`;
+  };
+}
+
 /**
  * Very simple poc implementation, needs to be modified to support all aggregation operators
  */
-function getAggregationExplainer(aggregationName: string) {
+function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without') {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
     const labelWord = pluralize('label', model.params.length);
-    return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+    if (mode === 'by') {
+      return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+    } else {
+      return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+    }
   };
 }
 
