@@ -540,7 +540,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			want: 200,
 		},
 		{
-			name: "AccessControl getting tags annotations without correct permissions is forbidden",
+			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
 			args: args{
 				permissions: []*accesscontrol.Permission{},
 				url:         "/api/annotations/tags",
