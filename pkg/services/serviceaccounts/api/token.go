@@ -16,7 +16,7 @@ import (
 
 const failedToDeleteMsg = "Failed to delete API key"
 
-type TokenDOT struct {
+type TokenDTO struct {
 	Id                     int64           `json:"id"`
 	Name                   string          `json:"name"`
 	Role                   models.RoleType `json:"role"`
@@ -43,7 +43,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	}
 
 	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
-		result := make([]*TokenDOT, len(saTokens))
+		result := make([]*TokenDTO, len(saTokens))
 		for i, t := range saTokens {
 			var expiration *time.Time = nil
 			var secondsUntilExpiration float64 = 0
@@ -57,7 +57,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 				}
 			}
 
-			result[i] = &TokenDOT{
+			result[i] = &TokenDTO{
 				Id:                     t.Id,
 				Name:                   t.Name,
 				Role:                   t.Role,
