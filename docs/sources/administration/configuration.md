@@ -453,7 +453,11 @@ value is `true`.
 
 ### check_for_updates
 
-Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
+Set to false to disable all checks to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
+
+### check_for_plugin_updates
+
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins. The version information is used in some UI views to notify that a new plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 ### google_analytics_ua_id
 
