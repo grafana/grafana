@@ -419,7 +419,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Put("/:annotationId", routing.Wrap(UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", routing.Wrap(PatchAnnotation))
 			annotationsRoute.Post("/graphite", reqEditorRole, routing.Wrap(PostGraphiteAnnotation))
-			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead)), routing.Wrap(GetAnnotationTags))
+			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead, ac.ScopeAnnotationsTagsAll)), routing.Wrap(GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))

@@ -253,7 +253,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
-				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
