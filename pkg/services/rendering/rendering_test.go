@@ -149,9 +149,22 @@ func TestRenderLimitImage(t *testing.T) {
 func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
-		Cfg: cfg,
-		log: log.New("rendering-test"),
+		Cfg:                   cfg,
+		RendererPluginManager: &dummyPluginManager{},
+		log:                   log.New("rendering-test"),
 	}
+
+	t.Run("When renderer url is set but version is missing", func(t *testing.T) {
+		rs.Cfg.RendererUrl = "http://localhost:8081/render"
+		rs.version = ""
+		require.Equal(t, false, rs.IsAvailable())
+	})
+
+	t.Run("When renderer url is set and version is present", func(t *testing.T) {
+		rs.Cfg.RendererUrl = "http://localhost:8081/render"
+		rs.version = "1.0.0"
+		require.Equal(t, true, rs.IsAvailable())
+	})
 
 	t.Run("When renderer responds with correct version should return that version", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

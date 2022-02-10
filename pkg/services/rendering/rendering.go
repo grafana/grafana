@@ -167,7 +167,7 @@ func (rs *RenderingService) remoteAvailable() bool {
 }
 
 func (rs *RenderingService) IsAvailable() bool {
-	return rs.remoteAvailable() || rs.pluginAvailable()
+	return (rs.remoteAvailable() && rs.Version() != "") || rs.pluginAvailable()
 }
 
 func (rs *RenderingService) Version() string {
