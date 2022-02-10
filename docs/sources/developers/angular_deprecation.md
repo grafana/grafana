@@ -23,7 +23,7 @@ Our plan is to fully remove angular plugin support in version 10 released in 202
 
 Depending on if it’s a data source plugin, panel plugin, or app plugin the process will differ.
 
-For panels the rendering logic could in some cases be easily preserved but all options need to be redone to use the declarative options framework. For data source plugins the query editor and config options will likely need a total rewrite.
+For panels, the rendering logic could in some cases be easily preserved but all options need to be redone to use the declarative options framework. For data source plugins the query editor and config options will likely need a total rewrite.
 
 ### Links
 
