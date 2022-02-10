@@ -57,10 +57,10 @@ func TestCapabilities(t *testing.T) {
 			rendererUrl:     dummyRendererUrl,
 			rendererVersion: "",
 			capabilityName:  testCapabilityName,
-			expectedError:   ErrInvalidPluginVersion,
+			expectedError:   ErrRenderUnavailable,
 			expectedResult: CapabilitySupportRequestResult{
 				IsSupported:      false,
-				SemverConstraint: testCapabilitySemverConstraint,
+				SemverConstraint: "",
 			},
 		},
 		{
