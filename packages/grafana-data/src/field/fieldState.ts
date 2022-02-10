@@ -38,9 +38,10 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
 
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const existingTitle = field.state?.displayName;
-  const calculatedForMultipleFrames = Boolean(field.state?.multipleFrames) && !Boolean(allFrames);
+  const canUseCachedDisplayName =
+    !Boolean(field.state?.multipleFrames) || (Boolean(field.state?.multipleFrames) && Boolean(allFrames));
 
-  if (existingTitle && !calculatedForMultipleFrames) {
+  if (existingTitle && canUseCachedDisplayName) {
     return existingTitle;
   }
 
