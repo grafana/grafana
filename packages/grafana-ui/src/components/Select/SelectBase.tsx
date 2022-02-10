@@ -20,7 +20,6 @@ import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { ActionMeta, SelectBaseProps, SelectValue } from './types';
-import { deprecationWarning } from '@grafana/data';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
