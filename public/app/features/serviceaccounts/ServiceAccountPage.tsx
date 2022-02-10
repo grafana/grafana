@@ -1,13 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
 import { StoreState, ServiceAccountDTO, ApiKey } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { deleteServiceAccountToken, loadServiceAccount, loadServiceAccountTokens } from './state/actions';
+import {
+  deleteServiceAccountToken,
+  loadServiceAccount,
+  loadServiceAccountTokens,
+  createServiceAccountToken,
+} from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel } from '@grafana/data';
+import { getTimeZone, NavModel, OrgRole } from '@grafana/data';
+import { Button, VerticalGroup } from '@grafana/ui';
+import { CreateTokenModal } from './CreateTokenModal';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
@@ -28,6 +35,7 @@ function mapStateToProps(state: StoreState) {
 const mapDispatchToProps = {
   loadServiceAccount,
   loadServiceAccountTokens,
+  createServiceAccountToken,
   deleteServiceAccountToken,
 };
 
@@ -43,8 +51,12 @@ const ServiceAccountPageUnconnected = ({
   isLoading,
   loadServiceAccount,
   loadServiceAccountTokens,
+  createServiceAccountToken,
   deleteServiceAccountToken,
 }: Props) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newToken, setNewToken] = useState('');
+
   useEffect(() => {
     const serviceAccountId = parseInt(match.params.id, 10);
     loadServiceAccount(serviceAccountId);
@@ -53,6 +65,22 @@ const ServiceAccountPageUnconnected = ({
 
   const onDeleteServiceAccountToken = (key: ApiKey) => {
     deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
+  };
+
+  const onCreateToken = (name: string) => {
+    createServiceAccountToken(
+      serviceAccount.id,
+      {
+        name,
+        role: OrgRole.Viewer,
+      },
+      setNewToken
+    );
+  };
+
+  const onModalClose = () => {
+    setIsModalOpen(false);
+    setNewToken('');
   };
 
   return (
@@ -77,10 +105,14 @@ const ServiceAccountPageUnconnected = ({
             />
           </>
         )}
-        <h3 className="page-heading">Tokens</h3>
-        {tokens && (
-          <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
-        )}
+        <VerticalGroup spacing="md">
+          <Button onClick={() => setIsModalOpen(true)}>Add token</Button>
+          <h3 className="page-heading">Tokens</h3>
+          {tokens && (
+            <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
+          )}
+        </VerticalGroup>
+        <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
       </Page.Contents>
     </Page>
   );

@@ -47,7 +47,7 @@ const getSelectContainerStyles = stylesFactory((theme: GrafanaTheme2, focused: b
         /* The display property is set by the styles prop in SelectBase because it's dependant on the width prop  */
         flex-direction: row;
         flex-wrap: wrap;
-        align-items: center;
+        align-items: stretch;
         justify-content: space-between;
 
         min-height: 32px;

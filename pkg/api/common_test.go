@@ -102,6 +102,7 @@ func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(sc.t, err)
+	req.Header.Add("Content-Type", "application/json")
 	sc.req = req
 
 	return sc
@@ -117,6 +118,8 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 		panic(fmt.Sprintf("Making request failed: %s", err))
 	}
 
+	req.Header.Add("Content-Type", "application/json")
+
 	q := req.URL.Query()
 	for k, v := range queryParams {
 		q.Add(k, v)
@@ -129,6 +132,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 func (sc *scenarioContext) fakeReqNoAssertions(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, _ := http.NewRequest(method, url, nil)
+	req.Header.Add("Content-Type", "application/json")
 	sc.req = req
 
 	return sc
@@ -140,7 +144,7 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 
 	req, _ := http.NewRequest(method, url, nil)
 	req.Header = http.Header{"Cookie": sc.resp.Header()["Set-Cookie"]}
-
+	req.Header.Add("Content-Type", "application/json")
 	sc.req = req
 
 	return sc

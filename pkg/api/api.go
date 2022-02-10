@@ -27,7 +27,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqOrgAdminFolderAdminOrTeamAdmin := middleware.OrgAdminFolderAdminOrTeamAdmin
-	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
+	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := acmiddleware.Middleware(hs.AccessControl)
@@ -198,8 +198,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", routing.Wrap(hs.GetTeamByID))
-			teamsRoute.Get("/search", routing.Wrap(hs.SearchTeams))
+			teamsRoute.Get("/:teamId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamByID))
+			teamsRoute.Get("/search", authorize(reqSignedIn, ac.EvalPermission(ac.ActionTeamsRead)), routing.Wrap(hs.SearchTeams))
 		})
 
 		// org information available to all users.
@@ -238,7 +238,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/orgs", authorizeInOrg(reqSignedIn, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsCreate)), quota("org"), routing.Wrap(hs.CreateOrg))
 
 		// search all orgs
-		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(SearchOrgs))
+		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.SearchOrgs))
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
@@ -273,17 +273,17 @@ func (hs *HTTPServer) registerRoutes() {
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			datasourceRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSources))
-			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), routing.Wrap(AddDataSource))
+			datasourceRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesCreate)), quota("data_source"), routing.Wrap(hs.AddDataSource))
 			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesWrite, ScopeDatasourceID)), routing.Wrap(hs.UpdateDataSource))
 			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceID)), routing.Wrap(hs.DeleteDataSourceById))
 			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceUID)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesDelete, ScopeDatasourceName)), routing.Wrap(hs.DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceById))
 			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(GetDataSourceByName))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)), routing.Wrap(hs.GetDataSourceByName))
 		})
 
-		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesIDRead, ScopeDatasourceName)), routing.Wrap(GetDataSourceIdByName))
+		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ac.EvalPermission(ActionDatasourcesIDRead, ScopeDatasourceName)), routing.Wrap(hs.GetDataSourceIdByName))
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
@@ -340,7 +340,7 @@ func (hs *HTTPServer) registerRoutes() {
 				dashboardRoute.Put("/uid/:uid/img/:kind/:theme", hs.ThumbService.UpdateThumbnailState)
 			}
 
-			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
+			dashboardRoute.Post("/calculate-diff", routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))

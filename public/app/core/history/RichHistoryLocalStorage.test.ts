@@ -4,23 +4,47 @@ import { RichHistoryQuery } from '../../types';
 import { DataQuery } from '@grafana/data';
 import { afterEach, beforeEach } from '../../../test/lib/common';
 import { RichHistoryStorageWarning } from './RichHistoryStorage';
+import { backendSrv } from '../services/backend_srv';
 
 const key = 'grafana.explore.richHistory';
 
-const mockItem: RichHistoryQuery = {
-  ts: 2,
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => backendSrv,
+  getDataSourceSrv: () => {
+    return {
+      getList: () => {
+        return [
+          { uid: 'dev-test-uid', name: 'dev-test' },
+          { uid: 'dev-test-2-uid', name: 'dev-test-2' },
+        ];
+      },
+    };
+  },
+}));
+
+interface MockQuery extends DataQuery {
+  query: string;
+}
+
+const mockItem: RichHistoryQuery<MockQuery> = {
+  id: '2',
+  createdAt: 2,
   starred: true,
+  datasourceUid: 'dev-test-uid',
   datasourceName: 'dev-test',
   comment: 'test',
-  queries: [{ refId: 'ref', query: 'query-test' } as DataQuery],
+  queries: [{ refId: 'ref', query: 'query-test' }],
 };
 
-const mockItem2: RichHistoryQuery = {
-  ts: 3,
+const mockItem2: RichHistoryQuery<MockQuery> = {
+  id: '3',
+  createdAt: 3,
   starred: true,
+  datasourceUid: 'dev-test-2-uid',
   datasourceName: 'dev-test-2',
   comment: 'test-2',
-  queries: [{ refId: 'ref-2', query: 'query-2' } as DataQuery],
+  queries: [{ refId: 'ref-2', query: 'query-2' }],
 };
 
 describe('RichHistoryLocalStorage', () => {
@@ -45,7 +69,7 @@ describe('RichHistoryLocalStorage', () => {
     it('should save query history to localStorage', async () => {
       await storage.addToRichHistory(mockItem);
       expect(store.exists(key)).toBeTruthy();
-      expect(store.getObject(key)).toMatchObject([mockItem]);
+      expect(await storage.getRichHistory()).toMatchObject([mockItem]);
     });
 
     it('should not save duplicated query to localStorage', async () => {
@@ -54,24 +78,25 @@ describe('RichHistoryLocalStorage', () => {
       await expect(async () => {
         await storage.addToRichHistory(mockItem2);
       }).rejects.toThrow('Entry already exists');
-      expect(store.getObject(key)).toMatchObject([mockItem2, mockItem]);
+      expect(await storage.getRichHistory()).toMatchObject([mockItem2, mockItem]);
     });
 
     it('should update starred in localStorage', async () => {
       await storage.addToRichHistory(mockItem);
-      await storage.updateStarred(mockItem.ts, false);
-      expect(store.getObject(key)[0].starred).toEqual(false);
+      await storage.updateStarred(mockItem.id, false);
+      expect((await storage.getRichHistory())[0].starred).toEqual(false);
     });
 
     it('should update comment in localStorage', async () => {
       await storage.addToRichHistory(mockItem);
-      await storage.updateComment(mockItem.ts, 'new comment');
-      expect(store.getObject(key)[0].comment).toEqual('new comment');
+      await storage.updateComment(mockItem.id, 'new comment');
+      expect((await storage.getRichHistory())[0].comment).toEqual('new comment');
     });
 
     it('should delete query in localStorage', async () => {
       await storage.addToRichHistory(mockItem);
-      await storage.deleteRichHistory(mockItem.ts);
+      await storage.deleteRichHistory(mockItem.id);
+      expect(await storage.getRichHistory()).toEqual([]);
       expect(store.getObject(key)).toEqual([]);
     });
   });
@@ -92,9 +117,9 @@ describe('RichHistoryLocalStorage', () => {
 
       expect(richHistory).toMatchObject([
         mockItem,
-        { starred: true, ts: 0, queries: [] },
-        { starred: true, ts: now, queries: [] },
-        { starred: false, ts: now, queries: [] },
+        { starred: true, createdAt: 0, queries: [] },
+        { starred: true, createdAt: now, queries: [] },
+        { starred: false, createdAt: now, queries: [] },
       ]);
     });
 
@@ -119,7 +144,7 @@ describe('RichHistoryLocalStorage', () => {
       expect(history.filter((h) => !h.starred)).toHaveLength(notStarredItemsInHistory);
 
       store.setObject(key, history);
-      const warning = await storage.addToRichHistory(mockItem);
+      const { warning } = await storage.addToRichHistory(mockItem);
       expect(warning).toMatchObject({
         type: RichHistoryStorageWarning.LimitExceeded,
       });
@@ -143,13 +168,22 @@ describe('RichHistoryLocalStorage', () => {
 
     describe('should load from localStorage data in old formats', () => {
       it('should load when queries are strings', async () => {
-        const oldHistoryItem = {
-          ...mockItem,
-          queries: ['test query 1', 'test query 2', 'test query 3'],
-        };
-        store.setObject(key, [oldHistoryItem]);
+        store.setObject(key, [
+          {
+            ts: 2,
+            starred: true,
+            datasourceName: 'dev-test',
+            comment: 'test',
+            queries: ['test query 1', 'test query 2', 'test query 3'],
+          },
+        ]);
         const expectedHistoryItem = {
-          ...mockItem,
+          id: '2',
+          createdAt: 2,
+          starred: true,
+          datasourceUid: 'dev-test-uid',
+          datasourceName: 'dev-test',
+          comment: 'test',
           queries: [
             {
               expr: 'test query 1',
@@ -171,13 +205,22 @@ describe('RichHistoryLocalStorage', () => {
       });
 
       it('should load when queries are json-encoded strings', async () => {
-        const oldHistoryItem = {
-          ...mockItem,
-          queries: ['{"refId":"A","key":"key1","metrics":[]}', '{"refId":"B","key":"key2","metrics":[]}'],
-        };
-        store.setObject(key, [oldHistoryItem]);
+        store.setObject(key, [
+          {
+            ts: 2,
+            starred: true,
+            datasourceName: 'dev-test',
+            comment: 'test',
+            queries: ['{"refId":"A","key":"key1","metrics":[]}', '{"refId":"B","key":"key2","metrics":[]}'],
+          },
+        ]);
         const expectedHistoryItem = {
-          ...mockItem,
+          id: '2',
+          createdAt: 2,
+          starred: true,
+          datasourceUid: 'dev-test-uid',
+          datasourceName: 'dev-test',
+          comment: 'test',
           queries: [
             {
               refId: 'A',
