@@ -49,7 +49,9 @@ export class TeamList extends PureComponent<Props, State> {
   }
 
   async fetchTeams() {
-    await this.props.loadTeams();
+    if (contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)) {
+      await this.props.loadTeams();
+    }
   }
 
   async fetchRoleOptions() {
@@ -197,6 +199,9 @@ export class TeamList extends PureComponent<Props, State> {
     const { teamsCount, hasFetched } = this.props;
 
     if (!hasFetched) {
+      if (!contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)) {
+        return this.renderEmptyList();
+      }
       return null;
     }
 
@@ -212,7 +217,9 @@ export class TeamList extends PureComponent<Props, State> {
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
+        <Page.Contents isLoading={!hasFetched && contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)}>
+          {this.renderList()}
+        </Page.Contents>
       </Page>
     );
   }
