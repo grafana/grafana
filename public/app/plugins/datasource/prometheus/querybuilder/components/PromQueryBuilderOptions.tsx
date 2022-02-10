@@ -32,7 +32,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const queryTypeOptions = getQueryTypeOptions(false);
+  const queryTypeOptions = getQueryTypeOptions(app === CoreApp.Explore);
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
