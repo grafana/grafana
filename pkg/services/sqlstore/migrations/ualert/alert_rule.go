@@ -262,6 +262,8 @@ func transExecErr(s string) (string, error) {
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
 		return "Error", nil
+	case "ok":
+		return "OK", nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }
