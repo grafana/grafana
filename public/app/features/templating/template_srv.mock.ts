@@ -46,7 +46,7 @@ export class TemplateSrvMock implements TemplateSrv {
     return match.slice(1).find((match) => match !== undefined);
   }
 
-  containsVariables(target: string | undefined): boolean {
+  containsTemplate(target: string | undefined): boolean {
     if (!target) {
       return false;
     }

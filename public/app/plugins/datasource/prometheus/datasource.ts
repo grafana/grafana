@@ -225,7 +225,7 @@ export class PrometheusDatasource
   }
 
   targetContainsTemplate(target: PromQuery) {
-    return this.templateSrv.containsVariables(target.expr);
+    return this.templateSrv.containsTemplate(target.expr);
   }
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {

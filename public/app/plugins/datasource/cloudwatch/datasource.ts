@@ -882,12 +882,12 @@ export class CloudWatchDatasource
 
   targetContainsTemplate(target: any) {
     return (
-      this.templateSrv.containsVariables(target.region) ||
-      this.templateSrv.containsVariables(target.namespace) ||
-      this.templateSrv.containsVariables(target.metricName) ||
-      this.templateSrv.containsVariables(target.expression!) ||
-      target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsVariables(logGroup)) ||
-      find(target.dimensions, (v, k) => this.templateSrv.containsVariables(k) || this.templateSrv.containsVariables(v))
+      this.templateSrv.containsTemplate(target.region) ||
+      this.templateSrv.containsTemplate(target.namespace) ||
+      this.templateSrv.containsTemplate(target.metricName) ||
+      this.templateSrv.containsTemplate(target.expression!) ||
+      target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
+      find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
   }
 

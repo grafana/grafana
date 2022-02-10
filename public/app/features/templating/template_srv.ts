@@ -189,7 +189,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  containsVariables(target: string | undefined): boolean {
+  containsTemplate(target: string | undefined): boolean {
     if (!target) {
       return false;
     }

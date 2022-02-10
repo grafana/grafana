@@ -417,7 +417,7 @@ export class GraphiteDatasource
   }
 
   targetContainsTemplate(target: GraphiteQuery) {
-    return this.templateSrv.containsVariables(target.target ?? '');
+    return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {

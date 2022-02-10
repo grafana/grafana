@@ -21,7 +21,7 @@ export interface TemplateSrv {
   /**
    * Checks if a target contains template variables.
    */
-  containsVariables(target?: string): boolean;
+  containsTemplate(target?: string): boolean;
 }
 
 let singletonInstance: TemplateSrv;
