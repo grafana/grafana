@@ -3,8 +3,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { selectOptionInTest } from '@grafana/ui';
 import { Props, SearchResultsFilter } from './SearchResultsFilter';
 import { SearchLayout } from '../types';
-import { Provider } from 'react-redux';
-import { configureStore } from '../../../store/configureStore';
 
 jest.mock('app/core/services/search_srv');
 
@@ -27,8 +25,6 @@ const searchQuery = {
 };
 
 const setup = (propOverrides?: Partial<Props>) => {
-  const store = configureStore();
-
   const props: Props = {
     allChecked: false,
     canDelete: false,
@@ -47,11 +43,7 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(
-    <Provider store={store}>
-      <SearchResultsFilter {...props} />
-    </Provider>
-  );
+  render(<SearchResultsFilter {...props} />);
 };
 
 describe('SearchResultsFilter', () => {

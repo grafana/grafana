@@ -10,8 +10,6 @@ import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
 import { Echo } from 'app/core/services/echo/Echo';
-import { configureStore } from '../../../store/configureStore';
-import { Provider } from 'react-redux';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -28,17 +26,11 @@ afterEach(() => {
 });
 
 const setup = (testProps?: Partial<Props>) => {
-  const store = configureStore();
-
   const props: any = {
     onCloseSearch: () => {},
     ...testProps,
   };
-  render(
-    <Provider store={store}>
-      <DashboardSearch {...props} />
-    </Provider>
-  );
+  render(<DashboardSearch {...props} />);
   jest.runOnlyPendingTimers();
 };
 
