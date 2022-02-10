@@ -7,22 +7,34 @@ export interface Props {
   showPreviews?: boolean;
 }
 
-const getText = (requiredImageRendererPluginVersion?: string) => {
+const MessageLink = ({ text }: { text: string }) => (
+  <a
+    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="external-link"
+  >
+    {text}
+  </a>
+);
+
+const Message = ({ requiredImageRendererPluginVersion }: { requiredImageRendererPluginVersion?: string }) => {
   if (requiredImageRendererPluginVersion) {
-    return {
-      title: 'Image renderer plugin needs to be updated',
-      beforeLink: 'You must update the ',
-      link: 'Grafana image renderer plugin',
-      afterLink: ` to version ${requiredImageRendererPluginVersion} to enable dashboard previews. Please contact your Grafana administrator to update the plugin`,
-    };
+    return (
+      <>
+        You must update the <MessageLink text="Grafana image renderer plugin" /> to version{' '}
+        {requiredImageRendererPluginVersion} to enable dashboard previews. Please contact your Grafana administrator to
+        update the plugin.
+      </>
+    );
   }
 
-  return {
-    title: 'Image renderer plugin not installed',
-    beforeLink: 'You must install the ',
-    link: 'Grafana image renderer plugin',
-    afterLink: ` to enable dashboard previews. Please contact your Grafana administrator to install the plugin.`,
-  };
+  return (
+    <>
+      You must install the <MessageLink text="Grafana image renderer plugin" /> to enable dashboard previews. Please
+      contact your Grafana administrator to install the plugin.
+    </>
+  );
 };
 
 export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
@@ -31,28 +43,24 @@ export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
   const previewsEnabled = config.featureToggles.dashboardPreviews;
   const rendererAvailable = config.rendererAvailable;
 
-  const { systemRequirements, thumbnailsExist } = config.dashboardPreviews;
+  const {
+    systemRequirements: { met: systemRequirementsMet, requiredImageRendererPluginVersion },
+    thumbnailsExist,
+  } = config.dashboardPreviews;
 
   const arePreviewsEnabled = previewsEnabled && showPreviews;
-  const areRequirementsMet = (rendererAvailable && systemRequirements.met) || thumbnailsExist;
+  const areRequirementsMet = (rendererAvailable && systemRequirementsMet) || thumbnailsExist;
   const shouldDisplayRequirements = arePreviewsEnabled && !areRequirementsMet;
 
-  const text = getText(systemRequirements.requiredImageRendererPluginVersion);
+  const title = requiredImageRendererPluginVersion
+    ? 'Image renderer plugin needs to be updated'
+    : 'Image renderer plugin not installed';
 
   return (
     shouldDisplayRequirements && (
       <div className={styles.wrapper}>
-        <Alert className={styles.alert} severity="info" title={text.title}>
-          <>{text.beforeLink}</>
-          <a
-            href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
-          >
-            {text.link}
-          </a>
-          {text.afterLink}
+        <Alert className={styles.alert} severity="info" title={title}>
+          <Message requiredImageRendererPluginVersion={requiredImageRendererPluginVersion} />
         </Alert>
       </div>
     )
