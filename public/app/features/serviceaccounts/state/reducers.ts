@@ -9,6 +9,7 @@ export const initialState: ServiceAccountsState = {
   isLoading: true,
   builtInRoles: {},
   roleOptions: [],
+  serviceAccountToRemove: null,
 };
 
 export const initialStateProfile: ServiceAccountProfileState = {
@@ -50,6 +51,9 @@ const serviceAccountsSlice = createSlice({
     builtInRolesLoaded: (state, action: PayloadAction<Record<string, Role[]>>): ServiceAccountsState => {
       return { ...state, builtInRoles: action.payload };
     },
+    serviceAccountToRemoveLoaded: (state, action: PayloadAction<ServiceAccountDTO | null>): ServiceAccountsState => {
+      return { ...state, serviceAccountToRemove: action.payload };
+    },
   },
 });
 
@@ -59,6 +63,7 @@ export const {
   serviceAccountsLoaded,
   acOptionsLoaded,
   builtInRolesLoaded,
+  serviceAccountToRemoveLoaded,
 } = serviceAccountsSlice.actions;
 
 export const { serviceAccountLoaded, serviceAccountTokensLoaded } = serviceAccountProfileSlice.actions;
