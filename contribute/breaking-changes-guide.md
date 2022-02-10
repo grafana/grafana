@@ -61,7 +61,7 @@ This means that a member was changed in a way that can break dependent plugins.
 ![](./breaking-changes-console-screenshot-2.png)
 
 **No breaking changes** (console view):<br />
-Seeing this does not mean that you made no changes, but that most probably none of them were breaking. You are good to go! 👏
+Seeing this suggests that whilst changes were made, most probably none of them were breaking. You are good to go! 👏
 
 ![](./breaking-changes-console-screenshot-3.png)
 
