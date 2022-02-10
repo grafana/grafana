@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
-import { Tooltip, PopoverContent, JSONFormatter } from '@grafana/ui';
+import { Tooltip, PopoverContent } from '@grafana/ui';
 import { getLocationSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -81,12 +81,6 @@ export class PanelHeaderCorner extends Component<Props> {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     const className = `panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`;
     const ariaLabel = selectors.components.Panels.Panel.headerCornerInfo(infoMode.toLowerCase());
-
-    try {
-      const contentJSON = JSON.parse(content.toString());
-      console.log(contentJSON);
-      content = <JSONFormatter json={contentJSON} open={4} />;
-    } catch {}
 
     return (
       <Tooltip content={content} placement="top-start" theme={theme}>
