@@ -48,8 +48,7 @@ possible breaking changes. It also adds the `"breaking change"` label to the pul
 Receiving a comment like the one above does not necessarily mean that you actually introduced breaking
 changes (as certain edge cases are still not covered by the tool), but as there is a good chance we rather raise attention.
 
-By clicking the links in the comment ("more info" or "Check console output") you can see the actual console
-output of the tool which gives more detailed information on what triggered the notification.
+By clicking the links in the comment ("more info" or "Check console output") you can view more detailed information about what triggered the notification.
 
 **Removed exported members** (consolve view):<br />
 This means that some previously exported members won't be available in the newer version of the package which can break dependent plugins.
