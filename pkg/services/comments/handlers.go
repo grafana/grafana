@@ -68,6 +68,8 @@ func (a *UserIDFilter) InCondition() *models.InCondition {
 type GetCmd struct {
 	ContentType string `json:"contentType"`
 	ObjectId    string `json:"objectId"`
+	Limit       uint   `json:"limit"`
+	BeforeId    int64  `json:"beforeId"`
 }
 
 type CreateCmd struct {
@@ -121,7 +123,10 @@ func (s *Service) Get(ctx context.Context, orgId int64, signedInUser *models.Sig
 		return nil, ErrPermissionDenied
 	}
 
-	messages, err := s.storage.Get(ctx, orgId, cmd.ContentType, cmd.ObjectId, GetFilter{})
+	messages, err := s.storage.Get(ctx, orgId, cmd.ContentType, cmd.ObjectId, GetFilter{
+		Limit:    cmd.Limit,
+		BeforeID: cmd.BeforeId,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -74,7 +74,9 @@ func (s *sqlStorage) Create(ctx context.Context, orgId int64, ct string, objectI
 	})
 }
 
-func (s *sqlStorage) Get(ctx context.Context, orgId int64, ct string, objectId string, _ GetFilter) ([]*commentmodel.Comment, error) {
+const maxLimit = 300
+
+func (s *sqlStorage) Get(ctx context.Context, orgId int64, ct string, objectId string, filter GetFilter) ([]*commentmodel.Comment, error) {
 	if !checkContentType(ct) {
 		return nil, errUnknownContentType
 	}
@@ -83,6 +85,14 @@ func (s *sqlStorage) Get(ctx context.Context, orgId int64, ct string, objectId s
 	}
 
 	var result []*commentmodel.Comment
+
+	limit := 100
+	if filter.Limit > 0 {
+		limit = int(filter.Limit)
+		if limit > maxLimit {
+			limit = maxLimit
+		}
+	}
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		group := commentmodel.CommentGroup{
@@ -97,6 +107,10 @@ func (s *sqlStorage) Get(ctx context.Context, orgId int64, ct string, objectId s
 		if !has {
 			return nil
 		}
-		return dbSession.Where("group_id=?", group.Id).OrderBy("id desc").Limit(100).Find(&result)
+		clause := dbSession.Where("group_id=?", group.Id)
+		if filter.BeforeID > 0 {
+			clause.Where("id < ?", filter.BeforeID)
+		}
+		return clause.OrderBy("id desc").Limit(limit).Find(&result)
 	})
 }

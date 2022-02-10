@@ -7,7 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 )
 
-type GetFilter struct{}
+type GetFilter struct {
+	Limit    uint
+	BeforeID int64
+}
 
 var (
 	errUnknownContentType = errors.New("unknown content type")
