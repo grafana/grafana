@@ -80,9 +80,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	}
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveDashboardDiscussions) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
-			addChatMigrations(mg)
-			addChatMessageMigrations(mg)
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardComments) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationComments) {
+			addCommentGroupMigrations(mg)
+			addCommentMigrations(mg)
 		}
 	}
 }

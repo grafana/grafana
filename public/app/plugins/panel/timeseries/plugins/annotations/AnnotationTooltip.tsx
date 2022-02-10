@@ -60,7 +60,7 @@ export const AnnotationTooltip = ({
     );
   }
 
-  const areAnnotationCommentsEnabled = config.featureToggles.liveAnnotationDiscussions;
+  const areAnnotationCommentsEnabled = config.featureToggles.annotationComments;
 
   return (
     <div className={styles.wrapper} style={areAnnotationCommentsEnabled ? { minWidth: '300px' } : {}}>
@@ -89,7 +89,7 @@ export const AnnotationTooltip = ({
         </>
         {areAnnotationCommentsEnabled && (
           <div className={styles.commentWrapper}>
-            <CommentManager contentTypeId={3} objectId={annotation.id.toString()} />
+            <CommentManager contentType={'annotation'} objectId={annotation.id.toString()} />
           </div>
         )}
       </div>

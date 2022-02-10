@@ -1,4 +1,4 @@
-package chatmodel
+package commentmodel
 
 import (
 	"context"
@@ -36,12 +36,12 @@ func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, i
 	return query.Result, nil
 }
 
-func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, contentTypeID int, objectID string) (bool, error) {
-	switch contentTypeID {
+func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, contentType string, objectID string) (bool, error) {
+	switch contentType {
 	case ContentTypeOrg:
 		return false, nil
 	case ContentTypeDashboard:
-		if !c.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
+		if !c.features.IsEnabled(featuremgmt.FlagDashboardComments) {
 			return false, nil
 		}
 		dash, err := c.getDashboardByUid(ctx, orgId, objectID)
@@ -53,7 +53,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 			return false, nil
 		}
 	case ContentTypeAnnotation:
-		if !c.features.IsEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
+		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}
 		repo := annotations.GetRepository()
@@ -83,12 +83,12 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 	return true, nil
 }
 
-func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, contentTypeID int, objectID string) (bool, error) {
-	switch contentTypeID {
+func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, contentType string, objectID string) (bool, error) {
+	switch contentType {
 	case ContentTypeOrg:
 		return false, nil
 	case ContentTypeDashboard:
-		if !c.features.IsEnabled(featuremgmt.FlagLiveDashboardDiscussions) {
+		if !c.features.IsEnabled(featuremgmt.FlagDashboardComments) {
 			return false, nil
 		}
 		dash, err := c.getDashboardByUid(ctx, orgId, objectID)
@@ -100,7 +100,7 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 			return false, nil
 		}
 	case ContentTypeAnnotation:
-		if !c.features.IsEnabled(featuremgmt.FlagLiveAnnotationDiscussions) {
+		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}
 		repo := annotations.GetRepository()

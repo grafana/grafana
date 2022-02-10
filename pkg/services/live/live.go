@@ -13,8 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -26,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
+	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/database"
@@ -49,6 +47,8 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/go-redis/redis/v8"
 	"github.com/gobwas/glob"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 )
@@ -241,7 +241,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["chat"] = features.NewChatHandler(chatmodel.NewPermissionChecker(g.bus, g.Features))
+	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.bus, g.Features))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()

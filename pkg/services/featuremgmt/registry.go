@@ -133,13 +133,13 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:        "liveDashboardDiscussions",
-			Description: "Enable dashboard-wide Live discussions",
+			Name:        "dashboardComments",
+			Description: "Enable dashboard-wide comments",
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "liveAnnotationDiscussions",
-			Description: "Enable annotation Live discussions",
+			Name:        "annotationComments",
+			Description: "Enable annotation comments",
 			State:       FeatureStateAlpha,
 		},
 	}

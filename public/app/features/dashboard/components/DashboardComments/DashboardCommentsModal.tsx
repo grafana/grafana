@@ -16,7 +16,7 @@ export const DashboardCommentsModal = ({ dashboard, onDismiss }: Props) => {
 
   return (
     <Modal isOpen={true} title="Dashboard comments" icon="save" onDismiss={onDismiss} className={styles.modal}>
-      <CommentManager contentTypeId={2} objectId={dashboard.uid} />
+      <CommentManager contentType={'dashboard'} objectId={dashboard.uid} />
     </Modal>
   );
 };

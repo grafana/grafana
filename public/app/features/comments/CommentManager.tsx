@@ -7,7 +7,7 @@ import { CommentView } from './CommentView';
 import { Message, MessagePacket } from './types';
 
 export interface Props {
-  contentTypeId: number;
+  contentType: string;
   objectId: string;
 }
 
@@ -30,13 +30,13 @@ export class CommentManager extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const resp = await getBackendSrv().post('/api/chats/get-messages/', {
+    const resp = await getBackendSrv().post('/api/comments/get', {
+      contentType: this.props.contentType,
       objectId: this.props.objectId,
-      contentTypeId: this.props.contentTypeId,
     });
     this.packetCounter++;
     this.setState({
-      messages: resp.chatMessages,
+      messages: resp.comments,
     });
     this.updateSubscription();
   }
@@ -59,8 +59,8 @@ export class CommentManager extends PureComponent<Props, State> {
   getLiveAddress = () => {
     return {
       scope: LiveChannelScope.Grafana,
-      namespace: 'chat', // holds on to the last value
-      path: `${this.props.contentTypeId}/${this.props.objectId}`,
+      namespace: 'comment',
+      path: `${this.props.contentType}/${this.props.objectId}`,
     };
   };
 
@@ -75,10 +75,10 @@ export class CommentManager extends PureComponent<Props, State> {
       this.subscription = channel.subscribe({
         next: (msg) => {
           if (isLiveChannelMessageEvent(msg)) {
-            const { messageCreated } = msg.message;
-            if (messageCreated) {
+            const { commentCreated } = msg.message;
+            if (commentCreated) {
               this.setState((prevState) => ({
-                messages: [...prevState.messages, messageCreated],
+                messages: [...prevState.messages, commentCreated],
               }));
               this.packetCounter++;
             }
@@ -89,9 +89,9 @@ export class CommentManager extends PureComponent<Props, State> {
   };
 
   addComment = async (comment: string): Promise<boolean> => {
-    const response = await getBackendSrv().post('/api/chats/send-message/', {
+    const response = await getBackendSrv().post('/api/comments/create', {
+      contentType: this.props.contentType,
       objectId: this.props.objectId,
-      contentTypeId: this.props.contentTypeId,
       content: comment,
     });
 

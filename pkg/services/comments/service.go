@@ -1,10 +1,10 @@
-package chats
+package comments
 
 import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
+	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -16,7 +16,7 @@ type Service struct {
 	bus         bus.Bus
 	live        *live.GrafanaLive
 	storage     Storage
-	permissions *chatmodel.PermissionChecker
+	permissions *commentmodel.PermissionChecker
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, live *live.GrafanaLive, features featuremgmt.FeatureToggles) *Service {
@@ -27,7 +27,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, liv
 		storage: &sqlStorage{
 			sql: store,
 		},
-		permissions: chatmodel.NewPermissionChecker(bus, features),
+		permissions: commentmodel.NewPermissionChecker(bus, features),
 	}
 	return s
 }

@@ -2,21 +2,20 @@ package features
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/chats/chatmodel"
+	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // ChatHandler manages all the `grafana/chat/*` channels.
 type ChatHandler struct {
-	permissionChecker *chatmodel.PermissionChecker
+	permissionChecker *commentmodel.PermissionChecker
 }
 
-func NewChatHandler(permissionChecker *chatmodel.PermissionChecker) *ChatHandler {
+func NewCommentHandler(permissionChecker *commentmodel.PermissionChecker) *ChatHandler {
 	return &ChatHandler{permissionChecker: permissionChecker}
 }
 
@@ -31,12 +30,9 @@ func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser
 	if len(parts) != 2 {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 	}
-	contentTypeID, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
-	}
+	contentType := parts[0]
 	objectID := parts[1]
-	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgId, user, int(contentTypeID), objectID)
+	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgId, user, contentType, objectID)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}

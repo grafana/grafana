@@ -13,8 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/chats"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -34,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -133,7 +132,7 @@ type HTTPServer struct {
 	TeamPermissionsService       *resourcepermissions.Service
 	NotificationService          *notifications.NotificationService
 	DatasourcePermissionsService DatasourcePermissionsService
-	chatsService                 *chats.Service
+	commentsService              *comments.Service
 }
 
 type ServerOptions struct {
@@ -162,7 +161,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
 	notificationService *notifications.NotificationService, datasourcePermissionsService DatasourcePermissionsService,
-	chatsService *chats.Service) (*HTTPServer, error) {
+	chatsService *comments.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -224,7 +223,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		TeamPermissionsService:       resourcePermissionServices.GetTeamService(),
 		NotificationService:          notificationService,
 		DatasourcePermissionsService: datasourcePermissionsService,
-		chatsService:                 chatsService,
+		commentsService:              chatsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

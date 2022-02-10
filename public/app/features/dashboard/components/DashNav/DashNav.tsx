@@ -216,7 +216,7 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    if (dashboard.uid && config.featureToggles.liveDashboardDiscussions) {
+    if (dashboard.uid && config.featureToggles.dashboardComments) {
       buttons.push(
         <ModalsController key="button-chat">
           {({ showModal, hideModal }) => (

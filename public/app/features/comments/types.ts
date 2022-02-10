@@ -1,6 +1,6 @@
 export interface MessagePacket {
   event: string;
-  messageCreated: Message;
+  commentCreated: Message;
 }
 
 export interface Message {
