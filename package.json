@@ -87,7 +87,7 @@
     "@grafana/e2e": "workspace:*",
     "@grafana/eslint-config": "2.5.2",
     "@grafana/toolkit": "workspace:*",
-    "@grafana/tsconfig": "^1.1.0-rc1",
+    "@grafana/tsconfig": "^1.2.0-rc1",
     "@lingui/cli": "3.13.2",
     "@lingui/macro": "3.13.2",
     "@microsoft/api-extractor": "7.19.4",
