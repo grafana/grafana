@@ -411,14 +411,14 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		apiRoute.Get("/annotations", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsAll)), routing.Wrap(GetAnnotations))
-		apiRoute.Post("/annotations/mass-delete", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAnnotationsDelete, ac.ScopeAnnotationsAll)), routing.Wrap(DeleteAnnotations))
+		apiRoute.Post("/annotations/mass-delete", routing.Wrap(DeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
-			annotationsRoute.Post("/", authorize(reqSignedIn, ac.AnnotationCreateAccessEvaluator), routing.Wrap(PostAnnotation))
-			annotationsRoute.Delete("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsDelete, ac.ScopeAnnotationsID)), routing.Wrap(DeleteAnnotationByID))
-			annotationsRoute.Put("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsUpdate, ac.ScopeAnnotationsID)), routing.Wrap(UpdateAnnotation))
-			annotationsRoute.Patch("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsUpdate, ac.ScopeAnnotationsID)), routing.Wrap(PatchAnnotation))
-			annotationsRoute.Post("/graphite", authorize(reqEditorRole, ac.AnnotationCreateAccessEvaluator), routing.Wrap(PostGraphiteAnnotation))
+			annotationsRoute.Post("/", routing.Wrap(PostAnnotation))
+			annotationsRoute.Delete("/:annotationId", routing.Wrap(DeleteAnnotationByID))
+			annotationsRoute.Put("/:annotationId", routing.Wrap(UpdateAnnotation))
+			annotationsRoute.Patch("/:annotationId", routing.Wrap(PatchAnnotation))
+			annotationsRoute.Post("/graphite", routing.Wrap(PostGraphiteAnnotation))
 			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead)), routing.Wrap(GetAnnotationTags))
 		})
 
