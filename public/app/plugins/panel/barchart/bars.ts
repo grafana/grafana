@@ -449,6 +449,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     labels = {};
     fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
+    labelOffset = LABEL_OFFSET_MAX;
     vSpace = hSpace = Infinity;
   };
 
