@@ -55,7 +55,7 @@ This means that some previously exported members won't be available in the newer
 
 ![](./breaking-changes-console-screenshot-1.png)
 
-**Changed an existing member** (consolve view):<br />
+**Changed an existing member** (console view):<br />
 This means that a member was changed in a way that can break dependent plugins.
 
 ![](./breaking-changes-console-screenshot-2.png)
