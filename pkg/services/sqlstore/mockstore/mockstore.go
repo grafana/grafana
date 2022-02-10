@@ -27,7 +27,10 @@ type SQLStoreMock struct {
 	ExpectedOrgListResponse      OrgListResponse
 	ExpectedDashboardSnapshot    *models.DashboardSnapshot
 	ExpectedTeamsByUser          []*models.TeamDTO
-	ExpectedError                error
+	ExpectedSearchOrgList        []*models.OrgDTO
+	ExpectedDatasources          []*models.DataSource
+
+	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -236,7 +239,11 @@ func (m *SQLStoreMock) RemoveTeamMember(ctx context.Context, cmd *models.RemoveT
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (m SQLStoreMock) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
+	return nil, m.ExpectedError
+}
+
+func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	return m.ExpectedError
 }
 
@@ -482,6 +489,7 @@ func (m *SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataS
 }
 
 func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	query.Result = m.ExpectedDatasources
 	return m.ExpectedError
 }
 
@@ -498,10 +506,12 @@ func (m *SQLStoreMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteD
 }
 
 func (m *SQLStoreMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 
@@ -626,5 +636,10 @@ func (m *SQLStoreMock) ExpireOldUserInvites(ctx context.Context, cmd *models.Exp
 }
 
 func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
+	query.Result = m.ExpectedSearchOrgList
 	return m.ExpectedError
 }
