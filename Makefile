@@ -48,7 +48,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-x "github.com/prometheus/alertmanager" \
 	-i /grafana/pkg/api/docs/tags.json
 
-swagger-api-spec: $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling post.json
@@ -65,7 +65,7 @@ ensure_go-swagger_mac:
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
+swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
 
 validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	docker run --rm -it \

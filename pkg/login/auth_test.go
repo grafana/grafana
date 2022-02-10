@@ -21,7 +21,7 @@ func TestAuthenticateUser(t *testing.T) {
 			Username: "user",
 			Password: "",
 		}
-		err := authenticateUser(context.Background(), &loginQuery)
+		err := AuthenticateUserFunc(context.Background(), &loginQuery)
 
 		require.EqualError(t, err, ErrPasswordEmpty.Error())
 		assert.False(t, sc.grafanaLoginWasCalled)
@@ -35,7 +35,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, nil, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrTooManyLoginAttempts.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -51,7 +51,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.NoError(t, err)
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -68,7 +68,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, customErr.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -84,7 +84,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(false, nil, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, models.ErrUserNotFound.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -100,7 +100,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -116,7 +116,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, nil, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.NoError(t, err)
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -133,7 +133,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, customErr, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, customErr.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)
@@ -149,7 +149,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		err := authenticateUser(context.Background(), sc.loginUserQuery)
+		err := AuthenticateUserFunc(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
 		assert.True(t, sc.loginAttemptValidationWasCalled)

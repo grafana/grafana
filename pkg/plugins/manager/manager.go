@@ -207,15 +207,15 @@ func (m *PluginManager) CallResource(ctx context.Context, req *backend.CallResou
 	return nil
 }
 
-func (m *PluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	p, exists := m.plugin(pluginID)
+func (m *PluginManager) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	p, exists := m.plugin(req.PluginContext.PluginID)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CollectMetricsResult
 	err := instrumentation.InstrumentCollectMetrics(p.PluginID(), func() (innerErr error) {
-		resp, innerErr = p.CollectMetrics(ctx)
+		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
 	if err != nil {
@@ -233,7 +233,7 @@ func (m *PluginManager) CheckHealth(ctx context.Context, req *backend.CheckHealt
 
 	var resp *backend.CheckHealthResult
 	err := instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
-		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: req.PluginContext})
+		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})
 

@@ -21,7 +21,7 @@ type SQLStoreMock struct {
 	ExpectedPluginSetting        *models.PluginSetting
 	ExpectedDashboard            *models.Dashboard
 	ExpectedDashboards           []*models.Dashboard
-	ExpectedDashboardVersion     *models.DashboardVersion
+	ExpectedDashboardVersions    []*models.DashboardVersion
 	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList          []*models.UserOrgDTO
 	ExpectedOrgListResponse      OrgListResponse
@@ -239,7 +239,11 @@ func (m *SQLStoreMock) RemoveTeamMember(ctx context.Context, cmd *models.RemoveT
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (m SQLStoreMock) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
+	return nil, m.ExpectedError
+}
+
+func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	return m.ExpectedError
 }
 
@@ -335,7 +339,12 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 }
 
 func (m *SQLStoreMock) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-	query.Result = m.ExpectedDashboardVersion
+	query.Result = &models.DashboardVersion{}
+	for _, dashboardversion := range m.ExpectedDashboardVersions {
+		if dashboardversion.DashboardId == query.DashboardId && dashboardversion.Version == query.Version {
+			query.Result = dashboardversion
+		}
+	}
 	return m.ExpectedError
 }
 
