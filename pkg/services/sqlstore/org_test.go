@@ -34,7 +34,7 @@ func TestAccountDataAccess(t *testing.T) {
 			}
 
 			query := &models.SearchOrgsQuery{Ids: ids}
-			err = SearchOrgs(context.Background(), query)
+			err = sqlStore.SearchOrgs(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(query.Result), 3)
@@ -50,7 +50,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to search with defaults", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{}
-				err := SearchOrgs(context.Background(), query)
+				err := sqlStore.SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 3)
@@ -58,7 +58,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to limit search", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{Limit: 1}
-				err := SearchOrgs(context.Background(), query)
+				err := sqlStore.SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
@@ -66,7 +66,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to limit and paginate search", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
-				err := SearchOrgs(context.Background(), query)
+				err := sqlStore.SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)

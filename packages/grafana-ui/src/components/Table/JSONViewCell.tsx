@@ -29,7 +29,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   const content = <JSONTooltip value={value} />;
 
   return (
-    <Tooltip placement="auto-start" content={content} theme="info-alt">
+    <Tooltip placement="auto-start" content={content} theme="info" interactive>
       <div {...cellProps} className={tableStyles.cellContainer}>
         <div className={cx(tableStyles.cellText, txt)}>{displayValue}</div>
       </div>

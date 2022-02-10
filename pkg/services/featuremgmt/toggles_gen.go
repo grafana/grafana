@@ -71,6 +71,10 @@ const (
 	// Use azure authentication for prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
+	// FlagInfluxdbBackendMigration
+	// Query InfluxDB InfluxQL without the proxy
+	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
 	// FlagNewNavigation
 	// Try the next gen navigation model
 	FlagNewNavigation = "newNavigation"
@@ -86,6 +90,10 @@ const (
 	// FlagValidatedQueries
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
+
+	// FlagSwaggerUi
+	// Serves swagger UI
+	FlagSwaggerUi = "swaggerUi"
 
 	// FlagFeatureHighlights
 	// Highlight Enterprise features

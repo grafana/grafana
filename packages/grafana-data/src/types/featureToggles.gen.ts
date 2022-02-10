@@ -33,9 +33,11 @@ export interface FeatureToggles {
   fullRangeLogsVolume?: boolean;
   accesscontrol?: boolean;
   prometheus_azure_auth?: boolean;
+  influxdbBackendMigration?: boolean;
   newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
+  swaggerUi?: boolean;
   featureHighlights?: boolean;
 }

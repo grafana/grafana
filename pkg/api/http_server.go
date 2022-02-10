@@ -134,6 +134,7 @@ type HTTPServer struct {
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
+	DatasourcePermissionsService DatasourcePermissionsService
 }
 
 type ServerOptions struct {
@@ -162,7 +163,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService, dashboardProvisioningService dashboards.DashboardProvisioningService,
-	folderService dashboards.FolderService) (*HTTPServer, error) {
+	folderService dashboards.FolderService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -226,6 +227,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
+		DatasourcePermissionsService: datasourcePermissionsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -452,9 +454,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
+	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
 	if hs.Cfg.ImageUploadProvider == "local" {
@@ -561,7 +564,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	}
 }
 
-func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string) {
+func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string, exclude ...string) {
 	headers := func(c *web.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
@@ -584,6 +587,7 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 			SkipLogging: true,
 			Prefix:      prefix,
 			AddHeaders:  headers,
+			Exclude:     exclude,
 		},
 	))
 }

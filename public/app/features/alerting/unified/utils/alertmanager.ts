@@ -11,6 +11,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 import { SelectableValue } from '@grafana/data';
 import { getAllDataSources } from './config';
 import { DataSourceType } from './datasource';
+import { FetchError } from '@grafana/runtime';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -253,4 +254,8 @@ export function getMonthsString(months?: string[]): string {
 
 export function getYearsString(years?: string[]): string {
   return 'Years: ' + (years?.join(', ') ?? 'All');
+}
+
+export function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }

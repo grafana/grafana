@@ -37,6 +37,7 @@ import (
 func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
+	httpReq.Header.Add("Content-Type", "application/json")
 	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
@@ -112,7 +113,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
-		mockSQLStore.ExpectedDashboardVersion = &models.DashboardVersion{}
 
 		hs := &HTTPServer{
 			Cfg:         setting.NewCfg(),
@@ -212,7 +212,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
-		mockSQLStore.ExpectedDashboardVersion = &models.DashboardVersion{}
 
 		dashboardStore := database.ProvideDashboardStore(sqlstore.InitTestDB(t))
 		hs := &HTTPServer{
@@ -373,7 +372,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 
-			mockSQLStore.ExpectedDashboardVersion = &models.DashboardVersion{}
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
 				sc.sqlStore = mockSQLStore
@@ -722,19 +720,25 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
+		dashboardvs := []*models.DashboardVersion{
+			{
+				DashboardId: 1,
+				Version:     1,
+				Data: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash1",
+				})},
+			{
+				DashboardId: 2,
+				Version:     2,
+				Data: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash2",
+				})},
+		}
+		sqlmock := mockstore.SQLStoreMock{ExpectedDashboardVersions: dashboardvs}
 		setUp := func() {
 			mockResult := []*models.DashboardAclInfoDTO{}
 			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-				query.Result = &models.DashboardVersion{
-					Data: simplejson.NewFromAny(map[string]interface{}{
-						"title": fmt.Sprintf("Dash%d", query.DashboardId),
-					}),
-				}
 				return nil
 			})
 		}
@@ -753,13 +757,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		t.Run("when user does not have permission", func(t *testing.T) {
 			role := models.ROLE_VIEWER
-
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				setUp()
 
 				callPostDashboard(sc)
 				assert.Equal(t, 403, sc.resp.Code)
-			})
+			}, &sqlmock)
 		})
 
 		t.Run("when user does have permission", func(t *testing.T) {
@@ -770,7 +773,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				callPostDashboard(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-			})
+			}, &sqlmock)
 		})
 	})
 
@@ -796,11 +799,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
-		mockSQLStore.ExpectedDashboardVersion = &models.DashboardVersion{
-			DashboardId: 2,
-			Version:     1,
-			Data:        fakeDash.Data,
-		}
+		mockSQLStore.ExpectedDashboardVersions = []*models.DashboardVersion{
+			{
+				DashboardId: 2,
+				Version:     1,
+				Data:        fakeDash.Data,
+			}}
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", mock, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
@@ -833,11 +837,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		mockSQLStore.ExpectedDashboard = fakeDash
-		mockSQLStore.ExpectedDashboardVersion = &models.DashboardVersion{
-			DashboardId: 2,
-			Version:     1,
-			Data:        fakeDash.Data,
-		}
+		mockSQLStore.ExpectedDashboardVersions = []*models.DashboardVersion{
+			{
+				DashboardId: 2,
+				Version:     1,
+				Data:        fakeDash.Data,
+			}}
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", mock, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
@@ -1026,6 +1031,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
@@ -1038,13 +1044,26 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	})
 }
 
-func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions, role models.RoleType, fn scenarioFunc) {
+func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions, role models.RoleType, fn scenarioFunc, sqlmock sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
+
+		cfg := setting.NewCfg()
+		hs := HTTPServer{
+			Cfg:                   cfg,
+			Bus:                   bus.GetBus(),
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
+			Live:                  newTestLive(t),
+			QuotaService:          &quota.QuotaService{Cfg: cfg},
+			LibraryPanelService:   &mockLibraryPanelService{},
+			LibraryElementService: &mockLibraryElementService{},
+			SQLStore:              sqlmock,
+		}
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1052,7 +1071,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			}
 			sc.context.OrgRole = role
 
-			return CalculateDashboardDiff(c)
+			return hs.CalculateDashboardDiff(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -1083,6 +1102,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		sc.sqlStore = mockSQLStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,

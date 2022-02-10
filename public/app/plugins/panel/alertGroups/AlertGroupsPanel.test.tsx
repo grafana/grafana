@@ -6,7 +6,6 @@ import { byTestId } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
 import { AlertGroupPanelOptions } from './types';
 import { getDefaultTimeRange, LoadingState, PanelProps, FieldConfigSource } from '@grafana/data';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { fetchAlertGroups } from 'app/features/alerting/unified/api/alertmanager';
 import {
   mockAlertGroup,
@@ -32,7 +31,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const mocks = {
   api: {
-    fetchAlertGroups: typeAsJestMock(fetchAlertGroups),
+    fetchAlertGroups: jest.mocked(fetchAlertGroups),
   },
 };
 
