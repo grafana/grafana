@@ -30,6 +30,7 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a matrix response with NaN", filepath: "matrix_nan"},
 		// you can produce Infinity by using `quantile_over_time(42,` (value larger than 1)
 		{name: "parse a matrix response with Infinity", filepath: "matrix_inf"},
+		{name: "parse a matrix response with very small step value", filepath: "matrix_small_step"},
 	}
 
 	for _, test := range tt {
