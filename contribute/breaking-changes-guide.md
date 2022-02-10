@@ -73,10 +73,8 @@ It can happen that Levitate highlights a change which is marked with TSDoc tags 
 which case you can choose to ignore it - keep in mind though that these flags won't really hold developers back
 from using your code and most likely it is going to cause them problems if we are breaking them.
 
-It can also happen that Levitate marks changing an interface as a possible breaking change.
-While it is correct (if anyone implements that interface introducing a new property will break their code),
-maybe it is an interface that is basically never implemented by other developers, in which case you
-can choose to ignore Levitate's message.
+It can also happen that Levitate marks changing an interface as a possible breaking change. 
+For anyone that implements that interface introducing a new property will break their code. Whilst this is correctly marked as a breaking change maybe it is an interface that is never implemented by other developers. In which case you can choose to ignore Levitate's message.
 
 These notifications are only warnings though, and **in the end it's up to the author of the PR to make a decision that makes the most sense.**
 
