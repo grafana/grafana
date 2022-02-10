@@ -1,9 +1,9 @@
+import React, { PureComponent } from 'react';
 import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
-import { CommentView } from './CommentView';
 
+import { CommentView } from './CommentView';
 import { Message, MessagePacket } from './types';
 
 export interface Props {
@@ -20,13 +20,13 @@ export class CommentManager extends PureComponent<Props, State> {
   subscription?: Unsubscribable;
   packetCounter = 0;
 
-  state: State = {
-    messages: [],
-    value: '',
-  };
-
   constructor(props: Props) {
     super(props);
+
+    this.state = {
+      messages: [],
+      value: '',
+    };
   }
 
   async componentDidMount() {
@@ -48,14 +48,15 @@ export class CommentManager extends PureComponent<Props, State> {
       return undefined;
     }
 
-    const addr = this.getLiveAddr();
-    if (!addr) {
+    const address = this.getLiveAddress();
+    if (!address) {
       return undefined;
     }
-    return live.getStream<MessagePacket>(addr);
+
+    return live.getStream<MessagePacket>(address);
   };
 
-  getLiveAddr = () => {
+  getLiveAddress = () => {
     return {
       scope: LiveChannelScope.Grafana,
       namespace: 'chat', // holds on to the last value
@@ -69,9 +70,9 @@ export class CommentManager extends PureComponent<Props, State> {
       this.subscription = undefined;
     }
 
-    const c = this.getLiveChannel();
-    if (c) {
-      this.subscription = c.subscribe({
+    const channel = this.getLiveChannel();
+    if (channel) {
+      this.subscription = channel.subscribe({
         next: (msg) => {
           if (isLiveChannelMessageEvent(msg)) {
             const { messageCreated } = msg.message;

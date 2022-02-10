@@ -221,7 +221,7 @@ class DashNav extends PureComponent<Props> {
         <ModalsController key="button-chat">
           {({ showModal, hideModal }) => (
             <ToolbarButton
-              tooltip="Show dashboard discussions"
+              tooltip="Show dashboard comments"
               icon="chat"
               onClick={() => {
                 showModal(DashboardCommentsModal, {

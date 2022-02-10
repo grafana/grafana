@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { FormEvent, useLayoutEffect, useRef, useState } from 'react';
 import { CustomScrollbar, TextArea } from '@grafana/ui';
 
 import { Comment } from './Comment';
@@ -23,13 +23,14 @@ export const CommentView = ({ comments, packetCounter, addComment }: Props) => {
     }
   }, [packetCounter]);
 
-  const onUpdateComment = (e: any) => {
-    setComment(e.target.value);
+  const onUpdateComment = (event: FormEvent<HTMLTextAreaElement>) => {
+    const element = event.target as HTMLInputElement;
+    setComment(element.value);
   };
 
-  const onKeyPress = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e?.key === 'Enter' && !e?.shiftKey) {
-      e.preventDefault();
+  const onKeyPress = async (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event?.key === 'Enter' && !event?.shiftKey) {
+      event.preventDefault();
 
       if (comment.length > 0) {
         const result = await addComment(comment);

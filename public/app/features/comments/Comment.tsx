@@ -28,7 +28,7 @@ export const Comment = ({ message }: Props) => {
   return (
     <div className={styles.comment}>
       <div className={styles.avatarContainer}>
-        <img src={avatarUrl} alt="" className={styles.avatar} />
+        <img src={avatarUrl} alt="User avatar" className={styles.avatar} />
       </div>
       <div>
         <div>
@@ -65,8 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   avatarContainer: css`
     align-self: left;
-    margin-top: 5px;
-    margin-right: 5px;
+    margin-top: 6px;
+    margin-right: 10px;
   `,
   avatar: css`
     width: 30px;
