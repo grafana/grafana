@@ -1,6 +1,6 @@
 # Handling breaking changes in our frontend API
 
-This guide tries to help you identifying and communicating breaking changes introduced to our frontend API.
+This guide tries to help you identify and communicate breaking changes introduced to our frontend API.
 
 - [What are our public APIs?](#what-are-our-public-apis)
 - [What is Levitate?](#what-is-levitate)
