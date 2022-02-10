@@ -4,7 +4,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -130,7 +129,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 
 		sess = dbSession.Limit(100, 0).
 			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccountID, time.Now().Unix()).
+			Where("user.org_id=? AND user.id=?", orgID, serviceAccountID).
 			Asc("name")
 
 		return sess.Find(&result)
