@@ -44,7 +44,7 @@ type Provider struct {
 	logger                log.Logger
 }
 
-// Get allows getting plugin context by its ID. If datasourceUID is not empty string
+// Get allows getting plugin context by its ID. If datasource is not nil
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
 func (p *Provider) Get(ctx context.Context, pluginID string, datasource *models.DataSource, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {

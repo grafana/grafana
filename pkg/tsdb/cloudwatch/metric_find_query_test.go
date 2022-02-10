@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"encoding/json"
 	"net/url"
 	"testing"
@@ -55,12 +54,12 @@ func TestQuery_Metrics(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetMetrics(context.Background(), url.Values{
-			"region":    []string{"us-east-1"},
-			"namespace": []string{"custom"},
-		},
+		resp, err := executor.handleGetMetrics(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":    []string{"us-east-1"},
+				"namespace": []string{"custom"},
 			},
 		)
 		require.NoError(t, err)
@@ -90,12 +89,12 @@ func TestQuery_Metrics(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetDimensionKeys(context.Background(), url.Values{
-			"region":    []string{"us-east-1"},
-			"namespace": []string{"custom"},
-		},
+		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":    []string{"us-east-1"},
+				"namespace": []string{"custom"},
 			},
 		)
 		require.NoError(t, err)
@@ -130,12 +129,12 @@ func TestQuery_Regions(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetRegions(context.Background(), url.Values{
-			"region":    []string{"us-east-1"},
-			"namespace": []string{"custom"},
-		},
+		resp, err := executor.handleGetRegions(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":    []string{"us-east-1"},
+				"namespace": []string{"custom"},
 			},
 		)
 		require.NoError(t, err)
@@ -203,13 +202,13 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		require.NoError(t, err)
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetEc2InstanceAttribute(context.Background(), url.Values{
-			"region":        []string{"us-east-1"},
-			"attributeName": []string{"InstanceId"},
-			"filters":       []string{string(filterJson)},
-		},
+		resp, err := executor.handleGetEc2InstanceAttribute(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":        []string{"us-east-1"},
+				"attributeName": []string{"InstanceId"},
+				"filters":       []string{string(filterJson)},
 			},
 		)
 		require.NoError(t, err)
@@ -280,12 +279,12 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetEbsVolumeIds(context.Background(), url.Values{
-			"region":     []string{"us-east-1"},
-			"instanceId": []string{"{i-1, i-2, i-3}"},
-		},
+		resp, err := executor.handleGetEbsVolumeIds(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":     []string{"us-east-1"},
+				"instanceId": []string{"{i-1, i-2, i-3}"},
 			},
 		)
 		require.NoError(t, err)
@@ -346,13 +345,13 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		require.NoError(t, err)
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetResourceArns(context.Background(), url.Values{
-			"region":       []string{"us-east-1"},
-			"resourceType": []string{"ec2:instance"},
-			"tags":         []string{string(tagJson)},
-		},
+		resp, err := executor.handleGetResourceArns(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":       []string{"us-east-1"},
+				"resourceType": []string{"ec2:instance"},
+				"tags":         []string{string(tagJson)},
 			},
 		)
 		require.NoError(t, err)
@@ -376,12 +375,12 @@ func TestQuery_GetAllMetrics(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetAllMetrics(context.Background(),
-			url.Values{
-				"region": []string{"us-east-1"},
-			},
+		resp, err := executor.handleGetAllMetrics(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			url.Values{
+				"region": []string{"us-east-1"},
 			},
 		)
 		require.NoError(t, err)
@@ -425,7 +424,10 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetDimensionKeys(context.Background(),
+		resp, err := executor.handleGetDimensionKeys(
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			url.Values{
 				"region":    []string{"us-east-1"},
 				"namespace": []string{"AWS/EC2"},
@@ -433,9 +435,6 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 					"InstanceId": "",
 					"AutoscalingGroup": []
 				}`},
-			},
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
 		)
 		require.NoError(t, err)
@@ -455,14 +454,14 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 		})
 
 		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.handleGetDimensionKeys(context.Background(),
+		resp, err := executor.handleGetDimensionKeys(
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
 			url.Values{
 				"region":           []string{"us-east-1"},
 				"namespace":        []string{"AWS/EC2"},
 				"dimensionFilters": []string{`{}`},
-			},
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
 		)
 		require.NoError(t, err)

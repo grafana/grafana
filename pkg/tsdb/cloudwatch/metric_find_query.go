@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,8 +53,7 @@ func parseMultiSelectValue(input string) []string {
 
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters url.Values,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -104,8 +102,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters ur
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext) ([]suggestData, error) {
-func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters url.Values, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	var keys []string
 	for key := range metricsMap {
 		keys = append(keys, key)
@@ -130,7 +127,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters url.Values, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	namespace := parameters.Get("namespace")
 
@@ -157,7 +154,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters ur
 }
 
 // handleGetAllMetrics returns a slice of suggestData structs with metric and its namespace
-func (e *cloudWatchExecutor) handleGetAllMetrics(ctx context.Context, parameters url.Values, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetAllMetrics(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	result := make([]suggestData, 0)
 	for namespace, metrics := range metricsMap {
 		for _, metric := range metrics {
@@ -171,7 +168,7 @@ func (e *cloudWatchExecutor) handleGetAllMetrics(ctx context.Context, parameters
 // handleGetDimensionKeys returns a slice of suggestData structs with dimension keys.
 // If a dimension filters parameter is specified, a new api call to list metrics will be issued to load dimension keys for the given filter.
 // If no dimension filter is specified, dimension keys will be retrieved from the hard coded map in this file.
-func (e *cloudWatchExecutor) handleGetDimensionKeys(ctx context.Context, parameters url.Values, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionKeys(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	namespace := parameters.Get("namespace")
 	metricName := parameters.Get("metricName")
@@ -268,7 +265,7 @@ func (e *cloudWatchExecutor) handleGetDimensionKeys(ctx context.Context, paramet
 
 // handleGetDimensionValues returns a slice of suggestData structs with dimension values.
 // A call to the list metrics api is issued to retrieve the dimension values. All parameters are used as input args to the list metrics call.
-func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters url.Values, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	namespace := parameters.Get("namespace")
 	metricName := parameters.Get("metricName")
@@ -339,8 +336,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters url.Values,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
 
@@ -362,8 +358,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters url.Values,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
@@ -448,8 +443,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters url.Values,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
