@@ -31,21 +31,17 @@ export const PreviewsSystemRequirements: FC<Props> = ({ showPreviews }) => {
   const previewsEnabled = config.featureToggles.dashboardPreviews;
   const rendererAvailable = config.rendererAvailable;
 
-  const dashboardPreviewsSettings = config.dashboardPreviews;
-
-  const systemRequirementsMet = dashboardPreviewsSettings.systemRequirements.met;
-  const requiredImageRendererPluginVersion =
-    dashboardPreviewsSettings.systemRequirements.requiredImageRendererPluginVersion;
+  const { systemRequirements, thumbnailsExist } = config.dashboardPreviews;
 
   if (!previewsEnabled || !showPreviews) {
     return <></>;
   }
 
-  if ((rendererAvailable && systemRequirementsMet) || dashboardPreviewsSettings.thumbnailsExist) {
+  if ((rendererAvailable && systemRequirements.met) || thumbnailsExist) {
     return <></>;
   }
 
-  const text = getText(requiredImageRendererPluginVersion);
+  const text = getText(systemRequirements.requiredImageRendererPluginVersion);
 
   return (
     <div className={styles.wrapper}>
