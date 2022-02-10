@@ -1,35 +1,32 @@
 import React, { ReactNode } from 'react';
+import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Link, useTheme2 } from '@grafana/ui';
-import NavBarDropdown from './NavBarDropdown';
+import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { IconName, useTheme2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+
+import { NavBarMenuItem } from './NavBarMenuItem';
+import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { NavBarItemMenu } from './NavBarItemMenu';
+import { getNavModelItemKey } from './utils';
 
 export interface Props {
   isActive?: boolean;
   children: ReactNode;
   className?: string;
-  label: string;
-  menuItems?: NavModelItem[];
-  menuSubTitle?: string;
-  onClick?: () => void;
   reverseMenuDirection?: boolean;
   showMenu?: boolean;
-  target?: HTMLAnchorElement['target'];
-  url?: string;
+  link: NavModelItem;
 }
 
 const NavBarItem = ({
   isActive = false,
   children,
   className,
-  label,
-  menuItems = [],
-  menuSubTitle,
-  onClick,
   reverseMenuDirection = false,
   showMenu = true,
-  target,
-  url,
+  link,
 }: Props) => {
   const theme = useTheme2();
   const menuItems = link.children ?? [];
@@ -59,41 +56,60 @@ const NavBarItem = ({
     }
   };
 
-  if (url) {
-    element =
-      !target && url.startsWith('/') ? (
-        <Link
-          className={styles.element}
-          href={url}
-          target={target}
-          aria-label={label}
-          onClick={onClick}
-          aria-haspopup="true"
+  return showMenu ? (
+    <li className={cx(styles.container, className)}>
+      <NavBarItemMenuTrigger item={section} isActive={isActive} label={link.text}>
+        <NavBarItemMenu
+          items={items}
+          reverseMenuDirection={reverseMenuDirection}
+          adjustHeightForBorder={adjustHeightForBorder}
+          disabledKeys={['divider', 'subtitle']}
+          aria-label={section.text}
+          onNavigate={onNavigate}
         >
-          <span className={styles.icon}>{children}</span>
-        </Link>
-      ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} aria-label={label}>
-          <span className={styles.icon}>{children}</span>
-        </a>
-      );
-  }
+          {(item: NavModelItem) => {
+            if (item.menuItemType === NavMenuItemType.Section) {
+              return (
+                <Item key={getNavModelItemKey(item)} textValue={item.text}>
+                  <NavBarMenuItem
+                    target={item.target}
+                    text={item.text}
+                    url={item.url}
+                    onClick={item.onClick}
+                    styleOverrides={styles.header}
+                  />
+                </Item>
+              );
+            }
 
-  return (
-    <div className={cx(styles.container, className)}>
-      {element}
-      {showMenu && (
-        <NavBarDropdown
-          headerTarget={target}
-          headerText={label}
-          headerUrl={url}
-          items={menuItems}
-          onHeaderClick={onClick}
-          reverseDirection={reverseMenuDirection}
-          subtitleText={menuSubTitle}
-        />
-      )}
-    </div>
+            return (
+              <Item key={getNavModelItemKey(item)} textValue={item.text}>
+                <NavBarMenuItem
+                  isDivider={item.divider}
+                  icon={item.icon as IconName}
+                  onClick={item.onClick}
+                  target={item.target}
+                  text={item.text}
+                  url={item.url}
+                  styleOverrides={styles.item}
+                />
+              </Item>
+            );
+          }}
+        </NavBarItemMenu>
+      </NavBarItemMenuTrigger>
+    </li>
+  ) : (
+    <NavBarItemWithoutMenu
+      label={link.text}
+      className={className}
+      isActive={isActive}
+      url={link.url}
+      onClick={link.onClick}
+      target={link.target}
+    >
+      {children}
+    </NavBarItemWithoutMenu>
   );
 };
 
@@ -110,45 +126,7 @@ const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActiv
     white-space: nowrap;
     width: 100%;
   `,
-  element: css`
-    background-color: transparent;
-    border: none;
-    color: inherit;
-    display: block;
-    line-height: ${theme.components.sidemenu.width}px;
-    padding: 0;
-    text-align: center;
-    width: ${theme.components.sidemenu.width}px;
-
-    &::before {
-      display: ${isActive ? 'block' : 'none'};
-      content: ' ';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      border-radius: 2px;
-      background-image: ${theme.colors.gradients.brandVertical};
-    }
-
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      box-shadow: none;
-      color: ${theme.colors.text.primary};
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: -2px;
-      transition: none;
-    }
-  `,
-  icon: css`
-    height: 100%;
-    width: 100%;
-
-    img {
-      border-radius: 50%;
-      height: ${theme.spacing(3)};
-      width: ${theme.spacing(3)};
-    }
+  item: css`
+    color: ${theme.colors.text.primary};
   `,
 });
