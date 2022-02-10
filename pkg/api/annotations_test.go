@@ -531,7 +531,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			want: 403,
 		},
 		{
-			name: "AccessControl getting tags annotations with correct permissions is allowed",
+			name: "AccessControl getting tags for annotations with correct permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll}},
 				url:         "/api/annotations/tags",
