@@ -24,7 +24,8 @@ func (ds *dummyService) Enabled() bool {
 	return false
 }
 
-func (ds *dummyService) GetSystemRequirements(c *models.ReqContext) {
+func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
+	return dashboardPreviewsSetupConfig{}
 }
 
 func (ds *dummyService) StartCrawler(c *models.ReqContext) response.Response {

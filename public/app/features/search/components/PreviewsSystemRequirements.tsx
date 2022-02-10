@@ -1,10 +1,7 @@
 import { Alert, useStyles2 } from '@grafana/ui';
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import { config } from '@grafana/runtime/src';
 import { css } from '@emotion/css';
-import { useDispatch, useSelector } from 'react-redux';
-import { StoreState } from 'app/types';
-import { getSystemRequirements } from 'app/features/search/reducers/previews';
 
 export interface Props {
   showPreviews?: boolean;
@@ -34,23 +31,17 @@ export const PreviewsSystemRequirements: FC<Props> = ({ showPreviews }) => {
   const previewsEnabled = config.featureToggles.dashboardPreviews;
   const rendererAvailable = config.rendererAvailable;
 
-  const dispatch = useDispatch();
-  const systemRequirementsMet = useSelector((state: StoreState) => state.previews.systemRequirements.met);
-  const requiredImageRendererPluginVersion = useSelector(
-    (state: StoreState) => state.previews.systemRequirements.requiredImageRendererPluginVersion
-  );
+  const dashboardPreviewsSettings = config.dashboardPreviews;
 
-  useEffect(() => {
-    if (previewsEnabled && rendererAvailable && showPreviews) {
-      dispatch(getSystemRequirements());
-    }
-  }, [dispatch, previewsEnabled, rendererAvailable, showPreviews]);
+  const systemRequirementsMet = dashboardPreviewsSettings.systemRequirements.met;
+  const requiredImageRendererPluginVersion =
+    dashboardPreviewsSettings.systemRequirements.requiredImageRendererPluginVersion;
 
   if (!previewsEnabled || !showPreviews) {
     return <></>;
   }
 
-  if (rendererAvailable && systemRequirementsMet) {
+  if ((rendererAvailable && systemRequirementsMet) || dashboardPreviewsSettings.thumbnailsExist) {
     return <></>;
   }
 

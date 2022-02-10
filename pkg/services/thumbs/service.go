@@ -27,7 +27,7 @@ var (
 type Service interface {
 	Enabled() bool
 	GetImage(c *models.ReqContext)
-	GetSystemRequirements(c *models.ReqContext)
+	GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig
 
 	// from dashboard page
 	SetImage(c *models.ReqContext) // form post
@@ -164,20 +164,42 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	}
 }
 
-func (hs *thumbService) GetSystemRequirements(c *models.ReqContext) {
+func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
+	systemRequirements := hs.getSystemRequirements()
+	thumbnailsExist, err := hs.thumbnailRepo.doThumbnailsExist(c.Req.Context())
+
+	if err != nil {
+		return dashboardPreviewsSetupConfig{
+			SystemRequirements: systemRequirements,
+			ThumbnailsExist:    false,
+		}
+	}
+
+	return dashboardPreviewsSetupConfig{
+		SystemRequirements: systemRequirements,
+		ThumbnailsExist:    thumbnailsExist,
+	}
+}
+
+func (hs *thumbService) getSystemRequirements() dashboardPreviewsSystemRequirements {
 	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
 	if err != nil {
 		tlog.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
-		c.JSON(200, map[string]interface{}{"met": false})
-		return
+		return dashboardPreviewsSystemRequirements{
+			Met: false,
+		}
 	}
 
 	if !res.IsSupported {
-		c.JSON(200, map[string]interface{}{"met": false, "requiredImageRendererPluginVersion": res.SemverConstraint})
-		return
+		return dashboardPreviewsSystemRequirements{
+			Met:                                false,
+			RequiredImageRendererPluginVersion: res.SemverConstraint,
+		}
 	}
 
-	c.JSON(200, map[string]interface{}{"met": true})
+	return dashboardPreviewsSystemRequirements{
+		Met: true,
+	}
 }
 
 // Hack for now -- lets you upload images explicitly
