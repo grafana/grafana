@@ -3970,7 +3970,7 @@ __metadata:
   dependencies:
     "@braintree/sanitize-url": 5.0.2
     "@grafana/schema": 8.5.0-pre
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.1.3
@@ -4025,7 +4025,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.1.3
     "@types/node": 16.11.22
@@ -4046,7 +4046,7 @@ __metadata:
     "@babel/preset-env": 7.16.11
     "@cypress/webpack-preprocessor": 5.11.0
     "@grafana/e2e-selectors": 8.5.0-pre
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.1.3
@@ -4127,7 +4127,7 @@ __metadata:
   dependencies:
     "@grafana/data": 8.5.0-pre
     "@grafana/e2e-selectors": 8.5.0-pre
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 8.5.0-pre
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-node-resolve": 13.1.3
@@ -4161,7 +4161,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 21.0.1
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.1.3
@@ -4212,7 +4212,7 @@ __metadata:
     "@babel/preset-env": 7.13.12
     "@grafana/data": 8.5.0-pre
     "@grafana/eslint-config": 2.5.2
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 8.5.0-pre
     "@jest/core": 26.6.3
     "@rushstack/eslint-patch": 1.0.6
@@ -4290,17 +4290,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/tsconfig@npm:^1.0.0-rc1":
-  version: 1.0.0-rc1
-  resolution: "@grafana/tsconfig@npm:1.0.0-rc1"
-  checksum: addb8b27fe2d1fb525c535a7eb38c8066a07638cb26cd4bc5b2e781ac542ba3dca3e82b87141218c44879894e37303e491e09a40c4bd25434b4554c51ce7f9e3
-  languageName: node
-  linkType: hard
-
-"@grafana/tsconfig@npm:^1.1.0-rc1":
-  version: 1.1.0-rc1
-  resolution: "@grafana/tsconfig@npm:1.1.0-rc1"
-  checksum: cc66393faffe4574d63c35a8516b53bab0025c320d89d3acd559647cf2ce81384bbcfb250837e588e39b1abefda7b279e2877cf18bae8ddb0dd6254d5e9688f2
+"@grafana/tsconfig@npm:^1.2.0-rc1":
+  version: 1.2.0-rc1
+  resolution: "@grafana/tsconfig@npm:1.2.0-rc1"
+  checksum: 621a400a762b97a33aade0c03eb8e7bdd1aa1635fab9eb2c03cd7cb7d80fb56e0fbdfc68b74a2abafacc623ad118e2ccaaf46164ee577b9c9c186a83a923d01d
   languageName: node
   linkType: hard
 
@@ -4316,7 +4309,7 @@ __metadata:
     "@grafana/e2e-selectors": 8.5.0-pre
     "@grafana/schema": 8.5.0-pre
     "@grafana/slate-react": 0.22.10-grafana
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.3.1
     "@popperjs/core": 2.11.2
@@ -4551,7 +4544,7 @@ __metadata:
   dependencies:
     "@emotion/css": 11.7.1
     "@grafana/data": 8.5.0-pre
-    "@grafana/tsconfig": ^1.0.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 8.5.0-pre
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
@@ -20321,7 +20314,7 @@ __metadata:
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/toolkit": "workspace:*"
-    "@grafana/tsconfig": ^1.1.0-rc1
+    "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 4.1.3
