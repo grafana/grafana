@@ -192,7 +192,7 @@ export class BackendSrv implements BackendService {
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        let responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
+        const responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
 
         const data = await parseResponseBody<T>(response, responseType);
         const fetchResponse: FetchResponse<T> = {
