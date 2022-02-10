@@ -16,18 +16,18 @@ func TestReadDashboard(t *testing.T) {
 		"panel-graph/graph-shared-tooltips.json",
 	}
 
+	// key will allow name or uid
+	ds := func(key string) *DatasourceInfo {
+		return nil // TODO!
+	}
+
 	for _, input := range inputs {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning because this is a test with hardcoded input values
 		f, err := os.Open("../../../../devenv/dev-dashboards/" + input)
 		require.NoError(t, err)
 
-		// key will allow name or uid
-		ds := func(key string) *datasourceInfo {
-			return nil // TODO!
-		}
-
-		dash := readDashboard(f, ds)
+		dash := ReadDashboard(f, ds)
 		out, err := json.MarshalIndent(dash, "", "  ")
 		require.NoError(t, err)
 

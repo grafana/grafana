@@ -7,10 +7,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-// readDashboard will take a byte stream and return dashboard info
-func readDashboard(stream io.Reader, datasource datasourceLookup) *dashboardInfo {
+// ReadDashboard will take a byte stream and return dashboard info
+func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
-	dash := &dashboardInfo{}
+	dash := &DashboardInfo{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
@@ -117,8 +117,8 @@ func readDashboard(stream io.Reader, datasource datasourceLookup) *dashboardInfo
 }
 
 // will always return strings for now
-func readPanelInfo(iter *jsoniter.Iterator) panelInfo {
-	panel := panelInfo{}
+func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
+	panel := PanelInfo{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {

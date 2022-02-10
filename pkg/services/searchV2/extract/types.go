@@ -1,8 +1,8 @@
 package extract
 
-type datasourceLookup = func(key string) *datasourceInfo
+type DatasourceLookup = func(key string) *DatasourceInfo
 
-type datasourceInfo struct {
+type DatasourceInfo struct {
 	UID     string `json:"uid"`
 	Name    string `json:"name"`
 	Type    string `json:"type"` // plugin name
@@ -10,7 +10,7 @@ type datasourceInfo struct {
 	Access  string `json:"access,omitempty"` // proxy, direct, or empty
 }
 
-type panelInfo struct {
+type PanelInfo struct {
 	ID              int64    `json:"id"`
 	Title           string   `json:"title"`
 	Description     string   `json:"description,omitempty"`
@@ -20,10 +20,10 @@ type panelInfo struct {
 	Transformations []string `json:"transformations,omitempty"` // ids of the transformation steps
 
 	// Rows define panels as sub objects
-	Collapsed []panelInfo `json:"collapsed,omitempty"`
+	Collapsed []PanelInfo `json:"collapsed,omitempty"`
 }
 
-type dashboardInfo struct {
+type DashboardInfo struct {
 	ID             int64       `json:"id,omitempty"`
 	UID            string      `json:"uid,omitempty"`
 	Path           string      `json:"path,omitempty"`
@@ -33,7 +33,7 @@ type dashboardInfo struct {
 	Datasource     []string    `json:"datasource,omitempty"`     // UIDs
 	DatasourceType []string    `json:"datasourceType,omitempty"` // PluginIDs
 	TemplateVars   []string    `json:"templateVars,omitempty"`   // the keys used
-	Panels         []panelInfo `json:"panels"`                   // nesed documents
+	Panels         []PanelInfo `json:"panels"`                   // nesed documents
 	SchemaVersion  int64       `json:"schemaVersion"`
 	LinkCount      int64       `json:"linkCount"`
 	TimeFrom       string      `json:"timeFrom"`
