@@ -92,12 +92,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	return &c, nil
 }
 
-func (c *ClientV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (c *ClientV2) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if c.DiagnosticsClient == nil {
 		return &backend.CollectMetricsResult{}, nil
 	}
 
-	protoResp, err := c.DiagnosticsClient.CollectMetrics(ctx, &pluginv2.CollectMetricsRequest{})
+	protoResp, err := c.DiagnosticsClient.CollectMetrics(ctx, backend.ToProto().CollectMetricsRequest(req))
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
 			return &backend.CollectMetricsResult{}, nil

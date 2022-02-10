@@ -13,6 +13,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  FieldType,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -505,6 +506,15 @@ export class CloudWatchDatasource
         }
 
         const lastError = findLast(res.results, (v) => !!v.error);
+
+        dataframes.forEach((frame) => {
+          frame.fields.forEach((field) => {
+            if (field.type === FieldType.time) {
+              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals
+              field.config.interval = frame.meta?.custom?.period * 1000;
+            }
+          });
+        });
 
         return {
           data: dataframes,

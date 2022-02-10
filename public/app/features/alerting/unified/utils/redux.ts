@@ -1,4 +1,3 @@
-import { isArray } from 'angular';
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
 import { FetchError } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -147,7 +146,7 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
         msg += `; ${e.data.error}`;
       }
       return msg;
-    } else if (isArray(e.data) && e.data.length && e.data[0]?.message) {
+    } else if (Array.isArray(e.data) && e.data.length && e.data[0]?.message) {
       return e.data
         .map((d) => d?.message)
         .filter((m) => !!m)
