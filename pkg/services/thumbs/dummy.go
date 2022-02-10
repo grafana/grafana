@@ -25,7 +25,13 @@ func (ds *dummyService) Enabled() bool {
 }
 
 func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
-	return dashboardPreviewsSetupConfig{}
+	return dashboardPreviewsSetupConfig{
+		SystemRequirements: dashboardPreviewsSystemRequirements{
+			Met:                                false,
+			RequiredImageRendererPluginVersion: "",
+		},
+		ThumbnailsExist: false,
+	}
 }
 
 func (ds *dummyService) StartCrawler(c *models.ReqContext) response.Response {
