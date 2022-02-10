@@ -36,7 +36,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-const ServiceAccountsListPage: React.FC<Props> = ({
+const ServiceAccountsListPage = ({
   loadServiceAccounts,
   fetchACOptions,
   updateServiceAccount,
@@ -45,7 +45,7 @@ const ServiceAccountsListPage: React.FC<Props> = ({
   isLoading,
   roleOptions,
   builtInRoles,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
   useEffect(() => {
     loadServiceAccounts();

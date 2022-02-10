@@ -16,8 +16,8 @@ export function fetchACOptions(): ThunkResult<void> {
   return async (dispatch) => {
     try {
       const options = await fetchRoleOptions();
-      const builtInRoles = await fetchBuiltinRoles();
       dispatch(acOptionsLoaded(options));
+      const builtInRoles = await fetchBuiltinRoles();
       dispatch(builtInRolesLoaded(builtInRoles));
     } catch (error) {
       console.error(error);
