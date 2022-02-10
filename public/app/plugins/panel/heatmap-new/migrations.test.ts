@@ -28,7 +28,7 @@ describe('Heatmap Migrations', () => {
           "cellRadius": 10,
           "color": Object {
             "exponent": 0.5,
-            "fill": "red-dark",
+            "fill": "dark-orange",
             "mode": "scheme",
             "scale": "exponential",
             "scheme": "Oranges",

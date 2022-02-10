@@ -28,7 +28,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const onhover = useCallback(
-    (evt?: HeatmapHoverEvent) => {
+    (evt?: HeatmapHoverEvent | null) => {
       // console.log('onhover', evt);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
