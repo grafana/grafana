@@ -98,7 +98,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simple
 	defaultRegion := dsInfo.region
 
 	region := model.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getCWLogsClient(region, pluginCtx)
+	logsClient, err := e.getCWLogsClient(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
