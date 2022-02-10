@@ -45,6 +45,7 @@ export const ActionIcon: FC<Props> = ({
           fill="text"
           size="sm"
           icon={icon}
+          type="button"
           onClick={onClick}
           {...rest}
           aria-label={ariaLabel}
