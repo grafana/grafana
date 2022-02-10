@@ -26,6 +26,8 @@ export enum AccessControlAction {
   UsersQuotasUpdate = 'users.quotas:update',
 
   ServiceAccountsCreate = 'serviceaccounts:create',
+  ServiceAccountsWrite = 'serviceaccounts:write',
+  ServiceAccountsDelete = 'serviceaccounts:delete',
 
   OrgsRead = 'orgs:read',
   OrgsPreferencesRead = 'orgs.preferences:read',
