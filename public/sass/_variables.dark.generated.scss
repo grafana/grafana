@@ -237,7 +237,7 @@ $dropdownBackground: #181b1f;
 $dropdownBorder: rgba(204, 204, 220, 0.07);
 $dropdownDividerTop: rgba(204, 204, 220, 0.07);
 $dropdownDividerBottom: rgba(204, 204, 220, 0.07);
-$dropdownShadow: 0px 10px 20px rgb(20,20,20);
+$dropdownShadow: 0px 8px 24px rgb(1,4,9);
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -267,7 +267,7 @@ $side-menu-header-color: rgb(204, 204, 220);
 // -------------------------
 $menu-dropdown-bg: #181b1f;
 $menu-dropdown-hover-bg: rgba(204, 204, 220, 0.16);
-$menu-dropdown-shadow: 0px 10px 20px rgb(20,20,20);
+$menu-dropdown-shadow: 0px 8px 24px rgb(1,4,9);
 
 // Tabs
 // -------------------------
@@ -301,7 +301,7 @@ $popover-bg: #181b1f;
 $popover-color: rgb(204, 204, 220);
 $popover-border-color: rgba(204, 204, 220, 0.07);
 $popover-header-bg: #22252b;
-$popover-shadow: 0px 10px 20px rgb(20,20,20);
+$popover-shadow: 0px 8px 24px rgb(1,4,9);
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;
