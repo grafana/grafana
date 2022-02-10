@@ -7,25 +7,25 @@ import {
   getPromAndLokiOperationDisplayName,
 } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
-import { PromVisualQueryOperationCategory } from './types';
+import { PromVisualQueryOperationCategory, PromOperationId } from './types';
 
 export function getAggregationOperations(): QueryBuilderOperationDef[] {
   return [
-    ...createAggregationOperation('sum'),
-    ...createAggregationOperation('avg'),
-    ...createAggregationOperation('min'),
-    ...createAggregationOperation('max'),
-    ...createAggregationOperation('count'),
-    ...createAggregationOperation('topk'),
-    createAggregationOverTime('sum'),
-    createAggregationOverTime('avg'),
-    createAggregationOverTime('min'),
-    createAggregationOverTime('max'),
-    createAggregationOverTime('count'),
-    createAggregationOverTime('last'),
-    createAggregationOverTime('present'),
-    createAggregationOverTime('stddev'),
-    createAggregationOverTime('stdvar'),
+    ...createAggregationOperation(PromOperationId.Sum),
+    ...createAggregationOperation(PromOperationId.Avg),
+    ...createAggregationOperation(PromOperationId.Min),
+    ...createAggregationOperation(PromOperationId.Max),
+    ...createAggregationOperation(PromOperationId.Count),
+    ...createAggregationOperation(PromOperationId.Topk),
+    createAggregationOverTime(PromOperationId.SumOverTime),
+    createAggregationOverTime(PromOperationId.AvgOverTime),
+    createAggregationOverTime(PromOperationId.MinOverTime),
+    createAggregationOverTime(PromOperationId.MaxOverTime),
+    createAggregationOverTime(PromOperationId.CountOverTime),
+    createAggregationOverTime(PromOperationId.LastOverTime),
+    createAggregationOverTime(PromOperationId.PresentOverTime),
+    createAggregationOverTime(PromOperationId.StddevOverTime),
+    createAggregationOverTime(PromOperationId.StdvarOverTime),
   ];
 }
 
@@ -172,10 +172,9 @@ function getOnLabelAdddedHandler(changeToOperartionId: string) {
 }
 
 function createAggregationOverTime(name: string): QueryBuilderOperationDef {
-  const functionName = `${name}_over_time`;
   return {
-    id: functionName,
-    name: getPromAndLokiOperationDisplayName(functionName),
+    id: name,
+    name: getPromAndLokiOperationDisplayName(name),
     params: [getAggregationOverTimeRangeVector()],
     defaultParams: ['auto'],
     alternativesKey: 'overtime function',
