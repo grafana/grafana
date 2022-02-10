@@ -42,7 +42,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
                 | project subscriptionName=name, subscriptionURI=id, subscriptionId
               ) on subscriptionId
     | summarize count() by subscriptionName, subscriptionURI, subscriptionId
-    | order by subscriptionURI asc
+    | order by subscriptionName desc
   `;
 
     let resources: RawAzureSubscriptionItem[] = [];
