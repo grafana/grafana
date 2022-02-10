@@ -83,7 +83,7 @@ class LiveTimer {
       const prevPublishHr = this.lastPublishHr;
       this.lastPublishHr = performance.now();
       this.ok.next(newOk);
-      if (livePerformance.isRunning() && !oldOk) {
+      if (!oldOk) {
         livePerformance.add(MeasurementName.DashboardRenderBudgetExceeded, this.lastPublishHr - prevPublishHr);
       }
     }

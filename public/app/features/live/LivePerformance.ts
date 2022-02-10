@@ -66,9 +66,9 @@ export class LivePerformance {
     return stats;
   };
 
-  add = (name: MeasurementName, value: number) => {
+  add = (name: MeasurementName, value: number | (() => number)) => {
     if (this.isRunning()) {
-      this.state.buffer[name].push(value);
+      this.state.buffer[name].push(typeof value === 'number' ? value : value());
     }
   };
 
