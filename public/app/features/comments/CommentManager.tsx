@@ -2,7 +2,7 @@ import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
-import { CommentsView } from './CommentsView';
+import { CommentView } from './CommentView';
 
 import { Message, MessagePacket } from './types';
 
@@ -102,7 +102,7 @@ export class CommentManager extends PureComponent<Props, State> {
 
   render() {
     return (
-      <CommentsView comments={this.state.messages} packetCounter={this.packetCounter} addComment={this.addComment} />
+      <CommentView comments={this.state.messages} packetCounter={this.packetCounter} addComment={this.addComment} />
     );
   }
 }

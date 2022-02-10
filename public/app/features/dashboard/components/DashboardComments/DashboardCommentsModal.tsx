@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-import { CommentManager } from 'app/features/chat/CommentManager';
+import { CommentManager } from 'app/features/comments/CommentManager';
 import { DashboardModel } from '../../state/DashboardModel';
 
 type Props = {

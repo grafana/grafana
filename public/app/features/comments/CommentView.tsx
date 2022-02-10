@@ -10,14 +10,14 @@ type Props = {
   addComment: (comment: string) => Promise<boolean>;
 };
 
-export const CommentsView = ({ comments, packetCounter, addComment }: Props) => {
+export const CommentView = ({ comments, packetCounter, addComment }: Props) => {
   const [comment, setComment] = useState('');
   const [scrollTop, setScrollTop] = useState(0);
-  const commentsViewContainer = useRef<HTMLDivElement>(null);
+  const commentViewContainer = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    if (commentsViewContainer.current) {
-      setScrollTop(commentsViewContainer.current.offsetHeight);
+    if (commentViewContainer.current) {
+      setScrollTop(commentViewContainer.current.offsetHeight);
     } else {
       setScrollTop(0);
     }
@@ -42,7 +42,7 @@ export const CommentsView = ({ comments, packetCounter, addComment }: Props) => 
 
   return (
     <CustomScrollbar scrollTop={scrollTop}>
-      <div ref={commentsViewContainer}>
+      <div ref={commentViewContainer}>
         {comments.map((msg) => (
           <Comment key={msg.id} message={msg} />
         ))}
