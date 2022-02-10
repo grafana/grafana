@@ -15,7 +15,6 @@ export const ServiceAccountTokensTable: FC<Props> = ({ tokens, timeZone, onDelet
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  console.log(tokens);
   return (
     <>
       <table className="filter-table">
