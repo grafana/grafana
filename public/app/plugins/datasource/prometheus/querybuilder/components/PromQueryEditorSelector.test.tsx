@@ -115,11 +115,7 @@ describe('PromQueryEditorSelector', () => {
     renderWithProps({
       editorPreview: true,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        metric: 'my_metric',
-        labels: [],
-        operations: [],
-      },
+      expr: 'my_metric',
     });
     expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
   });
