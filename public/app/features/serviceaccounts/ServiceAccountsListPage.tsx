@@ -5,7 +5,13 @@ import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState, ServiceAccountDTO, AccessControlAction, Role } from 'app/types';
-import { fetchACOptions, loadServiceAccounts, removeServiceAccount, updateServiceAccount } from './state/actions';
+import {
+  fetchACOptions,
+  loadServiceAccounts,
+  removeServiceAccount,
+  updateServiceAccount,
+  setServiceAccountToRemove,
+} from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -24,6 +30,7 @@ function mapStateToProps(state: StoreState) {
     isLoading: state.serviceAccounts.isLoading,
     roleOptions: state.serviceAccounts.roleOptions,
     builtInRoles: state.serviceAccounts.builtInRoles,
+    toRemove: state.serviceAccounts.serviceAccountToRemove,
   };
 }
 
@@ -32,6 +39,7 @@ const mapDispatchToProps = {
   fetchACOptions,
   updateServiceAccount,
   removeServiceAccount,
+  setServiceAccountToRemove,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -41,14 +49,15 @@ const ServiceAccountsListPage = ({
   removeServiceAccount,
   fetchACOptions,
   updateServiceAccount,
+  setServiceAccountToRemove,
   navModel,
   serviceAccounts,
   isLoading,
   roleOptions,
   builtInRoles,
+  toRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  let toRemove: ServiceAccountDTO | null | undefined;
 
   useEffect(() => {
     loadServiceAccounts();
@@ -61,10 +70,6 @@ const ServiceAccountsListPage = ({
     const updatedServiceAccount = { ...serviceAccount, role: role };
 
     updateServiceAccount(updatedServiceAccount);
-  };
-
-  const onSetToRemove = (serviceAccount: ServiceAccountDTO) => {
-    toRemove = serviceAccount;
   };
 
   const onRemoveServiceAccount = (serviceAccount: ServiceAccountDTO) => {
@@ -106,7 +111,7 @@ const ServiceAccountsListPage = ({
                       builtInRoles={builtInRoles}
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
-                      onSetToRemove={onSetToRemove}
+                      onSetToRemove={setServiceAccountToRemove}
                     />
                   ))}
                 </tbody>
@@ -120,7 +125,7 @@ const ServiceAccountsListPage = ({
             confirmText="Delete"
             title="Delete"
             onDismiss={() => {
-              toRemove = null;
+              setServiceAccountToRemove(null);
             }}
             isOpen={true}
             onConfirm={() => {
@@ -128,7 +133,7 @@ const ServiceAccountsListPage = ({
                 return;
               }
               onRemoveServiceAccount(toRemove);
-              toRemove = null;
+              setServiceAccountToRemove(null);
             }}
           />
         )}
