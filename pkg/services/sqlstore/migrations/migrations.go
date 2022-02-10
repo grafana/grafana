@@ -40,7 +40,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addAnnotationMig(mg)
 	addTestDataMigrations(mg)
 	addDashboardVersionMigration(mg)
-	// addDashboardSearchMigration(mg) NOT yet used!
 	addTeamMigrations(mg)
 	addDashboardAclMigrations(mg) // Do NOT add more migrations to this function.
 	addTagMigration(mg)
