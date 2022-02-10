@@ -84,11 +84,14 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               placeholder="Query patterns"
               allowCustomValue
               onChange={({ value }) => {
-                // TODO
-                // onChangeViewModel({
-                //   ...visualQuery,
-                //   operations: value?.operations!,
-                // });
+                // TODO: Bit convoluted as we don't have access to visualQuery model here. Maybe would make sense to
+                //  move it inside the editor?
+                const result = buildVisualQueryFromString(query.expr || '');
+                result.query.operations = value?.operations!;
+                onChange({
+                  ...query,
+                  expr: promQueryModeller.renderQuery(result.query),
+                });
               }}
               options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
