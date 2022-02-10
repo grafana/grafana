@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { urlUtil } from '../../packages/grafana-data/src/utils/url';
 
 e2e.scenario({
   describeName: 'Explore',
@@ -21,7 +20,7 @@ e2e.scenario({
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
 
     cy.location().then((loc) => {
-      const parsedUrl = urlUtil.parseKeyValue(loc.search);
+      const parsedUrl = e2e.utils.parseKeyValue(loc.search);
       const leftJSON = JSON.parse(parsedUrl.left);
       expect(leftJSON.range.to).to.equal('now');
       expect(leftJSON.range.from).to.equal('now-1h');
@@ -30,8 +29,7 @@ e2e.scenario({
       cy.get('body').type('t{leftarrow}');
 
       cy.location().then((locPostKeypress) => {
-        const parsedUrl = urlUtil.parseKeyValue(locPostKeypress.search);
-        console.log(parsedUrl);
+        const parsedUrl = e2e.utils.parseKeyValue(locPostKeypress.search);
         const leftJSON = JSON.parse(parsedUrl.left);
         // be sure the keypress affected the time window
         expect(leftJSON.range.to).to.not.equal('now');

@@ -8,6 +8,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
@@ -17,7 +18,6 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { runQueries } from './query';
 import { syncTimesAction, stateSave } from './main';
-import { TimeRangeUpdatedEvent } from '@grafana/runtime/src/services/appEvents';
 
 //
 // Actions and Payloads

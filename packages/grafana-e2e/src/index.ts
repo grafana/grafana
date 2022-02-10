@@ -5,6 +5,7 @@
  */
 import { e2eScenario, ScenarioArguments } from './support/scenario';
 import { benchmark } from './support/benchmark';
+import { parseKeyValue } from './support/url';
 import { getScenarioContext, setScenarioContext } from './support/scenarioContext';
 import { e2eFactory } from './support';
 import { E2ESelectors, Selectors, selectors } from '@grafana/e2e-selectors';
@@ -25,6 +26,7 @@ const e2eObject = {
   getScenarioContext,
   setScenarioContext,
   getSelectors: <T extends Selectors>(selectors: E2ESelectors<T>) => e2eFactory({ selectors }),
+  utils: { parseKeyValue },
 };
 
 export const e2e: (() => Cypress.cy) & typeof e2eObject = Object.assign(() => cy, e2eObject);
