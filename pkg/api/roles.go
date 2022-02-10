@@ -215,11 +215,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams.",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		Grants: teamCreatorGrants,
