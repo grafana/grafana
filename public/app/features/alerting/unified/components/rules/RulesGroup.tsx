@@ -101,10 +101,11 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
 
     actionIcons.push(
       <ActionIcon
+        aria-label="delete rule group"
+        data-testid="delete-group"
         key="delete-group"
-        aria-label=""
-        tooltip="Remove group"
         icon="trash-alt"
+        tooltip="delete rule group"
         onClick={() => setIsDeletingGroup(true)}
       />
     );
