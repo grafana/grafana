@@ -1,11 +1,15 @@
 import { SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Modal, ToolbarButton, RadioButtonGroup, Button, InputControl, Field, Input } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
 import { DashboardPicker } from 'app/core/components/editors/DashboardPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import React, { useState } from 'react';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+import { SaveToExistingDashboardDTO, SaveToNewDashboardDTO, useAddToDashboard } from './hooks/useAddToDashboard';
 
-type FormAction = 'stay' | 'navigate';
 type SaveTarget = 'new' | 'existing';
 
 const options: Array<SelectableValue<SaveTarget>> = [
@@ -13,28 +17,48 @@ const options: Array<SelectableValue<SaveTarget>> = [
   { label: 'Existing dashboard', value: 'existing' },
 ];
 
-interface SaveToNewDashboardDTO {
-  dashboardName: string;
-  folder: string;
-}
-
-interface SaveToExistingDashboardDTO {
-  dashboard: string;
-}
-
 type FormDTO = SaveToExistingDashboardDTO | SaveToNewDashboardDTO;
 
+const withRedirect =
+  (fn: (...args: any[]) => Promise<string>) =>
+  async (...args: any[]) =>
+    locationService.push(await fn(...args));
+
+// TODO: move the modal ccontent into a separate component
 export const SaveToDashboardButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const onSubmit = (action: FormAction) => (data: FormDTO) => console.log({ action, data });
   const [saveTarget, setSaveTarget] = useState<SaveTarget>('new');
+  const dispatch = useDispatch();
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
+    setError,
   } = useForm<FormDTO>();
+
+  const { execute } = useAddToDashboard();
+
+  const onSubmit = async (data: FormDTO) => {
+    const res = await execute(data);
+
+    if (!res.ok) {
+      switch (res.data.status) {
+        case 'name-exists':
+          setError('dashboardName', { message: res.data.message, shouldFocus: true });
+          break;
+        // TODO: do we know of any other error from BE?
+        default:
+          dispatch(notifyApp(createErrorNotification(res.data.message)));
+      }
+
+      throw res.data.status;
+    }
+
+    setIsOpen(false);
+    return res.data.url;
+  };
 
   return (
     <>
@@ -62,7 +86,7 @@ export const SaveToDashboardButton = () => {
                   // we set the default value here instead in useForm because this input will be unregistered when switching
                   // to "Existing Dashboard" and default values are not populated wit manually registered
                   // inputs (ie. when switching back to "New Dashboard")
-                  defaultValue="New dashboard"
+                  defaultValue="New dashboard (Explore)"
                 />
               </Field>
 
@@ -90,13 +114,31 @@ export const SaveToDashboardButton = () => {
           )}
 
           <Modal.ButtonRow>
-            <Button type="reset" onClick={() => setIsOpen(false)} fill="outline" variant="secondary">
+            <Button
+              type="reset"
+              onClick={() => setIsOpen(false)}
+              fill="outline"
+              variant="secondary"
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button type="submit" onClick={handleSubmit(onSubmit('stay'))} variant="secondary" icon="compass">
+            <Button
+              type="submit"
+              onClick={handleSubmit(onSubmit)}
+              variant="secondary"
+              icon="compass"
+              disabled={isSubmitting}
+            >
               Save and keep exploring
             </Button>
-            <Button type="submit" onClick={handleSubmit(onSubmit('navigate'))} variant="primary" icon="save">
+            <Button
+              type="submit"
+              onClick={handleSubmit(withRedirect(onSubmit))}
+              variant="primary"
+              icon="save"
+              disabled={isSubmitting}
+            >
               Save and go to dashboard
             </Button>
           </Modal.ButtonRow>
