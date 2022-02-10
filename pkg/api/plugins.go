@@ -311,7 +311,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, nil, c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -476,7 +476,7 @@ func mdFilepath(mdFilename string) string {
 }
 
 func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string, ds *models.DataSource) {
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, ds, c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.GetWithDatasource(c.Req.Context(), pluginID, ds, c.SignedInUser, false)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return

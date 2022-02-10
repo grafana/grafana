@@ -44,10 +44,25 @@ type Provider struct {
 	logger                log.Logger
 }
 
-// Get allows getting plugin context by its ID. If datasource is not nil
+// Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(ctx context.Context, pluginID string, datasource *models.DataSource, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
+func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
+	var ds *models.DataSource
+	var err error
+	if datasourceUID != "" {
+		ds, err = p.DataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
+		if err != nil {
+			return backend.PluginContext{}, false, errutil.Wrap("Failed to get datasource", err)
+		}
+	}
+	return p.GetWithDatasource(ctx, pluginID, ds, user, skipCache)
+}
+
+// GetWithDatasource allows getting plugin context by its ID. If datasource is not nil
+// then PluginContext.DataSourceInstanceSettings will be resolved and appended to
+// returned context.
+func (p *Provider) GetWithDatasource(ctx context.Context, pluginID string, datasource *models.DataSource, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
