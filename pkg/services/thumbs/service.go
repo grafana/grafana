@@ -363,6 +363,10 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 }
 
 func (hs *thumbService) Run(ctx context.Context) error {
+	if !hs.features.IsEnabled(featuremgmt.FlagDashboardPreviewsScheduler) {
+		return nil
+	}
+
 	gc := time.NewTicker(hs.scheduleOptions.tickerInterval)
 
 	for {
