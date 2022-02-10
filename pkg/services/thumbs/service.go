@@ -219,7 +219,7 @@ func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) 
 func (hs *thumbService) getSystemRequirements() dashboardPreviewsSystemRequirements {
 	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
 	if err != nil {
-		tlog.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
+		hs.log.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
 		return dashboardPreviewsSystemRequirements{
 			Met: false,
 		}

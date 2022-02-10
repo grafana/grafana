@@ -96,7 +96,7 @@ func (r *sqlThumbnailRepository) doThumbnailsExist(ctx context.Context) (bool, e
 	cmd := &models.FindDashboardThumbnailCountCommand{}
 	count, err := r.store.FindThumbnailCount(ctx, cmd)
 	if err != nil {
-		tlog.Error("Error finding thumbnails", "err", err)
+		r.log.Error("Error finding thumbnails", "err", err)
 		return false, err
 	}
 	return count > 0, err
