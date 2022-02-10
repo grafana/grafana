@@ -42,7 +42,11 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
               showPreviews,
             }}
           />
-          <PreviewsSystemRequirements showPreviews={showPreviews} onRemove={() => setShowPreviews(false)} />
+          <PreviewsSystemRequirements
+            bottomSpacing={3}
+            showPreviews={showPreviews}
+            onRemove={() => setShowPreviews(false)}
+          />
           <CustomScrollbar>
             <SearchResults
               results={results}

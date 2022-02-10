@@ -7,6 +7,8 @@ export interface Props {
   showPreviews?: boolean;
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
+  topSpacing?: number;
+  bottomSpacing?: number;
 }
 
 const MessageLink = ({ text }: { text: string }) => (
@@ -39,7 +41,7 @@ const Message = ({ requiredImageRendererPluginVersion }: { requiredImageRenderer
   );
 };
 
-export const PreviewsSystemRequirements = ({ showPreviews, onRemove }: Props) => {
+export const PreviewsSystemRequirements = ({ showPreviews, onRemove, topSpacing, bottomSpacing }: Props) => {
   const styles = useStyles2(getStyles);
 
   const previewsEnabled = config.featureToggles.dashboardPreviews;
@@ -62,7 +64,14 @@ export const PreviewsSystemRequirements = ({ showPreviews, onRemove }: Props) =>
     <>
       {shouldDisplayRequirements && (
         <div className={styles.wrapper}>
-          <Alert className={styles.alert} severity="info" title={title} onRemove={onRemove}>
+          <Alert
+            className={styles.alert}
+            topSpacing={topSpacing}
+            bottomSpacing={bottomSpacing}
+            severity="info"
+            title={title}
+            onRemove={onRemove}
+          >
             <Message requiredImageRendererPluginVersion={requiredImageRendererPluginVersion} />
           </Alert>
         </div>

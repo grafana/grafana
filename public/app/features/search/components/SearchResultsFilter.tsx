@@ -78,7 +78,12 @@ export const SearchResultsFilter: FC<Props> = ({
           />
         )}
       </div>
-      <PreviewsSystemRequirements showPreviews={showPreviews} onRemove={() => setShowPreviews(false)} />
+      <PreviewsSystemRequirements
+        topSpacing={2}
+        bottomSpacing={3}
+        showPreviews={showPreviews}
+        onRemove={() => setShowPreviews(false)}
+      />
     </div>
   );
 };
