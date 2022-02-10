@@ -114,7 +114,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 }
 
 export function getDataSourceNav(main: NavModelItem, pageName: string): NavModel {
-  let node: NavModelItem;
+  let node: NavModelItem = { text: '' };
 
   // find active page
   for (const child of main.children!) {
