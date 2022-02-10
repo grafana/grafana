@@ -72,10 +72,6 @@ const ServiceAccountsListPage = ({
     updateServiceAccount(updatedServiceAccount);
   };
 
-  const onRemoveServiceAccount = (serviceAccount: ServiceAccountDTO) => {
-    removeServiceAccount(serviceAccount.id);
-  };
-
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -119,20 +115,17 @@ const ServiceAccountsListPage = ({
             </div>
           </>
         )}
-        {Boolean(toRemove) && (
+        {toRemove && (
           <ConfirmModal
             body={`Are you sure you want to delete ${toRemove?.name}?`}
             confirmText="Delete"
-            title="Delete"
+            title="Delete service account"
             onDismiss={() => {
               setServiceAccountToRemove(null);
             }}
             isOpen={true}
             onConfirm={() => {
-              if (!toRemove) {
-                return;
-              }
-              onRemoveServiceAccount(toRemove);
+              removeServiceAccount(toRemove.id);
               setServiceAccountToRemove(null);
             }}
           />
