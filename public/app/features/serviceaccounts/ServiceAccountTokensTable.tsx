@@ -79,8 +79,7 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
       </span>
     );
   }
-  const isExpired = !!(token.expiration && Date.now() > new Date(token.expiration).getTime());
-  if (isExpired) {
+  if (token.hasExpired) {
     return (
       <span className={styles.hasExpired}>
         Expired
