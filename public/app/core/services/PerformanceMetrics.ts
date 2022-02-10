@@ -92,6 +92,7 @@ export class PerformanceMetrics {
         };
         this.state.currentIndexByEventName[name] = (index + 1) % this.options.maxIntervalsToKeep;
       });
+    this.state.buffer = emptyArrayByEventName<number>();
   };
 
   static instance = () => singleton;
