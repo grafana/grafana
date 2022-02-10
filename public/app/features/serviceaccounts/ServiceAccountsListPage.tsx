@@ -121,7 +121,7 @@ const ServiceAccountsListPage = ({
         )}
         {Boolean(toRemove) && (
           <ConfirmModal
-            body={`Are you sure you want to delete user ${toRemove?.name}?`}
+            body={`Are you sure you want to delete ${toRemove?.name}?`}
             confirmText="Delete"
             title="Delete"
             onDismiss={() => {
@@ -234,7 +234,7 @@ const ServiceAccountListItem = memo(
                 onSetToRemove(serviceAccount);
               }}
               icon="times"
-              aria-label="Delete user"
+              aria-label="Delete service account"
             />
           </td>
         )}
