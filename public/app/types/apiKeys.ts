@@ -7,7 +7,7 @@ export interface ApiKey {
   secondsToLive: number | null;
   expiration?: string;
   secondsUntilExpiration?: number;
-  hasExpired: boolean;
+  hasExpired?: boolean;
   created?: string;
 }
 
