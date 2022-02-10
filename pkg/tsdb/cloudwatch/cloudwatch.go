@@ -284,9 +284,9 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	var result *backend.QueryDataResponse
 	switch queryType {
 	case "metricFindQuery":
-		result, err = e.executeMetricFindQuery(ctx, model, q, req.PluginContext)
+		result, err = e.executeMetricFindQuery(model, q, req.PluginContext)
 	case "annotationQuery":
-		result, err = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
+		result, err = e.executeAnnotationQuery(model, q, req.PluginContext)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, req)
 	case "timeSeriesQuery":

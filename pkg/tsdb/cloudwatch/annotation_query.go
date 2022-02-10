@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"errors"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeAnnotationQuery(model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	usePrefixMatch := model.Get("prefixMatching").MustBool(false)

@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -37,7 +36,7 @@ var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMe
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
 	subType := model.Get("subtype").MustString()
 
 	var data []suggestData
