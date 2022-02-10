@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
-import { Themeable2 } from '../../types';
+import { PerformanceMetricName, Themeable2 } from '../../types';
 import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 import {
   DataFrame,
@@ -212,6 +212,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
+    window.grafanaPerformanceMetrics?.add(PerformanceMetricName.GraphNGComponentUpdate, 1);
     const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
