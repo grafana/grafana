@@ -326,6 +326,7 @@ async function handleHistory(
     limitExceeded,
   } = await addToRichHistory(
     state.richHistory || [],
+    datasource.uid,
     datasource.name,
     queries,
     false,

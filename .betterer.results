@@ -263,7 +263,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/RichHistory/RichHistory.test.tsx:409631018": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx:357697997": [
+    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx:689438177": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RichHistory/RichHistoryContainer.test.tsx:396471778": [
