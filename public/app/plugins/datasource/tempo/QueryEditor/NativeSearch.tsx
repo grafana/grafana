@@ -144,10 +144,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 });
               }}
               placeholder="Select a service"
-              onOpenMenu={fetchServiceNameOptions}
               isClearable
               defaultOptions
               onKeyDown={onKeyDown}
+              aria-label={'select-service-name'}
             />
           </InlineField>
         </InlineFieldRow>
@@ -167,10 +167,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 });
               }}
               placeholder="Select a span"
-              onOpenMenu={fetchSpanNameOptions}
               isClearable
               defaultOptions
               onKeyDown={onKeyDown}
+              aria-label={'select-span-name'}
             />
           </InlineField>
         </InlineFieldRow>
