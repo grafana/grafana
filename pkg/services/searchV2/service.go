@@ -31,7 +31,7 @@ type dashMeta struct {
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	if user == nil || user.Role != "admin" {
+	if user == nil || user.Role != "Admin" {
 		rsp.Error = fmt.Errorf("Search is only supported for admin users while in early development")
 		return rsp
 	}
@@ -57,7 +57,7 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	}
 
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		res, err := sess.Query("SELECT id,is_folder,data FROM dashboard WHERE orgId=?", orgID)
+		res, err := sess.Query("SELECT id,is_folder,data FROM dashboard WHERE org_id=?", orgID)
 		if err != nil {
 			return err
 		}
