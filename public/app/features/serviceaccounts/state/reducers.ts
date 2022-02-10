@@ -1,12 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { ApiKey, ServiceAccountDTO, ServiceAccountProfileState, ServiceAccountsState } from 'app/types';
+import { ApiKey, Role, ServiceAccountDTO, ServiceAccountProfileState, ServiceAccountsState } from 'app/types';
 
 export const initialState: ServiceAccountsState = {
   serviceAccounts: [] as ServiceAccountDTO[],
   searchQuery: '',
   searchPage: 1,
   isLoading: true,
+  builtInRoles: {},
+  roleOptions: [],
 };
 
 export const initialStateProfile: ServiceAccountProfileState = {
@@ -42,11 +44,22 @@ const serviceAccountsSlice = createSlice({
     setServiceAccountsSearchPage: (state, action: PayloadAction<number>): ServiceAccountsState => {
       return { ...state, searchPage: action.payload };
     },
+    acOptionsLoaded: (state, action: PayloadAction<Role[]>): ServiceAccountsState => {
+      return { ...state, roleOptions: action.payload };
+    },
+    builtInRolesLoaded: (state, action: PayloadAction<Record<string, Role[]>>): ServiceAccountsState => {
+      return { ...state, builtInRoles: action.payload };
+    },
   },
 });
 
-export const { setServiceAccountsSearchQuery, setServiceAccountsSearchPage, serviceAccountsLoaded } =
-  serviceAccountsSlice.actions;
+export const {
+  setServiceAccountsSearchQuery,
+  setServiceAccountsSearchPage,
+  serviceAccountsLoaded,
+  acOptionsLoaded,
+  builtInRolesLoaded,
+} = serviceAccountsSlice.actions;
 
 export const { serviceAccountLoaded, serviceAccountTokensLoaded } = serviceAccountProfileSlice.actions;
 

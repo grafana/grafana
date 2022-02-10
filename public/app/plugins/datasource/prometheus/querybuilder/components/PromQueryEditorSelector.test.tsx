@@ -71,6 +71,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('shows builder when builder mode is set', async () => {
     renderWithMode(QueryEditorMode.Builder);
+    screen.debug(undefined, 20000);
     expectBuilder();
   });
 
@@ -86,14 +87,6 @@ describe('PromQueryEditorSelector', () => {
       refId: 'A',
       expr: defaultQuery.expr,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        labels: [
-          { label: 'label1', op: '=', value: 'foo' },
-          { label: 'label2', op: '=', value: 'bar' },
-        ],
-        metric: 'metric',
-        operations: [],
-      },
     });
   });
 
@@ -115,11 +108,7 @@ describe('PromQueryEditorSelector', () => {
     renderWithProps({
       editorPreview: true,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        metric: 'my_metric',
-        labels: [],
-        operations: [],
-      },
+      expr: 'my_metric',
     });
     expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
   });
@@ -187,7 +176,7 @@ function expectCodeEditor() {
 }
 
 function expectBuilder() {
-  expect(screen.getByText('Select metric')).toBeInTheDocument();
+  expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
 function expectExplain() {

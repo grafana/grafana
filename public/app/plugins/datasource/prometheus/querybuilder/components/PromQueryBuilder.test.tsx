@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, getByText } from '@testing-library/react';
+import { render, screen, getByText, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PrometheusDatasource } from '../../datasource';
@@ -70,7 +70,7 @@ describe('PromQueryBuilder', () => {
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
     openMetricSelect(container);
-    expect(languageProvider.getLabelValues).toBeCalledWith('__name__');
+    await waitFor(() => expect(languageProvider.getLabelValues).toBeCalledWith('__name__'));
   });
 
   it('tries to load metrics with labels', async () => {
@@ -79,27 +79,27 @@ describe('PromQueryBuilder', () => {
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
     openMetricSelect(container);
-    expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true);
+    await waitFor(() => expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true));
   });
 
   it('tries to load variables in metric field', async () => {
     const { datasource, container } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
     openMetricSelect(container);
-    expect(datasource.getVariables).toBeCalled();
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     openLabelNameSelect();
-    expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}');
+    await waitFor(() => expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}'));
   });
 
   it('tries to load variables in label field', async () => {
     const { datasource } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
     openLabelNameSelect();
-    expect(datasource.getVariables).toBeCalled();
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected and other labels are already present', async () => {
@@ -111,7 +111,9 @@ describe('PromQueryBuilder', () => {
       ],
     });
     openLabelNameSelect(1);
-    expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}');
+    await waitFor(() =>
+      expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
+    );
   });
 
   it('tries to load labels when metric is not selected', async () => {
@@ -120,7 +122,7 @@ describe('PromQueryBuilder', () => {
       metric: '',
     });
     openLabelNameSelect();
-    expect(languageProvider.fetchLabels).toBeCalled();
+    await waitFor(() => expect(languageProvider.fetchLabels).toBeCalled());
   });
 });
 

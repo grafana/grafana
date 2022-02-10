@@ -80,6 +80,16 @@ describe('PromQueryModeller', () => {
     ).toBe('avg(sum by(server, job) (metric))');
   });
 
+  it('Can use aggregation without label', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric',
+        labels: [],
+        operations: [{ id: '__sum_without', params: ['server', 'job'] }],
+      })
+    ).toBe('sum without(server, job) (metric)');
+  });
+
   it('Can render aggregations with parameters', () => {
     expect(
       modeller.renderQuery({
