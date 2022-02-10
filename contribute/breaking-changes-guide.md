@@ -89,6 +89,8 @@ We can make breaking changes less painful if they are only happening between maj
 Whenever possible try to deprecate first what you are about to remove or change. For example:
 
 ```javascript
+import { deprecationWarning } from '@grafana/data';
+
 /**
  * @deprecated -- this is no longer necessary and will be removed in Grafana 9.0.0
  */
@@ -96,7 +98,6 @@ myOldFunction(name: string) {
     deprecationWarning('MyFile', 'myOldFunction', 'myNewFunction');
     // ...
 }
-```
 
 1. Add a deprecation comment `// @deprecated`
 2. Add info in the comment about **when it is going to be removed**
