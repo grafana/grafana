@@ -4387,7 +4387,7 @@ __metadata:
     classnames: 2.3.1
     common-tags: 1.8.2
     core-js: 3.21.0
-    css-loader: 6.5.1
+    css-loader: 6.6.0
     css-minimizer-webpack-plugin: 3.4.1
     csstype: 3.0.10
     d3: 5.15.0
@@ -15896,21 +15896,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-loader@npm:6.5.1":
-  version: 6.5.1
-  resolution: "css-loader@npm:6.5.1"
+"css-loader@npm:6.6.0":
+  version: 6.6.0
+  resolution: "css-loader@npm:6.6.0"
   dependencies:
     icss-utils: ^5.1.0
-    postcss: ^8.2.15
+    postcss: ^8.4.5
     postcss-modules-extract-imports: ^3.0.0
     postcss-modules-local-by-default: ^4.0.0
     postcss-modules-scope: ^3.0.0
     postcss-modules-values: ^4.0.0
-    postcss-value-parser: ^4.1.0
+    postcss-value-parser: ^4.2.0
     semver: ^7.3.5
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 5a3bedecb468038f09673d25c32d8db5b0baa6c38820253c54ce4c56c27a2250d5d5b4bace77dd5e20ba0a569604eb759362bab4e3128e7db2229e40857d4aca
+  checksum: cc4117320c2bfbbc3e84cdf811fb29219f1900cf4dcebb7dbf916b7cbdfc193cd9017d19b62be2d57d22baeb791919de52bf2e3086213d184875813817ac290f
   languageName: node
   linkType: hard
 
@@ -20441,7 +20441,7 @@ __metadata:
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
     core-js: 3.21.0
-    css-loader: 6.5.1
+    css-loader: 6.6.0
     css-minimizer-webpack-plugin: 3.4.1
     cypress: 9.3.1
     d3: 5.15.0
@@ -29082,7 +29082,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.4.6, postcss@npm:^8.4.6":
+"postcss@npm:8.4.6, postcss@npm:^8.4.5, postcss@npm:^8.4.6":
   version: 8.4.6
   resolution: "postcss@npm:8.4.6"
   dependencies:
