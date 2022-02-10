@@ -45,7 +45,6 @@ type DashboardPageRouteSearchParams = {
   viewPanel?: string;
   editview?: string;
   inspect?: string;
-  kiosk?: UrlQueryValue;
   from?: string;
   to?: string;
   refresh?: string;
