@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from '@grafana/data';
+import { uniqBy } from 'lodash';
 
 export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[]): AlertmanagerGroup[] => {
   return useMemo(() => {
@@ -14,7 +15,7 @@ export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[])
             if (!noGroupingGroup) {
               combinedGroups.push({ alerts: group.alerts, labels: {}, receiver: { name: 'NONE' } });
             } else {
-              noGroupingGroup.alerts = [...noGroupingGroup.alerts, ...group.alerts];
+              noGroupingGroup.alerts = uniqBy([...noGroupingGroup.alerts, ...group.alerts], 'labels');
             }
           } else {
             combinedGroups.push(group);
