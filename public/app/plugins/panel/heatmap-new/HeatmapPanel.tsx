@@ -1,11 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { PanelProps } from '@grafana/data';
-import { UPlotChart, useTheme2, VizLayout } from '@grafana/ui';
+import { Portal, UPlotChart, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
 import { prepareHeatmapData } from './fields';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
+import { DataHoverView } from '../geomap/components/DataHoverView';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -27,9 +28,11 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
+  const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
+
   const onhover = useCallback(
     (evt?: HeatmapHoverEvent | null) => {
-      // console.log('onhover', evt);
+      setHover(evt ?? undefined);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [options, data.structureRev]
@@ -67,13 +70,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           </UPlotChart>
         )}
       </VizLayout>
-      {/* <Portal>
-          {hover && (
-            <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
-              <TooltipView series={series[hover.scatterIndex]} rowIndex={hover.xIndex} data={data.series} />
-            </VizTooltipContainer>
-          )}
-        </Portal> */}
+      <Portal>
+        {hover && (
+          <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
+            <DataHoverView data={info.heatmap} rowIndex={hover.xIndex} columnIndex={hover.yIndex} />
+          </VizTooltipContainer>
+        )}
+      </Portal>
     </>
   );
 };

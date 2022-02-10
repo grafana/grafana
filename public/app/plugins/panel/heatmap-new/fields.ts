@@ -9,9 +9,6 @@ export interface HeatmapData {
   // List of heatmap frames
   heatmap?: DataFrame;
 
-  // Aligned version of any non-heatmap data.  This shares the same X axis as heatmap
-  data?: DataFrame;
-
   // Errors
   warning?: string;
 }
