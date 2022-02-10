@@ -126,7 +126,9 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme mode
 		Theme:           theme,
 		ConcurrentLimit: 10,
 	}
-	renderingSession, err := r.renderService.CreateRenderingSession(context.Background(), r.opts.AuthOpts, rendering.SessionOpts{
+
+	crawlerContext := context.Background()
+	renderingSession, err := r.renderService.CreateRenderingSession(crawlerContext, r.opts.AuthOpts, rendering.SessionOpts{
 		Expiry:                     5 * time.Minute,
 		RefreshExpiryOnEachRequest: true,
 	})
@@ -154,7 +156,7 @@ func (r *simpleCrawler) Start(c *models.ReqContext, mode CrawlerMode, theme mode
 
 	// create a pool of workers
 	for i := 0; i < r.threadCount; i++ {
-		go r.walk(ctx)
+		go r.walk(crawlerContext)
 	}
 	return r.Status()
 }
