@@ -1,59 +1,69 @@
 import { css } from '@emotion/css';
-import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, useStyles2 } from '@grafana/ui';
-import React, { SyntheticEvent, useCallback, useState } from 'react';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+
 import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
-import { getDefaultEmptyQuery, PromVisualQuery } from '../types';
-import { PromQueryBuilder } from './PromQueryBuilder';
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { buildVisualQueryFromString } from '../parsing';
+import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
-  const [visualQuery, setVisualQuery] = useState<PromVisualQuery>(query.visualQuery ?? getDefaultEmptyQuery());
+
+  const [parseModalOpen, setParseModalOpen] = useState(false);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      onChange({ ...query, editorMode: newMetricEditorMode });
+      const change = { ...query, editorMode: newMetricEditorMode };
+      if (newMetricEditorMode === QueryEditorMode.Builder) {
+        const result = buildVisualQueryFromString(query.expr || '');
+        // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
+        if (result.errors.length) {
+          setParseModalOpen(true);
+          return;
+        }
+      }
+      onChange(change);
     },
     [onChange, query]
   );
 
-  const onChangeViewModel = (updatedQuery: PromVisualQuery) => {
-    setVisualQuery(updatedQuery);
-
-    onChange({
-      ...query,
-      expr: promQueryModeller.renderQuery(updatedQuery),
-      visualQuery: updatedQuery,
-      editorMode: QueryEditorMode.Builder,
-    });
-  };
-
-  const onInstantChange = (event: SyntheticEvent<HTMLInputElement>) => {
+  const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, instant: isEnabled, exemplar: false });
-    onRunQuery();
-  };
-
-  const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, exemplar: isEnabled });
+    onChange({ ...query, editorPreview: isEnabled });
     onRunQuery();
   };
 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
-  const showExemplarSwitch = props.app !== CoreApp.UnifiedAlerting && !query.instant;
+
+  useEffect(() => {
+    if (query.editorMode === undefined) {
+      onChange({ ...query, editorMode });
+    }
+  }, [editorMode, onChange, query]);
 
   return (
     <>
+      <ConfirmModal
+        isOpen={parseModalOpen}
+        title="Query parsing"
+        body="There were errors while trying to parse the query. Continuing to visual builder may loose some parts of the query."
+        confirmText="Continue"
+        onConfirm={() => {
+          onChange({ ...query, editorMode: QueryEditorMode.Builder });
+          setParseModalOpen(false);
+        }}
+        onDismiss={() => setParseModalOpen(false)}
+      />
       <EditorHeader>
         <FlexItem grow={1} />
         <Button
@@ -67,10 +77,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         >
           Run query
         </Button>
-        <QueryHeaderSwitch label="Instant" value={query.instant} onChange={onInstantChange} />
-        {showExemplarSwitch && (
-          <QueryHeaderSwitch label="Exemplars" value={query.exemplar} onChange={onExemplarChange} />
-        )}
         {editorMode === QueryEditorMode.Builder && (
           <>
             <InlineSelect
@@ -78,28 +84,40 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               placeholder="Query patterns"
               allowCustomValue
               onChange={({ value }) => {
-                onChangeViewModel({
-                  ...visualQuery,
-                  operations: value?.operations!,
+                // TODO: Bit convoluted as we don't have access to visualQuery model here. Maybe would make sense to
+                //  move it inside the editor?
+                const result = buildVisualQueryFromString(query.expr || '');
+                result.query.operations = value?.operations!;
+                onChange({
+                  ...query,
+                  expr: promQueryModeller.renderQuery(result.query),
                 });
               }}
               options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
           </>
         )}
+        <QueryHeaderSwitch
+          label="Preview"
+          value={query.editorPreview}
+          onChange={onQueryPreviewChange}
+          disabled={editorMode !== QueryEditorMode.Builder}
+        />
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
-      {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
-      {editorMode === QueryEditorMode.Builder && (
-        <PromQueryBuilder
-          query={visualQuery}
-          datasource={props.datasource}
-          onChange={onChangeViewModel}
-          onRunQuery={props.onRunQuery}
-        />
-      )}
-      {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
+      <EditorRows>
+        {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
+        {editorMode === QueryEditorMode.Builder && (
+          <PromQueryBuilderContainer
+            query={query}
+            datasource={props.datasource}
+            onChange={onChange}
+            onRunQuery={props.onRunQuery}
+          />
+        )}
+        {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
+      </EditorRows>
     </>
   );
 });

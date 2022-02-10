@@ -1,9 +1,9 @@
-import { isArray } from 'angular';
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
 import { FetchError } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import { appEvents } from 'app/core/core';
+import { isFetchError } from './alertmanager';
 
 export interface AsyncRequestState<T> {
   result?: T;
@@ -138,10 +138,6 @@ export function withAppEvents<T>(
     });
 }
 
-export function isFetchError(e: unknown): e is FetchError {
-  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
-}
-
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
@@ -150,7 +146,7 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
         msg += `; ${e.data.error}`;
       }
       return msg;
-    } else if (isArray(e.data) && e.data.length && e.data[0]?.message) {
+    } else if (Array.isArray(e.data) && e.data.length && e.data[0]?.message) {
       return e.data
         .map((d) => d?.message)
         .filter((m) => !!m)

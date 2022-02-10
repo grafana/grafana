@@ -1,10 +1,14 @@
 package serviceaccounts
 
-import "github.com/grafana/grafana/pkg/services/accesscontrol"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
 
 var (
 	ScopeAll = "serviceaccounts:*"
-	ScopeID  = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceaccountId"))
+	ScopeID  = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceAccountId"))
 )
 
 const (
@@ -19,8 +23,29 @@ type ServiceAccount struct {
 }
 
 type CreateServiceaccountForm struct {
-	OrgID       int64  `json:"-"`
-	Name        string `json:"name" binding:"Required"`
-	DisplayName string `json:"displayName"`
-	Description string `json:"description"`
+	OrgID int64  `json:"-"`
+	Name  string `json:"name" binding:"Required"`
+}
+
+type ServiceAccountDTO struct {
+	Id            int64           `json:"id"`
+	Name          string          `json:"name"`
+	Login         string          `json:"login"`
+	OrgId         int64           `json:"orgId"`
+	Tokens        int64           `json:"tokens"`
+	Role          string          `json:"role"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
+}
+
+type ServiceAccountProfileDTO struct {
+	Id            int64           `json:"id"`
+	Name          string          `json:"name"`
+	Login         string          `json:"login"`
+	OrgId         int64           `json:"orgId"`
+	IsDisabled    bool            `json:"isDisabled"`
+	UpdatedAt     time.Time       `json:"updatedAt"`
+	CreatedAt     time.Time       `json:"createdAt"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

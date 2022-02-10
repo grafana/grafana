@@ -39,6 +39,7 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -62,7 +63,7 @@ func TestTestReceivers(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"error":"no receivers"}`, string(b))
+		require.JSONEq(t, `{}`, string(b))
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
@@ -72,6 +73,7 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -156,6 +158,7 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -235,6 +238,7 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -324,6 +328,7 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -439,6 +444,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -534,6 +540,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -624,6 +631,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
 			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -715,6 +723,7 @@ func TestNotificationChannels(t *testing.T) {
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)

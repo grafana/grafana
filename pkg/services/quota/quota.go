@@ -3,23 +3,29 @@ package quota
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ErrInvalidQuotaTarget = errors.New("invalid quota target")
 
-func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService) *QuotaService {
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, sqlStore *sqlstore.SQLStore) *QuotaService {
 	return &QuotaService{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
+		SQLStore:         sqlStore,
 	}
 }
 
 type QuotaService struct {
 	AuthTokenService models.UserTokenService
 	Cfg              *setting.Cfg
+	SQLStore         sqlstore.Store
+}
+
+type Service interface {
+	QuotaReached(c *models.ReqContext, target string) (bool, error)
 }
 
 func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
@@ -38,7 +44,6 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 	if err != nil {
 		return false, err
 	}
-
 	for _, scope := range scopes {
 		c.Logger.Debug("Checking quota", "target", target, "scope", scope)
 
@@ -63,7 +68,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				continue
 			}
 			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
-			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+			if err := qs.SQLStore.GetGlobalQuotaByTarget(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Used >= scope.DefaultLimit {
@@ -79,7 +84,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				Default:                scope.DefaultLimit,
 				UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled(),
 			}
-			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+			if err := qs.SQLStore.GetOrgQuotaByTarget(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -97,7 +102,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				continue
 			}
 			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit, UnifiedAlertingEnabled: qs.Cfg.UnifiedAlerting.IsEnabled()}
-			if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+			if err := qs.SQLStore.GetUserQuotaByTarget(c.Req.Context(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -112,7 +117,6 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			}
 		}
 	}
-
 	return false, nil
 }
 

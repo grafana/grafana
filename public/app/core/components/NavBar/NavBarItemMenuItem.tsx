@@ -9,7 +9,6 @@ import { mergeProps } from '@react-aria/utils';
 import { Node } from '@react-types/shared';
 
 import { useNavBarItemMenuContext } from './context';
-import { UpgradeBox } from '../Upgrade/UpgradeBox';
 
 export interface NavBarItemMenuItemProps {
   item: Node<NavModelItem>;
@@ -61,11 +60,6 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
       <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
         {rendered}
       </li>
-      {item.value.highlightText && (
-        <li className={styles.upgradeBoxContainer}>
-          <UpgradeBox text={item.value.highlightText} className={styles.upgradeBox} size={'sm'} />
-        </li>
-      )}
     </>
   );
 }

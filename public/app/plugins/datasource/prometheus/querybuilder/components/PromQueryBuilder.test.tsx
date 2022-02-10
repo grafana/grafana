@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, getByRole, getByText } from '@testing-library/react';
+import { render, screen, getByText, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PrometheusDatasource } from '../../datasource';
@@ -47,8 +47,6 @@ const bugQuery: PromVisualQuery = {
 describe('PromQueryBuilder', () => {
   it('shows empty just with metric selected', async () => {
     setup();
-    // One should be select another query preview
-    expect(screen.getAllByText('random_metric').length).toBe(2);
     // Add label
     expect(screen.getByLabelText('Add')).toBeInTheDocument();
     expect(screen.getByLabelText('Add operation')).toBeInTheDocument();
@@ -67,44 +65,41 @@ describe('PromQueryBuilder', () => {
     expect(screen.getByText('Binary operations')).toBeInTheDocument();
     expect(screen.getByText('Operator')).toBeInTheDocument();
     expect(screen.getByText('Vector matches')).toBeInTheDocument();
-    expect(screen.getByLabelText('selector').textContent).toBe(
-      'sum by(instance, job) (rate(random_metric{instance="localhost:9090"}[$__rate_interval])) / sum by(app) (metric2{foo="bar"})'
-    );
   });
 
   it('tries to load metrics without labels', async () => {
-    const { languageProvider } = setup();
-    openMetricSelect();
-    expect(languageProvider.getLabelValues).toBeCalledWith('__name__');
+    const { languageProvider, container } = setup();
+    openMetricSelect(container);
+    await waitFor(() => expect(languageProvider.getLabelValues).toBeCalledWith('__name__'));
   });
 
   it('tries to load metrics with labels', async () => {
-    const { languageProvider } = setup({
+    const { languageProvider, container } = setup({
       ...defaultQuery,
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
-    openMetricSelect();
-    expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true);
+    openMetricSelect(container);
+    await waitFor(() => expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true));
   });
 
   it('tries to load variables in metric field', async () => {
-    const { datasource } = setup();
+    const { datasource, container } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
-    openMetricSelect();
-    expect(datasource.getVariables).toBeCalled();
+    openMetricSelect(container);
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     openLabelNameSelect();
-    expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}');
+    await waitFor(() => expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}'));
   });
 
   it('tries to load variables in label field', async () => {
     const { datasource } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
     openLabelNameSelect();
-    expect(datasource.getVariables).toBeCalled();
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected and other labels are already present', async () => {
@@ -116,7 +111,9 @@ describe('PromQueryBuilder', () => {
       ],
     });
     openLabelNameSelect(1);
-    expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}');
+    await waitFor(() =>
+      expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
+    );
   });
 
   it('tries to load labels when metric is not selected', async () => {
@@ -125,7 +122,7 @@ describe('PromQueryBuilder', () => {
       metric: '',
     });
     openLabelNameSelect();
-    expect(languageProvider.fetchLabels).toBeCalled();
+    await waitFor(() => expect(languageProvider.fetchLabels).toBeCalled());
   });
 });
 
@@ -147,19 +144,15 @@ function setup(query: PromVisualQuery = defaultQuery) {
     onChange: () => {},
   };
 
-  render(<PromQueryBuilder {...props} query={query} />);
-  return { languageProvider, datasource };
+  const { container } = render(<PromQueryBuilder {...props} query={query} />);
+  return { languageProvider, datasource, container };
 }
 
-function getMetricSelect() {
-  const metricSelect = screen.getAllByText('random_metric')[0].parentElement!;
-  // We need to return specifically input element otherwise clicks don't seem to work
-  return getByRole(metricSelect, 'combobox');
-}
-
-function openMetricSelect() {
-  const select = getMetricSelect();
-  userEvent.click(select);
+function openMetricSelect(container: HTMLElement) {
+  const select = container.querySelector('#prometheus-metric-select');
+  if (select) {
+    userEvent.click(select);
+  }
 }
 
 function openLabelNameSelect(index = 0) {

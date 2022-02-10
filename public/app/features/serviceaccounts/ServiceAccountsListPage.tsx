@@ -1,18 +1,19 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
-import { StoreState, ServiceAccountDTO } from 'app/types';
-import { loadServiceAccounts, removeServiceAccount, updateServiceAccount } from './state/actions';
+import { StoreState, ServiceAccountDTO, AccessControlAction, Role } from 'app/types';
+import { fetchACOptions, loadServiceAccounts, removeServiceAccount, updateServiceAccount } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { contextSrv } from 'app/core/core';
+import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { OrgRolePicker } from '../admin/OrgRolePicker';
 export type Props = ConnectedProps<typeof connector>;
-
-export interface State {}
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -21,26 +22,55 @@ function mapStateToProps(state: StoreState) {
     searchQuery: getServiceAccountsSearchQuery(state.serviceAccounts),
     searchPage: getServiceAccountsSearchPage(state.serviceAccounts),
     isLoading: state.serviceAccounts.isLoading,
+    roleOptions: state.serviceAccounts.roleOptions,
+    builtInRoles: state.serviceAccounts.builtInRoles,
   };
 }
 
 const mapDispatchToProps = {
   loadServiceAccounts,
+  fetchACOptions,
   updateServiceAccount,
   removeServiceAccount,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navModel, serviceAccounts, isLoading }) => {
+const ServiceAccountsListPage = ({
+  loadServiceAccounts,
+  fetchACOptions,
+  updateServiceAccount,
+  navModel,
+  serviceAccounts,
+  isLoading,
+  roleOptions,
+  builtInRoles,
+}: Props) => {
   const styles = useStyles2(getStyles);
-
   useEffect(() => {
     loadServiceAccounts();
-  }, [loadServiceAccounts]);
+    if (contextSrv.accessControlEnabled()) {
+      fetchACOptions();
+    }
+  }, [loadServiceAccounts, fetchACOptions]);
+
+  const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
+    const updatedServiceAccount = { ...serviceAccount, role: role };
+
+    updateServiceAccount(updatedServiceAccount);
+  };
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        <h2>Service accounts</h2>
+        <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
+          {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              New service account
+            </LinkButton>
+          )}
+        </div>
         {isLoading ? (
           <PageLoader />
         ) : (
@@ -50,15 +80,21 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
                 <thead>
                   <tr>
                     <th></th>
-                    <th>Account</th>
+                    <th>Display name</th>
                     <th>ID</th>
                     <th>Roles</th>
                     <th>Tokens</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {serviceAccounts.map((serviceaccount: ServiceAccountDTO) => (
-                    <ServiceAccountListItem serviceaccount={serviceaccount} key={serviceaccount.userId} />
+                  {serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
+                    <ServiceAccountListItem
+                      serviceAccount={serviceAccount}
+                      key={serviceAccount.id}
+                      builtInRoles={builtInRoles}
+                      roleOptions={roleOptions}
+                      onRoleChange={onRoleChange}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -71,75 +107,91 @@ const ServiceAccountsListPage: React.FC<Props> = ({ loadServiceAccounts, navMode
 };
 
 type ServiceAccountListItemProps = {
-  serviceaccount: ServiceAccountDTO;
+  serviceAccount: ServiceAccountDTO;
+  onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
+  roleOptions: Role[];
+  builtInRoles: Record<string, Role[]>;
 };
 
 const getServiceAccountsAriaLabel = (name: string) => {
   return `Edit service account's ${name} details`;
 };
 
-const ServiceAccountListItem = memo(({ serviceaccount }: ServiceAccountListItemProps) => {
-  const editUrl = `org/serviceaccounts/${serviceaccount.userId}`;
-  const styles = useStyles2(getStyles);
+const ServiceAccountListItem = memo(
+  ({ serviceAccount, onRoleChange, roleOptions, builtInRoles }: ServiceAccountListItemProps) => {
+    const editUrl = `org/serviceAccounts/${serviceAccount.id}`;
+    const styles = useStyles2(getStyles);
+    const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
+    const rolePickerDisabled = !canUpdateRole;
 
-  return (
-    <tr key={serviceaccount.userId}>
-      <td className="width-4 text-center link-td">
-        <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}>
-          <img
-            className="filter-table__avatar"
-            src={serviceaccount.avatarUrl}
-            alt={`Avatar for user ${serviceaccount.name}`}
-          />
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a
-          className="ellipsis"
-          href={editUrl}
-          title={serviceaccount.login}
-          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
-        >
-          {serviceaccount.login}
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a
-          className="ellipsis"
-          href={editUrl}
-          title={serviceaccount.name}
-          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
-        >
-          {serviceaccount.name}
-        </a>
-      </td>
-      <td className={cx('link-td', styles.iconRow)}>
-        <a
-          className="ellipsis"
-          href={editUrl}
-          title={serviceaccount.name}
-          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
-        >
-          {serviceaccount.role === 'None' ? (
-            <span className={styles.disabled}>Not assigned </span>
+    return (
+      <tr key={serviceAccount.id}>
+        <td className="width-4 text-center link-td">
+          <a href={editUrl} aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}>
+            <img
+              className="filter-table__avatar"
+              src={serviceAccount.avatarUrl}
+              alt={`Avatar for user ${serviceAccount.name}`}
+            />
+          </a>
+        </td>
+        <td className="link-td max-width-10">
+          <a
+            className="ellipsis"
+            href={editUrl}
+            title={serviceAccount.name}
+            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
+          >
+            {serviceAccount.name}
+          </a>
+        </td>
+        <td className="link-td max-width-10">
+          <a
+            className="ellipsis"
+            href={editUrl}
+            title={serviceAccount.login}
+            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
+          >
+            {serviceAccount.login}
+          </a>
+        </td>
+        <td className={cx('link-td', styles.iconRow)}>
+          {contextSrv.licensedAccessControlEnabled() ? (
+            <UserRolePicker
+              userId={serviceAccount.id}
+              orgId={serviceAccount.orgId}
+              builtInRole={serviceAccount.role}
+              onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+              roleOptions={roleOptions}
+              builtInRoles={builtInRoles}
+              disabled={rolePickerDisabled}
+            />
           ) : (
-            serviceaccount.role
+            <OrgRolePicker
+              aria-label="Role"
+              value={serviceAccount.role}
+              disabled={!canUpdateRole}
+              onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+            />
           )}
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a
-          className="ellipsis"
-          href={editUrl}
-          title="tokens"
-          aria-label={getServiceAccountsAriaLabel(serviceaccount.name)}
-        >
-          0
-        </a>
-      </td>
-    </tr>
-  );
-});
+        </td>
+        <td className="link-td max-width-10">
+          <a
+            className="ellipsis"
+            href={editUrl}
+            title="tokens"
+            aria-label={getServiceAccountsAriaLabel(serviceAccount.name)}
+          >
+            <span>
+              <Icon name={'key-skeleton-alt'}></Icon>
+            </span>
+            {serviceAccount.tokens}
+          </a>
+        </td>
+      </tr>
+    );
+  }
+);
 ServiceAccountListItem.displayName = 'ServiceAccountListItem';
 
 const getStyles = (theme: GrafanaTheme2) => {

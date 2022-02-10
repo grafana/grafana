@@ -288,8 +288,9 @@ describe('DashboardPage', () => {
 
   dashboardPageScenario('When in full kiosk mode', (ctx) => {
     ctx.setup(() => {
+      locationService.partial({ kiosk: true });
       ctx.mount({
-        queryParams: { kiosk: true },
+        queryParams: {},
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });

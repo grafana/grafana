@@ -78,6 +78,10 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       background-color: ${theme.colors.background.primary};
       width: 268px;
 
+      .react-calendar__navigation {
+        display: flex;
+      }
+
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {

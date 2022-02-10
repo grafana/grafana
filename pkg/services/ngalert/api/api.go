@@ -32,8 +32,8 @@ type Scheduler interface {
 
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig() error
+	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -51,7 +51,7 @@ type Alertmanager interface {
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
 // API handlers.
@@ -83,30 +83,31 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger},
+		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, scheduleService: api.Schedule, store: api.RuleStore, log: logger},
+		&RulerSrv{DatasourceCache: api.DatasourceCache, QuotaService: api.QuotaService, scheduleService: api.Schedule, store: api.RuleStore, log: logger},
 	), m)
 	api.RegisterTestingApiEndpoints(NewForkedTestingApi(
-		TestingApiSrv{
+		&TestingApiSrv{
 			AlertingProxy:     proxy,
 			Cfg:               api.Cfg,
 			ExpressionService: api.ExpressionService,
 			DatasourceCache:   api.DatasourceCache,
+			secretsService:    api.SecretsService,
 			log:               logger,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
-		AdminSrv{
+		&AdminSrv{
 			store:     api.AdminConfigStore,
 			log:       logger,
 			scheduler: api.Schedule,

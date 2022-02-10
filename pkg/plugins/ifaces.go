@@ -47,9 +47,7 @@ type Client interface {
 	backend.CheckHealthHandler
 	backend.StreamHandler
 	backend.CallResourceHandler
-
-	// CollectMetrics collects metrics from a plugin.
-	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+	backend.CollectMetricsHandler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.

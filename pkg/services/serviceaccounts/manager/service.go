@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -25,6 +25,7 @@ type ServiceAccountsService struct {
 }
 
 func ProvideServiceAccountsService(
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	store *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl,
@@ -42,13 +43,13 @@ func ProvideServiceAccountsService(
 		}
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(s, ac, routeRegister, s.store)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, store)
 	serviceaccountsAPI.RegisterAPIEndpoints(features)
 
 	return s, nil
 }
 
-func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
 		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
 		return nil, nil

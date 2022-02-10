@@ -31,7 +31,7 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureTo
 	}
 
 	if cfg.SigV4AuthEnabled {
-		middlewares = append(middlewares, SigV4Middleware())
+		middlewares = append(middlewares, SigV4Middleware(cfg.SigV4VerboseLogging))
 	}
 
 	setDefaultTimeoutOptions(cfg)
