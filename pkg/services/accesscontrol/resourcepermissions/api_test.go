@@ -411,28 +411,21 @@ type uidSolverTestCase struct {
 	desc           string
 	uid            string
 	resourceID     string
-	solver         uidSolver
 	expectedStatus int
 }
 
 func TestApi_UidSolver(t *testing.T) {
 	tests := []uidSolverTestCase{
 		{
-			desc:       "expect uid to be mapped to id",
-			uid:        "resourceUID",
-			resourceID: "1",
-			solver: func(ctx context.Context, orgID int64, uid string) (int64, error) {
-				return 1, nil
-			},
+			desc:           "expect uid to be mapped to id",
+			uid:            "resourceUID",
+			resourceID:     "1",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:       "expect 404 when uid is not mapped to an id",
-			uid:        "resourceUID",
-			resourceID: "1",
-			solver: func(ctx context.Context, orgID int64, uid string) (int64, error) {
-				return 0, errors.New("not found")
-			},
+			desc:           "expect 404 when uid is not mapped to an id",
+			uid:            "notfound",
+			resourceID:     "1",
 			expectedStatus: http.StatusNotFound,
 		},
 	}
@@ -440,11 +433,11 @@ func TestApi_UidSolver(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			userPermissions := []*accesscontrol.Permission{{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"}}
-			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, tt.solver))
+			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, testSolver))
 			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
 			seedPermissions(t, tt.resourceID, sql, service)
 
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
+			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.uid)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
@@ -463,7 +456,6 @@ func TestApi_UidSolver(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func withSolver(options Options, solver uidSolver) Options {
@@ -508,6 +500,13 @@ var testOptions = Options{
 		"View": {"dashboards:read"},
 		"Edit": {"dashboards:read", "dashboards:write", "dashboards:delete"},
 	},
+}
+
+var testSolver = func(ctx context.Context, orgID int64, uid string) (int64, error) {
+	if uid == "resourceUID" {
+		return 1, nil
+	}
+	return 0, errors.New("not found")
 }
 
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
