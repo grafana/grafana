@@ -206,7 +206,7 @@ func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface
 		return ctxLogger
 	}
 
-	ctxLogger.Swap(withFunc(&ctxLogger.SwapLogger, ctx...))
+	ctxLogger.Swap(withFunc(ctxLogger.GetLogger(), ctx...))
 	return ctxLogger
 }
 
