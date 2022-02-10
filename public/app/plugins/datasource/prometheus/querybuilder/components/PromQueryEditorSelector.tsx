@@ -3,8 +3,6 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import React, { SyntheticEvent, useCallback, useState } from 'react';
-
-import { PromQueryEditor } from '../../components/PromQueryEditor';
 import { PromQueryEditorProps } from '../../components/types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
@@ -17,6 +15,7 @@ import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { QueryPreview } from './QueryPreview';
 import { buildVisualQueryFromString } from '../parsing';
 import { PromQuery } from '../../types';
+import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { query, onChange, onRunQuery, data } = props;
@@ -117,7 +116,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryEditor {...props} />}
+        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} />}
         {editorMode === QueryEditorMode.Builder && (
           <>
             <PromQueryBuilder
@@ -127,8 +126,10 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               onRunQuery={props.onRunQuery}
             />
             {query.editorPreview && <QueryPreview query={visualQuery} />}
-            <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
           </>
+        )}
+        {editorMode !== QueryEditorMode.Explain && (
+          <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={visualQuery} />}
       </EditorRows>

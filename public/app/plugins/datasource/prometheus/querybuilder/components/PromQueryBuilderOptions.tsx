@@ -4,7 +4,7 @@ import { CoreApp, SelectableValue } from '@grafana/data';
 import { Input, RadioButtonGroup, Select, Switch } from '@grafana/ui';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 import { PromQuery } from '../../types';
-import { FORMAT_OPTIONS } from '../../components/PromQueryEditor';
+import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 
 export interface Props {
@@ -41,6 +41,11 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
+  const onIntervalFactorChange = (value: SelectableValue<number>) => {
+    onChange({ ...query, intervalFactor: value.value });
+    onRunQuery();
+  };
+
   const showExemplarSwitch = app !== CoreApp.UnifiedAlerting && !query.instant;
 
   return (
@@ -48,8 +53,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption)}>
         <EditorField
           label="Legend"
-          tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname."
+          tooltip="Serie name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
         >
           <Input placeholder="auto" defaultValue={query.legendFormat} onBlur={onLegendFormatChanged} />
         </EditorField>
@@ -85,6 +89,18 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
         {showExemplarSwitch && (
           <EditorField label="Exemplars">
             <Switch value={query.exemplar} onChange={onExemplarChange} />
+          </EditorField>
+        )}
+        {query.intervalFactor && query.intervalFactor > 1 && (
+          <EditorField label="Resolution">
+            <Select
+              aria-label="Select resolution"
+              menuShouldPortal
+              isSearchable={false}
+              options={INTERVAL_FACTOR_OPTIONS}
+              onChange={onIntervalFactorChange}
+              value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+            />
           </EditorField>
         )}
       </QueryOptionGroup>
