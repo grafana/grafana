@@ -40,6 +40,7 @@ func (executionErrorState ExecutionErrorState) String() string {
 }
 
 const (
+	OkErrState       ExecutionErrorState = "OK"
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 )
