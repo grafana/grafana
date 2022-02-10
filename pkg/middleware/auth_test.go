@@ -40,7 +40,7 @@ func TestMiddlewareAuth(t *testing.T) {
 		middlewareScenario(t, "ReqSignIn true and NoAnonynmous true", func(
 			t *testing.T, sc *scenarioContext) {
 			sqlStore := mockstore.NewSQLStoreMock()
-			sqlStore.ExpectedOrg = models.Org{Id: orgID, Name: "test"}
+			sqlStore.ExpectedOrg = &models.Org{Id: orgID, Name: "test"}
 			sc.sqlStore = sqlStore
 			sc.m.Get("/api/secure", ReqSignedInNoAnonymous, sc.defaultHandler)
 			sc.fakeReq("GET", "/api/secure").exec()
@@ -51,7 +51,7 @@ func TestMiddlewareAuth(t *testing.T) {
 		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(
 			t *testing.T, sc *scenarioContext) {
 			sqlStore := mockstore.NewSQLStoreMock()
-			sqlStore.ExpectedOrg = models.Org{Id: orgID, Name: "test"}
+			sqlStore.ExpectedOrg = &models.Org{Id: orgID, Name: "test"}
 			sc.sqlStore = sqlStore
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
