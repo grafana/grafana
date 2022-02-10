@@ -254,11 +254,11 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("Can read correct properties with orgName instead of orgId", func(t *testing.T) {
 			setup()
 			existingOrg1 := models.GetOrgByNameQuery{Name: "Main Org. 1"}
-			err := sqlstore.GetOrgByName(context.Background(), &existingOrg1)
+			err := sqlStore.GetOrgByNameHandler(context.Background(), &existingOrg1)
 			require.NoError(t, err)
 			require.NotNil(t, existingOrg1.Result)
 			existingOrg2 := models.GetOrgByNameQuery{Name: "Main Org. 2"}
-			err = sqlstore.GetOrgByName(context.Background(), &existingOrg2)
+			err = sqlStore.GetOrgByNameHandler(context.Background(), &existingOrg2)
 			require.NoError(t, err)
 			require.NotNil(t, existingOrg2.Result)
 
@@ -363,7 +363,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 func setupBusHandlers(sqlStore *sqlstore.SQLStore) {
 	bus.AddHandler("getOrg", func(ctx context.Context, q *models.GetOrgByNameQuery) error {
-		return sqlstore.GetOrgByName(ctx, q)
+		return sqlStore.GetOrgByNameHandler(ctx, q)
 	})
 
 	bus.AddHandler("getAlertNotifications", func(ctx context.Context, q *models.GetAlertNotificationsWithUidQuery) error {

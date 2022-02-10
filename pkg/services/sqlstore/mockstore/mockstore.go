@@ -93,6 +93,10 @@ func (m *SQLStoreMock) SearchDashboardSnapshots(query *models.GetDashboardSnapsh
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) GetOrgById(ctx context.Context, cmd *models.GetOrgByIdQuery) error {
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) GetOrgByName(name string) (*models.Org, error) {
 	return m.ExpectedOrg, m.ExpectedError
 }
