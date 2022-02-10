@@ -33,31 +33,29 @@ export const PreviewsSystemRequirements = ({ showPreviews }: Props) => {
 
   const { systemRequirements, thumbnailsExist } = config.dashboardPreviews;
 
-  if (!previewsEnabled || !showPreviews) {
-    return <></>;
-  }
-
-  if ((rendererAvailable && systemRequirements.met) || thumbnailsExist) {
-    return <></>;
-  }
+  const arePreviewsEnabled = previewsEnabled && showPreviews;
+  const areRequirementsMet = (rendererAvailable && systemRequirements.met) || thumbnailsExist;
+  const shouldDisplayRequirements = arePreviewsEnabled && !areRequirementsMet;
 
   const text = getText(systemRequirements.requiredImageRendererPluginVersion);
 
   return (
-    <div className={styles.wrapper}>
-      <Alert className={styles.alert} severity="info" title={text.title}>
-        <>{text.beforeLink}</>
-        <a
-          href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="external-link"
-        >
-          {text.link}
-        </a>
-        {text.afterLink}
-      </Alert>
-    </div>
+    shouldDisplayRequirements && (
+      <div className={styles.wrapper}>
+        <Alert className={styles.alert} severity="info" title={text.title}>
+          <>{text.beforeLink}</>
+          <a
+            href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="external-link"
+          >
+            {text.link}
+          </a>
+          {text.afterLink}
+        </Alert>
+      </div>
+    )
   );
 };
 
@@ -67,6 +65,8 @@ const getStyles = () => {
       display: flex;
       justify-content: center;
     `,
-    alert: css``,
+    alert: css`
+      max-width: 800px;
+    `,
   };
 };
