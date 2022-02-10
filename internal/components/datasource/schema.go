@@ -32,7 +32,7 @@ func init() {
 	sch.SetRuntimeObjects(&CR{}, &CRList{})
 	schema.RegisterCoreSchema(sch)
 
-	// Calling this ensures our program cannot start if the Go DataSource type
+	// Calling this ensures our program cannot start if the Go datasource.Model type
 	// is not aligned with the canonical schema version in our lineage
 	_ = newDataSourceJSONKernel(lin)
 

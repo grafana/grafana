@@ -15,7 +15,8 @@ import (
 
 var (
 	groupName    = "grafana.core.group"
-	groupVersion = "v1"
+	// TODO come up with rule governing when and why this is incremented
+	groupVersion = "v1alpha1"
 )
 
 // Should we write some simple watcher / interface consumer so that we can test if our interface works?
