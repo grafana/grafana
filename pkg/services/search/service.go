@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus) *SearchService {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, store Store) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		Bus: bus,
@@ -18,6 +18,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus) *SearchService {
 			SortAlphaAsc.Name:  SortAlphaAsc,
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
+		store: store,
 	}
 	s.Bus.AddHandler(s.SearchHandler)
 	return s
@@ -68,6 +69,12 @@ type SearchService struct {
 	Bus         bus.Bus
 	Cfg         *setting.Cfg
 	sortOptions map[string]SortOption
+	store       Store
+}
+
+type Store interface {
+	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) error
+	GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
@@ -88,7 +95,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := bus.Dispatch(ctx, &dashboardQuery); err != nil {
+	if err := s.store.SearchDashboards(ctx, &dashboardQuery); err != nil {
 		return err
 	}
 
@@ -97,7 +104,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		hits = sortedHits(hits)
 	}
 
-	if err := setStarredDashboards(ctx, query.SignedInUser.UserId, hits); err != nil {
+	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserId, hits); err != nil {
 		return err
 	}
 
@@ -119,12 +126,12 @@ func sortedHits(unsorted HitList) HitList {
 	return hits
 }
 
-func setStarredDashboards(ctx context.Context, userID int64, hits []*Hit) error {
+func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*Hit) error {
 	query := models.GetUserStarsQuery{
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := s.store.GetUserStars(ctx, &query); err != nil {
 		return err
 	}
 

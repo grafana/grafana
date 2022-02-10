@@ -220,6 +220,10 @@ func (m *SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserH
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	return m.ExpectedError
+}
+
 func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
 	return models.Team{
 		Name:  name,

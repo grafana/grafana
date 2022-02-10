@@ -28,7 +28,7 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.SetUsingOrg)
 	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
 	bus.AddHandler("sql", ss.GetUserProfile)
-	bus.AddHandler("sql", SearchUsers)
+	bus.AddHandler("sql", ss.SearchUsers)
 	bus.AddHandler("sql", ss.GetUserOrgList)
 	bus.AddHandler("sql", ss.DisableUser)
 	bus.AddHandler("sql", ss.BatchDisableUsers)
@@ -617,7 +617,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 	return err
 }
 
-func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 	query.Result = models.SearchUserQueryResult{
 		Users: make([]*models.UserSearchHitDTO, 0),
 	}
