@@ -3,6 +3,7 @@ package searchV2
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -82,25 +83,51 @@ func metaToFrame(meta []dashMeta) *data.Frame {
 	fPanelID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 
 	fUID.Name = "UID"
 	fPanelID.Name = "Panel ID"
 	fName.Name = "Name"
 	fDescr.Name = "Description"
+	fType.Name = "Panel type"
+	fTags.Name = "Tags"
+	fTags.Config = &data.FieldConfig{
+		Custom: map[string]interface{}{
+			// Table panel default styling
+			"displayMode": "json-view",
+		},
+	}
 
+	var tags *string
 	for _, row := range meta {
 		fUID.Append(row.dash.UID)
 		fPanelID.Append(int64(0))
 		fName.Append(row.dash.Title)
 		fDescr.Append(row.dash.Description)
+		fType.Append("") // or null?
 
+		// Send tags as JSON array
+		tags = nil
+		if len(row.dash.Tags) > 0 {
+			b, err := json.Marshal(row.dash.Tags)
+			if err == nil {
+				s := string(b)
+				tags = &s
+			}
+		}
+		fTags.Append(tags)
+
+		// Row for each panel
 		for _, panel := range row.dash.Panels {
 			fUID.Append(row.dash.UID)
 			fPanelID.Append(panel.ID)
 			fName.Append(panel.Title)
 			fDescr.Append(panel.Description)
+			fType.Append(panel.Type)
+			fTags.Append(nil)
 		}
 	}
 
-	return data.NewFrame("", fUID, fPanelID, fName, fDescr)
+	return data.NewFrame("", fUID, fPanelID, fName, fDescr, fType, fTags)
 }
