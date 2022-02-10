@@ -233,12 +233,17 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const modifier = node.getChild('AggregateModifier');
   const labels = [];
 
-  // TODO: support also Without modifier (but we don't support it in visual query yet)
   if (modifier) {
     const byModifier = modifier.getChild(`By`);
     if (byModifier && funcName) {
       funcName = `__${funcName}_by`;
     }
+
+    const withoutModifier = modifier.getChild(`Without`);
+    if (withoutModifier) {
+      funcName = `__${funcName}_without`;
+    }
+
     labels.push(...getAllByType(expr, modifier, 'GroupingLabel'));
   }
 
