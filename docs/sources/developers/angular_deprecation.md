@@ -17,7 +17,7 @@ In Grafana version 9 coming in June 2022, all angular plugins will stop working 
 
 This is a good time to start working on migrating plugins to React.
 
-The plan is to fully remove angular plugin support in version 10 released in 2023. Meaning all plugins that do depend on angular will stop working and this temporary option to enable it introduced in v9 will be removed.
+Our plan is to fully remove angular plugin support in version 10 released in 2023. Meaning all plugins that do depend on angular will stop working and this temporary option to enable it introduced in v9 will be removed.
 
 ## How do I migrate an angular plugin to React?
 
