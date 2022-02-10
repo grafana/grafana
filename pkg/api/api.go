@@ -460,9 +460,9 @@ func (hs *HTTPServer) registerRoutes() {
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
 
-		apiRoute.Group("/comments", func(chatRoute routing.RouteRegister) {
-			chatRoute.Post("/get", routing.Wrap(hs.commentsGet))
-			chatRoute.Post("/create", routing.Wrap(hs.commentsCreate))
+		apiRoute.Group("/comments", func(commentRoute routing.RouteRegister) {
+			commentRoute.Post("/get", routing.Wrap(hs.commentsGet))
+			commentRoute.Post("/create", routing.Wrap(hs.commentsCreate))
 		})
 	}, reqSignedIn)
 

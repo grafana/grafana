@@ -7,17 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
-
-type thumbTestFeatures struct{}
-
-func (t thumbTestFeatures) IsEnabled(flag string) bool {
-	return flag == featuremgmt.FlagDashboardPreviews
-}
 
 func TestSqlStorage(t *testing.T) {
 

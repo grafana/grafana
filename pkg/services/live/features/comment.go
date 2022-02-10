@@ -10,22 +10,22 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// ChatHandler manages all the `grafana/chat/*` channels.
-type ChatHandler struct {
+// CommentHandler manages all the `grafana/comment/*` channels.
+type CommentHandler struct {
 	permissionChecker *commentmodel.PermissionChecker
 }
 
-func NewCommentHandler(permissionChecker *commentmodel.PermissionChecker) *ChatHandler {
-	return &ChatHandler{permissionChecker: permissionChecker}
+func NewCommentHandler(permissionChecker *commentmodel.PermissionChecker) *CommentHandler {
+	return &CommentHandler{permissionChecker: permissionChecker}
 }
 
 // GetHandlerForPath called on init.
-func (h *ChatHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
+func (h *CommentHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return h, nil // all chats share the same handler
 }
 
-// OnSubscribe for now allows anyone to subscribe to any chat.
-func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+// OnSubscribe handles subscription to comment group channel.
+func (h *CommentHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
 	if len(parts) != 2 {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
@@ -39,13 +39,10 @@ func (h *ChatHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser
 	if !ok {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 	}
-	return models.SubscribeReply{
-		Presence:  true,
-		JoinLeave: true,
-	}, backend.SubscribeStreamStatusOK, nil
+	return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 }
 
-// OnPublish is not used for chats.
-func (h *ChatHandler) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+// OnPublish is not used for comments.
+func (h *CommentHandler) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }
