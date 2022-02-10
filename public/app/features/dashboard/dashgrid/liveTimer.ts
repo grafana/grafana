@@ -1,7 +1,7 @@
 import { dateMath, dateTime, TimeRange } from '@grafana/data';
-import { LivePerformance, MeasurementName } from 'app/features/live/LivePerformance';
 import { BehaviorSubject } from 'rxjs';
 import { PanelChrome } from './PanelChrome';
+import { PerformanceMetricName } from '@grafana/ui';
 
 // target is 20hz (50ms), but we poll at 100ms to smooth out jitter
 const interval = 100;
@@ -11,8 +11,6 @@ interface LiveListener {
   intervalMs: number;
   panel: PanelChrome;
 }
-
-const livePerformance = LivePerformance.instance();
 
 class LiveTimer {
   listeners: LiveListener[] = [];
@@ -84,7 +82,10 @@ class LiveTimer {
       this.lastPublishHr = performance.now();
       this.ok.next(newOk);
       if (!oldOk) {
-        livePerformance.add(MeasurementName.DashboardRenderBudgetExceeded, this.lastPublishHr - prevPublishHr);
+        window.grafanaPerformanceMetrics?.add(
+          PerformanceMetricName.LiveDashboardRenderBudgetExceeded,
+          this.lastPublishHr - prevPublishHr
+        );
       }
     }
     this.lastUpdate = now;

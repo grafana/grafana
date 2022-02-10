@@ -1,7 +1,7 @@
 import { PanelData } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { LivePerformance } from 'app/features/live/LivePerformance';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { PerformanceMetrics } from 'app/core/services/PerformanceMetrics';
 
 /**
  * This will setup features that are accessible through the root window location
@@ -43,12 +43,12 @@ export function initWindowRuntime() {
       }, {} as Record<number, PanelData | undefined>);
     },
 
-    livePerformance: {
+    performanceMetrics: {
       /** Gets stats collected by the LivePerformance service and stops further collection */
-      getStats: () => LivePerformance.instance().stopAndGetStats(),
+      getStats: () => PerformanceMetrics.instance().stopAndGetStats(),
 
       /** Enables LivePerformance to collect stats */
-      start: () => LivePerformance.instance().start(),
+      start: () => PerformanceMetrics.instance().start(),
     },
   };
 }

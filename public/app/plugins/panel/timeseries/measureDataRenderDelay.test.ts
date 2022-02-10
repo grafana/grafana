@@ -1,27 +1,18 @@
 import { measureDataRenderDelay } from './measureDataRenderDelay';
 import { FieldType, toDataFrame } from '@grafana/data';
-import { MeasurementName } from 'app/features/live/LivePerformance';
-
-const mockMeasurementFn = jest.fn();
-jest.mock('app/features/live/LivePerformance', () => {
-  const originalModule = jest.requireActual('app/features/live/LivePerformance');
-
-  return {
-    ...originalModule,
-    LivePerformance: {
-      instance: () => ({
-        add: mockMeasurementFn,
-      }),
-    },
-  };
-});
+import { PerformanceMetricName } from '@grafana/ui';
 
 jest.useFakeTimers();
 
 describe('measureDataRenderDelay', () => {
   const currentTime = 1000;
+  const mockMeasurementFn = jest.fn();
 
   beforeAll(() => {
+    window.grafanaPerformanceMetrics = {
+      add: mockMeasurementFn,
+      enabled: () => true,
+    };
     jest.spyOn(Date, 'now').mockReturnValue(currentTime);
   });
 
@@ -44,7 +35,7 @@ describe('measureDataRenderDelay', () => {
   it('should measure the delay between the creation and the render of the most recently added data point', async () => {
     const timeValues = [100, 200, 300];
     measureDataRenderDelay(frameWith([...timeValues, 400]), frameWith(timeValues));
-    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 600);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(PerformanceMetricName.GraphNGDataRenderDelay, 600);
   });
 
   it('should work for mutated frames which keep the same references for time values', async () => {
@@ -60,7 +51,7 @@ describe('measureDataRenderDelay', () => {
     timeValues.push(500);
     measureDataRenderDelay(frame, frame);
     expect(mockMeasurementFn).toHaveBeenCalledTimes(1);
-    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 500);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(PerformanceMetricName.GraphNGDataRenderDelay, 500);
   });
 
   it('should use the oldest packet', async () => {
@@ -76,14 +67,14 @@ describe('measureDataRenderDelay', () => {
 
     expect(mockMeasurementFn).toHaveBeenCalledTimes(3);
 
-    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 600);
-    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 500);
-    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 400);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(PerformanceMetricName.GraphNGDataRenderDelay, 600);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(PerformanceMetricName.GraphNGDataRenderDelay, 500);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(PerformanceMetricName.GraphNGDataRenderDelay, 400);
 
     timeValues.push(700);
     measureDataRenderDelay(frame, frame);
 
     expect(mockMeasurementFn).toHaveBeenCalledTimes(4);
-    expect(mockMeasurementFn).toHaveBeenCalledWith(MeasurementName.DataRenderDelay, 300);
+    expect(mockMeasurementFn).toHaveBeenCalledWith(PerformanceMetricName.GraphNGDataRenderDelay, 300);
   });
 });

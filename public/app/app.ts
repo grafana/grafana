@@ -73,6 +73,7 @@ import { createDataSourceVariableAdapter } from './features/variables/datasource
 import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
+import { PerformanceMetrics } from './core/services/PerformanceMetrics';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -83,6 +84,8 @@ const extensionsIndex = (require as any).context('.', true, /extensions\/index.t
 const extensionsExports = extensionsIndex.keys().map((key: any) => {
   return extensionsIndex(key);
 });
+
+window.grafanaPerformanceMetrics = PerformanceMetrics.instance();
 
 if (process.env.NODE_ENV === 'development') {
   initDevFeatures();

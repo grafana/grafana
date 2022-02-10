@@ -1,6 +1,6 @@
 import { DataFrame, FieldType } from '@grafana/data';
-import { LivePerformance, MeasurementName } from 'app/features/live/LivePerformance';
 import { closestIdx } from 'app/features/live/data/StreamingDataFrame';
+import { PerformanceMetricName } from '@grafana/ui';
 
 const lastSeenTimeByTimeValuesRef = new WeakMap();
 
@@ -34,7 +34,7 @@ const measureDataRenderDelayForFrame = (prevFrame: DataFrame, newFrame: DataFram
     const firstBiggerIndex = newValues[closest] > lastSeenTime ? closest : closest + 1;
 
     for (let i = firstBiggerIndex, val = newValues[i]; val; val = newValues[++i]) {
-      LivePerformance.instance().add(MeasurementName.DataRenderDelay, now - val);
+      window.grafanaPerformanceMetrics?.add(PerformanceMetricName.GraphNGDataRenderDelay, now - val);
     }
   }
 
