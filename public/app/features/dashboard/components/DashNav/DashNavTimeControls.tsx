@@ -38,7 +38,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onRefresh = () => {
-    getTimeSrv().refreshDashboard();
+    getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
 

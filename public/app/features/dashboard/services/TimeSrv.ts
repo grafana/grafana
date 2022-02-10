@@ -7,9 +7,9 @@ import {
   rangeUtil,
   RawTimeRange,
   TimeRange,
+  TimeZone,
   toUtc,
 } from '@grafana/data';
-import { DashboardModel } from '../state/DashboardModel';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
@@ -18,20 +18,29 @@ import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEven
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 
+interface TimeModel {
+  time: any;
+  fiscalYearStartMonth?: number;
+  refresh: any;
+  timepicker: any;
+  getTimezone(): TimeZone;
+  timeRangeUpdated(timeRange: TimeRange): void;
+}
+
 export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
   previousAutoRefresh: any;
   oldRefresh: string | null | undefined;
-  dashboard?: DashboardModel;
+  timeModel?: TimeModel;
   timeAtLoad: any;
   private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
     this.time = getDefaultTimeRange().raw;
-    this.refreshDashboard = this.refreshDashboard.bind(this);
+    this.refreshTimeModel = this.refreshTimeModel.bind(this);
 
     appEvents.subscribe(ZoomOutEvent, (e) => {
       this.zoomOut(e.payload.scale, e.payload.updateUrl);
@@ -48,15 +57,15 @@ export class TimeSrv {
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
         this.autoRefreshBlocked = false;
-        this.refreshDashboard();
+        this.refreshTimeModel();
       }
     });
   }
 
-  init(dashboard: DashboardModel) {
-    this.dashboard = dashboard;
-    this.time = dashboard.time;
-    this.refresh = dashboard.refresh;
+  init(timeModel: TimeModel) {
+    this.timeModel = timeModel;
+    this.time = timeModel.time;
+    this.refresh = timeModel.refresh;
 
     this.initTimeFromUrl();
     this.parseTime();
@@ -66,8 +75,8 @@ export class TimeSrv {
 
     const range = rangeUtil.convertRawToRange(
       this.time,
-      this.dashboard?.getTimezone(),
-      this.dashboard?.fiscalYearStartMonth
+      this.timeModel?.getTimezone(),
+      this.timeModel?.fiscalYearStartMonth
     );
 
     if (range.to.isBefore(range.from)) {
@@ -159,11 +168,11 @@ export class TimeSrv {
       this.time.to = this.parseUrlParam(params.get('to')!) || this.time.to;
     }
 
-    // if absolute ignore refresh option saved to dashboard
+    // if absolute ignore refresh option saved to timeModel
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
-      if (this.dashboard) {
-        this.dashboard.refresh = false;
+      if (this.timeModel) {
+        this.timeModel.refresh = false;
       }
     }
 
@@ -176,8 +185,8 @@ export class TimeSrv {
     this.refresh = getRefreshFromUrl({
       params: paramsJSON,
       currentRefresh: this.refresh,
-      refreshIntervals: Array.isArray(this.dashboard?.timepicker?.refresh_intervals)
-        ? this.dashboard?.timepicker?.refresh_intervals
+      refreshIntervals: Array.isArray(this.timeModel?.timepicker?.refresh_intervals)
+        ? this.timeModel?.timepicker?.refresh_intervals
         : undefined,
       isAllowedIntervalFn: this.contextSrv.isAllowedInterval,
       minRefreshInterval: config.minRefreshInterval,
@@ -213,8 +222,8 @@ export class TimeSrv {
   }
 
   setAutoRefresh(interval: any) {
-    if (this.dashboard) {
-      this.dashboard.refresh = interval;
+    if (this.timeModel) {
+      this.timeModel.refresh = interval;
     }
 
     this.stopAutoRefresh();
@@ -235,7 +244,7 @@ export class TimeSrv {
 
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
-      this.refreshDashboard();
+      this.refreshTimeModel();
     }, intervalMs);
 
     const refresh = this.contextSrv.getValidInterval(interval);
@@ -245,15 +254,15 @@ export class TimeSrv {
     }
   }
 
-  refreshDashboard() {
-    this.dashboard?.timeRangeUpdated(this.timeRange());
+  refreshTimeModel() {
+    this.timeModel?.timeRangeUpdated(this.timeRange());
   }
 
   private startNextRefreshTimer(afterMs: number) {
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
-        this.refreshDashboard();
+        this.refreshTimeModel();
       } else {
         this.autoRefreshBlocked = true;
       }
@@ -264,10 +273,10 @@ export class TimeSrv {
     clearTimeout(this.refreshTimer);
   }
 
-  // store dashboard refresh value and pause auto-refresh in some places
+  // store timeModel refresh value and pause auto-refresh in some places
   // i.e panel edit
   pauseAutoRefresh() {
-    this.previousAutoRefresh = this.dashboard?.refresh;
+    this.previousAutoRefresh = this.timeModel?.refresh;
     this.setAutoRefresh('');
   }
 
@@ -281,9 +290,9 @@ export class TimeSrv {
 
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
-      this.oldRefresh = this.dashboard?.refresh || this.oldRefresh;
+      this.oldRefresh = this.timeModel?.refresh || this.oldRefresh;
       this.setAutoRefresh(false);
-    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard?.refresh) {
+    } else if (this.oldRefresh && this.oldRefresh !== this.timeModel?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = null;
     }
@@ -302,7 +311,7 @@ export class TimeSrv {
       locationService.partial(urlParams);
     }
 
-    this.refreshDashboard();
+    this.refreshTimeModel();
   }
 
   timeRangeForUrl = () => {
@@ -325,11 +334,11 @@ export class TimeSrv {
       to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+    const timezone = this.timeModel ? this.timeModel.getTimezone() : undefined;
 
     return {
-      from: dateMath.parse(raw.from, false, timezone, this.dashboard?.fiscalYearStartMonth)!,
-      to: dateMath.parse(raw.to, true, timezone, this.dashboard?.fiscalYearStartMonth)!,
+      from: dateMath.parse(raw.from, false, timezone, this.timeModel?.fiscalYearStartMonth)!,
+      to: dateMath.parse(raw.to, true, timezone, this.timeModel?.fiscalYearStartMonth)!,
       raw: raw,
     };
   }
