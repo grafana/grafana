@@ -19,6 +19,7 @@ import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
+import pluralize from 'pluralize';
 export type Props = ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
@@ -117,7 +118,14 @@ const ServiceAccountsListPage = ({
         )}
         {toRemove && (
           <ConfirmModal
-            body={`Are you sure you want to delete ${toRemove?.name}?`}
+            body={
+              <div>
+                Are you sure you want to delete &apos;{toRemove.name}&apos;
+                {Boolean(toRemove.tokens) &&
+                  ` and ${toRemove.tokens} accompanying ${pluralize('token', toRemove.tokens)}`}
+                ?
+              </div>
+            }
             confirmText="Delete"
             title="Delete service account"
             onDismiss={() => {
