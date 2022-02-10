@@ -197,6 +197,10 @@ func (m SQLStoreMock) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTe
 	return nil // TODO: Implement
 }
 
+func (m SQLStoreMock) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
+	return nil, m.ExpectedError
+}
+
 func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	return nil // TODO: Implement
 }
