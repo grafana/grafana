@@ -36,7 +36,7 @@ var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMe
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeMetricFindQuery(pluginCtx backend.PluginContext, model *simplejson.Json, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	subType := model.Get("subtype").MustString()
 
 	var data []suggestData
@@ -47,19 +47,19 @@ func (e *cloudWatchExecutor) executeMetricFindQuery(model *simplejson.Json, quer
 	case "namespaces":
 		data, err = e.handleGetNamespaces(pluginCtx)
 	case "metrics":
-		data, err = e.handleGetMetrics(model, pluginCtx)
+		data, err = e.handleGetMetrics(pluginCtx, model)
 	case "all_metrics":
 		data, err = e.handleGetAllMetrics()
 	case "dimension_keys":
-		data, err = e.handleGetDimensions(model, pluginCtx)
+		data, err = e.handleGetDimensions(pluginCtx, model)
 	case "dimension_values":
-		data, err = e.handleGetDimensionValues(model, pluginCtx)
+		data, err = e.handleGetDimensionValues(pluginCtx, model)
 	case "ebs_volume_ids":
-		data, err = e.handleGetEbsVolumeIds(model, pluginCtx)
+		data, err = e.handleGetEbsVolumeIds(pluginCtx, model)
 	case "ec2_instance_attribute":
-		data, err = e.handleGetEc2InstanceAttribute(model, pluginCtx)
+		data, err = e.handleGetEc2InstanceAttribute(pluginCtx, model)
 	case "resource_arns":
-		data, err = e.handleGetResourceArns(model, pluginCtx)
+		data, err = e.handleGetResourceArns(pluginCtx, model)
 	}
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext) (
 		}
 	}
 
-	client, err := e.getEC2Client(defaultRegion, pluginCtx)
+	client, err := e.getEC2Client(pluginCtx, defaultRegion)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(pluginCtx backend.PluginContext
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(pluginCtx backend.PluginContext, parameters *simplejson.Json) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -222,7 +222,7 @@ func (e *cloudWatchExecutor) handleGetAllMetrics() ([]suggestData, error) {
 // handleGetDimensions returns a slice of suggestData structs with dimension keys.
 // If a dimension filters parameter is specified, a new api call to list metrics will be issued to load dimension keys for the given filter.
 // If no dimension filter is specified, dimension keys will be retrieved from the hard coded map in this file.
-func (e *cloudWatchExecutor) handleGetDimensions(parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(pluginCtx backend.PluginContext, parameters *simplejson.Json) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString("")
@@ -264,7 +264,8 @@ func (e *cloudWatchExecutor) handleGetDimensions(parameters *simplejson.Json, pl
 				input.MetricName = aws.String(metricName)
 			}
 
-			metrics, err := e.listMetrics(region, input, pluginCtx)
+			metrics, err := e.listMetrics(pluginCtx,
+				region, input)
 
 			if err != nil {
 				return nil, errutil.Wrap("unable to call AWS API", err)
@@ -310,7 +311,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(parameters *simplejson.Json, pl
 
 // handleGetDimensionValues returns a slice of suggestData structs with dimension values.
 // A call to the list metrics api is issued to retrieve the dimension values. All parameters are used as input args to the list metrics call.
-func (e *cloudWatchExecutor) handleGetDimensionValues(parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(pluginCtx backend.PluginContext, parameters *simplejson.Json) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -348,7 +349,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(parameters *simplejson.Jso
 	if metricName != "" {
 		params.MetricName = aws.String(metricName)
 	}
-	metrics, err := e.listMetrics(region, params, pluginCtx)
+	metrics, err := e.listMetrics(pluginCtx, region, params)
 	if err != nil {
 		return nil, err
 	}
@@ -375,13 +376,12 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(parameters *simplejson.Jso
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(parameters *simplejson.Json,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters *simplejson.Json) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
-	instances, err := e.ec2DescribeInstances(region, nil, instanceIds, pluginCtx)
+	instances, err := e.ec2DescribeInstances(pluginCtx, region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
@@ -398,8 +398,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(parameters *simplejson.Json,
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(parameters *simplejson.Json,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.PluginContext, parameters *simplejson.Json) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -420,7 +419,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(parameters *simplejso
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(region, filters, nil, pluginCtx)
+	instances, err := e.ec2DescribeInstances(pluginCtx, region, filters, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -478,8 +477,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(parameters *simplejso
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetResourceArns(parameters *simplejson.Json,
-	pluginCtx backend.PluginContext) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginContext, parameters *simplejson.Json) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
@@ -503,7 +501,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(parameters *simplejson.Json,
 	var resourceTypes []*string
 	resourceTypes = append(resourceTypes, &resourceType)
 
-	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes, pluginCtx)
+	resources, err := e.resourceGroupsGetResources(pluginCtx, region, filters, resourceTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -517,8 +515,8 @@ func (e *cloudWatchExecutor) handleGetResourceArns(parameters *simplejson.Json,
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) listMetrics(region string, params *cloudwatch.ListMetricsInput, pluginCtx backend.PluginContext) ([]*cloudwatch.Metric, error) {
-	client, err := e.getCWClient(region, pluginCtx)
+func (e *cloudWatchExecutor) listMetrics(pluginCtx backend.PluginContext, region string, params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error) {
+	client, err := e.getCWClient(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -542,13 +540,13 @@ func (e *cloudWatchExecutor) listMetrics(region string, params *cloudwatch.ListM
 	return cloudWatchMetrics, err
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string, pluginCtx backend.PluginContext) (*ec2.DescribeInstancesOutput, error) {
+func (e *cloudWatchExecutor) ec2DescribeInstances(pluginCtx backend.PluginContext, region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(region, pluginCtx)
+	client, err := e.getEC2Client(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -564,14 +562,14 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter,
-	resourceTypes []*string, pluginCtx backend.PluginContext) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
+	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(region, pluginCtx)
+	client, err := e.getRGTAClient(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -614,9 +612,9 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	if customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 	}
-	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{
+	metrics, err := e.listMetrics(pluginCtx, region, &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(namespace),
-	}, pluginCtx)
+	})
 	if err != nil {
 		return []string{}, err
 	}
@@ -660,7 +658,7 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace str
 	if customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 	}
-	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)}, pluginCtx)
+	metrics, err := e.listMetrics(pluginCtx, region, &cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
 	if err != nil {
 		return []string{}, err
 	}
