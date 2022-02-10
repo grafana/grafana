@@ -34,7 +34,7 @@ Any change that causes dependent software to behave differently is considered to
 It can list exported members of an NPM package or imports used by an NPM package,
 **but we are mainly using it for comparing different versions of the same package to see changes in the exported members.**
 
-We have a Github workflow that runs against every pull request and comments a hint in case there are
+A Github workflow runs against every pull request and comments a hint in case there are
 possible breaking changes. It also adds the `"breaking change"` label to the pull request.
 
 ## How does the CI workflow look like?
