@@ -9,7 +9,7 @@ Angular plugin support is deprecated, meaning it will be removed in a future rel
 
 ## Why are we deprecating angular support?
 
-AngularJS is an old frontend framework that stopped active development many years ago. Because of that it is a security risk. AngularJS also requires unsafe-eval in the CSP (Content Security Policy) settings which also reduces the security level of how javascript is executed in the browser.
+AngularJS is an old frontend framework that stopped active development many years ago. As a result, it is a security risk. AngularJS also requires unsafe-eval in the CSP (Content Security Policy) settings which also reduces the security level of how javascript is executed in the browser.
 
 ## When will angular plugins stop working?
 
