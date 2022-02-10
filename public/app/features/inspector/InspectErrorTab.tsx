@@ -26,9 +26,5 @@ export const InspectErrorTab: React.FC<InspectErrorTabProps> = ({ error }) => {
       return <div>{error.message}</div>;
     }
   }
-  return (
-    <div>
-      {error.status} : {error.statusText}
-    </div>
-  );
+  return <JSONFormatter json={error} open={2} />;
 };
