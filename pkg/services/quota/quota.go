@@ -10,7 +10,7 @@ import (
 
 var ErrInvalidQuotaTarget = errors.New("invalid quota target")
 
-func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, sqlStore sqlstore.Store) *QuotaService {
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, sqlStore *sqlstore.SQLStore) *QuotaService {
 	return &QuotaService{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
