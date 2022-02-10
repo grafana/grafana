@@ -178,6 +178,7 @@ export interface FieldState {
 
   /**
    * Boolean value is true if field is in a larger data set with multiple frames.
+   * This is only related to the cached displayName property above.
    */
   multipleFrames?: boolean;
 }
