@@ -7,6 +7,7 @@ import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 import { DataHoverView } from '../geomap/components/DataHoverView';
+import { HeatmapHoverView } from './HeatmapHoverView';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -42,7 +43,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return prepConfig({
       data: info,
       theme,
-      onhover,
+      onhover: options.tooltip.show ? onhover : () => {},
       timeZone,
       timeRange,
       palette,
@@ -73,7 +74,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       <Portal>
         {hover && (
           <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
-            <DataHoverView data={info.heatmap} rowIndex={hover.xIndex} columnIndex={hover.yIndex} />
+            {/* <DataHoverView data={info.heatmap} rowIndex={hover.xIndex} columnIndex={hover.yIndex} /> */}
+            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
           </VizTooltipContainer>
         )}
       </Portal>
