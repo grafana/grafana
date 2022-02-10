@@ -871,19 +871,19 @@ export class ElasticDatasource
   }
 
   targetContainsTemplate(target: any) {
-    if (this.templateSrv.variableExists(target.query) || this.templateSrv.variableExists(target.alias)) {
+    if (this.templateSrv.containsVariables(target.query) || this.templateSrv.containsVariables(target.alias)) {
       return true;
     }
 
     for (const bucketAgg of target.bucketAggs) {
-      if (this.templateSrv.variableExists(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
+      if (this.templateSrv.containsVariables(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
         return true;
       }
     }
 
     for (const metric of target.metrics) {
       if (
-        this.templateSrv.variableExists(metric.field) ||
+        this.templateSrv.containsVariables(metric.field) ||
         this.objectContainsTemplate(metric.settings) ||
         this.objectContainsTemplate(metric.meta)
       ) {
@@ -912,7 +912,7 @@ export class ElasticDatasource
 
     for (const key of Object.keys(obj)) {
       if (this.isPrimitive(obj[key])) {
-        if (this.templateSrv.variableExists(obj[key])) {
+        if (this.templateSrv.containsVariables(obj[key])) {
           return true;
         }
       } else if (Array.isArray(obj[key])) {

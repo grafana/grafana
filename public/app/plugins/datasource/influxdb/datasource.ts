@@ -329,7 +329,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // for influxql-mode we use InfluxQueryModel to create the text-representation
     const queryText = this.isFlux ? target.query : buildRawQuery(target);
 
-    return this.templateSrv.variableExists(queryText);
+    return this.templateSrv.containsVariables(queryText);
   }
 
   interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {

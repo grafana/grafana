@@ -187,6 +187,6 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
 
   targetContainsTemplate(query: MssqlQuery): boolean {
     const rawSql = query.rawSql.replace('$__', '');
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.containsVariables(rawSql);
   }
 }
