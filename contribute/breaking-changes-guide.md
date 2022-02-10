@@ -23,7 +23,7 @@ These packages live in the `/packages` folder and contain packages like:
 - `@grafana/runtime`
 - `@grafana/toolkit`
 - `@grafana/ui`
-- etc. ([View all available on npmjs.com](https://www.npmjs.com/org/grafana))
+- etc. ([They can be viewed here](https://github.com/grafana/grafana/tree/main/packages)
 
 Any change that causes dependent software to behave differently is considered to be breaking.
 
