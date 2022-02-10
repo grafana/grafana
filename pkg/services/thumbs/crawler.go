@@ -142,7 +142,7 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	for i := 0; i < r.threadCount; i++ {
 		walkerId := i
 		group.Go(func() error {
-			r.walk(walkerId, gCtx)
+			r.walk(gCtx, walkerId)
 			return nil
 		})
 	}
@@ -220,7 +220,7 @@ func (r *simpleCrawler) shouldWalk() bool {
 	return r.status.State == running
 }
 
-func (r *simpleCrawler) walk(id int, ctx context.Context) {
+func (r *simpleCrawler) walk(ctx context.Context, id int) {
 	for {
 		if !r.shouldWalk() {
 			break
