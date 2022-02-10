@@ -84,14 +84,17 @@ type GoSchema struct {
 	runtimeObjects []runtime.Object
 }
 
+func NewGoSchema(kind string, objects ...runtime.Object) GoSchema {
+	sch := GoSchema{
+		Kind: kind,
+	}
+	sch.runtimeObjects = append(sch.runtimeObjects, objects...)
+	return sch
+}
+
 // GetRuntimeObjects returns a runtime.Object for this object kind.
 func (gs *GoSchema) GetRuntimeObjects() []runtime.Object {
 	return gs.runtimeObjects
-}
-
-// SetRuntimeObjects associates a go schema with its kubernetes runtime objects
-func (gs *GoSchema) SetRuntimeObjects(objects ...runtime.Object) {
-	gs.runtimeObjects = append(gs.runtimeObjects, objects...)
 }
 
 // Name returns the canonical string that identifies the object being schematized.
@@ -112,22 +115,24 @@ type ThemaSchema struct {
 	runtimeObjects []runtime.Object
 }
 
+func NewThemaSchema(lin thema.Lineage, objects ...runtime.Object) ThemaSchema {
+	sch := ThemaSchema{
+		Lineage: lin,
+	}
+	sch.runtimeObjects = append(sch.runtimeObjects, objects...)
+	return sch
+}
+
 // GetRuntimeObjects returns a runtime.Object that will accurately represent
 // the authorial intent of the Thema lineage to Kubernetes.
 func (ts *ThemaSchema) GetRuntimeObjects() []runtime.Object {
 	return ts.runtimeObjects
 }
 
-// SetRuntimeObjects associates a thema schema with its kubernetes runtime objects
-func (ts *ThemaSchema) SetRuntimeObjects(objects ...runtime.Object) {
-	ts.runtimeObjects = append(ts.runtimeObjects, objects...)
-}
-
 // A ObjectSchema returns a SchemeBuilder. Produced by schema components
 // to make their schema available to things relying on k8s
 type ObjectSchema interface {
 	Name() string
-	SetRuntimeObjects(...runtime.Object)
 	GetRuntimeObjects() []runtime.Object
 }
 
