@@ -7,6 +7,7 @@ import (
 
 	gokitlog "github.com/go-kit/log"
 	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -105,5 +106,75 @@ func TestLogger(t *testing.T) {
 			require.Len(t, loggedArgs, 4)
 			require.Len(t, swappedLoggedArgs, 7, "expected 4 messages for AllowAll logger and 3 messages for AllowInfo logger")
 		})
+	})
+}
+
+func TestGetFilters(t *testing.T) {
+	t.Run("Parsing filters on single line with only space should return expected result", func(t *testing.T) {
+		filter := `   `
+		filters := getFilters(util.SplitString(filter))
+		require.Len(t, filters, 0)
+	})
+
+	t.Run("Parsing filters on single line with should return expected result", func(t *testing.T) {
+		filter := `rendering:debug oauth.generic_oauth:debug testwithoutlevel provisioning.dashboard:debug`
+		filters := getFilters(util.SplitString(filter))
+		keys := []string{}
+		for k := range filters {
+			keys = append(keys, k)
+		}
+
+		require.ElementsMatch(t, []string{
+			"rendering",
+			"oauth.generic_oauth",
+			"provisioning.dashboard",
+		}, keys)
+	})
+
+	t.Run("Parsing filters spread over multiple lines with comments should return expected result", func(t *testing.T) {
+		filter := `rendering:debug \
+          ; alerting.notifier:debug \
+          oauth.generic_oauth:debug \
+          ; oauth.okta:debug \
+          ; tsdb.postgres:debug \
+          ;tsdb.mssql:debug \
+          #provisioning.plugins:debug \
+          provisioning.dashboard:debug \
+          data-proxy-log:debug \
+          ;oauthtoken:debug \
+          plugins.backend:debug \
+          tsdb.elasticsearch.client:debug \
+          server:debug \
+          tsdb.graphite:debug \
+          auth:debug \
+          plugin.manager:debug \
+          plugin.initializer:debug \
+          plugin.loader:debug \
+          plugin.finder:debug \
+          plugin.installer:debug \
+          plugin.signature.validator:debug`
+		filters := getFilters(util.SplitString(filter))
+		keys := []string{}
+		for k := range filters {
+			keys = append(keys, k)
+		}
+
+		require.ElementsMatch(t, []string{
+			"rendering",
+			"oauth.generic_oauth",
+			"provisioning.dashboard",
+			"data-proxy-log",
+			"plugins.backend",
+			"tsdb.elasticsearch.client",
+			"server",
+			"tsdb.graphite",
+			"auth",
+			"plugin.manager",
+			"plugin.initializer",
+			"plugin.loader",
+			"plugin.finder",
+			"plugin.installer",
+			"plugin.signature.validator",
+		}, keys)
 	})
 }
