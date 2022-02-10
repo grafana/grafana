@@ -21,7 +21,7 @@ type SQLStoreMock struct {
 	ExpectedPluginSetting        *models.PluginSetting
 	ExpectedDashboard            *models.Dashboard
 	ExpectedDashboards           []*models.Dashboard
-	ExpectedDashboardVersion     *models.DashboardVersion
+	ExpectedDashboardVersions    []*models.DashboardVersion
 	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList          []*models.UserOrgDTO
 	ExpectedOrgListResponse      OrgListResponse
@@ -29,6 +29,7 @@ type SQLStoreMock struct {
 	ExpectedTeamsByUser          []*models.TeamDTO
 	ExpectedSearchOrgList        []*models.OrgDTO
 	ExpectedDatasources          []*models.DataSource
+	ExpectedOrg                  *models.Org
 
 	ExpectedError error
 }
@@ -67,11 +68,11 @@ func (m *SQLStoreMock) SearchDashboardSnapshots(query *models.GetDashboardSnapsh
 }
 
 func (m *SQLStoreMock) GetOrgByName(name string) (*models.Org, error) {
-	return nil, m.ExpectedError
+	return m.ExpectedOrg, m.ExpectedError
 }
 
 func (m *SQLStoreMock) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
-	return models.Org{}, nil
+	return *m.ExpectedOrg, nil
 }
 
 func (m *SQLStoreMock) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
@@ -239,7 +240,11 @@ func (m *SQLStoreMock) RemoveTeamMember(ctx context.Context, cmd *models.RemoveT
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (m SQLStoreMock) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
+	return nil, m.ExpectedError
+}
+
+func (m SQLStoreMock) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
 	return m.ExpectedError
 }
 
@@ -335,7 +340,12 @@ func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Co
 }
 
 func (m *SQLStoreMock) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-	query.Result = m.ExpectedDashboardVersion
+	query.Result = &models.DashboardVersion{}
+	for _, dashboardversion := range m.ExpectedDashboardVersions {
+		if dashboardversion.DashboardId == query.DashboardId && dashboardversion.Version == query.Version {
+			query.Result = dashboardversion
+		}
+	}
 	return m.ExpectedError
 }
 

@@ -24,9 +24,14 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId}
-	if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgId, query.TeamId, c.SignedInUser); err != nil {
-		return response.Error(403, "Not allowed to list team members", err)
+	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId, SignedInUser: c.SignedInUser}
+
+	// With accesscontrol the permission check has been done at middleware layer
+	// and the membership filtering will be done at DB layer based on user permissions
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgId, query.TeamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to list team members", err)
+		}
 	}
 
 	if err := hs.SQLStore.GetTeamMembers(c.Req.Context(), &query); err != nil {

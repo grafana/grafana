@@ -4,7 +4,8 @@ on:
     types: [labeled, unlabeled]
   issue_comment:
     types: [created]
-
+concurrency:
+  group: issue-commands-${{ github.event.issue.number }}
 jobs:
   main:
     runs-on: ubuntu-latest

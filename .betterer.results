@@ -44,9 +44,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/List/AbstractList.test.tsx:2210654375": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Logs/LogDetails.test.tsx:1917110956": [
-      [3, 17, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Logs/LogLabels.test.tsx:1113070745": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -266,7 +263,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/RichHistory/RichHistory.test.tsx:409631018": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx:357697997": [
+    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx:689438177": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RichHistory/RichHistoryContainer.test.tsx:396471778": [
