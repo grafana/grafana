@@ -125,6 +125,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpiredDisabled,
     } = this.props;
 
+    const styles = getStyles(config.theme);
+
     if (!hasFetched) {
       return (
         <Page navModel={navModel}>

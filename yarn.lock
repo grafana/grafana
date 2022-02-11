@@ -2132,7 +2132,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.0.0, @emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.4.0, @emotion/cache@npm:^11.7.1":
+"@emotion/cache@npm:^11.0.0, @emotion/cache@npm:^11.1.3, @emotion/cache@npm:^11.7.1":
   version: 11.7.1
   resolution: "@emotion/cache@npm:11.7.1"
   dependencies:
@@ -5439,7 +5439,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:^3.3.0":
+"@react-types/menu@npm:3.4.1, @react-types/menu@npm:^3.3.0":
   version: 3.4.1
   resolution: "@react-types/menu@npm:3.4.1"
   dependencies:
@@ -7694,25 +7694,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@torkelo/react-select@npm:3.0.8":
-  version: 3.0.8
-  resolution: "@torkelo/react-select@npm:3.0.8"
-  dependencies:
-    "@babel/runtime": ^7.4.4
-    "@emotion/cache": ^10.0.9
-    "@emotion/core": ^10.0.9
-    "@emotion/css": ^10.0.9
-    memoize-one: ^5.0.0
-    prop-types: ^15.6.0
-    react-input-autosize: ^2.2.2
-    react-transition-group: ^4.3.0
-  peerDependencies:
-    react: ^16.8.0
-    react-dom: ^16.8.0
-  checksum: 00e89d8f2bf024ae87a7649ba995778767b94691fd45e94d4f4ad18b4460cdabf225c7ca7855aa477f54aee361a585506e08cb636416227eb3d2122ef2a0f3df
-  languageName: node
-  linkType: hard
-
 "@trysound/sax@npm:0.2.0":
   version: 0.2.0
   resolution: "@trysound/sax@npm:0.2.0"
@@ -9208,7 +9189,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:*, @types/react-transition-group@npm:^4.4.0":
+"@types/react-transition-group@npm:*":
   version: 4.4.4
   resolution: "@types/react-transition-group@npm:4.4.4"
   dependencies:
@@ -19627,6 +19608,8 @@ __metadata:
     "@react-stately/collections": 3.3.4
     "@react-stately/menu": 3.2.3
     "@react-stately/tree": 3.2.0
+    "@react-types/menu": 3.4.1
+    "@react-types/shared": ^3.10.1
     "@reduxjs/toolkit": 1.7.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.15.0
@@ -19639,7 +19622,6 @@ __metadata:
     "@testing-library/react": 12.1.2
     "@testing-library/react-hooks": 7.0.2
     "@testing-library/user-event": 13.3.0
-    "@torkelo/react-select": 3.0.8
     "@types/angular": 1.6.56
     "@types/angular-route": 1.7.0
     "@types/antlr4": ^4.7.1
@@ -19835,7 +19817,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: ^2.0.1
     react-router-dom: ^5.2.0
-    react-select: 5.2.1
+    react-select: 4.3.0
     react-select-event: ^5.1.0
     react-simple-compat: ^1.2.2
     react-sizeme: 2.6.12
@@ -29915,17 +29897,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-input-autosize@npm:^2.2.2":
-  version: 2.2.2
-  resolution: "react-input-autosize@npm:2.2.2"
-  dependencies:
-    prop-types: ^15.5.8
-  peerDependencies:
-    react: ^0.14.9 || ^15.3.0 || ^16.0.0-rc || ^16.0
-  checksum: 5164cbbff5091618f889a2a68368ef95460423dd3addd32d7db7cbde2f880816552ed750839baa278b28c210d77b9e3fbae48faf62ba90f3838abef1cfde58e6
-  languageName: node
-  linkType: hard
-
 "react-input-autosize@npm:^3.0.0":
   version: 3.0.0
   resolution: "react-input-autosize@npm:3.0.0"
@@ -30257,24 +30228,6 @@ __metadata:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
   checksum: 00946ed4dfa46523bc44cd26aab11431396632097207081b471d1965fa53cf7f5a006ac11d89b8a65df05cc5376b1c4438edb1d5259323bdc6d3adf01c79d53e
-  languageName: node
-  linkType: hard
-
-"react-select@npm:5.2.1":
-  version: 5.2.1
-  resolution: "react-select@npm:5.2.1"
-  dependencies:
-    "@babel/runtime": ^7.12.0
-    "@emotion/cache": ^11.4.0
-    "@emotion/react": ^11.1.1
-    "@types/react-transition-group": ^4.4.0
-    memoize-one: ^5.0.0
-    prop-types: ^15.6.0
-    react-transition-group: ^4.3.0
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
-  checksum: 014cde5d23ca466795bd7f02455769efda74522c41f11109ec2d6f0e3c77f401ea91ae23cdccce997efb653aa6ea88688a16f40e59bfdef2a2414d0cfd10f374
   languageName: node
   linkType: hard
 
