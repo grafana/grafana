@@ -1,4 +1,4 @@
-package datasources
+package service
 
 import (
 	"context"
@@ -77,7 +77,9 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	return s
 }
 
+// DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
+	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 }
 
