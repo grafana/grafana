@@ -42,16 +42,17 @@ export class TeamList extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.fetchTeams();
+    // Don't fetch teams if the user cannot see any
+    if (contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)) {
+      this.fetchTeams();
+    }
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       this.fetchRoleOptions();
     }
   }
 
   async fetchTeams() {
-    if (contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)) {
-      await this.props.loadTeams();
-    }
+    await this.props.loadTeams();
   }
 
   async fetchRoleOptions() {
@@ -197,11 +198,10 @@ export class TeamList extends PureComponent<Props, State> {
 
   renderList() {
     const { teamsCount, hasFetched } = this.props;
+    // If the user cannot read any team, we didn't fetch them
+    let isLoading = !hasFetched && contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true);
 
-    if (!hasFetched) {
-      if (!contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)) {
-        return this.renderEmptyList();
-      }
+    if (isLoading) {
       return null;
     }
 
@@ -214,12 +214,12 @@ export class TeamList extends PureComponent<Props, State> {
 
   render() {
     const { hasFetched, navModel } = this.props;
+    // If the user cannot read any team, we didn't fetch them
+    let isLoading = !hasFetched && contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true);
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched && contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)}>
-          {this.renderList()}
-        </Page.Contents>
+        <Page.Contents isLoading={isLoading}>{this.renderList()}</Page.Contents>
       </Page>
     );
   }
