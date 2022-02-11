@@ -18,8 +18,7 @@ interface PathbuilderOpts {
 }
 
 export interface HeatmapHoverEvent {
-  // yIndex: number; // seriesIdx
-  xIndex: number;
+  index: number;
   pageX: number;
   pageY: number;
 }
@@ -61,24 +60,34 @@ export function prepConfig(opts: PrepConfigOpts) {
     rect = r;
   });
 
+  let pendingOnleave = 0;
+
   builder.addHook('setLegend', (u) => {
     if (u.cursor.idxs != null) {
       for (let i = 0; i < u.cursor.idxs.length; i++) {
         const sel = u.cursor.idxs[i];
         if (sel != null && !isToolTipOpen.current) {
+          if (pendingOnleave) {
+            clearTimeout(pendingOnleave);
+            pendingOnleave = 0;
+          }
+
           onhover({
-            // yIndex: i - 1,  // seriesIdx
-            xIndex: sel,
+            index: sel,
             pageX: rect.left + u.cursor.left!,
             pageY: rect.top + u.cursor.top!,
           });
+
           return; // only show the first one
         }
       }
     }
 
     if (!isToolTipOpen.current) {
-      onhover(null);
+      // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
+      if (!pendingOnleave) {
+        pendingOnleave = setTimeout(() => onhover(null), 100);
+      }
     }
   });
 
