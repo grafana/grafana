@@ -10,8 +10,6 @@ If you suspect a user account is compromised or is no longer authorized to acces
 
 The force logout action can apply to one device that is logged in to Grafana, or all devices logged in to Grafana.
 
-<!--- What's the user experience if they are signed in at the moment of force logout? -->
-
 ## Before you begin
 
 - Ensure you have Grafana server administrator privileges

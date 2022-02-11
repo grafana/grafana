@@ -26,5 +26,3 @@ A user can belong to multiple teams.
 1. Click **Add member**.
 1. In the **Add team member** field, locate and select a user.
 1. Click **Add to team**.
-
-<!--- Is the user notified that they've been added to a team? -->
