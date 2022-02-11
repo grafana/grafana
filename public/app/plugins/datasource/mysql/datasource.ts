@@ -9,7 +9,6 @@ import ResponseParser from './response_parser';
 import { MySQLOptions, MySQLQuery, MysqlQueryForInterpolation } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
@@ -21,8 +20,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -140,7 +138,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       format: 'table',
     };
 
-    const range = this.timeSrv.timeRange();
+    const range = optionalOptions?.range;
 
     return lastValueFrom(
       getBackendSrv()
@@ -148,8 +146,8 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
           url: '/api/ds/query',
           method: 'POST',
           data: {
-            from: range.from.valueOf().toString(),
-            to: range.to.valueOf().toString(),
+            from: range?.from?.valueOf()?.toString(),
+            to: range?.to?.valueOf()?.toString(),
             queries: [interpolatedQuery],
           },
           requestId: refId,
