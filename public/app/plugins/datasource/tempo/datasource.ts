@@ -325,17 +325,17 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         links: [
           makePromLink(
             'Request rate',
-            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__interval])`,
+            `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
           makePromLink(
             'Request histogram',
-            `histogram_quantile(0.9, rate(${histogramMetric}{server="\${__data.fields.id}"}[$__interval]))`,
+            `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
             datasourceUid
           ),
           makePromLink(
             'Failed request rate',
-            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__interval])`,
+            `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
             datasourceUid
           ),
         ],

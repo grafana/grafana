@@ -15,6 +15,9 @@ Access to these API endpoints is restricted as follows:
 - Organization Admins are able to manage all teams and team members.
 - If the `editors_can_admin` configuration flag is enabled, Organization Editors are able to view details of all teams and to manage teams that they are Admin members of.
 
+> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by Fine-grained access control permissions.
+> Refer to specific endpoints to understand what permissions are required.
+
 ## Team Search With Paging
 
 `GET /api/teams/search?perpage=50&page=1&query=myteam`
@@ -23,24 +26,22 @@ or
 
 `GET /api/teams/search?name=myteam`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action     | Scope    |
+| ---------- | -------- |
+| teams:read | teams:\* |
+
+**Example Request**:
+
 ```http
-GET /api/teams/search?perpage=10&page=1&query=myteam HTTP/1.1
+GET /api/teams/search?perpage=10&page=1&query=mytestteam HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
-
-### Using the query parameter
-
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`.
-
-The `totalCount` field in the response can be used for pagination of the teams list E.g. if `totalCount` is equal to 100 teams and the `perpage` parameter is set to 10 then there are 10 pages of teams.
-
-The `query` parameter is optional and it will return results where the query value is contained in the `name` field. Query values with spaces need to be URL encoded e.g. `query=my%20team`.
-
-### Using the name parameter
-
-The `name` parameter returns a single team if the parameter matches the `name` field.
 
 **Example Response**:
 
@@ -65,7 +66,19 @@ Content-Type: application/json
 }
 ```
 
-Status Codes:
+### Using the query parameter
+
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`.
+
+The `totalCount` field in the response can be used for pagination of the teams list E.g. if `totalCount` is equal to 100 teams and the `perpage` parameter is set to 10 then there are 10 pages of teams.
+
+The `query` parameter is optional and it will return results where the query value is contained in the `name` field. Query values with spaces need to be URL encoded e.g. `query=my%20team`.
+
+### Using the name parameter
+
+The `name` parameter returns a single team if the parameter matches the `name` field.
+
+#### Status Codes:
 
 - **200** - Ok
 - **401** - Unauthorized
@@ -75,6 +88,14 @@ Status Codes:
 ## Get Team By Id
 
 `GET /api/teams/:id`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action     | Scope    |
+| ---------- | -------- |
+| teams:read | teams:\* |
 
 **Example Request**:
 
@@ -114,6 +135,14 @@ The Team `name` needs to be unique. `name` is required and `email`,`orgId` is op
 
 `POST /api/teams`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action       | Scope |
+| ------------ | ----- |
+| teams:create | N/A   |
+
 **Example Request**:
 
 ```http
@@ -151,6 +180,14 @@ There are two fields that can be updated for a team: `name` and `email`.
 
 `PUT /api/teams/:id`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action      | Scope    |
+| ----------- | -------- |
+| teams:write | teams:\* |
+
 **Example Request**:
 
 ```http
@@ -186,6 +223,14 @@ Status Codes:
 
 `DELETE /api/teams/:id`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action       | Scope    |
+| ------------ | -------- |
+| teams:delete | teams:\* |
+
 **Example Request**:
 
 ```http
@@ -214,6 +259,14 @@ Status Codes:
 ## Get Team Members
 
 `GET /api/teams/:teamId/members`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                 | Scope    |
+| ---------------------- | -------- |
+| teams.permissions:read | teams:\* |
 
 **Example Request**:
 
@@ -260,6 +313,14 @@ Status Codes:
 
 `POST /api/teams/:teamId/members`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                  | Scope    |
+| ----------------------- | -------- |
+| teams.permissions:write | teams:\* |
+
 **Example Request**:
 
 ```http
@@ -294,6 +355,14 @@ Status Codes:
 
 `DELETE /api/teams/:teamId/members/:userId`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                  | Scope    |
+| ----------------------- | -------- |
+| teams.permissions:write | teams:\* |
+
 **Example Request**:
 
 ```http
@@ -323,6 +392,14 @@ Status Codes:
 
 `GET /api/teams/:teamId/preferences`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action     | Scope    |
+| ---------- | -------- |
+| teams:read | teams:\* |
+
 **Example Request**:
 
 ```http
@@ -348,6 +425,14 @@ Content-Type: application/json
 ## Update Team Preferences
 
 `PUT /api/teams/:teamId/preferences`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action      | Scope    |
+| ----------- | -------- |
+| teams:write | teams:\* |
 
 **Example Request**:
 
