@@ -69,9 +69,13 @@ func transformRows(rows []Row, query Query) data.Frames {
 
 			for _, valuePair := range row.Values {
 				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-					values = append(values, valuePair[1].(string))
+					if len(valuePair) >= 1 {
+						values = append(values, valuePair[1].(string))
+					}
 				} else {
-					values = append(values, valuePair[0].(string))
+					if len(valuePair) >= 1 {
+						values = append(values, valuePair[0].(string))
+					}
 				}
 			}
 
