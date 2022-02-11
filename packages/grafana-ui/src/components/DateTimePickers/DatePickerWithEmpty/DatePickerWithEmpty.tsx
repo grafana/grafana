@@ -1,11 +1,13 @@
 import React, { ChangeEvent, memo } from 'react';
-import Calendar from 'react-calendar/dist/entry.nostyle';
-import { css } from 'emotion';
+import Calendar from 'react-calendar';
+import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../../Icon/Icon';
-import { getBodyStyles } from '../TimeRangePicker/TimePickerCalendar';
+// import { getBodyStyles } from '../TimeRangePicker/TimePickerCalendar';
+import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
+
 import { InlineField } from '../../Forms/InlineField';
 import { InlineSwitch } from '../../Switch/Switch';
 
@@ -60,7 +62,7 @@ const Body = memo<DatePickerWithEmptyProps>(({ value, onChange, isDateInput, ret
         value={value || new Date()}
         nextLabel={<Icon name="angle-right" />}
         prevLabel={<Icon name="angle-left" />}
-        onChange={(date) => {
+        onChange={(date: Date | Date[]) => {
           if (!Array.isArray(date)) {
             onChange(date, true);
           }

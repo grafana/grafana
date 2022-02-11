@@ -33,7 +33,7 @@ export function DateTimeVariablePicker({ variable, onVariableChange }: Props): R
   }, [variable]);
 
   const updateVariable = useCallback(
-    (value: Date, isDateInput: boolean) => {
+    (value: Date | string, isDateInput: boolean) => {
       dispatch(
         changeVariableProp(
           toVariablePayload(
@@ -56,7 +56,7 @@ export function DateTimeVariablePicker({ variable, onVariableChange }: Props): R
     [dispatch, variable, onVariableChange]
   );
 
-  const onChange = (value: Date, isDateInput: boolean) => {
+  const onChange = (value: Date | string, isDateInput: boolean) => {
     setDate(value);
     setIsDateInput(isDateInput);
     updateVariable(value, isDateInput);

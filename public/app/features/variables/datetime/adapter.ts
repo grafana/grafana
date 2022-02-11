@@ -8,7 +8,7 @@ import { VariableAdapter } from '../adapters';
 import { DateTimeVariableEditor } from './DateTimeVariableEditor';
 import { DateTimeVariablePicker } from './DateTimeVariablePicker';
 import { updateDateTimeVariableOptions, setDateTimeVariableOptionsFromUrl } from './actions';
-import { toVariableIdentifier } from '../state/types';
+import { ALL_VARIABLE_VALUE, toVariableIdentifier } from '../state/types';
 
 export const createDateTimeVariableAdapter = (): VariableAdapter<DateTimeVariableModel> => {
   return {
@@ -26,6 +26,12 @@ export const createDateTimeVariableAdapter = (): VariableAdapter<DateTimeVariabl
       await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
+      if (urlValue) {
+        if (isNaN(new Date(+urlValue).getTime())) {
+          urlValue = ALL_VARIABLE_VALUE;
+        }
+      }
+
       await dispatch(setDateTimeVariableOptionsFromUrl(toVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
