@@ -127,11 +127,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		})
 
 		t.Run("UnprovisionDashboard should delete provisioning metadata", func(t *testing.T) {
-			unprovisionCmd := &models.UnprovisionDashboardCommand{
-				Id: dashId,
-			}
-
-			require.Nil(t, dashboardStore.UnprovisionDashboard(context.Background(), unprovisionCmd))
+			require.Nil(t, dashboardStore.UnprovisionDashboard(context.Background(), dashId))
 
 			data, err := dashboardStore.GetProvisionedDataByDashboardID(dashId)
 			require.Nil(t, err)
