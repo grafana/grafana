@@ -279,7 +279,7 @@ type accessControlScenarioContext struct {
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
-	acmock.GetUserPermissionsFunc = func(_ context.Context, u *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+	acmock.GetUserPermissionsFunc = func(_ context.Context, u *models.SignedInUser, options accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 		if u.OrgId == org {
 			return perms, nil
 		}
@@ -370,7 +370,8 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		require.NoError(t, err)
 		hs.TeamPermissionsService = teamPermissionService
 	} else {
-		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t}, database.ProvideService(db))
+		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
+			database.ProvideService(db), routing.NewRouteRegister())
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
