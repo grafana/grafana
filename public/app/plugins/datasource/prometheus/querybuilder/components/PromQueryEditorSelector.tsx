@@ -114,6 +114,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             datasource={props.datasource}
             onChange={onChange}
             onRunQuery={props.onRunQuery}
+            series={data?.series}
           />
         )}
         {editorMode === QueryEditorMode.Explain && <PromQueryBuilderExplained query={query.expr} />}
