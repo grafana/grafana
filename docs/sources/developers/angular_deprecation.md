@@ -5,7 +5,7 @@ keywords = ["grafana", "documentation", "developers", "resources"]
 
 # Angular support deprecation
 
-Angular plugin support is deprecated, meaning it will be removed in a future release. There are still many community plugins that depend on Grafana’s angular plugin support for them to work. The same is true for many internal (private) plugins that have been developed over the years by Grafana users. Grafana version 9 will have a server configuration option, global for the whole instance, that will control if angular plugin support is available or not. By default angular plugin support will be disabled.
+Angular plugin support is deprecated, and it will be removed in a future release. There are still many community plugins that depend on Grafana’s angular plugin support for them to work. The same is true for many internal (private) plugins developed over the years by Grafana users. Grafana version 9 will have a server configuration option, global for the whole instance, that will control if angular plugin support is available or not. By default, angular plugin support will be disabled.
 
 ## Why are we deprecating angular support?
 
