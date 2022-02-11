@@ -1,5 +1,7 @@
 import React, { FormEvent, useLayoutEffect, useRef, useState } from 'react';
-import { CustomScrollbar, TextArea } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { CustomScrollbar, TextArea, useStyles2 } from '@grafana/ui';
 
 import { Comment } from './Comment';
 import { Message } from './types';
@@ -11,6 +13,8 @@ type Props = {
 };
 
 export const CommentView = ({ comments, packetCounter, addComment }: Props) => {
+  const styles = useStyles2(getStyles);
+
   const [comment, setComment] = useState('');
   const [scrollTop, setScrollTop] = useState(0);
   const commentViewContainer = useRef<HTMLDivElement>(null);
@@ -43,7 +47,7 @@ export const CommentView = ({ comments, packetCounter, addComment }: Props) => {
 
   return (
     <CustomScrollbar scrollTop={scrollTop}>
-      <div ref={commentViewContainer}>
+      <div ref={commentViewContainer} className={styles.commentViewContainer}>
         {comments.map((msg) => (
           <Comment key={msg.id} message={msg} />
         ))}
@@ -58,3 +62,9 @@ export const CommentView = ({ comments, packetCounter, addComment }: Props) => {
     </CustomScrollbar>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  commentViewContainer: css`
+    margin: 5px;
+  `,
+});

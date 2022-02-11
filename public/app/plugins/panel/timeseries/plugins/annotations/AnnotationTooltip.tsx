@@ -107,7 +107,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     commentWrapper: css`
       margin-top: 10px;
       border-top: 2px solid #2d2b34;
-      max-height: 300px;
+      height: 30vh;
       overflow-y: scroll;
       padding: 0 3px;
     `,
