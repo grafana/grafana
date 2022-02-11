@@ -177,6 +177,7 @@ export function SuggestionsPlugin({
         };
 
         return editor
+          .snapshotSelection()
           .deleteBackward(backward)
           .deleteForward(forward)
           .insertText(suggestionText)
