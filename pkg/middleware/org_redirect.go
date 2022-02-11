@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,14 +9,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
+type setUsingOrg interface {
+	SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error
+}
+
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
-func OrgRedirect(cfg *setting.Cfg, ss sqlstore.Store) web.Handler {
+func OrgRedirect(cfg *setting.Cfg, s setUsingOrg) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		orgIdValue := req.URL.Query().Get("orgId")
 		orgId, err := strconv.ParseInt(orgIdValue, 10, 64)
@@ -34,7 +38,7 @@ func OrgRedirect(cfg *setting.Cfg, ss sqlstore.Store) web.Handler {
 		}
 
 		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
-		if err := ss.SetUsingOrg(ctx.Req.Context(), &cmd); err != nil {
+		if err := s.SetUsingOrg(ctx.Req.Context(), &cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
 			} else {

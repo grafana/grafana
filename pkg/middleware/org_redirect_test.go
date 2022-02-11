@@ -10,6 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type orgMock struct{}
+
+func (o *orgMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
+	return fmt.Errorf("")
+}
+
+func (o *orgMock) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
+	return nil
+}
+
 func TestOrgRedirectMiddleware(t *testing.T) {
 	testCases := []struct {
 		desc        string
