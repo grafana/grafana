@@ -106,8 +106,7 @@ func (ac *OSSAccessControlService) GetUserRoles(ctx context.Context, user *model
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context,
-	user *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
