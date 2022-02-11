@@ -6,6 +6,7 @@ import {
   serviceAccountLoaded,
   serviceAccountsLoaded,
   serviceAccountTokensLoaded,
+  serviceAccountToRemoveLoaded,
 } from './reducers';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -19,6 +20,16 @@ export function fetchACOptions(): ThunkResult<void> {
       dispatch(acOptionsLoaded(options));
       const builtInRoles = await fetchBuiltinRoles();
       dispatch(builtInRolesLoaded(builtInRoles));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+export function setServiceAccountToRemove(serviceAccount: ServiceAccountDTO | null): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      dispatch(serviceAccountToRemoveLoaded(serviceAccount));
     } catch (error) {
       console.error(error);
     }
