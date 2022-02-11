@@ -18,8 +18,12 @@ export const dateTimeVariableSlice = createSlice({
     createDateTimeOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState<DateTimeVariableModel>(state, action.payload.id);
       const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
-      instanceState.options = [option];
       instanceState.current = option;
+      if (instanceState.returnValue === 'end') {
+        instanceState.options = [option];
+      } else {
+        instanceState.options = [];
+      }
     },
   },
 });

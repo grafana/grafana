@@ -1,4 +1,4 @@
-import React, { FormEvent, ReactElement, useCallback } from 'react';
+import React, { ChangeEvent, FormEvent, ReactElement, useCallback } from 'react';
 
 import { DateTimeVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
@@ -20,9 +20,12 @@ export const DateTimeVariableEditor = ({ onPropChange, variable: { allValue, ret
   );
 
   const updateReturnValueVariable = useCallback(
-    (event: FormEvent<HTMLInputElement>, updateOptions: boolean) => {
-      event.preventDefault();
-      onPropChange({ propName: 'returnValue', propValue: event.currentTarget.value ? 'end' : 'start', updateOptions });
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onPropChange({
+        propName: 'returnValue',
+        propValue: event.currentTarget.checked ? 'end' : 'start',
+        updateOptions: true,
+      });
     },
     [onPropChange]
   );
@@ -30,13 +33,14 @@ export const DateTimeVariableEditor = ({ onPropChange, variable: { allValue, ret
   const onAllChange = useCallback((e: FormEvent<HTMLInputElement>) => updateAllVariable(e, true), [updateAllVariable]);
   const onAllBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateAllVariable(e, false), [updateAllVariable]);
 
-  const onReturnValueChanged = useCallback((e: FormEvent<HTMLInputElement>) => updateReturnValueVariable(e, true), [
+  const onReturnValueChanged = useCallback((e: ChangeEvent<HTMLInputElement>) => updateReturnValueVariable(e), [
     updateReturnValueVariable,
   ]);
 
   return (
-    <VerticalGroup spacing="xs">
+    <VerticalGroup spacing="none">
       <VariableSectionHeader name="Date options" />
+
       <VariableTextField
         value={allValue ?? ''}
         name="No Date Input Value"
@@ -47,13 +51,14 @@ export const DateTimeVariableEditor = ({ onPropChange, variable: { allValue, ret
         grow
         ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
+
       <InlineFieldRow>
         <VariableSwitchField
           value={returnValue === 'end'}
-          name="Use end of day"
+          name="Use end of the day"
           tooltip="Return the end of the selected day instead of its start"
           onChange={onReturnValueChanged}
-          ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
+          ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
         />
       </InlineFieldRow>
     </VerticalGroup>
