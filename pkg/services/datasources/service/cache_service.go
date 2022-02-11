@@ -11,18 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-var (
-	plog = log.New("datasources")
-)
-
 func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
 	return &CacheServiceImpl{
+		logger:       log.New("datasources"),
 		CacheService: cacheService,
 		SQLStore:     sqlStore,
 	}
 }
 
 type CacheServiceImpl struct {
+	logger       log.Logger
 	CacheService *localcache.CacheService
 	SQLStore     *sqlstore.SQLStore
 }
@@ -44,7 +42,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 		}
 	}
 
-	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
+	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
 	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
 	err := dc.SQLStore.GetDataSource(ctx, query)
@@ -84,7 +82,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 		}
 	}
 
-	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
+	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
 	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
