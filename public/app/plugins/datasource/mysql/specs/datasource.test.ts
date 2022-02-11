@@ -5,7 +5,6 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   MutableDataFrame,
-  toUtc,
 } from '@grafana/data';
 
 import { MysqlDatasource } from '../datasource';
@@ -27,20 +26,9 @@ describe('MySQLDatasource', () => {
     } as unknown as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
-    const raw = {
-      from: toUtc('2018-04-25 10:00'),
-      to: toUtc('2018-04-25 11:00'),
-    };
-    const timeSrvMock: any = {
-      timeRange: () => ({
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      }),
-    };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
+    const ds = new MysqlDatasource(instanceSettings, templateSrv);
 
     return { ds, variable, templateSrv, fetchMock };
   };
