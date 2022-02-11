@@ -61,6 +61,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     [options, data.structureRev]
   );
 
+  const allowPointerEvents = () => isToolTipOpen.current;
+
   const builder = useMemo(() => {
     return prepConfig({
       data: info,
@@ -96,7 +98,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
             offset={{ x: 10, y: 10 }}
-            allowPointerEvents
+            allowPointerEvents={allowPointerEvents}
           >
             {shouldDisplayCloseButton && (
               <>
