@@ -1,4 +1,4 @@
-rish+++
++++
 title = "About users and permissions"
 aliases = ["docs/sources/manage-users/_index.md", "docs/sources/administration/manage-users-and-permissions/about-users-and-permissions.md", "/docs/grafana/latest/permissions/overview/", "docs/sources/permissions/_index.md", "docs/sources/permissions/organization_roles.md"]
 weight = 100
@@ -80,7 +80,7 @@ The following table lists permissions for each role.
 
 ## Dashboard permissions
 
-When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and dashboard folders. For example, you might want a viewer to also to edit a dashboard. While that user can see _all_ dashboards, you can grant them access to update only one of them.
+When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and dashboard folders. For example, you might want a certain viewer to be able to to edit a dashboard. While that user can *see* all dashboards, you can grant them access to *update* only one of them.
 
 > Important: The dashboard permissions you specify override the organization permissions you assign to the user for the selected entity.
 
@@ -124,7 +124,7 @@ You can assign a team member one of the following permissions:
 - **Member**: Includes the user as a member of the team. Members do not have team administrator privileges.
 - **Admin**: Administrators have permission to manage various aspects of the team, including team membership, permissions, and settings.
 
-Because teams exist inside an organization, the organization administrator can manage all teams, and users with the [editors_can_admin] permission can manage teams that they create. For more information about assigning [editors_can_admin] permissions, refer to [Grant editors administrator permissions]({{< relref "./manage-server-users/grant-editor-admin-permissions.md" >}}).
+Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "./manage-server-users/grant-editor-admin-permissions.md" >}}).
 
 ## Grafana Enterprise user permissions features
 
@@ -140,8 +140,6 @@ Grafana Enterprise provides the following permissions-related features:
 By default, a user can query any data source in an organization, even if the data source is not linked to the user's dashboards.
 
 Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../../enterprise/datasource_permissions.md" >}}).
-
-> **Note:** Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
 
 ### Fine-grained access control
 

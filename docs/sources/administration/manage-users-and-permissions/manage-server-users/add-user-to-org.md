@@ -6,14 +6,14 @@ weight = 30
 
 # Add a user to an organization
 
-Add a user to an organization when you want the user to have access to organization resources such as dashboards, data sources, and playlists. A user must belong to one organization, but can also also belong to multiple organizations.
+Add a user to an organization when you want the user to have access to organization resources such as dashboards, data sources, and playlists. A user must belong to at least one organization.
 
 You are required to specify an Admin role for each organization. The first user you add to an organization becomes the Admin by default. After you assign the Admin role to a user, you can add other users to an organization as either Admins, Editors, or Viewers.
 
 ## Before you begin
 
 - Add an organization
-- [Add a user]({{< relref "./add-user.md">}})
+- [Add a user]({{< relref "./add-user.md">}}) to Grafana
 - Ensure you have Grafana server administrator privileges
 
 **To add a user to an organization**:
@@ -28,4 +28,4 @@ You are required to specify an Admin role for each organization. The first user 
 
 1. Click **Add to organization**.
 
-   <!--- Is the user made aware of this change, through email maybe? -->
+The next time the user signs in, they will be able to navigate to their new organization using the Switch Organizations option in the user profile menu.
