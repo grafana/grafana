@@ -2,25 +2,25 @@ import { e2e } from '@grafana/e2e';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
-describe('Variables - Add variable', () => {
+describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2()
       .should('be.visible')
       .within((input) => {
         expect(input.attr('placeholder')).equals('name');
         expect(input.val()).equals('query0');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2()
       .should('be.visible')
       .within((select) => {
         e2e.components.Select.singleValue().should('have.text', 'Query');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
       .within((input) => {
         expect(input.attr('placeholder')).equals('optional display name');
@@ -33,7 +33,7 @@ describe('Variables - Add variable', () => {
         expect(input.attr('placeholder')).equals('descriptive text');
         expect(input.val()).equals('');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelectV2()
       .should('be.visible')
       .within((select) => {
         e2e.components.Select.singleValue().should('have.text', '');
@@ -45,19 +45,19 @@ describe('Variables - Add variable', () => {
         e2e.components.Select.singleValue().should('have.text', 'gdev-testdata');
       });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect()
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2()
       .should('be.visible')
       .within((select) => {
         e2e.components.Select.singleValue().should('have.text', 'On dashboard load');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2()
       .should('be.visible')
       .within((input) => {
         const placeholder = '/.*-(?<text>.*)-(?<value>.*)-.*/';
         expect(input.attr('placeholder')).equals(placeholder);
         expect(input.val()).equals('');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect()
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2()
       .should('be.visible')
       .within((select) => {
         e2e.components.Select.singleValue().should('have.text', 'Disabled');
@@ -66,7 +66,7 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch().should('not.be.checked');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().should('not.exist');
   });
 
   it('adding a single value query variable', () => {
@@ -75,7 +75,7 @@ describe('Variables - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
       .clear()
       .type('a label');
@@ -89,7 +89,7 @@ describe('Variables - Add variable', () => {
       .type('*')
       .blur();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2()
       .should('be.visible')
       .type('/.*C.*/')
       .blur();
@@ -125,7 +125,7 @@ describe('Variables - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
       .clear()
       .type('a label');
@@ -139,7 +139,7 @@ describe('Variables - Add variable', () => {
       .type('*')
       .blur();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2()
       .should('be.visible')
       .type('/.*C.*/')
       .blur();
@@ -152,7 +152,7 @@ describe('Variables - Add variable', () => {
       .click({ force: true })
       .should('be.checked');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().within((input) => {
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().within((input) => {
       expect(input.attr('placeholder')).equals('blank = auto');
       expect(input.val()).equals('');
     });

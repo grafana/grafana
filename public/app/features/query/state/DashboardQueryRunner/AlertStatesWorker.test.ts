@@ -7,7 +7,7 @@ import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceCons
 import * as store from '../../../../store/store';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 

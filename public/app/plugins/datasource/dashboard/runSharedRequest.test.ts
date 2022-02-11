@@ -6,7 +6,7 @@ describe('SharedQueryRunner', () => {
     expect(isSharedDashboardQuery('-- Dashboard --')).toBe(true);
 
     expect(isSharedDashboardQuery('')).toBe(false);
-    expect(isSharedDashboardQuery((undefined as unknown) as null)).toBe(false);
+    expect(isSharedDashboardQuery(undefined as unknown as null)).toBe(false);
     expect(isSharedDashboardQuery(null)).toBe(false);
 
     const ds = {

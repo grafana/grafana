@@ -635,12 +635,45 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, res, 1)
-		require.Equal(t, res[0].Fields[0].Len(), 4)
-		require.Equal(t, res[0].Fields[0].At(1), time.Unix(2, 0).UTC())
-		require.Equal(t, res[0].Fields[0].At(2), time.Unix(3, 0).UTC())
-		require.Equal(t, res[0].Fields[1].Len(), 4)
-		require.Nil(t, res[0].Fields[1].At(1))
-		require.Nil(t, res[0].Fields[1].At(2))
+		require.Equal(t, res[0].Fields[0].Len(), 2)
+		require.Equal(t, time.Unix(1, 0).UTC(), res[0].Fields[0].At(0))
+		require.Equal(t, time.Unix(4, 0).UTC(), res[0].Fields[0].At(1))
+		require.Equal(t, res[0].Fields[1].Len(), 2)
+		require.Equal(t, float64(1), *res[0].Fields[1].At(0).(*float64))
+		require.Equal(t, float64(4), *res[0].Fields[1].At(1).(*float64))
+	})
+
+	t.Run("matrix response with from alerting missed data points should be parsed correctly", func(t *testing.T) {
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+			{Value: 4, Timestamp: 4000},
+		}
+		value := make(map[TimeSeriesQueryType]interface{})
+		value[RangeQueryType] = p.Matrix{
+			&p.SampleStream{
+				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+				Values: values,
+			},
+		}
+		query := &PrometheusQuery{
+			LegendFormat: "",
+			Step:         1 * time.Second,
+			Start:        time.Unix(1, 0).UTC(),
+			End:          time.Unix(4, 0).UTC(),
+			UtcOffsetSec: 0,
+		}
+		res, err := parseTimeSeriesResponse(value, query)
+
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.Equal(t, res[0].Name, "{app=\"Application\", tag2=\"tag2\"}")
+		require.Len(t, res[0].Fields, 2)
+		require.Len(t, res[0].Fields[0].Labels, 0)
+		require.Equal(t, res[0].Fields[0].Name, "Time")
+		require.Len(t, res[0].Fields[1].Labels, 2)
+		require.Equal(t, res[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
+		require.Equal(t, res[0].Fields[1].Name, "Value")
+		require.Equal(t, res[0].Fields[1].Config.DisplayNameFromDS, "{app=\"Application\", tag2=\"tag2\"}")
 	})
 
 	t.Run("matrix response with NaN value should be changed to null", func(t *testing.T) {

@@ -1,10 +1,20 @@
 import { Event, Severity } from '@sentry/browser';
-import { Status } from '@sentry/types';
 import { CustomEndpointTransport } from './CustomEndpointTransport';
 
 describe('CustomEndpointTransport', () => {
   const fetchSpy = (window.fetch = jest.fn());
-  beforeEach(() => jest.resetAllMocks());
+  let consoleSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    // The code logs a warning to console
+    // Let's stub this out so we don't pollute the test output
+    consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
   const now = new Date();
 
   const event: Event = {
@@ -42,9 +52,9 @@ describe('CustomEndpointTransport', () => {
     const rateLimiterResponse = {
       status: 429,
       ok: false,
-      headers: (new Headers({
+      headers: new Headers({
         'Retry-After': '1', // 1 second
-      }) as any) as Headers,
+      }) as any as Headers,
     } as Response;
     fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
     const transport = new CustomEndpointTransport({ endpoint: '/log' });
@@ -54,7 +64,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // second immediate call - shot circuited because retry-after time has not expired, backend not called
-    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', Status.Skipped);
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', 'skipped');
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // wait out the retry-after and call again - great success
@@ -67,9 +77,9 @@ describe('CustomEndpointTransport', () => {
     const rateLimiterResponse = {
       status: 429,
       ok: false,
-      headers: (new Headers({
+      headers: new Headers({
         'Retry-After': '1', // 1 second
-      }) as any) as Headers,
+      }) as any as Headers,
     } as Response;
     fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
     const transport = new CustomEndpointTransport({ endpoint: '/log' });
@@ -79,7 +89,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // second immediate call - shot circuited because retry-after time has not expired, backend not called
-    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', Status.Skipped);
+    await expect(transport.sendEvent(event)).resolves.toHaveProperty('status', 'skipped');
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // wait out the retry-after and call again - great success
@@ -88,7 +98,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('will drop events if max concurrency is reached', async () => {
+  it('will drop events and log a warning to console if max concurrency is reached', async () => {
     const calls: Array<(value: unknown) => void> = [];
     fetchSpy.mockImplementation(
       () =>

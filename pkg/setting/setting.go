@@ -284,6 +284,7 @@ type Cfg struct {
 	LoginMaxLifetime             time.Duration
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
+	SigV4VerboseLogging          bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
@@ -772,6 +773,8 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		return nil, err
 	}
 
+	cfg.Logger.Info(fmt.Sprintf("Starting %s", ApplicationName), "version", BuildVersion, "commit", BuildCommit, "branch", BuildBranch, "compiled", time.Unix(BuildStamp, 0))
+
 	return parsedFile, err
 }
 
@@ -1257,6 +1260,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
+	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
