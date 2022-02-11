@@ -33,7 +33,7 @@ type scenarioContext struct {
 	jwtAuthService       *models.FakeJWTService
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
-	sqlStore             *sqlstore.SQLStore
+	sqlStore             sqlstore.Store
 	contextHandler       *contexthandler.ContextHandler
 
 	req *http.Request

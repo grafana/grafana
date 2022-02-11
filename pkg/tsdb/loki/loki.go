@@ -184,7 +184,7 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 		}
 
 		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			timeVector = append(timeVector, k.Timestamp.Time().UTC())
 			values = append(values, float64(k.Value))
 		}
 

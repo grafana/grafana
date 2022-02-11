@@ -34,6 +34,7 @@ export { SortOrder };
 
 export async function addToRichHistory(
   richHistory: RichHistoryQuery[],
+  datasourceUid: string,
   datasourceName: string | null,
   queries: DataQuery[],
   starred: boolean,
@@ -41,25 +42,25 @@ export async function addToRichHistory(
   showQuotaExceededError: boolean,
   showLimitExceededWarning: boolean
 ): Promise<{ richHistory: RichHistoryQuery[]; richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
-  const ts = Date.now();
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
 
   if (newQueriesToSave.length > 0) {
-    const newRichHistory: RichHistoryQuery = {
-      queries: newQueriesToSave,
-      ts,
-      datasourceName: datasourceName ?? '',
-      starred,
-      comment: comment ?? '',
-    };
-
     let richHistoryStorageFull = false;
     let limitExceeded = false;
     let warning: RichHistoryStorageWarningDetails | undefined;
+    let newRichHistory: RichHistoryQuery;
 
     try {
-      warning = await getRichHistoryStorage().addToRichHistory(newRichHistory);
+      const result = await getRichHistoryStorage().addToRichHistory({
+        datasourceUid: datasourceUid,
+        datasourceName: datasourceName ?? '',
+        queries: newQueriesToSave,
+        starred,
+        comment: comment ?? '',
+      });
+      warning = result.warning;
+      newRichHistory = result.richHistoryQuery;
     } catch (error) {
       if (error.name === RichHistoryServiceError.StorageFull) {
         richHistoryStorageFull = true;
@@ -93,26 +94,10 @@ export async function deleteAllFromRichHistory(): Promise<void> {
   return getRichHistoryStorage().deleteAll();
 }
 
-export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: number) {
-  let updatedQuery: RichHistoryQuery | undefined;
-
-  const updatedHistory = richHistory.map((query) => {
-    /* Timestamps are currently unique - we can use them to identify specific queries */
-    if (query.ts === ts) {
-      const isStarred = query.starred;
-      updatedQuery = Object.assign({}, query, { starred: !isStarred });
-      return updatedQuery;
-    }
-    return query;
-  });
-
-  if (!updatedQuery) {
-    return richHistory;
-  }
-
+export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[], id: string, starred: boolean) {
   try {
-    await getRichHistoryStorage().updateStarred(ts, updatedQuery.starred);
-    return updatedHistory;
+    const updatedQuery = await getRichHistoryStorage().updateStarred(id, starred);
+    return richHistory.map((query) => (query.id === id ? updatedQuery : query));
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
@@ -121,25 +106,12 @@ export async function updateStarredInRichHistory(richHistory: RichHistoryQuery[]
 
 export async function updateCommentInRichHistory(
   richHistory: RichHistoryQuery[],
-  ts: number,
+  id: string,
   newComment: string | undefined
 ) {
-  let updatedQuery: RichHistoryQuery | undefined;
-  const updatedHistory = richHistory.map((query) => {
-    if (query.ts === ts) {
-      updatedQuery = Object.assign({}, query, { comment: newComment });
-      return updatedQuery;
-    }
-    return query;
-  });
-
-  if (!updatedQuery) {
-    return richHistory;
-  }
-
   try {
-    await getRichHistoryStorage().updateComment(ts, newComment);
-    return updatedHistory;
+    const updatedQuery = await getRichHistoryStorage().updateComment(id, newComment);
+    return richHistory.map((query) => (query.id === id ? updatedQuery : query));
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return richHistory;
@@ -148,11 +120,11 @@ export async function updateCommentInRichHistory(
 
 export async function deleteQueryInRichHistory(
   richHistory: RichHistoryQuery[],
-  ts: number
+  id: string
 ): Promise<RichHistoryQuery[]> {
-  const updatedHistory = richHistory.filter((query) => query.ts !== ts);
+  const updatedHistory = richHistory.filter((query) => query.id !== id);
   try {
-    await getRichHistoryStorage().deleteRichHistory(ts);
+    await getRichHistoryStorage().deleteRichHistory(id);
     return updatedHistory;
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
@@ -234,7 +206,7 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   if (sortOrder === SortOrder.DatasourceAZ || sortOrder === SortOrder.DatasourceZA) {
     heading = query.datasourceName;
   } else {
-    heading = createDateStringFromTs(query.ts);
+    heading = createDateStringFromTs(query.createdAt);
   }
   return heading;
 }

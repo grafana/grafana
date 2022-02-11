@@ -34,6 +34,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardPreviewsScheduler",
+			Description: "Schedule automatic updates to dashboard previews",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "live-config",
 			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
@@ -93,6 +98,12 @@ var (
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
 			State:       FeatureStateBeta,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "newNavigation",

@@ -149,7 +149,7 @@ const MonacoQueryField = (props: Props) => {
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
-          // they are registerd to languages. this makes it hard for us to have
+          // they are registered to languages. this makes it hard for us to have
           // separate completion-providers for every query-field-instance
           // (but we need that, because they might connect to different datasources).
           // the trick we do is, we wrap the callback in a "proxy",
@@ -206,6 +206,6 @@ const MonacoQueryField = (props: Props) => {
 // we will lazy-load this module using React.lazy,
 // and that only supports default-exports,
 // so we have to default-export this, even if
-// it is agains the style-guidelines.
+// it is against the style-guidelines.
 
 export default MonacoQueryField;

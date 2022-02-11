@@ -195,12 +195,14 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
+  queries: T[];
 };
 
 export interface ExplorePanelData extends PanelData {

@@ -670,6 +670,20 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		assert.Equal(t, "important_cookie=important_value", proxy.ctx.Resp.Header().Get("Set-Cookie"))
 	})
 
+	t.Run("When response should set Content-Security-Policy header", func(t *testing.T) {
+		ctx, ds := setUp(t)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		assert.Equal(t, "sandbox", proxy.ctx.Resp.Header().Get("Content-Security-Policy"))
+	})
+
 	t.Run("Data source returns status code 401", func(t *testing.T) {
 		ctx, ds := setUp(t, setUpCfg{
 			writeCb: func(w http.ResponseWriter, r *http.Request) {
