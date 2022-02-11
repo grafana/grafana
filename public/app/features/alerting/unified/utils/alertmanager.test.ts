@@ -31,17 +31,11 @@ describe('Alertmanager utils', () => {
       });
     });
 
-    it('should parse escaped values correctly', () => {
-      expect(parseMatcher('foo=~"bar\\"baz\\""')).toEqual<Matcher>({
+    it('should not parse escaped values', () => {
+      expect(parseMatcher('foo="^[a-z0-9-]{1}[a-z0-9-]{0,30}$"')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar"baz"',
-        isRegex: true,
-        isEqual: true,
-      });
-      expect(parseMatcher('foo=~bar\\"baz\\"')).toEqual<Matcher>({
-        name: 'foo',
-        value: 'bar"baz"',
-        isRegex: true,
+        value: '"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"',
+        isRegex: false,
         isEqual: true,
       });
     });
