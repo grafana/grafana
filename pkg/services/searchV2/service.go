@@ -101,6 +101,28 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	return meta, err
 }
 
+type simpleCounter struct {
+	values map[string]int64
+}
+
+func (c *simpleCounter) add(key string) {
+	v, ok := c.values[key]
+	if !ok {
+		v = 0
+	}
+	c.values[key] = v + 1
+}
+
+func (c *simpleCounter) toFrame(name string) *data.Frame {
+	key := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	val := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	for k, v := range c.values {
+		key.Append(k)
+		val.Append(v)
+	}
+	return data.NewFrame(name, key, val)
+}
+
 // UGLY... but helpful for now
 func metaToFrame(meta []dashMeta) data.Frames {
 	folderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
@@ -157,6 +179,10 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	// 	},
 	// }
 
+	counter := simpleCounter{
+		values: make(map[string]int64, 30),
+	}
+
 	var tags *string
 	for _, row := range meta {
 		if row.is_folder {
@@ -193,6 +219,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 			panelName.Append(panel.Title)
 			panelDescr.Append(panel.Description)
 			panelType.Append(panel.Type)
+			counter.add(panel.Type)
 		}
 	}
 
@@ -200,5 +227,6 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		data.NewFrame("folders", folderID, folderUID, folderName),
 		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
+		counter.toFrame("panel-type-counts"),
 	}
 }
