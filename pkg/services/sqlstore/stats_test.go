@@ -32,7 +32,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
 		query := models.GetSystemUserCountStatsQuery{}
-		err := GetSystemUserCountStats(context.Background(), &query)
+		err := sqlStore.GetSystemUserCountStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
