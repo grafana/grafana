@@ -6,6 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
@@ -31,13 +35,49 @@ type dashMeta struct {
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	if user == nil || user.Role != "Admin" {
-		rsp.Error = fmt.Errorf("Search is only supported for admin users while in early development")
+	if user == nil {
+		rsp.Error = fmt.Errorf("no user found in request")
 		return rsp
 	}
 
+	var orgRole models.RoleType
+	switch user.Role {
+	case "Admin":
+		orgRole = models.ROLE_ADMIN
+	case "Editor":
+		orgRole = models.ROLE_EDITOR
+	default:
+		orgRole = models.ROLE_VIEWER
+	}
+
+	// Up to 1000 results returned with this query.
+	// May require several requests to load all dashboard IDs.
+	dashboardQuery := search.FindPersistedDashboardsQuery{
+		Title: "",
+		SignedInUser: &models.SignedInUser{
+			UserId:  user.UserID,
+			OrgRole: orgRole,
+			OrgId:   1, // TODO: proper orgId.
+		},
+		Type:       "",
+		Limit:      0,
+		Page:       0,
+		Permission: models.PERMISSION_VIEW,
+	}
+
+	if err := bus.Dispatch(ctx, &dashboardQuery); err != nil {
+		return nil
+	}
+
+	hits := dashboardQuery.Result
+
+	var dashboardIDs []int64
+	for _, h := range hits {
+		dashboardIDs = append(dashboardIDs, h.ID)
+	}
+
 	// Load and parse all dashboards for orgId=1
-	dash, err := loadDashboards(ctx, 1, s.sql)
+	dash, err := loadDashboards(ctx, 1, s.sql, dashboardIDs)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -48,7 +88,13 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return rsp
 }
 
-func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
+type dashDataQueryResult struct {
+	Id       int64
+	IsFolder bool
+	Data     []byte
+}
+
+func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, dashboardIDs []int64) ([]dashMeta, error) {
 	meta := make([]dashMeta, 0, 200)
 
 	// key will allow name or uid
@@ -57,19 +103,22 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	}
 
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		res, err := sess.Query("SELECT id,is_folder,data FROM dashboard WHERE org_id=?", orgID)
+		rows := make([]*dashDataQueryResult, 0)
+
+		sess.Table("dashboard").Where("org_id = ?", orgID).In("id", dashboardIDs).Cols("id", "is_folder", "data")
+		err := sess.Find(&rows)
 		if err != nil {
 			return err
 		}
 
-		for _, row := range res {
+		for _, row := range rows {
 			// id := row["id"]
 			// is_folder := row["is_folder"]
-			dash := extract.ReadDashboard(bytes.NewReader(row["data"]), lookup)
+			dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
 
 			meta = append(meta, dashMeta{
-				id:        1,
-				is_folder: false,
+				id:        row.Id,
+				is_folder: row.IsFolder,
 				dash:      dash,
 			})
 		}

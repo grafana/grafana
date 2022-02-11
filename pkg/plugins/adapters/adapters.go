@@ -42,9 +42,10 @@ func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
 		return nil
 	}
 	return &backend.User{
-		Login: su.Login,
-		Name:  su.Name,
-		Email: su.Email,
-		Role:  string(su.OrgRole),
+		UserID: su.UserId,
+		Login:  su.Login,
+		Name:   su.Name,
+		Email:  su.Email,
+		Role:   string(su.OrgRole),
 	}
 }
