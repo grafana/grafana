@@ -6,7 +6,7 @@ weight = 40
 
 # Remove a user from an organization
 
-Remove a user from an organization when they no longer require access to the dashboards or data sources owned by the organization.
+Remove a user from an organization when they no longer require access to the dashboards, data sources, or alerts in that organization.
 
 ## Before you begin
 
@@ -17,5 +17,5 @@ Remove a user from an organization when they no longer require access to the das
 1. Sign in to Grafana as a server administrator.
 1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
 1. Click a user.
-1. In the **Organization** section, click **Remove from organization** next to the organization.
+1. In the **Organization** section, click **Remove from organization** next to the organization from which you want to remove the user.
 1. Click **Confirm removal**.
