@@ -21,11 +21,11 @@ func checkObjectId(objectId string) bool {
 	return objectId != ""
 }
 
-func (s *sqlStorage) Create(ctx context.Context, orgId int64, ct string, objectId string, userId int64, content string) (*commentmodel.Comment, error) {
-	if !checkContentType(ct) {
+func (s *sqlStorage) Create(ctx context.Context, orgID int64, cType string, objectID string, userID int64, content string) (*commentmodel.Comment, error) {
+	if !checkContentType(cType) {
 		return nil, errUnknownContentType
 	}
-	if !checkObjectId(objectId) {
+	if !checkObjectId(objectID) {
 		return nil, errEmptyObjectId
 	}
 	if content == "" {
@@ -36,9 +36,9 @@ func (s *sqlStorage) Create(ctx context.Context, orgId int64, ct string, objectI
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		group := commentmodel.CommentGroup{
-			OrgId:       orgId,
-			ContentType: ct,
-			ObjectId:    objectId,
+			OrgId:       orgID,
+			ContentType: cType,
+			ObjectId:    objectID,
 		}
 		has, err := dbSession.Get(&group)
 		if err != nil {
@@ -47,7 +47,7 @@ func (s *sqlStorage) Create(ctx context.Context, orgId int64, ct string, objectI
 
 		nowUnix := time.Now().Unix()
 
-		groupId := group.Id
+		groupID := group.Id
 		if !has {
 			group.Created = nowUnix
 			group.Updated = nowUnix
@@ -56,11 +56,11 @@ func (s *sqlStorage) Create(ctx context.Context, orgId int64, ct string, objectI
 			if err != nil {
 				return err
 			}
-			groupId = group.Id
+			groupID = group.Id
 		}
 		message := commentmodel.Comment{
-			GroupId: groupId,
-			UserId:  userId,
+			GroupId: groupID,
+			UserId:  userID,
 			Content: content,
 			Created: nowUnix,
 			Updated: nowUnix,
@@ -76,11 +76,11 @@ func (s *sqlStorage) Create(ctx context.Context, orgId int64, ct string, objectI
 
 const maxLimit = 300
 
-func (s *sqlStorage) Get(ctx context.Context, orgId int64, ct string, objectId string, filter GetFilter) ([]*commentmodel.Comment, error) {
-	if !checkContentType(ct) {
+func (s *sqlStorage) Get(ctx context.Context, orgID int64, cType string, objectID string, filter GetFilter) ([]*commentmodel.Comment, error) {
+	if !checkContentType(cType) {
 		return nil, errUnknownContentType
 	}
-	if !checkObjectId(objectId) {
+	if !checkObjectId(objectID) {
 		return nil, errEmptyObjectId
 	}
 
@@ -96,9 +96,9 @@ func (s *sqlStorage) Get(ctx context.Context, orgId int64, ct string, objectId s
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		group := commentmodel.CommentGroup{
-			OrgId:       orgId,
-			ContentType: ct,
-			ObjectId:    objectId,
+			OrgId:       orgID,
+			ContentType: cType,
+			ObjectId:    objectID,
 		}
 		has, err := dbSession.Get(&group)
 		if err != nil {

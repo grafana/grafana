@@ -19,6 +19,6 @@ var (
 )
 
 type Storage interface {
-	Get(ctx context.Context, orgId int64, ct string, objectId string, filter GetFilter) ([]*commentmodel.Comment, error)
-	Create(ctx context.Context, orgId int64, ct string, objectId string, userId int64, content string) (*commentmodel.Comment, error)
+	Get(ctx context.Context, orgID int64, cType string, objectID string, filter GetFilter) ([]*commentmodel.Comment, error)
+	Create(ctx context.Context, orgID int64, cType string, objectID string, userID int64, content string) (*commentmodel.Comment, error)
 }

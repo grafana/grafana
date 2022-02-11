@@ -67,21 +67,21 @@ func (a *UserIDFilter) InCondition() *models.InCondition {
 
 type GetCmd struct {
 	ContentType string `json:"contentType"`
-	ObjectId    string `json:"objectId"`
+	ObjectID    string `json:"objectId"`
 	Limit       uint   `json:"limit"`
 	BeforeId    int64  `json:"beforeId"`
 }
 
 type CreateCmd struct {
 	ContentType string `json:"contentType"`
-	ObjectId    string `json:"objectId"`
+	ObjectID    string `json:"objectId"`
 	Content     string `json:"content"`
 }
 
 var ErrPermissionDenied = errors.New("permission denied")
 
-func (s *Service) Create(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd CreateCmd) (*commentmodel.CommentDto, error) {
-	ok, err := s.permissions.CheckWritePermissions(ctx, orgId, signedInUser, cmd.ContentType, cmd.ObjectId)
+func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, cmd CreateCmd) (*commentmodel.CommentDto, error) {
+	ok, err := s.permissions.CheckWritePermissions(ctx, orgID, signedInUser, cmd.ContentType, cmd.ObjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *Service) Create(ctx context.Context, orgId int64, signedInUser *models.
 		}
 	}
 
-	m, err := s.storage.Create(ctx, orgId, cmd.ContentType, cmd.ObjectId, signedInUser.UserId, cmd.Content)
+	m, err := s.storage.Create(ctx, orgID, cmd.ContentType, cmd.ObjectID, signedInUser.UserId, cmd.Content)
 	if err != nil {
 		return nil, err
 	}
@@ -110,12 +110,12 @@ func (s *Service) Create(ctx context.Context, orgId int64, signedInUser *models.
 		CommentCreated: mDto,
 	}
 	eventJSON, _ := json.Marshal(e)
-	_ = s.live.Publish(orgId, fmt.Sprintf("grafana/comment/%s/%s", cmd.ContentType, cmd.ObjectId), eventJSON)
+	_ = s.live.Publish(orgID, fmt.Sprintf("grafana/comment/%s/%s", cmd.ContentType, cmd.ObjectID), eventJSON)
 	return mDto, nil
 }
 
-func (s *Service) Get(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, cmd GetCmd) ([]*commentmodel.CommentDto, error) {
-	ok, err := s.permissions.CheckReadPermissions(ctx, orgId, signedInUser, cmd.ContentType, cmd.ObjectId)
+func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, cmd GetCmd) ([]*commentmodel.CommentDto, error) {
+	ok, err := s.permissions.CheckReadPermissions(ctx, orgID, signedInUser, cmd.ContentType, cmd.ObjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (s *Service) Get(ctx context.Context, orgId int64, signedInUser *models.Sig
 		return nil, ErrPermissionDenied
 	}
 
-	messages, err := s.storage.Get(ctx, orgId, cmd.ContentType, cmd.ObjectId, GetFilter{
+	messages, err := s.storage.Get(ctx, orgID, cmd.ContentType, cmd.ObjectID, GetFilter{
 		Limit:    cmd.Limit,
 		BeforeID: cmd.BeforeId,
 	})
