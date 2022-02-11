@@ -5,6 +5,7 @@ import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
+import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from './utils';
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -40,8 +41,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const kiosk = query.get('kiosk') as KioskMode;
+  const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
@@ -57,7 +57,7 @@ export const NavBarNextUnconnected = React.memo(({ navBarTree }: Props) => {
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  if (kiosk !== null) {
+  if (kiosk !== KioskMode.Off) {
     return null;
   }
 

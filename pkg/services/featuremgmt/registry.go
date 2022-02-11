@@ -34,6 +34,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardPreviewsScheduler",
+			Description: "Schedule automatic updates to dashboard previews",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "live-config",
 			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
