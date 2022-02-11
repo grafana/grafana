@@ -20,8 +20,15 @@ export const InspectErrorTab: React.FC<InspectErrorTabProps> = ({ error }) => {
   }
   if (error.message) {
     try {
-      const jsonError = JSON.parse(error.message);
-      return <JSONFormatter json={jsonError} open={5} />;
+      const [msg, json] = error.message.split(/\{(.+)/);
+      const jsonError = JSON.parse('{' + json);
+      const title = msg && msg !== '' ? <h3>{msg}</h3> : null;
+      return (
+        <>
+          {title}
+          <JSONFormatter json={jsonError} open={5} />
+        </>
+      );
     } catch {
       return <div>{error.message}</div>;
     }
