@@ -184,7 +184,6 @@ func TestUnmarshalResponse200Invalid(t *testing.T) {
 
 func TestUnmarshalResponse200(t *testing.T) {
 	datasource := &AzureResourceGraphDatasource{}
-	// azData, err1 := json.Marshal(loadTestFile(t, "resource-graph/1-azure-resource-graph-response.json"))
 	res, err2 := datasource.unmarshalResponse(&http.Response{
 		StatusCode: 200,
 		Status:     "OK",
@@ -193,7 +192,6 @@ func TestUnmarshalResponse200(t *testing.T) {
 
 	expectedRes := AzureResourceGraphResponse{}
 
-	// assert.NoError(t, err1)
 	assert.NoError(t, err2)
 	assert.Equal(t, expectedRes, res)
 }
