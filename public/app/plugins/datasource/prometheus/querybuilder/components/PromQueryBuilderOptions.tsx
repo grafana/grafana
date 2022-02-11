@@ -46,8 +46,6 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const showExemplarSwitch = app !== CoreApp.UnifiedAlerting && !query.instant;
-
   return (
     <EditorRow>
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption)}>
@@ -80,13 +78,9 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
         </EditorField>
         <EditorField label="Type">
-          <RadioButtonGroup
-            options={queryTypeOptions}
-            value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
-            onChange={onQueryTypeChange}
-          />
+          <RadioButtonGroup options={queryTypeOptions} value={getQueryTypeValue(query)} onChange={onQueryTypeChange} />
         </EditorField>
-        {showExemplarSwitch && (
+        {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
             <Switch value={query.exemplar} onChange={onExemplarChange} />
           </EditorField>
@@ -108,6 +102,18 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   );
 });
 
+function shouldShowExemplarSwitch(query: PromQuery, app?: CoreApp) {
+  if (app === CoreApp.UnifiedAlerting || !query.range) {
+    return false;
+  }
+
+  return true;
+}
+
+function getQueryTypeValue(query: PromQuery) {
+  return query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range';
+}
+
 function getCollapsedInfo(query: PromQuery, formatOption: SelectableValue<string>): string[] {
   const items: string[] = [];
 
@@ -121,9 +127,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: SelectableValue<string
     items.push(`Step ${query.interval}`);
   }
 
-  if (query.instant) {
-    items.push(`Instant: true`);
-  }
+  items.push(`Type: ${getQueryTypeValue(query)}`);
 
   if (query.exemplar) {
     items.push(`Exemplars: true`);
