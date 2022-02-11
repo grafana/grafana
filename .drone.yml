@@ -3217,7 +3217,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -3522,7 +3522,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -3684,7 +3684,7 @@ steps:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
@@ -3893,6 +3893,6 @@ kind: secret
 name: prerelease_bucket
 ---
 kind: signature
-hmac: 65c858e5a684c7ea29c5787f1bc81294d74b0e7f6783a05322bb34dbe4bae5c0
+hmac: ccccf712cc34ebea0b3aaab48914f8019624b1838af29ec712e47b1f7bd9a104
 
 ...
