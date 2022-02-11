@@ -1,4 +1,4 @@
-import { CoreApp, PanelData } from '@grafana/data';
+import { PanelData } from '@grafana/data';
 import React from 'react';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -14,7 +14,6 @@ export interface Props {
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
-  app?: CoreApp;
   data?: PanelData;
 }
 
