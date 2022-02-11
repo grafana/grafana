@@ -1,5 +1,7 @@
+import { CoreApp } from '@grafana/data';
+import { PromQuery } from '../types';
 import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryEditorMode } from './shared/types';
 
 /**
  * Visual query model
@@ -54,12 +56,29 @@ export interface PromQueryPattern {
   operations: QueryBuilderOperation[];
 }
 
-export function getDefaultEmptyQuery() {
-  const model: PromVisualQuery = {
-    metric: '',
-    labels: [],
-    operations: [],
-  };
+/**
+ * Returns query with defaults, and boolean true/false depending on change was required
+ */
+export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): [PromQuery, boolean] {
+  // If no expr (ie new query) then default to builder
+  let result = query;
+  let changed = false;
+  const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
 
-  return model;
+  if (result.editorMode !== editorMode) {
+    result = { ...result, editorMode };
+    changed = true;
+  }
+
+  if (query.expr == null) {
+    result = { ...result, expr: '' };
+    changed = true;
+  }
+
+  if (query.exemplar == null && app !== CoreApp.UnifiedAlerting) {
+    result = { ...result, exemplar: true };
+    changed = true;
+  }
+
+  return [result, changed];
 }
