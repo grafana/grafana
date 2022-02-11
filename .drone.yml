@@ -3431,9 +3431,7 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  environment: {}
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
@@ -3766,9 +3764,7 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  environment: {}
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
@@ -3931,9 +3927,7 @@ steps:
   - yarn install --immutable
   depends_on:
   - clone-enterprise
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  environment: {}
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
@@ -4218,6 +4212,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 5c4a8e18a79c5031b622d3c54a571d91683dc7ccf73115eae29dc95cf5216a19
+hmac: 1d7c4a778a9dcf8f7f69100cdef990a89ef563383c7b81ea79df1a04b815343d
 
 ...
