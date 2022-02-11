@@ -49,6 +49,12 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return rsp
 }
 
+type dashDataQueryResult struct {
+	Id       int64
+	IsFolder bool
+	Data     []byte
+}
+
 func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
 	meta := make([]dashMeta, 0, 200)
 
@@ -58,19 +64,21 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	}
 
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		res, err := sess.Query("SELECT id,is_folder,data FROM dashboard WHERE org_id=?", orgID)
+		rows := make([]*dashDataQueryResult, 0)
+
+		sess.Table("dashboard").Where("org_id = ?", orgID).Cols("id", "is_folder", "data")
+		err := sess.Find(&rows)
+
 		if err != nil {
 			return err
 		}
 
-		for _, row := range res {
-			// id := row["id"]
-			// is_folder := row["is_folder"]
-			dash := extract.ReadDashboard(bytes.NewReader(row["data"]), lookup)
+		for _, row := range rows {
+			dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
 
 			meta = append(meta, dashMeta{
-				id:        1,
-				is_folder: false,
+				id:        row.Id,
+				is_folder: row.IsFolder,
 				dash:      dash,
 			})
 		}
