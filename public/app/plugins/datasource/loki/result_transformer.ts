@@ -192,11 +192,22 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
   };
 }
 
+function parsePrometheusFormatSampleValue(value: string): number {
+  switch (value) {
+    case '+Inf':
+      return Number.POSITIVE_INFINITY;
+    case '-Inf':
+      return Number.NEGATIVE_INFINITY;
+    default:
+      return parseFloat(value);
+  }
+}
+
 export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): TimeSeriesValue[][] {
   const datapoints: TimeSeriesValue[][] = [];
 
   for (const [time, value] of data) {
-    let datapointValue: TimeSeriesValue = parseFloat(value);
+    let datapointValue: TimeSeriesValue = parsePrometheusFormatSampleValue(value);
 
     if (isNaN(datapointValue)) {
       datapointValue = null;
