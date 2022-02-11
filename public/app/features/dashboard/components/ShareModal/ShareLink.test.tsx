@@ -6,7 +6,7 @@ import { Props, ShareLink, State } from './ShareLink';
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
-import { PanelModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
 import { getDefaultTimeRange } from '@grafana/data';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -31,6 +31,7 @@ function mockLocationHref(href: string) {
   (window as any).location = {
     ...location,
     href,
+    origin: new URL(href).origin,
     search,
   };
 }
@@ -187,5 +188,41 @@ describe('ShareModal', () => {
         expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
       });
     });
+  });
+});
+
+describe('when default_home_dashboard_path is set in the grafana config', () => {
+  let originalBootData: any;
+
+  beforeAll(() => {
+    originalBootData = config.bootData;
+    config.appUrl = 'http://dashboards.grafana.com/';
+
+    config.bootData = {
+      user: {
+        orgId: 1,
+      },
+    };
+  });
+
+  afterAll(() => {
+    config.bootData = originalBootData;
+  });
+
+  it('should render the correct link', async () => {
+    const mockDashboard = new DashboardModel({
+      uid: 'mockDashboardUid',
+    });
+    const mockPanel = new PanelModel({
+      id: 'mockPanelId',
+    });
+    mockLocationHref('http://dashboards.grafana.com/?orgId=1');
+    const test: ShallowWrapper<Props, State, ShareLink> = shallow(
+      <ShareLink dashboard={mockDashboard} panel={mockPanel} />
+    );
+    await test.instance().buildUrl();
+    expect(test.state().imageUrl).toBe(
+      `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&width=1000&height=500&tz=UTC`
+    );
   });
 });

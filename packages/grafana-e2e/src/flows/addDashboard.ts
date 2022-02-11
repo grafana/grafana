@@ -162,7 +162,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
 
   // This field is key to many reactive changes
   if (type !== VARIABLE_TYPE_QUERY) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2()
       .should('be.visible')
       .within(() => {
         e2e.components.Select.singleValue().should('have.text', 'Query').click();
@@ -171,10 +171,10 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
   }
 
   if (label) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type(label);
   }
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().clear().type(name);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
 
   if (
     dataSource &&
@@ -188,7 +188,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
   }
 
   if (constantValue && type === VARIABLE_TYPE_CONSTANT) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(constantValue);
+    e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2().type(constantValue);
   }
 
   if (type === VARIABLE_TYPE_QUERY) {
@@ -197,7 +197,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     }
 
     if (regex) {
-      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput().type(regex);
+      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2().type(regex);
     }
   }
 

@@ -24,6 +24,8 @@ Periodically review invitations you have sent so that you can see a list of user
 
    ![Pending Invites button](/static/img/docs/manage-users/pending-invites-button-7-3.png)
 
-1. To cancel an invitation, click the red **X** next to the invitation.
+To cancel an invitation, click the red **X** next to the invitation.
 
-   ![Pending Invites list](/static/img/docs/manage-users/pending-invites-list-7-3.png)
+To copy an invitation link and send it directly to a user, click Copy Invite. You can then paste the invite link into a message.
+
+![Pending Invites list](/static/img/docs/manage-users/pending-invites-list-7-3.png)

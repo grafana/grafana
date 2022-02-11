@@ -6,7 +6,7 @@ weight = 80
 
 # View user sessions
 
-Grafana displays information about user sessions such as when the user logged in and the IP address of the computer they used. You can use this information to investigate the frequency with which users access Grafana.
+Grafana displays information about user sessions such as when the user logged in and the IP address of the computer they used. You can use this information to investigate the places where a given user is signed in.
 
 ## Before you begin
 

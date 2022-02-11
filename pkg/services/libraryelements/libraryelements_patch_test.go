@@ -14,7 +14,7 @@ import (
 func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{Kind: int64(models.PanelElement), Version: 1}
+			cmd := PatchLibraryElementCommand{Kind: int64(models.PanelElement), Version: 1}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": "unknown"})
 			sc.reqContext.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
@@ -24,7 +24,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: newFolder.Id,
 				Name:     "Panel - New name",
 				Model: []byte(`
@@ -87,7 +87,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: newFolder.Id,
 				Kind:     int64(models.PanelElement),
 				Version:  1,
@@ -109,7 +109,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				Name:     "New Name",
 				Kind:     int64(models.PanelElement),
@@ -132,7 +132,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a nonexistent UID, it should change UID successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				UID:      util.GenerateShortUID(),
 				Kind:     int64(models.PanelElement),
@@ -155,7 +155,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an invalid UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				UID:      "Testing an invalid UID",
 				Kind:     int64(models.PanelElement),
@@ -169,7 +169,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an UID that is too long, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				UID:      "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K",
 				Kind:     int64(models.PanelElement),
@@ -188,7 +188,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				UID:      command.UID,
 				Kind:     int64(models.PanelElement),
@@ -202,7 +202,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "title": "New Model Title", "name": "New Model Name", "type":"graph", "description": "New description" }`),
 				Kind:     int64(models.PanelElement),
@@ -231,7 +231,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "description": "New description" }`),
 				Kind:     int64(models.PanelElement),
@@ -258,7 +258,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "type": "graph" }`),
 				Kind:     int64(models.PanelElement),
@@ -285,7 +285,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
+			cmd := PatchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
 			sc.reqContext.UserId = 2
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -307,7 +307,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.ctx.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				Name:    "Text - Library Panel",
 				Version: 1,
 				Kind:    int64(models.PanelElement),
@@ -325,7 +325,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.ctx.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: 1,
 				Version:  1,
 				Kind:     int64(models.PanelElement),
@@ -338,7 +338,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
 				Kind:     int64(models.PanelElement),
@@ -352,7 +352,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an old version number, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
 				Kind:     int64(models.PanelElement),
@@ -368,7 +368,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an other kind, it should succeed but panel should not change",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{
+			cmd := PatchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
 				Kind:     int64(models.VariableElement),

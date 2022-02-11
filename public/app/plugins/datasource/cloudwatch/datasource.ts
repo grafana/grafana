@@ -1,6 +1,5 @@
 import React from 'react';
-import angular from 'angular';
-import { find, findLast, isEmpty, isString, set } from 'lodash';
+import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
 import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
@@ -14,6 +13,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  FieldType,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -59,7 +59,8 @@ import { increasingInterval } from './utils/rxjs/increasingInterval';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { addDataLinksToLogsResponse } from './utils/datalinks';
 import { runWithRetry } from './utils/logsRetry';
-import { CompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -81,16 +82,18 @@ const displayAlert = (datasourceName: string, region: string) =>
 const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
 
-export const MAX_ATTEMPTS = 5;
-
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport {
+  implements DataSourceWithLogsContextSupport
+{
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;
   languageProvider: CloudWatchLanguageProvider;
-  sqlCompletionItemProvider: CompletionItemProvider;
+  sqlCompletionItemProvider: SQLCompletionItemProvider;
+
+  metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
+
   tracingDataSourceUid?: string;
   logsTimeout: string;
 
@@ -119,11 +122,12 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.sqlCompletionItemProvider = new CompletionItemProvider(this);
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
-    options = angular.copy(options);
+    options = cloneDeep(options);
 
     let queries = options.targets.filter((item) => item.id !== '' || item.hide !== true);
     const { logQueries, metricsQueries } = this.getTargetsByQueryMode(queries);
@@ -175,6 +179,11 @@ export class CloudWatchDatasource
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
+    const startTime = new Date();
+    const timeoutFunc = () => {
+      return Date.now() >= startTime.valueOf() + rangeUtil.intervalToMs(this.logsTimeout);
+    };
+
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
         return this.makeLogActionRequest('StartQuery', targets, {
@@ -184,9 +193,7 @@ export class CloudWatchDatasource
         });
       },
       queryParams,
-      {
-        timeout: rangeUtil.intervalToMs(this.logsTimeout),
-      }
+      timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
@@ -197,7 +204,8 @@ export class CloudWatchDatasource
             refId: dataFrame.refId!,
             statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
               .statsGroups,
-          }))
+          })),
+          timeoutFunc
         ).pipe(
           map((response: DataQueryResponse) => {
             if (!response.error && error) {
@@ -258,8 +266,9 @@ export class CloudWatchDatasource
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map(
-      (item: CloudWatchMetricsQuery): MetricQuery => {
+    const validMetricsQueries = metricQueries
+      .filter(this.filterMetricQuery)
+      .map((item: CloudWatchMetricsQuery): MetricQuery => {
         item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
         item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
         item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
@@ -277,8 +286,7 @@ export class CloudWatchDatasource
           type: 'timeSeriesQuery',
           datasource: this.getRef(),
         };
-      }
-    );
+      });
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {
@@ -305,7 +313,8 @@ export class CloudWatchDatasource
       limit?: number;
       region: string;
       statsGroups?: string[];
-    }>
+    }>,
+    timeoutFunc: () => boolean
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach((param) => {
@@ -358,7 +367,7 @@ export class CloudWatchDatasource
         }
       }),
       map(([dataFrames, failedAttempts]) => {
-        if (failedAttempts >= MAX_ATTEMPTS) {
+        if (timeoutFunc()) {
           for (const frame of dataFrames) {
             set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
           }
@@ -376,13 +385,12 @@ export class CloudWatchDatasource
           )
             ? LoadingState.Done
             : LoadingState.Loading,
-          error:
-            failedAttempts >= MAX_ATTEMPTS
-              ? {
-                  message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
-                  type: DataQueryErrorType.Timeout,
-                }
-              : undefined,
+          error: timeoutFunc()
+            ? {
+                message: `error: query timed out after ${failedAttempts} attempts`,
+                type: DataQueryErrorType.Timeout,
+              }
+            : undefined,
         };
       }),
       takeWhile(({ state }) => state !== LoadingState.Error && state !== LoadingState.Done, true)
@@ -498,6 +506,15 @@ export class CloudWatchDatasource
         }
 
         const lastError = findLast(res.results, (v) => !!v.error);
+
+        dataframes.forEach((frame) => {
+          frame.fields.forEach((field) => {
+            if (field.type === FieldType.time) {
+              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals
+              field.config.interval = frame.meta?.custom?.period * 1000;
+            }
+          });
+        });
 
         return {
           data: dataframes,
@@ -955,7 +972,7 @@ export class CloudWatchDatasource
         .getVariables()
         .find(({ name }) => name === this.templateSrv.getVariableName(value));
       if (valueVar) {
-        if (((valueVar as unknown) as VariableWithMultiSupport).multi) {
+        if ((valueVar as unknown as VariableWithMultiSupport).multi) {
           const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
           return { ...result, [key]: values };
         }
@@ -976,7 +993,7 @@ export class CloudWatchDatasource
       const variable = this.templateSrv
         .getVariables()
         .find(({ name }) => name === this.templateSrv.getVariableName(target));
-      if (variable && ((variable as unknown) as VariableWithMultiSupport).multi) {
+      if (variable && (variable as unknown as VariableWithMultiSupport).multi) {
         this.debouncedCustomAlert(
           'CloudWatch templating error',
           `Multi template variables are not supported for ${fieldName || target}`

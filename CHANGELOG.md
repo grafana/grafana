@@ -1,3 +1,59 @@
+<!-- 8.4.0-beta1 START -->
+
+# 8.4.0-beta1 (2022-02-02)
+
+### Features and enhancements
+
+- **Alerting:** Support WeCom as a contact point type. [#40975](https://github.com/grafana/grafana/pull/40975), [@smallpath](https://github.com/smallpath)
+- **Alerting:** UI for mute timings. [#41578](https://github.com/grafana/grafana/pull/41578), [@nathanrodman](https://github.com/nathanrodman)
+- **Alerting:** add settings for peer reconnection in HA mode. [#42300](https://github.com/grafana/grafana/pull/42300), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **Auth:** implement auto_sign_up for auth.jwt. [#37040](https://github.com/grafana/grafana/pull/37040), [@Roguelazer](https://github.com/Roguelazer)
+- **Dashboard:** Add Show unknown variables toggle to dashboard settings. [#41854](https://github.com/grafana/grafana/pull/41854), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Instrumentation:** Logger migration from log15 to gokit/log. [#41636](https://github.com/grafana/grafana/pull/41636), [@ying-jeanne](https://github.com/ying-jeanne)
+- **MSSQL:** Change regex to validate Provider connection string. [#40248](https://github.com/grafana/grafana/pull/40248), [@ianselmi](https://github.com/ianselmi)
+- **MSSQL:** Configuration of certificate verification for TLS connection. [#31865](https://github.com/grafana/grafana/pull/31865), [@mortenaa](https://github.com/mortenaa)
+- **Middleware:** Don't require HTTPS for HSTS headers to be emitted. [#35147](https://github.com/grafana/grafana/pull/35147), [@alexmv](https://github.com/alexmv)
+- **Navigation:** Implement Keyboard Navigation. [#41618](https://github.com/grafana/grafana/pull/41618), [@axelavargas](https://github.com/axelavargas)
+- **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
+- **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
+
+<!-- 8.3.6 START -->
+
+# 8.3.6 (2022-02-09)
+
+### Features and enhancements
+
+- **Cloud Monitoring:** Reduce request size when listing labels. [#44365](https://github.com/grafana/grafana/pull/44365), [@mtanda](https://github.com/mtanda)
+- **Explore:** Show scalar data result in a table instead of graph. [#44362](https://github.com/grafana/grafana/pull/44362), [@tharun208](https://github.com/tharun208)
+- **Snapshots:** Updates the default external snapshot server URL. [#44563](https://github.com/grafana/grafana/pull/44563), [@DanCech](https://github.com/DanCech)
+- **Table:** Makes footer not overlap table content. [#44210](https://github.com/grafana/grafana/pull/44210), [@dprokop](https://github.com/dprokop)
+- **Tempo:** Add request histogram to service graph datalink. [#44671](https://github.com/grafana/grafana/pull/44671), [@connorlindsey](https://github.com/connorlindsey)
+- **Tempo:** Add time range to tempo search query behind a feature flag. [#43811](https://github.com/grafana/grafana/pull/43811), [@connorlindsey](https://github.com/connorlindsey)
+- **Tempo:** Auto-clear results when changing query type. [#44390](https://github.com/grafana/grafana/pull/44390), [@connorlindsey](https://github.com/connorlindsey)
+- **Tempo:** Display start time in search results as relative time. [#44568](https://github.com/grafana/grafana/pull/44568), [@tharun208](https://github.com/tharun208)
+
+### Bug fixes
+
+- **CloudMonitoring:** Fix resource labels in query editor. [#44550](https://github.com/grafana/grafana/pull/44550), [@iwysiu](https://github.com/iwysiu)
+- **Cursor sync:** Apply the settings without saving the dashboard. [#44270](https://github.com/grafana/grafana/pull/44270), [@dprokop](https://github.com/dprokop)
+- **LibraryPanels:** Fix for Error while cleaning library panels. [#45033](https://github.com/grafana/grafana/pull/45033), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Logs Panel:** fix timestamp parsing for string dates without timezone. [#44664](https://github.com/grafana/grafana/pull/44664), [@Elfo404](https://github.com/Elfo404)
+- **Prometheus:** Fix some of the alerting queries that use reduce/math operation. [#44380](https://github.com/grafana/grafana/pull/44380), [@ivanahuckova](https://github.com/ivanahuckova)
+- **TablePanel:** Fix ad-hoc variables not working on default datasources. [#44314](https://github.com/grafana/grafana/pull/44314), [@joshhunt](https://github.com/joshhunt)
+- **Text Panel:** Fix alignment of elements. [#44313](https://github.com/grafana/grafana/pull/44313), [@ashharrison90](https://github.com/ashharrison90)
+- **Variables:** Fix for constant variables in self referencing links. [#44631](https://github.com/grafana/grafana/pull/44631), [@hugohaggmark](https://github.com/hugohaggmark)
+
+<!-- 8.3.6 END -->
+<!-- 8.4.0-beta1 END -->
+<!-- 8.3.5 START -->
+
+# 8.3.5 (2022-02-08)
+
+- **Security**: Fixes CVE-2022-21702. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21703. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21713. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+
+<!-- 8.3.5 END -->
 <!-- 8.3.4 START -->
 
 # 8.3.4 (2022-01-17)
@@ -1259,7 +1315,15 @@ Issue [#33352](https://github.com/grafana/grafana/issues/33352)
 - **AGPL License:** Update license from Apache 2.0 to the GNU Affero General Public License (AGPL). [#33184](https://github.com/grafana/grafana/pull/33184)
 
 <!-- 8.0.0-beta1 END -->
+<!-- 7.5.15 START -->
 
+# 7.5.15 (2022-02-08)
+
+- **Security**: Fixes CVE-2022-21702. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21703. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+- **Security**: Fixes CVE-2022-21713. For more information, see our [blog](https://grafana.com/blog/2022/02/08/grafana-7.5.15-and-8.3.5-released-with-moderate-severity-security-fixes/)
+
+<!-- 7.5.15 END -->
 <!-- 7.5.13 START -->
 
 # 7.5.13 (2022-01-18)

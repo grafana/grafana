@@ -12,7 +12,7 @@ while IFS=" " read -r -a package; do
     PACKAGE_PATH=$(basename "$package")
 
     # Calculate current and previous package paths / names
-    PREV="./main/packages/$PACKAGE_PATH/dist/"
+    PREV="./base/packages/$PACKAGE_PATH/dist/"
     CURRENT="./pr/packages/$PACKAGE_PATH/dist/"
 
     # Temporarily skipping these packages as they don't have any exposed static typing
@@ -25,7 +25,7 @@ while IFS=" " read -r -a package; do
     echo ""
     echo "${PACKAGE_PATH}"
     echo "================================================="
-    npm exec -- @grafana/levitate@0.2.0 compare --prev "$PREV" --current "$CURRENT"
+    npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT"
 
     # Check if the comparison returned with a non-zero exit code
     # Record the output, maybe with some additional information

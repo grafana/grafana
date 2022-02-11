@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,11 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("Given two teams", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		hs.SQLStore = sqlstore.InitTestDB(t)
+		hs.Cfg.EditorsCanAdmin = true
+		store := sqlstore.InitTestDB(t)
+		store.Cfg = hs.Cfg
+		hs.SQLStore = store
+		mock := &mockstore.SQLStoreMock{}
 
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
@@ -50,7 +55,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 			assert.EqualValues(t, 2, resp.TotalCount)
 			assert.Equal(t, 2, len(resp.Teams))
-		})
+		}, mock)
 
 		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", "/api/teams/search", func(sc *scenarioContext) {
 			_, err := hs.SQLStore.CreateTeam("team1", "", 1)
@@ -67,28 +72,14 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 			assert.EqualValues(t, 2, resp.TotalCount)
 			assert.Equal(t, 0, len(resp.Teams))
-		})
+		}, mock)
 	})
 
 	t.Run("When creating team with API key", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-
+		hs.SQLStore = mockstore.NewSQLStoreMock()
 		teamName := "team foo"
-
-		// TODO: Use a fake SQLStore when it's represented by an interface
-		orgCreateTeam := createTeam
-		orgAddTeamMember := addOrUpdateTeamMember
-		t.Cleanup(func() {
-			createTeam = orgCreateTeam
-			addOrUpdateTeamMember = orgAddTeamMember
-		})
-
-		createTeamCalled := 0
-		createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
-			createTeamCalled++
-			return models.Team{Name: teamName, Id: 42}, nil
-		}
 
 		addTeamMemberCalled := 0
 		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
@@ -109,9 +100,10 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
-			hs.CreateTeam(c)
-			assert.Equal(t, createTeamCalled, 1)
-			assert.Equal(t, addTeamMemberCalled, 0)
+			c.Req.Header.Add("Content-Type", "application/json")
+			r := hs.CreateTeam(c)
+
+			assert.Equal(t, 200, r.Status())
 			assert.True(t, stub.warnCalled)
 			assert.Equal(t, stub.warnMessage, "Could not add creator to team because is not a real user")
 		})
@@ -125,16 +117,16 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			}
 			c.OrgRole = models.ROLE_EDITOR
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
-			createTeamCalled, addTeamMemberCalled = 0, 0
-			hs.CreateTeam(c)
-			assert.Equal(t, createTeamCalled, 1)
-			assert.Equal(t, addTeamMemberCalled, 1)
+			c.Req.Header.Add("Content-Type", "application/json")
+			r := hs.CreateTeam(c)
+			assert.Equal(t, 200, r.Status())
 			assert.False(t, stub.warnCalled)
 		})
 	})
 }
 
 const (
+	searchTeamsURL          = "/api/teams/search"
 	createTeamURL           = "/api/teams/"
 	detailTeamURL           = "/api/teams/%d"
 	detailTeamPreferenceURL = "/api/teams/%d/preferences"
@@ -191,6 +183,79 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "teams:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.db = sqlstore.InitTestDB(t)
+
+	// Seed three teams
+	for i := 1; i <= 3; i++ {
+		_, err := sc.db.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)
+		require.NoError(t, err)
+	}
+
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	t.Run("Access control prevents searching for teams with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:*"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+
+	t.Run("Access control allows searching for teams with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:*"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		res := &models.SearchTeamQueryResult{}
+		err := json.Unmarshal(response.Body.Bytes(), res)
+		require.NoError(t, err)
+		require.Len(t, res.Teams, 3, "expected all teams to have been returned")
+		require.Equal(t, res.TotalCount, int64(3), "expected count to match teams length")
+	})
+
+	t.Run("Access control filters teams based on user permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		res := &models.SearchTeamQueryResult{}
+		err := json.Unmarshal(response.Body.Bytes(), res)
+		require.NoError(t, err)
+		require.Len(t, res.Teams, 2, "expected a subset of teams to have been returned")
+		require.Equal(t, res.TotalCount, int64(2), "expected count to match teams length")
+		for _, team := range res.Teams {
+			require.NotEqual(t, team.Name, "team2", "expected team2 to have been filtered")
+		}
+	})
+}
+
+func TestTeamAPIEndpoint_GetTeamByID_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.db = sqlstore.InitTestDB(t)
+
+	_, err := sc.db.CreateTeam("team1", "team1@example.org", 1)
+	require.NoError(t, err)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	t.Run("Access control prevents getting a team with the incorrect permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+
+	t.Run("Access control allows getting a team with the correct permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		res := &models.TeamDTO{}
+		err := json.Unmarshal(response.Body.Bytes(), res)
+		require.NoError(t, err)
+		assert.Equal(t, "team1", res.Name)
 	})
 }
 

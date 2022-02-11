@@ -11,7 +11,7 @@ import { setDashboardSrv } from '../../../features/dashboard/services/DashboardS
 import { locationService } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -68,7 +68,7 @@ async function setupTestContext({
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
     },
-    fieldConfig: ({} as unknown) as FieldConfigSource,
+    fieldConfig: {} as unknown as FieldConfigSource,
     height: 400,
     id: 1,
     onChangeTimeRange: jest.fn(),
@@ -265,9 +265,6 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByRole('img')).toBeInTheDocument();
-        userEvent.hover(screen.getByRole('img'));
-
-        expect(screen.getByText(/result email/i)).toBeInTheDocument();
       });
     });
   });

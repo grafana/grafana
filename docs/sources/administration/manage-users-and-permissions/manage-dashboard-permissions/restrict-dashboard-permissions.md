@@ -6,9 +6,7 @@ weight = 50
 
 # Restrict access to dashboards
 
-The system applies the highest permission, so if you want to hide a folder or dashboard from others you need to remove the **Organization Role** based permission from the Access Control List (ACL).
-
-<!--- I don't understand the sentence above. -->
+Grafana applies the highest permission a given user has to access a resource like a dashboard, so if you want to prevent a user from accessing a folder or dashboard you need to consider the user's organization role, folder permissions, and dashboard permissions.
 
 - You cannot override organization administrator permissions. Organization administrators have access to all organization resources.
 - User permissions set for a dashboard folder propagate to dashboards contained in the folder.
@@ -25,7 +23,7 @@ Dashboard permissions settings:
 - Everyone with Editor role can edit
 - user1 is set to `view`
 
-Result: User1 has edit permissions because the system applies the highest permissions.
+Result: User1 has edit permissions because the user's organization role is Editor.
 
 ## Example 2
 
@@ -37,7 +35,7 @@ Dashboard permissions settings:
 - user1 is set to `edit`
 - team1 is set to `admin`
 
-Result: User1 has administrator permissions because the system applies the highest permissions.
+Result: User1 has administrator permissions for the dashboard because user1 is a member of team1.
 
 ## Example 3
 
@@ -48,6 +46,6 @@ Dashboard permissions settings:
 - user1 is set to `admin`, which is inherited from the permissions set in parent folder
 - user1 is set to `edit`
 
-Result: You receive a message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions because the system applies the highest permissions.
+Result: You receive an error message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions.
 
-> Refer to [Fine-grained access Control]({{< relref "../../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how to use fine-grained permissions to restrict access.
+> Refer to [Fine-grained access Control]({{< relref "../../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how to use fine-grained permissions to restrict access to dashboards, folders, administrative functions, and other resources.

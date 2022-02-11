@@ -13,6 +13,7 @@ interface VariableTextAreaFieldProps<T> {
   ariaLabel?: string;
   required?: boolean;
   labelWidth?: number;
+  testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
 }
 
@@ -27,6 +28,7 @@ export function VariableTextAreaField({
   required,
   width,
   labelWidth,
+  testId,
 }: PropsWithChildren<VariableTextAreaFieldProps<any>>): ReactElement {
   const styles = useStyles(getStyles);
   const getLineCount = useCallback((value: any) => {
@@ -49,6 +51,7 @@ export function VariableTextAreaField({
         aria-label={ariaLabel}
         cols={width}
         className={styles.textarea}
+        data-testid={testId}
       />
     </InlineField>
   );

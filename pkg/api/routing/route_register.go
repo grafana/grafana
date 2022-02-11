@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -52,8 +51,8 @@ type RouteRegister interface {
 
 type RegisterNamedMiddleware func(name string) web.Handler
 
-func ProvideRegister(features featuremgmt.FeatureToggles) *RouteRegisterImpl {
-	return NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(features))
+func ProvideRegister() *RouteRegisterImpl {
+	return NewRouteRegister(middleware.ProvideRouteOperationName)
 }
 
 // NewRouteRegister creates a new RouteRegister with all middlewares sent as params

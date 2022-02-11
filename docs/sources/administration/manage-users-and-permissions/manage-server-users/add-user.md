@@ -6,13 +6,11 @@ weight = 10
 
 # Add a user
 
-Add users when you want to provide individuals with access to Grafana.
+Add users when you want to manually provide individuals with access to Grafana.
 
-When you create a user, the system assigns the user viewer permissions in a default organization, which you can change.
+When you create a user using this method, you must create their password  and they do not receive a notification by email. To invite a user to Grafana and allow them to create their own password, [invite a user to join  an organization]({{< relref "../manage-org-users/invite-user-join-org.md">}}).
 
-<!--- Is there a limit to the number of user created for OSS? -->
-
-<!--- Do orgs need to be created before users? Or does Main Org come out of the box? -->
+When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth proxy, users are created automaticlly
 
 ## Before you begin
 
@@ -25,6 +23,6 @@ When you create a user, the system assigns the user viewer permissions in a defa
 1. Click **New user**.
 1. Complete the fields and click **Create user**.
 
-<!--- Is the user made aware that they have been added? Through email maybe? -->
+When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "./add-user-to-org.md">}}).
 
-You can now add the user to an organization. For more information, refer to [Add a user to an organization]({{< relref "./add-user-to-org.md">}}).
+> **Note:** If you have [organization administrator]({{< relref "../about-users-and-permissions.md#organization-roles">}}) permissions and *not* [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators">}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../../manage-users-and-permissions/manage-org-users/invite-user-join-org.md" >}}).

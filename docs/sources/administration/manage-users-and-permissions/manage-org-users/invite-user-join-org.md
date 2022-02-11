@@ -11,6 +11,8 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
 - If you know that the user already has access Grafana and you know their user name, then you issue an invitation by entering their user name.<!--- It's weird to me that I cannot see all users, so that I know their user name -->
 - If the user is new to Grafana, then use their email address to issue an invitation. The system automatically creates the user account on first sign in.
 
+> **Note:** If you have [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators">}}) permissions, you can also manually [add a user to an organization]({{< relref "../../manage-users-and-permissions/manage-server-users/add-user-to-org.md" >}}).
+
 ## Before you begin
 
 - Ensure you have organization administrator privileges.

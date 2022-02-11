@@ -18,14 +18,13 @@ import (
 
 type UsageStats struct {
 	Cfg           *setting.Cfg
-	Bus           bus.Bus
-	SQLStore      *sqlstore.SQLStore
+	SQLStore      sqlstore.Store
 	pluginStore   plugins.Store
 	SocialService social.Service
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
 
-	log log.MultiLoggers
+	log log.Logger
 
 	oauthProviders           map[string]bool
 	externalMetrics          []usagestats.MetricsFunc
@@ -39,7 +38,6 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, 
 ) *UsageStats {
 	s := &UsageStats{
 		Cfg:            cfg,
-		Bus:            bus,
 		SQLStore:       sqlStore,
 		oauthProviders: socialService.GetOAuthProviders(),
 		RouteRegister:  routeRegister,

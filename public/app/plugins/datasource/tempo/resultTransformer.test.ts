@@ -1,7 +1,44 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
-import { createTableFrame, transformToOTLP, transformFromOTLP } from './resultTransformer';
-import { otlpDataFrameToResponse, otlpDataFrameFromResponse, otlpResponse } from './testResponse';
+import {
+  ArrayVector,
+  FieldType,
+  MutableDataFrame,
+  PluginType,
+  DataSourceInstanceSettings,
+  dateTime,
+} from '@grafana/data';
+import {
+  SearchResponse,
+  createTableFrame,
+  transformToOTLP,
+  transformFromOTLP,
+  transformTrace,
+  createTableFrameFromSearch,
+} from './resultTransformer';
+import {
+  badOTLPResponse,
+  otlpDataFrameToResponse,
+  otlpDataFrameFromResponse,
+  otlpResponse,
+  tempoSearchResponse,
+} from './testResponse';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
+
+const defaultSettings: DataSourceInstanceSettings = {
+  id: 0,
+  uid: '0',
+  type: 'tracing',
+  name: 'tempo',
+  access: 'proxy',
+  meta: {
+    id: 'tempo',
+    name: 'tempo',
+    type: PluginType.datasource,
+    info: {} as any,
+    module: '',
+    baseUrl: '',
+  },
+  jsonData: {},
+};
 
 describe('transformTraceList()', () => {
   const lokiDataFrame = new MutableDataFrame({
@@ -48,9 +85,103 @@ describe('transformToOTLP()', () => {
 describe('transformFromOTLP()', () => {
   test('transforms OTLP format to dataFrame', () => {
     const res = transformFromOTLP(
-      (otlpResponse.batches as unknown) as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      otlpResponse.batches as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
       false
     );
     expect(res.data[0]).toMatchObject(otlpDataFrameFromResponse);
+  });
+});
+
+describe('createTableFrameFromSearch()', () => {
+  const mockTimeUnix = dateTime(1643357709095).valueOf();
+  global.Date.now = jest.fn(() => mockTimeUnix);
+  test('transforms search response to dataFrame', () => {
+    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as SearchResponse[], defaultSettings);
+    expect(frame.fields[0].name).toBe('traceID');
+    expect(frame.fields[0].values.get(0)).toBe('e641dcac1c3a0565');
+
+    expect(frame.fields[1].name).toBe('traceName');
+    expect(frame.fields[1].values.get(0)).toBe('c10d7ca4e3a00354 ');
+
+    // expect time in ago format if startTime less than 1 hour
+    expect(frame.fields[2].name).toBe('startTime');
+    expect(frame.fields[2].values.get(0)).toBe('15 minutes ago');
+
+    // expect time in format if startTime greater than 1 hour
+    expect(frame.fields[2].values.get(1)).toBe('2022-01-27 22:56:06');
+
+    expect(frame.fields[3].name).toBe('duration');
+    expect(frame.fields[3].values.get(0)).toBe(65);
+  });
+});
+
+describe('transformFromOTLP()', () => {
+  // Mock the console error so that running the test suite doesnt throw the error
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
+  test('if passed bad data, will surface an error', () => {
+    const res = transformFromOTLP(
+      badOTLPResponse.batches as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      false
+    );
+
+    expect(res.data[0]).toBeFalsy();
+    expect(res.error?.message).toBeTruthy();
+    // if it does have resources, no error will be thrown
+    expect({
+      ...res.data[0],
+      resources: {
+        attributes: [
+          { key: 'service.name', value: { stringValue: 'db' } },
+          { key: 'job', value: { stringValue: 'tns/db' } },
+          { key: 'opencensus.exporterversion', value: { stringValue: 'Jaeger-Go-2.22.1' } },
+          { key: 'host.name', value: { stringValue: '63d16772b4a2' } },
+          { key: 'ip', value: { stringValue: '0.0.0.0' } },
+          { key: 'client-uuid', value: { stringValue: '39fb01637a579639' } },
+        ],
+      },
+    }).not.toBeFalsy();
+  });
+});
+
+describe('transformTrace()', () => {
+  // Mock the console error so that running the test suite doesnt throw the error
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
+  const badFrame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'serviceTags',
+        values: new ArrayVector([undefined]),
+      },
+    ],
+  });
+
+  const goodFrame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'serviceTags',
+        values: new ArrayVector(),
+      },
+    ],
+  });
+
+  test('if passed bad data, will surface an error', () => {
+    const response = transformTrace({ data: [badFrame] }, false);
+    expect(response.data[0]).toBeFalsy();
+    expect(response.error?.message).toBeTruthy();
+  });
+
+  test('if passed good data, will parse successfully', () => {
+    const response2 = transformTrace({ data: [goodFrame] }, false);
+    expect(response2.data[0]).toBeTruthy();
+    expect(response2.data[0]).toMatchObject(goodFrame);
+    expect(response2.error).toBeFalsy();
   });
 });
