@@ -55,9 +55,10 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     } catch (error) {
       switch (error.data.status) {
         case 'name-exists':
+        case 'empty-name':
+        case 'name-match':
           setError('dashboardName', { message: error.data.message, shouldFocus: true });
           break;
-        // TODO: do we know of any other error from BE?
         default:
           dispatch(notifyApp(createErrorNotification(error.data.message)));
       }
