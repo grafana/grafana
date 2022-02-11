@@ -1,7 +1,9 @@
+import { MutableRefObject } from 'react';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
+
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { HeatmapData } from './fields';
 
@@ -26,13 +28,15 @@ interface PrepConfigOpts {
   data: HeatmapData;
   theme: GrafanaTheme2;
   onhover: (evt?: HeatmapHoverEvent | null) => void;
+  onclick: (evt?: any) => void;
+  isToolTipOpen: MutableRefObject<boolean>;
   timeZone: string;
   timeRange: TimeRange; // should be getTimeRange() cause dynamic?
   palette: string[];
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { theme, onhover, timeZone, timeRange, palette } = opts;
+  const { theme, onhover, onclick, isToolTipOpen, timeZone, timeRange, palette } = opts;
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -49,6 +53,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         background: 'transparent',
       });
     });
+    u.over.addEventListener('click', onclick);
   });
 
   // rect of .u-over (grid area)
@@ -60,7 +65,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     if (u.cursor.idxs != null) {
       for (let i = 0; i < u.cursor.idxs.length; i++) {
         const sel = u.cursor.idxs[i];
-        if (sel != null) {
+        if (sel != null && !isToolTipOpen.current) {
           onhover({
             yIndex: i - 1,
             xIndex: sel,
@@ -71,7 +76,10 @@ export function prepConfig(opts: PrepConfigOpts) {
         }
       }
     }
-    onhover(null);
+
+    if (!isToolTipOpen.current) {
+      onhover(null);
+    }
   });
 
   builder.addHook('drawClear', (u) => {

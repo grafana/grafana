@@ -1,13 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { PanelProps } from '@grafana/data';
-import { Portal, UPlotChart, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
-import { prepareHeatmapData } from './fields';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
+
+import { prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
-import { DataHoverView } from '../geomap/components/DataHoverView';
 import { HeatmapHoverView } from './HeatmapHoverView';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -24,12 +26,28 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   replaceVariables,
 }) => {
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  const isToolTipOpen = useRef<boolean>(false);
+
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setShouldDisplayCloseButton(false);
+    onhover(null);
+  };
+
+  const onclick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
 
   const onhover = useCallback(
     (evt?: HeatmapHoverEvent | null) => {
@@ -44,6 +62,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       data: info,
       theme,
       onhover: options.tooltip.show ? onhover : () => {},
+      onclick: options.tooltip.show ? onclick : () => {},
+      isToolTipOpen,
       timeZone,
       timeRange,
       palette,
@@ -73,8 +93,17 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       </VizLayout>
       <Portal>
         {hover && (
-          <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
-            {/* <DataHoverView data={info.heatmap} rowIndex={hover.xIndex} columnIndex={hover.yIndex} /> */}
+          <VizTooltipContainer
+            position={{ x: hover.pageX, y: hover.pageY }}
+            offset={{ x: 10, y: 10 }}
+            allowPointerEvents
+          >
+            {shouldDisplayCloseButton && (
+              <>
+                <CloseButton onClick={onCloseToolTip} />
+                <div className={styles.closeButtonSpacer} />
+              </>
+            )}
             <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
           </VizTooltipContainer>
         )}
@@ -82,3 +111,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  closeButtonSpacer: css`
+    margin-bottom: 15px;
+  `,
+});

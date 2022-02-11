@@ -51,8 +51,6 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     }
   }
 
-  console.log(links);
-
   return (
     <>
       <div>
