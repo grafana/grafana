@@ -28,7 +28,7 @@ type dashMeta struct {
 	dash      *extract.DashboardInfo
 }
 
-func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, query DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
 	if user == nil || user.Role != "Admin" {
@@ -36,8 +36,8 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	// Load and parse all dashboards for orgId=1
-	dash, err := loadDashboards(ctx, 1, s.sql)
+	// Load and parse all dashboards for given orgId
+	dash, err := loadDashboards(ctx, orgId, s.sql)
 	if err != nil {
 		rsp.Error = err
 		return rsp
