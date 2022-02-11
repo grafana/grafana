@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { DeleteButton, Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 
 import { ApiKey } from '../../types';
@@ -66,8 +66,7 @@ interface TokenExpirationProps {
 }
 
 const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   if (!token.expiration) {
     return <span className={styles.neverExpire}>Never</span>;
   }
@@ -84,7 +83,7 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
         Expired
         <span className={styles.tooltipContainer}>
           <Tooltip content="This API key has expired.">
-            <Icon name="exclamation-triangle" style={{ color: `${theme.colors.error.text}` }} />
+            <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
           </Tooltip>
         </span>
       </span>
@@ -99,6 +98,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   tooltipContainer: css`
     margin-left: ${theme.spacing(1)};
+  `,
+  toolTipIcon: css`
+    color: ${theme.colors.error.text};
   `,
   secondsUntilExpiration: css`
     color: ${theme.colors.warning.text};

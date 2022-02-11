@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -44,6 +45,7 @@ func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64, sec
 	err = bus.Dispatch(context.Background(), &cmd)
 	require.NoError(t, err)
 
+	fmt.Printf("%+v", cmd.Result)
 	return cmd.Result
 }
 
@@ -245,34 +247,60 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
 
 	type testCreateSAToken struct {
-		desc         string
-		keyName      string
-		expectedCode int
-		body         map[string]interface{}
-		acmock       *accesscontrolmock.Mock
+		desc                      string
+		keyName                   string
+		secondsToLive             int64
+		expectedHasExpired        bool
+		expectedResponseBodyField string
+		expectedCode              int
+		acmock                    *accesscontrolmock.Mock
 	}
 
 	testCases := []testCreateSAToken{
 		{
-			desc:    "should be able to list serviceaccount that has expired",
-			keyName: "aaa",
+			desc:          "should be able to list serviceaccount with no expiration date",
+			keyName:       "Test1",
+			secondsToLive: 0,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
 				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
 			),
-			body: map[string]interface{}{
-				"id":                     6,
-				"name":                   "aaa",
-				"role":                   "Viewer",
-				"created":                "2022-02-09T11:13:30+01:00",
-				"expiration":             "2022-02-09T12:13:30+01:00",
-				"secondsUntilExpiration": 0,
-				"hasExpired":             true,
-			},
-			expectedCode: http.StatusOK,
+			expectedHasExpired:        false,
+			expectedResponseBodyField: "hasExpired",
+			expectedCode:              http.StatusOK,
+		},
+		{
+			desc:          "should be able to list serviceaccount with secondsUntilExpiration",
+			keyName:       "Test2",
+			secondsToLive: 1000,
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
+				},
+				false,
+			),
+			expectedHasExpired:        false,
+			expectedResponseBodyField: "secondsUntilExpiration",
+			expectedCode:              http.StatusOK,
+		},
+		{
+			desc:          "should be able to list serviceaccount with expired token",
+			keyName:       "Test3",
+			secondsToLive: 1,
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
+				},
+				false,
+			),
+			expectedHasExpired:        true,
+			expectedResponseBodyField: "secondsUntilExpiration",
+			expectedCode:              http.StatusOK,
 		},
 	}
 
@@ -285,27 +313,34 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		return recorder
 	}
 
-	for _, tc := range testCases {
+	for i, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			_ = createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id, 1000)
+			_ = createTokenforSA(t, tc.keyName, sa.OrgId, sa.Id, tc.secondsToLive)
 
-			endpoint := fmt.Sprintf(serviceaccountIDPath, sa.Id)
+			endpoint := fmt.Sprintf(serviceaccountIDPath+"/tokens", sa.Id)
 			bodyString := ""
 			server := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store)
+			if i == 2 {
+				time.Sleep(time.Millisecond * 1000)
+			}
 			actual := requestResponse(server, http.MethodGet, endpoint, strings.NewReader(bodyString))
 
 			actualCode := actual.Code
-			actualBody := map[string]interface{}{}
+			actualBody := []map[string]interface{}{}
 
 			_ = json.Unmarshal(actual.Body.Bytes(), &actualBody)
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
+			t.Logf("%+v", actualBody)
 
-			query := models.GetApiKeyByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgId}
-			err := store.GetApiKeyByName(context.Background(), &query)
-			if actualCode == http.StatusOK {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			if tc.expectedCode != http.StatusOK {
+				t.Fatalf("expected code %d, got %d", tc.expectedCode, actualCode)
+			}
+			if tc.expectedHasExpired != actualBody[i]["hasExpired"] {
+				t.Fatalf("expected hasExpired %t, got %t", tc.expectedHasExpired, actualBody[i]["hasExpired"])
+			}
+			_, ok := actualBody[i][tc.expectedResponseBodyField]
+			if ok != true {
+				t.Fatalf("expected %s to be present in response body", tc.expectedResponseBodyField)
 			}
 		})
 	}
