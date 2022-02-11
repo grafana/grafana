@@ -4,10 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareQuota(t *testing.T) {
@@ -244,5 +246,9 @@ type mockQuotaService struct {
 }
 
 func (m *mockQuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
+	return m.reached, m.err
+}
+
+func (m *mockQuotaService) CheckQuotaReached(c context.Context, target string, params *quota.ScopeParameters) (bool, error) {
 	return m.reached, m.err
 }
