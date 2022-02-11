@@ -1,10 +1,12 @@
 import { DataQuery } from '@grafana/data';
-import { DashboardDataDTO, StoreState } from 'app/types';
+import { DashboardDataDTO, ExploreId, StoreState } from 'app/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { useSelector } from 'react-redux';
 import { getBackendSrv } from '@grafana/runtime';
 import { lastValueFrom } from 'rxjs';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { getExploreItemSelector } from '../state/selectors';
+import { first } from 'lodash';
 export interface SaveToNewDashboardDTO {
   dashboardName: string;
   folder: { title: string; id: number };
@@ -27,7 +29,7 @@ const createDashboardApiCall = (dashboard: DashboardDataDTO, folderId: number) =
   });
 };
 
-const createDashboard = (dashboardName: string, folderId: number, queries: DataQuery[]) => {
+const createDashboard = (dashboardName: string, folderId: number, queries: DataQuery[], visualization: string) => {
   const dashboard = getDashboardSrv().create({ title: dashboardName }, { folderId });
 
   // TODO: type should be based on current visualization in explore
@@ -36,18 +38,22 @@ const createDashboard = (dashboardName: string, folderId: number, queries: DataQ
   return lastValueFrom(createDashboardApiCall(dashboard.getSaveModelClone(), folderId));
 };
 
-export const useAddToDashboard = () => {
-  // TODO: left or right should be dynamic
-  // TODO: move selector somewhere else
-  const queries = useSelector((state: StoreState) => state.explore.left.queries);
-  // to decide which panel to show we should pick the first refId from queries, then pick from graphFrames, logsFrame, traceFrames and nodeGraphFrames
-  // in the store and the first one that matches refId
-  //   const queries = useSelector((state: StoreState) => state.explore.left.sh);
+const isActive = (query: DataQuery) => !query.hide;
+
+export const useAddToDashboard = (exploreId: ExploreId) => {
+  const exploreSelector = useMemo(() => getExploreItemSelector(exploreId), [exploreId]);
+  const queries = useSelector((state: StoreState) => exploreSelector(state)?.queries || []);
+
   return useCallback(
     async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO) => {
+      const activeQueries = queries.filter(isActive);
+      // to decide which panel to show we should pick the first refId from queries, then pick from graphFrames, logsFrame, traceFrames and nodeGraphFrames
+      // in the store and the first one that matches refId
+      const visualization = 'table';
+
       // TODO: if create dashboard...
       // @ts-expect-error
-      return await createDashboard(data.dashboardName, data.folder.id, queries);
+      return await createDashboard(data.dashboardName, data.folder.id, queries, visualization);
     },
     [queries]
   );

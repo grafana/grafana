@@ -18,7 +18,7 @@ import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { SaveToDashboardButton } from './SaveToDashboardButton';
+import { AddToDashboardButton } from './AddToDashboard';
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -128,7 +128,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             />
           )}
 
-          <SaveToDashboardButton />
+          <AddToDashboardButton exploreId={exploreId} />
 
           <RunButton
             refreshInterval={refreshInterval}
