@@ -316,7 +316,7 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 ### locking_attempt_timeout_sec
 
-For "mysql" only if `lockingMigration` feature toggle is set. How many seconds to wait before failing to lock the database for the migrations, default is 0.
+For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
