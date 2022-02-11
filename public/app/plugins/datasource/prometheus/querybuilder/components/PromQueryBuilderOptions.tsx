@@ -51,7 +51,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption)}>
         <EditorField
           label="Legend"
-          tooltip="Serie name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
+          tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
         >
           <Input placeholder="auto" defaultValue={query.legendFormat} onBlur={onLegendFormatChanged} />
         </EditorField>
