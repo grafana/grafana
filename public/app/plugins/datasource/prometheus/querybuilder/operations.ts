@@ -3,6 +3,7 @@ import {
   functionRendererLeft,
   functionRendererRight,
   getPromAndLokiOperationDisplayName,
+  rangeRendererWithParams,
 } from './shared/operationUtils';
 import {
   QueryBuilderOperation,
@@ -166,16 +167,23 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({ id: PromOperationId.Floor }),
     // Check
     createFunction({ id: PromOperationId.Group }),
+    // Check
     createFunction({
       id: PromOperationId.HoltWinters,
       params: [
+        getRangeVectorParamDef(),
         { name: 'Smoothing Factor', type: 'number' },
         { name: 'Trend Factor', type: 'number' },
       ],
-      defaultParams: [1, 1],
+      defaultParams: ['auto', 0.5, 0.5],
+      alternativesKey: 'range function',
+      category: PromVisualQueryOperationCategory.RangeFunctions,
+      renderer: rangeRendererWithParams,
     }),
+    // Check
     createFunction({ id: PromOperationId.Hour }),
-    createFunction({ id: PromOperationId.Idelta }),
+    // Check
+    createRangeFunction(PromOperationId.Idelta),
     createFunction({ id: PromOperationId.LabelJoin }),
     createFunction({ id: PromOperationId.Last }),
     createFunction({ id: PromOperationId.Log10 }),
@@ -231,8 +239,8 @@ function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBui
     params: definition.params ?? [],
     defaultParams: definition.defaultParams ?? [],
     category: definition.category ?? PromVisualQueryOperationCategory.Functions,
-    renderer: definition.renderer ?? definition.params ? functionRendererRight : functionRendererLeft,
-    addOperationHandler: defaultAddOperationHandler,
+    renderer: definition.renderer ?? (definition.params ? functionRendererRight : functionRendererLeft),
+    addOperationHandler: definition.addOperationHandler ?? defaultAddOperationHandler,
   };
 }
 
