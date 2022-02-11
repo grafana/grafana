@@ -6,6 +6,7 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 import { PromQuery } from '../../types';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
+import { PromQueryLegendEditor } from './PromQueryLegendEditor';
 
 export interface Props {
   query: PromQuery;
@@ -19,11 +20,6 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
 
   const onChangeFormat = (value: SelectableValue<string>) => {
     onChange({ ...query, format: value.value });
-    onRunQuery();
-  };
-
-  const onLegendFormatChanged = (evt: React.FocusEvent<HTMLInputElement>) => {
-    onChange({ ...query, legendFormat: evt.currentTarget.value });
     onRunQuery();
   };
 
@@ -49,12 +45,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   return (
     <EditorRow>
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption)}>
-        <EditorField
-          label="Legend"
-          tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
-        >
-          <Input placeholder="auto" defaultValue={query.legendFormat} onBlur={onLegendFormatChanged} />
-        </EditorField>
+        <PromQueryLegendEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />
         <EditorField
           label="Min step"
           tooltip={
@@ -73,7 +64,6 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
             defaultValue={query.interval}
           />
         </EditorField>
-
         <EditorField label="Format">
           <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
         </EditorField>
