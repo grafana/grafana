@@ -208,7 +208,7 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 }
 
 func (ss *SQLStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
@@ -770,7 +770,7 @@ func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, ove
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
 			query.Result = true
 			return nil
