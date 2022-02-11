@@ -16,13 +16,15 @@ import (
 type FolderServiceImpl struct {
 	dashboardService dashboards.DashboardService
 	dashboardStore   dashboards.Store
+	searchService    *search.SearchService
 	log              log.Logger
 }
 
-func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store) *FolderServiceImpl {
+func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, searchService *search.SearchService) *FolderServiceImpl {
 	return &FolderServiceImpl{
 		dashboardService: dashboardService,
 		dashboardStore:   dashboardStore,
+		searchService:    searchService,
 		log:              log.New("folder-service"),
 	}
 }
@@ -39,7 +41,7 @@ func (f *FolderServiceImpl) GetFolders(ctx context.Context, user *models.SignedI
 		Page:         page,
 	}
 
-	if err := bus.Dispatch(ctx, &searchQuery); err != nil {
+	if err := f.searchService.SearchHandler(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 

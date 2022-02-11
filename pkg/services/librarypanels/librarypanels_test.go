@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/search"
 	"testing"
 	"time"
 
@@ -1428,7 +1429,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	d := dashboardservice.ProvideDashboardService(dashboardStore)
-	s := dashboardservice.ProvideFolderService(d, dashboardStore)
+	s := dashboardservice.ProvideFolderService(d, dashboardStore, &search.SearchService{})
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
 	require.NoError(t, err)
@@ -1516,7 +1517,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
-		folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore), dashboardStore)
+		folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore), dashboardStore, &search.SearchService{})
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
 		service := LibraryPanelService{
