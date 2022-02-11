@@ -7,7 +7,6 @@ import { buildVisualQueryFromString } from '../parsing';
 import { promQueryModeller } from '../PromQueryModeller';
 import { PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
-import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { QueryPreview } from './QueryPreview';
 
 export interface Props {
@@ -25,7 +24,7 @@ export interface Props {
  * @constructor
  */
 export function PromQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, app, data } = props;
+  const { query, onChange, onRunQuery, datasource, data } = props;
 
   const visQuery = buildVisualQueryFromString(query.expr || '').query;
 
@@ -44,7 +43,6 @@ export function PromQueryBuilderContainer(props: Props) {
         data={data}
       />
       {query.editorPreview && <QueryPreview query={query.expr} />}
-      <PromQueryBuilderOptions query={query} app={app} onChange={onChange} onRunQuery={onRunQuery} />
     </>
   );
 }

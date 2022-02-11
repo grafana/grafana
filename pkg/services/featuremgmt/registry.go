@@ -88,6 +88,7 @@ var (
 			Description:  "Show full range logs volume in explore",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "accesscontrol",
