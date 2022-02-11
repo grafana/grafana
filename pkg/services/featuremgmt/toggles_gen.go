@@ -27,6 +27,10 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
+	// FlagDashboardPreviewsScheduler
+	// Schedule automatic updates to dashboard previews
+	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
+
 	// FlagLiveConfig
 	// Save grafana live configuration in SQL tables
 	FlagLiveConfig = "live-config"
