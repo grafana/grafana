@@ -279,12 +279,13 @@ type accessControlScenarioContext struct {
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
-	acmock.GetUserPermissionsFunc = func(_ context.Context, u *models.SignedInUser, options accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-		if u.OrgId == org {
-			return perms, nil
+	acmock.GetUserPermissionsFunc =
+		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+			if u.OrgId == org {
+				return perms, nil
+			}
+			return nil, nil
 		}
-		return nil, nil
-	}
 }
 
 // setInitCtxSignedInUser sets a copy of the user in initCtx
