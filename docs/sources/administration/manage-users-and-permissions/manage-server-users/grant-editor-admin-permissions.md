@@ -6,9 +6,13 @@ weight = 60
 
 # Grant editors administrator permissions
 
-By default, the editor organization role does not allow editors to manage dashboard folders, dashboards, and teams, which you can change by modifying a configuration parameter.
+By default, the editor organization role does not allow editors to manage dashboard folders, dashboards, and teams, which you can change by modifying a configuration parameter. You can allow them to do so using the `editors_can_admin` configuration option.
 
 This setting can be used to enable self-organizing teams to administer their own dashboards.
+
+When `editors_can_admin` is enabled:
+- Users with the Editor role in an organization are Administrators for new dashboards and folders they create, meaning they can edit dashboard permissions. To learn more about dashboard permissions, refer to [Manage dashboard permissions]({{< relref "../manage-dashboard-permissions/_index.md" >}}).
+- Users with the Editor role in an organization can create teams, and they are Administrators of the teams they create. To learn more about team permissions, refer to [Manage teams]({{< relref "../manage-teams/_index.md" >}})
 
 ## Before you begin
 

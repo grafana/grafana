@@ -8,6 +8,8 @@ weight = 600
 
 A team is a group of users within an organization that have common dashboard and data source permission needs. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 
+A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and udpate its settings, like the team name, team member's team roles, UI preferences, and home dashboard.
+
 For more information about teams, refer to [Teams and permissions]({{< relref "../about-users-and-permissions/#teams-and-permissions">}}).
 
 {{< section >}}
