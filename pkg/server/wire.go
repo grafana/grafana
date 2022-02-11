@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -183,7 +184,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
-	datasources.ProvideService,
+	datasourceservice.ProvideService,
+	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginsettings.ProvideService,
 	alerting.ProvideService,
 	serviceaccountsmanager.ProvideServiceAccountsService,

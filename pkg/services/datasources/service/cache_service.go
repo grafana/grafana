@@ -1,4 +1,4 @@
-package datasources
+package service
 
 import (
 	"context"
@@ -6,8 +6,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+)
+
+var (
+	plog = log.New("datasources")
 )
 
 func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
@@ -15,11 +20,6 @@ func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlsto
 		CacheService: cacheService,
 		SQLStore:     sqlStore,
 	}
-}
-
-type CacheService interface {
-	GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
-	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
