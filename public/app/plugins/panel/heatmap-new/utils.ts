@@ -18,8 +18,8 @@ interface PathbuilderOpts {
 }
 
 export interface HeatmapHoverEvent {
+  // yIndex: number; // seriesIdx
   xIndex: number;
-  yIndex: number;
   pageX: number;
   pageY: number;
 }
@@ -67,7 +67,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         const sel = u.cursor.idxs[i];
         if (sel != null && !isToolTipOpen.current) {
           onhover({
-            yIndex: i - 1,
+            // yIndex: i - 1,  // seriesIdx
             xIndex: sel,
             pageX: rect.left + u.cursor.left!,
             pageY: rect.top + u.cursor.top!,

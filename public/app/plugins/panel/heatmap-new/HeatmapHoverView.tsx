@@ -14,6 +14,7 @@ type Props = {
 export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
+  const countField = data.heatmap?.fields[2];
 
   let xDisplay = xField?.display ?? getDisplay;
   const yDisplay = yField?.display ?? getDisplay;
@@ -24,10 +25,12 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   }
 
   const xBucketMin = xField?.values.get(hover.xIndex);
-  const yBucketMin = yField?.values.get(hover.yIndex);
+  const yBucketMin = yField?.values.get(hover.xIndex);
 
   const xBucketMax = xBucketMin + data.xBucketSize;
   const yBucketMax = yBucketMin + data.yBucketSize;
+
+  const count = countField?.values.get(hover.xIndex);
 
   const x = formattedValueToString(xDisplay(xBucketMin));
 
@@ -59,7 +62,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       <div>
         Y Bucket: {yBucketMin} - {yBucketMax}
       </div>
-      <div>Count: TODO</div>
+      <div>Count: {count}</div>
       {showHistogram && <div>TODO: Histogram placeholder</div>}
       {links.length > 0 && (
         <VerticalGroup>

@@ -12,6 +12,9 @@ export interface HeatmapData {
   xBucketSize?: number;
   yBucketSize?: number;
 
+  xBucketCount?: number;
+  yBucketCount?: number;
+
   // Errors
   warning?: string;
 }
@@ -52,17 +55,27 @@ export function prepareHeatmapData(
   return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}));
 }
 
-const getHeatmapData = (data: DataFrame): HeatmapData => {
-  if (data.fields.length < 2 || data.length < 2) {
-    return { heatmap: data };
+const getHeatmapData = (frame: DataFrame): HeatmapData => {
+  if (frame.fields.length < 2 || frame.length < 2) {
+    return { heatmap: frame };
   }
 
-  // Assuming dense heatmap (size is difference between first values)
-  const xMin = data.fields[0].values;
-  const yMin = data.fields[1].values;
+  // infer bucket sizes from data (for now)
+  // the 'heatmap-scanlines' dense frame format looks like:
+  // x:      1,1,1,1,2,2,2,2
+  // y:      3,4,5,6,3,4,5,6
+  // count:  0,0,0,7,0,3,0,1
 
-  const xBucketSize = xMin.get(1) - xMin.get(0);
-  const yBucketSize = yMin.get(1) - yMin.get(0);
+  const xs = frame.fields[0].values.toArray();
+  const ys = frame.fields[1].values.toArray();
+  const dlen = xs.length;
 
-  return { heatmap: data, xBucketSize, yBucketSize };
+  // below is literally copy/paste from the pathBuilder code in utils.ts
+  // detect x and y bin qtys by detecting layout repetition in x & y data
+  let yBinQty = dlen - ys.lastIndexOf(ys[0]);
+  let xBinQty = dlen / yBinQty;
+  let yBinIncr = ys[1] - ys[0];
+  let xBinIncr = xs[yBinQty] - xs[0];
+
+  return { heatmap: frame, xBucketSize: xBinIncr, yBucketSize: yBinIncr, xBucketCount: xBinQty, yBucketCount: yBinQty };
 };

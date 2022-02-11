@@ -30,6 +30,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
+  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+
+  //console.log(facets);
+
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
@@ -74,10 +78,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   if (info.warning || !info.heatmap) {
     return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
   }
-
-  const facets = [null, info.heatmap.fields.map((f) => f.values.toArray())];
-
-  //console.log(facets);
 
   return (
     <>
