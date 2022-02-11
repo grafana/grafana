@@ -1,6 +1,6 @@
 import React from 'react';
 import { Cascader, CascaderOption, CascaderProps } from './Cascader';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const options = [
@@ -52,16 +52,18 @@ describe('Cascader', () => {
     it('displays updated options', () => {
       render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
 
-      userEvent.click(screen.getByPlaceholderText(placeholder));
+      act(() => {
+        userEvent.click(screen.getByPlaceholderText(placeholder));
+      });
 
       expect(screen.getByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
       act(() => {
         jest.runAllTimers();
+        userEvent.click(screen.getByPlaceholderText(placeholder));
       });
 
-      userEvent.click(screen.getByPlaceholderText(placeholder));
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
       expect(screen.getByText('First')).toBeInTheDocument();
     });

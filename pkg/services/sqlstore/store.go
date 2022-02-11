@@ -56,6 +56,7 @@ type Store interface {
 	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
 	IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
+	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
 	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
@@ -151,4 +152,5 @@ type Store interface {
 	GetTempUserByCode(ctx context.Context, query *models.GetTempUserByCodeQuery) error
 	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
+	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 }

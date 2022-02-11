@@ -9,6 +9,7 @@ Here you can find detailed release notes that list everything that is included i
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
 - [Release notes for 8.4.0-beta1]({{< relref "release-notes-8-4-0-beta1" >}})
+- [Release notes for 8.3.6]({{< relref "release-notes-8-3-6" >}})
 - [Release notes for 8.3.5]({{< relref "release-notes-8-3-5" >}})
 - [Release notes for 8.3.4]({{< relref "release-notes-8-3-4" >}})
 - [Release notes for 8.3.3]({{< relref "release-notes-8-3-3" >}})

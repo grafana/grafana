@@ -134,6 +134,10 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
 
   let range = minStopPos - maxStopPos;
 
+  if (range === 0) {
+    return scaleStops[maxStopIdx!][1];
+  }
+
   let x0, y0, x1, y1;
 
   if (u.scales.x!.ori === ScaleOrientation.Horizontal) {
