@@ -340,7 +340,7 @@ func (hs *HTTPServer) registerRoutes() {
 				dashboardRoute.Put("/uid/:uid/img/:kind/:theme", hs.ThumbService.UpdateThumbnailState)
 			}
 
-			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
+			dashboardRoute.Post("/calculate-diff", routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
