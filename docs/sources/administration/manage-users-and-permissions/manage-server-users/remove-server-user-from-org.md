@@ -19,3 +19,5 @@ Remove a user from an organization when they no longer require access to the das
 1. Click a user.
 1. In the **Organization** section, click **Remove from organization** next to the organization from which you want to remove the user.
 1. Click **Confirm removal**.
+
+> **Note:** If you have [organization administrator]({{< relref "../about-users-and-permissions.md#organization-roles">}}) permissions and *not* [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators">}}) permissions, you can still [remove a user from an organization]({{< relref "../../manage-users-and-permissions/manage-org-users/remove-user-from-org.md" >}}) in the Users section of organization configuration.

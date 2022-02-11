@@ -23,3 +23,5 @@ This action does not remove the user account from the Grafana server.
    Use the search field to filter the list, if necessary.
 
 1. Click the red **X** to remove the user from the organization.
+
+> **Note:** If you have [server administrator]({{< relref "../about-users-and-permissions.md#grafana-server-administrators">}}) permissions, you can also [remove a user from an organization]({{< relref "../../manage-users-and-permissions/manage-server-users/remove-server-user-from-org.md" >}}) on the Users page of the Server Admin section.
