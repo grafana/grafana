@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
@@ -152,6 +153,7 @@ func TestUsageMetrics(t *testing.T) {
 				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
 				&usagestats.UsageStatsMock{T: t},
 				database.ProvideService(sqlstore.InitTestDB(t)),
+				routing.NewRouteRegister(),
 			)
 			report, err := s.usageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
@@ -543,7 +545,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test
-			userPerms, err := ac.GetUserPermissions(context.Background(), &tt.user)
+			userPerms, err := ac.GetUserPermissions(context.Background(), &tt.user, accesscontrol.Options{})
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error with GetUserPermissions.")
 				return
