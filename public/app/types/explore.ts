@@ -147,12 +147,6 @@ export interface ExploreItemState {
 
   queryResponse: PanelData;
 
-  /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
-   * query of that panel.
-   */
-  originPanelId?: number | null;
-
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;
@@ -201,12 +195,14 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
+  queries: T[];
 };
 
 export interface ExplorePanelData extends PanelData {

@@ -160,7 +160,7 @@ type cloudWatchExecutor struct {
 	sessions SessionCache
 }
 
-func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
+func (e *cloudWatchExecutor) newSession(pluginCtx backend.PluginContext, region string) (*session.Session, error) {
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -187,16 +187,16 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 	})
 }
 
-func (e *cloudWatchExecutor) getCWClient(region string, pluginCtx backend.PluginContext) (cloudwatchiface.CloudWatchAPI, error) {
-	sess, err := e.newSession(region, pluginCtx)
+func (e *cloudWatchExecutor) getCWClient(pluginCtx backend.PluginContext, region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
 	return NewCWClient(sess), nil
 }
 
-func (e *cloudWatchExecutor) getCWLogsClient(region string, pluginCtx backend.PluginContext) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	sess, err := e.newSession(region, pluginCtx)
+func (e *cloudWatchExecutor) getCWLogsClient(pluginCtx backend.PluginContext, region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -206,8 +206,8 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string, pluginCtx backend.Pl
 	return logsClient, nil
 }
 
-func (e *cloudWatchExecutor) getEC2Client(region string, pluginCtx backend.PluginContext) (ec2iface.EC2API, error) {
-	sess, err := e.newSession(region, pluginCtx)
+func (e *cloudWatchExecutor) getEC2Client(pluginCtx backend.PluginContext, region string) (ec2iface.EC2API, error) {
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -215,9 +215,9 @@ func (e *cloudWatchExecutor) getEC2Client(region string, pluginCtx backend.Plugi
 	return newEC2Client(sess), nil
 }
 
-func (e *cloudWatchExecutor) getRGTAClient(region string, pluginCtx backend.PluginContext) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+func (e *cloudWatchExecutor) getRGTAClient(pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
-	sess, err := e.newSession(region, pluginCtx)
+	sess, err := e.newSession(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -284,9 +284,9 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	var result *backend.QueryDataResponse
 	switch queryType {
 	case "metricFindQuery":
-		result, err = e.executeMetricFindQuery(ctx, model, q, req.PluginContext)
+		result, err = e.executeMetricFindQuery(req.PluginContext, model, q)
 	case "annotationQuery":
-		result, err = e.executeAnnotationQuery(ctx, model, q, req.PluginContext)
+		result, err = e.executeAnnotationQuery(req.PluginContext, model, q)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, req)
 	case "timeSeriesQuery":
@@ -319,7 +319,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 			model.Set("region", dsInfo.region)
 		}
 
-		logsClient, err := e.getCWLogsClient(region, req.PluginContext)
+		logsClient, err := e.getCWLogsClient(req.PluginContext, region)
 		if err != nil {
 			return nil, err
 		}

@@ -1513,10 +1513,11 @@ func TestStaleResultsHandler(t *testing.T) {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
 
+	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	const mainOrgID int64 = 1
-	rule := tests.CreateTestAlertRule(t, dbstore, 600, mainOrgID)
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrgID)
 
 	saveCmd1 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -1528,7 +1529,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 
-	_ = dbstore.SaveAlertInstance(saveCmd1)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
 
 	saveCmd2 := &models.SaveAlertInstanceCommand{
 		RuleOrgID:         rule.OrgID,
@@ -1539,7 +1540,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
-	_ = dbstore.SaveAlertInstance(saveCmd2)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
 	testCases := []struct {
 		desc               string
@@ -1589,9 +1590,10 @@ func TestStaleResultsHandler(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		ctx := context.Background()
 		sqlStore := mockstore.NewSQLStoreMock()
 		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, sqlStore)
-		st.Warm()
+		st.Warm(ctx)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db

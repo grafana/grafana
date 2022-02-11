@@ -13,6 +13,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  FieldType,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -80,8 +81,6 @@ const displayAlert = (datasourceName: string, region: string) =>
 
 const displayCustomError = (title: string, message: string) =>
   store.dispatch(notifyApp(createErrorNotification(title, message)));
-
-export const MAX_ATTEMPTS = 5;
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
@@ -180,6 +179,11 @@ export class CloudWatchDatasource
       region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
     }));
 
+    const startTime = new Date();
+    const timeoutFunc = () => {
+      return Date.now() >= startTime.valueOf() + rangeUtil.intervalToMs(this.logsTimeout);
+    };
+
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
         return this.makeLogActionRequest('StartQuery', targets, {
@@ -189,9 +193,7 @@ export class CloudWatchDatasource
         });
       },
       queryParams,
-      {
-        timeout: rangeUtil.intervalToMs(this.logsTimeout),
-      }
+      timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
         // This queries for the results
@@ -202,7 +204,8 @@ export class CloudWatchDatasource
             refId: dataFrame.refId!,
             statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
               .statsGroups,
-          }))
+          })),
+          timeoutFunc
         ).pipe(
           map((response: DataQueryResponse) => {
             if (!response.error && error) {
@@ -310,7 +313,8 @@ export class CloudWatchDatasource
       limit?: number;
       region: string;
       statsGroups?: string[];
-    }>
+    }>,
+    timeoutFunc: () => boolean
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach((param) => {
@@ -363,7 +367,7 @@ export class CloudWatchDatasource
         }
       }),
       map(([dataFrames, failedAttempts]) => {
-        if (failedAttempts >= MAX_ATTEMPTS) {
+        if (timeoutFunc()) {
           for (const frame of dataFrames) {
             set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
           }
@@ -381,13 +385,12 @@ export class CloudWatchDatasource
           )
             ? LoadingState.Done
             : LoadingState.Loading,
-          error:
-            failedAttempts >= MAX_ATTEMPTS
-              ? {
-                  message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
-                  type: DataQueryErrorType.Timeout,
-                }
-              : undefined,
+          error: timeoutFunc()
+            ? {
+                message: `error: query timed out after ${failedAttempts} attempts`,
+                type: DataQueryErrorType.Timeout,
+              }
+            : undefined,
         };
       }),
       takeWhile(({ state }) => state !== LoadingState.Error && state !== LoadingState.Done, true)
@@ -503,6 +506,15 @@ export class CloudWatchDatasource
         }
 
         const lastError = findLast(res.results, (v) => !!v.error);
+
+        dataframes.forEach((frame) => {
+          frame.fields.forEach((field) => {
+            if (field.type === FieldType.time) {
+              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals
+              field.config.interval = frame.meta?.custom?.period * 1000;
+            }
+          });
+        });
 
         return {
           data: dataframes,

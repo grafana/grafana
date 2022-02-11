@@ -463,6 +463,10 @@ type InitTestDBOpt struct {
 	EnsureDefaultOrgAndUser bool
 }
 
+var featuresEnabledDuringTests = []string{
+	featuremgmt.FlagDashboardPreviews,
+}
+
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
@@ -500,7 +504,15 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+		cfg.IsFeatureToggleEnabled = func(requestedFeature string) bool {
+			for _, enabledFeature := range featuresEnabledDuringTests {
+				if enabledFeature == requestedFeature {
+					return true
+				}
+			}
+
+			return false
+		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err

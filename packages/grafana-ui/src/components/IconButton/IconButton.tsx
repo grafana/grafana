@@ -5,8 +5,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { PopoverContent, Tooltip } from '../Tooltip/Tooltip';
-import { TooltipPlacement } from '../Tooltip/PopoverController';
+import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';

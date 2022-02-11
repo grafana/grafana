@@ -29,7 +29,7 @@ import { SpanLinkFunc, TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
 import { autoColor } from '../../Theme';
-import { UIDivider } from '../../uiElementsContext';
+import { Divider } from '../../common/Divider';
 import {
   uAlignIcon,
   ubFlex,
@@ -43,21 +43,6 @@ import {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    divider: css`
-      label: divider;
-      background: ${autoColor(theme, '#ddd')};
-    `,
-    dividerVertical: css`
-      label: dividerVertical;
-      display: block;
-      height: 1px;
-      width: 100%;
-      margin: 24px 0;
-      clear: both;
-      vertical-align: middle;
-      position: relative;
-      top: -0.06em;
-    `,
     debugInfo: css`
       label: debugInfo;
       display: block;
@@ -195,12 +180,12 @@ export default function SpanDetail(props: SpanDetailProps) {
     <div>
       <div className={cx(ubFlex, ubItemsCenter, ubMb1)}>
         <h2 className={cx(ubFlexAuto, ubM0)}>{operationName}</h2>
-        <LabeledList className={ubTxRightAlign} dividerClassName={styles.divider} items={overviewItems} />
+        <LabeledList className={ubTxRightAlign} items={overviewItems} />
       </div>
       {link ? (
         <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
       ) : null}
-      <UIDivider className={cx(styles.divider, styles.dividerVertical, ubMy1)} />
+      <Divider className={ubMy1} type={'horizontal'} />
       <div>
         <div>
           <AccordianKeyValues
