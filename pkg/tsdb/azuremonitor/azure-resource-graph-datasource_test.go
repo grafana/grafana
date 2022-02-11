@@ -2,7 +2,9 @@ package azuremonitor
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,4 +151,49 @@ func TestGetAzurePortalUrl(t *testing.T) {
 		}
 		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
+}
+
+func TestUnmarshalResponse400(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	res, err := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 400,
+		Status:     "400 Bad Request",
+		Body:       io.NopCloser(strings.NewReader(("Azure Error Message"))),
+	})
+
+	expectedErrMsg := "400 Bad Request. Error returned from Azure: Azure Error Message"
+
+	assert.Equal(t, expectedErrMsg, err.Error())
+	assert.Empty(t, res)
+}
+
+func TestUnmarshalResponse200Invalid(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	res, err := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 200,
+		Status:     "OK",
+		Body:       io.NopCloser(strings.NewReader(("Azure Data"))),
+	})
+
+	expectedRes := AzureResourceGraphResponse{}
+	expectedErr := "invalid character 'A' looking for beginning of value"
+
+	assert.Equal(t, expectedErr, err.Error())
+	assert.Equal(t, expectedRes, res)
+}
+
+func TestUnmarshalResponse200(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	// azData, err1 := json.Marshal(loadTestFile(t, "resource-graph/1-azure-resource-graph-response.json"))
+	res, err2 := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 200,
+		Status:     "OK",
+		Body:       io.NopCloser(strings.NewReader("{}")),
+	})
+
+	expectedRes := AzureResourceGraphResponse{}
+
+	// assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.Equal(t, expectedRes, res)
 }
