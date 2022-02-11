@@ -160,7 +160,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, permissionServices *resourceservices.ResourceServices,
 	notificationService *notifications.NotificationService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
-
 	web.Env = cfg.Env
 	m := web.New()
 

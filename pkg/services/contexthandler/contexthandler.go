@@ -55,7 +55,7 @@ type ContextHandler struct {
 	JWTAuthService   models.JWTService
 	RemoteCache      *remotecache.RemoteCache
 	RenderService    rendering.Service
-	SQLStore         *sqlstore.SQLStore
+	SQLStore         sqlstore.Store
 	tracer           tracing.Tracer
 	// GetTime returns the current time.
 	// Stubbable by tests.
