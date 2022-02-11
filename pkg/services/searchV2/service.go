@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -27,10 +28,16 @@ type dashMeta struct {
 	dash      *extract.DashboardInfo
 }
 
-func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, query DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	dash, err := loadDashboards(ctx, s.sql)
+	if user == nil || user.Role != "Admin" {
+		rsp.Error = fmt.Errorf("Search is only supported for admin users while in early development")
+		return rsp
+	}
+
+	// Load and parse all dashboards for orgId=1
+	dash, err := loadDashboards(ctx, 1, s.sql)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -41,7 +48,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, query Dash
 	return rsp
 }
 
-func loadDashboards(ctx context.Context, sql *sqlstore.SQLStore) ([]dashMeta, error) {
+func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
 	meta := make([]dashMeta, 0, 200)
 
 	// key will allow name or uid
@@ -50,11 +57,7 @@ func loadDashboards(ctx context.Context, sql *sqlstore.SQLStore) ([]dashMeta, er
 	}
 
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// alertRules := make([]*ngmodels.AlertRule, 0)
-		// q := "SELECT * FROM alert_rule WHERE org_id = ?"
-		// params := []interface{}{query.OrgID}
-
-		res, err := sess.Query("SELECT id,is_folder,data FROM dashboard") // TODO -- limit by orgID!!!
+		res, err := sess.Query("SELECT id,is_folder,data FROM dashboard WHERE org_id=?", orgID)
 		if err != nil {
 			return err
 		}

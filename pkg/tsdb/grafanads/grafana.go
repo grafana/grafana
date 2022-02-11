@@ -93,7 +93,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		case queryTypeRead:
 			response.Responses[q.RefID] = s.doReadQuery(q)
 		case queryTypeSearch:
-			response.Responses[q.RefID] = s.doSearchQuery(ctx, q)
+			response.Responses[q.RefID] = s.doSearchQuery(ctx, req.PluginContext.User, q)
 		default:
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("unknown query type"),
@@ -222,7 +222,7 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	return response
 }
 
-func (s *Service) doSearchQuery(ctx context.Context, query backend.DataQuery) backend.DataResponse {
+func (s *Service) doSearchQuery(ctx context.Context, user *backend.User, query backend.DataQuery) backend.DataResponse {
 	q := searchV2.DashboardQuery{}
 	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
@@ -231,5 +231,5 @@ func (s *Service) doSearchQuery(ctx context.Context, query backend.DataQuery) ba
 		}
 	}
 
-	return *s.search.DoDashboardQuery(ctx, q)
+	return *s.search.DoDashboardQuery(ctx, user, q)
 }

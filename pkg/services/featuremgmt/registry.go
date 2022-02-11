@@ -61,9 +61,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "panelTitleSearch",
-			Description: "Search for dashboards using panel title",
-			State:       FeatureStateAlpha,
+			Name:            "panelTitleSearch",
+			Description:     "Search for dashboards using panel title",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // only supported in dev mode right now
 		},
 		{
 			Name:         "tempoSearch",
