@@ -355,6 +355,5 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *m.Save
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
 // and provisioned dashboards are left behind but not deleted.
 func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
-	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.Dispatch(ctx, cmd)
+	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }

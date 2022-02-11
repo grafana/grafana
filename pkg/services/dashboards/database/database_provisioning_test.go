@@ -131,7 +131,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				Id: dashId,
 			}
 
-			require.Nil(t, sqlstore.UnprovisionDashboard(context.Background(), unprovisionCmd))
+			require.Nil(t, dashboardStore.UnprovisionDashboard(context.Background(), unprovisionCmd))
 
 			data, err := dashboardStore.GetProvisionedDataByDashboardID(dashId)
 			require.Nil(t, err)

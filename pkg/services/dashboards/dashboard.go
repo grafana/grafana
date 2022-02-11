@@ -43,4 +43,5 @@ type Store interface {
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
+	UnprovisionDashboard(ctx context.Context, id int64) error
 }

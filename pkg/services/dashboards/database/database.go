@@ -167,7 +167,7 @@ func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int
 	})
 }
 
-func (d DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
+func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
 	return d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
@@ -183,6 +183,15 @@ func (d DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*
 		}
 
 		return nil
+	})
+}
+
+// UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
+// The dashboard will still have `created_by = -1` to see it was not created by any particular user.
+func (d *DashboardStore) UnprovisionDashboard(ctx context.Context, id int64) error {
+	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Where("dashboard_id = ?", id).Delete(&models.DashboardProvisioning{})
+		return err
 	})
 }
 
