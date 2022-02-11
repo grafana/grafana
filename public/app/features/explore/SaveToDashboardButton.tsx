@@ -38,26 +38,25 @@ export const SaveToDashboardButton = () => {
     setError,
   } = useForm<FormDTO>();
 
-  const { execute } = useAddToDashboard();
+  const execute = useAddToDashboard();
 
   const onSubmit = async (data: FormDTO) => {
-    const res = await execute(data);
-
-    if (!res.ok) {
-      switch (res.data.status) {
+    try {
+      const res = await execute(data);
+      setIsOpen(false);
+      return res.data.url;
+    } catch (error) {
+      switch (error.data.status) {
         case 'name-exists':
-          setError('dashboardName', { message: res.data.message, shouldFocus: true });
+          setError('dashboardName', { message: error.data.message, shouldFocus: true });
           break;
         // TODO: do we know of any other error from BE?
         default:
-          dispatch(notifyApp(createErrorNotification(res.data.message)));
+          dispatch(notifyApp(createErrorNotification(error.data.message)));
       }
 
-      throw res.data.status;
+      throw error.data.status;
     }
-
-    setIsOpen(false);
-    return res.data.url;
   };
 
   return (
@@ -79,6 +78,7 @@ export const SaveToDashboardButton = () => {
             <>
               <Field label="Dashboard name" error={errors.dashboardName?.message} invalid={!!errors.dashboardName}>
                 <Input
+                  id="dahboard_name"
                   {...register('dashboardName', {
                     shouldUnregister: true,
                     required: { value: true, message: 'This field is required' },
@@ -92,7 +92,9 @@ export const SaveToDashboardButton = () => {
 
               <Field label="Folder">
                 <InputControl
-                  render={({ field: { ref, ...field } }) => <FolderPicker {...field} enableCreateNew />}
+                  render={({ field: { ref, ...field } }) => (
+                    <FolderPicker {...field} enableCreateNew inputId="folder" />
+                  )}
                   control={control}
                   name="folder"
                   shouldUnregister
