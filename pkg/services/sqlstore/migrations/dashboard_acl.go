@@ -38,6 +38,11 @@ func addDashboardAclMigrations(mg *Migrator) {
 	mg.AddMigration("add index dashboard_acl_org_id_role", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[5]))
 	mg.AddMigration("add index dashboard_permission", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[6]))
 
+	mg.AddMigration("remove index dashboard_acl_user_id from dashboard_acl table", NewDropIndexMigration(dashboardAclV1, dashboardAclV1.Indices[3]))
+	mg.AddMigration("remove index dashboard_acl_team_id from dashboard_acl table", NewDropIndexMigration(dashboardAclV1, dashboardAclV1.Indices[4]))
+	mg.AddMigration("remove index dashboard_acl_org_id_role from dashboard_acl table", NewDropIndexMigration(dashboardAclV1, dashboardAclV1.Indices[5]))
+	mg.AddMigration("remove index dashboard_permission from dashboard_acl table", NewDropIndexMigration(dashboardAclV1, dashboardAclV1.Indices[6]))
+
 	const rawSQL = `
 INSERT INTO dashboard_acl
 	(
