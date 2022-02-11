@@ -433,9 +433,10 @@ Accept: application/json
 
 #### Query parameters
 
-| Param | Type    | Required | Description                                                             |
-| ----- | ------- | -------- | ----------------------------------------------------------------------- |
-| force | boolean | No       | When set to `true`, the role will be deleted with all it's assignments. |
+| Param  | Type    | Required | Description                                                                                                                                                                                                                                                                     |
+| ------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                                         |
+| global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information. |
 
 #### Example response
 
