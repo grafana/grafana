@@ -21,10 +21,11 @@ var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTok
 type Service struct {
 	pluginsClient      plugins.Client
 	oAuthTokenService  oauthtoken.OAuthTokenService
-	dataSourcesService *datasources.Service
+	dataSourcesService datasources.DataSourceService
 }
 
-func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.OAuthTokenService, dataSourcesService *datasources.Service) *Service {
+func ProvideService(pluginsClient plugins.Client, oAuthTokenService oauthtoken.OAuthTokenService,
+	dataSourcesService datasources.DataSourceService) *Service {
 	return &Service{
 		pluginsClient:      pluginsClient,
 		oAuthTokenService:  oAuthTokenService,

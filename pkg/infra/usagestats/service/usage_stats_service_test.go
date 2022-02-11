@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -20,7 +19,6 @@ import (
 func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	uss := &UsageStats{
-		Bus:      bus.New(),
 		SQLStore: sqlStore,
 		kvStore:  kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
 		log:      log.New("infra.usagestats"),
@@ -54,7 +52,7 @@ func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
 	assert.Equal(t, expectedCachedResult, actualResult)
 }
 
-func createToken(t *testing.T, uID int, sqlStore *sqlstore.SQLStore) {
+func createToken(t *testing.T, uID int, sqlStore sqlstore.Store) {
 	t.Helper()
 	token, err := util.RandomHex(16)
 	require.NoError(t, err)
@@ -85,7 +83,7 @@ func createToken(t *testing.T, uID int, sqlStore *sqlstore.SQLStore) {
 	require.NoError(t, err)
 }
 
-func createConcurrentTokens(t *testing.T, sqlStore *sqlstore.SQLStore) {
+func createConcurrentTokens(t *testing.T, sqlStore sqlstore.Store) {
 	t.Helper()
 	for u := 1; u <= 6; u++ {
 		for tkn := 1; tkn <= u*3; tkn++ {

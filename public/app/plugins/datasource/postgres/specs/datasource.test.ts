@@ -7,14 +7,12 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   MutableDataFrame,
-  toUtc,
 } from '@grafana/data';
 
 import { PostgresDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { PostgresOptions, PostgresQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -43,21 +41,10 @@ describe('PostgreSQLDatasource', () => {
       },
     } as unknown as DataSourceInstanceSettings<PostgresOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
-    const raw = {
-      from: toUtc('2018-04-25 10:00'),
-      to: toUtc('2018-04-25 11:00'),
-    };
-    const timeSrvMock = {
-      timeRange: () => ({
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      }),
-    } as unknown as TimeSrv;
     const variable = { ...initialCustomVariableModelState };
-    const ds = new PostgresDatasource(instanceSettings, templateSrv, timeSrvMock);
+    const ds = new PostgresDatasource(instanceSettings, templateSrv);
 
-    return { ds, templateSrv, timeSrvMock, variable };
+    return { ds, templateSrv, variable };
   };
 
   // https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing

@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   LicenseInfo,
   MapLayerOptions,
+  OAuthSettings,
   PanelPluginMeta,
   PreloadPlugin,
   systemDateFormats,
@@ -48,7 +49,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
-  oauth: any;
+  oauth: OAuthSettings = {};
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;
