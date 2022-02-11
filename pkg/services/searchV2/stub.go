@@ -14,7 +14,7 @@ func NewStubSearchService() SearchService {
 	return &stubSearchService{}
 }
 
-func (s *stubSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, query DashboardQuery) *backend.DataResponse {
+func (s *stubSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
 	// dashboards
