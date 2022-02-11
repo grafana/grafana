@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { IconButton, Input } from '@grafana/ui';
 import * as React from 'react';
 
 import { TNil } from '../types/index';
-import { UIIcon, UIInput } from '../uiElementsContext';
 
 type Props = {
   allowClear?: boolean;
@@ -43,17 +43,16 @@ export default class UiFindInput extends React.PureComponent<Props> {
 
     const suffix = (
       <>
-        {allowClear && value && value.length && <UIIcon type="close" onClick={this.clearUiFind} />}
         {inputProps.suffix}
+        {allowClear && value && value.length && <IconButton name="times" onClick={this.clearUiFind} />}
       </>
     );
 
     return (
-      <UIInput
-        autosize={null}
+      <Input
         placeholder="Find..."
         {...inputProps}
-        onChange={(e) => this.props.onChange(e.target.value)}
+        onChange={(e) => this.props.onChange(e.currentTarget.value)}
         suffix={suffix}
         value={value}
       />

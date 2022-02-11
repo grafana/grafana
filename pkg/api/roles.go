@@ -215,11 +215,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams.",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -300,12 +301,15 @@ var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
-var teamsAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
-	accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+// grants access to a user when they can either create teams or can read and update a team
+var teamsAccessEvaluator = accesscontrol.EvalAny(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+	accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+		accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+		),
 	),
 )
 
@@ -313,6 +317,7 @@ var teamsAccessEvaluator = accesscontrol.EvalAll(
 var teamsEditAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
 	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
 	),

@@ -4,7 +4,8 @@ on:
     types:
       - opened
       - synchronize
-
+concurrency:
+  group: pr-commands-${{ github.event.issue.number }}
 jobs:
   main:
     runs-on: ubuntu-latest
