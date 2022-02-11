@@ -59,26 +59,22 @@ export interface PromQueryPattern {
 /**
  * Returns query with defaults, and boolean true/false depending on change was required
  */
-export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): [PromQuery, boolean] {
+export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
   // If no expr (ie new query) then default to builder
   let result = query;
-  let changed = false;
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
 
   if (result.editorMode !== editorMode) {
     result = { ...result, editorMode };
-    changed = true;
   }
 
   if (query.expr == null) {
     result = { ...result, expr: '' };
-    changed = true;
   }
 
   if (query.exemplar == null && app !== CoreApp.UnifiedAlerting) {
     result = { ...result, exemplar: true };
-    changed = true;
   }
 
-  return [result, changed];
+  return result;
 }

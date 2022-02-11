@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
@@ -16,18 +16,11 @@ import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { getQueryWithDefaults } from '../types';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
-  const { query, onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data } = props;
   const styles = useStyles2(getStyles);
   const [parseModalOpen, setParseModalOpen] = useState(false);
-
-  // On mount, make sure query model has valid defaults
-  useEffect(() => {
-    const [newQuery, changed] = getQueryWithDefaults(query, props.app);
-    if (changed) {
-      onChange(newQuery);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const query = getQueryWithDefaults(props.query, props.app);
+  const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
