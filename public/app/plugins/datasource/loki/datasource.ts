@@ -122,10 +122,6 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    if (!config.featureToggles.fullRangeLogsVolume) {
-      return undefined;
-    }
-
     const isLogsVolumeAvailable = request.targets.some((target) => target.expr && !isMetricsQuery(target.expr));
     if (!isLogsVolumeAvailable) {
       return undefined;

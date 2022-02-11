@@ -63,10 +63,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagFullRangeLogsVolume
-	// Show full range logs volume in explore
-	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
-
 	// FlagAccesscontrol
 	// Support robust access control
 	FlagAccesscontrol = "accesscontrol"
