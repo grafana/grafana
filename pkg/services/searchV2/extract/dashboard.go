@@ -18,6 +18,12 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 	dash := &DashboardInfo{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Skip null values so we don't need special int handling
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+
 		switch l1Field {
 		case "id":
 			dash.ID = iter.ReadInt64()
@@ -116,6 +122,10 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 			v := iter.Read()
 			logf("[DASHBOARD] support key: %s / %v\n", l1Field, v)
 		}
+	}
+
+	if dash.UID == "" {
+		fmt.Printf("????")
 	}
 
 	return dash

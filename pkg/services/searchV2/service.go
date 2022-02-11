@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -26,6 +27,9 @@ func ProvideService(sql *sqlstore.SQLStore) SearchService {
 type dashMeta struct {
 	id        int64
 	is_folder bool
+	folder_id int64
+	created   time.Time
+	updated   time.Time
 	dash      *extract.DashboardInfo
 }
 
@@ -44,15 +48,18 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	rsp.Frames = append(rsp.Frames, metaToFrame(dash))
+	rsp.Frames = metaToFrame(dash)
 
 	return rsp
 }
 
 type dashDataQueryResult struct {
 	Id       int64
-	IsFolder bool
+	IsFolder bool  `xorm:"is_folder"`
+	FolderID int64 `xorm:"folder_id"`
 	Data     []byte
+	Created  time.Time
+	Updated  time.Time
 }
 
 func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
@@ -66,9 +73,11 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rows := make([]*dashDataQueryResult, 0)
 
-		sess.Table("dashboard").Where("org_id = ?", orgID).Cols("id", "is_folder", "data")
-		err := sess.Find(&rows)
+		sess.Table("dashboard").
+			Where("org_id = ?", orgID).
+			Cols("id", "is_folder", "folder_id", "data", "created", "updated")
 
+		err := sess.Find(&rows)
 		if err != nil {
 			return err
 		}
@@ -79,6 +88,9 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 			meta = append(meta, dashMeta{
 				id:        row.Id,
 				is_folder: row.IsFolder,
+				folder_id: row.FolderID,
+				created:   row.Created,
+				updated:   row.Updated,
 				dash:      dash,
 			})
 		}
@@ -90,34 +102,78 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 }
 
 // UGLY... but helpful for now
-func metaToFrame(meta []dashMeta) *data.Frame {
-	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fPanelID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
+func metaToFrame(meta []dashMeta) data.Frames {
+	folderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	folderUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	folderName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 
-	fUID.Name = "UID"
-	fPanelID.Name = "Panel ID"
-	fName.Name = "Name"
-	fDescr.Name = "Description"
-	fType.Name = "Panel type"
-	fTags.Name = "Tags"
-	fTags.Config = &data.FieldConfig{
-		Custom: map[string]interface{}{
-			// Table panel default styling
-			"displayMode": "json-view",
-		},
-	}
+	folderID.Name = "ID"
+	folderUID.Name = "UID"
+	folderName.Name = "Name"
+
+	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	dashFolderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	dashDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	dashCreated := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	dashUpdated := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	dashSchemaVersion := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
+
+	dashID.Name = "ID"
+	dashUID.Name = "UID"
+	dashFolderID.Name = "FolderID"
+	dashName.Name = "Name"
+	dashDescr.Name = "Description"
+	dashTags.Name = "Tags"
+	dashSchemaVersion.Name = "SchemaVersion"
+	dashCreated.Name = "Created"
+	dashUpdated.Name = "Updated"
+
+	panelDashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	panelID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	panelName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	panelDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	panelType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+
+	panelDashID.Name = "DashboardID"
+	panelID.Name = "ID"
+	panelName.Name = "Name"
+	panelDescr.Name = "Description"
+	panelType.Name = "Type"
+
+	// fID.Name = "ID"
+	// fUID.Name = "UID"
+	// fPanelID.Name = "Panel ID"
+	// fName.Name = "Name"
+	// fDescr.Name = "Description"
+	// fType.Name = "Panel type"
+	// fTags.Name = "Tags"
+	// fTags.Config = &data.FieldConfig{
+	// 	Custom: map[string]interface{}{
+	// 		// Table panel default styling
+	// 		"displayMode": "json-view",
+	// 	},
+	// }
 
 	var tags *string
 	for _, row := range meta {
-		fUID.Append(row.dash.UID)
-		fPanelID.Append(int64(0))
-		fName.Append(row.dash.Title)
-		fDescr.Append(row.dash.Description)
-		fType.Append("") // or null?
+		if row.is_folder {
+			folderID.Append(row.id)
+			folderUID.Append(row.dash.UID)
+			folderName.Append(row.dash.Title)
+			continue
+		}
+
+		dashID.Append(row.id)
+		dashUID.Append(row.dash.UID)
+		dashFolderID.Append(row.folder_id)
+		dashName.Append(row.dash.Title)
+		dashDescr.Append(row.dash.Title)
+		dashSchemaVersion.Append(row.dash.SchemaVersion)
+		dashCreated.Append(row.created)
+		dashUpdated.Append(row.updated)
 
 		// Send tags as JSON array
 		tags = nil
@@ -128,18 +184,21 @@ func metaToFrame(meta []dashMeta) *data.Frame {
 				tags = &s
 			}
 		}
-		fTags.Append(tags)
+		dashTags.Append(tags)
 
 		// Row for each panel
 		for _, panel := range row.dash.Panels {
-			fUID.Append(row.dash.UID)
-			fPanelID.Append(panel.ID)
-			fName.Append(panel.Title)
-			fDescr.Append(panel.Description)
-			fType.Append(panel.Type)
-			fTags.Append(nil)
+			panelDashID.Append(row.id)
+			panelID.Append(panel.ID)
+			panelName.Append(panel.Title)
+			panelDescr.Append(panel.Description)
+			panelType.Append(panel.Type)
 		}
 	}
 
-	return data.NewFrame("", fUID, fPanelID, fName, fDescr, fType, fTags)
+	return data.Frames{
+		data.NewFrame("folders", folderID, folderUID, folderName),
+		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashCreated, dashUpdated),
+		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
+	}
 }
