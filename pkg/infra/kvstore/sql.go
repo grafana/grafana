@@ -12,7 +12,7 @@ import (
 // kvStoreSQL provides a key/value store backed by the Grafana database
 type kvStoreSQL struct {
 	log      log.Logger
-	sqlStore *sqlstore.SQLStore
+	sqlStore sqlstore.Store
 }
 
 // Get an item from the store

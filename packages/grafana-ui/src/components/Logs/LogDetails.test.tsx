@@ -3,7 +3,6 @@ import { render, screen, within } from '@testing-library/react';
 import { Field, GrafanaTheme2, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
-import { expect } from '../../../../../public/test/lib/common';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const props: Props = {

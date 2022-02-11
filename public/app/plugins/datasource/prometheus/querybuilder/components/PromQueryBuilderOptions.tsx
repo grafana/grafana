@@ -4,7 +4,7 @@ import { CoreApp, SelectableValue } from '@grafana/data';
 import { Input, RadioButtonGroup, Select, Switch } from '@grafana/ui';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 import { PromQuery } from '../../types';
-import { FORMAT_OPTIONS } from '../../components/PromQueryEditor';
+import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 
 export interface Props {
@@ -32,7 +32,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const queryTypeOptions = getQueryTypeOptions(false);
+  const queryTypeOptions = getQueryTypeOptions(app === CoreApp.Explore);
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -41,15 +41,17 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const showExemplarSwitch = app !== CoreApp.UnifiedAlerting && !query.instant;
+  const onIntervalFactorChange = (value: SelectableValue<number>) => {
+    onChange({ ...query, intervalFactor: value.value });
+    onRunQuery();
+  };
 
   return (
     <EditorRow>
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption)}>
         <EditorField
           label="Legend"
-          tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname."
+          tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
         >
           <Input placeholder="auto" defaultValue={query.legendFormat} onBlur={onLegendFormatChanged} />
         </EditorField>
@@ -76,21 +78,41 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
         </EditorField>
         <EditorField label="Type">
-          <RadioButtonGroup
-            options={queryTypeOptions}
-            value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
-            onChange={onQueryTypeChange}
-          />
+          <RadioButtonGroup options={queryTypeOptions} value={getQueryTypeValue(query)} onChange={onQueryTypeChange} />
         </EditorField>
-        {showExemplarSwitch && (
+        {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
             <Switch value={query.exemplar} onChange={onExemplarChange} />
+          </EditorField>
+        )}
+        {query.intervalFactor && query.intervalFactor > 1 && (
+          <EditorField label="Resolution">
+            <Select
+              aria-label="Select resolution"
+              menuShouldPortal
+              isSearchable={false}
+              options={INTERVAL_FACTOR_OPTIONS}
+              onChange={onIntervalFactorChange}
+              value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+            />
           </EditorField>
         )}
       </QueryOptionGroup>
     </EditorRow>
   );
 });
+
+function shouldShowExemplarSwitch(query: PromQuery, app?: CoreApp) {
+  if (app === CoreApp.UnifiedAlerting || !query.range) {
+    return false;
+  }
+
+  return true;
+}
+
+function getQueryTypeValue(query: PromQuery) {
+  return query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range';
+}
 
 function getCollapsedInfo(query: PromQuery, formatOption: SelectableValue<string>): string[] {
   const items: string[] = [];
@@ -105,9 +127,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: SelectableValue<string
     items.push(`Step ${query.interval}`);
   }
 
-  if (query.instant) {
-    items.push(`Instant: true`);
-  }
+  items.push(`Type: ${getQueryTypeValue(query)}`);
 
   if (query.exemplar) {
     items.push(`Exemplars: true`);
