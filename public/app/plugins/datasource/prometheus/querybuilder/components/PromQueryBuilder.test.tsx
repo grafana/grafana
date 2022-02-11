@@ -7,7 +7,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import PromQlLanguageProvider from '../../language_provider';
 import { PromVisualQuery } from '../types';
 import { getLabelSelects } from '../testUtils';
-import { DataFrame, MutableDataFrame } from '@grafana/data';
+import { LoadingState, MutableDataFrame, PanelData, TimeRange } from '@grafana/data';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -160,9 +160,13 @@ describe('PromQueryBuilder', () => {
   });
 
   it('shows multiple hints', async () => {
-    const series = [];
+    const data: PanelData = {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: {} as TimeRange,
+    };
     for (let i = 0; i < 25; i++) {
-      series.push(new MutableDataFrame());
+      data.series.push(new MutableDataFrame());
     }
     const { container } = setup(
       {
@@ -170,7 +174,7 @@ describe('PromQueryBuilder', () => {
         labels: [],
         operations: [],
       },
-      series
+      data
     );
     openMetricSelect(container);
     userEvent.click(screen.getByText('histogram_metric_sum'));
@@ -178,7 +182,7 @@ describe('PromQueryBuilder', () => {
   });
 });
 
-function setup(query: PromVisualQuery = defaultQuery, series?: DataFrame[]) {
+function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
@@ -194,7 +198,7 @@ function setup(query: PromVisualQuery = defaultQuery, series?: DataFrame[]) {
     datasource,
     onRunQuery: () => {},
     onChange: () => {},
-    series,
+    data,
   };
 
   const { container } = render(<PromQueryBuilder {...props} query={query} />);

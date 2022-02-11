@@ -1,4 +1,4 @@
-import { CoreApp, DataFrame } from '@grafana/data';
+import { CoreApp, PanelData } from '@grafana/data';
 import React from 'react';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -16,7 +16,7 @@ export interface Props {
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
   app?: CoreApp;
-  series?: DataFrame[];
+  data?: PanelData;
 }
 
 /**
@@ -25,7 +25,7 @@ export interface Props {
  * @constructor
  */
 export function PromQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource, app, series } = props;
+  const { query, onChange, onRunQuery, datasource, app, data } = props;
 
   const visQuery = buildVisualQueryFromString(query.expr || '').query;
 
@@ -41,7 +41,7 @@ export function PromQueryBuilderContainer(props: Props) {
         datasource={datasource}
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
-        series={series}
+        data={data}
       />
       {query.editorPreview && <QueryPreview query={query.expr} />}
       <PromQueryBuilderOptions query={query} app={app} onChange={onChange} onRunQuery={onRunQuery} />
