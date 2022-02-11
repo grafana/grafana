@@ -33,7 +33,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	rsp := &backend.DataResponse{}
 
 	if user == nil || user.Role != string(models.ROLE_ADMIN) {
-		rsp.Error = fmt.Errorf("Search is only supported for admin users while in early development")
+		rsp.Error = fmt.Errorf("search is only supported for admin users while in early development")
 		return rsp
 	}
 

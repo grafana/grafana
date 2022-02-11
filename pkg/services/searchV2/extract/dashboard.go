@@ -8,9 +8,10 @@ import (
 )
 
 func logf(format string, a ...interface{}) {
-	fmt.Printf(format, a)
+	fmt.Printf(format, a...)
 }
 
+// nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
 func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
