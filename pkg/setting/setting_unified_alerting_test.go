@@ -233,6 +233,13 @@ func TestMinInterval(t *testing.T) {
 				require.Equal(t, cfg.UnifiedAlerting.MinInterval, cfg.UnifiedAlerting.DefaultAlertForDuration)
 			},
 		},
+		{
+			desc:              "should fallback to the default if legacy interval is less than base",
+			legacyMinInterval: randPredicate(func(dur time.Duration) bool { return dur < SchedulerBaseInterval }),
+			verifyCfg: func(t *testing.T, cfg *Cfg, err error) {
+				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.MinInterval)
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
