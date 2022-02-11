@@ -60,27 +60,27 @@ Grafana uses the following roles to control user access:
 
 The following table lists permissions for each role.
 
-| Permission                       | Organization administrator | Editor | Viewer |
-| :------------------------------- | :------------------------: | :----: | :----: |
-| View dashboards                  |             x              |   x    |   x    |
-| Add, edit, delete dashboards     |             x              |   x    |        |
-| Add, edit, delete folders        |             x              |   x    |        |
-| View playlists                   |             x              |   x    |   x    |
-| Add, edit, delete playlists      |             x              |   x    |        |
-| Create library panels            |             x              |   x    |        |
-| View annotations                 |             x              |   x    |   x    |
-| Add, edit, delete annotations    |             x              |   x    |        |
-| Access Explore                   |             x              |   x    |        |
-| Add, edit, delete data sources   |             x              |        |        |
-| Add and edit users               |             x              |        |        |
-| Add and edit teams               |             x              |        |        |
-| Change organizations settings    |             x              |        |        |
-| Change team settings             |             x              |        |        |
-| Configure application plugins    |             x              |        |        |
+| Permission                     | Organization administrator | Editor | Viewer |
+| :----------------------------- | :------------------------: | :----: | :----: |
+| View dashboards                |             x              |   x    |   x    |
+| Add, edit, delete dashboards   |             x              |   x    |        |
+| Add, edit, delete folders      |             x              |   x    |        |
+| View playlists                 |             x              |   x    |   x    |
+| Add, edit, delete playlists    |             x              |   x    |        |
+| Create library panels          |             x              |   x    |        |
+| View annotations               |             x              |   x    |   x    |
+| Add, edit, delete annotations  |             x              |   x    |        |
+| Access Explore                 |             x              |   x    |        |
+| Add, edit, delete data sources |             x              |        |        |
+| Add and edit users             |             x              |        |        |
+| Add and edit teams             |             x              |        |        |
+| Change organizations settings  |             x              |        |        |
+| Change team settings           |             x              |        |        |
+| Configure application plugins  |             x              |        |        |
 
 ## Dashboard permissions
 
-When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and dashboard folders. For example, you might want a certain viewer to be able to to edit a dashboard. While that user can *see* all dashboards, you can grant them access to *update* only one of them.
+When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and dashboard folders. For example, you might want a certain viewer to be able to to edit a dashboard. While that user can _see_ all dashboards, you can grant them access to _update_ only one of them.
 
 > Important: The dashboard permissions you specify override the organization permissions you assign to the user for the selected entity.
 
