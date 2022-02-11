@@ -67,13 +67,17 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
             environment = {
                   'GITHUB_TOKEN': from_secret(github_token),
             }
+            token = "--github-token $${GITHUB_TOKEN}"
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
             environment = {}
+            token = ""
         else:
+            environment = {}
             if is_downstream:
                 source_commit = ' $${SOURCE_COMMIT}'
             committish = '${DRONE_COMMIT}'
+            token = ""
         steps = [
             identify_runner,
             clone_enterprise(committish),
@@ -88,7 +92,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise --github-token $${{GITHUB_TOKEN}} /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
