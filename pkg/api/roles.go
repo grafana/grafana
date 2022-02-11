@@ -301,12 +301,15 @@ var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
-var teamsAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
-	accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+// grants access to a user when they can either create teams or can read and update a team
+var teamsAccessEvaluator = accesscontrol.EvalAny(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+	accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+		accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+		),
 	),
 )
 
@@ -314,6 +317,7 @@ var teamsAccessEvaluator = accesscontrol.EvalAll(
 var teamsEditAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
 	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
 	),
