@@ -46,5 +46,6 @@ export interface ServiceAccountsState {
   searchPage: number;
   isLoading: boolean;
   roleOptions: Role[];
+  serviceAccountToRemove: ServiceAccountDTO | null;
   builtInRoles: Record<string, Role[]>;
 }

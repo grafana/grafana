@@ -56,7 +56,7 @@ function returnVariables(expr: string) {
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update update the query model. The query model is modified
+ * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
  * during the traversal and sent to each handler as context.
  *
  * @param expr
@@ -98,7 +98,7 @@ const ErrorName = '⚠';
 
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
- * handled here does not necessarily needs to be of type == Expr.
+ * handled here does not necessarily need to be of type == Expr.
  * @param expr
  * @param node
  * @param context
@@ -201,6 +201,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const body = node.getChild('FunctionCallBody');
   const callArgs = body!.getChild('FunctionCallArgs');
   const params = [];
+  let interval = '';
 
   // This is a bit of a shortcut to get the interval argument. Reasons are
   // - interval is not part of the function args per promQL grammar but we model it as argument for the function in
@@ -209,14 +210,23 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   if (rangeFunctions.includes(funcName) || funcName.endsWith('_over_time')) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
-      params.push(returnVariables(match[1]));
+      interval = match[1];
+      params.push(match[1]);
     }
   }
 
   const op = { id: funcName, params };
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
   visQuery.operations.unshift(op);
-  updateFunctionArgs(expr, callArgs!, context, op);
+
+  if (callArgs) {
+    if (getString(expr, callArgs) === interval + ']') {
+      // This is a special case where we have a function with a single argument and it is the interval.
+      // This happens when you start adding operations in query builder and did not set a metric yet.
+      return;
+    }
+    updateFunctionArgs(expr, callArgs, context, op);
+  }
 }
 
 /**
@@ -284,7 +294,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op
     }
 
     case 'NumberLiteral': {
-      op.params.push(parseInt(getString(expr, node), 10));
+      op.params.push(parseFloat(getString(expr, node)));
       break;
     }
 

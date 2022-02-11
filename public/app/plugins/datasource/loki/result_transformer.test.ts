@@ -295,6 +295,9 @@ describe('enhanceDataFrame', () => {
       [1, '1'],
       [2, '0'],
       [4, '1'],
+      [7, 'NaN'],
+      [8, '+Inf'],
+      [9, '-Inf'],
     ];
 
     it('returns data as is if step, start, and end align', () => {
@@ -303,6 +306,9 @@ describe('enhanceDataFrame', () => {
         [1, 1000],
         [0, 2000],
         [1, 4000],
+        [null, 7000],
+        [Infinity, 8000],
+        [-Infinity, 9000],
       ]);
     });
   });

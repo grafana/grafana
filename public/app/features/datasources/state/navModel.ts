@@ -56,9 +56,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   const dsPermissions = {
     active: false,
     icon: 'lock',
-    id: `datasource-permissions-${dataSource.id}`,
+    id: `datasource-permissions-${dataSource.uid}`,
     text: 'Permissions',
-    url: `datasources/edit/${dataSource.id}/permissions`,
+    url: `datasources/edit/${dataSource.uid}/permissions`,
   };
 
   if (featureEnabled('dspermissions')) {
@@ -114,7 +114,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 }
 
 export function getDataSourceNav(main: NavModelItem, pageName: string): NavModel {
-  let node: NavModelItem;
+  let node: NavModelItem = { text: '' };
 
   // find active page
   for (const child of main.children!) {

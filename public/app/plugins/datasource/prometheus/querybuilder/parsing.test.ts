@@ -148,6 +148,27 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses function with argument', () => {
+    expect(
+      buildVisualQueryFromString('histogram_quantile(0.99, rate(counters_logins{app="backend"}[$__rate_interval]))')
+    ).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [{ label: 'app', op: '=', value: 'backend' }],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'histogram_quantile',
+            params: [0.99],
+          },
+        ],
+      })
+    );
+  });
+
   it('parses function with multiple arguments', () => {
     expect(
       buildVisualQueryFromString(
@@ -324,6 +345,23 @@ describe('buildVisualQueryFromString', () => {
         metric: 'ewafweaf',
         labels: [{ label: 'afea', op: '=', value: '' }],
         operations: [],
+      },
+    });
+  });
+
+  it('parses query without metric', () => {
+    expect(buildVisualQueryFromString('label_replace(rate([$__rate_interval]), "", "$1", "", "(.*)")')).toEqual({
+      errors: [],
+      query: {
+        metric: '',
+        labels: [],
+        operations: [
+          { id: 'rate', params: ['$__rate_interval'] },
+          {
+            id: 'label_replace',
+            params: ['', '$1', '', '(.*)'],
+          },
+        ],
       },
     });
   });
