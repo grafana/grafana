@@ -1,5 +1,6 @@
 import { merge } from 'lodash';
 import {
+  BootData,
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
@@ -30,7 +31,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   windowTitlePrefix = '';
   buildInfo: BuildInfo = {} as BuildInfo;
   newPanelTitle = '';
-  bootData: any;
+  bootData = {} as BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
@@ -51,9 +52,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
   disableUserSignUp = false;
-  loginHint: any;
-  passwordHint: any;
-  loginError: any;
+  loginHint = '';
+  passwordHint = '';
+  loginError = undefined;
   navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;

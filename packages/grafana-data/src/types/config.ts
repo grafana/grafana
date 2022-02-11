@@ -5,6 +5,7 @@ import { SystemDateFormatSettings } from '../datetime';
 import { GrafanaTheme2 } from '../themes';
 import { MapLayerOptions } from '../geo/layer';
 import { FeatureToggles } from './featureToggles.gen';
+import { NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -85,6 +86,45 @@ export type OAuth =
  */
 export type OAuthSettings = Partial<Record<OAuth, { name: string }>>;
 
+/** Current user info included in bootData
+ *
+ * @public
+ */
+export interface CurrentUserDTO {
+  isSignedIn: boolean;
+  id: number;
+  login: string;
+  email: string;
+  name: string;
+  lightTheme: boolean;
+  orgCount: number;
+  orgId: number;
+  orgName: string;
+  orgRole: OrgRole | '';
+  isGrafanaAdmin: boolean;
+  gravatarUrl: string;
+  timezone: string;
+  weekStart: string;
+  locale: string;
+  helpFlags1: number;
+  hasEditPermissionInFolders: boolean;
+  permissions?: Record<string, boolean>;
+}
+
+/** Contains essential user and config info
+ *
+ * @public
+ */
+export interface BootData {
+  user: CurrentUserDTO;
+  settings: GrafanaConfig;
+  navTree: NavLinkDTO[];
+  themePaths: {
+    light: string;
+    dark: string;
+  };
+}
+
 /**
  * Describes all the different Grafana configuration values available for an instance.
  *
@@ -98,7 +138,7 @@ export interface GrafanaConfig {
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
   newPanelTitle: string;
-  bootData: any;
+  bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
@@ -118,9 +158,9 @@ export interface GrafanaConfig {
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
   disableUserSignUp: boolean;
-  loginHint: any;
-  passwordHint: any;
-  loginError: any;
+  loginHint: string;
+  passwordHint: string;
+  loginError?: string;
   navTree: any;
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
