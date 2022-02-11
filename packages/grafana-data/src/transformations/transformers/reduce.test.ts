@@ -164,7 +164,7 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['A temperature', 'A humidity']),
+          values: new ArrayVector(['temperature', 'humidity']),
           config: {},
         },
         {
@@ -213,7 +213,7 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['A temperature']),
+          values: new ArrayVector(['temperature']),
           config: {},
         },
         {
@@ -286,16 +286,16 @@ describe('Reducer Transformer', () => {
     const seriesA = toDataFrame({
       name: 'a',
       fields: [
-        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'value', type: FieldType.number, values: [3, 4, 5, 6], state: { displayName: 'a' } },
+        { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'Value', type: FieldType.number, values: [3, 4, 5, 6] },
       ],
     });
 
     const seriesB = toDataFrame({
       name: '2021',
       fields: [
-        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'value', type: FieldType.number, values: [7, 8, 9, 10], state: { displayName: '2021' } },
+        { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'Value', type: FieldType.number, values: [7, 8, 9, 10] },
       ],
     });
 

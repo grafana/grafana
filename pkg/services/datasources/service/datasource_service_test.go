@@ -1,4 +1,4 @@
-package datasources
+package service
 
 import (
 	"context"

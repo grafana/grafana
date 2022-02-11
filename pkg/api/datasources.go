@@ -27,7 +27,7 @@ var datasourcesLogger = log.New("datasources")
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 
-	if err := hs.SQLStore.GetDataSources(c.Req.Context(), &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
@@ -76,7 +76,8 @@ func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, d
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+		accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		return nil, err
 	}
@@ -98,7 +99,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		OrgId: c.OrgId,
 	}
 
-	if err := hs.SQLStore.GetDataSource(c.Req.Context(), &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
@@ -149,7 +150,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 
 	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId}
 
-	err = hs.SQLStore.DeleteDataSource(c.Req.Context(), cmd)
+	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -209,7 +210,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId}
 
-	err = hs.SQLStore.DeleteDataSource(c.Req.Context(), cmd)
+	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -231,7 +232,7 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	}
 
 	getCmd := &models.GetDataSourceQuery{Name: name, OrgId: c.OrgId}
-	if err := hs.SQLStore.GetDataSource(c.Req.Context(), getCmd); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(c.Req.Context(), getCmd); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
@@ -243,7 +244,7 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	}
 
 	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
-	err := hs.SQLStore.DeleteDataSource(c.Req.Context(), cmd)
+	err := hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -279,7 +280,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 		}
 	}
 
-	if err := hs.SQLStore.AddDataSource(c.Req.Context(), &cmd); err != nil {
+	if err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrDataSourceNameExists) || errors.Is(err, models.ErrDataSourceUidExists) {
 			return response.Error(409, err.Error(), err)
 		}
@@ -329,7 +330,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to update datasource", err)
 	}
 
-	err = hs.SQLStore.UpdateDataSource(c.Req.Context(), &cmd)
+	err = hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
@@ -342,7 +343,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		OrgId: c.OrgId,
 	}
 
-	if err := hs.SQLStore.GetDataSource(c.Req.Context(), &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
@@ -394,7 +395,7 @@ func (hs *HTTPServer) getRawDataSourceById(ctx context.Context, id int64, orgID 
 		OrgId: orgID,
 	}
 
-	if err := hs.SQLStore.GetDataSource(ctx, &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -407,7 +408,7 @@ func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, org
 		OrgId: orgID,
 	}
 
-	if err := hs.SQLStore.GetDataSource(ctx, &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(ctx, &query); err != nil {
 		return nil, err
 	}
 
@@ -418,7 +419,7 @@ func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, org
 func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Response {
 	query := models.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgId: c.OrgId}
 
-	if err := hs.SQLStore.GetDataSource(c.Req.Context(), &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
@@ -438,7 +439,7 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 func (hs *HTTPServer) GetDataSourceIdByName(c *models.ReqContext) response.Response {
 	query := models.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgId: c.OrgId}
 
-	if err := hs.SQLStore.GetDataSource(c.Req.Context(), &query); err != nil {
+	if err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}

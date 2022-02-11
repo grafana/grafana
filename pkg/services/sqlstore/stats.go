@@ -10,42 +10,42 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetSystemStats)
-	bus.AddHandler("sql", GetDataSourceStats)
-	bus.AddHandler("sql", GetDataSourceAccessStats)
-	bus.AddHandler("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandler("sql", GetSystemUserCountStats)
 }
 
 func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetAdminStats)
+	bus.AddHandler("sql", ss.GetAlertNotifiersUsageStats)
+	bus.AddHandler("sql", ss.GetDataSourceAccessStats)
+	bus.AddHandler("sql", ss.GetDataSourceStats)
+	bus.AddHandler("sql", ss.GetSystemStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
+func (ss *SQLStore) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 	var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
 	query.Result = make([]*models.NotifierUsageStats, 0)
 	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }
 
-func GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
+func (ss *SQLStore) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 	var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
 	query.Result = make([]*models.DataSourceStats, 0)
 	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }
 
-func GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
+func (ss *SQLStore) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 	var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
 	query.Result = make([]*models.DataSourceAccessStats, 0)
 	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }
 
-func GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
+func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
 	sb := &SQLBuilder{}
 	sb.Write("SELECT ")
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
