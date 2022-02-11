@@ -156,7 +156,8 @@ func LoadPermissionsMiddleware(ac accesscontrol.AccessControl) web.Handler {
 			return
 		}
 
-		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+			accesscontrol.Options{ReloadCache: false})
 		if err != nil {
 			c.JsonApiErr(http.StatusForbidden, "", err)
 			return
