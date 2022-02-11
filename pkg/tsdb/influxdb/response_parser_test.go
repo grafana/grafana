@@ -129,9 +129,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
+	})
 
-		// SHOW TAG VALUES metricFindQuery
-		response2 := `
+	t.Run("Influxdb response parser should parse metricFindQueries->SHOW TAG VALUES normally", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
 		{
 			"results": [
 				{
@@ -150,19 +153,19 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		var queries2 []Query
-		queries2 = append(queries2, Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
-		newField2 := data.NewField("value", nil, []string{
+		var queries []Query
+		queries = append(queries, Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
+		newField := data.NewField("value", nil, []string{
 			"cpu-total", "cpu0", "cpu1",
 		})
-		testFrame2 := data.NewFrame("cpu",
-			newField2,
+		testFrame := data.NewFrame("cpu",
+			newField,
 		)
 
-		result2 := parser.Parse(prepare(response2), queries2)
+		result := parser.Parse(prepare(response), queries)
 
-		frame2 := result2.Responses["metricFindQuery"]
-		if diff := cmp.Diff(testFrame2, frame2.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		frame := result.Responses["metricFindQuery"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
