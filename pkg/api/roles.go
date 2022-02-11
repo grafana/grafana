@@ -245,10 +245,25 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	annotationsReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:annotations:reader",
+			DisplayName: "Annotation reader",
+			Description: "Read annotations and tags",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
+		teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
 	)
 }
 
@@ -301,12 +316,15 @@ var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
-var teamsAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
-	accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+// grants access to a user when they can either create teams or can read and update a team
+var teamsAccessEvaluator = accesscontrol.EvalAny(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+	accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+		accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+		),
 	),
 )
 
@@ -314,6 +332,7 @@ var teamsAccessEvaluator = accesscontrol.EvalAll(
 var teamsEditAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
 	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
 		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
 	),

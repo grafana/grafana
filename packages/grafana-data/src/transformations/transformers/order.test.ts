@@ -47,6 +47,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'temperature',
+              multipleFrames: false,
             },
           },
           {
@@ -57,6 +58,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'humidity',
+              multipleFrames: false,
             },
           },
           {
@@ -67,6 +69,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'time',
+              multipleFrames: false,
             },
           },
         ]);
@@ -108,6 +111,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'humidity',
+              multipleFrames: false,
             },
           },
           {
@@ -118,6 +122,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'time',
+              multipleFrames: false,
             },
           },
           {
@@ -128,6 +133,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'pressure',
+              multipleFrames: false,
             },
           },
         ]);

@@ -219,7 +219,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsRead]
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
     },
@@ -237,7 +237,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsWrite, AccessControlAction.ActionTeamsPermissionsWrite]
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },

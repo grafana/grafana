@@ -16,13 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
 	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
-	oauthTokenService *oauthtoken.Service, dsService *datasources.Service, tracer tracing.Tracer) *DataSourceProxyService {
+	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
+	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -32,6 +34,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 		OAuthTokenService:      oauthTokenService,
 		DataSourcesService:     dsService,
 		tracer:                 tracer,
+		secretsService:         secretsService,
 	}
 }
 
@@ -42,8 +45,9 @@ type DataSourceProxyService struct {
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
-	DataSourcesService     *datasources.Service
+	DataSourcesService     datasources.DataSourceService
 	tracer                 tracing.Tracer
+	secretsService         secrets.Service
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
@@ -87,7 +91,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.secretsService)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
