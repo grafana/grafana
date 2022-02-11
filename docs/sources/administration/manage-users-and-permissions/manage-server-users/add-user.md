@@ -10,7 +10,7 @@ Add users when you want to manually provide individuals with access to Grafana.
 
 When you create a user using this method, you must create their password. The user does not receive a notification by email. To invite a user to Grafana and allow them to create their own password, [invite a user to join an organization]({{< relref "../manage-org-users/invite-user-join-org.md">}}).
 
-When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth proxy, users are created automaticlly
+When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth proxy, users are created automatically.
 
 ## Before you begin
 
