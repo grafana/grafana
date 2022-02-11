@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1044,7 +1045,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			dashboards.NewFolderService = origNewFolderService
 		})
 		dashboards.MockDashboardService(mock)
-		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func(dboards.Store, search.Service) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 		mockFolderService(mockFolder)

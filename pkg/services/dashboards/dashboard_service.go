@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -39,16 +39,17 @@ type DashboardProvisioningService interface {
 }
 
 // NewService is a factory for creating a new dashboard service.
-var NewService = func(store dashboards.Store) DashboardService {
+var NewService = func(store dashboards.Store, searchService search.Service) DashboardService {
 	return &dashboardServiceImpl{
 		dashboardStore: store,
 		log:            log.New("dashboard-service"),
+		searchService:  searchService,
 	}
 }
 
 // NewProvisioningService is a factory for creating a new dashboard provisioning service.
-var NewProvisioningService = func(store dashboards.Store) DashboardProvisioningService {
-	return NewService(store).(*dashboardServiceImpl)
+var NewProvisioningService = func(store dashboards.Store, searchService search.Service) DashboardProvisioningService {
+	return NewService(store, searchService).(*dashboardServiceImpl)
 }
 
 type SaveDashboardDTO struct {
@@ -65,6 +66,7 @@ type dashboardServiceImpl struct {
 	orgId          int64
 	user           *models.SignedInUser
 	log            log.Logger
+	searchService  search.Service
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -324,7 +326,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.Dispatch(ctx, cmd)
+	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (
@@ -353,7 +355,7 @@ func (dr *dashboardServiceImpl) ImportDashboard(ctx context.Context, dto *SaveDa
 // and provisioned dashboards are left behind but not deleted.
 func (dr *dashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
 	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.Dispatch(ctx, cmd)
+	return dr.dashboardStore.UnprovisionDashboard(ctx, cmd)
 }
 
 type FakeDashboardService struct {
@@ -394,7 +396,7 @@ func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func(dashboards.Store) DashboardService {
+	NewService = func(dashboards.Store, search.Service) DashboardService {
 		return mock
 	}
 }

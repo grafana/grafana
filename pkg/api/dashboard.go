@@ -233,7 +233,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
-	svc := dashboards.NewService(hs.SQLStore)
+	svc := dashboards.NewService(hs.SQLStore, hs.SearchService)
 	err = svc.DeleteDashboard(c.Req.Context(), dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
@@ -329,7 +329,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashSvc := dashboards.NewService(hs.SQLStore)
+	dashSvc := dashboards.NewService(hs.SQLStore, hs.SearchService)
 	dashboard, err := dashSvc.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
