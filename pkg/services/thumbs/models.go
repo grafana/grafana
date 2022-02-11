@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type CrawlerMode string
@@ -55,13 +56,15 @@ type crawlStatus struct {
 type dashRenderer interface {
 
 	// Run Assumes you have already authenticated as admin.
-	Start(c *models.ReqContext, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) (crawlStatus, error)
+	Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) error
 
 	// Assumes you have already authenticated as admin.
 	Stop() (crawlStatus, error)
 
 	// Assumes you have already authenticated as admin.
 	Status() (crawlStatus, error)
+
+	IsRunning() bool
 }
 
 type thumbnailRepo interface {
@@ -69,5 +72,5 @@ type thumbnailRepo interface {
 	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	getThumbnail(ctx context.Context, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
-	findDashboardsWithStaleThumbnails(ctx context.Context) ([]*models.DashboardWithStaleThumbnail, error)
+	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error)
 }

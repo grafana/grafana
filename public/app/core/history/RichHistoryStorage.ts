@@ -32,9 +32,16 @@ export type RichHistoryStorageWarningDetails = {
  */
 export default interface RichHistoryStorage {
   getRichHistory(): Promise<RichHistoryQuery[]>;
-  addToRichHistory(richHistoryQuery: RichHistoryQuery): Promise<RichHistoryStorageWarningDetails | undefined>;
+
+  /**
+   * Creates new RichHistoryQuery, returns object with unique id and created date
+   */
+  addToRichHistory(
+    newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
+  ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }>;
+
   deleteAll(): Promise<void>;
-  deleteRichHistory(id: number): Promise<void>;
-  updateStarred(id: number, starred: boolean): Promise<void>;
-  updateComment(id: number, comment: string | undefined): Promise<void>;
+  deleteRichHistory(id: string): Promise<void>;
+  updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery>;
+  updateComment(id: string, comment: string | undefined): Promise<RichHistoryQuery>;
 }
