@@ -62,6 +62,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			setup()
 			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{
+				orgStore:          sqlStore,
 				encryptionService: ossencryption.ProvideService(),
 				log:               log.New("test logger"),
 			}
@@ -139,7 +140,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("One configured notification", func(t *testing.T) {
 			t.Run("no notification in database", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+				dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 
 				err := dc.applyChanges(context.Background(), twoNotificationsConfig)
 				if err != nil {
@@ -170,7 +171,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				require.Equal(t, len(notificationsQuery.Result), 1)
 
 				t.Run("should update one notification", func(t *testing.T) {
-					dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+					dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 					err = dc.applyChanges(context.Background(), twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -194,7 +195,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			})
 			t.Run("Two notifications with is_default", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+				dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 				err := dc.applyChanges(context.Background(), doubleNotificationsConfig)
 				t.Run("should both be inserted", func(t *testing.T) {
 					require.NoError(t, err)
@@ -237,7 +238,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				require.Equal(t, len(notificationsQuery.Result), 2)
 
 				t.Run("should have two new notifications", func(t *testing.T) {
-					dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+					dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 					err := dc.applyChanges(context.Background(), twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -271,7 +272,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			err = sqlStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 			require.NoError(t, err)
 
-			dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+			dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 			err = dc.applyChanges(context.Background(), correctPropertiesWithOrgName)
 			if err != nil {
 				t.Fatalf("applyChanges return an error %v", err)
@@ -290,7 +291,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Config doesn't contain required field", func(t *testing.T) {
 			setup()
-			dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+			dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 			err := dc.applyChanges(context.Background(), noRequiredFields)
 			require.NotNil(t, err)
 
@@ -304,7 +305,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("Empty yaml file", func(t *testing.T) {
 			t.Run("should have not changed repo", func(t *testing.T) {
 				setup()
-				dc := newNotificationProvisioner(ossencryption.ProvideService(), nil, logger)
+				dc := newNotificationProvisioner(sqlStore, ossencryption.ProvideService(), nil, logger)
 				err := dc.applyChanges(context.Background(), emptyFile)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
@@ -318,6 +319,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Broken yaml should return error", func(t *testing.T) {
 			reader := &configReader{
+				orgStore:          sqlStore,
 				encryptionService: ossencryption.ProvideService(),
 				log:               log.New("test logger"),
 			}
@@ -328,6 +330,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Skip invalid directory", func(t *testing.T) {
 			cfgProvider := &configReader{
+				orgStore:          sqlStore,
 				encryptionService: ossencryption.ProvideService(),
 				log:               log.New("test logger"),
 			}
@@ -341,6 +344,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Unknown notifier should return error", func(t *testing.T) {
 			cfgProvider := &configReader{
+				orgStore:          sqlStore,
 				encryptionService: ossencryption.ProvideService(),
 				log:               log.New("test logger"),
 			}
@@ -351,6 +355,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Read incorrect properties", func(t *testing.T) {
 			cfgProvider := &configReader{
+				orgStore:          sqlStore,
 				encryptionService: ossencryption.ProvideService(),
 				log:               log.New("test logger"),
 			}

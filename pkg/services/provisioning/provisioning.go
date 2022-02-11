@@ -65,7 +65,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionNotifiers func(context.Context, string, encryption.Internal, *notifications.NotificationService) error,
+	provisionNotifiers func(context.Context, string, notifiers.Store, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, utils.OrgStore) error,
 	provisionPlugins func(context.Context, string, plugins.Store, plugifaces.Store) error,
 ) *ProvisioningServiceImpl {
@@ -88,7 +88,7 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
-	provisionNotifiers      func(context.Context, string, encryption.Internal, *notifications.NotificationService) error
+	provisionNotifiers      func(context.Context, string, notifiers.Store, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources    func(context.Context, string, datasources.Store, utils.OrgStore) error
 	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Store) error
 	mutex                   sync.Mutex
@@ -165,7 +165,7 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) error {
 	alertNotificationsPath := filepath.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	if err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.EncryptionService, ps.NotificationService); err != nil {
+	if err := ps.provisionNotifiers(ctx, alertNotificationsPath, ps.SQLStore, ps.EncryptionService, ps.NotificationService); err != nil {
 		err = errutil.Wrap("Alert notification provisioning error", err)
 		ps.log.Error("Failed to provision alert notifications", "error", err)
 		return err
