@@ -134,6 +134,12 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	var legend string
 
+	plog.Info("Metric", "data", metric)
+
+	if query.LegendFormat == "__auto" {
+		return ""
+	}
+
 	if query.LegendFormat == "" {
 		legend = metric.String()
 	} else {
@@ -330,9 +336,14 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 		timeField.Name = data.TimeSeriesTimeFieldName
 		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+
+		if name != "" {
+			valueField.Config = &data.FieldConfig{DisplayNameFromDS: name}
+		}
+
 		valueField.Labels = tags
-		frames = append(frames, newDataFrame(name, "matrix", timeField, valueField))
+
+		frames = append(frames, newDataFrame("", "matrix", timeField, valueField))
 	}
 
 	return frames
