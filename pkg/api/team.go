@@ -110,7 +110,7 @@ func (hs *HTTPServer) getTeamsAccessControlMetadata(c *models.ReqContext, teamID
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		hs.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
 		return nil, err
@@ -175,7 +175,7 @@ func (hs *HTTPServer) getTeamAccessControlMetadata(c *models.ReqContext, teamID 
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		hs.log.Warn("could not fetch accesscontrol metadata", "team", teamID, "error", err)
 		return nil, err
