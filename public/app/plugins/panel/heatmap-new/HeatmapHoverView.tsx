@@ -4,6 +4,7 @@ import { DataFrame, Field, FieldType, formattedValueToString, getValueFormat, Li
 import { HeatmapHoverEvent } from './utils';
 import { HeatmapData } from './fields';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 type Props = {
   data: HeatmapData;
@@ -16,23 +17,18 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
 
-  //const xDisplay = xField?.display ?? getDisplay;
-  //const yDisplay = yField?.display ?? getDisplay;
-
-  if (xField?.type === FieldType.time) {
-    // TODO: format display use getValueFormat('ms') if is time field type
-    // xDisplay =
-  }
-
   const xBucketMin = xField?.values.get(hover.index);
   const yBucketMin = yField?.values.get(hover.index);
 
   const xBucketMax = xBucketMin + data.xBucketSize;
   const yBucketMax = yBucketMin + data.yBucketSize;
 
-  const count = countField?.values.get(hover.index);
+  const tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+  const dashboard = getDashboardSrv().getCurrent();
+  const minTime = dashboard?.formatDate(xBucketMin, tooltipTimeFormat);
+  const maxTime = dashboard?.formatDate(xBucketMax, tooltipTimeFormat);
 
-  //const x = formattedValueToString(xDisplay(xBucketMin));
+  const count = countField?.values.get(hover.index);
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
@@ -57,7 +53,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   return (
     <>
       <div>
-        X Bucket: {xBucketMin} - {xBucketMax}
+        X Bucket: {minTime} - {maxTime}
       </div>
       <div>
         Y Bucket: {yBucketMin} - {yBucketMax}
@@ -84,5 +80,3 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     </>
   );
 };
-
-const getDisplay = (value: any) => ({ text: `${value}`, numeric: +value });
