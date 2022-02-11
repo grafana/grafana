@@ -1,5 +1,5 @@
 import { CoreApp } from '@grafana/data';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
@@ -24,13 +24,23 @@ export interface Props {
  */
 export function PromQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource } = props;
+  const [visQuery, setVisQuery] = useState<PromVisualQuery | undefined>();
 
-  const visQuery = buildVisualQueryFromString(query.expr || '').query;
+  useEffect(() => {
+    const result = buildVisualQueryFromString(query.expr || '');
+    setVisQuery(result.query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.query.editorMode]);
 
   const onVisQueryChange = (newVisQuery: PromVisualQuery) => {
     const rendered = promQueryModeller.renderQuery(newVisQuery);
     onChange({ ...query, expr: rendered });
+    setVisQuery(newVisQuery);
   };
+
+  if (!visQuery) {
+    return null;
+  }
 
   return (
     <>

@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { EditorField } from '@grafana/experimental';
 import { SelectableValue } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
-import { PromQuery } from '../../types';
+import { LegendFormatMode, PromQuery } from '../../types';
 
 export interface Props {
   query: PromQuery;
@@ -10,13 +10,7 @@ export interface Props {
   onRunQuery: () => void;
 }
 
-export enum LegendFormatMode {
-  Auto = '__auto',
-  Verbose = '__verbose',
-  Custom = '__custom',
-}
-
-const legendOptions = [
+const legendModeOptions = [
   { label: 'Auto', value: LegendFormatMode.Auto },
   { label: 'Verbose', value: LegendFormatMode.Verbose },
   { label: 'Custom', value: LegendFormatMode.Custom },
@@ -75,10 +69,10 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
           <Select
             menuShouldPortal
             isSearchable={false}
-            options={legendOptions}
+            options={legendModeOptions}
             width={20}
             onChange={onLegendModeChanged}
-            value={legendOptions.find((x) => x.value === mode)}
+            value={legendModeOptions.find((x) => x.value === mode)}
           />
         )}
       </>
@@ -100,4 +94,12 @@ function getLegendMode(legendFormat: string | undefined) {
   }
 
   return LegendFormatMode.Custom;
+}
+
+export function getLegendModeLabel(legendFormat: string | undefined) {
+  const mode = getLegendMode(legendFormat);
+  if (mode !== LegendFormatMode.Custom) {
+    return legendModeOptions.find((x) => x.value === mode)?.label;
+  }
+  return legendFormat;
 }

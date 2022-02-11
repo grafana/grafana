@@ -136,7 +136,8 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 
 	plog.Info("Metric", "data", metric)
 
-	if query.LegendFormat == "__auto" {
+	// If legendFormat is __auto and we have labels return as emtpy name will trigger automatic naming based on labels
+	if query.LegendFormat == "__auto" && len(metric) > 0 {
 		return ""
 	}
 
