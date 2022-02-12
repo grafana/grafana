@@ -83,7 +83,6 @@ func (ss *SQLStore) UpdateThumbnailState(ctx context.Context, cmd *models.Update
 
 func (ss *SQLStore) FindThumbnailCount(ctx context.Context, cmd *models.FindDashboardThumbnailCountCommand) (int64, error) {
 	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
-		sess.MustLogSQL(true)
 		count, err := sess.Count(&models.DashboardThumbnail{})
 		if err != nil {
 			return err
