@@ -52,7 +52,7 @@ func TestDatasourceLineageIsValid(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, ok := dsInterface.(*DataSource); !ok {
+	if _, ok := dsInterface.(*Model); !ok {
 		t.Fatalf("could not assert dsInterface of type %t to type Datasource", dsInterface)
 	}
 
