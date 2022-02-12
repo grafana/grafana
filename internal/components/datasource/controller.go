@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -16,10 +17,10 @@ type DatasourceReconciler struct {
 }
 
 type Store interface {
-	Get(ctx context.Context, uid string) (DataSource, error)
+	Get(ctx context.Context, uid string) (CR, error)
 	//Upsert(context.Context, string, DataSource) error
-	Insert(ctx context.Context, ds DataSource) error
-	Update(ctx context.Context, ds DataSource) error
+	Insert(ctx context.Context, ds CR) error
+	Update(ctx context.Context, ds CR) error
 	Delete(ctx context.Context, uid string) error
 }
 
@@ -32,7 +33,7 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 	// TODO should Thema-based approaches differ from pure k8s here? (research!)
 	if err := ctrl.NewControllerManagedBy(mgr).
 		Named("datasource-controller").
-		// For(&DataSource{}).
+		For(&CR{}).
 		Complete(reconcile.Func(d.Reconcile)); err != nil {
 		return nil, err
 	}
@@ -43,10 +44,9 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 var errNotFound = errors.New("k8s obj not found")
 
 func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	ds := DataSource{}
+	ds := CR{}
 
-	var err error
-	// err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
+	err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
 
 	// TODO: check ACTUAL error
 	if errors.Is(err, errNotFound) {
@@ -60,8 +60,24 @@ func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Requ
 		}, err
 	}
 
-	// TODO: figure out insert vs Update
-	if err := d.sto.Insert(ctx, ds); err != nil {
+	_, err = d.sto.Get(ctx, string(ds.UID))
+	if err != nil {
+		if !errors.Is(err, models.ErrDataSourceNotFound) {
+			return reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: 1 * time.Minute,
+			}, err 
+		}
+
+		if err := d.sto.Insert(ctx, ds); err != nil {
+			return reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: 1 * time.Minute,
+			}, err
+		}
+	}
+
+	if err := d.sto.Update(ctx, ds); err != nil {
 		return reconcile.Result{
 			Requeue:      true,
 			RequeueAfter: 1 * time.Minute,
