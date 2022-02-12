@@ -198,8 +198,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
   }
 
-  const allowPointerEvents = () => isToolTipOpen.current;
-
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const {
       barWidth,
@@ -273,7 +271,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
               <VizTooltipContainer
                 position={{ x: coords.x, y: coords.y }}
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                allowPointerEvents={allowPointerEvents}
+                allowPointerEvents={isToolTipOpen.current}
               >
                 {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>

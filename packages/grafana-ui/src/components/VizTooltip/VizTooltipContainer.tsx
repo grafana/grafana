@@ -13,7 +13,7 @@ export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement>
   position: { x: number; y: number };
   offset: { x: number; y: number };
   children?: React.ReactNode;
-  allowPointerEvents?: () => boolean;
+  allowPointerEvents?: boolean;
 }
 
 /**
@@ -23,7 +23,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
   children,
-  allowPointerEvents = () => false,
+  allowPointerEvents = false,
   className,
   ...otherProps
 }) => {
@@ -92,7 +92,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         left: 0,
         // disabling pointer-events is to prevent the tooltip from flickering when moving left to right
         // see e.g. https://github.com/grafana/grafana/pull/33609
-        pointerEvents: allowPointerEvents() ? 'auto' : 'none',
+        pointerEvents: allowPointerEvents ? 'auto' : 'none',
         top: 0,
         transform: `translate(${placement.x}px, ${placement.y}px)`,
         transition: 'transform ease-out 0.1s',
