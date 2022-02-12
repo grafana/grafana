@@ -84,29 +84,39 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
             i++;
           }
 
-          let p = new Path2D();
+          let pHov = new Path2D();
+          let pRest = new Path2D();
 
           i = fromIdx;
           let j = 0;
           while (i < toIdx) {
             let c = countVals[i];
-            let pctY = c / maxCount;
-            let pctX = j / (data.yBucketCount! + 1);
 
-            p.rect(
-              histCanWidth * pctX,
-              histCanHeight * (1 - pctY),
-              histCanWidth / data.yBucketCount!,
-              histCanHeight * pctY
-            );
+            if (c > 0) {
+              let pctY = c / maxCount;
+              let pctX = j / (data.yBucketCount! + 1);
+
+              let p = i === hover.index ? pHov : pRest;
+
+              p.rect(
+                Math.round(histCanWidth * pctX),
+                Math.round(histCanHeight * (1 - pctY)),
+                Math.round(histCanWidth / data.yBucketCount!),
+                Math.round(histCanHeight * pctY)
+              );
+            }
 
             i++;
             j++;
           }
 
-          histCtx.fillStyle = '#ffffff80';
           histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
-          histCtx.fill(p);
+
+          histCtx.fillStyle = '#ffffff80';
+          histCtx.fill(pRest);
+
+          histCtx.fillStyle = '#ff000080';
+          histCtx.fill(pHov);
         }
       }
     },
