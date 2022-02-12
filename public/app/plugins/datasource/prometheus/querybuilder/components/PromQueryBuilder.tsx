@@ -8,8 +8,9 @@ import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../shared/types';
-import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
+import { PromQueryBuilderHints } from './PromQueryBuilderHints';
 
 export interface Props {
   query: PromVisualQuery;
@@ -17,9 +18,10 @@ export interface Props {
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
   nested?: boolean;
+  data?: PanelData;
 }
 
-export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery }) => {
+export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, data }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -106,6 +108,7 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
         {query.binaryQueries && query.binaryQueries.length > 0 && (
           <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
         )}
+        <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
     </>
   );
