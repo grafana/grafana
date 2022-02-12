@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { DataFrame, Field, FieldType, formattedValueToString, getValueFormat, LinkModel } from '@grafana/data';
 
 import { HeatmapHoverEvent } from './utils';
@@ -17,8 +17,12 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
 
-  const xBucketMin = xField?.values.get(hover.index);
-  const yBucketMin = yField?.values.get(hover.index);
+  const xVals = xField?.values.toArray();
+  const yVals = yField?.values.toArray();
+  const countVals = countField?.values.toArray();
+
+  const xBucketMin = xVals?.[hover.index];
+  const yBucketMin = yVals?.[hover.index];
 
   const xBucketMax = xBucketMin + data.xBucketSize;
   const yBucketMax = yBucketMin + data.yBucketSize;
@@ -28,18 +32,18 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const minTime = dashboard?.formatDate(xBucketMin, tooltipTimeFormat);
   const maxTime = dashboard?.formatDate(xBucketMax, tooltipTimeFormat);
 
-  const count = countField?.values.get(hover.index);
+  const count = countVals?.[hover.index];
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
   for (const field of visibleFields ?? []) {
-    const v = field.values.get(hover.index);
-    const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
-
     // TODO: Currently always undefined? (getLinks)
     if (field.getLinks) {
+      const v = field.values.get(hover.index);
+      const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+
       field.getLinks({ calculatedValue: disp, valueRowIndex: hover.index }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
         if (!linkLookup.has(key)) {
@@ -50,6 +54,66 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     }
   }
 
+  let can = useRef<HTMLCanvasElement>(null);
+
+  let histCssWidth = 300;
+  let histCssHeight = 100;
+  let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
+  let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
+
+  useEffect(
+    () => {
+      if (showHistogram) {
+        let histCtx = can.current?.getContext('2d');
+
+        if (histCtx && xVals && yVals && countVals) {
+          let fromIdx = hover.index;
+
+          while (xVals[fromIdx--] === xVals[hover.index]) {}
+
+          fromIdx++;
+
+          let toIdx = fromIdx + data.yBucketCount!;
+
+          let maxCount = 0;
+
+          let i = fromIdx;
+          while (i < toIdx) {
+            let c = countVals[i];
+            maxCount = Math.max(maxCount, c);
+            i++;
+          }
+
+          let p = new Path2D();
+
+          i = fromIdx;
+          let j = 0;
+          while (i < toIdx) {
+            let c = countVals[i];
+            let pctY = c / maxCount;
+            let pctX = j / (data.yBucketCount! + 1);
+
+            p.rect(
+              histCanWidth * pctX,
+              histCanHeight * (1 - pctY),
+              histCanWidth / data.yBucketCount!,
+              histCanHeight * pctY
+            );
+
+            i++;
+            j++;
+          }
+
+          histCtx.fillStyle = '#ffffff80';
+          histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
+          histCtx.fill(p);
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hover.index]
+  );
+
   return (
     <>
       <div>
@@ -59,7 +123,14 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
         Y Bucket: {yBucketMin} - {yBucketMax}
       </div>
       <div>Count: {count}</div>
-      {showHistogram && <div>TODO: Histogram placeholder</div>}
+      {showHistogram && (
+        <canvas
+          width={histCanWidth}
+          height={histCanHeight}
+          ref={can}
+          style={{ width: histCanWidth + 'px', height: histCanHeight + 'px' }}
+        />
+      )}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (
