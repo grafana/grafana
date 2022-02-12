@@ -30,7 +30,9 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	cfg.AlertingBaseInterval = baseInterval
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: setting.SchedulerBaseInterval,
+	}
 	// AlertNG database migrations run and the relative database tables are created only when it's enabled
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true

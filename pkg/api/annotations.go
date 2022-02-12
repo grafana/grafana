@@ -173,8 +173,13 @@ func UpdateAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	if resp := canSave(c, repo, annotationID); resp != nil {
+	annotation, resp := findAnnotationByID(repo, annotationID, c.OrgId)
+	if resp != nil {
 		return resp
+	}
+
+	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
 	}
 
 	item := annotations.Item{
@@ -206,24 +211,23 @@ func PatchAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	if resp := canSave(c, repo, annotationID); resp != nil {
+	annotation, resp := findAnnotationByID(repo, annotationID, c.OrgId)
+	if resp != nil {
 		return resp
 	}
 
-	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
-
-	if err != nil || len(items) == 0 {
-		return response.Error(404, "Could not find annotation to update", err)
+	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
 	}
 
 	existing := annotations.Item{
 		OrgId:    c.OrgId,
 		UserId:   c.UserId,
 		Id:       annotationID,
-		Epoch:    items[0].Time,
-		EpochEnd: items[0].TimeEnd,
-		Text:     items[0].Text,
-		Tags:     items[0].Tags,
+		Epoch:    annotation.Time,
+		EpochEnd: annotation.TimeEnd,
+		Text:     annotation.Text,
+		Tags:     annotation.Tags,
 	}
 
 	if cmd.Tags != nil {
@@ -271,14 +275,20 @@ func DeleteAnnotations(c *models.ReqContext) response.Response {
 }
 
 func DeleteAnnotationByID(c *models.ReqContext) response.Response {
-	repo := annotations.GetRepository()
 	annotationID, err := strconv.ParseInt(web.Params(c.Req)[":annotationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	if resp := canSave(c, repo, annotationID); resp != nil {
+	repo := annotations.GetRepository()
+
+	annotation, resp := findAnnotationByID(repo, annotationID, c.OrgId)
+	if resp != nil {
 		return resp
+	}
+
+	if canSave, err := canSaveByDashboardID(c, annotation.DashboardId); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
 	}
 
 	err = repo.Delete(&annotations.DeleteParams{
@@ -307,19 +317,18 @@ func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error)
 	return true, nil
 }
 
-func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int64) response.Response {
-	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
-	if err != nil || len(items) == 0 {
-		return response.Error(500, "Could not find annotation to update", err)
+func findAnnotationByID(repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
+	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
+
+	if err != nil {
+		return nil, response.Error(500, "Failed to find annotation", err)
 	}
 
-	dashboardID := items[0].DashboardId
-
-	if canSave, err := canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
+	if len(items) == 0 {
+		return nil, response.Error(404, "Annotation not found", nil)
 	}
 
-	return nil
+	return items[0], nil
 }
 
 func GetAnnotationTags(c *models.ReqContext) response.Response {
