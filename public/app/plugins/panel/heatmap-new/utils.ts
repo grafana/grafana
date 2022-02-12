@@ -86,7 +86,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     if (!isToolTipOpen.current) {
       // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
       if (!pendingOnleave) {
-        pendingOnleave = setTimeout(() => onhover(null), 100);
+        pendingOnleave = setTimeout(() => onhover(null), 100) as any;
       }
     }
   });

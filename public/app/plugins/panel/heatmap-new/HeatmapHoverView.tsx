@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { DataFrame, Field, FieldType, formattedValueToString, getValueFormat, LinkModel } from '@grafana/data';
+import { Field, LinkModel } from '@grafana/data';
 
 import { HeatmapHoverEvent } from './utils';
 import { HeatmapData } from './fields';
@@ -56,8 +56,8 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 300;
-  let histCssHeight = 100;
+  let histCssWidth = 150;
+  let histCssHeight = 50;
   let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
   let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
 
@@ -127,12 +127,9 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   return (
     <>
       <div>
-        X Bucket: {minTime} - {maxTime}
+        <div>{minTime}</div>
+        <div>{maxTime}</div>
       </div>
-      <div>
-        Y Bucket: {yBucketMin} - {yBucketMax}
-      </div>
-      <div>Count: {count}</div>
       {showHistogram && (
         <canvas
           width={histCanWidth}
@@ -141,6 +138,12 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
           style={{ width: histCanWidth + 'px', height: histCanHeight + 'px' }}
         />
       )}
+      <div>
+        <div>
+          Bucket: {yBucketMin} - {yBucketMax}
+        </div>
+        <div>Count: {count}</div>
+      </div>
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (
