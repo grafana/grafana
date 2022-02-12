@@ -47,6 +47,7 @@ func RegisterCoreSchema(sch ObjectSchema) {
 	if _, has := cr.Load(sch.Name()); has {
 		panic(fmt.Sprintf("core object schema with name %s already exists", sch.Name()))
 	}
+
 	cr.Store(sch)
 }
 
@@ -80,12 +81,20 @@ type CoreSchemaList []ObjectSchema
 type GoSchema struct {
 	Kind string
 	// TODO figure out what fields should be here
-	SB *runtime.SchemeBuilder
+	runtimeObjects []runtime.Object
 }
 
-// SchemeBuilder returns a runtime.SchemeBuilder for this object kind.
-func (gs *GoSchema) SchemeBuilder() *runtime.SchemeBuilder {
-	return gs.SB
+func NewGoSchema(kind string, objects ...runtime.Object) GoSchema {
+	sch := GoSchema{
+		Kind: kind,
+	}
+	sch.runtimeObjects = append(sch.runtimeObjects, objects...)
+	return sch
+}
+
+// GetRuntimeObjects returns a runtime.Object for this object kind.
+func (gs *GoSchema) GetRuntimeObjects() []runtime.Object {
+	return gs.runtimeObjects
 }
 
 // Name returns the canonical string that identifies the object being schematized.
@@ -102,20 +111,29 @@ func (ts *ThemaSchema) Name() string {
 // is made with Thema and CUE.
 type ThemaSchema struct {
 	// TODO figure out what fields should be here
-	Lineage thema.Lineage
+	Lineage        thema.Lineage
+	runtimeObjects []runtime.Object
 }
 
-// SchemeBuilder returns a runtime.SchemeBuilder that will accurately represent
+func NewThemaSchema(lin thema.Lineage, objects ...runtime.Object) ThemaSchema {
+	sch := ThemaSchema{
+		Lineage: lin,
+	}
+	sch.runtimeObjects = append(sch.runtimeObjects, objects...)
+	return sch
+}
+
+// GetRuntimeObjects returns a runtime.Object that will accurately represent
 // the authorial intent of the Thema lineage to Kubernetes.
-func (ts *ThemaSchema) SchemeBuilder() *runtime.SchemeBuilder {
-	panic("TODO")
+func (ts *ThemaSchema) GetRuntimeObjects() []runtime.Object {
+	return ts.runtimeObjects
 }
 
 // A ObjectSchema returns a SchemeBuilder. Produced by schema components
 // to make their schema available to things relying on k8s
 type ObjectSchema interface {
 	Name() string
-	SchemeBuilder() *runtime.SchemeBuilder
+	GetRuntimeObjects() []runtime.Object
 }
 
 // CoreRegistry is a registry for Grafana core (compile-time-known)
