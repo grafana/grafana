@@ -136,6 +136,12 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 	panel := PanelInfo{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Skip null values so we don't need special int handling
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+
 		switch l1Field {
 		case "id":
 			panel.ID = iter.ReadInt64()

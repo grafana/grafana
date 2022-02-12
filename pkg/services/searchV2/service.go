@@ -225,7 +225,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 
 	return data.Frames{
 		data.NewFrame("folders", folderID, folderUID, folderName),
-		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashCreated, dashUpdated),
+		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		counter.toFrame("panel-type-counts"),
 	}
