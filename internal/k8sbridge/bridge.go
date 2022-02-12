@@ -5,8 +5,18 @@ package k8sbridge
 
 import (
 	"github.com/grafana/grafana/pkg/schema"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/scheme"
+)
+
+var (
+	groupName    = "grafana.core.group"
+	// TODO come up with rule governing when and why this is incremented
+	groupVersion = "v1alpha1"
 )
 
 // Should we write some simple watcher / interface consumer so that we can test if our interface works?
@@ -26,8 +36,17 @@ func ProvideBridgeService(cfg *rest.Config, list schema.CoreSchemaList) (*Bridge
 		return nil, err
 	}
 
+	schm := runtime.NewScheme()
+	schemaGroupVersion := k8schema.GroupVersion{Group: groupName, Version: groupVersion}
+	schemaBuilder := &scheme.Builder{GroupVersion: schemaGroupVersion}
+
+	utilruntime.Must(schemaBuilder.AddToScheme(schm))
+	for _, cr := range list {
+		schemaBuilder.Register(cr.GetRuntimeObjects()...)
+	}
+
 	mgropts := ctrl.Options{
-		Scheme: nil, // TODO fill me in by populating from reg
+		Scheme: schm,
 	}
 
 	mgr, err := ctrl.NewManager(cfg, mgropts)
@@ -40,6 +59,14 @@ func ProvideBridgeService(cfg *rest.Config, list schema.CoreSchemaList) (*Bridge
 		Schemas: list,
 		Manager: mgr,
 	}
+
+	/*
+		go func() {
+			if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+				panic(err)
+			}
+		}()
+	*/
 
 	return b, nil
 }
