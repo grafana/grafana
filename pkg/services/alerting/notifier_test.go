@@ -381,7 +381,7 @@ func (s *testRenderService) RenderErrorImage(theme models.Theme, err error) (*re
 	return &rendering.RenderResult{FilePath: "image.png"}, nil
 }
 
-func (s *testRenderService) GetRenderUser(ctx context.Context, key string) (*rendering.RenderUser, bool) {
+func (s *testRenderService) GetRenderUser(ctx context.Context, key string) (*models.RenderUser, bool) {
 	return nil, false
 }
 

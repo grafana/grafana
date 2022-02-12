@@ -78,6 +78,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 		}
 	}
+
+	if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagRenderKeyPerUser) {
+		addCreateRenderKeyTableMigration(mg)
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

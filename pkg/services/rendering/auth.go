@@ -7,25 +7,25 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const renderKeyPrefix = "render-%s"
 
-type RenderUser struct {
-	OrgID   int64
-	UserID  int64
-	OrgRole string
-}
+func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*models.RenderUser, bool) {
+	if rs.features.IsEnabled(featuremgmt.FlagRenderKeyPerUser) {
+		return rs.getRenderUserPOC(ctx, key)
+	}
 
-func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
 	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		rs.log.Error("Failed to get render key from cache", "error", err)
 	}
 
 	if val != nil {
-		if user, ok := val.(*RenderUser); ok {
+		if user, ok := val.(*models.RenderUser); ok {
 			return user, true
 		}
 	}
@@ -34,7 +34,7 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 }
 
 func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
-	err := cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), &RenderUser{
+	err := cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), &models.RenderUser{
 		OrgID:   opts.OrgID,
 		UserID:  opts.UserID,
 		OrgRole: string(opts.OrgRole),
@@ -42,8 +42,12 @@ func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts Auth
 	return err
 }
 
+func generateRenderKey() (string, error) {
+	return util.GetRandomString(32)
+}
+
 func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {
-	key, err := util.GetRandomString(32)
+	key, err := generateRenderKey()
 	if err != nil {
 		return "", err
 	}

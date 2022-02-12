@@ -34,6 +34,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "renderKeyPerUser",
+			Description: "Create a reusable renderKey for each user",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "dashboardPreviewsScheduler",
 			Description: "Schedule automatic updates to dashboard previews",
 			State:       FeatureStateAlpha,

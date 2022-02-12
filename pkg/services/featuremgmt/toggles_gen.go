@@ -31,6 +31,10 @@ const (
 	// Schedule automatic updates to dashboard previews
 	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
 
+	// FlagRenderKeyPerUser
+	// Create a reusable renderKey for each user
+	FlagRenderKeyPerUser = "renderKeyPerUser"
+
 	// FlagLiveConfig
 	// Save grafana live configuration in SQL tables
 	FlagLiveConfig = "live-config"

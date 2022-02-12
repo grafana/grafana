@@ -19,34 +19,39 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
-	remotecache.Register(&RenderUser{})
+	remotecache.Register(&models.RenderUser{})
 }
 
 const ServiceName = "RenderingService"
 
 type RenderingService struct {
-	log             log.Logger
-	pluginInfo      *plugins.Plugin
-	renderAction    renderFunc
-	renderCSVAction renderCSVFunc
-	domain          string
-	inProgressCount int32
-	version         string
-	versionMutex    sync.RWMutex
-	capabilities    []Capability
+	log                               log.Logger
+	pluginInfo                        *plugins.Plugin
+	renderAction                      renderFunc
+	renderCSVAction                   renderCSVFunc
+	domain                            string
+	inProgressCount                   int32
+	version                           string
+	versionMutex                      sync.RWMutex
+	capabilities                      []Capability
+	features                          featuremgmt.FeatureToggles
+	sqlStore                          *sqlstore.SQLStore
+	perUserRenderKeyProviderKeyMaxAge time.Duration
 
-	perRequestRenderKeyProvider renderKeyProvider
-	Cfg                         *setting.Cfg
-	RemoteCacheService          *remotecache.RemoteCache
-	RendererPluginManager       plugins.RendererManager
+	defaultRenderKeyProvider renderKeyProvider
+	Cfg                      *setting.Cfg
+	RemoteCacheService       *remotecache.RemoteCache
+	RendererPluginManager    plugins.RendererManager
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager, sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -77,12 +82,29 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 	}
 
 	logger := log.New("rendering")
-	s := &RenderingService{
-		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
+
+	var defaultRenderKeyProvider renderKeyProvider
+
+	perUserRenderKeyProviderKeyMaxAge := 10 * time.Minute
+	if features.IsEnabled(featuremgmt.FlagRenderKeyPerUser) {
+		defaultRenderKeyProvider = &perUserRenderKeyProvider{
+			sqlStore:  sqlStore,
+			log:       logger,
+			keyMaxAge: perUserRenderKeyProviderKeyMaxAge,
+		}
+	} else {
+		defaultRenderKeyProvider = &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
 			keyExpiry: 5 * time.Minute,
-		},
+		}
+	}
+
+	s := &RenderingService{
+		sqlStore:                          sqlStore,
+		features:                          features,
+		defaultRenderKeyProvider:          defaultRenderKeyProvider,
+		perUserRenderKeyProviderKeyMaxAge: perUserRenderKeyProviderKeyMaxAge,
 		capabilities: []Capability{
 			{
 				name:             FullHeightImages,
@@ -209,7 +231,7 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error) {
 	startTime := time.Now()
 
-	renderKeyProvider := rs.perRequestRenderKeyProvider
+	renderKeyProvider := rs.defaultRenderKeyProvider
 	if session != nil {
 		renderKeyProvider = session
 	}
@@ -264,7 +286,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
 	startTime := time.Now()
 
-	renderKeyProvider := rs.perRequestRenderKeyProvider
+	renderKeyProvider := rs.defaultRenderKeyProvider
 	if session != nil {
 		renderKeyProvider = session
 	}

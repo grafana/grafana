@@ -100,7 +100,7 @@ type Service interface {
 	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
-	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
+	GetRenderUser(ctx context.Context, key string) (*models.RenderUser, bool)
 	HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 }
