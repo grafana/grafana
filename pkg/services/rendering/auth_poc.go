@@ -28,13 +28,12 @@ func (r *perUserRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (stri
 	err := r.sqlStore.FindAndRefreshRenderKey(ctx, findAndRefreshCommand)
 	if err != nil {
 		r.log.Error("Failed to find and refresh render key", "error", err)
-		return "", nil
-	}
-
-	existingKey := *findAndRefreshCommand.Result
-	if existingKey != "" {
-		r.log.Info("Found an existing render key", "userId", opts.UserID, "orgId", opts.OrgID, "orgRole", opts.OrgRole)
-		return existingKey, nil
+	} else {
+		existingKey := *findAndRefreshCommand.Result
+		if existingKey != "" {
+			r.log.Info("Found an existing render key", "userId", opts.UserID, "orgId", opts.OrgID, "orgRole", opts.OrgRole)
+			return existingKey, nil
+		}
 	}
 
 	newKey, err := generateRenderKey()
