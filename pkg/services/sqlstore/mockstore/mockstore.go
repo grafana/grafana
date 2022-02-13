@@ -13,23 +13,28 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery           *models.GetAlertsQuery
-	LatestUserId                 int64
-	ExpectedUser                 *models.User
-	ExpectedDatasource           *models.DataSource
-	ExpectedAlert                *models.Alert
-	ExpectedPluginSetting        *models.PluginSetting
-	ExpectedDashboard            *models.Dashboard
-	ExpectedDashboards           []*models.Dashboard
-	ExpectedDashboardVersions    []*models.DashboardVersion
-	ExpectedDashboardAclInfoList []*models.DashboardAclInfoDTO
-	ExpectedUserOrgList          []*models.UserOrgDTO
-	ExpectedOrgListResponse      OrgListResponse
-	ExpectedDashboardSnapshot    *models.DashboardSnapshot
-	ExpectedTeamsByUser          []*models.TeamDTO
-	ExpectedSearchOrgList        []*models.OrgDTO
-	ExpectedDatasources          []*models.DataSource
-	ExpectedOrg                  *models.Org
+	LastGetAlertsQuery             *models.GetAlertsQuery
+	LatestUserId                   int64
+	ExpectedUser                   *models.User
+	ExpectedDatasource             *models.DataSource
+	ExpectedAlert                  *models.Alert
+	ExpectedPluginSetting          *models.PluginSetting
+	ExpectedDashboard              *models.Dashboard
+	ExpectedDashboards             []*models.Dashboard
+	ExpectedDashboardVersions      []*models.DashboardVersion
+	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
+	ExpectedUserOrgList            []*models.UserOrgDTO
+	ExpectedOrgListResponse        OrgListResponse
+	ExpectedDashboardSnapshot      *models.DashboardSnapshot
+	ExpectedTeamsByUser            []*models.TeamDTO
+	ExpectedSearchOrgList          []*models.OrgDTO
+	ExpectedDatasources            []*models.DataSource
+	ExpectedOrg                    *models.Org
+	ExpectedSystemStats            *models.SystemStats
+	ExpectedDataSourceStats        []*models.DataSourceStats
+	ExpectedDataSources            []*models.DataSource
+	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
+	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 
 	ExpectedError error
 }
@@ -39,6 +44,26 @@ func NewSQLStoreMock() *SQLStoreMock {
 }
 
 func (m *SQLStoreMock) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
+	query.Result = m.ExpectedNotifierUsageStats
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
+	query.Result = m.ExpectedDataSourceStats
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
+	query.Result = m.ExpectedDataSourcesAccessStats
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
+	query.Result = m.ExpectedSystemStats
 	return m.ExpectedError
 }
 

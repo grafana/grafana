@@ -7,12 +7,23 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+func logf(format string, a ...interface{}) {
+	fmt.Printf(format, a...)
+}
+
+// nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
 func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
 	dash := &DashboardInfo{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Skip null values so we don't need special int handling
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+
 		switch l1Field {
 		case "id":
 			dash.ID = iter.ReadInt64()
@@ -69,7 +80,7 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 		case "rows":
 			for iter.ReadArray() {
 				v := iter.Read()
-				fmt.Printf("[DASHBOARD.ROW???] id=%s // %v\n", dash.UID, v)
+				logf("[DASHBOARD.ROW???] id=%s // %v\n", dash.UID, v)
 			}
 
 		case "annotations":
@@ -77,7 +88,7 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 				if sub == "list" {
 					for iter.ReadArray() {
 						v := iter.Read()
-						fmt.Printf("[dash.anno] %v\n", v)
+						logf("[dash.anno] %v\n", v)
 					}
 				} else {
 					iter.Skip()
@@ -109,8 +120,12 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 
 		default:
 			v := iter.Read()
-			fmt.Printf("[DASHBOARD] support key: %s / %v\n", l1Field, v)
+			logf("[DASHBOARD] support key: %s / %v\n", l1Field, v)
 		}
+	}
+
+	if dash.UID == "" {
+		fmt.Printf("????")
 	}
 
 	return dash
@@ -121,6 +136,12 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 	panel := PanelInfo{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		// Skip null values so we don't need special int handling
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+
 		switch l1Field {
 		case "id":
 			panel.ID = iter.ReadInt64()
@@ -136,12 +157,12 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 
 		case "datasource":
 			v := iter.Read()
-			fmt.Printf(">>Panel.datasource = %v\n", v) // string or object!!!
+			logf(">>Panel.datasource = %v\n", v) // string or object!!!
 
 		case "targets":
 			for iter.ReadArray() {
 				v := iter.Read()
-				fmt.Printf("[Panel.TARGET] %v\n", v)
+				logf("[Panel.TARGET] %v\n", v)
 			}
 
 		case "transformations":
@@ -172,7 +193,7 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 
 		default:
 			v := iter.Read()
-			fmt.Printf("[PANEL] support key: %s / %v\n", l1Field, v)
+			logf("[PANEL] support key: %s / %v\n", l1Field, v)
 		}
 	}
 

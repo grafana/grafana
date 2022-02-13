@@ -45,5 +45,4 @@ func TestReadDashboard(t *testing.T) {
 			_ = os.WriteFile(savedPath, out, 0600)
 		}
 	}
-
 }

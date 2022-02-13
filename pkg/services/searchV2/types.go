@@ -11,5 +11,5 @@ type DashboardQuery struct {
 }
 
 type SearchService interface {
-	DoDashboardQuery(ctx context.Context, user *backend.User, query DashboardQuery) *backend.DataResponse
+	DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse
 }
