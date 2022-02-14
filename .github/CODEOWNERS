@@ -56,9 +56,11 @@ go.sum @grafana/backend-platform
 # Grafana live
 /pkg/services/live/ @grafana/grafana-edge-squad
 
-# Unified Alerting
-/pkg/services/ngalert @grafana/alerting-squad
-/pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad
+# Alerting
+/pkg/services/ngalert @grafana/alerting-squad-backend
+/pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad-backend
+/pkg/services/alerting @grafana/alerting-squad-backend
+/public/app/features/alerting @grafana/alerting-squad-frontend
 
 # Library Services
 /pkg/services/libraryelements @grafana/user-essentials

@@ -69,9 +69,10 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
   .setPanelOptions((builder, context) => {
     const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as any));
     let xaxisPlaceholder = 'First string or time field';
-    if (disp.viz?.fields?.length) {
-      const first = disp.viz.fields[0];
-      xaxisPlaceholder += ` (${getFieldDisplayName(first, disp.viz)})`;
+    const viz = disp.viz ? disp.viz[0] : undefined;
+    if (viz?.fields?.length) {
+      const first = viz.fields[0];
+      xaxisPlaceholder += ` (${getFieldDisplayName(first, viz)})`;
     }
 
     builder

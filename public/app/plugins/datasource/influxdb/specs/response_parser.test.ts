@@ -1,5 +1,7 @@
 import { size } from 'lodash';
-import ResponseParser from '../response_parser';
+import ResponseParser, { getSelectedParams } from '../response_parser';
+import InfluxQueryModel from '../influx_query_model';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 
 describe('influxdb response parser', () => {
   const parser = new ResponseParser();
@@ -200,6 +202,84 @@ describe('influxdb response parser', () => {
         expect(size(result)).toBe(1);
         expect(result[0].text).toBe('time');
       });
+    });
+  });
+
+  describe('Should name the selected params correctly', () => {
+    it('when there are no duplicates', () => {
+      const query = new InfluxQueryModel({
+        refId: 'A',
+        select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
+      });
+
+      const selectedParams = getSelectedParams(query.target);
+
+      expect(selectedParams.length).toBe(2);
+      expect(selectedParams[0]).toBe('usage_iowait');
+      expect(selectedParams[1]).toBe('usage_idle');
+    });
+
+    it('when there are duplicates', () => {
+      const query = new InfluxQueryModel({
+        refId: 'A',
+        select: [
+          [{ type: 'field', params: ['usage_iowait'] }],
+          [{ type: 'field', params: ['usage_iowait'] }],
+          [{ type: 'field', params: ['usage_iowait'] }],
+          [{ type: 'field', params: ['usage_idle'] }],
+        ],
+      });
+
+      const selectedParams = getSelectedParams(query.target);
+
+      expect(selectedParams.length).toBe(4);
+      expect(selectedParams[0]).toBe('usage_iowait');
+      expect(selectedParams[1]).toBe('usage_iowait_1');
+      expect(selectedParams[2]).toBe('usage_iowait_2');
+      expect(selectedParams[3]).toBe('usage_idle');
+    });
+  });
+
+  describe('Should get the table', () => {
+    const dataFrame = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1640257340000] },
+        { name: 'value', type: FieldType.number, values: [3234232323] },
+      ],
+      meta: {
+        executedQueryString: 'SELECT everything!',
+      },
+    });
+
+    const query = new InfluxQueryModel({
+      refId: 'A',
+      select: [[{ type: 'field', params: ['usage_iowait'] }], [{ type: 'field', params: ['usage_idle'] }]],
+    });
+
+    const table = parser.getTable([dataFrame], query.target, {
+      preferredVisualisationType: 'table',
+    });
+
+    it('columns correctly', () => {
+      expect(table.columns.length).toBe(3);
+      expect(table.columns[0].text).toBe('Time');
+      expect(table.columns[1].text).toBe('usage_iowait');
+      expect(table.columns[2].text).toBe('usage_idle');
+    });
+
+    it('rows correctly', () => {
+      expect(table.rows.length).toBe(1);
+      expect(table.rows[0].length).toBe(2);
+      expect(table.rows[0][0]).toBe(1640257340000);
+      expect(table.rows[0][1]).toBe(3234232323);
+    });
+
+    it('preferredVisualisationType correctly', () => {
+      expect(table.meta?.preferredVisualisationType).toBe('table');
+    });
+
+    it('executedQueryString correctly', () => {
+      expect(table.meta?.executedQueryString).toBe('SELECT everything!');
     });
   });
 });

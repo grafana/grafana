@@ -1,5 +1,5 @@
 import { throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, first } from 'rxjs/operators';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { AlertState, AlertStateInfo } from '@grafana/data';
 
@@ -60,18 +60,19 @@ function expectOnResults(args: {
   expect: (results: DashboardQueryRunnerResult) => void;
 }) {
   const { runner, done, panelId, expect: expectCallback } = args;
-  const subscription = runner.getResult(panelId).subscribe({
-    next: (value) => {
-      try {
-        expectCallback(value);
-        subscription?.unsubscribe();
-        done();
-      } catch (err) {
-        subscription?.unsubscribe();
-        done.fail(err);
-      }
-    },
-  });
+  runner
+    .getResult(panelId)
+    .pipe(first())
+    .subscribe({
+      next: (value) => {
+        try {
+          expectCallback(value);
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
+      },
+    });
 }
 
 describe('DashboardQueryRunnerImpl', () => {

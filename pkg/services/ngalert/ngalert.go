@@ -3,7 +3,6 @@ package ngalert
 import (
 	"context"
 	"net/url"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
@@ -26,17 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-const (
-	// scheduler interval
-	// changing this value is discouraged
-	// because this could cause existing alert definition
-	// with intervals that are not exactly divided by this number
-	// not to be evaluated
-	defaultBaseIntervalSeconds = 10
-	// default alert definition interval
-	defaultIntervalSeconds int64 = 6 * defaultBaseIntervalSeconds
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
@@ -92,15 +80,9 @@ type AlertNG struct {
 func (ng *AlertNG) init() error {
 	var err error
 
-	baseInterval := ng.Cfg.AlertingBaseInterval
-	if baseInterval <= 0 {
-		baseInterval = defaultBaseIntervalSeconds
-	}
-	baseInterval *= time.Second
-
 	store := &store.DBstore{
-		BaseInterval:    baseInterval,
-		DefaultInterval: ng.getRuleDefaultInterval(),
+		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
+		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultAlertForDuration,
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
 	}
@@ -119,7 +101,7 @@ func (ng *AlertNG) init() error {
 
 	schedCfg := schedule.SchedulerCfg{
 		C:                       clock.New(),
-		BaseInterval:            baseInterval,
+		BaseInterval:            ng.Cfg.UnifiedAlerting.BaseInterval,
 		Logger:                  ng.Log,
 		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
 		Evaluator:               eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService),
@@ -131,7 +113,7 @@ func (ng *AlertNG) init() error {
 		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
 		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
 		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		MinRuleInterval:         ng.getRuleMinInterval(),
+		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
@@ -190,31 +172,4 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
-}
-
-// getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.
-// If this constant (1 minute) is lower than the configured minimum evaluation interval then
-// this configuration is returned.
-func (ng *AlertNG) getRuleDefaultInterval() time.Duration {
-	ruleMinInterval := ng.getRuleMinInterval()
-	if defaultIntervalSeconds < int64(ruleMinInterval.Seconds()) {
-		return ruleMinInterval
-	}
-	return time.Duration(defaultIntervalSeconds) * time.Second
-}
-
-// getRuleMinIntervalSeconds returns the configured minimum rule interval.
-// If this value is less or equal to zero or not divided exactly by the scheduler interval
-// the scheduler interval (10 seconds) is returned.
-func (ng *AlertNG) getRuleMinInterval() time.Duration {
-	if ng.Cfg.UnifiedAlerting.MinInterval <= 0 {
-		return defaultBaseIntervalSeconds // if it's not configured; apply default
-	}
-
-	if ng.Cfg.UnifiedAlerting.MinInterval%defaultBaseIntervalSeconds != 0 {
-		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.UnifiedAlerting.MinInterval, "baseIntervalSeconds", defaultBaseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
-		return defaultBaseIntervalSeconds // if it's invalid; apply default
-	}
-
-	return ng.Cfg.UnifiedAlerting.MinInterval
 }
