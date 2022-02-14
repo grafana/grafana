@@ -11,11 +11,18 @@ export interface Props {
 }
 
 const legendModeOptions = [
-  { label: 'Auto', value: LegendFormatMode.Auto },
-  { label: 'Verbose', value: LegendFormatMode.Verbose },
-  { label: 'Custom', value: LegendFormatMode.Custom },
+  {
+    label: 'Auto',
+    value: LegendFormatMode.Auto,
+    description: 'Only includes unique labels',
+  },
+  { label: 'Verbose', value: LegendFormatMode.Verbose, description: 'All label names and values' },
+  { label: 'Custom', value: LegendFormatMode.Custom, description: 'Provide a naming template' },
 ];
 
+/**
+ * Tests for this component are on the parent level (PromQueryBuilderOptions).
+ */
 export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRunQuery }) => {
   const [mode, setMode] = useState(getLegendMode(query.legendFormat));
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -58,7 +65,8 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
       <>
         {mode === LegendFormatMode.Custom && (
           <Input
-            width={20}
+            id="legendFormat"
+            width={22}
             placeholder="auto"
             defaultValue={query.legendFormat}
             onBlur={onLegendFormatChanged}
@@ -67,10 +75,11 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
         )}
         {mode !== LegendFormatMode.Custom && (
           <Select
-            menuShouldPortal
+            inputId="legend.mode"
             isSearchable={false}
+            placeholder="Select legend mode"
             options={legendModeOptions}
-            width={20}
+            width={22}
             onChange={onLegendModeChanged}
             value={legendModeOptions.find((x) => x.value === mode)}
           />
