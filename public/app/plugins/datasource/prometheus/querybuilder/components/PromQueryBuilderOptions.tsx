@@ -70,7 +70,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
         </EditorField>
         <EditorField label="Type">
-          <RadioButtonGroup options={queryTypeOptions} value={queryTypeLabel} onChange={onQueryTypeChange} />
+          <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">

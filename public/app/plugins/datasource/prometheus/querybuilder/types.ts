@@ -78,12 +78,8 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
   }
 
   // In explore we default to both instant & range
-  if (query.instant == null && query.range == null) {
-    if (app === CoreApp.Explore) {
-      result = { ...result, instant: true };
-    } else {
-      result = { ...result, instant: false, range: true };
-    }
+  if (query.instant == null && app === CoreApp.Explore) {
+    result = { ...result, instant: true };
   }
 
   return result;
