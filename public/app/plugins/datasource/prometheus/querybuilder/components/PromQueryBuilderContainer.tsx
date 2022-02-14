@@ -1,20 +1,20 @@
-import { CoreApp } from '@grafana/data';
-import React, { useEffect, useState } from 'react';
+import { PanelData } from '@grafana/data';
+import React from 'react';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
 import { buildVisualQueryFromString } from '../parsing';
 import { promQueryModeller } from '../PromQueryModeller';
+import { PromVisualQuery } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { QueryPreview } from './QueryPreview';
-import { PromVisualQuery } from '../types';
 
 export interface Props {
   query: PromQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
-  app?: CoreApp;
+  data?: PanelData;
 }
 
 /**
@@ -23,28 +23,24 @@ export interface Props {
  * @constructor
  */
 export function PromQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource } = props;
-  const [visQuery, setVisQuery] = useState<PromVisualQuery | undefined>();
+  const { query, onChange, onRunQuery, datasource, data } = props;
 
-  useEffect(() => {
-    const result = buildVisualQueryFromString(query.expr || '');
-    setVisQuery(result.query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.query.editorMode]);
+  const visQuery = buildVisualQueryFromString(query.expr || '').query;
 
   const onVisQueryChange = (newVisQuery: PromVisualQuery) => {
     const rendered = promQueryModeller.renderQuery(newVisQuery);
     onChange({ ...query, expr: rendered });
-    setVisQuery(newVisQuery);
   };
-
-  if (!visQuery) {
-    return null;
-  }
 
   return (
     <>
-      <PromQueryBuilder query={visQuery} datasource={datasource} onChange={onVisQueryChange} onRunQuery={onRunQuery} />
+      <PromQueryBuilder
+        query={visQuery}
+        datasource={datasource}
+        onChange={onVisQueryChange}
+        onRunQuery={onRunQuery}
+        data={data}
+      />
       {query.editorPreview && <QueryPreview query={query.expr} />}
     </>
   );

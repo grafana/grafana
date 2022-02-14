@@ -7,6 +7,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import PromQlLanguageProvider from '../../language_provider';
 import { PromVisualQuery } from '../types';
 import { getLabelSelects } from '../testUtils';
+import { LoadingState, MutableDataFrame, PanelData, TimeRange } from '@grafana/data';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -124,9 +125,64 @@ describe('PromQueryBuilder', () => {
     openLabelNameSelect();
     await waitFor(() => expect(languageProvider.fetchLabels).toBeCalled());
   });
+
+  it('shows hints for histogram metrics', async () => {
+    const { container } = setup({
+      metric: 'histogram_metric_bucket',
+      labels: [],
+      operations: [],
+    });
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_bucket'));
+    await waitFor(() => expect(screen.getByText('hint: add histogram_quantile()')).toBeInTheDocument());
+  });
+
+  it('shows hints for counter metrics', async () => {
+    const { container } = setup({
+      metric: 'histogram_metric_sum',
+      labels: [],
+      operations: [],
+    });
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
+  });
+
+  it('shows hints for counter metrics', async () => {
+    const { container } = setup({
+      metric: 'histogram_metric_sum',
+      labels: [],
+      operations: [],
+    });
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
+  });
+
+  it('shows multiple hints', async () => {
+    const data: PanelData = {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: {} as TimeRange,
+    };
+    for (let i = 0; i < 25; i++) {
+      data.series.push(new MutableDataFrame());
+    }
+    const { container } = setup(
+      {
+        metric: 'histogram_metric_sum',
+        labels: [],
+        operations: [],
+      },
+      data
+    );
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await waitFor(() => expect(screen.getAllByText(/hint:/g)).toHaveLength(2));
+  });
 });
 
-function setup(query: PromVisualQuery = defaultQuery) {
+function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
@@ -142,6 +198,7 @@ function setup(query: PromVisualQuery = defaultQuery) {
     datasource,
     onRunQuery: () => {},
     onChange: () => {},
+    data,
   };
 
   const { container } = render(<PromQueryBuilder {...props} query={query} />);
