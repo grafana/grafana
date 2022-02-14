@@ -70,10 +70,12 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
 
   // assumes all Time fields are identical
   // TODO: handle null-filling w/ fields[0].config.interval?
-  const timeValues = frames[0].fields[0].values.toArray();
+  const xField = frames[0].fields[0];
+  const xValues = xField.values.toArray();
+  const yField = frames[0].fields[1];
 
   // similar to initBins() below
-  const len = timeValues.length * bucketBounds.length;
+  const len = xValues.length * bucketBounds.length;
   const xs = new Array(len);
   const ys = new Array(len);
   const counts2 = new Array(len);
@@ -107,7 +109,7 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
       xi++;
     }
 
-    xs[i] = timeValues[xi];
+    xs[i] = xValues[xi];
   }
 
   return {
@@ -118,21 +120,23 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
     fields: [
       {
         name: 'xMin',
-        type: FieldType.time,
+        type: xField.type,
         values: new ArrayVector(xs),
-        config: {},
+        config: xField.config,
       },
       {
         name: 'yMin',
         type: FieldType.number,
         values: new ArrayVector(ys),
-        config: {},
+        config: yField.config,
       },
       {
         name: 'count',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: {},
+        config: {
+          unit: 'short',
+        },
       },
     ],
   };
@@ -182,9 +186,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   const heat2d = heatmap(xs, ys, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
-    xUnit: options.xAxis?.mode,
+    xMode: options.xAxis?.mode,
     xSize: +(options.xAxis?.value ?? 0),
-    yUnit: options.yAxis?.mode,
+    yMode: options.yAxis?.mode,
     ySize: +(options.yAxis?.value ?? 0),
   });
 
@@ -225,8 +229,8 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
 
 interface HeatmapOpts {
   // default is 10% of data range, snapped to a "nice" increment
-  xUnit?: HeatmapCalculationMode;
-  yUnit?: HeatmapCalculationMode;
+  xMode?: HeatmapCalculationMode;
+  yMode?: HeatmapCalculationMode;
   xSize?: number;
   ySize?: number;
 
@@ -281,20 +285,20 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
 
   let xBinIncr = opts?.xSize ?? 0;
   let yBinIncr = opts?.ySize ?? 0;
-  let xUnit = opts?.xUnit;
-  let yUnit = opts?.yUnit;
+  let xMode = opts?.xMode;
+  let yMode = opts?.yMode;
 
   // fall back to 10 buckets if invalid settings
   if (!Number.isFinite(xBinIncr) || xBinIncr <= 0) {
-    xUnit = HeatmapCalculationMode.Count;
+    xMode = HeatmapCalculationMode.Count;
     xBinIncr = 20;
   }
   if (!Number.isFinite(yBinIncr) || yBinIncr <= 0) {
-    yUnit = HeatmapCalculationMode.Count;
+    yMode = HeatmapCalculationMode.Count;
     yBinIncr = 10;
   }
 
-  if (xUnit === HeatmapCalculationMode.Count) {
+  if (xMode === HeatmapCalculationMode.Count) {
     // TODO: optionally use view range min/max instead of data range for bucket sizing
     let approx = (maxX - minX) / Math.max(xBinIncr - 1, 1);
     // nice-ify
@@ -303,7 +307,7 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
     xBinIncr = xIncrs[Math.max(xIncrIdx, 0)];
   }
 
-  if (yUnit === HeatmapCalculationMode.Count) {
+  if (yMode === HeatmapCalculationMode.Count) {
     // TODO: optionally use view range min/max instead of data range for bucket sizing
     let approx = (maxY - minY) / Math.max(yBinIncr - 1, 1);
     // nice-ify
@@ -331,9 +335,9 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr);
 
   for (let i = 0; i < len; i++) {
-    let xi = (binX(xs[i]) - minXBin) / xBinIncr;
-    let yi = (binY(ys[i]) - minYBin) / yBinIncr;
-    let ci = xi * yBinQty + yi;
+    const xi = (binX(xs[i]) - minXBin) / xBinIncr;
+    const yi = (binY(ys[i]) - minYBin) / yBinIncr;
+    const ci = xi * yBinQty + yi;
 
     counts[ci]++;
   }

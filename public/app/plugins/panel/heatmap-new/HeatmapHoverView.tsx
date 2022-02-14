@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Field, LinkModel } from '@grafana/data';
+import { Field, FieldType, formattedValueToString, LinkModel } from '@grafana/data';
 
 import { HeatmapHoverEvent } from './utils';
 import { HeatmapData } from './fields';
@@ -17,6 +17,25 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
 
+  const xDisp = (v: any) => {
+    if (xField?.display) {
+      return formattedValueToString(xField.display(v));
+    }
+    if (xField?.type === FieldType.time) {
+      const tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+      const dashboard = getDashboardSrv().getCurrent();
+      return dashboard?.formatDate(v, tooltipTimeFormat);
+    }
+    return `${v}XX`;
+  };
+
+  const yDisp = (v: any) => {
+    if (yField?.display) {
+      return formattedValueToString(yField.display(v));
+    }
+    return `${v}YYY`;
+  };
+
   const xVals = xField?.values.toArray();
   const yVals = yField?.values.toArray();
   const countVals = countField?.values.toArray();
@@ -26,11 +45,6 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
 
   const xBucketMax = xBucketMin + data.xBucketSize;
   const yBucketMax = yBucketMin + data.yBucketSize;
-
-  const tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-  const dashboard = getDashboardSrv().getCurrent();
-  const minTime = dashboard?.formatDate(xBucketMin, tooltipTimeFormat);
-  const maxTime = dashboard?.formatDate(xBucketMax, tooltipTimeFormat);
 
   const count = countVals?.[hover.index];
 
@@ -127,8 +141,8 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   return (
     <>
       <div>
-        <div>{minTime}</div>
-        <div>{maxTime}</div>
+        <div>{xDisp(xBucketMin)}</div>
+        <div>{xDisp(xBucketMax)}</div>
       </div>
       {showHistogram && (
         <canvas
@@ -140,7 +154,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       )}
       <div>
         <div>
-          Bucket: {yBucketMin} - {yBucketMax}
+          Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
         </div>
         <div>Count: {count}</div>
       </div>

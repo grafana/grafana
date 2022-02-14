@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
   createHeatmapFromBuckets,
@@ -31,33 +31,44 @@ export function prepareHeatmapData(
   const { source } = options;
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}));
+    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
   }
 
   // Find a well defined heatmap
   let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanLines);
   if (heatmap) {
-    return getHeatmapData(heatmap);
+    return getHeatmapData(heatmap, theme);
   }
 
   if (source === HeatmapSourceMode.Data) {
     // TODO: check for names xMin, yMin etc...
-    return getHeatmapData(createHeatmapFromBuckets(frames));
+    return getHeatmapData(createHeatmapFromBuckets(frames), theme);
   }
 
   // detect a frame-per-bucket heatmap frame
   // TODO: improve heuristic?
   if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.endsWith('Inf'))) {
-    return getHeatmapData(createHeatmapFromBuckets(frames));
+    return getHeatmapData(createHeatmapFromBuckets(frames), theme);
   }
 
   // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}));
+  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
 }
 
-const getHeatmapData = (frame: DataFrame): HeatmapData => {
+const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
+  if (frame.meta?.type !== DataFrameType.HeatmapScanLines) {
+    return {
+      warning: 'Expected heatmap scan lines format',
+      heatmap: frame,
+    };
+  }
+
   if (frame.fields.length < 2 || frame.length < 2) {
     return { heatmap: frame };
+  }
+
+  if (!frame.fields[1].display) {
+    frame.fields[1].display = getDisplayProcessor({ field: frame.fields[1], theme });
   }
 
   // infer bucket sizes from data (for now)
