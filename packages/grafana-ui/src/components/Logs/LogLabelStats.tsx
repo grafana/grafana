@@ -18,6 +18,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: inherit;
       color: ${theme.colors.text};
       word-break: break-all;
+      width: fit-content;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -73,28 +74,22 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <table>
-        <tbody>
-          <tr>
-            <td className={style.logsStats} data-testid="logLabelStats">
-              <div className={style.logsStatsHeader}>
-                <div className={style.logsStatsTitle}>
-                  {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
-                </div>
-              </div>
-              <div className={style.logsStatsBody}>
-                {topRows.map((stat) => (
-                  <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
-                ))}
-                {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}
-                {otherCount > 0 && (
-                  <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
-                )}
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className={style.logsStats} data-testid="logLabelStats">
+        <div className={style.logsStatsHeader}>
+          <div className={style.logsStatsTitle}>
+            {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
+          </div>
+        </div>
+        <div className={style.logsStatsBody}>
+          {topRows.map((stat) => (
+            <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
+          ))}
+          {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}
+          {otherCount > 0 && (
+            <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
+          )}
+        </div>
+      </div>
     );
   }
 }
