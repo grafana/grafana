@@ -43,6 +43,7 @@ const SETTINGS_KEYS = {
   showTime: 'grafana.explore.logs.showTime',
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
+  logsSortOrder: 'grafana.explore.logs.sortOrder',
 };
 
 interface Props extends Themeable2 {
@@ -96,7 +97,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
-    logsSortOrder: null,
+    logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || null,
     isFlipping: false,
     showDetectedFields: [],
     forceEscape: false,
@@ -117,10 +118,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
     this.flipOrderTimer = window.setTimeout(() => {
       this.setState((prevState) => {
-        if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
-          return { logsSortOrder: LogsSortOrder.Ascending };
-        }
-        return { logsSortOrder: LogsSortOrder.Descending };
+        const newSortOrder =
+          prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending
+            ? LogsSortOrder.Ascending
+            : LogsSortOrder.Descending;
+        store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
+        return { logsSortOrder: newSortOrder };
       });
     }, 0);
     this.cancelFlippingTimer = window.setTimeout(() => this.setState({ isFlipping: false }), 1000);
