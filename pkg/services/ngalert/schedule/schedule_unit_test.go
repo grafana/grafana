@@ -39,11 +39,11 @@ import (
 )
 
 func TestSendingToExternalAlertmanager(t *testing.T) {
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := store.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
-	fakeRuleStore := NewFakeRuleStore(t)
-	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := NewFakeAdminConfigStore(t)
+	fakeRuleStore := store.NewFakeRuleStore(t)
+	fakeInstanceStore := &store.FakeInstanceStore{}
+	fakeAdminConfigStore := store.NewFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval
 	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
@@ -104,11 +104,11 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 }
 
 func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := store.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
-	fakeRuleStore := NewFakeRuleStore(t)
-	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := NewFakeAdminConfigStore(t)
+	fakeRuleStore := store.NewFakeRuleStore(t)
+	fakeInstanceStore := &store.FakeInstanceStore{}
+	fakeAdminConfigStore := store.NewFakeAdminConfigStore(t)
 
 	// First, let's create an admin configuration that holds an alertmanager.
 	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}}
@@ -174,7 +174,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// }, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s' from org 1 or '%s' from org 2, the alert count was: %d", alertRuleOrgOne.Title, alertRuleOrgTwo.Title, count)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := NewFakeExternalAlertmanager(t)
+	fakeAM2 := store.NewFakeExternalAlertmanager(t)
 	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
@@ -245,11 +245,11 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 }
 
 func TestChangingAlertmanagersChoice(t *testing.T) {
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := store.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
-	fakeRuleStore := NewFakeRuleStore(t)
-	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := NewFakeAdminConfigStore(t)
+	fakeRuleStore := store.NewFakeRuleStore(t)
+	fakeInstanceStore := &store.FakeInstanceStore{}
+	fakeAdminConfigStore := store.NewFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval and an Alertmanagers choice.
 	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
@@ -338,10 +338,10 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *FakeRuleStore, *FakeInstanceStore, *FakeAdminConfigStore, prometheus.Gatherer) {
-		ruleStore := NewFakeRuleStore(t)
-		instanceStore := &FakeInstanceStore{}
-		adminConfigStore := NewFakeAdminConfigStore(t)
+	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer) {
+		ruleStore := store.NewFakeRuleStore(t)
+		instanceStore := &store.FakeInstanceStore{}
+		adminConfigStore := store.NewFakeAdminConfigStore(t)
 
 		registry := prometheus.NewPedanticRegistry()
 		sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
@@ -505,7 +505,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		// Now update the rule
 		newRule := *rule
 		newRule.Version++
-		ruleStore.putRule(ctx, &newRule)
+		ruleStore.PutRule(ctx, &newRule)
 
 		// and call with new version
 		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
@@ -601,7 +601,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			// wait for command to be executed
 			var queries []interface{}
 			require.Eventuallyf(t, func() bool {
-				queries = ruleStore.getRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+				queries = ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
 					c, ok := cmd.(models.GetAlertRuleByUIDQuery)
 					return c, ok
 				})
@@ -619,7 +619,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}
 			waitForTimeChannel(t, evalAppliedChan)
 
-			queries = ruleStore.getRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+			queries = ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
 				c, ok := cmd.(models.GetAlertRuleByUIDQuery)
 				return c, ok
 			})
@@ -651,7 +651,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			var queries []interface{}
 			require.Eventuallyf(t, func() bool {
-				queries = ruleStore.getRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+				queries = ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
 					c, ok := cmd.(models.GetAlertRuleByUIDQuery)
 					return c, ok
 				})
@@ -662,7 +662,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	t.Run("when rule version is updated", func(t *testing.T) {
 		t.Run("should clear the state and expire firing alerts", func(t *testing.T) {
-			fakeAM := NewFakeExternalAlertmanager(t)
+			fakeAM := store.NewFakeExternalAlertmanager(t)
 			defer fakeAM.Close()
 
 			orgID := rand.Int63()
@@ -730,7 +730,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			wg.Wait()
 			newRule := rule
 			newRule.Version++
-			ruleStore.putRule(ctx, &newRule)
+			ruleStore.PutRule(ctx, &newRule)
 			wg.Add(1)
 			updateChan <- struct{}{}
 			wg.Wait()
@@ -745,7 +745,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				return count == len(expectedToBeSent.PostableAlerts)
 			}, 20*time.Second, 200*time.Millisecond, "Alertmanager was expected to receive %d alerts, but received only %d", len(expectedToBeSent.PostableAlerts), count)
 
-			for _, alert := range fakeAM.alerts {
+			for _, alert := range fakeAM.Alerts() {
 				require.Equalf(t, sch.clock.Now().UTC(), time.Time(alert.EndsAt).UTC(), "Alert received by Alertmanager should be expired as of now")
 			}
 		})
@@ -768,7 +768,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			t.Skip()
 		})
 		t.Run("it should send to external alertmanager if configured for organization", func(t *testing.T) {
-			fakeAM := NewFakeExternalAlertmanager(t)
+			fakeAM := store.NewFakeExternalAlertmanager(t)
 			defer fakeAM.Close()
 
 			orgID := rand.Int63()
@@ -997,9 +997,9 @@ func generateRuleKey() models.AlertRuleKey {
 
 func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	t.Helper()
-	ruleStore := NewFakeRuleStore(t)
-	instanceStore := &FakeInstanceStore{}
-	adminConfigStore := NewFakeAdminConfigStore(t)
+	ruleStore := store.NewFakeRuleStore(t)
+	instanceStore := &store.FakeInstanceStore{}
+	adminConfigStore := store.NewFakeAdminConfigStore(t)
 	sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, nil)
 	return sch
 }
@@ -1007,7 +1007,7 @@ func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock) {
 	t.Helper()
 
-	fakeAnnoRepo := NewFakeAnnotationsRepo()
+	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 	annotations.SetRepository(fakeAnnoRepo)
 	mockedClock := clock.NewMock()
 	logger := log.New("ngalert schedule test")
@@ -1042,7 +1042,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *FakeRuleStore, intervalSeconds int64, orgID int64, evalResult eval.State) *models.AlertRule {
+func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSeconds int64, orgID int64, evalResult eval.State) *models.AlertRule {
 	ctx := context.Background()
 
 	t.Helper()
