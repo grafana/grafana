@@ -14,7 +14,6 @@ Access to these API endpoints is restricted as follows:
 - All authenticated users are able to view details of teams they are a member of.
 - Organization Admins are able to manage all teams and team members.
 - If the `editors_can_admin` configuration flag is enabled, Organization Editors are able to create teams and manage teams that they are Admin members of.
-  - Note that when the `editors_can_admin` configuration flag is enabled, Organizations Editors could find the name of a team that they are not members of by attempting to create a team with the same name.
 
 > If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by Fine-grained access control permissions.
 > Refer to specific endpoints to understand what permissions are required.
