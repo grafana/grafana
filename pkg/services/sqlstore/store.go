@@ -9,6 +9,10 @@ import (
 
 type Store interface {
 	GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error
+	GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error
+	GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error
+	GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error
+	GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error
 	DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error
 	CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error
 	DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error
