@@ -41,15 +41,15 @@ import (
 func TestSendingToExternalAlertmanager(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
-	fakeRuleStore := newFakeRuleStore(t)
+	fakeRuleStore := NewFakeRuleStore(t)
 	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := newFakeAdminConfigStore(t)
+	fakeAdminConfigStore := NewFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval
 	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
 
 	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}, SendAlertsTo: models.AllAlertmanagers}
+	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -106,12 +106,12 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
-	fakeRuleStore := newFakeRuleStore(t)
+	fakeRuleStore := NewFakeRuleStore(t)
 	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := newFakeAdminConfigStore(t)
+	fakeAdminConfigStore := NewFakeAdminConfigStore(t)
 
 	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}}
+	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -140,7 +140,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}()
 
 	// 1. Now, let's assume a new org comes along.
-	adminConfig2 := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL}}
+	adminConfig2 := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.Server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -164,8 +164,8 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// However, sometimes this does not happen.
 
 	// Create two alert rules with one second interval.
-	// alertRuleOrgOne := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
-	// alertRuleOrgTwo := CreateTestAlertRule(t, fakeRuleStore, 1, 2)
+	// alertRuleOrgOne := CreateTestAlertRule(t, FakeRuleStore, 1, 1)
+	// alertRuleOrgTwo := CreateTestAlertRule(t, FakeRuleStore, 1, 2)
 	// Eventually, our Alertmanager should have received at least two alerts.
 	// var count int
 	// require.Eventuallyf(t, func() bool {
@@ -175,7 +175,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
 	fakeAM2 := NewFakeExternalAlertmanager(t)
-	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL, fakeAM2.server.URL}}
+	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -247,16 +247,16 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 func TestChangingAlertmanagersChoice(t *testing.T) {
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
-	fakeRuleStore := newFakeRuleStore(t)
+	fakeRuleStore := NewFakeRuleStore(t)
 	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := newFakeAdminConfigStore(t)
+	fakeAdminConfigStore := NewFakeAdminConfigStore(t)
 
 	// create alert rule with one second interval and an Alertmanagers choice.
 	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
 
 	// First, let's create an admin configuration that holds an alertmanager
 	// and sends alerts to both internal and external alertmanagers (default).
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}}
+	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.Server.URL}}
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
@@ -338,10 +338,10 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *fakeRuleStore, *FakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
-		ruleStore := newFakeRuleStore(t)
+	) (*schedule, *FakeRuleStore, *FakeInstanceStore, *FakeAdminConfigStore, prometheus.Gatherer) {
+		ruleStore := NewFakeRuleStore(t)
 		instanceStore := &FakeInstanceStore{}
-		adminConfigStore := newFakeAdminConfigStore(t)
+		adminConfigStore := NewFakeAdminConfigStore(t)
 
 		registry := prometheus.NewPedanticRegistry()
 		sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
@@ -386,7 +386,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			t.Run("it should get rule from database when run the first time", func(t *testing.T) {
 				queries := make([]models.GetAlertRuleByUIDQuery, 0)
-				for _, op := range ruleStore.recordedOps {
+				for _, op := range ruleStore.RecordedOps {
 					switch q := op.(type) {
 					case models.GetAlertRuleByUIDQuery:
 						queries = append(queries, q)
@@ -419,7 +419,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				s := states[0]
 
 				var cmd *models.SaveAlertInstanceCommand
-				for _, op := range instanceStore.recordedOps {
+				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
 					case models.SaveAlertInstanceCommand:
 						cmd = &q
@@ -518,7 +518,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		require.Equal(t, expectedTime, actualTime)
 
 		queries := make([]models.GetAlertRuleByUIDQuery, 0)
-		for _, op := range ruleStore.recordedOps {
+		for _, op := range ruleStore.RecordedOps {
 			switch q := op.(type) {
 			case models.GetAlertRuleByUIDQuery:
 				queries = append(queries, q)
@@ -572,7 +572,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		require.Equal(t, expectedTime, actualTime)
 
 		queries := make([]models.GetAlertRuleByUIDQuery, 0)
-		for _, op := range ruleStore.recordedOps {
+		for _, op := range ruleStore.RecordedOps {
 			switch q := op.(type) {
 			case models.GetAlertRuleByUIDQuery:
 				queries = append(queries, q)
@@ -606,7 +606,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 					return c, ok
 				})
 				return len(queries) == 1
-			}, 5*time.Second, 100*time.Millisecond, "Expected command a single %T to be recorded. All recordings: %#v", models.GetAlertRuleByUIDQuery{}, ruleStore.recordedOps)
+			}, 5*time.Second, 100*time.Millisecond, "Expected command a single %T to be recorded. All recordings: %#v", models.GetAlertRuleByUIDQuery{}, ruleStore.RecordedOps)
 
 			m := queries[0].(models.GetAlertRuleByUIDQuery)
 			require.Equal(t, rule.UID, m.UID)
@@ -641,7 +641,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				_ = sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evalContext), updateChan)
 			}()
 
-			ruleStore.hook = func(cmd interface{}) error {
+			ruleStore.Hook = func(cmd interface{}) error {
 				if _, ok := cmd.(models.GetAlertRuleByUIDQuery); !ok {
 					return nil
 				}
@@ -656,7 +656,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 					return c, ok
 				})
 				return int64(len(queries)) == sch.maxAttempts
-			}, 5*time.Second, 100*time.Millisecond, "Expected exactly two request of %T. All recordings: %#v", models.GetAlertRuleByUIDQuery{}, ruleStore.recordedOps)
+			}, 5*time.Second, 100*time.Millisecond, "Expected exactly two request of %T. All recordings: %#v", models.GetAlertRuleByUIDQuery{}, ruleStore.RecordedOps)
 		})
 	})
 
@@ -668,7 +668,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			orgID := rand.Int63()
 			s, err := sender.New(nil)
 			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.server.URL}}
+			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.Server.URL}}
 			err = s.ApplyConfig(adminConfig)
 			require.NoError(t, err)
 			s.Run()
@@ -717,7 +717,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
-			ruleStore.hook = func(cmd interface{}) error {
+			ruleStore.Hook = func(cmd interface{}) error {
 				_, ok := cmd.(models.GetAlertRuleByUIDQuery)
 				if ok {
 					wg.Done() // add synchronization.
@@ -774,7 +774,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			orgID := rand.Int63()
 			s, err := sender.New(nil)
 			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.server.URL}}
+			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.Server.URL}}
 			err = s.ApplyConfig(adminConfig)
 			require.NoError(t, err)
 			s.Run()
@@ -997,9 +997,9 @@ func generateRuleKey() models.AlertRuleKey {
 
 func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	t.Helper()
-	ruleStore := newFakeRuleStore(t)
+	ruleStore := NewFakeRuleStore(t)
 	instanceStore := &FakeInstanceStore{}
-	adminConfigStore := newFakeAdminConfigStore(t)
+	adminConfigStore := NewFakeAdminConfigStore(t)
 	sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, nil)
 	return sch
 }
@@ -1042,15 +1042,15 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *fakeRuleStore, intervalSeconds int64, orgID int64, evalResult eval.State) *models.AlertRule {
+func CreateTestAlertRule(t *testing.T, dbstore *FakeRuleStore, intervalSeconds int64, orgID int64, evalResult eval.State) *models.AlertRule {
 	ctx := context.Background()
 
 	t.Helper()
-	records := make([]interface{}, 0, len(dbstore.recordedOps))
-	copy(records, dbstore.recordedOps)
+	records := make([]interface{}, 0, len(dbstore.RecordedOps))
+	copy(records, dbstore.RecordedOps)
 	defer func() {
 		// erase queries that were made by the testing suite
-		dbstore.recordedOps = records
+		dbstore.RecordedOps = records
 	}()
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)

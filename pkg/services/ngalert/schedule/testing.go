@@ -50,41 +50,41 @@ func waitForErrChannel(t *testing.T, ch chan error) error {
 	}
 }
 
-func newFakeRuleStore(t *testing.T) *fakeRuleStore {
-	return &fakeRuleStore{
+func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
+	return &FakeRuleStore{
 		t:     t,
-		rules: map[int64]map[string]map[string][]*models.AlertRule{},
-		hook: func(interface{}) error {
+		Rules: map[int64]map[string]map[string][]*models.AlertRule{},
+		Hook: func(interface{}) error {
 			return nil
 		},
 	}
 }
 
 // FakeRuleStore mocks the RuleStore of the scheduler.
-type fakeRuleStore struct {
+type FakeRuleStore struct {
 	t           *testing.T
 	mtx         sync.Mutex
-	rules       map[int64]map[string]map[string][]*models.AlertRule
-	hook        func(cmd interface{}) error // use hook if you need to intercept some query and return an error
-	recordedOps []interface{}
+	Rules       map[int64]map[string]map[string][]*models.AlertRule
+	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
+	RecordedOps []interface{}
 }
 
-// putRule puts the rule in the rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *fakeRuleStore) putRule(_ context.Context, r *models.AlertRule) {
+// putRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
+func (f *FakeRuleStore) putRule(_ context.Context, r *models.AlertRule) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
+	f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
 		r,
 	}
 }
 
 // getRecordedCommands filters recorded commands using predicate function. Returns the subset of the recorded commands that meet the predicate
-func (f *fakeRuleStore) getRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
+func (f *FakeRuleStore) getRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	result := make([]interface{}, 0, len(f.recordedOps))
-	for _, op := range f.recordedOps {
+	result := make([]interface{}, 0, len(f.RecordedOps))
+	for _, op := range f.RecordedOps {
 		cmd, ok := predicate(op)
 		if !ok {
 			continue
@@ -94,24 +94,24 @@ func (f *fakeRuleStore) getRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *fakeRuleStore) DeleteAlertRuleByUID(_ context.Context, _ int64, _ string) error { return nil }
-func (f *fakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
+func (f *FakeRuleStore) DeleteAlertRuleByUID(_ context.Context, _ int64, _ string) error { return nil }
+func (f *FakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
 	return []string{}, nil
 }
-func (f *fakeRuleStore) DeleteRuleGroupAlertRules(_ context.Context, _ int64, _ string, _ string) ([]string, error) {
+func (f *FakeRuleStore) DeleteRuleGroupAlertRules(_ context.Context, _ int64, _ string, _ string) ([]string, error) {
 	return []string{}, nil
 }
-func (f *fakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
+func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
 	return nil
 }
-func (f *fakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
+func (f *FakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
-	if err := f.hook(*q); err != nil {
+	f.RecordedOps = append(f.RecordedOps, *q)
+	if err := f.Hook(*q); err != nil {
 		return err
 	}
-	rgs, ok := f.rules[q.OrgID]
+	rgs, ok := f.Rules[q.OrgID]
 	if !ok {
 		return nil
 	}
@@ -131,14 +131,14 @@ func (f *fakeRuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertR
 }
 
 // For now, we're not implementing namespace filtering.
-func (f *fakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
-	if err := f.hook(*q); err != nil {
+	f.RecordedOps = append(f.RecordedOps, *q)
+	if err := f.Hook(*q); err != nil {
 		return err
 	}
-	for _, rg := range f.rules {
+	for _, rg := range f.Rules {
 		for _, n := range rg {
 			for _, r := range n {
 				q.Result = append(q.Result, r...)
@@ -148,26 +148,26 @@ func (f *fakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 
 	return nil
 }
-func (f *fakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
+	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
-func (f *fakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
+func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
+	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
-func (f *fakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.ListRuleGroupAlertRulesQuery) error {
+func (f *FakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.ListRuleGroupAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
-	if err := f.hook(*q); err != nil {
+	f.RecordedOps = append(f.RecordedOps, *q)
+	if err := f.Hook(*q); err != nil {
 		return err
 	}
-	rgs, ok := f.rules[q.OrgID]
+	rgs, ok := f.Rules[q.OrgID]
 	if !ok {
 		return nil
 	}
@@ -192,51 +192,51 @@ func (f *fakeRuleStore) GetRuleGroupAlertRules(_ context.Context, q *models.List
 
 	return nil
 }
-func (f *fakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaces(_ context.Context, _ int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	return nil, nil
 }
-func (f *fakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	return nil, nil
 }
-func (f *fakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
+func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
-	if err := f.hook(*q); err != nil {
+	f.RecordedOps = append(f.RecordedOps, *q)
+	if err := f.Hook(*q); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (f *fakeRuleStore) UpsertAlertRules(_ context.Context, q []store.UpsertRule) error {
+func (f *FakeRuleStore) UpsertAlertRules(_ context.Context, q []store.UpsertRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, q)
-	if err := f.hook(q); err != nil {
+	f.RecordedOps = append(f.RecordedOps, q)
+	if err := f.Hook(q); err != nil {
 		return err
 	}
 	return nil
 }
-func (f *fakeRuleStore) UpdateRuleGroup(_ context.Context, cmd store.UpdateRuleGroupCmd) error {
+func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd store.UpdateRuleGroupCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, cmd)
-	if err := f.hook(cmd); err != nil {
+	f.RecordedOps = append(f.RecordedOps, cmd)
+	if err := f.Hook(cmd); err != nil {
 		return err
 	}
-	rgs, ok := f.rules[cmd.OrgID]
+	rgs, ok := f.Rules[cmd.OrgID]
 	if !ok {
-		f.rules[cmd.OrgID] = map[string]map[string][]*models.AlertRule{}
+		f.Rules[cmd.OrgID] = map[string]map[string][]*models.AlertRule{}
 	}
 
 	rg, ok := rgs[cmd.RuleGroupConfig.Name]
 	if !ok {
-		f.rules[cmd.OrgID][cmd.RuleGroupConfig.Name] = map[string][]*models.AlertRule{}
+		f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name] = map[string][]*models.AlertRule{}
 	}
 
 	_, ok = rg[cmd.NamespaceUID]
 	if !ok {
-		f.rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = []*models.AlertRule{}
+		f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = []*models.AlertRule{}
 	}
 
 	rules := []*models.AlertRule{}
@@ -280,31 +280,31 @@ func (f *fakeRuleStore) UpdateRuleGroup(_ context.Context, cmd store.UpdateRuleG
 		rules = append(rules, new)
 	}
 
-	f.rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = rules
+	f.Rules[cmd.OrgID][cmd.RuleGroupConfig.Name][cmd.NamespaceUID] = rules
 	return nil
 }
 
 type FakeInstanceStore struct {
 	mtx         sync.Mutex
-	recordedOps []interface{}
+	RecordedOps []interface{}
 }
 
 func (f *FakeInstanceStore) GetAlertInstance(_ context.Context, q *models.GetAlertInstanceQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
+	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
 func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
+	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
 func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, *q)
+	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
 
@@ -313,43 +313,43 @@ func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _
 	return nil
 }
 
-func newFakeAdminConfigStore(t *testing.T) *fakeAdminConfigStore {
+func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {
 	t.Helper()
-	return &fakeAdminConfigStore{configs: map[int64]*models.AdminConfiguration{}}
+	return &FakeAdminConfigStore{Configs: map[int64]*models.AdminConfiguration{}}
 }
 
-type fakeAdminConfigStore struct {
+type FakeAdminConfigStore struct {
 	mtx     sync.Mutex
-	configs map[int64]*models.AdminConfiguration
+	Configs map[int64]*models.AdminConfiguration
 }
 
-func (f *fakeAdminConfigStore) GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error) {
+func (f *FakeAdminConfigStore) GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	return f.configs[orgID], nil
+	return f.Configs[orgID], nil
 }
 
-func (f *fakeAdminConfigStore) GetAdminConfigurations() ([]*models.AdminConfiguration, error) {
+func (f *FakeAdminConfigStore) GetAdminConfigurations() ([]*models.AdminConfiguration, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	acs := make([]*models.AdminConfiguration, 0, len(f.configs))
-	for _, ac := range f.configs {
+	acs := make([]*models.AdminConfiguration, 0, len(f.Configs))
+	for _, ac := range f.Configs {
 		acs = append(acs, ac)
 	}
 
 	return acs, nil
 }
 
-func (f *fakeAdminConfigStore) DeleteAdminConfiguration(orgID int64) error {
+func (f *FakeAdminConfigStore) DeleteAdminConfiguration(orgID int64) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	delete(f.configs, orgID)
+	delete(f.Configs, orgID)
 	return nil
 }
-func (f *fakeAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminConfigurationCmd) error {
+func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminConfigurationCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
+	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
 	return nil
 }
@@ -358,7 +358,7 @@ type FakeExternalAlertmanager struct {
 	t      *testing.T
 	mtx    sync.Mutex
 	alerts amv2.PostableAlerts
-	server *httptest.Server
+	Server *httptest.Server
 }
 
 func NewFakeExternalAlertmanager(t *testing.T) *FakeExternalAlertmanager {
@@ -368,13 +368,13 @@ func NewFakeExternalAlertmanager(t *testing.T) *FakeExternalAlertmanager {
 		t:      t,
 		alerts: amv2.PostableAlerts{},
 	}
-	am.server = httptest.NewServer(http.HandlerFunc(am.Handler()))
+	am.Server = httptest.NewServer(http.HandlerFunc(am.Handler()))
 
 	return am
 }
 
 func (am *FakeExternalAlertmanager) URL() string {
-	return am.server.URL
+	return am.Server.URL
 }
 
 func (am *FakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
@@ -424,24 +424,24 @@ func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *htt
 }
 
 func (am *FakeExternalAlertmanager) Close() {
-	am.server.Close()
+	am.Server.Close()
 }
 
 type FakeAnnotationsRepo struct {
 	mtx   sync.Mutex
-	items []*annotations.Item
+	Items []*annotations.Item
 }
 
 func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
 	return &FakeAnnotationsRepo{
-		items: make([]*annotations.Item, 0),
+		Items: make([]*annotations.Item, 0),
 	}
 }
 
 func (repo *FakeAnnotationsRepo) Len() int {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
-	return len(repo.items)
+	return len(repo.Items)
 }
 
 func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
@@ -451,7 +451,7 @@ func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error 
 func (repo *FakeAnnotationsRepo) Save(item *annotations.Item) error {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
-	repo.items = append(repo.items, item)
+	repo.Items = append(repo.Items, item)
 
 	return nil
 }
