@@ -75,8 +75,9 @@ interface ValueLabelArray {
  * @internal
  */
 interface ValueLabel {
-  bbox?: Rect;
   text: string;
+  value: number;
+  bbox?: Rect;
   textMetrics?: TextMetrics;
   x?: number;
   y?: number;
@@ -313,7 +314,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         if (labels[dataIdx] === undefined) {
           labels[dataIdx] = {};
         }
-        labels[dataIdx][seriesIdx] = { text: text };
+        labels[dataIdx][seriesIdx] = { text: text, value: val };
 
         // Calculate font size when it's set to be automatic
         if (hasAutoValueSize) {
@@ -342,22 +343,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         }
 
         let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
-        let curAlign: CanvasTextAlign | undefined = undefined,
-          curBaseline: CanvasTextBaseline | undefined = undefined;
         let value = rawValue(seriesIdx, dataIdx);
 
         if (value != null) {
-          let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
-          let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'alphabetic') : 'middle';
-
-          if (align !== curAlign) {
-            u.ctx.textAlign = curAlign = align;
-          }
-
-          if (baseline !== curBaseline) {
-            u.ctx.textBaseline = baseline;
-          }
-
           // Calculate final co-ordinates for text position
           const x =
             u.bbox.left + (isXHorizontal ? lft + wid / 2 : value < 0 ? lft - labelOffset : lft + wid + labelOffset);
@@ -384,12 +372,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           if (isXHorizontal) {
             // Adjust for baseline which is "top" in this case
             xAdjust = (textMetrics.width * scaleFactor) / 2;
-            yAdjust = (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor;
 
-            // yAdjust doesn't matter for neg values when x is horizontal- the baseline is top
-            if (value < 0) {
-              yAdjust = 0;
-            }
+            // yAdjust only matters when when the value isn't negative
+            yAdjust =
+              value > 0
+                ? (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor
+                : 0;
           } else {
             // Adjust from the baseline which is "middle" in this case
             yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
@@ -484,9 +472,23 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.fillStyle = theme.colors.text.primary;
     u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
 
+    let curAlign: CanvasTextAlign | undefined = undefined,
+      curBaseline: CanvasTextBaseline | undefined = undefined;
+
     for (const didx in labels) {
       for (const sidx in labels[didx]) {
-        const { text, x = 0, y = 0, bbox = { x: 0, y: 0, w: 1, h: 1 } } = labels[didx][sidx];
+        const { text, value, x = 0, y = 0, bbox = { x: 0, y: 0, w: 1, h: 1 } } = labels[didx][sidx];
+
+        let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
+        let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'alphabetic') : 'middle';
+
+        if (align !== curAlign) {
+          u.ctx.textAlign = curAlign = align;
+        }
+
+        if (baseline !== curBaseline) {
+          u.ctx.textBaseline = curBaseline = baseline;
+        }
 
         if (showValue === VisibilityMode.Always) {
           u.ctx.fillText(text, x, y);
@@ -499,14 +501,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
             if (r !== undefined && sidx !== subsidx && intersects(bbox, r)) {
               intersectsLabel = true;
-            }
-
-            // SUPER DUMMY DEBUG ONLY - change
-            // We need to detrct whether or not hte value is +/- and set the baseline accordingly
-            // The same thing is already done in the bars builder.
-            if (text.startsWith('-')) {
-              console.log('when rendering text', text, r, intersectsLabel);
-              u.ctx.textBaseline = 'top';
             }
           }
 
