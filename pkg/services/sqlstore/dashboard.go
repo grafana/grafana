@@ -375,7 +375,8 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 }
 
 func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
-	sql := `SELECT
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sql := `SELECT
 					  COUNT(*) as count,
 						term
 					FROM dashboard
@@ -384,10 +385,11 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 					GROUP BY term
 					ORDER BY term`
 
-	query.Result = make([]*models.DashboardTagCloudItem, 0)
-	sess := x.SQL(sql, query.OrgId)
-	err := sess.Find(&query.Result)
-	return err
+		query.Result = make([]*models.DashboardTagCloudItem, 0)
+		sess := dbSession.SQL(sql, query.OrgId)
+		err := sess.Find(&query.Result)
+		return err
+	})
 }
 
 func (ss *SQLStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
