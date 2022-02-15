@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLoki(t *testing.T) {
+func TestFormatLegend(t *testing.T) {
 	t.Run("converting metric name", func(t *testing.T) {
-		metric := map[p.LabelName]p.LabelValue{
-			p.LabelName("app"):    p.LabelValue("backend"),
-			p.LabelName("device"): p.LabelValue("mobile"),
+		metric := map[string]string{
+			"app":    "backend",
+			"device": "mobile",
 		}
 
 		query := &lokiQuery{
@@ -26,10 +26,10 @@ func TestLoki(t *testing.T) {
 	})
 
 	t.Run("build full series name", func(t *testing.T) {
-		metric := map[p.LabelName]p.LabelValue{
-			p.LabelName(p.MetricNameLabel): p.LabelValue("http_request_total"),
-			p.LabelName("app"):             p.LabelValue("backend"),
-			p.LabelName("device"):          p.LabelValue("mobile"),
+		metric := map[string]string{
+			"__name__": "http_request_total",
+			"app":      "backend",
+			"device":   "mobile",
 		}
 
 		query := &lokiQuery{
@@ -41,15 +41,14 @@ func TestLoki(t *testing.T) {
 }
 
 func TestParseResponse(t *testing.T) {
-	t.Run("value is not of type matrix", func(t *testing.T) {
-		queryRes := data.Frames{}
+	t.Run("value is not of supported type", func(t *testing.T) {
 		value := loghttp.QueryResponse{
 			Data: loghttp.QueryResponseData{
-				Result: loghttp.Vector{},
+				Result: loghttp.Scalar{},
 			},
 		}
 		res, err := parseResponse(&value, nil)
-		require.Equal(t, queryRes, res)
+		require.Equal(t, len(res), 0)
 		require.Error(t, err)
 	})
 

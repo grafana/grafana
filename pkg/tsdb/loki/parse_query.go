@@ -55,7 +55,7 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		model := &QueryModel{}
+		model := &QueryJSONModel{}
 		err := json.Unmarshal(query.JSON, model)
 		if err != nil {
 			return nil, err
@@ -76,13 +76,24 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 
 		expr := interpolateVariables(model.Expr, interval, timeRange)
 
+		queryType := model.QueryType
+
+		// there are older queries stored in alerting that did not have queryType,
+		// those were range-queries
+		if queryType == "" {
+			queryType = "range"
+		}
+
 		qs = append(qs, &lokiQuery{
 			Expr:         expr,
+			QueryType:    queryType,
 			Step:         step,
+			MaxLines:     model.MaxLines,
 			LegendFormat: model.LegendFormat,
 			Start:        start,
 			End:          end,
 			RefID:        query.RefID,
+			VolumeQuery:  model.VolumeQuery,
 		})
 	}
 
