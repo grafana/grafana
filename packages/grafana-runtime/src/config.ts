@@ -41,6 +41,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   alertingErrorOrTimeout = '';
   alertingNoDataOrNullValues = '';
   alertingMinInterval = 1;
+  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
