@@ -1,8 +1,12 @@
 import React, { ComponentProps } from 'react';
-import { FieldType, DataFrame } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InspectDataTab } from './InspectDataTab';
+
+// the mock below gets rid of this warning from recompose:
+// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
+jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {
