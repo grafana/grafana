@@ -195,7 +195,7 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 		}
 
 		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			timeVector = append(timeVector, k.Timestamp.Time().UTC())
 			values = append(values, float64(k.Value))
 		}
 
@@ -203,7 +203,12 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField := data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 
-		frames = append(frames, data.NewFrame(name, timeField, valueField))
+		frame := data.NewFrame(name, timeField, valueField)
+		frame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String(),
+		})
+
+		frames = append(frames, frame)
 	}
 
 	return frames, nil

@@ -36,7 +36,7 @@ export * from './live';
 export * from './variables';
 export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
-export { GrafanaConfig, BuildInfo, LicenseInfo, PreloadPlugin } from './config';
+export { OAuth, OAuthSettings, GrafanaConfig, BuildInfo, LicenseInfo, PreloadPlugin } from './config';
 export { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';

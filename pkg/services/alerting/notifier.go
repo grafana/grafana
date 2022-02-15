@@ -214,7 +214,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		Width:           1000,
 		Height:          500,
 		ConcurrentLimit: setting.AlertingRenderLimit,
-		Theme:           rendering.ThemeDark,
+		Theme:           models.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()

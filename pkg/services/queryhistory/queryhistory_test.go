@@ -35,7 +35,10 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		ctx := web.Context{Req: &http.Request{}}
+		ctx := web.Context{Req: &http.Request{
+			Header: http.Header{},
+		}}
+		ctx.Req.Header.Add("Content-Type", "application/json")
 		sqlStore := sqlstore.InitTestDB(t)
 		service := QueryHistoryService{
 			Cfg:      setting.NewCfg(),

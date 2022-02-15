@@ -27,6 +27,10 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
+	// FlagDashboardPreviewsScheduler
+	// Schedule automatic updates to dashboard previews
+	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
+
 	// FlagLiveConfig
 	// Save grafana live configuration in SQL tables
 	FlagLiveConfig = "live-config"
@@ -59,10 +63,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagFullRangeLogsVolume
-	// Show full range logs volume in explore
-	FlagFullRangeLogsVolume = "fullRangeLogsVolume"
-
 	// FlagAccesscontrol
 	// Support robust access control
 	FlagAccesscontrol = "accesscontrol"
@@ -70,6 +70,10 @@ const (
 	// FlagPrometheusAzureAuth
 	// Use azure authentication for prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
+
+	// FlagInfluxdbBackendMigration
+	// Query InfluxDB InfluxQL without the proxy
+	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
 	// FlagNewNavigation
 	// Try the next gen navigation model
@@ -98,4 +102,8 @@ const (
 	// FlagFeatureHighlights
 	// Highlight Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
+
+	// FlagMigrationLocking
+	// Lock database during migrations
+	FlagMigrationLocking = "migrationLocking"
 )

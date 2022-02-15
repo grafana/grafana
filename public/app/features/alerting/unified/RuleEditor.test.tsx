@@ -11,7 +11,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { mockDataSource, MockDataSourceSrv } from './mocks';
 import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -39,13 +38,13 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
 
   api: {
-    fetchRulerRulesGroup: typeAsJestMock(fetchRulerRulesGroup),
-    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
-    fetchRulerRulesNamespace: typeAsJestMock(fetchRulerRulesNamespace),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
+    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
+    fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
   },
 };
 
