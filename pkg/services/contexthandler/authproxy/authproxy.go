@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
@@ -47,13 +46,22 @@ var newLDAP = multildap.New
 // supportedHeaders states the supported headers configuration fields
 var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role"}
 
+type userStore interface {
+	GetSignedInUserWithCacheCtx(context.Context, *models.GetSignedInUserQuery) error
+}
+type loginService interface {
+	UpsertUser(context.Context, *models.UpsertUserCommand) error
+}
+
 // AuthProxy struct
 type AuthProxy struct {
-	cfg         *setting.Cfg
-	remoteCache *remotecache.RemoteCache
-	ctx         *models.ReqContext
-	orgID       int64
-	header      string
+	cfg          *setting.Cfg
+	remoteCache  *remotecache.RemoteCache
+	ctx          *models.ReqContext
+	loginService loginService
+	userStore    userStore
+	orgID        int64
+	header       string
 }
 
 // Error auth proxy specific error
@@ -83,14 +91,16 @@ type Options struct {
 }
 
 // New instance of the AuthProxy.
-func New(cfg *setting.Cfg, options *Options) *AuthProxy {
+func New(cfg *setting.Cfg, options *Options, loginService loginService, userStore userStore) *AuthProxy {
 	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
 	return &AuthProxy{
-		remoteCache: options.RemoteCache,
-		cfg:         cfg,
-		ctx:         options.Ctx,
-		orgID:       options.OrgID,
-		header:      header,
+		remoteCache:  options.RemoteCache,
+		cfg:          cfg,
+		ctx:          options.Ctx,
+		orgID:        options.OrgID,
+		header:       header,
+		loginService: loginService,
+		userStore:    userStore,
 	}
 }
 
@@ -248,7 +258,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
-	if err := bus.Dispatch(auth.ctx.Req.Context(), upsert); err != nil {
+	if err := auth.loginService.UpsertUser(auth.ctx.Req.Context(), upsert); err != nil {
 		return 0, err
 	}
 
@@ -305,7 +315,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		ExternalUser:  extUser,
 	}
 
-	err := bus.Dispatch(auth.ctx.Req.Context(), upsert)
+	err := auth.loginService.UpsertUser(auth.ctx.Req.Context(), upsert)
 	if err != nil {
 		return 0, err
 	}
@@ -334,7 +344,7 @@ func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, erro
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(context.Background(), query); err != nil {
+	if err := auth.userStore.GetSignedInUserWithCacheCtx(context.Background(), query); err != nil {
 		return nil, err
 	}
 

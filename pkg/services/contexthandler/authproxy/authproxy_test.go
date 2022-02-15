@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
@@ -43,7 +42,7 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, cb fu
 		RemoteCache: remoteCache,
 		Ctx:         ctx,
 		OrgID:       4,
-	})
+	}, &fakeLoginService{}, nil)
 
 	return auth
 }
@@ -101,14 +100,6 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 
 	t.Run("Logs in via LDAP", func(t *testing.T) {
 		const id int64 = 42
-
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-			cmd.Result = &models.User{
-				Id: id,
-			}
-
-			return nil
-		})
 
 		origIsLDAPEnabled := isLDAPEnabled
 		origGetLDAPConfig := getLDAPConfig
@@ -190,4 +181,11 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 		assert.NotEqual(t, id, gotID)
 		assert.False(t, stub.LoginCalled)
 	})
+}
+
+type fakeLoginService struct{}
+
+func (m *fakeLoginService) UpsertUser(_ context.Context, cmd *models.UpsertUserCommand) error {
+	cmd.Result = &models.User{Id: 42}
+	return nil
 }
