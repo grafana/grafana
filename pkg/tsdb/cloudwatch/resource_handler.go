@@ -26,7 +26,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 
 type handleFn func(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
 
-func handleResourceReq(handleMetricFind handleFn) func(rw http.ResponseWriter, req *http.Request) {
+func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		pluginContext := httpadapter.PluginConfigFromContext(ctx)
@@ -34,7 +34,7 @@ func handleResourceReq(handleMetricFind handleFn) func(rw http.ResponseWriter, r
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		}
-		data, err := handleMetricFind(pluginContext, req.URL.Query())
+		data, err := handleFunc(pluginContext, req.URL.Query())
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
 		}
