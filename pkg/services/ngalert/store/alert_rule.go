@@ -53,6 +53,7 @@ type RuleStore interface {
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
 	UpdateRuleGroup(ctx context.Context, cmd UpdateRuleGroupCmd) error
+	InTransaction(ctx context.Context, f func(ctx context.Context) error) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -649,4 +650,8 @@ WHERE org_id = ?`
 		query.Result = ruleGroups
 		return nil
 	})
+}
+
+func (st *DBstore) InTransaction(ctx context.Context, f func(ctx context.Context) error) error {
+	return st.SQLStore.InTransaction(ctx, f)
 }
