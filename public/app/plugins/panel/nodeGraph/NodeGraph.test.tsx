@@ -61,6 +61,7 @@ describe('NodeGraph', () => {
     expect(getXY(circle)).toEqual({ x: 0, y: 0 });
   });
 
+  // TODO: Fix test
   it('shows context menu when clicking on node or edge', async () => {
     render(
       <NodeGraph
@@ -152,6 +153,7 @@ describe('NodeGraph', () => {
     expect(markers.length).toBe(1);
   });
 
+  // TODO: Fix test
   it('allows expanding the nodes when limiting visible nodes', async () => {
     render(
       <NodeGraph
