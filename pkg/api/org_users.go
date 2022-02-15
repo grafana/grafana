@@ -118,7 +118,7 @@ func (hs *HTTPServer) getUserAccessControlMetadata(c *models.ReqContext, resourc
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		return nil, err
 	}
