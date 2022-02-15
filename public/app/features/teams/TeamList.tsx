@@ -69,11 +69,9 @@ export class TeamList extends PureComponent<Props, State> {
     const { editorsCanAdmin, signedInUser } = this.props;
     const permission = team.permission;
     const teamUrl = `org/teams/edit/${team.id}`;
-    const canDelete = contextSrv.hasAccessInMetadata(
-      AccessControlAction.ActionTeamsDelete,
-      team,
-      isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser })
-    );
+    const isTeamAdmin = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
+    const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, team, isTeamAdmin);
+    const canReadTeam = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRead, team, isTeamAdmin);
     const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
     const canUpdateTeamRoles =
       contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesAdd, false) ||
@@ -86,20 +84,34 @@ export class TeamList extends PureComponent<Props, State> {
     return (
       <tr key={team.id}>
         <td className="width-4 text-center link-td">
-          <a href={teamUrl}>
+          {canReadTeam ? (
+            <a href={teamUrl}>
+              <img className="filter-table__avatar" src={team.avatarUrl} alt="Team avatar" />
+            </a>
+          ) : (
             <img className="filter-table__avatar" src={team.avatarUrl} alt="Team avatar" />
-          </a>
+          )}
         </td>
         <td className="link-td">
-          <a href={teamUrl}>{team.name}</a>
+          {canReadTeam ? <a href={teamUrl}>{team.name}</a> : <div style={{ padding: '0px 8px' }}>{team.name}</div>}
         </td>
         <td className="link-td">
-          <a href={teamUrl} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
-            {team.email}
-          </a>
+          {canReadTeam ? (
+            <a href={teamUrl} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
+              {team.email}
+            </a>
+          ) : (
+            <div style={{ padding: '0px 8px' }} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
+              {team.email}
+            </div>
+          )}
         </td>
         <td className="link-td">
-          <a href={teamUrl}>{team.memberCount}</a>
+          {canReadTeam ? (
+            <a href={teamUrl}>{team.memberCount}</a>
+          ) : (
+            <div style={{ padding: '0px 8px' }}>{team.memberCount}</div>
+          )}
         </td>
         {displayRolePicker && (
           <td>
