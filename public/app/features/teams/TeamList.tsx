@@ -42,10 +42,7 @@ export class TeamList extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    // Don't fetch teams if the user cannot see any
-    if (contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true)) {
-      this.fetchTeams();
-    }
+    this.fetchTeams();
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       this.fetchRoleOptions();
     }
@@ -130,6 +127,7 @@ export class TeamList extends PureComponent<Props, State> {
         buttonIcon="users-alt"
         buttonLink="org/teams/new"
         buttonTitle=" New team"
+        buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
         proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
         proTipLink=""
         proTipLinkTitle=""
@@ -198,10 +196,8 @@ export class TeamList extends PureComponent<Props, State> {
 
   renderList() {
     const { teamsCount, hasFetched } = this.props;
-    // If the user cannot read any team, we didn't fetch them
-    let isLoading = !hasFetched && contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true);
 
-    if (isLoading) {
+    if (!hasFetched) {
       return null;
     }
 
@@ -214,12 +210,10 @@ export class TeamList extends PureComponent<Props, State> {
 
   render() {
     const { hasFetched, navModel } = this.props;
-    // If the user cannot read any team, we didn't fetch them
-    let isLoading = !hasFetched && contextSrv.hasAccess(AccessControlAction.ActionTeamsRead, true);
 
     return (
       <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>{this.renderList()}</Page.Contents>
+        <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
       </Page>
     );
   }
