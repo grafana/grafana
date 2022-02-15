@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -45,6 +46,19 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(500, "Failed to query db for existing user check", err)
+		}
+
+		ok, err := hs.AccessControl.Evaluate(
+			c.Req.Context(),
+			c.SignedInUser,
+			accesscontrol.EvalPermission(accesscontrol.ActionUsersCreate),
+		)
+		if err != nil {
+			return response.Error(500, "Failed to validate permissions to create user", err)
+		}
+
+		if !ok {
+			return response.Error(403, "You do not have sufficient permissions to create new users", nil)
 		}
 	} else {
 		return hs.inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)

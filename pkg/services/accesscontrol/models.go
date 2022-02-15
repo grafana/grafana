@@ -265,6 +265,7 @@ const (
 	ActionUsersPasswordUpdate    = "users.password:update"
 	ActionUsersDelete            = "users:delete"
 	ActionUsersCreate            = "users:create"
+	ActionUsersInvite            = "users:invite"
 	ActionUsersEnable            = "users:enable"
 	ActionUsersDisable           = "users:disable"
 	ActionUsersPermissionsUpdate = "users.permissions:update"
