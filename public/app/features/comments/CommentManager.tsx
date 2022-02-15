@@ -7,7 +7,7 @@ import { CommentView } from './CommentView';
 import { Message, MessagePacket } from './types';
 
 export interface Props {
-  contentType: string;
+  objectType: string;
   objectId: string;
 }
 
@@ -31,7 +31,7 @@ export class CommentManager extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const resp = await getBackendSrv().post('/api/comments/get', {
-      contentType: this.props.contentType,
+      objectType: this.props.objectType,
       objectId: this.props.objectId,
     });
     this.packetCounter++;
@@ -60,7 +60,7 @@ export class CommentManager extends PureComponent<Props, State> {
     return {
       scope: LiveChannelScope.Grafana,
       namespace: 'comment',
-      path: `${this.props.contentType}/${this.props.objectId}`,
+      path: `${this.props.objectType}/${this.props.objectId}`,
     };
   };
 
@@ -90,7 +90,7 @@ export class CommentManager extends PureComponent<Props, State> {
 
   addComment = async (comment: string): Promise<boolean> => {
     const response = await getBackendSrv().post('/api/comments/create', {
-      contentType: this.props.contentType,
+      objectType: this.props.objectType,
       objectId: this.props.objectId,
       content: comment,
     });

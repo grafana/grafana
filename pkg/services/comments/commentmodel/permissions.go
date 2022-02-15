@@ -36,11 +36,11 @@ func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, i
 	return query.Result, nil
 }
 
-func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, contentType string, objectID string) (bool, error) {
-	switch contentType {
-	case ContentTypeOrg:
+func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, objectType string, objectID string) (bool, error) {
+	switch objectType {
+	case ObjectTypeOrg:
 		return false, nil
-	case ContentTypeDashboard:
+	case ObjectTypeDashboard:
 		if !c.features.IsEnabled(featuremgmt.FlagDashboardComments) {
 			return false, nil
 		}
@@ -52,7 +52,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
-	case ContentTypeAnnotation:
+	case ObjectTypeAnnotation:
 		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}
@@ -83,11 +83,11 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 	return true, nil
 }
 
-func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, contentType string, objectID string) (bool, error) {
-	switch contentType {
-	case ContentTypeOrg:
+func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, objectType string, objectID string) (bool, error) {
+	switch objectType {
+	case ObjectTypeOrg:
 		return false, nil
-	case ContentTypeDashboard:
+	case ObjectTypeDashboard:
 		if !c.features.IsEnabled(featuremgmt.FlagDashboardComments) {
 			return false, nil
 		}
@@ -99,7 +99,7 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}
-	case ContentTypeAnnotation:
+	case ObjectTypeAnnotation:
 		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}

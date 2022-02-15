@@ -89,7 +89,7 @@ export const AnnotationTooltip = ({
         </>
         {areAnnotationCommentsEnabled && (
           <div className={styles.commentWrapper}>
-            <CommentManager contentType={'annotation'} objectId={annotation.id.toString()} />
+            <CommentManager objectType={'annotation'} objectId={annotation.id.toString()} />
           </div>
         )}
       </div>

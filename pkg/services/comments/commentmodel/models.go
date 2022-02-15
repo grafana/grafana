@@ -8,26 +8,26 @@ import (
 )
 
 const (
-	// ContentTypeOrg is reserved for future use for per-org discussions.
-	ContentTypeOrg = "org"
-	// ContentTypeDashboard used for dashboard-wide discussions.
-	ContentTypeDashboard = "dashboard"
-	// ContentTypeAnnotation used for annotation discussions.
-	ContentTypeAnnotation = "annotation"
+	// ObjectTypeOrg is reserved for future use for per-org comments.
+	ObjectTypeOrg = "org"
+	// ObjectTypeDashboard used for dashboard-wide comments.
+	ObjectTypeDashboard = "dashboard"
+	// ObjectTypeAnnotation used for annotation comments.
+	ObjectTypeAnnotation = "annotation"
 )
 
-var RegisteredContentTypes = map[string]struct{}{
-	ContentTypeOrg:        {},
-	ContentTypeDashboard:  {},
-	ContentTypeAnnotation: {},
+var RegisteredObjectTypes = map[string]struct{}{
+	ObjectTypeOrg:        {},
+	ObjectTypeDashboard:  {},
+	ObjectTypeAnnotation: {},
 }
 
 type CommentGroup struct {
-	Id          int64
-	OrgId       int64
-	ContentType string
-	ObjectId    string
-	Settings    Settings
+	Id         int64
+	OrgId      int64
+	ObjectType string
+	ObjectId   string
+	Settings   Settings
 
 	Created int64
 	Updated int64

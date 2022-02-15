@@ -30,9 +30,9 @@ func (h *CommentHandler) OnSubscribe(ctx context.Context, user *models.SignedInU
 	if len(parts) != 2 {
 		return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 	}
-	contentType := parts[0]
+	objectType := parts[0]
 	objectID := parts[1]
-	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgId, user, contentType, objectID)
+	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgId, user, objectType, objectID)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}

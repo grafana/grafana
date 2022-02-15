@@ -12,21 +12,21 @@ type sqlStorage struct {
 	sql *sqlstore.SQLStore
 }
 
-func checkContentType(contentType string) bool {
-	_, ok := commentmodel.RegisteredContentTypes[contentType]
+func checkObjectType(contentType string) bool {
+	_, ok := commentmodel.RegisteredObjectTypes[contentType]
 	return ok
 }
 
-func checkObjectId(objectId string) bool {
-	return objectId != ""
+func checkObjectID(objectID string) bool {
+	return objectID != ""
 }
 
-func (s *sqlStorage) Create(ctx context.Context, orgID int64, cType string, objectID string, userID int64, content string) (*commentmodel.Comment, error) {
-	if !checkContentType(cType) {
-		return nil, errUnknownContentType
+func (s *sqlStorage) Create(ctx context.Context, orgID int64, objectType string, objectID string, userID int64, content string) (*commentmodel.Comment, error) {
+	if !checkObjectType(objectType) {
+		return nil, errUnknownObjectType
 	}
-	if !checkObjectId(objectID) {
-		return nil, errEmptyObjectId
+	if !checkObjectID(objectID) {
+		return nil, errEmptyObjectID
 	}
 	if content == "" {
 		return nil, errEmptyContent
@@ -36,9 +36,9 @@ func (s *sqlStorage) Create(ctx context.Context, orgID int64, cType string, obje
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		group := commentmodel.CommentGroup{
-			OrgId:       orgID,
-			ContentType: cType,
-			ObjectId:    objectID,
+			OrgId:      orgID,
+			ObjectType: objectType,
+			ObjectId:   objectID,
 		}
 		has, err := dbSession.Get(&group)
 		if err != nil {
@@ -76,12 +76,12 @@ func (s *sqlStorage) Create(ctx context.Context, orgID int64, cType string, obje
 
 const maxLimit = 300
 
-func (s *sqlStorage) Get(ctx context.Context, orgID int64, cType string, objectID string, filter GetFilter) ([]*commentmodel.Comment, error) {
-	if !checkContentType(cType) {
-		return nil, errUnknownContentType
+func (s *sqlStorage) Get(ctx context.Context, orgID int64, objectType string, objectID string, filter GetFilter) ([]*commentmodel.Comment, error) {
+	if !checkObjectType(objectType) {
+		return nil, errUnknownObjectType
 	}
-	if !checkObjectId(objectID) {
-		return nil, errEmptyObjectId
+	if !checkObjectID(objectID) {
+		return nil, errEmptyObjectID
 	}
 
 	var result []*commentmodel.Comment
@@ -96,9 +96,9 @@ func (s *sqlStorage) Get(ctx context.Context, orgID int64, cType string, objectI
 
 	return result, s.sql.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		group := commentmodel.CommentGroup{
-			OrgId:       orgID,
-			ContentType: cType,
-			ObjectId:    objectID,
+			OrgId:      orgID,
+			ObjectType: objectType,
+			ObjectId:   objectID,
 		}
 		has, err := dbSession.Get(&group)
 		if err != nil {
