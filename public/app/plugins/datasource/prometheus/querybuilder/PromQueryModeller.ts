@@ -32,7 +32,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     return queryString;
   }
 
-  protected hasBinaryOp(query: PromVisualQuery): boolean {
+  hasBinaryOp(query: PromVisualQuery): boolean {
     return (
       Boolean(query.binaryQueries?.length) ||
       query.operations.find((op) => {

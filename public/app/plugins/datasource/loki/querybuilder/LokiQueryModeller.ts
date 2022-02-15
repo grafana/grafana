@@ -32,6 +32,10 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
     return queryString;
   }
 
+  hasBinaryOp(query: LokiVisualQuery): boolean {
+    return false;
+  }
+
   getQueryPatterns(): LokiQueryPattern[] {
     return [
       {
