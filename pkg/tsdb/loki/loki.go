@@ -192,7 +192,12 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField := data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 
-		frames = append(frames, data.NewFrame(name, timeField, valueField))
+		frame := data.NewFrame(name, timeField, valueField)
+		frame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String(),
+		})
+
+		frames = append(frames, frame)
 	}
 
 	return frames, nil
