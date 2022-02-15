@@ -58,6 +58,8 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 		return AlertingErrState, nil
 	case string(ErrorErrState):
 		return ErrorErrState, nil
+	case string(OkErrState):
+		return OkErrState, nil
 	default:
 		return "", fmt.Errorf("unknown Error state option %s", opt)
 	}
@@ -66,6 +68,7 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 const (
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
+	OkErrState       ExecutionErrorState = "OK"
 )
 
 const (
