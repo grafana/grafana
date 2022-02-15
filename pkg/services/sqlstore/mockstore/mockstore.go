@@ -546,7 +546,7 @@ func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateD
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) Migrate() error {
+func (m *SQLStoreMock) Migrate(_ bool) error {
 	return m.ExpectedError
 }
 
