@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -23,7 +24,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, utils.OrgStore) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -35,9 +36,9 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, service dashboards.DashboardProvisioningService) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, service dashboards.DashboardProvisioningService, orgStore utils.OrgStore) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
-	cfgReader := &configReader{path: configDirectory, log: logger}
+	cfgReader := &configReader{path: configDirectory, log: logger, orgStore: orgStore}
 	configs, err := cfgReader.readConfig(ctx)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
