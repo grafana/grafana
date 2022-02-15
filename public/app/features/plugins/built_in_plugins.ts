@@ -71,11 +71,11 @@ const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" 
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
 const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 const graphPanel = async () =>
-  await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/panel/graph/module');
+  await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
 const heatmapPanel = async () =>
-  await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/panel/heatmap/module');
+  await import(/* webpackChunkName: "heatmapPlugin" */ 'app/plugins/panel/heatmap/module');
 const tableOldPanel = async () =>
-  await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/panel/table-old/module');
+  await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
