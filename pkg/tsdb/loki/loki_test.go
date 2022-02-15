@@ -73,6 +73,7 @@ func TestParseResponse(t *testing.T) {
 		}
 
 		query := &lokiQuery{
+			Expr:         "up(ALERTS)",
 			LegendFormat: "legend {{app}}",
 			Step:         time.Second * 42,
 		}
@@ -92,6 +93,9 @@ func TestParseResponse(t *testing.T) {
 		field2 := data.NewField("value", labels, []float64{1, 2, 3, 4, 5})
 		field2.SetConfig(&data.FieldConfig{DisplayNameFromDS: "legend Application"})
 		testFrame := data.NewFrame("legend Application", field1, field2)
+		testFrame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: "Expr: up(ALERTS)\nStep: 42s",
+		})
 
 		if diff := cmp.Diff(testFrame, frame[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
