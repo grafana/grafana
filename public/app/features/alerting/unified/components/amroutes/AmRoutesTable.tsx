@@ -44,6 +44,23 @@ export const getFilteredRoutes = (routes: FormAmRoute[], labelMatcherQuery?: str
   return filteredRoutes;
 };
 
+export const updatedRoute = (routes: FormAmRoute[], updatedRoute: FormAmRoute): FormAmRoute[] => {
+  const newRoutes = [...routes];
+  const editIndex = newRoutes.findIndex((route) => route.id === updatedRoute.id);
+
+  if (editIndex >= 0) {
+    newRoutes[editIndex] = {
+      ...newRoutes[editIndex],
+      ...updatedRoute,
+    };
+  }
+  return newRoutes;
+};
+
+export const deleteRoute = (routes: FormAmRoute[], routeToRemove: FormAmRoute): FormAmRoute[] => {
+  return routes.filter((route) => route.id !== routeToRemove.id);
+};
+
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   isAddMode,
   onCancelAdd,
@@ -118,7 +135,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
                     aria-label="Delete route"
                     name="trash-alt"
                     onClick={() => {
-                      const newRoutes = routes.filter((route) => route.id !== item.data.id);
+                      const newRoutes = deleteRoute(routes, item.data);
                       onChange(newRoutes);
                     }}
                     type="button"
@@ -178,15 +195,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               setEditMode(false);
             }}
             onSave={(data) => {
-              const newRoutes = [...routes];
-
-              const editIndex = newRoutes.findIndex((route) => route.id === data.id);
-              if (editIndex >= 0) {
-                newRoutes[editIndex] = {
-                  ...newRoutes[editIndex],
-                  ...data,
-                };
-              }
+              const newRoutes = updatedRoute(routes, data);
 
               setEditMode(false);
               onChange(newRoutes);
@@ -197,16 +206,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         ) : (
           <AmRoutesExpandedRead
             onChange={(data) => {
-              const newRoutes = [...routes];
-
-              const editIndex = newRoutes.findIndex((route) => route.id === data.id);
-              if (editIndex >= 0) {
-                newRoutes[editIndex] = {
-                  ...item.data,
-                  ...data,
-                };
-              }
-
+              const newRoutes = updatedRoute(routes, data);
               onChange(newRoutes);
             }}
             receivers={receivers}
