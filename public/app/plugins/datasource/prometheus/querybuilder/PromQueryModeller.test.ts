@@ -188,6 +188,56 @@ describe('PromQueryModeller', () => {
     ).toBe('metric_a + metric_b + metric_c');
   });
 
+  it('Can render query with nested query with binary op', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / (metric_b * 1000)');
+  });
+
+  it('Can render query with nested binary query with parentheses', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+              binaryQueries: [
+                {
+                  operator: '*',
+                  query: {
+                    metric: 'metric_c',
+                    labels: [],
+                    operations: [],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / (metric_b * metric_c)');
+  });
+
   it('Can render with binary queries with vectorMatches expression', () => {
     expect(
       modeller.renderQuery({

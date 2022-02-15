@@ -13,7 +13,11 @@ export interface VisualQueryBinary<T> {
   query: T;
 }
 
-export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations> implements VisualQueryModeller {
+export interface PromLokiQuery<T> extends QueryWithOperations {
+  binaryQueries: Array<VisualQueryBinary<T>>;
+}
+
+export abstract class LokiAndPromQueryModellerBase<T extends PromLokiQuery<T>> implements VisualQueryModeller {
   protected operationsRegisty: Registry<QueryBuilderOperationDef>;
   private categories: string[] = [];
 
@@ -61,10 +65,18 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
 
   private renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<T>) {
     let result = leftOperand + ` ${binaryQuery.operator} `;
+
     if (binaryQuery.vectorMatches) {
       result += `${binaryQuery.vectorMatches} `;
     }
-    return result + `${this.renderQuery(binaryQuery.query)}`;
+
+    if (this.hasBinaryOp(binaryQuery.query)) {
+      result += `(${this.renderQuery(binaryQuery.query)})`;
+    } else {
+      result += `${this.renderQuery(binaryQuery.query)}`;
+    }
+
+    return result;
   }
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
@@ -85,4 +97,5 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
   }
 
   abstract renderQuery(query: T): string;
+  abstract hasBinaryOp(query: T): boolean;
 }
