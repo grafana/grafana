@@ -64,7 +64,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "should be ok to create serviceaccount token with scope all permissions",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
@@ -76,7 +76,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "serviceaccount token should match SA orgID and SA provided in parameters even if specified in body",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
@@ -88,7 +88,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "should be ok to create serviceaccount token with scope id permissions",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -100,7 +100,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "should be forbidden to create serviceaccount token if wrong scoped",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:2"}}, nil
 				},
 				false,
@@ -113,6 +113,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
 		require.NoError(t, err)
+		req.Header.Add("Content-Type", "application/json")
 		recorder := httptest.NewRecorder()
 		server.ServeHTTP(recorder, req)
 		return recorder
@@ -170,7 +171,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			keyName: "Test1",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -182,7 +183,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			keyName: "Test2",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
@@ -194,7 +195,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			keyName: "Test3",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:10"}}, nil
 				},
 				false,
@@ -206,6 +207,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
 		require.NoError(t, err)
+		req.Header.Add("Content-Type", "application/json")
 		recorder := httptest.NewRecorder()
 		server.ServeHTTP(recorder, req)
 		return recorder
