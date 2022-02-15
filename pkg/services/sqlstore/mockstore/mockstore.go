@@ -23,6 +23,7 @@ type SQLStoreMock struct {
 	ExpectedDashboard              *models.Dashboard
 	ExpectedDashboards             []*models.Dashboard
 	ExpectedDashboardVersion       *models.DashboardVersion
+	ExpectedDashboardVersions      []*models.DashboardVersion
 	ExpectedDashboardAclInfoList   []*models.DashboardAclInfoDTO
 	ExpectedUserOrgList            []*models.UserOrgDTO
 	ExpectedOrgListResponse        OrgListResponse
