@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { FlexItem, Stack } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import {
   VisualQueryModeller,
@@ -27,8 +27,12 @@ export interface Props {
   onRunQuery: () => void;
 }
 
+export interface State {
+  operation: QueryBuilderOperation;
+}
+
 export function OperationEditor({
-  operation,
+  operation: externalOperation,
   index,
   onRemove,
   onChange,
@@ -38,17 +42,35 @@ export function OperationEditor({
   datasource,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const [operation, setOperation] = useState<QueryBuilderOperation>(externalOperation);
   const def = queryModeller.getOperationDef(operation.id);
+
+  useEffect(() => {
+    setOperation(externalOperation);
+  }, [externalOperation]);
+
+  const onChangeInternal = (index: number, update: QueryBuilderOperation) => {
+    // If we are adding rest params params make sure it's valid before calling external onChange
+    if (update.params.length > operation.params.length) {
+      const lastValue = update.params[update.params.length - 1] as string;
+      if (lastValue.length === 0) {
+        setOperation(update);
+        return;
+      }
+    }
+    // Commit change
+    onChange(index, update);
+  };
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
     const update: QueryBuilderOperation = { ...operation, params: [...operation.params] };
     update.params[paramIdx] = value;
-    callParamChangedThenOnChange(def, update, index, paramIdx, onChange);
+    callParamChangedThenOnChange(def, update, index, paramIdx, onChangeInternal);
   };
 
   const onAddRestParam = () => {
     const update: QueryBuilderOperation = { ...operation, params: [...operation.params, ''] };
-    callParamChangedThenOnChange(def, update, index, operation.params.length, onChange);
+    callParamChangedThenOnChange(def, update, index, operation.params.length, onChangeInternal);
   };
 
   const onRemoveRestParam = (paramIdx: number) => {
@@ -56,7 +78,7 @@ export function OperationEditor({
       ...operation,
       params: [...operation.params.slice(0, paramIdx), ...operation.params.slice(paramIdx + 1)],
     };
-    callParamChangedThenOnChange(def, update, index, paramIdx, onChange);
+    callParamChangedThenOnChange(def, update, index, paramIdx, onChangeInternal);
   };
 
   const operationElements: React.ReactNode[] = [];
