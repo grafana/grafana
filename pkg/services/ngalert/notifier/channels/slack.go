@@ -52,9 +52,14 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
 
+	endpointURL := model.Settings.Get("endpointUrl").MustString()
+	if endpointURL == "" {
+		endpointURL = SlackAPIEndpoint
+	}
+
 	slackURL := fn(context.Background(), model.SecureSettings, "url", model.Settings.Get("url").MustString())
 	if slackURL == "" {
-		slackURL = SlackAPIEndpoint
+		slackURL = endpointURL
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
@@ -62,7 +67,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template, fn
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
-	if recipient == "" && apiURL.String() == SlackAPIEndpoint {
+	if recipient == "" && apiURL.String() == endpointURL {
 		return nil, receiverInitError{Cfg: *model,
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
