@@ -355,7 +355,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           }
 
           if (baseline !== curBaseline) {
-            u.ctx.textBaseline = curBaseline = baseline;
+            u.ctx.textBaseline = baseline;
           }
 
           // Calculate final co-ordinates for text position
@@ -380,10 +380,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           // factor and orientation (which changes the baseline)
           let xAdjust = 0,
             yAdjust = 0;
+
           if (isXHorizontal) {
             // Adjust for baseline which is "top" in this case
             xAdjust = (textMetrics.width * scaleFactor) / 2;
             yAdjust = (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor;
+
+            // yAdjust doesn't matter for neg values when x is horizontal- the baseline is top
+            if (value < 0) {
+              yAdjust = 0;
+            }
           } else {
             // Adjust from the baseline which is "middle" in this case
             yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
@@ -398,6 +404,21 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             w: textMetrics.width * scaleFactor,
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
+
+          // DEBUG - remove
+          if (labels[dataIdx][seriesIdx].bbox && value < 0) {
+            console.log('collected bbox', labels[dataIdx][seriesIdx].bbox);
+            u.ctx.beginPath();
+            u.ctx.rect(
+              labels[dataIdx][seriesIdx].bbox!.x,
+              labels[dataIdx][seriesIdx].bbox!.y,
+              labels[dataIdx][seriesIdx].bbox!.w,
+              labels[dataIdx][seriesIdx].bbox!.h
+            );
+            u.ctx.strokeStyle = 'yellow';
+            u.ctx.stroke();
+            u.ctx.closePath();
+          }
         }
       }
     },
@@ -478,6 +499,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
             if (r !== undefined && sidx !== subsidx && intersects(bbox, r)) {
               intersectsLabel = true;
+            }
+
+            // SUPER DUMMY DEBUG ONLY - change
+            // We need to detrct whether or not hte value is +/- and set the baseline accordingly
+            // The same thing is already done in the bars builder.
+            if (text.startsWith('-')) {
+              console.log('when rendering text', text, r, intersectsLabel);
+              u.ctx.textBaseline = 'top';
             }
           }
 
