@@ -180,10 +180,14 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
             onSave={(data) => {
               const newRoutes = [...routes];
 
-              newRoutes[index] = {
-                ...newRoutes[index],
-                ...data,
-              };
+              const editIndex = newRoutes.findIndex((route) => route.id === data.id);
+              if (editIndex >= 0) {
+                newRoutes[editIndex] = {
+                  ...newRoutes[editIndex],
+                  ...data,
+                };
+              }
+
               setEditMode(false);
               onChange(newRoutes);
             }}
@@ -195,10 +199,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
             onChange={(data) => {
               const newRoutes = [...routes];
 
-              newRoutes[index] = {
-                ...item.data,
-                ...data,
-              };
+              const editIndex = newRoutes.findIndex((route) => route.id === data.id);
+              if (editIndex >= 0) {
+                newRoutes[editIndex] = {
+                  ...item.data,
+                  ...data,
+                };
+              }
 
               onChange(newRoutes);
             }}
