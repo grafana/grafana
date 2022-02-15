@@ -90,9 +90,9 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create and edit dashboards. Editors _cannot_ change folder or dashboard permissions, or add, edit, or delete folders.
 - **View**: Can only view dashboards and folders.
 
-For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "./manage-dashboard-permissions/grant-dashboard-folder-permissions.md" >}}).
+For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "./manage-dashboard-permissions/_index.md#grant-dashboard-folder-permissions" >}}).
 
-For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "./manage-dashboard-permissions/grant-dashboard-permissions.md" >}}).
+For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "./manage-dashboard-permissions/_index.md#grant-dashboard-permissions" >}}).
 
 ## Editors with administrator permissions
 
@@ -113,7 +113,7 @@ If you have access to the Grafana server, you can modify the default viewer role
 
 Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
 
-For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "./manage-dashboard-permissions/enable-dashboard-preview-explore.md" >}}).
+For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "./manage-dashboard-permissions/_index.md#enable-viewers-to-preview-dashboards-and-use-explore" >}}).
 
 ## Teams and permissions
 
