@@ -238,6 +238,26 @@ describe('PromQueryModeller', () => {
     ).toBe('metric_a / (metric_b * metric_c)');
   });
 
+  it('Should add parantheis around first query if it has binary op', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('(metric_a * 1000) / metric_b');
+  });
+
   it('Can render with binary queries with vectorMatches expression', () => {
     expect(
       modeller.renderQuery({

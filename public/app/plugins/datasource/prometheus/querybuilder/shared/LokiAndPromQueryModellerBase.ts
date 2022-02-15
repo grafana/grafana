@@ -66,13 +66,7 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
       result += `${binaryQuery.vectorMatches} `;
     }
 
-    if (this.hasBinaryOp(binaryQuery.query)) {
-      result += `(${this.renderQuery(binaryQuery.query)})`;
-    } else {
-      result += `${this.renderQuery(binaryQuery.query)}`;
-    }
-
-    return result;
+    return result + this.renderQuery(binaryQuery.query, true);
   }
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
@@ -93,5 +87,4 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
   }
 
   abstract renderQuery(query: T): string;
-  abstract hasBinaryOp(query: T): boolean;
 }
