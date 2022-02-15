@@ -67,9 +67,9 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
           }}
           isLoading={state.isLoading}
           options={state.metrics}
-          onChange={({ metric }) => {
-            if (metric) {
-              onChange({ ...query, metric });
+          onChange={({ value }) => {
+            if (value) {
+              onChange({ ...query, metric: value });
             }
           }}
         />
