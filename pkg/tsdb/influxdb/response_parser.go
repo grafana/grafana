@@ -61,45 +61,38 @@ func transformRows(rows []Row, query Query) data.Frames {
 				continue
 			}
 
-			var timeArray []time.Time
-			var valType = typeof(row.Values[0][colIndex])
-			var stringArray []string
-			var boolArray []bool
+			valType := typeof(row.Values[0][colIndex])
 			name := formatFrameName(row, column, query)
 
-			for _, valuePair := range row.Values {
-				timestamp, timestampErr := parseTimestamp(valuePair[0])
-				// we only add this row if the timestamp is valid
-				if timestampErr == nil {
-					timeArray = append(timeArray, timestamp)
-					if valType == "string" {
-						value := valuePair[colIndex].(string)
-						stringArray = append(stringArray, value)
-					} else if valType == "bool" {
-						value := valuePair[colIndex].(bool)
-						boolArray = append(boolArray, value)
-					}
-				}
-			}
-
 			if valType == "string" {
-				timeField := data.NewField("time", nil, timeArray)
-				valueField := data.NewField("value", row.Tags, stringArray)
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				var fields = parseStringSeries(row, colIndex, name)
+				frames = append(frames, newDataFrame(name, query.RawQuery, fields[0], fields[1]))
 			} else if valType == "json.Number" {
 				var fields = parseFloatSeries(row, colIndex, name)
 				frames = append(frames, newDataFrame(name, query.RawQuery, fields[0], fields[1]))
 			} else if valType == "bool" {
-				timeField := data.NewField("time", nil, timeArray)
-				valueField := data.NewField("value", row.Tags, boolArray)
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				var fields = parseBoolSeries(row, colIndex, name)
+				frames = append(frames, newDataFrame(name, query.RawQuery, fields[0], fields[1]))
 			}
 		}
 	}
 
 	return frames
+}
+
+func parseStringSeries(row Row, colIndex int, name string) []*data.Field {
+	timeArray := make([]time.Time, len(row.Values))
+	stringArray := make([]string, len(row.Values))
+	for i, valuePair := range row.Values {
+		if timestamp, err := parseTimestamp(valuePair[0]); err == nil {
+			timeArray[i] = timestamp
+			stringArray[i] = valuePair[colIndex].(string)
+		}
+	}
+	timeField := data.NewField("time", nil, timeArray)
+	valueField := data.NewField("value", row.Tags, stringArray)
+	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+	return []*data.Field{timeField, valueField}
 }
 
 func parseFloatSeries(row Row, colIndex int, name string) []*data.Field {
@@ -113,6 +106,21 @@ func parseFloatSeries(row Row, colIndex int, name string) []*data.Field {
 	}
 	timeField := data.NewField("time", nil, timeArray)
 	valueField := data.NewField("value", row.Tags, floatArray)
+	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+	return []*data.Field{timeField, valueField}
+}
+
+func parseBoolSeries(row Row, colIndex int, name string) []*data.Field {
+	timeArray := make([]time.Time, len(row.Values))
+	boolArray := make([]bool, len(row.Values))
+	for i, valuePair := range row.Values {
+		if timestamp, err := parseTimestamp(valuePair[0]); err == nil {
+			timeArray[i] = timestamp
+			boolArray[i] = valuePair[colIndex].(bool)
+		}
+	}
+	timeField := data.NewField("time", nil, timeArray)
+	valueField := data.NewField("value", row.Tags, boolArray)
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 	return []*data.Field{timeField, valueField}
 }
