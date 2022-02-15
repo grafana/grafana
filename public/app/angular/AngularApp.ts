@@ -17,6 +17,8 @@ import { registerComponents } from './registerComponents';
 import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
+import * as sdk from 'app/plugins/sdk';
+import { promiseToDigest } from './promiseToDigest';
 
 export class AngularApp {
   ngModuleDependencies: any[];
@@ -97,6 +99,9 @@ export class AngularApp {
     initAngularRoutingBridge();
 
     // Angular plugins import this
+    exposeToPlugin('angular', angular);
+    exposeToPlugin('app/core/utils/promiseToDigest', { promiseToDigest, __esModule: true });
+    exposeToPlugin('app/plugins/sdk', sdk);
     exposeToPlugin('app/core/core_module', coreModule);
     exposeToPlugin('app/core/core', {
       coreModule: coreModule,
