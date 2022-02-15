@@ -46,6 +46,7 @@ Content-Type: application/json
     "type": "dash-folder",
     "tags": [],
     "isStarred": false,
+    "sortMeta": 0,
     "uri":"db/folder" // deprecated in Grafana v5.0
   },
   {
@@ -56,6 +57,7 @@ Content-Type: application/json
     "type":"dash-db",
     "tags":[prod],
     "isStarred":true,
+    "sortMeta": 0,
     "uri":"db/production-overview" // deprecated in Grafana v5.0
   }
 ]
