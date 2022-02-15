@@ -141,6 +141,60 @@ describe('createSpanLinkFactory', () => {
 
       expect(linkDef!.href).toBe('testSpanId');
     });
+
+    it('handles renamed tags', () => {
+      const createLink = setupSpanLinkFactory({
+        mapTagNamesEnabled: true,
+        mappedTags: [
+          { key: 'service.name', value: 'service' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{service=\\"serviceName\\", pod=\\"podName\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('handles incomplete renamed tags', () => {
+      const createLink = setupSpanLinkFactory({
+        mapTagNamesEnabled: true,
+        mappedTags: [
+          { key: 'service.name', value: '' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1","queries":[{"expr":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
   });
 });
 

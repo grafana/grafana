@@ -3,6 +3,7 @@ import {
   DataLink,
   dateTime,
   Field,
+  KeyValue,
   mapInternalLinkToExplore,
   rangeUtil,
   SplitOpen,
@@ -122,11 +123,22 @@ function legacyCreateSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions?
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
 function getLokiQueryFromSpan(span: TraceSpan, options: TraceToLogsOptions): string {
-  const { tags: keys, filterByTraceID, filterBySpanID } = options;
-  const keysToCheck = keys?.length ? keys : defaultKeys;
+  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
+
+  // In order, try to use mapped tags -> tags -> default tags
+  const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
+
+  // Build tag portion of query
   const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
-    if (keysToCheck.includes(tag.key)) {
-      acc.push(`${tag.key}="${tag.value}"`);
+    if (mapTagNamesEnabled) {
+      const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
+      if (keyValue) {
+        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}="${tag.value}"`);
+      }
+    } else {
+      if ((keysToCheck as string[]).includes(tag.key)) {
+        acc.push(`${tag.key}="${tag.value}"`);
+      }
     }
     return acc;
   }, [] as string[]);
