@@ -10,7 +10,7 @@ Panels allow you to show your data in visual form. Each panel needs at least one
 
 ## Before you begin
 
-- Ensure that you have the proper [organization role]({{< relref "../../permissions/organization_roles.md" >}}) or [permissions]({{< relref "../../permissions/_index.md" >}}).
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}) if you need instructions.
