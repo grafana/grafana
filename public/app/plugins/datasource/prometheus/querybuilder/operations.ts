@@ -1,14 +1,18 @@
+import { defaultPadding } from 'ol/render/canvas';
+import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   defaultAddOperationHandler,
   functionRendererLeft,
   functionRendererRight,
   getPromAndLokiOperationDisplayName,
-  rangeRendererWithParams,
+  rangeRendererLeftWithParams,
+  rangeRendererRightWithParams,
 } from './shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
+  QueryWithOperations,
   VisualQueryModeller,
 } from './shared/types';
 import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
@@ -141,33 +145,30 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       category: PromVisualQueryOperationCategory.Trigonometric,
     }),
     // *** Need to double check this one ***
-    createRangeFunction(PromOperationId.CountValues),
-    // Check
+    createFunction({
+      id: PromOperationId.CountValues,
+      params: [{ name: 'Identifier', type: 'string' }],
+      defaultParams: ['count'],
+      renderer: functionRendererLeft,
+    }),
     createFunction({
       id: PromOperationId.DayOfMonth,
       category: PromVisualQueryOperationCategory.Time,
     }),
-    // Check
     createFunction({
       id: PromOperationId.DayOfWeek,
       category: PromVisualQueryOperationCategory.Time,
     }),
-    // Check
     createFunction({
       id: PromOperationId.DaysInMonth,
       category: PromVisualQueryOperationCategory.Time,
     }),
-    // Check
     createFunction({ id: PromOperationId.Deg }),
-    // Check
     createRangeFunction(PromOperationId.Deriv),
     //
     createFunction({ id: PromOperationId.Exp }),
-    // Check
     createFunction({ id: PromOperationId.Floor }),
-    // Check
     createFunction({ id: PromOperationId.Group }),
-    // Check
     createFunction({
       id: PromOperationId.HoltWinters,
       params: [
@@ -178,25 +179,66 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: ['auto', 0.5, 0.5],
       alternativesKey: 'range function',
       category: PromVisualQueryOperationCategory.RangeFunctions,
-      renderer: rangeRendererWithParams,
+      renderer: rangeRendererRightWithParams,
     }),
-    // Check
     createFunction({ id: PromOperationId.Hour }),
-    // Check
     createRangeFunction(PromOperationId.Idelta),
-    createFunction({ id: PromOperationId.LabelJoin }),
-    createFunction({ id: PromOperationId.Last }),
+    createFunction({
+      id: PromOperationId.LabelJoin,
+      params: [
+        {
+          name: 'Destination Label',
+          type: 'string',
+          editor: LabelParamEditor,
+        },
+        {
+          name: 'Separator',
+          type: 'string',
+        },
+        {
+          name: 'Source Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          editor: LabelParamEditor,
+        },
+      ],
+      defaultParams: ['', ',', ''],
+      renderer: labelJoinRenderer,
+      addOperationHandler: labelJoinAddOperationHandler,
+    }),
     createFunction({ id: PromOperationId.Log10 }),
     createFunction({ id: PromOperationId.Log2 }),
     createFunction({ id: PromOperationId.Minute }),
     createFunction({ id: PromOperationId.Month }),
-    createFunction({ id: PromOperationId.Pi }),
-    createFunction({ id: PromOperationId.PredictLinear }),
-    createFunction({ id: PromOperationId.Present }),
-    createFunction({ id: PromOperationId.Quantile }),
-    createFunction({ id: PromOperationId.QuantileOverTime }),
+    createFunction({
+      id: PromOperationId.Pi,
+      renderer: (model) => `${model.id}()`,
+    }),
+    createFunction({
+      id: PromOperationId.PredictLinear,
+      params: [getRangeVectorParamDef(), { name: 'Seconds from now', type: 'number' }],
+      defaultParams: ['auto', 60],
+      alternativesKey: 'range function',
+      category: PromVisualQueryOperationCategory.RangeFunctions,
+      renderer: rangeRendererRightWithParams,
+    }),
+    createFunction({
+      id: PromOperationId.Quantile,
+      params: [{ name: 'Value', type: 'number' }],
+      defaultParams: [1],
+      renderer: functionRendererLeft,
+    }),
+    createFunction({
+      id: PromOperationId.QuantileOverTime,
+      params: [getRangeVectorParamDef(), { name: 'Quantile', type: 'number' }],
+      defaultParams: ['auto', 0.5],
+      alternativesKey: 'range function',
+      category: PromVisualQueryOperationCategory.RangeFunctions,
+      renderer: rangeRendererLeftWithParams,
+    }),
     createFunction({ id: PromOperationId.Rad }),
-    createFunction({ id: PromOperationId.Resets }),
+    createRangeFunction(PromOperationId.Resets),
     createFunction({
       id: PromOperationId.Round,
       category: PromVisualQueryOperationCategory.Functions,
@@ -222,9 +264,17 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       id: PromOperationId.Tanh,
       category: PromVisualQueryOperationCategory.Trigonometric,
     }),
-    createFunction({ id: PromOperationId.Time }),
+    createFunction({
+      id: PromOperationId.Time,
+      renderer: (model) => `${model.id}()`,
+    }),
     createFunction({ id: PromOperationId.Timestamp }),
-    createFunction({ id: PromOperationId.Vector }),
+    createFunction({
+      id: PromOperationId.Vector,
+      params: [{ name: 'Value', type: 'number' }],
+      defaultParams: [1],
+      renderer: (model) => `${model.id}(${model.params[0]})`,
+    }),
     createFunction({ id: PromOperationId.Year }),
   ];
 
@@ -331,5 +381,25 @@ function addNestedQueryHandler(def: QueryBuilderOperationDef, query: PromVisualQ
         query,
       },
     ],
+  };
+}
+
+function labelJoinRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  if (typeof model.params[1] !== 'string') {
+    throw 'The separator must be a string';
+  }
+  const separator = `"${model.params[1]}"`;
+  return `${model.id}(${innerExpr}, "${model.params[0]}", ${separator}, "${model.params.slice(2).join(separator)}")`;
+}
+
+function labelJoinAddOperationHandler<T extends QueryWithOperations>(def: QueryBuilderOperationDef, query: T) {
+  const newOperation: QueryBuilderOperation = {
+    id: def.id,
+    params: def.defaultParams,
+  };
+
+  return {
+    ...query,
+    operations: [...query.operations, newOperation],
   };
 }
