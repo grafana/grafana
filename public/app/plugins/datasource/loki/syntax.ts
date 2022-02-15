@@ -192,7 +192,7 @@ export const lokiGrammar: Grammar = {
         pattern: /#.*/,
       },
       'label-key': {
-        pattern: /[a-z_]\w*(?=\s*(=|!=|=~|!~))/,
+        pattern: /[a-zA-Z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
         greedy: true,
       },
