@@ -66,6 +66,9 @@ var (
 				Action: ActionOrgUsersRemove,
 				Scope:  ScopeUsersAll,
 			},
+			{
+				Action: ActionUsersInvite,
+			},
 		}),
 	}
 
