@@ -13,11 +13,7 @@ export interface VisualQueryBinary<T> {
   query: T;
 }
 
-export interface PromLokiQuery<T> extends QueryWithOperations {
-  binaryQueries: Array<VisualQueryBinary<T>>;
-}
-
-export abstract class LokiAndPromQueryModellerBase<T extends PromLokiQuery<T>> implements VisualQueryModeller {
+export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations> implements VisualQueryModeller {
   protected operationsRegisty: Registry<QueryBuilderOperationDef>;
   private categories: string[] = [];
 
