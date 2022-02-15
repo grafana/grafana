@@ -56,20 +56,29 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   });
   const [error, setError] = useState(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
-  const [isLoadingService, setIsLoadingService] = useState<{ optionType: string; loading: boolean }>({
-    optionType: '',
-    loading: false,
+  const [isLoading, setIsLoading] = useState<{
+    serviceName: boolean;
+    operationName: boolean;
+  }>({
+    serviceName: false,
+    operationName: false,
   });
 
   async function loadOptionsAsync(nameType: string, lp: TempoLanguageProvider) {
     const res = await lp.getOptions(nameType === 'serviceName' ? 'service.name' : 'name');
-    setIsLoadingService({ optionType: nameType, loading: false });
+    setIsLoading({
+      serviceName: nameType === 'serviceName' && false,
+      operationName: nameType === 'spanName' && false, // The terms 'span' and 'operation' are interchangeable
+    });
     return res;
   }
 
   const loadOptions = useCallback(
     (nameType: string) => {
-      setIsLoadingService({ optionType: nameType, loading: true });
+      setIsLoading({
+        serviceName: nameType === 'serviceName' && true,
+        operationName: nameType === 'spanName' && true,
+      });
       return loadOptionsAsync(nameType, languageProvider);
     },
     [languageProvider]
@@ -132,7 +141,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               inputId="service"
               menuShouldPortal
               loadOptions={fetchServiceNameOptions}
-              isLoading={isLoadingService.optionType === 'serviceName' && isLoadingService.loading}
+              isLoading={isLoading.serviceName}
               value={asyncServiceNameValue.value}
               onChange={(v) => {
                 setAsyncServiceNameValue({
@@ -157,7 +166,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               inputId="spanName"
               menuShouldPortal
               loadOptions={fetchSpanNameOptions}
-              isLoading={isLoadingService.optionType === 'spanName' && isLoadingService.loading}
+              isLoading={isLoading.operationName}
               value={asyncSpanNameValue.value}
               onChange={(v) => {
                 setAsyncSpanNameValue({ value: v });
