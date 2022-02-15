@@ -2,7 +2,6 @@ package elasticsearch
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -17,8 +16,8 @@ import (
 func TestExecuteTimeSeriesQuery(t *testing.T) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
+	fromMs := from.UnixNano() / int64(time.Millisecond)
+	toMs := to.UnixNano() / int64(time.Millisecond)
 
 	t.Run("Test execute time series query", func(t *testing.T) {
 		t.Run("With defaults on es 2", func(t *testing.T) {
@@ -32,14 +31,14 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
 			require.Equal(t, rangeFilter.Key, c.timeField)
-			require.Equal(t, rangeFilter.Lte, toStr)
-			require.Equal(t, rangeFilter.Gte, fromStr)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 			require.Equal(t, sr.Aggs[0].Key, "2")
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			require.Equal(t, dateHistogramAgg.Field, "@timestamp")
-			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromStr)
-			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toStr)
+			require.Equal(t, dateHistogramAgg.ExtendedBounds.Min, fromMs)
+			require.Equal(t, dateHistogramAgg.ExtendedBounds.Max, toMs)
 		})
 
 		t.Run("With defaults on es 5", func(t *testing.T) {
@@ -53,8 +52,8 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			require.Equal(t, sr.Query.Bool.Filters[0].(*es.RangeFilter).Key, c.timeField)
 			require.Equal(t, sr.Aggs[0].Key, "2")
-			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Min, fromStr)
-			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Max, toStr)
+			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Min, fromMs)
+			require.Equal(t, sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg).ExtendedBounds.Max, toMs)
 		})
 
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
@@ -1061,7 +1060,7 @@ func TestSettingsCasting(t *testing.T) {
 							"field": "@timestamp",
 							"id": "2",
 							"settings": {
-								"interval": "1d"							
+								"interval": "1d"
 							}
 						}
 					],
@@ -1088,7 +1087,7 @@ func TestSettingsCasting(t *testing.T) {
 							"field": "@timestamp",
 							"id": "2",
 							"settings": {
-								"interval": "1d"							
+								"interval": "1d"
 							}
 						}
 					],

@@ -6,6 +6,7 @@ devenv
 data
 dist
 e2e/tmp
+scripts/grafana-server/tmp
 public/lib/monaco
 deployment_tools_config.json
 

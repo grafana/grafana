@@ -162,7 +162,7 @@ func newTestConfig() *setting.Cfg {
 type fakeSessionCache struct {
 }
 
-func (s fakeSessionCache) GetSession(region string, settings awsds.AWSDatasourceSettings) (*session.Session, error) {
+func (s fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, error) {
 	return &session.Session{
 		Config: &aws.Config{},
 	}, nil

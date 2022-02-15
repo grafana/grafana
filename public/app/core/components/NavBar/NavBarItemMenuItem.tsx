@@ -56,9 +56,11 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   });
 
   return (
-    <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
-      {rendered}
-    </li>
+    <>
+      <li {...mergeProps(menuItemProps, focusProps, keyboardProps)} ref={ref} className={styles.menuItem}>
+        {rendered}
+      </li>
+    </>
   );
 }
 
@@ -82,6 +84,12 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         outline-offset: -2px;
         transition: none;
       }
+    `,
+    upgradeBoxContainer: css`
+      padding: ${theme.spacing(1)};
+    `,
+    upgradeBox: css`
+      width: 300px;
     `,
   };
 }

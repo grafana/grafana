@@ -12,9 +12,9 @@ import (
 )
 
 func TestIntegration_GetAdminStats(t *testing.T) {
-	InitTestDB(t)
+	sqlStore := InitTestDB(t)
 
 	query := models.GetAdminStatsQuery{}
-	err := GetAdminStats(context.Background(), &query)
+	err := sqlStore.GetAdminStats(context.Background(), &query)
 	require.NoError(t, err)
 }

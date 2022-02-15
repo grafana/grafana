@@ -1,5 +1,5 @@
 import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
-import { catchError, filter, finalize, first, mergeMap, takeUntil } from 'rxjs/operators';
+import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
 import {
   CoreApp,
   DataQuery,
@@ -7,6 +7,7 @@ import {
   DataSourceApi,
   getDefaultTimeRange,
   LoadingState,
+  PanelData,
   ScopedVars,
 } from '@grafana/data';
 
@@ -115,12 +116,14 @@ export class VariableQueryRunner {
           filter(() => {
             // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
             const afterUid = getState().templating.transaction.uid;
+
             return beforeUid === afterUid;
           }),
-          first((data) => data.state === LoadingState.Done || data.state === LoadingState.Error),
-          mergeMap((data) => {
+          filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
+          take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
+          mergeMap((data: PanelData) => {
             if (data.state === LoadingState.Error) {
-              return throwError(data.error);
+              return throwError(() => data.error);
             }
 
             return of(data);
@@ -148,7 +151,7 @@ export class VariableQueryRunner {
             }
 
             this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
-            return throwError(error);
+            return throwError(() => error);
           }),
           finalize(() => {
             this.updateOptionsResults.next({ identifier, state: LoadingState.Done });

@@ -18,12 +18,12 @@ load(
     'build_frontend_step',
     'build_plugins_step',
     'package_step',
-    'e2e_tests_server_step',
+    'grafana_server_step',
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
     'copy_packages_for_docker_step',
-    'package_docker_images_step',
+    'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
@@ -36,7 +36,8 @@ load(
     'store_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step',
-    'ensure_cuetsified_step'
+    'ensure_cuetsified_step',
+    'publish_images_step'
 )
 
 load(
@@ -70,10 +71,7 @@ def build_npm_packages_step(edition, ver_mode):
         'commands': ['./scripts/build/build-npm-packages.sh ${DRONE_TAG}'],
     }
 
-def store_npm_packages_step(edition, ver_mode):
-    if edition == 'enterprise' or ver_mode != 'release':
-        return None
-
+def store_npm_packages_step():
     return {
         'name': 'store-npm-packages',
         'image': publish_image,
@@ -84,31 +82,28 @@ def store_npm_packages_step(edition, ver_mode):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
-        'commands': ['./scripts/build/store-npm-packages.sh ${DRONE_TAG}'],
+        'commands': [
+            './bin/grabpl artifacts npm store --tag ${DRONE_TAG}'
+        ],
     }
 
-def retrieve_npm_packages_step(edition, ver_mode):
-    if edition == 'enterprise' or ver_mode != 'release':
-        return None
-
+def retrieve_npm_packages_step():
     return {
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
-            # Has to run after store-storybook since this step cleans the files publish-storybook depends on
-            'store-storybook',
+            'initialize',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
-        'commands': ['./scripts/build/retrieve-npm-packages.sh ${DRONE_TAG}'],
+        'commands': [
+            './bin/grabpl artifacts npm retrieve --tag v${TAG}'
+        ],
     }
 
-def release_npm_packages_step(edition, ver_mode):
-    if edition == 'enterprise' or ver_mode != 'release':
-        return None
-
+def release_npm_packages_step():
     return {
         'name': 'release-npm-packages',
         'image': build_image,
@@ -118,14 +113,55 @@ def release_npm_packages_step(edition, ver_mode):
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
-        'commands': ['./scripts/build/release-npm-packages.sh ${DRONE_TAG}'],
+        'commands': [
+            './bin/grabpl artifacts npm release --tag v${TAG}'
+        ],
     }
 
+def fetch_images_step(edition):
+    return {
+        'name': 'fetch-images-{}'.format(edition),
+        'image': 'google/cloud-sdk',
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+            'DOCKER_USER': from_secret('docker_username'),
+            'DOCKER_PASSWORD': from_secret('docker_password'),
+        },
+        'commands': ['./bin/grabpl artifacts docker fetch --version-tag ${{TAG}} --edition {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(edition)],
+        'depends_on': ['grabpl'],
+        'volumes': [{
+            'name': 'docker',
+            'path': '/var/run/docker.sock'
+        }],
+    }
+
+def publish_image_steps(version, mode, docker_repo, additional_docker_repo=""):
+    steps = [
+        download_grabpl_step(),
+        fetch_images_step(version),
+        publish_images_step(version, 'release', mode, docker_repo),
+    ]
+    if additional_docker_repo != "":
+        steps.extend([publish_images_step(version, 'release', mode, additional_docker_repo)])
+
+    return steps
+
+def publish_image_pipelines(mode):
+    trigger = {
+        'event': ['promote'],
+        'target': [mode],
+    }
+
+    return [pipeline(
+        name='publish-docker-oss-{}'.format(mode), trigger=trigger, steps=publish_image_steps(version='oss',  mode=mode, docker_repo='grafana', additional_docker_repo='grafana-oss'), edition=""
+    ), pipeline(
+        name='publish-docker-enterprise-{}'.format(mode), trigger=trigger, steps=publish_image_steps(version='enterprise',  mode=mode, docker_repo='grafana-enterprise'), edition=""
+    ),]
 
 def get_steps(edition, ver_mode):
     package_steps = []
     publish_steps = []
-    should_publish = ver_mode in ('release', 'test-release',)
+    should_publish = ver_mode == 'release'
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
     edition2 = 'enterprise2'
@@ -168,9 +204,9 @@ def get_steps(edition, ver_mode):
     build_steps.extend([
         package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         copy_packages_for_docker_step(),
-        package_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
-        package_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
-        e2e_tests_server_step(edition=edition),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True),
+        grafana_server_step(edition=edition),
     ])
 
     if not disable_tests:
@@ -195,7 +231,7 @@ def get_steps(edition, ver_mode):
     if should_publish:
         publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
         build_npm_step = build_npm_packages_step(edition=edition, ver_mode=ver_mode)
-        store_npm_step = store_npm_packages_step(edition=edition, ver_mode=ver_mode)
+        store_npm_step = store_npm_packages_step()
         if publish_step:
             publish_steps.append(publish_step)
         if build_npm_step and store_npm_step:
@@ -229,7 +265,7 @@ def get_oss_pipelines(trigger, ver_mode):
     )
     pipelines = [
         pipeline(
-            name='oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
+            name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
                   build_steps + package_steps + publish_steps,
             volumes=volumes,
@@ -252,7 +288,7 @@ def get_oss_pipelines(trigger, ver_mode):
         ])
         deps = {
             'depends_on': [
-                'oss-build-publish{}-{}'.format(get_e2e_suffix(), ver_mode),
+                'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
                 'oss-test-{}'.format(ver_mode),
                 'oss-integration-tests-{}'.format(ver_mode)
             ]
@@ -310,18 +346,92 @@ def get_enterprise_pipelines(trigger, ver_mode):
 
     return pipelines
 
-def release_pipelines(ver_mode='release', trigger=None):
+def publish_artifacts_step(mode):
+    security = ''
+    if mode == 'security':
+        security = '--security '
+    return {
+        'name': 'publish-artifacts',
+        'image': publish_image,
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+        },
+        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket grafana-prerelease'.format(security)],
+        'depends_on': ['grabpl'],
+    }
+
+def publish_packages_step(edition):
+    return {
+        'name': 'publish-packages-{}'.format(edition),
+        'image': publish_image,
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+        },
+        'commands': ['./bin/grabpl store-packages {}'.format(edition)],
+        'depends_on': ['grabpl'],
+    }
+
+def publish_artifacts_pipelines(mode):
+    trigger = {
+        'event': ['promote'],
+        'target': [mode],
+    }
+    steps = [
+        download_grabpl_step(),
+        publish_artifacts_step(mode),
+    ]
+
+    return [pipeline(
+        name='publish-artifacts-{}'.format(mode), trigger=trigger, steps=steps, edition="all"
+    )]
+
+def publish_packages_pipeline():
+    trigger = {
+        'event': ['promote'],
+        'target': ['public'],
+    }
+    steps = [
+        download_grabpl_step(),
+        store_packages_step(edition='oss', ver_mode='release'),
+        store_packages_step(edition='enterprise', ver_mode='release'),
+    ]
+
+    return [pipeline(
+        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=['publish-artifacts-public']
+    )]
+
+def publish_npm_pipelines(mode):
+    trigger = {
+        'event': ['promote'],
+        'target': [mode],
+    }
+    steps = [
+        download_grabpl_step(),
+        retrieve_npm_packages_step(),
+        release_npm_packages_step()
+    ]
+
+    return [pipeline(
+        name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = initialize_step(edition='oss', platform='linux', ver_mode='release') + steps, edition="all"
+    )]
+
+def release_pipelines(ver_mode='release', trigger=None, environment=None):
     # 'enterprise' edition services contain both OSS and enterprise services
     services = integration_test_services(edition='enterprise')
     if not trigger:
         trigger = {
+            'event': {
+                'exclude': [
+                    'promote'
+                ]
+            },
             'ref': ['refs/tags/v*',],
             'repo': {
               'exclude': ['grafana/grafana'],
             },
         }
 
-    should_publish = ver_mode in ('release', 'test-release',)
+    should_publish = ver_mode == 'release'
 
     # The release pipelines include also enterprise ones, so both editions are built for a release.
     # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
@@ -330,54 +440,13 @@ def release_pipelines(ver_mode='release', trigger=None):
     enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
 
     pipelines = oss_pipelines + enterprise_pipelines
-    if should_publish:
-        steps = [
-            store_packages_step(edition='oss', ver_mode=ver_mode),
-            store_packages_step(edition='enterprise', ver_mode=ver_mode),
-        ]
-        publish_pipeline = pipeline(
-            name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss',
-            steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
-            depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
-        )
 
+    # if ver_mode == 'release':
+    #   pipelines.append(publish_artifacts_pipelines())
     #pipelines.append(notify_pipeline(
     #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
     #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
     #))
-
-    return pipelines
-
-def test_release_pipelines():
-    ver_mode = 'test-release'
-
-    services = integration_test_services(edition='enterprise')
-    trigger = {
-        'event': ['custom',],
-    }
-
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
-
-    publish_cmd = './bin/grabpl store-packages --edition {{}} --dry-run {}'.format(test_release_ver)
-
-    steps = [
-        store_packages_step(edition='oss', ver_mode=ver_mode),
-        store_packages_step(edition='enterprise', ver_mode=ver_mode),
-    ]
-
-    publish_pipeline = pipeline(
-        name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss',
-        steps=[download_grabpl_step()] + initialize_step(edition='oss', platform='linux', ver_mode=ver_mode, install_deps=False) + steps,
-        depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines],
-    )
-
-    pipelines = oss_pipelines + enterprise_pipelines + [publish_pipeline,]
-
-    pipelines.append(notify_pipeline(
-        name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-        depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
-    ))
 
     return pipelines
 

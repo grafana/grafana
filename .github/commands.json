@@ -92,6 +92,14 @@
   },
   {
     "type":"label",
+    "name":"datasource/CloudWatch Logs",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/97"
+    }
+  },
+  {
+    "type":"label",
     "name":"datasource/GoogleCloudMonitoring",
     "action":"addToProject",
     "addToProject":{
@@ -100,18 +108,10 @@
   },
   {
     "type":"label",
-    "name":"oss-observability",
-    "action":"addToProject",
-    "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
-    }
-  },
-  {
-    "type":"label",
     "name":"datasource/Prometheus",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/112"
     }
   },
   {
@@ -119,7 +119,23 @@
     "name":"datasource/InfluxDB",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/112"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Graphite",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/112"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/OpenTSDB",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/112"
     }
   },
   {
@@ -127,7 +143,7 @@
     "name":"datasource/OpenSearch",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/110"
     }
   },
   {
@@ -135,7 +151,7 @@
     "name":"datasource/Loki",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/110"
     }
   },
   {
@@ -143,7 +159,7 @@
     "name":"datasource/Tempo",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/110"
     }
   },
   {
@@ -151,7 +167,23 @@
     "name":"datasource/Elasticsearch",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/110"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Jaeger",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/110"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Zipkin",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/110"
     }
   },
   {
@@ -159,7 +191,7 @@
     "name":"area/explore",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/54"
+      "url":"https://github.com/orgs/grafana/projects/111"
     }
   },
   {

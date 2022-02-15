@@ -61,7 +61,7 @@ You can configure report-specific template variables for the dashboard on the re
 
 > **Note:** Available in Grafana Enterprise v8+.
 
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/repeat-panels-or-rows.md" >}}) section.
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/add-panels-dynamically/" >}}) section.
 
 #### Caveats:
 

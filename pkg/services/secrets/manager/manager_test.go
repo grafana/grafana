@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -177,15 +178,16 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
+		features := featuremgmt.WithFeatures(featuremgmt.FlagEnvelopeEncryption)
 		providerID := secrets.ProviderID("fakeProvider.v1")
 		settings := &setting.OSSImpl{
 			Cfg: &setting.Cfg{
-				Raw:            raw,
-				FeatureToggles: map[string]bool{secrets.EnvelopeEncryptionFeatureToggle: true},
+				Raw:                    raw,
+				IsFeatureToggleEnabled: features.IsEnabled,
 			},
 		}
 		encr := ossencryption.ProvideService()
-		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings))
+		kms := newFakeKMS(osskmsproviders.ProvideService(encr, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 
 		svcEncrypt, err := ProvideSecretsService(
@@ -193,6 +195,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
@@ -210,6 +213,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 			&kms,
 			encr,
 			settings,
+			features,
 			&usagestats.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
@@ -313,5 +317,44 @@ func TestSecretsService_Run(t *testing.T) {
 
 		dataKeyID := svc.keyName(withoutScope())
 		assert.True(t, svc.dataKeyCache[dataKeyID].expiry.After(time.Now().Add(dekTTL)))
+	})
+}
+
+func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
+	ctx := context.Background()
+	sql := sqlstore.InitTestDB(t)
+	store := database.ProvideSecretsStore(sql)
+	svc := SetupTestService(t, store)
+
+	// Encrypt to generate data encryption key
+	withoutScope := secrets.WithoutScope()
+	ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), withoutScope)
+	require.NoError(t, err)
+
+	t.Run("existing key should be re-encrypted", func(t *testing.T) {
+		prevDataKeys, err := store.GetAllDataKeys(ctx)
+		require.NoError(t, err)
+		require.Len(t, prevDataKeys, 1)
+
+		err = svc.ReEncryptDataKeys(ctx)
+		require.NoError(t, err)
+
+		reEncryptedDataKeys, err := store.GetAllDataKeys(ctx)
+		require.NoError(t, err)
+		require.Len(t, reEncryptedDataKeys, 1)
+
+		assert.NotEqual(t, prevDataKeys[0].EncryptedData, reEncryptedDataKeys[0].EncryptedData)
+	})
+
+	t.Run("data keys cache should be invalidated", func(t *testing.T) {
+		// Decrypt to ensure data key is cached
+		_, err := svc.Decrypt(ctx, ciphertext)
+		require.NoError(t, err)
+		require.NotEmpty(t, svc.dataKeyCache)
+
+		err = svc.ReEncryptDataKeys(ctx)
+		require.NoError(t, err)
+
+		assert.Empty(t, svc.dataKeyCache)
 	})
 }

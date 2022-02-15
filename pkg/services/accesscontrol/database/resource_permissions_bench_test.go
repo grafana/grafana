@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -51,10 +52,10 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	}
 }
 
-func getDSPermissions(b *testing.B, store accesscontrol.ResourcePermissionsStore, dataSources []int64) {
+func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int64) {
 	dsId := dataSources[0]
 
-	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, accesscontrol.GetResourcesPermissionsQuery{
+	permissions, err := store.GetResourcesPermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcesPermissionsQuery{
 		Actions:     []string{dsAction},
 		Resource:    dsResource,
 		ResourceIDs: []string{strconv.Itoa(int(dsId))},
@@ -93,12 +94,13 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 			_, err := ac.SetUserResourcePermission(
 				context.Background(),
 				accesscontrol.GlobalOrgID,
-				userIds[i],
-				accesscontrol.SetResourcePermissionCommand{
+				accesscontrol.User{ID: userIds[i]},
+				types.SetResourcePermissionCommand{
 					Actions:    []string{dsAction},
 					Resource:   dsResource,
 					ResourceID: strconv.Itoa(int(dsID)),
 				},
+				nil,
 			)
 			require.NoError(b, err)
 		}
@@ -110,11 +112,12 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *Acce
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				teamIds[i],
-				accesscontrol.SetResourcePermissionCommand{
+				types.SetResourcePermissionCommand{
 					Actions:    []string{"datasources:query"},
 					Resource:   "datasources",
 					ResourceID: strconv.Itoa(int(dsID)),
 				},
+				nil,
 			)
 			require.NoError(b, err)
 		}

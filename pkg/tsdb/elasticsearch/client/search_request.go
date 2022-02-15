@@ -235,7 +235,7 @@ func (b *FilterQueryBuilder) Build() ([]Filter, error) {
 }
 
 // AddDateRangeFilter adds a new time range filter
-func (b *FilterQueryBuilder) AddDateRangeFilter(timeField, lte, gte, format string) *FilterQueryBuilder {
+func (b *FilterQueryBuilder) AddDateRangeFilter(timeField string, lte, gte int64, format string) *FilterQueryBuilder {
 	b.filters = append(b.filters, &RangeFilter{
 		Key:    timeField,
 		Lte:    lte,

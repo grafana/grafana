@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -67,7 +68,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
 	}, func(cfg *setting.Cfg) {
-		cfg.Protocol = setting.HTTPSScheme
 		cfg.StrictTransportSecurity = true
 		cfg.StrictTransportSecurityMaxAge = 64000
 	})
@@ -333,7 +333,6 @@ func TestMiddlewareContext(t *testing.T) {
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
 		org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
 		require.NoError(t, err)
-
 		sc.fakeReq("GET", "/").exec()
 
 		assert.Equal(t, int64(0), sc.context.UserId)
@@ -674,7 +673,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		}
 
 		sc := &scenarioContext{t: t, cfg: cfg}
-
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 		exists, err := fs.Exists(viewsPath)
@@ -726,12 +724,14 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
-	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
-	require.NoError(t, err)
+
+	remoteCacheSvc := remotecache.NewFakeStore(t)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
 }
 
 type fakeRenderService struct {

@@ -6,26 +6,28 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
+
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/prometheus/common/model"
 )
 
 type RulerSrv struct {
 	store           store.RuleStore
 	DatasourceCache datasources.CacheService
 	QuotaService    *quota.QuotaService
-	manager         *state.Manager
+	scheduleService schedule.ScheduleService
 	log             log.Logger
 }
 
@@ -36,13 +38,16 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 		return toNamespaceErrorResponse(err)
 	}
 
-	uids, err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid)
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete namespace alert rules")
 	}
 
 	for _, uid := range uids {
-		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   uid,
+		})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
@@ -55,7 +60,7 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := web.Params(c.Req)[":Groupname"]
-	uids, err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.Req.Context(), c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
 
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
@@ -65,7 +70,10 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 	}
 
 	for _, uid := range uids {
-		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   uid,
+		})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
@@ -82,7 +90,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
 	}
-	if err := srv.store.GetNamespaceAlertRules(&q); err != nil {
+	if err := srv.store.GetNamespaceAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
@@ -125,7 +133,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 		NamespaceUID: namespace.Uid,
 		RuleGroup:    ruleGroup,
 	}
-	if err := srv.store.GetRuleGroupAlertRules(&q); err != nil {
+	if err := srv.store.GetRuleGroupAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
@@ -179,7 +187,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		PanelID:       panelID,
 	}
 
-	if err := srv.store.GetOrgAlertRules(&q); err != nil {
+	if err := srv.store.GetOrgAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
@@ -274,7 +282,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		}
 	}
 
-	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	if err := srv.store.UpdateRuleGroup(c.Req.Context(), store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
 		NamespaceUID:    namespace.Uid,
 		RuleGroupConfig: ruleGroupConfig,
@@ -288,7 +296,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	}
 
 	for uid := range alertRuleUIDs {
-		srv.manager.RemoveByRuleUID(c.OrgId, uid)
+		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+			OrgID: c.SignedInUser.OrgId,
+			UID:   uid,
+		})
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})

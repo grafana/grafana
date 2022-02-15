@@ -9,9 +9,20 @@ aliases = ["/docs/grafana/latest/http_api/external_group_sync/"]
 
 > External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
+> If you have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by Fine-grained access control permissions.
+> Refer to specific endpoints to understand what permissions are required.
+
 ## Get External Groups
 
 `GET /api/teams/:teamId/groups`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                 | Scope    |
+| ---------------------- | -------- |
+| teams.permissions:read | teams:\* |
 
 **Example Request**:
 
@@ -47,6 +58,14 @@ Status Codes:
 
 `POST /api/teams/:teamId/groups`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                  | Scope    |
+| ----------------------- | -------- |
+| teams.permissions:write | teams:\* |
+
 **Example Request**:
 
 ```http
@@ -80,6 +99,14 @@ Status Codes:
 ## Remove External Group
 
 `DELETE /api/teams/:teamId/groups/:groupId`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                  | Scope    |
+| ----------------------- | -------- |
+| teams.permissions:write | teams:\* |
 
 **Example Request**:
 

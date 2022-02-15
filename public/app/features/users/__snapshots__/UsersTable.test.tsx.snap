@@ -1,510 +1,466 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<table
-  className="filter-table form-inline"
->
-  <thead>
-    <tr>
-      <th />
-      <th>
-        Login
-      </th>
-      <th>
-        Email
-      </th>
-      <th>
-        Name
-      </th>
-      <th>
-        Seen
-      </th>
-      <th>
-        Role
-      </th>
-      <th
-        style={
-          Object {
-            "width": "34px",
+<Fragment>
+  <table
+    className="filter-table form-inline"
+  >
+    <thead>
+      <tr>
+        <th />
+        <th>
+          Login
+        </th>
+        <th>
+          Email
+        </th>
+        <th>
+          Name
+        </th>
+        <th>
+          Seen
+        </th>
+        <th>
+          Role
+        </th>
+        <th
+          style={
+            Object {
+              "width": "34px",
+            }
           }
-        }
-      />
-    </tr>
-  </thead>
-  <tbody />
-</table>
+        />
+      </tr>
+    </thead>
+    <tbody />
+  </table>
+</Fragment>
 `;
 
 exports[`Render should render users table 1`] = `
-<table
-  className="filter-table form-inline"
->
-  <thead>
-    <tr>
-      <th />
-      <th>
-        Login
-      </th>
-      <th>
-        Email
-      </th>
-      <th>
-        Name
-      </th>
-      <th>
-        Seen
-      </th>
-      <th>
-        Role
-      </th>
-      <th
-        style={
-          Object {
-            "width": "34px",
+<Fragment>
+  <table
+    className="filter-table form-inline"
+  >
+    <thead>
+      <tr>
+        <th />
+        <th>
+          Login
+        </th>
+        <th>
+          Email
+        </th>
+        <th>
+          Name
+        </th>
+        <th>
+          Seen
+        </th>
+        <th>
+          Role
+        </th>
+        <th
+          style={
+            Object {
+              "width": "34px",
+            }
           }
-        }
-      />
-    </tr>
-  </thead>
-  <tbody>
-    <tr
-      key="0-0"
-    >
-      <td
-        className="width-2 text-center"
-      >
-        <img
-          alt="User avatar"
-          className="filter-table__avatar"
-          src="url/to/avatar"
         />
-      </td>
-      <td
-        className="max-width-6"
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        key="0-0"
       >
-        <span
-          className="ellipsis"
-          title="user-0"
+        <td
+          className="width-2 text-center"
         >
-          user-0
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-0@test.com"
+          <img
+            alt="User avatar"
+            className="filter-table__avatar"
+            src="url/to/avatar"
+          />
+        </td>
+        <td
+          className="max-width-6"
         >
-          user-0@test.com
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-0 test"
+          <span
+            className="ellipsis"
+            title="user-0"
+          >
+            user-0
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-0 test
-        </span>
-      </td>
-      <td
-        className="width-1"
-      />
-      <td
-        className="width-8"
-      >
-        <OrgRolePicker
-          aria-label="Role"
-          disabled={false}
-          onChange={[Function]}
-          value="Admin"
-        />
-      </td>
-      <td>
-        <Button
-          aria-label="Delete user"
-          icon="times"
-          onClick={[Function]}
-          size="sm"
-          variant="destructive"
-        />
-        <ConfirmModal
-          body="Are you sure you want to delete user user-0?"
-          confirmText="Delete"
-          isOpen={false}
-          onConfirm={[Function]}
-          onDismiss={[Function]}
-          title="Delete"
-        />
-      </td>
-    </tr>
-    <tr
-      key="1-1"
-    >
-      <td
-        className="width-2 text-center"
-      >
-        <img
-          alt="User avatar"
-          className="filter-table__avatar"
-          src="url/to/avatar"
-        />
-      </td>
-      <td
-        className="max-width-6"
-      >
-        <span
-          className="ellipsis"
-          title="user-1"
+          <span
+            className="ellipsis"
+            title="user-0@test.com"
+          >
+            user-0@test.com
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-1
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-1@test.com"
+          <span
+            className="ellipsis"
+            title="user-0 test"
+          >
+            user-0 test
+          </span>
+        </td>
+        <td
+          className="width-1"
+        />
+        <td
+          className="width-8"
         >
-          user-1@test.com
-        </span>
-      </td>
-      <td
-        className="max-width-5"
+          <OrgRolePicker
+            aria-label="Role"
+            disabled={false}
+            onChange={[Function]}
+            value="Admin"
+          />
+        </td>
+        <td>
+          <Button
+            aria-label="Delete user"
+            icon="times"
+            onClick={[Function]}
+            size="sm"
+            variant="destructive"
+          />
+        </td>
+      </tr>
+      <tr
+        key="1-1"
       >
-        <span
-          className="ellipsis"
-          title="user-1 test"
+        <td
+          className="width-2 text-center"
         >
-          user-1 test
-        </span>
-      </td>
-      <td
-        className="width-1"
-      />
-      <td
-        className="width-8"
-      >
-        <OrgRolePicker
-          aria-label="Role"
-          disabled={false}
-          onChange={[Function]}
-          value="Admin"
-        />
-      </td>
-      <td>
-        <Button
-          aria-label="Delete user"
-          icon="times"
-          onClick={[Function]}
-          size="sm"
-          variant="destructive"
-        />
-        <ConfirmModal
-          body="Are you sure you want to delete user user-1?"
-          confirmText="Delete"
-          isOpen={false}
-          onConfirm={[Function]}
-          onDismiss={[Function]}
-          title="Delete"
-        />
-      </td>
-    </tr>
-    <tr
-      key="2-2"
-    >
-      <td
-        className="width-2 text-center"
-      >
-        <img
-          alt="User avatar"
-          className="filter-table__avatar"
-          src="url/to/avatar"
-        />
-      </td>
-      <td
-        className="max-width-6"
-      >
-        <span
-          className="ellipsis"
-          title="user-2"
+          <img
+            alt="User avatar"
+            className="filter-table__avatar"
+            src="url/to/avatar"
+          />
+        </td>
+        <td
+          className="max-width-6"
         >
-          user-2
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-2@test.com"
+          <span
+            className="ellipsis"
+            title="user-1"
+          >
+            user-1
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-2@test.com
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-2 test"
+          <span
+            className="ellipsis"
+            title="user-1@test.com"
+          >
+            user-1@test.com
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-2 test
-        </span>
-      </td>
-      <td
-        className="width-1"
-      />
-      <td
-        className="width-8"
-      >
-        <OrgRolePicker
-          aria-label="Role"
-          disabled={false}
-          onChange={[Function]}
-          value="Admin"
+          <span
+            className="ellipsis"
+            title="user-1 test"
+          >
+            user-1 test
+          </span>
+        </td>
+        <td
+          className="width-1"
         />
-      </td>
-      <td>
-        <Button
-          aria-label="Delete user"
-          icon="times"
-          onClick={[Function]}
-          size="sm"
-          variant="destructive"
-        />
-        <ConfirmModal
-          body="Are you sure you want to delete user user-2?"
-          confirmText="Delete"
-          isOpen={false}
-          onConfirm={[Function]}
-          onDismiss={[Function]}
-          title="Delete"
-        />
-      </td>
-    </tr>
-    <tr
-      key="3-3"
-    >
-      <td
-        className="width-2 text-center"
-      >
-        <img
-          alt="User avatar"
-          className="filter-table__avatar"
-          src="url/to/avatar"
-        />
-      </td>
-      <td
-        className="max-width-6"
-      >
-        <span
-          className="ellipsis"
-          title="user-3"
+        <td
+          className="width-8"
         >
-          user-3
-        </span>
-      </td>
-      <td
-        className="max-width-5"
+          <OrgRolePicker
+            aria-label="Role"
+            disabled={false}
+            onChange={[Function]}
+            value="Admin"
+          />
+        </td>
+        <td>
+          <Button
+            aria-label="Delete user"
+            icon="times"
+            onClick={[Function]}
+            size="sm"
+            variant="destructive"
+          />
+        </td>
+      </tr>
+      <tr
+        key="2-2"
       >
-        <span
-          className="ellipsis"
-          title="user-3@test.com"
+        <td
+          className="width-2 text-center"
         >
-          user-3@test.com
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-3 test"
+          <img
+            alt="User avatar"
+            className="filter-table__avatar"
+            src="url/to/avatar"
+          />
+        </td>
+        <td
+          className="max-width-6"
         >
-          user-3 test
-        </span>
-      </td>
-      <td
-        className="width-1"
-      />
-      <td
-        className="width-8"
-      >
-        <OrgRolePicker
-          aria-label="Role"
-          disabled={false}
-          onChange={[Function]}
-          value="Admin"
-        />
-      </td>
-      <td>
-        <Button
-          aria-label="Delete user"
-          icon="times"
-          onClick={[Function]}
-          size="sm"
-          variant="destructive"
-        />
-        <ConfirmModal
-          body="Are you sure you want to delete user user-3?"
-          confirmText="Delete"
-          isOpen={false}
-          onConfirm={[Function]}
-          onDismiss={[Function]}
-          title="Delete"
-        />
-      </td>
-    </tr>
-    <tr
-      key="4-4"
-    >
-      <td
-        className="width-2 text-center"
-      >
-        <img
-          alt="User avatar"
-          className="filter-table__avatar"
-          src="url/to/avatar"
-        />
-      </td>
-      <td
-        className="max-width-6"
-      >
-        <span
-          className="ellipsis"
-          title="user-4"
+          <span
+            className="ellipsis"
+            title="user-2"
+          >
+            user-2
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-4
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-4@test.com"
+          <span
+            className="ellipsis"
+            title="user-2@test.com"
+          >
+            user-2@test.com
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-4@test.com
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-4 test"
+          <span
+            className="ellipsis"
+            title="user-2 test"
+          >
+            user-2 test
+          </span>
+        </td>
+        <td
+          className="width-1"
+        />
+        <td
+          className="width-8"
         >
-          user-4 test
-        </span>
-      </td>
-      <td
-        className="width-1"
-      />
-      <td
-        className="width-8"
+          <OrgRolePicker
+            aria-label="Role"
+            disabled={false}
+            onChange={[Function]}
+            value="Admin"
+          />
+        </td>
+        <td>
+          <Button
+            aria-label="Delete user"
+            icon="times"
+            onClick={[Function]}
+            size="sm"
+            variant="destructive"
+          />
+        </td>
+      </tr>
+      <tr
+        key="3-3"
       >
-        <OrgRolePicker
-          aria-label="Role"
-          disabled={false}
-          onChange={[Function]}
-          value="Admin"
-        />
-      </td>
-      <td>
-        <Button
-          aria-label="Delete user"
-          icon="times"
-          onClick={[Function]}
-          size="sm"
-          variant="destructive"
-        />
-        <ConfirmModal
-          body="Are you sure you want to delete user user-4?"
-          confirmText="Delete"
-          isOpen={false}
-          onConfirm={[Function]}
-          onDismiss={[Function]}
-          title="Delete"
-        />
-      </td>
-    </tr>
-    <tr
-      key="5-5"
-    >
-      <td
-        className="width-2 text-center"
-      >
-        <img
-          alt="User avatar"
-          className="filter-table__avatar"
-          src="url/to/avatar"
-        />
-      </td>
-      <td
-        className="max-width-6"
-      >
-        <span
-          className="ellipsis"
-          title="user-5"
+        <td
+          className="width-2 text-center"
         >
-          user-5
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-5@test.com"
+          <img
+            alt="User avatar"
+            className="filter-table__avatar"
+            src="url/to/avatar"
+          />
+        </td>
+        <td
+          className="max-width-6"
         >
-          user-5@test.com
-        </span>
-      </td>
-      <td
-        className="max-width-5"
-      >
-        <span
-          className="ellipsis"
-          title="user-5 test"
+          <span
+            className="ellipsis"
+            title="user-3"
+          >
+            user-3
+          </span>
+        </td>
+        <td
+          className="max-width-5"
         >
-          user-5 test
-        </span>
-      </td>
-      <td
-        className="width-1"
-      />
-      <td
-        className="width-8"
+          <span
+            className="ellipsis"
+            title="user-3@test.com"
+          >
+            user-3@test.com
+          </span>
+        </td>
+        <td
+          className="max-width-5"
+        >
+          <span
+            className="ellipsis"
+            title="user-3 test"
+          >
+            user-3 test
+          </span>
+        </td>
+        <td
+          className="width-1"
+        />
+        <td
+          className="width-8"
+        >
+          <OrgRolePicker
+            aria-label="Role"
+            disabled={false}
+            onChange={[Function]}
+            value="Admin"
+          />
+        </td>
+        <td>
+          <Button
+            aria-label="Delete user"
+            icon="times"
+            onClick={[Function]}
+            size="sm"
+            variant="destructive"
+          />
+        </td>
+      </tr>
+      <tr
+        key="4-4"
       >
-        <OrgRolePicker
-          aria-label="Role"
-          disabled={false}
-          onChange={[Function]}
-          value="Admin"
+        <td
+          className="width-2 text-center"
+        >
+          <img
+            alt="User avatar"
+            className="filter-table__avatar"
+            src="url/to/avatar"
+          />
+        </td>
+        <td
+          className="max-width-6"
+        >
+          <span
+            className="ellipsis"
+            title="user-4"
+          >
+            user-4
+          </span>
+        </td>
+        <td
+          className="max-width-5"
+        >
+          <span
+            className="ellipsis"
+            title="user-4@test.com"
+          >
+            user-4@test.com
+          </span>
+        </td>
+        <td
+          className="max-width-5"
+        >
+          <span
+            className="ellipsis"
+            title="user-4 test"
+          >
+            user-4 test
+          </span>
+        </td>
+        <td
+          className="width-1"
         />
-      </td>
-      <td>
-        <Button
-          aria-label="Delete user"
-          icon="times"
-          onClick={[Function]}
-          size="sm"
-          variant="destructive"
+        <td
+          className="width-8"
+        >
+          <OrgRolePicker
+            aria-label="Role"
+            disabled={false}
+            onChange={[Function]}
+            value="Admin"
+          />
+        </td>
+        <td>
+          <Button
+            aria-label="Delete user"
+            icon="times"
+            onClick={[Function]}
+            size="sm"
+            variant="destructive"
+          />
+        </td>
+      </tr>
+      <tr
+        key="5-5"
+      >
+        <td
+          className="width-2 text-center"
+        >
+          <img
+            alt="User avatar"
+            className="filter-table__avatar"
+            src="url/to/avatar"
+          />
+        </td>
+        <td
+          className="max-width-6"
+        >
+          <span
+            className="ellipsis"
+            title="user-5"
+          >
+            user-5
+          </span>
+        </td>
+        <td
+          className="max-width-5"
+        >
+          <span
+            className="ellipsis"
+            title="user-5@test.com"
+          >
+            user-5@test.com
+          </span>
+        </td>
+        <td
+          className="max-width-5"
+        >
+          <span
+            className="ellipsis"
+            title="user-5 test"
+          >
+            user-5 test
+          </span>
+        </td>
+        <td
+          className="width-1"
         />
-        <ConfirmModal
-          body="Are you sure you want to delete user user-5?"
-          confirmText="Delete"
-          isOpen={false}
-          onConfirm={[Function]}
-          onDismiss={[Function]}
-          title="Delete"
-        />
-      </td>
-    </tr>
-  </tbody>
-</table>
+        <td
+          className="width-8"
+        >
+          <OrgRolePicker
+            aria-label="Role"
+            disabled={false}
+            onChange={[Function]}
+            value="Admin"
+          />
+        </td>
+        <td>
+          <Button
+            aria-label="Delete user"
+            icon="times"
+            onClick={[Function]}
+            size="sm"
+            variant="destructive"
+          />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Fragment>
 `;

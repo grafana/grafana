@@ -1,15 +1,12 @@
 import React, { FC, memo } from 'react';
-import { useLocalStorage } from 'react-use';
 import { css } from '@emotion/css';
-import { useTheme2, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
+import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
-import { PREVIEWS_LOCAL_STORAGE_KEY } from '../constants';
 
 export interface Props {
   onCloseSearch: () => void;
@@ -17,14 +14,12 @@ export interface Props {
 
 export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
   const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
-  const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
+  const { results, loading, onToggleSection, onKeyDown, showPreviews, onShowPreviewsChange } = useDashboardSearch(
+    query,
+    onCloseSearch
+  );
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const previewsEnabled = config.featureToggles.dashboardPreviews;
-  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, previewsEnabled);
-  const onShowPreviewsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setShowPreviews(event.target.checked);
-  };
 
   return (
     <div tabIndex={0} className={styles.overlay}>
@@ -39,7 +34,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
           <ActionRow
             {...{
               onLayoutChange,
-              onShowPreviewsChange,
+              onShowPreviewsChange: (ev) => onShowPreviewsChange(ev.target.checked),
               onSortChange,
               onTagFilterChange,
               query,
@@ -54,7 +49,7 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
               editable={false}
               onToggleSection={onToggleSection}
               layout={query.layout}
-              showPreviews={previewsEnabled && showPreviews}
+              showPreviews={showPreviews}
             />
           </CustomScrollbar>
         </div>

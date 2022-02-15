@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -21,10 +22,14 @@ import (
 )
 
 func TestPrometheusRules(t *testing.T) {
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -32,7 +37,7 @@ func TestPrometheusRules(t *testing.T) {
 	store.Bus = bus.GetBus()
 
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "default")
+	_, err = createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
@@ -202,7 +207,7 @@ func TestPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
-		require.JSONEq(t, `{"message": "API error","error":"failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
 	}
 
 	// Now, let's see how this looks like.
@@ -320,9 +325,12 @@ func TestPrometheusRules(t *testing.T) {
 }
 
 func TestPrometheusRulesFilterByDashboard(t *testing.T) {
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
+		AppModeProduction:    true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -594,7 +602,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "API error","error":"invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
+		require.JSONEq(t, `{"message": "invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
 	}
 
 	// Now, let's check a panel_id without dashboard_uid returns a 400 Bad Request response
@@ -610,15 +618,19 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "API error","error":"panel_id must be set with dashboard_uid"}`, string(b))
+		require.JSONEq(t, `{"message": "panel_id must be set with dashboard_uid"}`, string(b))
 	}
 }
 
 func TestPrometheusRulesPermissions(t *testing.T) {
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -633,7 +645,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	})
 
 	// Create a namespace under default organisation (orgID = 1) where we'll save some alerts.
-	_, err := createFolder(t, store, 0, "folder1")
+	_, err = createFolder(t, store, 0, "folder1")
 	require.NoError(t, err)
 
 	// Create another namespace under default organisation (orgID = 1) where we'll save some alerts.

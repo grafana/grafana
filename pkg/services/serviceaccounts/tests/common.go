@@ -29,7 +29,7 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 // create mock for serviceaccountservice
 type ServiceAccountMock struct{}
 
-func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return nil, nil
 }
 
@@ -41,7 +41,9 @@ func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
 	return false
 }
 
-func SetupMockAccesscontrol(t *testing.T, userpermissionsfunc func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error), disableAccessControl bool) *accesscontrolmock.Mock {
+func SetupMockAccesscontrol(t *testing.T,
+	userpermissionsfunc func(c context.Context, siu *models.SignedInUser, opt accesscontrol.Options) ([]*accesscontrol.Permission, error),
+	disableAccessControl bool) *accesscontrolmock.Mock {
 	t.Helper()
 	acmock := accesscontrolmock.New()
 	if disableAccessControl {
@@ -57,15 +59,19 @@ var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
 	CreateServiceAccount   []interface{}
+	ListServiceAccounts    []interface{}
+	RetrieveServiceAccount []interface{}
 	DeleteServiceAccount   []interface{}
 	UpgradeServiceAccounts []interface{}
+	ConvertServiceAccounts []interface{}
+	ListTokens             []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
 	Calls Calls
 }
 
-func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd *serviceaccounts.CreateServiceaccountForm) (*models.User, error) {
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd *serviceaccounts.CreateServiceaccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, cmd})
 	return nil, nil
@@ -78,6 +84,25 @@ func (s *ServiceAccountsStoreMock) DeleteServiceAccount(ctx context.Context, org
 }
 
 func (s *ServiceAccountsStoreMock) UpgradeServiceAccounts(ctx context.Context) error {
-	s.Calls.DeleteServiceAccount = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
+	s.Calls.UpgradeServiceAccounts = append(s.Calls.UpgradeServiceAccounts, []interface{}{ctx})
 	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ConvertToServiceAccounts(ctx context.Context, keys []int64) error {
+	s.Calls.ConvertServiceAccounts = append(s.Calls.ConvertServiceAccounts, []interface{}{ctx})
+	return nil
+}
+
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
+	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+	return nil, nil
+}
+func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgID int64, serviceAccountID int64) ([]*serviceaccounts.ServiceAccountDTO, error) {
+	s.Calls.ListServiceAccounts = append(s.Calls.ListServiceAccounts, []interface{}{ctx, orgID})
+	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return nil, nil
 }

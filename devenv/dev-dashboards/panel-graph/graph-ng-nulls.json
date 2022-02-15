@@ -34,7 +34,9 @@
   ],
   "panels": [
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -139,7 +141,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "Series A have no nulls and is not aligned with series B",
       "fieldConfig": {
         "defaults": {
@@ -254,7 +258,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -389,7 +395,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -494,7 +502,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "Series A have no nulls and is not aligned with series B",
       "fieldConfig": {
         "defaults": {
@@ -609,7 +619,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "description": "Should look the same as above\n",
       "fieldConfig": {
         "defaults": {
@@ -744,7 +756,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -885,7 +899,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1208,7 +1224,7 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 30,
+  "schemaVersion": 33,
   "style": "dark",
   "tags": [
     "gdev",

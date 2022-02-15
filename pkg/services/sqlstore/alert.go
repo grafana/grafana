@@ -15,14 +15,13 @@ import (
 var timeNow = time.Now
 
 func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
-	bus.AddHandler("sql", SaveAlerts)
 	bus.AddHandler("sql", ss.HandleAlertsQuery)
 	bus.AddHandler("sql", ss.GetAlertById)
 	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
 	bus.AddHandler("sql", ss.SetAlertState)
 	bus.AddHandler("sql", ss.GetAlertStatesForDashboard)
-	bus.AddHandler("sql", PauseAlert)
-	bus.AddHandler("sql", PauseAllAlerts)
+	bus.AddHandler("sql", ss.PauseAlert)
+	bus.AddHandler("sql", ss.PauseAllAlerts)
 }
 
 func (ss *SQLStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
@@ -174,7 +173,7 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 }
 
 func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
-	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
 			return err
@@ -185,25 +184,6 @@ func (ss *SQLStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*mode
 		}
 
 		if err := deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-func SaveAlerts(ctx context.Context, cmd *models.SaveAlertsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
-		if err != nil {
-			return err
-		}
-
-		if err := updateAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
-			return err
-		}
-
-		if err := deleteMissingAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
 			return err
 		}
 
@@ -344,8 +324,8 @@ func (ss *SQLStore) SetAlertState(ctx context.Context, cmd *models.SetAlertState
 	})
 }
 
-func PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if len(cmd.AlertIds) == 0 {
 			return fmt.Errorf("command contains no alertids")
 		}
@@ -378,8 +358,8 @@ func PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
 	})
 }
 
-func PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var newState string
 		if cmd.Paused {
 			newState = string(models.AlertStatePaused)

@@ -22,7 +22,7 @@ export function VariableTypeSelect({ onChange, type }: PropsWithChildren<Props>)
       options={options}
       onChange={onChange}
       tooltip={variableAdapters.get(type).description}
-      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect}
+      testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2}
     />
   );
 }

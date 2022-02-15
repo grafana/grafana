@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,10 +23,14 @@ import (
 
 func TestAlertRulePermissions(t *testing.T) {
 	// Setup Grafana and its Database
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -40,7 +45,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "folder1")
+	_, err = createFolder(t, store, 0, "folder1")
 	require.NoError(t, err)
 
 	_, err = createFolder(t, store, 0, "folder2")
@@ -324,6 +329,8 @@ func createRule(t *testing.T, grafanaListedAddr string, folder string, user, pas
 }
 
 func TestAlertRuleConflictingTitle(t *testing.T) {
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -331,6 +338,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		EnableQuota:           true,
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
+		AppModeProduction:     true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -338,7 +346,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
-	_, err := createFolder(t, store, 0, "folder1")
+	_, err = createFolder(t, store, 0, "folder1")
 	require.NoError(t, err)
 	_, err = createFolder(t, store, 0, "folder2")
 	require.NoError(t, err)
@@ -422,7 +430,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "API error","error":"failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
@@ -448,9 +456,13 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestRulerRulesFilterByDashboard(t *testing.T) {
+	_, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
+		AppModeProduction:    true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -773,7 +785,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "API error","error":"invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
+		require.JSONEq(t, `{"message": "invalid panel_id: strconv.ParseInt: parsing \"invalid\": invalid syntax"}`, string(b))
 	}
 
 	// Now, let's check a panel_id without dashboard_uid returns a 400 Bad Request response
@@ -789,6 +801,6 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "API error","error":"panel_id must be set with dashboard_uid"}`, string(b))
+		require.JSONEq(t, `{"message": "panel_id must be set with dashboard_uid"}`, string(b))
 	}
 }

@@ -9,7 +9,7 @@ import { AzureDataSourceJsonData, AzureQueryType, DatasourceValidationResult } f
 const templateSrv = new TemplateSrv();
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getTemplateSrv: () => templateSrv,
 }));
 
@@ -23,11 +23,11 @@ describe('AzureMonitorDatasource', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ctx.instanceSettings = ({
+    ctx.instanceSettings = {
       name: 'test',
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
-    } as unknown) as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+    } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
@@ -281,6 +281,54 @@ describe('AzureMonitorDatasource', () => {
             expect(results.length).toEqual(1);
             expect(results[0].text).toEqual('storagetest/default');
             expect(results[0].value).toEqual('storagetest/default');
+          });
+      });
+    });
+
+    describe('and there are several pages', () => {
+      const skipToken = 'token';
+      const response1 = {
+        value: [
+          {
+            name: `${resourceGroup}1`,
+            type: metricDefinition,
+          },
+        ],
+        nextLink: `https://management.azure.com/resourceuri?$skiptoken=${skipToken}`,
+      };
+      const response2 = {
+        value: [
+          {
+            name: `${resourceGroup}2`,
+            type: metricDefinition,
+          },
+        ],
+      };
+
+      beforeEach(() => {
+        const fn = jest.fn();
+        ctx.ds.azureMonitorDatasource.getResource = fn;
+        const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
+        const expectedPath = `${basePath}/${resourceGroup}/resources?$filter=resourceType eq '${metricDefinition}'&api-version=2021-04-01`;
+        // first page
+        fn.mockImplementationOnce((path: string) => {
+          expect(path).toBe(expectedPath);
+          return Promise.resolve(response1);
+        });
+        // second page
+        fn.mockImplementationOnce((path: string) => {
+          expect(path).toBe(`${expectedPath}&$skiptoken=${skipToken}`);
+          return Promise.resolve(response2);
+        });
+      });
+
+      it('should return list of Resource Names', () => {
+        return ctx.ds
+          .getResourceNames(subscription, resourceGroup, metricDefinition)
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(2);
+            expect(results[0].value).toEqual(`${resourceGroup}1`);
+            expect(results[1].value).toEqual(`${resourceGroup}2`);
           });
       });
     });

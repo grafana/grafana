@@ -14,6 +14,9 @@ export const ServerStats = () => {
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
 
+  const hasAccessToDataSources = contextSrv.hasAccess(AccessControlAction.DataSourcesRead, contextSrv.isGrafanaAdmin);
+  const hasAccessToAdminUsers = contextSrv.hasAccess(AccessControlAction.UsersRead, contextSrv.isGrafanaAdmin);
+
   useEffect(() => {
     if (contextSrv.hasAccess(AccessControlAction.ActionServerStatsRead, contextSrv.isGrafanaAdmin)) {
       setIsLoading(true);
@@ -55,9 +58,11 @@ export const ServerStats = () => {
             <StatCard
               content={[{ name: 'Data sources', value: stats.datasources }]}
               footer={
-                <LinkButton href={'/datasources'} variant={'secondary'}>
-                  Manage data sources
-                </LinkButton>
+                hasAccessToDataSources && (
+                  <LinkButton href={'/datasources'} variant={'secondary'}>
+                    Manage data sources
+                  </LinkButton>
+                )
               }
             />
             <StatCard
@@ -77,9 +82,11 @@ export const ServerStats = () => {
               { name: 'Active sessions', value: stats.activeSessions },
             ]}
             footer={
-              <LinkButton href={'/admin/users'} variant={'secondary'}>
-                Manage users
-              </LinkButton>
+              hasAccessToAdminUsers && (
+                <LinkButton href={'/admin/users'} variant={'secondary'}>
+                  Manage users
+                </LinkButton>
+              )
             }
           />
         </div>
@@ -133,7 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 type StatCardProps = {
   content: Array<Record<string, number | string>>;
-  footer?: JSX.Element;
+  footer?: JSX.Element | boolean;
 };
 
 const StatCard = ({ content, footer }: StatCardProps) => {

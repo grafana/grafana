@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,13 +23,17 @@ func (hs *HTTPServer) GetSignedInUser(c *models.ReqContext) response.Response {
 
 // GET /api/users/:id
 func (hs *HTTPServer) GetUserByID(c *models.ReqContext) response.Response {
-	return hs.getUserUserProfile(c, c.ParamsInt64(":id"))
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return hs.getUserUserProfile(c, id)
 }
 
 func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) response.Response {
 	query := models.GetUserProfileQuery{UserId: userID}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetUserProfile(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -38,7 +42,7 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 
 	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
-	if err := bus.Dispatch(c.Req.Context(), &getAuthQuery); err == nil {
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true
@@ -60,7 +64,7 @@ func (hs *HTTPServer) getGlobalUserAccessControlMetadata(c *models.ReqContext, u
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		return nil, err
 	}
@@ -72,9 +76,9 @@ func (hs *HTTPServer) getGlobalUserAccessControlMetadata(c *models.ReqContext, u
 }
 
 // GET /api/users/lookup
-func GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &query); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -96,7 +100,7 @@ func GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 }
 
 // POST /api/user
-func UpdateSignedInUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -110,38 +114,48 @@ func UpdateSignedInUser(c *models.ReqContext) response.Response {
 		}
 	}
 	cmd.UserId = c.UserId
-	return handleUpdateUser(c.Req.Context(), cmd)
+	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
 // POST /api/users/:id
-func UpdateUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateUser(c *models.ReqContext) response.Response {
 	cmd := models.UpdateUserCommand{}
+	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.UserId = c.ParamsInt64(":id")
-	return handleUpdateUser(c.Req.Context(), cmd)
+	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
 // POST /api/users/:id/using/:orgId
-func UpdateUserActiveOrg(c *models.ReqContext) response.Response {
-	userID := c.ParamsInt64(":id")
-	orgID := c.ParamsInt64(":orgId")
+func (hs *HTTPServer) UpdateUserActiveOrg(c *models.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
 
-	if !validateUsingOrg(c.Req.Context(), userID, orgID) {
+	if !hs.validateUsingOrg(c.Req.Context(), userID, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
 	cmd := models.SetUsingOrgCommand{UserId: userID, OrgId: orgID}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
 	}
 
 	return response.Success("Active organization changed")
 }
 
-func handleUpdateUser(ctx context.Context, cmd models.UpdateUserCommand) response.Response {
+func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd models.UpdateUserCommand) response.Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
@@ -149,7 +163,7 @@ func handleUpdateUser(ctx context.Context, cmd models.UpdateUserCommand) respons
 		}
 	}
 
-	if err := bus.Dispatch(ctx, &cmd); err != nil {
+	if err := hs.SQLStore.UpdateUser(ctx, &cmd); err != nil {
 		return response.Error(500, "Failed to update user", err)
 	}
 
@@ -157,24 +171,28 @@ func handleUpdateUser(ctx context.Context, cmd models.UpdateUserCommand) respons
 }
 
 // GET /api/user/orgs
-func GetSignedInUserOrgList(c *models.ReqContext) response.Response {
-	return getUserOrgList(c.Req.Context(), c.UserId)
+func (hs *HTTPServer) GetSignedInUserOrgList(c *models.ReqContext) response.Response {
+	return hs.getUserOrgList(c.Req.Context(), c.UserId)
 }
 
 // GET /api/user/teams
-func GetSignedInUserTeamList(c *models.ReqContext) response.Response {
-	return getUserTeamList(c.Req.Context(), c.OrgId, c.UserId)
+func (hs *HTTPServer) GetSignedInUserTeamList(c *models.ReqContext) response.Response {
+	return hs.getUserTeamList(c.Req.Context(), c.OrgId, c.UserId)
 }
 
 // GET /api/users/:id/teams
-func GetUserTeams(c *models.ReqContext) response.Response {
-	return getUserTeamList(c.Req.Context(), c.OrgId, c.ParamsInt64(":id"))
+func (hs *HTTPServer) GetUserTeams(c *models.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return hs.getUserTeamList(c.Req.Context(), c.OrgId, id)
 }
 
-func getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Response {
+func (hs *HTTPServer) getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Response {
 	query := models.GetTeamsByUserQuery{OrgId: orgID, UserId: userID}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := hs.SQLStore.GetTeamsByUser(ctx, &query); err != nil {
 		return response.Error(500, "Failed to get user teams", err)
 	}
 
@@ -185,24 +203,28 @@ func getUserTeamList(ctx context.Context, orgID int64, userID int64) response.Re
 }
 
 // GET /api/users/:id/orgs
-func GetUserOrgList(c *models.ReqContext) response.Response {
-	return getUserOrgList(c.Req.Context(), c.ParamsInt64(":id"))
+func (hs *HTTPServer) GetUserOrgList(c *models.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	return hs.getUserOrgList(c.Req.Context(), id)
 }
 
-func getUserOrgList(ctx context.Context, userID int64) response.Response {
+func (hs *HTTPServer) getUserOrgList(ctx context.Context, userID int64) response.Response {
 	query := models.GetUserOrgListQuery{UserId: userID}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := hs.SQLStore.GetUserOrgList(ctx, &query); err != nil {
 		return response.Error(500, "Failed to get user organizations", err)
 	}
 
 	return response.JSON(200, query.Result)
 }
 
-func validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
+func (hs *HTTPServer) validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
 	query := models.GetUserOrgListQuery{UserId: userID}
 
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := hs.SQLStore.GetUserOrgList(ctx, &query); err != nil {
 		return false
 	}
 
@@ -218,16 +240,19 @@ func validateUsingOrg(ctx context.Context, userID int64, orgID int64) bool {
 }
 
 // POST /api/user/using/:id
-func UserSetUsingOrg(c *models.ReqContext) response.Response {
-	orgID := c.ParamsInt64(":id")
+func (hs *HTTPServer) UserSetUsingOrg(c *models.ReqContext) response.Response {
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
-	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
+	if !hs.validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
 	cmd := models.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
 	}
 
@@ -236,22 +261,26 @@ func UserSetUsingOrg(c *models.ReqContext) response.Response {
 
 // GET /profile/switch-org/:id
 func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
-	orgID := c.ParamsInt64(":id")
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
+		return
+	}
 
-	if !validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
+	if !hs.validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
 		hs.NotFoundHandler(c)
 	}
 
 	cmd := models.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		hs.NotFoundHandler(c)
 	}
 
 	c.Redirect(hs.Cfg.AppSubURL + "/")
 }
 
-func ChangeUserPassword(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response {
 	cmd := models.ChangeUserPasswordCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -262,7 +291,7 @@ func ChangeUserPassword(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByIdQuery{Id: c.UserId}
 
-	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
+	if err := hs.SQLStore.GetUserById(c.Req.Context(), &userQuery); err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
@@ -285,7 +314,7 @@ func ChangeUserPassword(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 
@@ -297,8 +326,11 @@ func redirectToChangePassword(c *models.ReqContext) {
 	c.Redirect("/profile/password", 302)
 }
 
-func SetHelpFlag(c *models.ReqContext) response.Response {
-	flag := c.ParamsInt64(":id")
+func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
+	flag, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	bitmask := &c.HelpFlags1
 	bitmask.AddFlag(models.HelpFlags1(flag))
@@ -308,20 +340,20 @@ func SetHelpFlag(c *models.ReqContext) response.Response {
 		HelpFlags1: *bitmask,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 
 	return response.JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
-func ClearHelpFlags(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 	cmd := models.SetUserHelpFlagCommand{
 		UserId:     c.UserId,
 		HelpFlags1: models.HelpFlags1(0),
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update help flag", err)
 	}
 

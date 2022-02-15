@@ -108,7 +108,7 @@ describe('LokiLabelBrowser', () => {
       theme: createTheme(),
       onChange: () => {},
       autoSelect: 0,
-      languageProvider: (mockLanguageProvider as unknown) as LokiLanguageProvider,
+      languageProvider: mockLanguageProvider as unknown as LokiLanguageProvider,
       lastUsedLabels: [],
       storeLastUsedLabels: () => {},
       deleteLastUsedLabels: () => {},

@@ -16,7 +16,7 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
-import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace, CombinedRule } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
@@ -45,7 +45,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
     name: `Prometheus-${id}`,
     access: 'proxy',
     jsonData: {} as T,
-    meta: ({
+    meta: {
       info: {
         logos: {
           small: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
@@ -53,7 +53,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any) as DataSourcePluginMeta,
+    } as any as DataSourcePluginMeta,
     ...partial,
   };
 }
@@ -280,13 +280,15 @@ export class MockDataSourceSrv implements DataSourceSrv {
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
     return (
       DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
-      (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
+      ({ meta: { info: { logos: {} } } } as unknown as DataSourceInstanceSettings)
     );
   }
 
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
     return DatasourceSrv.prototype.loadDatasource.call(this, name);
   }
+
+  reload() {}
 }
 
 export const mockGrafanaReceiver = (
@@ -428,3 +430,22 @@ export const someRulerRules: RulerRulesConfigDTO = {
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };
+
+export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
+  name: 'mockRule',
+  query: 'expr',
+  group: {
+    name: 'mockCombinedRuleGroup',
+    rules: [],
+  },
+  namespace: {
+    name: 'mockCombinedNamespace',
+    groups: [{ name: 'mockCombinedRuleGroup', rules: [] }],
+    rulesSource: 'grafana',
+  },
+  labels: {},
+  annotations: {},
+  promRule: mockPromAlertingRule(),
+  rulerRule: mockRulerAlertingRule(),
+  ...partial,
+});

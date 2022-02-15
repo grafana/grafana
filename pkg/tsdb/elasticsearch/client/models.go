@@ -136,8 +136,8 @@ func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 type RangeFilter struct {
 	Filter
 	Key    string
-	Gte    string
-	Lte    string
+	Gte    int64
+	Lte    int64
 	Format string
 }
 
@@ -264,8 +264,8 @@ type TermsAggregation struct {
 
 // ExtendedBounds represents extended bounds
 type ExtendedBounds struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 // GeoHashGridAggregation represents a geo hash grid aggregation

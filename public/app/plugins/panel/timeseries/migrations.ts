@@ -7,6 +7,7 @@ import {
   FieldConfigSource,
   FieldMatcherID,
   fieldReducers,
+  FieldType,
   NullValueMode,
   PanelTypeChangedHandler,
   Threshold,
@@ -434,6 +435,20 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     };
   }
 
+  if (angular.xaxis && angular.xaxis.show === false && angular.xaxis.mode === 'time') {
+    overrides.push({
+      matcher: {
+        id: FieldMatcherID.byType,
+        options: FieldType.time,
+      },
+      properties: [
+        {
+          id: 'custom.axisPlacement',
+          value: AxisPlacement.Hidden,
+        },
+      ],
+    });
+  }
   return {
     fieldConfig: {
       defaults: omitBy(y1, isNil),

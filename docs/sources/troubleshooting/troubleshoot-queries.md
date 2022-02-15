@@ -19,7 +19,7 @@ The most common problems are related to the query and response from your data so
 like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
 the data source response. Start by inspecting your panel query and response.
 
-For more information, refer to [Inspect a panel]({{< relref "../panels/inspect-panel.md" >}}).
+For more information, refer to [Inspect request and response data]({{< relref "../panels/query-a-data-source/inspect-request-and-response-data.md" >}}).
 
 ## My query is slow
 

@@ -12,7 +12,6 @@ export { Aggregation } from './Aggregation';
 export { MetricQueryEditor } from './MetricQueryEditor';
 export { SLOQueryEditor } from './SLO/SLOQueryEditor';
 export { MQLQueryEditor } from './MQLQueryEditor';
-export { QueryTypeSelector } from './QueryType';
 export { VariableQueryField, QueryEditorRow, QueryEditorField } from './Fields';
 export { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 export { Preprocessor } from './Preprocessor';

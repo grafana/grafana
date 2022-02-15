@@ -8,6 +8,7 @@ import { VariableTextField } from '../editor/VariableTextField';
 import { VariableSwitchField } from '../editor/VariableSwitchField';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends VariableEditorProps<IntervalVariableModel> {}
 
@@ -70,6 +71,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
             onChange={this.onQueryChanged}
             onBlur={this.onQueryBlur}
             labelWidth={20}
+            testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.intervalsValueInput}
             grow
             required
           />

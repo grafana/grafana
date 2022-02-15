@@ -5,14 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -63,7 +64,7 @@ type LDAPServerDTO struct {
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
+func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, sqlstore sqlstore.Store) error {
 	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
@@ -73,7 +74,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context) error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.Dispatch(ctx, q); err != nil {
+	if err := sqlstore.SearchOrgs(ctx, q); err != nil {
 		return err
 	}
 
@@ -163,11 +164,14 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
 
-	userId := c.ParamsInt64(":id")
+	userId, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(c.Req.Context(), &query); err != nil { // validate the userId exists
+	if err := hs.SQLStore.GetUserById(c.Req.Context(), &query); err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -176,8 +180,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 	}
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
-
-	if err := bus.Dispatch(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -219,7 +222,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
-	err = bus.Dispatch(c.Req.Context(), upsertCmd)
+	err = hs.Login.UpsertUser(c.Req.Context(), upsertCmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
@@ -302,18 +305,15 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	u.OrgRoles = orgRoles
 
 	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	err = u.FetchOrgs(c.Req.Context())
+	err = u.FetchOrgs(c.Req.Context(), hs.SQLStore)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
-	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
-	err = bus.Dispatch(c.Req.Context(), cmd)
-	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
+	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups)
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
-
-	u.Teams = cmd.Result
 
 	return response.JSON(200, u)
 }
