@@ -16,12 +16,16 @@ import (
 )
 
 type StandardSearchService struct {
-	sql *sqlstore.SQLStore
+	sql  *sqlstore.SQLStore
+	auth FutureAuthService // eventually injected from elsewhere
 }
 
 func ProvideService(sql *sqlstore.SQLStore) SearchService {
 	return &StandardSearchService{
 		sql: sql,
+		auth: &simpleSQLAuthService{
+			sql: sql,
+		},
 	}
 }
 
@@ -49,9 +53,32 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
+	// TODO!!! get user from context?
+	dash, err = s.applyAuthFilter(nil, dash)
+	if err != nil {
+		rsp.Error = err
+		return rsp
+	}
+
 	rsp.Frames = metaToFrame(dash)
 
 	return rsp
+}
+
+func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashMeta) ([]dashMeta, error) {
+	filter, err := s.auth.GetDashboardReadFilter(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a list of all viewable dashboards for this user
+	res := make([]dashMeta, 0, len(dash))
+	for _, dash := range dash {
+		if filter(dash.dash.UID) {
+			res = append(res, dash)
+		}
+	}
+	return res, nil
 }
 
 type dashDataQueryResult struct {
