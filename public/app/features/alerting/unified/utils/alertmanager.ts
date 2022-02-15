@@ -4,6 +4,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 import { SelectableValue } from '@grafana/data';
 import { getAllDataSources } from './config';
 import { DataSourceType } from './datasource';
+import { FetchError } from '@grafana/runtime';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -175,4 +176,8 @@ export function getAllAlertmanagerDataSources() {
 
 export function getAlertmanagerByUid(uid?: string) {
   return getAllAlertmanagerDataSources().find((ds) => uid === ds.uid);
+}
+
+export function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }

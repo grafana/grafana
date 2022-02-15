@@ -4,6 +4,7 @@ import { FetchError } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import { appEvents } from 'app/core/core';
+import { isFetchError } from './alertmanager';
 
 export interface AsyncRequestState<T> {
   result?: T;
@@ -136,10 +137,6 @@ export function withAppEvents<T>(
       appEvents.emit(AppEvents.alertError, [`${options.errorMessage ?? 'Error'}: ${msg}`]);
       throw e;
     });
-}
-
-export function isFetchError(e: unknown): e is FetchError {
-  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }
 
 export function messageFromError(e: Error | FetchError | SerializedError): string {
