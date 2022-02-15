@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/prometheus/common/model"
 
@@ -30,6 +31,7 @@ type RulerSrv struct {
 	QuotaService    *quota.QuotaService
 	scheduleService schedule.ScheduleService
 	log             log.Logger
+	cfg             *setting.UnifiedAlertingSettings
 }
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
