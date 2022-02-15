@@ -13,14 +13,23 @@ import (
 )
 
 type TestUser struct {
+	Name             string
+	Role             string
 	Login            string
 	IsServiceAccount bool
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
+	role := string(models.ROLE_VIEWER)
+	if testUser.Role != "" {
+		role = testUser.Role
+	}
+
 	u1, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
+		DefaultOrgRole:   role,
+		Name:             testUser.Name,
 	})
 	require.NoError(t, err)
 	return u1

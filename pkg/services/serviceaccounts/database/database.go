@@ -214,6 +214,8 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 			if _, err := sess.ID(orgUser.Id).Update(&orgUser); err != nil {
 				return err
 			}
+
+			updatedUser.Role = string(*saForm.Role)
 		}
 
 		if saForm.Name != nil {
@@ -225,6 +227,8 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 			if _, err := sess.ID(serviceAccountID).Update(&user); err != nil {
 				return err
 			}
+
+			updatedUser.Name = *saForm.Name
 		}
 
 		return nil

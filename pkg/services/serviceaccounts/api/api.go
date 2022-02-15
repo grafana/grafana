@@ -203,9 +203,18 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	if cmd.Role != nil && !cmd.Role.IsValid() {
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
+	}
+
 	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, cmd)
 	if err != nil {
-		return response.Error(500, "Failed update service account", err)
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed update service account", err)
+		}
 	}
 
 	return response.JSON(http.StatusOK, resp)
