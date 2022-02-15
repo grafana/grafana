@@ -83,7 +83,7 @@ export type OAuth =
  *
  * @public
  */
-export type OAuthSettings = Partial<Record<OAuth, { name: string }>>;
+export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string }>>;
 
 /**
  * Describes all the different Grafana configuration values available for an instance.
