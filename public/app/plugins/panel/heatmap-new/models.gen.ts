@@ -57,6 +57,8 @@ export interface PanelOptions extends OptionsWithLegend {
   yAxisLabels?: string;
   yAxisReverse?: boolean;
 
+  cellGap?: number | null;
+
   tooltip: HeatmapTooltip;
 }
 

@@ -46,6 +46,8 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       // });
     }
 
+    category = ['Colors'];
+
     builder.addFieldNamePicker({
       path: `color.field`,
       name: 'Color with field',
@@ -56,8 +58,6 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
         placeholderText: 'Auto',
       },
     });
-
-    category = ['Colors'];
 
     builder.addRadio({
       path: `color.mode`,
@@ -152,6 +152,11 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
             { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
+      })
+      .addNumberInput({
+        path: 'cellGap',
+        name: 'Cell gap',
+        category,
       })
       .addSliderInput({
         name: 'Cell padding',

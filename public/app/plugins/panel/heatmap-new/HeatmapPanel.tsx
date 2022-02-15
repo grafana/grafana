@@ -71,6 +71,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       timeZone,
       timeRange,
       palette,
+      cellGap: options.cellGap,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);

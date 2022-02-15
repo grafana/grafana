@@ -9,6 +9,7 @@ import { HeatmapData } from './fields';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
+  gap?: number | null;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -32,10 +33,11 @@ interface PrepConfigOpts {
   timeZone: string;
   timeRange: TimeRange; // should be getTimeRange() cause dynamic?
   palette: string[];
+  cellGap?: number | null; // in css pixels
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { theme, onhover, onclick, isToolTipOpen, timeZone, timeRange, palette } = opts;
+  const { theme, onhover, onclick, isToolTipOpen, timeZone, timeRange, palette, cellGap } = opts;
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -158,6 +160,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           didx: dataIdx,
         });
       },
+      gap: cellGap,
       disp: {
         fill: {
           values: (u, seriesIdx) => countsToFills(u, seriesIdx, palette),
@@ -205,7 +208,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 }
 
 export function heatmapPaths(opts: PathbuilderOpts) {
-  const { disp, each } = opts;
+  const { disp, each, gap } = opts;
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -250,6 +253,15 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         // uniform tile sizes based on zoom level
         let xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
         let ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff));
+
+        const autoGapFactor = 0.05;
+
+        // tile gap control
+        let xGap = gap != null ? gap * devicePixelRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
+        let yGap = xGap;
+
+        xSize = Math.round(xSize - xGap);
+        ySize = Math.round(ySize - yGap);
 
         // bucket agg direction
         let xCeil = false;
