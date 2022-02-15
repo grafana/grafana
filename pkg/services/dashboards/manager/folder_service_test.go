@@ -5,8 +5,6 @@ package service
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -29,7 +27,7 @@ func TestFolderService(t *testing.T) {
 		service := ProvideFolderService(
 			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store)},
 			store,
-			search.ProvideService(setting.NewCfg(), bus.New()),
+			nil,
 		)
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
