@@ -11,7 +11,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
-  const histogramMetric = query.trim().match(/^\w+_bucket$/);
+  const histogramMetric = query.trim().match(/^\w+_bucket$|^\w+_bucket{.*}$/);
   if (histogramMetric) {
     const label = 'Selected metric has buckets.';
     hints.push({

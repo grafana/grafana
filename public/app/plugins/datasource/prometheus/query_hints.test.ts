@@ -133,6 +133,21 @@ describe('getQueryHints()', () => {
     });
   });
 
+  it('returns a histogram hint with action for a bucket with labels', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints('metric_bucket{job="grafana"}', series);
+    expect(hints!.length).toBe(1);
+    expect(hints![0].label).toContain('Selected metric has buckets.');
+    expect(hints![0].fix).toBeDefined();
+  });
+
   it('returns a sum hint when many time series results are returned for a simple metric', () => {
     const seriesCount = SUM_HINT_THRESHOLD_COUNT;
     const series = Array.from({ length: seriesCount }, (_) => ({
