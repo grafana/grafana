@@ -7,12 +7,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type Options struct {
+	ReloadCache bool
+}
+
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
 	// GetUserPermissions returns user permissions.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
+	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
 	// GetUserRoles returns user roles.
 	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
