@@ -245,12 +245,27 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	dashboardsCreatorRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:dashboards:creator",
+			DisplayName: "Dashboard creator",
+			Description: "Create dashboard in general folder",
+			Group:       "Dashboards",
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionFoldersRead, Scope: "folders:id:0"},
+				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:id:0"},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
 	dashboardsReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
 			Name:        "fixed:dashboards:reader",
 			DisplayName: "Dashboard reader",
-			Description: "Read dashboards",
+			Description: "Read all dashboards",
 			Group:       "Dashboards",
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionDashboardsRead, Scope: accesscontrol.ScopeDashboardsAll},
@@ -265,12 +280,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Name:        "fixed:dashboards:writer",
 			DisplayName: "Dashboard writer",
 			Group:       "Dashboards",
-			Description: "Update dashboards",
+			Description: "Create, read, write or delete all dashboards and their permissions.",
 			Permissions: accesscontrol.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionDashboardsEdit, Scope: accesscontrol.ScopeDashboardsAll},
 				{Action: accesscontrol.ActionDashboardsWrite, Scope: accesscontrol.ScopeDashboardsAll},
 				{Action: accesscontrol.ActionDashboardsDelete, Scope: accesscontrol.ScopeDashboardsAll},
-				{Action: accesscontrol.ActionDashboardsCreate, Scope: accesscontrol.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionDashboardsCreate, Scope: accesscontrol.ScopeFoldersAll},
 				{Action: accesscontrol.ActionDashboardsPermissionsRead, Scope: accesscontrol.ScopeDashboardsAll},
 				{Action: accesscontrol.ActionDashboardsPermissionsWrite, Scope: accesscontrol.ScopeDashboardsAll},
 			}),
@@ -278,13 +293,27 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	foldersCreatorRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     1,
+			Name:        "fixed:folders:creator",
+			DisplayName: "Folder creator",
+			Description: "Create folders",
+			Group:       "Folders",
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionFoldersCreate},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
 	foldersReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
 			Name:        "fixed:folders:reader",
 			DisplayName: "Folder reader",
-			Group:       "Dashboards",
-			Description: "Read folders",
+			Description: "Read all folders and dashboards",
+			Group:       "Folders",
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionFoldersRead, Scope: accesscontrol.ScopeFoldersAll},
 				{Action: accesscontrol.ActionDashboardsRead, Scope: accesscontrol.ScopeFoldersAll},
@@ -298,8 +327,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     1,
 			Name:        "fixed:folders:writer",
 			DisplayName: "Folder writer",
-			Description: "",
-			Group:       "Dashboards",
+			Description: "Create, read, write or delete all folders and dashboards and their permissions.",
+			Group:       "Folders",
 			Permissions: accesscontrol.ConcatPermissions(
 				foldersReaderRole.Role.Permissions,
 				[]accesscontrol.Permission{
@@ -336,8 +365,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
-		annotationsReaderRole, dashboardsReaderRole, dashboardsWriterRole, foldersReaderRole, foldersReaderWriter,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersReaderWriter,
 	)
 }
 
