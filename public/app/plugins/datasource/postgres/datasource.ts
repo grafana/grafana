@@ -213,6 +213,6 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     rawSql = rawSql.replace('$__', '');
 
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.containsTemplate(rawSql);
   }
 }

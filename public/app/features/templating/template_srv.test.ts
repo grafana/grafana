@@ -430,37 +430,37 @@ describe('templateSrv', () => {
     });
 
     it('should return true if $test exists', () => {
-      const result = _templateSrv.variableExists('$test');
+      const result = _templateSrv.containsTemplate('$test');
       expect(result).toBe(true);
     });
 
     it('should return true if $test exists in string', () => {
-      const result = _templateSrv.variableExists('something $test something');
+      const result = _templateSrv.containsTemplate('something $test something');
       expect(result).toBe(true);
     });
 
     it('should return true if [[test]] exists in string', () => {
-      const result = _templateSrv.variableExists('something [[test]] something');
+      const result = _templateSrv.containsTemplate('something [[test]] something');
       expect(result).toBe(true);
     });
 
     it('should return true if [[test:csv]] exists in string', () => {
-      const result = _templateSrv.variableExists('something [[test:csv]] something');
+      const result = _templateSrv.containsTemplate('something [[test:csv]] something');
       expect(result).toBe(true);
     });
 
     it('should return true if ${test} exists in string', () => {
-      const result = _templateSrv.variableExists('something ${test} something');
+      const result = _templateSrv.containsTemplate('something ${test} something');
       expect(result).toBe(true);
     });
 
     it('should return true if ${test:raw} exists in string', () => {
-      const result = _templateSrv.variableExists('something ${test:raw} something');
+      const result = _templateSrv.containsTemplate('something ${test:raw} something');
       expect(result).toBe(true);
     });
 
     it('should return null if there are no variables in string', () => {
-      const result = _templateSrv.variableExists('string without variables');
+      const result = _templateSrv.containsTemplate('string without variables');
       expect(result).toBe(false);
     });
   });
