@@ -162,7 +162,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   targetContainsTemplate(target: any) {
     if (target.filters && target.filters.length > 0) {
       for (let i = 0; i < target.filters.length; i++) {
-        if (this.templateSrv.variableExists(target.filters[i].filter)) {
+        if (this.templateSrv.containsTemplate(target.filters[i].filter)) {
           return true;
         }
       }
@@ -170,7 +170,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     if (target.tags && Object.keys(target.tags).length > 0) {
       for (const tagKey in target.tags) {
-        if (this.templateSrv.variableExists(target.tags[tagKey])) {
+        if (this.templateSrv.containsTemplate(target.tags[tagKey])) {
           return true;
         }
       }
