@@ -60,13 +60,6 @@ func checkDashboardAndPanel(ctx context.Context, dashboardId, panelId string) er
 
 	if err := bus.Dispatch(ctx, &query); err != nil {
 		return err
-		//if errors.Is(err, models.ErrDataSourceNotFound) {
-		///return response.Error(404, "Data source not found", nil)
-		//}
-		//if errors.Is(err, models.ErrDataSourceIdentifierNotSet) {
-		//return response.Error(400, "Datasource id is missing", nil)
-		//}
-		//return response.Error(500, "Failed to query datasources", err)
 	}
 
 	// Dashboard has no properties. This would be weird, haven't written a test
