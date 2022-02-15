@@ -82,7 +82,7 @@ jobs:
       if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
       uses: marocchino/sticky-pull-request-comment@v2
       with:
-        number: ${{ github.event.workflow_run.pull_requests[0].number }}
+        number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
           ⚠️ &nbsp;&nbsp;**Possible breaking changes**
 
@@ -97,7 +97,7 @@ jobs:
       if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
       uses: marocchino/sticky-pull-request-comment@v2
       with:
-        number: ${{ github.event.workflow_run.pull_requests[0].number }}
+        number: ${{ steps.levitate-run.outputs.pr_number }}
         delete: true
 
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
@@ -108,8 +108,8 @@ jobs:
       with:
         payload: |
           {
-            "pr_link": "${{ github.event.workflow_run.pull_requests[0].html_url }}",
-            "pr_number": "${{ github.event.workflow_run.pull_requests[0].number }}",
+            "pr_link": "https://github.com/grafana/grafana/pull/${{ steps.levitate-run.outputs.pr_number }}",
+            "pr_number": "${{ steps.levitate-run.outputs.pr_number }}",
             "job_link": "${{ steps.levitate-run.outputs.job_link }}",
             "reporting_job_link": "${{ github.event.workflow_run.html_url }}",
             "message": "${{ steps.levitate-run.outputs.message }}"
@@ -121,7 +121,7 @@ jobs:
       if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
       uses: actions/github-script@v5
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
         github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
@@ -136,7 +136,7 @@ jobs:
       if: ${{ steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 }}
       uses: actions/github-script@v5
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
         github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
@@ -153,7 +153,7 @@ jobs:
       if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
       uses: actions/github-script@v5
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
         github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
@@ -169,7 +169,7 @@ jobs:
       if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
       uses: actions/github-script@v5
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
         github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
