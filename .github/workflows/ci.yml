@@ -36,7 +36,7 @@ jobs:
         run: yarn cache clean
 
       - name: Install dependencies
-        run: yarn install --prefer-offline --frozen-lockfile --no-progress --network-concurrency 1
+        run: yarn install --immutable
 
       - name: Run tests 
         run: yarn run ci:test-percona-frontend
