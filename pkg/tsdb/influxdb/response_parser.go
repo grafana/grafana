@@ -65,13 +65,13 @@ func transformRows(rows []Row, query Query) data.Frames {
 			name := formatFrameName(row, column, query)
 
 			if valType == "string" {
-				var fields = parseStringSeries(row, colIndex, name)
+				fields := parseStringSeries(row, colIndex, name)
 				frames = append(frames, newDataFrame(name, query.RawQuery, fields[0], fields[1]))
 			} else if valType == "json.Number" {
-				var fields = parseFloatSeries(row, colIndex, name)
+				fields := parseFloatSeries(row, colIndex, name)
 				frames = append(frames, newDataFrame(name, query.RawQuery, fields[0], fields[1]))
 			} else if valType == "bool" {
-				var fields = parseBoolSeries(row, colIndex, name)
+				fields := parseBoolSeries(row, colIndex, name)
 				frames = append(frames, newDataFrame(name, query.RawQuery, fields[0], fields[1]))
 			}
 		}
