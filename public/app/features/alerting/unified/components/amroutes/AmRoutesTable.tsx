@@ -92,7 +92,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
             id: 'actions',
             label: 'Actions',
             // eslint-disable-next-line react/display-name
-            renderCell: (item, index) => {
+            renderCell: (item) => {
               if (item.renderExpandedContent) {
                 return null;
               }
@@ -118,10 +118,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
                     aria-label="Delete route"
                     name="trash-alt"
                     onClick={() => {
-                      const newRoutes = [...routes];
-
-                      newRoutes.splice(index, 1);
-
+                      const newRoutes = routes.filter((route) => route.id !== item.data.id);
                       onChange(newRoutes);
                     }}
                     type="button"
@@ -144,10 +141,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     [isAddMode, routes, filteredRoutes]
   );
 
-  // expand the last item when adding
+  // expand the last item when adding or rest when the lenght changed
   useEffect(() => {
     if (isAddMode && dynamicTableRoutes.length) {
       setExpandedId(dynamicTableRoutes[dynamicTableRoutes.length - 1].id);
+    }
+    if (!isAddMode && dynamicTableRoutes.length) {
+      setExpandedId(undefined);
     }
   }, [isAddMode, dynamicTableRoutes]);
 
@@ -168,7 +168,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       onCollapse={collapseItem}
       onExpand={expandItem}
       isExpanded={(item) => expandedId === item.id}
-      renderExpandedContent={(item: RouteTableItemProps, index) =>
+      renderExpandedContent={(item: RouteTableItemProps) =>
         isAddMode || editMode ? (
           <AmRoutesExpandedForm
             onCancel={() => {
