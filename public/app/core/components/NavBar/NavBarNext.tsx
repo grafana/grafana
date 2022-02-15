@@ -40,13 +40,15 @@ export const NavBarNext = React.memo(() => {
   };
   const navTree = cloneDeep(navBarTree);
   const coreItems = navTree.filter((item) => item.section === NavSection.Core);
-  const pinnedItems = navTree.filter((item) => item.showInNavBar);
+  const pinnedCoreItems = coreItems.filter((item) => !item.hideFromNavbar);
   const pluginItems = navTree.filter((item) => item.section === NavSection.Plugin);
+  const pinnedPluginItems = pluginItems.filter((item) => !item.hideFromNavbar);
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
   );
+  const pinnedConfigItems = configItems.filter((item) => !item.hideFromNavbar);
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -70,7 +72,7 @@ export const NavBarNext = React.memo(() => {
       </NavBarSection>
 
       <NavBarSection>
-        {pinnedItems.map((link, index) => (
+        {pinnedCoreItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
@@ -82,9 +84,9 @@ export const NavBarNext = React.memo(() => {
         ))}
       </NavBarSection>
 
-      {pluginItems.length > 0 && (
+      {pinnedPluginItems.length > 0 && (
         <NavBarSection>
-          {pluginItems.map((link, index) => (
+          {pinnedPluginItems.map((link, index) => (
             <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
               {link.icon && <Icon name={link.icon as IconName} size="xl" />}
               {link.img && <img src={link.img} alt={`${link.text} logo`} />}
@@ -96,7 +98,7 @@ export const NavBarNext = React.memo(() => {
       <div className={styles.spacer} />
 
       <NavBarSection>
-        {configItems.map((link, index) => (
+        {pinnedConfigItems.map((link, index) => (
           <NavBarItem
             key={`${link.id}-${index}`}
             isActive={isMatchOrChildMatch(link, activeItem)}
