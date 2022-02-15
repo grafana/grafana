@@ -1,8 +1,8 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
 import { rangeUtil, WithAccessControlMetadata } from '@grafana/data';
-import { featureEnabled } from '@grafana/runtime';
 import { AccessControlAction, UserPermission } from 'app/types';
+import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 
 export class User {
   id: number;
@@ -66,6 +66,18 @@ export class ContextSrv {
     this.minRefreshInterval = config.minRefreshInterval;
   }
 
+  async fetchUserPermissions() {
+    try {
+      if (this.accessControlEnabled()) {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+          reloadcache: true,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   /**
    * Indicate the user has been logged out
    */
@@ -83,13 +95,17 @@ export class ContextSrv {
   }
 
   accessControlEnabled(): boolean {
-    return featureEnabled(config.featureToggles.accesscontrol);
+    return Boolean(config.featureToggles['accesscontrol']);
+  }
+
+  licensedAccessControlEnabled(): boolean {
+    return featureEnabled('accesscontrol') && Boolean(config.featureToggles['accesscontrol']);
   }
 
   // Checks whether user has required permission
   hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
     // Fallback if access control disabled
-    if (!config.featureToggles.accesscontrol) {
+    if (!this.accessControlEnabled()) {
       return true;
     }
 
@@ -99,7 +115,7 @@ export class ContextSrv {
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
     // Fallback if access control disabled
-    if (!config.featureToggles.accesscontrol) {
+    if (!this.accessControlEnabled()) {
       return true;
     }
 
@@ -126,22 +142,29 @@ export class ContextSrv {
   }
 
   hasAccessToExplore() {
-    if (config.featureToggles.accesscontrol) {
+    if (this.accessControlEnabled()) {
       return this.hasPermission(AccessControlAction.DataSourcesExplore);
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
   hasAccess(action: string, fallBack: boolean) {
-    if (!config.featureToggles.accesscontrol) {
+    if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermission(action);
   }
 
+  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
+    if (!config.featureToggles['accesscontrol']) {
+      return fallBack;
+    }
+    return this.hasPermissionInMetadata(action, object);
+  }
+
   // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
   evaluatePermission(fallback: () => string[], actions: string[]) {
-    if (!config.featureToggles.accesscontrol) {
+    if (!this.accessControlEnabled()) {
       return fallback();
     }
     if (actions.some((action) => this.hasPermission(action))) {

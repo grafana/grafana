@@ -82,11 +82,11 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
-func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
+func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.Bus, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
-		Bus:                         bus,
+		Bus:                         b,
 		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
@@ -115,6 +115,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
+	ss.addStatsQueryAndCommandHandlers()
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
@@ -128,6 +129,12 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addDashboardVersionQueryAndCommandHandlers()
 	ss.addAPIKeysQueryAndCommandHandlers()
 	ss.addPlaylistQueryAndCommandHandlers()
+	ss.addLoginAttemptQueryAndCommandHandlers()
+	ss.addTeamQueryAndCommandHandlers()
+	ss.addDashboardProvisioningQueryAndCommandHandlers()
+	ss.addOrgQueryAndCommandHandlers()
+
+	bus.AddHandler("sql", ss.GetDBHealthQuery)
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -327,7 +334,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FLAG_database_metrics) {
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -456,6 +463,10 @@ type InitTestDBOpt struct {
 	EnsureDefaultOrgAndUser bool
 }
 
+var featuresEnabledDuringTests = []string{
+	featuremgmt.FlagDashboardPreviews,
+}
+
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
@@ -493,7 +504,15 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+		cfg.IsFeatureToggleEnabled = func(requestedFeature string) bool {
+			for _, enabledFeature := range featuresEnabledDuringTests {
+				if enabledFeature == requestedFeature {
+					return true
+				}
+			}
+
+			return false
+		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -117,13 +118,13 @@ func (ss *SQLStore) GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQu
 	// service accounts table in the modelling
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
-	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
-		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.User != nil {
+		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, q)
-		whereParams = append(whereParams, args...)
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 	}
 
 	if query.Query != "" {
@@ -180,13 +181,13 @@ func (ss *SQLStore) SearchOrgUsers(ctx context.Context, query *models.SearchOrgU
 	// service accounts table in the modelling
 	whereConditions = append(whereConditions, fmt.Sprintf("%s.is_service_account = %t", x.Dialect().Quote("user"), query.IsServiceAccount))
 
-	if ss.Cfg.IsFeatureToggleEnabled("accesscontrol") {
-		q, args, err := accesscontrol.Filter(ctx, ss.Dialect, "org_user.user_id", "users", "org.users:read", query.User)
+	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		acFilter, err := accesscontrol.Filter(ctx, "org_user.user_id", "users", "org.users:read", query.User)
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, q)
-		whereParams = append(whereParams, args...)
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 	}
 
 	if query.Query != "" {

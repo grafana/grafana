@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -357,7 +356,7 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 
 				t.Run("Unimplemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return method not implemented error", func(t *testing.T) {
-						_, err = ctx.manager.CollectMetrics(context.Background(), testPluginID)
+						_, err = ctx.manager.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 					})
 
@@ -369,13 +368,13 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 
 				t.Run("Implemented handlers", func(t *testing.T) {
 					t.Run("Collect metrics should return expected result", func(t *testing.T) {
-						ctx.pluginClient.CollectMetricsHandlerFunc = func(ctx context.Context) (*backend.CollectMetricsResult, error) {
+						ctx.pluginClient.CollectMetricsHandlerFunc = func(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 							return &backend.CollectMetricsResult{
 								PrometheusMetrics: []byte("hello"),
 							}, nil
 						}
 
-						res, err := ctx.manager.CollectMetrics(context.Background(), testPluginID)
+						res, err := ctx.manager.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: testPluginID}})
 						require.NoError(t, err)
 						require.NotNil(t, res)
 						require.Equal(t, "hello", string(res.PrometheusMetrics))
@@ -467,8 +466,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	requestValidator := &testPluginRequestValidator{}
-	pm := New(&plugins.Cfg{}, requestValidator, nil, &fakeLoader{}, &sqlstore.SQLStore{})
+	pm := New(&plugins.Cfg{}, nil, &fakeLoader{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -521,9 +519,8 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.Cloud = "AzureCloud"
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
-	requestValidator := &testPluginRequestValidator{}
 	loader := &fakeLoader{}
-	manager := New(cfg, requestValidator, nil, loader, nil)
+	manager := New(cfg, nil, loader)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
@@ -654,9 +651,9 @@ func (pc *fakePluginClient) kill() {
 	pc.exited = true
 }
 
-func (pc *fakePluginClient) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (pc *fakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if pc.CollectMetricsHandlerFunc != nil {
-		return pc.CollectMetricsHandlerFunc(ctx)
+		return pc.CollectMetricsHandlerFunc(ctx, req)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented
@@ -696,12 +693,6 @@ func (pc *fakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *fakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
-}
-
-type testPluginRequestValidator struct{}
-
-func (t *testPluginRequestValidator) Validate(string, *http.Request) error {
-	return nil
 }
 
 type fakeLogger struct {

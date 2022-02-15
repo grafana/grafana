@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -37,10 +37,11 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
+	ns            notifications.WebhookSender
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -75,6 +76,7 @@ func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template
 		Summary:   model.Settings.Get("summary").MustString(DefaultMessageTitleEmbed),
 		tmpl:      t,
 		log:       log.New("alerting.notifier." + model.Name),
+		ns:        ns,
 	}, nil
 }
 
@@ -105,7 +107,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 

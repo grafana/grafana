@@ -13,9 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func BenchmarkFilter10_10(b *testing.B)   { benchmarkFilter(b, 10, 10) }
-func BenchmarkFilter100_10(b *testing.B)  { benchmarkFilter(b, 100, 10) }
-func BenchmarkFilter100_100(b *testing.B) { benchmarkFilter(b, 100, 100) }
+func BenchmarkFilter10_10(b *testing.B)     { benchmarkFilter(b, 10, 10) }
+func BenchmarkFilter100_10(b *testing.B)    { benchmarkFilter(b, 100, 10) }
+func BenchmarkFilter100_100(b *testing.B)   { benchmarkFilter(b, 100, 100) }
+func BenchmarkFilter1000_100(b *testing.B)  { benchmarkFilter(b, 1000, 100) }
+func BenchmarkFilter1000_1000(b *testing.B) { benchmarkFilter(b, 1000, 100) }
 
 func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 	store, permissions := setupFilterBenchmark(b, numDs, numPermissions)
@@ -29,9 +31,8 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 
 	for i := 0; i < b.N; i++ {
 		baseSql := `SELECT data_source.* FROM data_source WHERE`
-		query, args, err := accesscontrol.Filter(
+		acFilter, err := accesscontrol.Filter(
 			context.Background(),
-			&FakeDriver{name: "sqlite3"},
 			"data_source.id",
 			"datasources",
 			"datasources:read",
@@ -41,7 +42,7 @@ func benchmarkFilter(b *testing.B, numDs, numPermissions int) {
 
 		var datasources []models.DataSource
 		sess := store.NewSession(context.Background())
-		err = sess.SQL(baseSql+query, args...).Find(&datasources)
+		err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 		require.NoError(b, err)
 		sess.Close()
 		require.Len(b, datasources, numPermissions)

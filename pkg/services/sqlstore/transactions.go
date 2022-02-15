@@ -3,19 +3,21 @@ package sqlstore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/mattn/go-sqlite3"
-	"xorm.io/xorm"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
-func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
+func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
 }
 
@@ -30,19 +32,32 @@ func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx cont
 	}, retry)
 }
 
-func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
+func inTransactionWithRetry(callback DBTransactionFunc, retry int) error {
 	return inTransactionWithRetryCtx(context.Background(), x, callback, retry)
 }
 
-func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc, retry int) error {
-	sess, err := startSession(ctx, engine, true)
+func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc, retry int) error {
+	sess, isNew, err := startSessionOrUseExisting(ctx, engine, true)
 	if err != nil {
 		return err
 	}
 
-	defer sess.Close()
+	if !sess.transactionOpen && !isNew {
+		// this should not happen because the only place that creates reusable session begins a new transaction.
+		return fmt.Errorf("cannot reuse existing session that did not start transaction")
+	}
+
+	if isNew { // if this call initiated the session, it should be responsible for closing it.
+		defer sess.Close()
+	}
 
 	err = callback(sess)
+
+	if !isNew {
+		tsclogger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
+		// Do not commit the transaction if the session was reused.
+		return err
+	}
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
 	var sqlError sqlite3.Error
@@ -77,10 +92,10 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	return nil
 }
 
-func inTransaction(callback dbTransactionFunc) error {
+func inTransaction(callback DBTransactionFunc) error {
 	return inTransactionWithRetry(callback, 0)
 }
 
-func inTransactionCtx(ctx context.Context, callback dbTransactionFunc) error {
+func inTransactionCtx(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, x, callback, 0)
 }

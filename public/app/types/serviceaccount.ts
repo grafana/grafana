@@ -1,7 +1,7 @@
 import { WithAccessControlMetadata } from '@grafana/data';
-import { OrgRole } from '.';
+import { ApiKey, OrgRole, Role } from '.';
 
-export interface OrgServiceAccount {
+export interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;
   avatarUrl: string;
   email: string;
@@ -25,20 +25,19 @@ export interface ServiceAccount {
 }
 
 export interface ServiceAccountDTO extends WithAccessControlMetadata {
+  id: number;
   orgId: number;
-  userId: number;
-  email: string;
+  tokens: number;
   name: string;
-  avatarUrl?: string;
   login: string;
-  role: string;
-  lastSeenAt: string;
-  lastSeenAtAge: string;
+  avatarUrl?: string;
+  role: OrgRole;
 }
 
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
   isLoading: boolean;
+  tokens: ApiKey[];
 }
 
 export interface ServiceAccountsState {
@@ -46,4 +45,7 @@ export interface ServiceAccountsState {
   searchQuery: string;
   searchPage: number;
   isLoading: boolean;
+  roleOptions: Role[];
+  serviceAccountToRemove: ServiceAccountDTO | null;
+  builtInRoles: Record<string, Role[]>;
 }

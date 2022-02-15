@@ -4,15 +4,16 @@ import {
   DataFrame,
   DataQuery,
   DataQueryRequest,
-  DataQueryResponse,
   DataSourceApi,
-  EventBusExtended,
   HistoryItem,
   LogsModel,
   PanelData,
   QueryHint,
   RawTimeRange,
   TimeRange,
+  EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -47,10 +48,10 @@ export interface ExploreState {
   richHistory: RichHistoryQuery[];
 
   /**
-   * True if local storage quota was exceeded when a new item was added. This is to prevent showing
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
    * multiple errors when local storage is full.
    */
-  localStorageFull: boolean;
+  richHistoryStorageFull: boolean;
 
   /**
    * True if a warning message of hitting the exceeded number of items has been shown already.
@@ -146,12 +147,6 @@ export interface ExploreItemState {
 
   queryResponse: PanelData;
 
-  /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
-   * query of that panel.
-   */
-  originPanelId?: number | null;
-
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;
@@ -173,6 +168,7 @@ export interface ExploreItemState {
 
   /* explore graph style */
   graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {
@@ -199,15 +195,14 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
+  queries: T[];
 };
 
 export interface ExplorePanelData extends PanelData {

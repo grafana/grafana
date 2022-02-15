@@ -44,8 +44,11 @@ interface TimeAndValue {
 }
 
 const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
-  // We want to process instant results in Explore as table
-  if ((options.app === CoreApp.Explore && dataFrame.meta?.custom?.resultType) === 'vector') {
+  // We want to process vector and scalar results in Explore as table
+  if (
+    options.app === CoreApp.Explore &&
+    (dataFrame.meta?.custom?.resultType === 'vector' || dataFrame.meta?.custom?.resultType === 'scalar')
+  ) {
     return true;
   }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -42,8 +43,9 @@ type DataSourceProxy struct {
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
-	dataSourcesService *datasources.Service
+	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
+	secretsService     secrets.Service
 }
 
 type handleResponseTransport struct {
@@ -56,6 +58,7 @@ func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, 
 		return nil, err
 	}
 	res.Header.Del("Set-Cookie")
+	proxyutil.SetProxyResponseHeaders(res.Header)
 	return res, nil
 }
 
@@ -77,8 +80,8 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
-	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service,
-	tracer tracing.Tracer) (*DataSourceProxy, error) {
+	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
+	tracer tracing.Tracer, secretsService secrets.Service) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
@@ -95,6 +98,7 @@ func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ct
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
 		tracer:             tracer,
+		secretsService:     secretsService,
 	}, nil
 }
 
@@ -158,7 +162,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	span.SetAttributes("datasource_name", proxy.ds.Name, attribute.Key("datasource_name").String(proxy.ds.Name))
 	span.SetAttributes("datasource_type", proxy.ds.Type, attribute.Key("datasource_type").String(proxy.ds.Type))
-	span.SetAttributes("user", proxy.ds.Type, attribute.Key("user").String(proxy.ds.Type))
+	span.SetAttributes("user", proxy.ctx.SignedInUser.Login, attribute.Key("user").String(proxy.ctx.SignedInUser.Login))
 	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgId, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -249,7 +253,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	secureJsonData, err := proxy.dataSourcesService.SecretsService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData)
+	secureJsonData, err := proxy.secretsService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -64,41 +62,10 @@ func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLo
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
-		l.log.Error("plugin finder encountered an error", "err", err)
+		return nil, err
 	}
 
 	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
-}
-
-func (l *Loader) LoadWithFactory(ctx context.Context, class plugins.Class, path string, factory backendplugin.PluginFactoryFunc) (*plugins.Plugin, error) {
-	p, err := l.load(ctx, class, path, map[string]struct{}{})
-	if err != nil {
-		l.log.Error("failed to load core plugin", "err", err)
-		return nil, err
-	}
-
-	err = l.pluginInitializer.InitializeWithFactory(p, factory)
-
-	return p, err
-}
-
-func (l *Loader) load(ctx context.Context, class plugins.Class, path string, ignore map[string]struct{}) (*plugins.Plugin, error) {
-	pluginJSONPaths, err := l.pluginFinder.Find([]string{path})
-	if err != nil {
-		l.log.Error("failed to find plugin", "err", err)
-		return nil, err
-	}
-
-	loadedPlugins, err := l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(loadedPlugins) == 0 {
-		return nil, fmt.Errorf("could not load plugin at path %s", path)
-	}
-
-	return loadedPlugins[0], nil
 }
 
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
@@ -108,18 +75,18 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as it's plugin.json is invalid", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as full plugin.json path could not be calculated", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
 			continue
 		}
 
 		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "id", plugin.ID)
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
@@ -130,13 +97,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := &plugins.Plugin{
-			JSONData:  pluginJSON,
-			PluginDir: pluginDir,
-			Class:     class,
-		}
-		l.setDefaults(plugin)
-		plugin.SetLogger(l.log.New("pluginID", plugin.ID))
+		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -199,6 +160,14 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			}
 		}
 
+		if plugin.IsApp() {
+			setDefaultNavURL(plugin)
+		}
+
+		if plugin.Parent != nil && plugin.Parent.IsApp() {
+			configureAppChildOPlugin(plugin.Parent, plugin)
+		}
+
 		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 
@@ -207,6 +176,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		if err != nil {
 			return nil, err
 		}
+		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 
 	return verifiedPlugins, nil
@@ -261,56 +231,54 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func (l *Loader) setDefaults(p *plugins.Plugin) {
-	setModule(p)
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, logger log.Logger) *plugins.Plugin {
+	plugin := &plugins.Plugin{
+		JSONData:  pluginJSON,
+		PluginDir: pluginDir,
+		BaseURL:   baseURL(pluginJSON, class, pluginDir),
+		Module:    module(pluginJSON, class, pluginDir),
+		Class:     class,
+	}
 
+	plugin.SetLogger(logger.New("pluginID", plugin.ID))
+	setImages(plugin)
+
+	return plugin
+}
+
+func setImages(p *plugins.Plugin) {
 	p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
 	p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
 
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		p.Info.Screenshots[i].Path = evalRelativePluginURLPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
 	}
+}
 
-	if p.IsApp() {
-		for _, child := range p.Children {
-			setChildModule(p, child)
+func setDefaultNavURL(p *plugins.Plugin) {
+	// slugify pages
+	for _, include := range p.Includes {
+		if include.Slug == "" {
+			include.Slug = slug.Make(include.Name)
 		}
 
-		// slugify pages
-		for _, include := range p.Includes {
-			if include.Slug == "" {
-				include.Slug = slug.Make(include.Name)
-			}
-			if include.Type == "page" && include.DefaultNav {
-				p.DefaultNavURL = l.cfg.AppSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
-			}
-			if include.Type == "dashboard" && include.DefaultNav {
-				p.DefaultNavURL = l.cfg.AppSubURL + "/dashboard/db/" + include.Slug
-			}
+		if !include.DefaultNav {
+			continue
+		}
+
+		if include.Type == "page" {
+			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
+		}
+		if include.Type == "dashboard" {
+			p.DefaultNavURL = path.Join("/dashboard/db/", include.Slug)
 		}
 	}
 }
 
-func setModule(p *plugins.Plugin) {
-	if p.IsCorePlugin() {
-		// Previously there was an assumption that the Core plugins directory
-		// should be public/app/plugins/<plugin type>/<plugin id>
-		// However this can be an issue if the Core plugins directory is renamed
-		baseDir := filepath.Base(p.PluginDir)
-
-		// use path package for the following statements because these are not file paths
-		p.Module = path.Join("app/plugins", string(p.Type), baseDir, "module")
-		p.BaseURL = path.Join("public/app/plugins", string(p.Type), baseDir)
+func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+	if !parent.IsApp() {
 		return
 	}
-
-	metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-
-	p.Module = path.Join("plugins", p.ID, "module")
-	p.BaseURL = path.Join("public/plugins", p.ID)
-}
-
-func setChildModule(parent *plugins.Plugin, child *plugins.Plugin) {
 	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
@@ -362,6 +330,22 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	}
 
 	return errs
+}
+
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+	}
+
+	return path.Join("public/plugins", pluginJSON.ID)
+}
+
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+	if class == plugins.Core {
+		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+	}
+
+	return path.Join("plugins", pluginJSON.ID, "module")
 }
 
 func validatePluginJSON(data plugins.JSONData) error {

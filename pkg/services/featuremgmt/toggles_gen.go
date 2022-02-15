@@ -2,156 +2,100 @@
 
 package featuremgmt
 
-// IsRecordedQueriesEnabled checks for the flag: recordedQueries
-// Supports saving queries that can be scraped by prometheus
-func (ft *FeatureToggles) IsRecordedQueriesEnabled() bool {
-	return ft.manager.IsEnabled("recordedQueries")
-}
+const (
+	// FlagTrimDefaults
+	// Use cue schema to remove values that will be applied automatically
+	FlagTrimDefaults = "trimDefaults"
 
-// IsTeamsyncEnabled checks for the flag: teamsync
-// Team sync lets you set up synchronization between your auth providers teams and teams in Grafana
-func (ft *FeatureToggles) IsTeamsyncEnabled() bool {
-	return ft.manager.IsEnabled("teamsync")
-}
+	// FlagEnvelopeEncryption
+	// encrypt secrets
+	FlagEnvelopeEncryption = "envelopeEncryption"
 
-// IsLdapsyncEnabled checks for the flag: ldapsync
-// Enhanced LDAP integration
-func (ft *FeatureToggles) IsLdapsyncEnabled() bool {
-	return ft.manager.IsEnabled("ldapsync")
-}
+	// FlagHttpclientproviderAzureAuth
+	// use http client for azure auth
+	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
 
-// IsCachingEnabled checks for the flag: caching
-// Temporarily store data source query results.
-func (ft *FeatureToggles) IsCachingEnabled() bool {
-	return ft.manager.IsEnabled("caching")
-}
+	// FlagServiceAccounts
+	// support service accounts
+	FlagServiceAccounts = "service-accounts"
 
-// IsDspermissionsEnabled checks for the flag: dspermissions
-// Data source permissions
-func (ft *FeatureToggles) IsDspermissionsEnabled() bool {
-	return ft.manager.IsEnabled("dspermissions")
-}
+	// FlagDatabaseMetrics
+	// Add prometheus metrics for database tables
+	FlagDatabaseMetrics = "database_metrics"
 
-// IsAnalyticsEnabled checks for the flag: analytics
-// Analytics
-func (ft *FeatureToggles) IsAnalyticsEnabled() bool {
-	return ft.manager.IsEnabled("analytics")
-}
+	// FlagDashboardPreviews
+	// Create and show thumbnails for dashboard search results
+	FlagDashboardPreviews = "dashboardPreviews"
 
-// IsEnterprisePluginsEnabled checks for the flag: enterprise.plugins
-// Enterprise plugins
-func (ft *FeatureToggles) IsEnterprisePluginsEnabled() bool {
-	return ft.manager.IsEnabled("enterprise.plugins")
-}
+	// FlagDashboardPreviewsScheduler
+	// Schedule automatic updates to dashboard previews
+	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
 
-// IsTrimDefaultsEnabled checks for the flag: trimDefaults
-// Use cue schema to remove values that will be applied automatically
-func (ft *FeatureToggles) IsTrimDefaultsEnabled() bool {
-	return ft.manager.IsEnabled("trimDefaults")
-}
+	// FlagLiveConfig
+	// Save grafana live configuration in SQL tables
+	FlagLiveConfig = "live-config"
 
-// IsEnvelopeEncryptionEnabled checks for the flag: envelopeEncryption
-// encrypt secrets
-func (ft *FeatureToggles) IsEnvelopeEncryptionEnabled() bool {
-	return ft.manager.IsEnabled("envelopeEncryption")
-}
+	// FlagLivePipeline
+	// enable a generic live processing pipeline
+	FlagLivePipeline = "live-pipeline"
 
-// IsHttpclientproviderAzureAuthEnabled checks for the flag: httpclientprovider_azure_auth
-func (ft *FeatureToggles) IsHttpclientproviderAzureAuthEnabled() bool {
-	return ft.manager.IsEnabled("httpclientprovider_azure_auth")
-}
+	// FlagLiveServiceWebWorker
+	// This will use a webworker thread to processes events rather than the main thread
+	FlagLiveServiceWebWorker = "live-service-web-worker"
 
-// IsServiceAccountsEnabled checks for the flag: service-accounts
-// support service accounts
-func (ft *FeatureToggles) IsServiceAccountsEnabled() bool {
-	return ft.manager.IsEnabled("service-accounts")
-}
+	// FlagQueryOverLive
+	// Use grafana live websocket to execute backend queries
+	FlagQueryOverLive = "queryOverLive"
 
-// IsDatabaseMetricsEnabled checks for the flag: database_metrics
-// Add prometheus metrics for database tables
-func (ft *FeatureToggles) IsDatabaseMetricsEnabled() bool {
-	return ft.manager.IsEnabled("database_metrics")
-}
+	// FlagTempoSearch
+	// Enable searching in tempo datasources
+	FlagTempoSearch = "tempoSearch"
 
-// IsDashboardPreviewsEnabled checks for the flag: dashboardPreviews
-// Create and show thumbnails for dashboard search results
-func (ft *FeatureToggles) IsDashboardPreviewsEnabled() bool {
-	return ft.manager.IsEnabled("dashboardPreviews")
-}
+	// FlagTempoBackendSearch
+	// Use backend for tempo search
+	FlagTempoBackendSearch = "tempoBackendSearch"
 
-// IsLiveConfigEnabled checks for the flag: live-config
-// Save grafana live configuration in SQL tables
-func (ft *FeatureToggles) IsLiveConfigEnabled() bool {
-	return ft.manager.IsEnabled("live-config")
-}
+	// FlagTempoServiceGraph
+	// show service
+	FlagTempoServiceGraph = "tempoServiceGraph"
 
-// IsLivePipelineEnabled checks for the flag: live-pipeline
-// enable a generic live processing pipeline
-func (ft *FeatureToggles) IsLivePipelineEnabled() bool {
-	return ft.manager.IsEnabled("live-pipeline")
-}
+	// FlagLokiBackendMode
+	// Loki datasource works as backend datasource
+	FlagLokiBackendMode = "lokiBackendMode"
 
-// IsLiveServiceWebWorkerEnabled checks for the flag: live-service-web-worker
-// This will use a webworker thread to processes events rather than the main thread
-func (ft *FeatureToggles) IsLiveServiceWebWorkerEnabled() bool {
-	return ft.manager.IsEnabled("live-service-web-worker")
-}
+	// FlagAccesscontrol
+	// Support robust access control
+	FlagAccesscontrol = "accesscontrol"
 
-// IsQueryOverLiveEnabled checks for the flag: queryOverLive
-// Use grafana live websocket to execute backend queries
-func (ft *FeatureToggles) IsQueryOverLiveEnabled() bool {
-	return ft.manager.IsEnabled("queryOverLive")
-}
+	// FlagPrometheusAzureAuth
+	// Use azure authentication for prometheus datasource
+	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
-// IsTempoSearchEnabled checks for the flag: tempoSearch
-// Enable searching in tempo datasources
-func (ft *FeatureToggles) IsTempoSearchEnabled() bool {
-	return ft.manager.IsEnabled("tempoSearch")
-}
+	// FlagInfluxdbBackendMigration
+	// Query InfluxDB InfluxQL without the proxy
+	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
 
-// IsTempoBackendSearchEnabled checks for the flag: tempoBackendSearch
-// Use backend for tempo search
-func (ft *FeatureToggles) IsTempoBackendSearchEnabled() bool {
-	return ft.manager.IsEnabled("tempoBackendSearch")
-}
+	// FlagNewNavigation
+	// Try the next gen navigation model
+	FlagNewNavigation = "newNavigation"
 
-// IsTempoServiceGraphEnabled checks for the flag: tempoServiceGraph
-// show service
-func (ft *FeatureToggles) IsTempoServiceGraphEnabled() bool {
-	return ft.manager.IsEnabled("tempoServiceGraph")
-}
+	// FlagShowFeatureFlagsInUI
+	// Show feature flags in the settings UI
+	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
 
-// IsFullRangeLogsVolumeEnabled checks for the flag: fullRangeLogsVolume
-// Show full range logs volume in expore
-func (ft *FeatureToggles) IsFullRangeLogsVolumeEnabled() bool {
-	return ft.manager.IsEnabled("fullRangeLogsVolume")
-}
+	// FlagDisableHttpRequestHistogram
+	// Do not create histograms for http requests
+	FlagDisableHttpRequestHistogram = "disable_http_request_histogram"
 
-// IsAccesscontrolEnabled checks for the flag: accesscontrol
-// Support robust access control
-func (ft *FeatureToggles) IsAccesscontrolEnabled() bool {
-	return ft.manager.IsEnabled("accesscontrol")
-}
+	// FlagValidatedQueries
+	// only execute the query saved in a panel
+	FlagValidatedQueries = "validatedQueries"
 
-// IsPrometheusAzureAuthEnabled checks for the flag: prometheus_azure_auth
-// Use azure authentication for prometheus datasource
-func (ft *FeatureToggles) IsPrometheusAzureAuthEnabled() bool {
-	return ft.manager.IsEnabled("prometheus_azure_auth")
-}
+	// FlagSwaggerUi
+	// Serves swagger UI
+	FlagSwaggerUi = "swaggerUi"
 
-// IsNewNavigationEnabled checks for the flag: newNavigation
-// Try the next gen naviation model
-func (ft *FeatureToggles) IsNewNavigationEnabled() bool {
-	return ft.manager.IsEnabled("newNavigation")
-}
-
-// IsShowFeatureFlagsInUIEnabled checks for the flag: showFeatureFlagsInUI
-// Show feature flags in the settings UI
-func (ft *FeatureToggles) IsShowFeatureFlagsInUIEnabled() bool {
-	return ft.manager.IsEnabled("showFeatureFlagsInUI")
-}
-
-// IsDisableHttpRequestHistogramEnabled checks for the flag: disable_http_request_histogram
-func (ft *FeatureToggles) IsDisableHttpRequestHistogramEnabled() bool {
-	return ft.manager.IsEnabled("disable_http_request_histogram")
-}
+	// FlagFeatureHighlights
+	// Highlight Enterprise features
+	FlagFeatureHighlights = "featureHighlights"
+)
