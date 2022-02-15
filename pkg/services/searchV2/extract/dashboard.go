@@ -115,6 +115,8 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 		// Ignore these properties
 		case "timepicker":
 			fallthrough
+		case "version":
+			fallthrough
 		case "iteration":
 			iter.Skip()
 
@@ -125,7 +127,7 @@ func ReadDashboard(stream io.Reader, datasource DatasourceLookup) *DashboardInfo
 	}
 
 	if dash.UID == "" {
-		fmt.Printf("????")
+		logf("All dashbaords should have a UID defined")
 	}
 
 	return dash
@@ -154,6 +156,9 @@ func readPanelInfo(iter *jsoniter.Iterator) PanelInfo {
 
 		case "description":
 			panel.Description = iter.ReadString()
+
+		case "pluginVersion":
+			panel.PluginVersion = iter.ReadString() // since 7x (the saved version for the plugin model)
 
 		case "datasource":
 			v := iter.Read()

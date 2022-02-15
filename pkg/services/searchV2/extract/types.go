@@ -14,7 +14,8 @@ type PanelInfo struct {
 	ID              int64    `json:"id"`
 	Title           string   `json:"title"`
 	Description     string   `json:"description,omitempty"`
-	Type            string   `json:"type"`                      // PluginID
+	Type            string   `json:"type,omitempty"` // PluginID
+	PluginVersion   string   `json:"pluginVersion,omitempty"`
 	Datasource      []string `json:"datasource,omitempty"`      // UIDs
 	DatasourceType  []string `json:"datasourceType,omitempty"`  // PluginIDs
 	Transformations []string `json:"transformations,omitempty"` // ids of the transformation steps

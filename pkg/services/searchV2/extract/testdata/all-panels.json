@@ -15,12 +15,14 @@
     {
       "id": 34,
       "title": "",
-      "type": "text"
+      "type": "text",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 35,
       "title": "",
-      "type": "text"
+      "type": "text",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 32,
@@ -50,7 +52,8 @@
     {
       "id": 8,
       "title": "Dashboard list",
-      "type": "dashlist"
+      "type": "dashlist",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 30,
@@ -70,7 +73,8 @@
     {
       "id": 20,
       "title": "Bar gauge",
-      "type": "bargauge"
+      "type": "bargauge",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 24,
@@ -80,12 +84,14 @@
     {
       "id": 18,
       "title": "Gauge",
-      "type": "gauge"
+      "type": "gauge",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 22,
       "title": "Tabel",
-      "type": "table"
+      "type": "table",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 10,
@@ -95,7 +101,8 @@
     {
       "id": 16,
       "title": "Stat",
-      "type": "stat"
+      "type": "stat",
+      "pluginVersion": "8.1.0-pre"
     },
     {
       "id": 2,

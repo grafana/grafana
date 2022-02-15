@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -153,6 +154,13 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashCreated.Name = "Created"
 	dashUpdated.Name = "Updated"
 
+	dashTags.Config = &data.FieldConfig{
+		Custom: map[string]interface{}{
+			// Table panel default styling
+			"displayMode": "json-view",
+		},
+	}
+
 	panelDashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	panelID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	panelName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -165,21 +173,11 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	panelDescr.Name = "Description"
 	panelType.Name = "Type"
 
-	// fID.Name = "ID"
-	// fUID.Name = "UID"
-	// fPanelID.Name = "Panel ID"
-	// fName.Name = "Name"
-	// fDescr.Name = "Description"
-	// fType.Name = "Panel type"
-	// fTags.Name = "Tags"
-	// fTags.Config = &data.FieldConfig{
-	// 	Custom: map[string]interface{}{
-	// 		// Table panel default styling
-	// 		"displayMode": "json-view",
-	// 	},
-	// }
+	panelTypeCounter := simpleCounter{
+		values: make(map[string]int64, 30),
+	}
 
-	counter := simpleCounter{
+	schemaVersionCounter := simpleCounter{
 		values: make(map[string]int64, 30),
 	}
 
@@ -201,6 +199,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		dashCreated.Append(row.created)
 		dashUpdated.Append(row.updated)
 
+		// stats
+		schemaVersionCounter.add(strconv.FormatInt(row.dash.SchemaVersion, 10))
+
 		// Send tags as JSON array
 		tags = nil
 		if len(row.dash.Tags) > 0 {
@@ -219,7 +220,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 			panelName.Append(panel.Title)
 			panelDescr.Append(panel.Description)
 			panelType.Append(panel.Type)
-			counter.add(panel.Type)
+			panelTypeCounter.add(panel.Type)
 		}
 	}
 
@@ -227,6 +228,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		data.NewFrame("folders", folderID, folderUID, folderName),
 		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
-		counter.toFrame("panel-type-counts"),
+		panelTypeCounter.toFrame("panel-type-counts"),
+		schemaVersionCounter.toFrame("schema-version-counts"),
 	}
 }

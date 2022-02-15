@@ -10,12 +10,14 @@
     {
       "id": 4,
       "title": "two units",
-      "type": "timeseries"
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre"
     },
     {
       "id": 13,
       "title": "Speed vs Temperature (XY)",
       "type": "xychart",
+      "pluginVersion": "7.5.0-pre",
       "transformations": [
         "seriesToColumns",
         "organize"
@@ -24,32 +26,38 @@
     {
       "id": 2,
       "title": "Cursor info",
-      "type": "debug"
+      "type": "debug",
+      "pluginVersion": "7.5.0-pre"
     },
     {
       "id": 5,
       "title": "Only temperature",
-      "type": "timeseries"
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre"
     },
     {
       "id": 9,
       "title": "Only Speed",
-      "type": "timeseries"
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre"
     },
     {
       "id": 11,
       "title": "Panel Title",
-      "type": "timeseries"
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre"
     },
     {
       "id": 8,
       "title": "flot panel (temperature)",
-      "type": "graph"
+      "type": "graph",
+      "pluginVersion": "7.5.0-pre"
     },
     {
       "id": 10,
       "title": "flot panel (no units)",
-      "type": "graph"
+      "type": "graph",
+      "pluginVersion": "7.5.0-pre"
     }
   ],
   "schemaVersion": 28,
