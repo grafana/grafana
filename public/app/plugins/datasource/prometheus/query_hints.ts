@@ -53,7 +53,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     }
 
     if (counterNameMetric) {
-      // FixableQuery includes metric name and it can include label-value pairs. We are not offering fix for complex queries yet.
+      // FixableQuery consists of metric name and optionally label-value pairs. We are not offering fix for complex queries yet.
       const fixableQuery = query.trim().match(/^\w+$|^\w+{.*}$/);
       const verb = certain ? 'is' : 'looks like';
       let label = `Selected metric ${verb} a counter.`;
