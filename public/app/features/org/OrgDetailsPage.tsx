@@ -1,68 +1,47 @@
-import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import React, { useEffect, useState } from 'react';
 
-import Page from 'app/core/components/Page/Page';
-import OrgProfile from './OrgProfile';
-import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { loadOrganization, updateOrganization } from './state/actions';
-import { AccessControlAction, Organization, StoreState } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { setOrganizationName } from './state/reducers';
 import { VerticalGroup } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { contextSrv } from 'app/core/core';
+import { updateConfigurationSubtitle } from 'app/core/actions';
+import { getNavModel } from 'app/core/selectors/navModel';
+import Page from 'app/core/components/Page/Page';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import OrgProfile from './OrgProfile';
+import { OrgDetailsDTO } from './types';
 
-export interface Props {
-  navModel: NavModel;
-  organization: Organization;
-  loadOrganization: typeof loadOrganization;
-  setOrganizationName: typeof setOrganizationName;
-  updateOrganization: typeof updateOrganization;
-}
+export default function OrgDetailsPage() {
+  const dispatch = useDispatch();
+  const [orgName, setOrgName] = useState<string | null>(null);
+  useEffect(() => {
+    getBackendSrv()
+      .get('/api/org')
+      .then((curOrg: OrgDetailsDTO) => setOrgName(curOrg.name));
+  }, []);
 
-export class OrgDetailsPage extends PureComponent<Props> {
-  async componentDidMount() {
-    await this.props.loadOrganization();
-  }
+  const onUpdateOrganization = async (orgName: string) => {
+    await getBackendSrv().put('/api/org', { name: orgName });
 
-  onUpdateOrganization = (orgName: string) => {
-    this.props.setOrganizationName(orgName);
-    this.props.updateOrganization();
+    dispatch(updateConfigurationSubtitle(orgName));
+    setOrgName(orgName);
   };
 
-  render() {
-    const { navModel, organization } = this.props;
-    const isLoading = Object.keys(organization).length === 0;
-    const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
-    const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
-    const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
+  const navModel = useSelector((state) => getNavModel(state.navIndex, 'org-settings'));
+  const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
+  const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
+  const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
-          {!isLoading && (
-            <VerticalGroup spacing="lg">
-              {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
-              {canReadPreferences && <SharedPreferences resourceUri="org" disabled={!canWritePreferences} />}
-            </VerticalGroup>
-          )}
-        </Page.Contents>
-      </Page>
-    );
-  }
+  return (
+    <Page navModel={navModel}>
+      <Page.Contents isLoading={orgName === null}>
+        {orgName !== null && (
+          <VerticalGroup spacing="lg">
+            {canReadOrg && <OrgProfile onSubmit={onUpdateOrganization} orgName={orgName} />}
+            {canReadPreferences && <SharedPreferences resourceUri="org" disabled={!canWritePreferences} />}
+          </VerticalGroup>
+        )}
+      </Page.Contents>
+    </Page>
+  );
 }
-
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'org-settings'),
-    organization: state.organization.organization,
-  };
-}
-
-const mapDispatchToProps = {
-  loadOrganization,
-  setOrganizationName,
-  updateOrganization,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);

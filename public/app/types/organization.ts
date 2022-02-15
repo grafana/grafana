@@ -6,6 +6,5 @@ export interface Organization {
 }
 
 export interface OrganizationState {
-  organization: Organization;
   userOrgs: UserOrg[];
 }
