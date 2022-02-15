@@ -7,6 +7,7 @@ import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { parseMatchers } from '../../utils/alertmanager';
 import { debounce, uniqueId } from 'lodash';
+import { Stack } from '@grafana/experimental';
 
 const stateOptions: SelectableValue[] = Object.entries(SilenceState).map(([key, value]) => ({
   label: key,
@@ -45,19 +46,21 @@ export const SilencesFilter = () => {
       <Field
         className={styles.rowChild}
         label={
-          <span className={styles.fieldLabel}>
-            <Tooltip
-              content={
-                <div>
-                  Filter silences by matchers using a comma separated list of matchers, ie:
-                  <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
-                </div>
-              }
-            >
-              <Icon name="info-circle" />
-            </Tooltip>{' '}
-            Search by matchers
-          </span>
+          <Label>
+            <Stack gap={0.5}>
+              <span>Search by matchers</span>
+              <Tooltip
+                content={
+                  <div>
+                    Filter silences by matchers using a comma separated list of matchers, ie:
+                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
         }
         invalid={inputInvalid}
         error={inputInvalid ? 'Query must use valid matcher syntax' : null}
@@ -72,11 +75,9 @@ export const SilencesFilter = () => {
           data-testid="search-query-input"
         />
       </Field>
-
-      <div className={styles.rowChild}>
-        <Label>State</Label>
+      <Field className={styles.rowChild} label="State">
         <RadioButtonGroup options={stateOptions} value={silenceState} onChange={handleSilenceStateChange} />
-      </div>
+      </Field>
       {(queryString || silenceState) && (
         <div className={styles.rowChild}>
           <Button variant="secondary" icon="times" onClick={clearFilters}>

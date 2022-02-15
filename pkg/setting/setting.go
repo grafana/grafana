@@ -418,12 +418,6 @@ type Cfg struct {
 	// Grafana.com URL
 	GrafanaComURL string
 
-	// Alerting
-
-	// AlertingBaseInterval controls the alerting base interval in seconds.
-	// Only for internal use and not user configuration.
-	AlertingBaseInterval time.Duration
-
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
 	GeomapEnableCustomBaseLayers bool
