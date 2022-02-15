@@ -20,18 +20,19 @@ type simpleSQLAuthService struct {
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
-	fmt.Printf("TODO, query: %v\n", a.sql)
+	if user == nil || user.HasRole(models.ROLE_ADMIN) {
+		return alwaysTrueFilter, nil
+	}
 
-	// Return true for everything
-	return func(uid string) bool {
-		return true
-	}, nil
+	// TODO: find all matching IDs for the user and check results
+	fmt.Printf("TODO, SELECT all ids for user: %v\n", a.sql)
+	return alwaysFalseFilter, nil
 }
 
-type alwaysTrueAuthService struct{}
+func alwaysTrueFilter(uid string) bool {
+	return true
+}
 
-func (a *alwaysTrueAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
-	return func(uid string) bool {
-		return true
-	}, nil
+func alwaysFalseFilter(uid string) bool {
+	return true
 }
