@@ -21,7 +21,6 @@ import * as redux from 'redux';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import { coreModule } from 'app/angular/core_module';
 import { appEvents, contextSrv } from 'app/core/core';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -75,7 +74,7 @@ grafanaRuntime.SystemJS.config({
   },
 });
 
-function exposeToPlugin(name: string, component: any) {
+export function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
@@ -135,9 +134,7 @@ exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core_module', coreModule);
 exposeToPlugin('app/core/core', {
-  coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
   __esModule: true,

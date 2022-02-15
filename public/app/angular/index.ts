@@ -37,3 +37,4 @@ import './components/plugin_component';
 import './GrafanaCtrl';
 
 export { AngularApp } from './AngularApp';
+export { coreModule } from './core_module';
