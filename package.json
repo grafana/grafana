@@ -26,7 +26,7 @@
     "lint:fix": "yarn lint:ts --fix",
     "jest": "jest --notify --watch",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
-    "jest-percona-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --roots public/app/percona",
+    "jest-percona-ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --roots public/app/percona",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
     "packages:docsToMarkdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo",
