@@ -82,11 +82,6 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 		return err
 	}
 
-	var ids []int64
-	for _, d := range dashboards {
-		ids = append(ids, d.ID)
-	}
-
 	var acl []models.DashboardAcl
 	if err := m.sess.Find(&acl); err != nil {
 		return err
@@ -153,7 +148,6 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 				allRoles = append(allRoles, &role)
 			}
 		}
-
 	}
 
 	createdRoles, err := m.bulkCreateRoles(rolesToCreate)
