@@ -198,6 +198,11 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variable !== null && variable !== undefined;
   }
 
+  variableExists(expression: string): boolean {
+    deprecationWarning('template_srv.ts', 'variableExists', 'containsTemplate');
+    return this.containsTemplate(expression);
+  }
+
   highlightVariablesAsHtml(str: string) {
     if (!str || !isString(str)) {
       return str;
