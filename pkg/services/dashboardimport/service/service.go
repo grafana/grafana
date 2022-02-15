@@ -39,6 +39,7 @@ type ImportDashboardService struct {
 	libraryPanelService    librarypanels.Service
 }
 
+// TODO: set permissions on import
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
 	var dashboard *models.Dashboard
 	if req.PluginId != "" {

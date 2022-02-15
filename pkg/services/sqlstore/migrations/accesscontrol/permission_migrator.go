@@ -109,7 +109,6 @@ func (m *permissionMigrator) bulkAssignRoles(rolesMap map[int64]map[string]*acce
 					Updated: ts,
 				})
 			}
-
 		}
 	}
 
