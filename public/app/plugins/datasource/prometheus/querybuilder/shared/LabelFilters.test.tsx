@@ -47,6 +47,18 @@ describe('LabelFilters', () => {
     userEvent.click(screen.getByLabelText(/remove/));
     expect(onChange).toBeCalledWith([]);
   });
+
+  it('renders empty input when labels are deleted from outside ', async () => {
+    const { rerender } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
+    expect(screen.getByText(/foo/)).toBeInTheDocument();
+    expect(screen.getByText(/bar/)).toBeInTheDocument();
+    rerender(
+      <LabelFilters onChange={jest.fn()} onGetLabelNames={jest.fn()} onGetLabelValues={jest.fn()} labelsFilters={[]} />
+    );
+    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getByText(/=/)).toBeInTheDocument();
+    expect(getAddButton()).toBeInTheDocument();
+  });
 });
 
 function setup(labels: QueryBuilderLabelFilter[] = []) {
@@ -64,8 +76,8 @@ function setup(labels: QueryBuilderLabelFilter[] = []) {
     ],
   };
 
-  render(<LabelFilters {...props} labelsFilters={labels} />);
-  return props;
+  const { rerender } = render(<LabelFilters {...props} labelsFilters={labels} />);
+  return { ...props, rerender };
 }
 
 function getAddButton() {
