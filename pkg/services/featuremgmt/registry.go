@@ -34,6 +34,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardPreviewsScheduler",
+			Description: "Schedule automatic updates to dashboard previews",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "live-config",
 			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
@@ -76,12 +81,6 @@ var (
 			Name:         "lokiBackendMode",
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "fullRangeLogsVolume",
-			Description:  "Show full range logs volume in explore",
-			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{

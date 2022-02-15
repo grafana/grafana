@@ -13,6 +13,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   dateMath,
+  FieldType,
   LoadingState,
   LogRowModel,
   rangeUtil,
@@ -506,6 +507,15 @@ export class CloudWatchDatasource
 
         const lastError = findLast(res.results, (v) => !!v.error);
 
+        dataframes.forEach((frame) => {
+          frame.fields.forEach((field) => {
+            if (field.type === FieldType.time) {
+              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals
+              field.config.interval = frame.meta?.custom?.period * 1000;
+            }
+          });
+        });
+
         return {
           data: dataframes,
           error: lastError ? { message: lastError.error } : null,
@@ -884,12 +894,12 @@ export class CloudWatchDatasource
 
   targetContainsTemplate(target: any) {
     return (
-      this.templateSrv.variableExists(target.region) ||
-      this.templateSrv.variableExists(target.namespace) ||
-      this.templateSrv.variableExists(target.metricName) ||
-      this.templateSrv.variableExists(target.expression!) ||
-      target.logGroupNames?.some((logGroup: string) => this.templateSrv.variableExists(logGroup)) ||
-      find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
+      this.templateSrv.containsTemplate(target.region) ||
+      this.templateSrv.containsTemplate(target.namespace) ||
+      this.templateSrv.containsTemplate(target.metricName) ||
+      this.templateSrv.containsTemplate(target.expression!) ||
+      target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
+      find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
   }
 

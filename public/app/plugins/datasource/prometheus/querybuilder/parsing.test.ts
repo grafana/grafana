@@ -93,6 +93,31 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with aggregation without labels', () => {
+    const visQuery = {
+      metric: 'metric_name',
+      labels: [
+        {
+          label: 'instance',
+          op: '=',
+          value: 'internal:3000',
+        },
+      ],
+      operations: [
+        {
+          id: '__sum_without',
+          params: ['app', 'version'],
+        },
+      ],
+    };
+    expect(buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) without (app, version)')).toEqual(
+      noErrors(visQuery)
+    );
+    expect(buildVisualQueryFromString('sum without (app, version)(metric_name{instance="internal:3000"})')).toEqual(
+      noErrors(visQuery)
+    );
+  });
+
   it('parses aggregation with params', () => {
     expect(buildVisualQueryFromString('topk(5, http_requests_total)')).toEqual(
       noErrors({
@@ -117,6 +142,27 @@ describe('buildVisualQueryFromString', () => {
           {
             id: '__topk_by',
             params: [5, 'instance', 'job'],
+          },
+        ],
+      })
+    );
+  });
+
+  it('parses function with argument', () => {
+    expect(
+      buildVisualQueryFromString('histogram_quantile(0.99, rate(counters_logins{app="backend"}[$__rate_interval]))')
+    ).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [{ label: 'app', op: '=', value: 'backend' }],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'histogram_quantile',
+            params: [0.99],
           },
         ],
       })
@@ -299,6 +345,23 @@ describe('buildVisualQueryFromString', () => {
         metric: 'ewafweaf',
         labels: [{ label: 'afea', op: '=', value: '' }],
         operations: [],
+      },
+    });
+  });
+
+  it('parses query without metric', () => {
+    expect(buildVisualQueryFromString('label_replace(rate([$__rate_interval]), "", "$1", "", "(.*)")')).toEqual({
+      errors: [],
+      query: {
+        metric: '',
+        labels: [],
+        operations: [
+          { id: 'rate', params: ['$__rate_interval'] },
+          {
+            id: 'label_replace',
+            params: ['', '$1', '', '(.*)'],
+          },
+        ],
       },
     });
   });
