@@ -45,6 +45,12 @@ describe('Alertmanager utils', () => {
         isRegex: false,
         isEqual: true,
       });
+      expect(parseMatcher('foo=~bar\\"baz\\"')).toEqual<Matcher>({
+        name: 'foo',
+        value: 'bar\\"baz\\"',
+        isRegex: true,
+        isEqual: true,
+      });
     });
     it('should parse multiple operators values correctly', () => {
       expect(parseMatcher('foo=~bar=baz!=bad!~br')).toEqual<Matcher>({
