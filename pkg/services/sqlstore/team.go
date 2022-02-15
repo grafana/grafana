@@ -50,17 +50,9 @@ func getTeamMemberCount(filteredUsers []string) string {
 	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
 }
 
+// getTeamSelectSQLBase returns the select statement to list all teams and a user permission in them
+// (permission is null if the user is not a member of a team)
 func getTeamSelectSQLBase(filteredUsers []string) string {
-	return `SELECT
-		team.id as id,
-		team.org_id,
-		team.name as name,
-		team.email as email, ` +
-		getTeamMemberCount(filteredUsers) +
-		` FROM team as team `
-}
-
-func getTeamSelectWithPermissionsSQLBase(filteredUsers []string) string {
 	return `SELECT
 		team.id AS id,
 		team.org_id,
@@ -68,8 +60,8 @@ func getTeamSelectWithPermissionsSQLBase(filteredUsers []string) string {
 		team.email AS email,
 		team_member.permission, ` +
 		getTeamMemberCount(filteredUsers) +
-		` FROM team AS team
-		INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ? `
+		` FROM team AS team 
+		LEFT JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`
 }
 
 func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, error) {
@@ -189,11 +181,12 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 			params = append(params, user)
 		}
 
-		if query.UserIdFilter == models.FilterIgnoreUser {
-			sql.WriteString(getTeamSelectSQLBase(filteredUsers))
-		} else {
-			sql.WriteString(getTeamSelectWithPermissionsSQLBase(filteredUsers))
+		sql.WriteString(getTeamSelectSQLBase(filteredUsers))
+		if query.UserIdFilter != models.FilterIgnoreUser {
 			params = append(params, query.UserIdFilter)
+		} else {
+			// No filtering applied => see permission for oneself
+			params = append(params, query.SignedInUser.UserId)
 		}
 
 		sql.WriteString(` WHERE team.org_id = ?`)
@@ -202,6 +195,11 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		if query.Query != "" {
 			sql.WriteString(` and team.name ` + ss.Dialect.LikeStr() + ` ?`)
 			params = append(params, queryWithWildcards)
+		}
+
+		if query.UserIdFilter != models.FilterIgnoreUser {
+			sql.WriteString(` AND team_member.user_id = ?`)
+			params = append(params, query.UserIdFilter)
 		}
 
 		if query.Name != "" {
@@ -279,9 +277,10 @@ func (ss *SQLStore) GetTeamById(ctx context.Context, query *models.GetTeamByIdQu
 		for _, user := range filteredUsers {
 			params = append(params, user)
 		}
+		params = append(params, query.UserIdFilter)
 
 		if query.UserIdFilter != models.FilterIgnoreUser {
-			sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
+			sql.WriteString(` WHERE team_member.user_id = ?`)
 			params = append(params, query.UserIdFilter)
 		}
 
@@ -312,10 +311,9 @@ func (ss *SQLStore) GetTeamsByUser(ctx context.Context, query *models.GetTeamsBy
 		var sql bytes.Buffer
 
 		sql.WriteString(getTeamSelectSQLBase([]string{}))
-		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
 		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
-		err := sess.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
+		err := sess.SQL(sql.String(), query.UserId, query.OrgId, query.UserId).Find(&query.Result)
 		return err
 	})
 }

@@ -293,7 +293,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 				query := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: groupId}
 				err = sqlStore.GetTeamById(context.Background(), query)
-				require.Equal(t, err, models.ErrTeamNotFound)
+				require.Equal(t, models.ErrTeamNotFound, err)
 
 				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgID}
 				err = sqlStore.GetDashboardAclInfoList(context.Background(), permQuery)
