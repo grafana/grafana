@@ -17,34 +17,40 @@ export interface Props {
   data?: PanelData;
 }
 
+export interface State {
+  visQuery?: PromVisualQuery;
+  expr: string;
+}
+
 /**
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function PromQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource, data } = props;
-  const [visQuery, setVisQuery] = useState<PromVisualQuery | undefined>();
+  const [state, setState] = useState<State>({ expr: query.expr });
 
+  // Only rebuild visual query if expr changes from outside
   useEffect(() => {
-    // Only build the model from expression when editorMode changes
-    const result = buildVisualQueryFromString(query.expr || '');
-    setVisQuery(result.query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.query.editorMode]);
+    if (!state.visQuery || state.expr !== query.expr) {
+      const result = buildVisualQueryFromString(query.expr || '');
+      setState({ visQuery: result.query, expr: query.expr });
+    }
+  }, [query.expr, state.visQuery, state.expr]);
 
   const onVisQueryChange = (newVisQuery: PromVisualQuery) => {
     const rendered = promQueryModeller.renderQuery(newVisQuery);
     onChange({ ...query, expr: rendered });
-    setVisQuery(newVisQuery);
+    setState({ visQuery: newVisQuery, expr: rendered });
   };
 
-  if (!visQuery) {
+  if (!state.visQuery) {
     return null;
   }
 
   return (
     <>
       <PromQueryBuilder
-        query={visQuery}
+        query={state.visQuery}
         datasource={datasource}
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
