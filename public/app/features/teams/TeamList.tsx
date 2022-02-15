@@ -127,6 +127,7 @@ export class TeamList extends PureComponent<Props, State> {
         buttonIcon="users-alt"
         buttonLink="org/teams/new"
         buttonTitle=" New team"
+        buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
         proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
         proTipLink=""
         proTipLinkTitle=""
