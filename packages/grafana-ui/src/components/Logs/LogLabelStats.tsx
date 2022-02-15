@@ -19,6 +19,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.colors.text};
       word-break: break-all;
       width: fit-content;
+      max-width: 100%;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
