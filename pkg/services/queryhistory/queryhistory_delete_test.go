@@ -11,7 +11,7 @@ func TestDeleteQueryFromQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "When users tries to delete query in query history that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.deleteHandler(sc.reqContext)
-			require.Equal(t, 404, resp.Status())
+			require.Equal(t, 500, resp.Status())
 		})
 
 	testScenarioWithQueryInQueryHistory(t, "When users tries to delete query in query history that exists, it should succeed",
