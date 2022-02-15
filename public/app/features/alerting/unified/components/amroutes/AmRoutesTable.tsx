@@ -158,7 +158,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     [isAddMode, routes, filteredRoutes]
   );
 
-  // expand the last item when adding or rest when the lenght changed
+  // expand the last item when adding or reset when the length changed
   useEffect(() => {
     if (isAddMode && dynamicTableRoutes.length) {
       setExpandedId(dynamicTableRoutes[dynamicTableRoutes.length - 1].id);
