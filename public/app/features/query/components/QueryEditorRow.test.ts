@@ -54,10 +54,24 @@ describe('filterPanelDataToQuery', () => {
 
     const panelData = filterPanelDataToQuery(withError, 'B');
     expect(panelData).toBeDefined();
+    expect(panelData?.state).toBe(LoadingState.Error);
+    expect(panelData?.error).toBe(withError.error);
+  });
 
-    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
-    expect(panelData.state).toBe(LoadingState.Error);
-    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
-    expect(panelData.error).toBe(withError.error);
+  it('should set the state to done if the frame has no errors', () => {
+    const withError = {
+      ...data,
+    };
+    withError.state = LoadingState.Error;
+
+    const panelDataB = filterPanelDataToQuery(withError, 'B');
+    expect(panelDataB?.series.length).toBe(3);
+    expect(panelDataB?.series[0].refId).toBe('B');
+    expect(panelDataB?.state).toBe(LoadingState.Error);
+
+    const panelDataA = filterPanelDataToQuery(withError, 'A');
+    expect(panelDataA?.series.length).toBe(1);
+    expect(panelDataA?.series[0].refId).toBe('A');
+    expect(panelDataA?.state).toBe(LoadingState.Done);
   });
 });
