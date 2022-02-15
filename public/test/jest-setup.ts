@@ -39,6 +39,9 @@ angular.module('grafana.routes', ['ngRoute']);
 jest.mock('../app/core/core', () => ({ appEvents: testAppEvents }));
 jest.mock('../app/angular/partials', () => ({}));
 jest.mock('../app/features/plugins/plugin_loader', () => ({}));
+// the mock below gets rid of this warning from recompose:
+// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
+jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
 
 configure({ adapter: new Adapter() });
 
