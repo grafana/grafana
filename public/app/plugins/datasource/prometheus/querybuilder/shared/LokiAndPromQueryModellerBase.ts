@@ -86,5 +86,5 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     return expr + `}`;
   }
 
-  abstract renderQuery(query: T): string;
+  abstract renderQuery(query: T, nested?: boolean): string;
 }
