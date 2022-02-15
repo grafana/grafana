@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -39,11 +40,11 @@ var (
 	logger                            = log.New("tsdb.grafana")
 )
 
-func ProvideService(cfg *setting.Cfg) *Service {
-	return newService(cfg)
+func ProvideService(cfg *setting.Cfg, search searchV2.SearchService) *Service {
+	return newService(cfg, search)
 }
 
-func newService(cfg *setting.Cfg) *Service {
+func newService(cfg *setting.Cfg, search searchV2.SearchService) *Service {
 	s := &Service{
 		staticRootPath: cfg.StaticRootPath,
 		roots: []string{
@@ -54,6 +55,7 @@ func newService(cfg *setting.Cfg) *Service {
 			"maps",
 			"upload", // does not exist yet
 		},
+		search: search,
 	}
 
 	return s
@@ -64,6 +66,7 @@ type Service struct {
 	// path to the public folder
 	staticRootPath string
 	roots          []string
+	search         searchV2.SearchService
 }
 
 func DataSourceModel(orgId int64) *models.DataSource {
@@ -78,7 +81,7 @@ func DataSourceModel(orgId int64) *models.DataSource {
 	}
 }
 
-func (s *Service) QueryData(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -89,6 +92,8 @@ func (s *Service) QueryData(_ context.Context, req *backend.QueryDataRequest) (*
 			response.Responses[q.RefID] = s.doListQuery(q)
 		case queryTypeRead:
 			response.Responses[q.RefID] = s.doReadQuery(q)
+		case queryTypeSearch:
+			response.Responses[q.RefID] = s.doSearchQuery(ctx, req, q)
 		default:
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("unknown query type"),
@@ -215,4 +220,16 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
 
 	return response
+}
+
+func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
+	q := searchV2.DashboardQuery{}
+	err := json.Unmarshal(query.JSON, &q)
+	if err != nil {
+		return backend.DataResponse{
+			Error: err,
+		}
+	}
+
+	return *s.search.DoDashboardQuery(ctx, req.PluginContext.User, req.PluginContext.OrgID, q)
 }

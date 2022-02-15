@@ -8,6 +8,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SelectWithAdd } from './SelectWIthAdd';
 import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { checkForPathSeparator } from './util';
 
 interface Props {
   rulesSourceName: string;
@@ -75,6 +76,9 @@ export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
+            validate: {
+              pathSeparator: checkForPathSeparator,
+            },
           }}
         />
       </Field>
@@ -87,6 +91,9 @@ export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
+            validate: {
+              pathSeparator: checkForPathSeparator,
+            },
           }}
         />
       </Field>

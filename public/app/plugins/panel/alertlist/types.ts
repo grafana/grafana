@@ -1,3 +1,5 @@
+import { Alert } from 'app/types/unified-alerting';
+
 export enum SortOrder {
   AlphaAsc = 1,
   AlphaDesc,
@@ -9,6 +11,11 @@ export enum SortOrder {
 export enum ShowOption {
   Current = 'current',
   RecentChanges = 'changes',
+}
+
+export enum GroupMode {
+  Default = 'default',
+  Custom = 'custom',
 }
 
 export interface AlertListOptions {
@@ -43,6 +50,8 @@ export interface UnifiedAlertListOptions {
   maxItems: number;
   sortOrder: SortOrder;
   dashboardAlerts: boolean;
+  groupMode: GroupMode;
+  groupBy: string[];
   alertName: string;
   showInstances: boolean;
   folder: { id: number; title: string };
@@ -50,3 +59,5 @@ export interface UnifiedAlertListOptions {
   alertInstanceLabelFilter: string;
   datasource: string;
 }
+
+export type GroupedRules = Map<string, Alert[]>;

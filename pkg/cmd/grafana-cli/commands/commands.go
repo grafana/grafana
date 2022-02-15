@@ -12,6 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -55,7 +58,15 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		if err != nil {
 			return errutil.Wrap("failed to initialize tracer service", err)
 		}
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer)
+
+		hooksService := hooks.ProvideService()
+		ossLicensingService := licensing.ProvideService(cfg, hooksService)
+		featureManager, err := featuremgmt.ProvideManagerService(cfg, ossLicensingService)
+		if err != nil {
+			return errutil.Wrap("failed to initialize feature manager service", err)
+		}
+
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer, featureManager)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
 		}
@@ -182,6 +193,16 @@ var adminCommands = []*cli.Command{
 				Name:   "re-encrypt",
 				Usage:  "Re-encrypts secrets by decrypting and re-encrypting them with the currently configured encryption. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsmigrations.ReEncryptSecrets),
+			},
+			{
+				Name:   "rollback",
+				Usage:  "Rolls back secrets to legacy encryption. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.RollBackSecrets),
+			},
+			{
+				Name:   "re-encrypt-data-keys",
+				Usage:  "Rotates persisted data encryption keys. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.ReEncryptDEKS),
 			},
 		},
 	},

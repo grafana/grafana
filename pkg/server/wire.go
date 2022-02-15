@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -45,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -58,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -65,6 +68,7 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
@@ -143,8 +147,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
+	authinfodatabase.ProvideAuthInfoStore,
+	wire.Bind(new(login.Store), new(*authinfodatabase.AuthInfoStore)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
+	searchV2.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
@@ -179,7 +186,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
 	grafanads.ProvideService,
 	dashboardsnapshots.ProvideService,
-	datasources.ProvideService,
+	datasourceservice.ProvideService,
+	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginsettings.ProvideService,
 	alerting.ProvideService,
 	serviceaccountsmanager.ProvideServiceAccountsService,
@@ -189,7 +197,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
-	wire.Bind(new(authinfoservice.Service), new(*authinfoservice.Implementation)),
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	resourceservices.ProvideResourceServices,
@@ -201,10 +208,12 @@ var wireBasicSet = wire.NewSet(
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
+	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
+	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -212,11 +221,14 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
+	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
+	mockstore.NewSQLStoreMock,
+	wire.Bind(new(sqlstore.Store), new(*mockstore.SQLStoreMock)),
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {

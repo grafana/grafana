@@ -6,7 +6,7 @@ import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 
 import config from 'app/core/config';
 import { feedToDataFrame } from './utils';
-import { loadRSSFeed } from './rss';
+import { loadFeed } from './feed';
 
 // Types
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
@@ -55,8 +55,9 @@ export class NewsPanel extends PureComponent<Props, State> {
           ? `${PROXY_PREFIX}${options.feedUrl}`
           : options.feedUrl
         : DEFAULT_FEED_URL;
-      const res = await loadRSSFeed(url);
-      const frame = feedToDataFrame(res);
+
+      const feed = await loadFeed(url);
+      const frame = feedToDataFrame(feed);
       this.setState({
         news: new DataFrameView<NewsItem>(frame),
         isError: false,

@@ -2,26 +2,30 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AlertNotificationService struct {
-	Bus               bus.Bus
-	SQLStore          *sqlstore.SQLStore
-	EncryptionService encryption.Internal
+	Bus                 bus.Bus
+	SQLStore            *sqlstore.SQLStore
+	EncryptionService   encryption.Internal
+	NotificationService *notifications.NotificationService
 }
 
 func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Internal,
-) *AlertNotificationService {
+	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
-		Bus:               bus,
-		SQLStore:          store,
-		EncryptionService: encryptionService,
+		Bus:                 bus,
+		SQLStore:            store,
+		EncryptionService:   encryptionService,
+		NotificationService: notificationService,
 	}
 
 	s.Bus.AddHandler(s.GetAlertNotifications)
@@ -74,6 +78,7 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 
 	model := models.AlertNotification{
 		Id:       cmd.Id,
+		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -134,7 +139,11 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 			return nil, err
 		}
 
-		if query.Result != nil && query.Result.SecureSettings != nil {
+		if query.Result == nil {
+			return nil, fmt.Errorf("unable to find the alert notification")
+		}
+
+		if query.Result.SecureSettings != nil {
 			var err error
 			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
 			if err != nil {
@@ -153,7 +162,7 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 		return nil, err
 	}
 
-	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue)
+	notifier, err := InitNotifier(model, s.EncryptionService.GetDecryptedValue, s.NotificationService)
 	if err != nil {
 		logger.Error("Failed to create notifier", "error", err.Error())
 		return nil, err

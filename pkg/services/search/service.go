@@ -59,10 +59,14 @@ type FindPersistedDashboardsQuery struct {
 	Result HitList
 }
 
-type SearchService struct {
-	Bus bus.Bus
-	Cfg *setting.Cfg
+type Service interface {
+	SearchHandler(context.Context, *Query) error
+	SortOptions() []SortOption
+}
 
+type SearchService struct {
+	Bus         bus.Bus
+	Cfg         *setting.Cfg
 	sortOptions map[string]SortOption
 }
 

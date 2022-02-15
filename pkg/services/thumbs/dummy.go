@@ -1,6 +1,8 @@
 package thumbs
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -9,6 +11,10 @@ import (
 type dummyService struct{}
 
 func (ds *dummyService) GetImage(c *models.ReqContext) {
+	c.JSON(400, map[string]string{"error": "invalid size"})
+}
+
+func (ds *dummyService) UpdateThumbnailState(c *models.ReqContext) {
 	c.JSON(400, map[string]string{"error": "invalid size"})
 }
 
@@ -36,4 +42,8 @@ func (ds *dummyService) CrawlerStatus(c *models.ReqContext) response.Response {
 	result := make(map[string]string)
 	result["error"] = "Not enabled"
 	return response.JSON(200, result)
+}
+
+func (ds *dummyService) Run(ctx context.Context) error {
+	return nil
 }

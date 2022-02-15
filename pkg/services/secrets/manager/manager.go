@@ -353,6 +353,17 @@ func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider 
 	return s.providers
 }
 
+func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
+	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
+	if err != nil {
+		return nil
+	}
+
+	// Invalidate cache
+	s.dataKeyCache = make(map[string]dataKeyCacheItem)
+	return err
+}
+
 // These variables are used to test the code
 // responsible for periodically cleaning up
 // data encryption keys cache.

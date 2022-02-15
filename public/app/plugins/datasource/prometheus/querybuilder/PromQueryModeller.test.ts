@@ -1,4 +1,5 @@
 import { PromQueryModeller } from './PromQueryModeller';
+import { PromOperationId } from './types';
 
 describe('PromQueryModeller', () => {
   const modeller = new PromQueryModeller();
@@ -41,7 +42,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: 'histogram_quantile', params: [0.86] }],
+        operations: [{ id: PromOperationId.HistogramQuantile, params: [0.86] }],
       })
     ).toBe('histogram_quantile(0.86, metric)');
   });
@@ -51,7 +52,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: 'label_replace', params: ['server', '$1', 'instance', 'as(.*)d'] }],
+        operations: [{ id: PromOperationId.LabelReplace, params: ['server', '$1', 'instance', 'as(.*)d'] }],
       })
     ).toBe('label_replace(metric, "server", "$1", "instance", "as(.*)d")');
   });
@@ -79,6 +80,16 @@ describe('PromQueryModeller', () => {
     ).toBe('avg(sum by(server, job) (metric))');
   });
 
+  it('Can use aggregation without label', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric',
+        labels: [],
+        operations: [{ id: '__sum_without', params: ['server', 'job'] }],
+      })
+    ).toBe('sum without(server, job) (metric)');
+  });
+
   it('Can render aggregations with parameters', () => {
     expect(
       modeller.renderQuery({
@@ -94,7 +105,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: 'rate', params: ['auto'] }],
+        operations: [{ id: PromOperationId.Rate, params: ['auto'] }],
       })
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
@@ -104,7 +115,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: 'increase', params: ['auto'] }],
+        operations: [{ id: PromOperationId.Increase, params: ['auto'] }],
       })
     ).toBe('increase(metric{pod="A"}[$__rate_interval])');
   });
@@ -114,7 +125,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: 'rate', params: ['10m'] }],
+        operations: [{ id: PromOperationId.Rate, params: ['10m'] }],
       })
     ).toBe('rate(metric{pod="A"}[10m])');
   });
@@ -124,7 +135,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [],
-        operations: [{ id: '__multiply_by', params: [1000] }],
+        operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
       })
     ).toBe('metric * 1000');
   });
@@ -175,6 +186,76 @@ describe('PromQueryModeller', () => {
         ],
       })
     ).toBe('metric_a + metric_b + metric_c');
+  });
+
+  it('Can render query with nested query with binary op', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / (metric_b * 1000)');
+  });
+
+  it('Can render query with nested binary query with parentheses', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+              binaryQueries: [
+                {
+                  operator: '*',
+                  query: {
+                    metric: 'metric_c',
+                    labels: [],
+                    operations: [],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / (metric_b * metric_c)');
+  });
+
+  it('Should add parantheis around first query if it has binary op', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('(metric_a * 1000) / metric_b');
   });
 
   it('Can render with binary queries with vectorMatches expression', () => {

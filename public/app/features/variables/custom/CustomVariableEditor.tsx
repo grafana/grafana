@@ -5,6 +5,7 @@ import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { VerticalGroup } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { StoreState } from 'app/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
@@ -55,6 +56,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
               required
               width={50}
               labelWidth={27}
+              testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
             />
           </VerticalGroup>
           <SelectionOptionsEditor
