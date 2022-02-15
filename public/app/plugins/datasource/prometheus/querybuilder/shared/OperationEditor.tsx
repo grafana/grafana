@@ -27,10 +27,6 @@ export interface Props {
   onRunQuery: () => void;
 }
 
-export interface State {
-  operation: QueryBuilderOperation;
-}
-
 export function OperationEditor({
   operation: externalOperation,
   index,
