@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies for Grafana
         working-directory: ./grafana
-        run: yarn install --prefer-offline --frozen-lockfile --no-progress --network-concurrency 1
+        run: yarn install --immutable
 
       - name: Start Environment
         working-directory: ./grafana
