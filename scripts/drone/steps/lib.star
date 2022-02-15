@@ -975,7 +975,6 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
             'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
         },
         'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             cmd,
         ],
     }

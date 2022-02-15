@@ -1073,7 +1073,6 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -2843,7 +2842,6 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
@@ -2862,7 +2860,6 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: store-packages-oss
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
@@ -4212,6 +4209,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6619036aae90bbf3f04b626f5d107e53d8916aaeac8e780af469358fc31184f7
+hmac: 79ee74457a6514948979770a736528c234b325751a46699db65043bd5d18aad2
 
 ...
