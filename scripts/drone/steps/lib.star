@@ -305,11 +305,11 @@ def upload_cdn_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --bucket "{}"'.format(edition, bucket),
+            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
 
@@ -897,7 +897,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         'image': publish_image,
         'depends_on': deps,
         'environment': {
-            'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
         'commands': [cmd, ],
