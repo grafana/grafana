@@ -35,7 +35,7 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 
 func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if len(queryUID) == 0 || !util.IsValidShortUID(queryUID) {
+	if !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
@@ -52,7 +52,7 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 
 func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if len(queryUID) == 0 || !util.IsValidShortUID(queryUID) {
+	if !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
