@@ -555,7 +555,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 }
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
-func CalculateDashboardDiff(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Response {
 	apiOptions := dtos.CalculateDiffOptions{}
 	if err := web.Bind(c.Req, &apiOptions); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -587,7 +587,37 @@ func CalculateDashboardDiff(c *models.ReqContext) response.Response {
 		},
 	}
 
-	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options)
+	baseVersionQuery := models.GetDashboardVersionQuery{
+		DashboardId: options.Base.DashboardId,
+		Version:     options.Base.Version,
+		OrgId:       options.OrgId,
+	}
+
+	if err := hs.SQLStore.GetDashboardVersion(c.Req.Context(), &baseVersionQuery); err != nil {
+		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+			return response.Error(404, "Dashboard version not found", err)
+		}
+		return response.Error(500, "Unable to compute diff", err)
+	}
+
+	newVersionQuery := models.GetDashboardVersionQuery{
+		DashboardId: options.New.DashboardId,
+		Version:     options.New.Version,
+		OrgId:       options.OrgId,
+	}
+
+	if err := hs.SQLStore.GetDashboardVersion(c.Req.Context(), &newVersionQuery); err != nil {
+		if errors.Is(err, models.ErrDashboardVersionNotFound) {
+			return response.Error(404, "Dashboard version not found", err)
+		}
+		return response.Error(500, "Unable to compute diff", err)
+	}
+
+	baseData := baseVersionQuery.Result.Data
+	newData := newVersionQuery.Result.Data
+
+	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
+
 	if err != nil {
 		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return response.Error(404, "Dashboard version not found", err)

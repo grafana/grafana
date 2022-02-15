@@ -35,6 +35,9 @@ describe('DebugSection', () => {
       getVariables() {
         return [];
       },
+      containsTemplate() {
+        return false;
+      },
     });
   });
 

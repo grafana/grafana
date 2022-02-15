@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^1.0.0-rc1",
+    "@grafana/tsconfig": "^1.2.0-rc1",
     "@types/classnames": "^2.2.7",
     "@types/deep-freeze": "^0.1.1",
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",

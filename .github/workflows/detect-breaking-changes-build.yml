@@ -128,7 +128,7 @@ jobs:
       - name: Persisting the check output
         run: |
             mkdir -p ./levitate
-            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\" }" > ./levitate/result.json
+            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
         uses: actions/upload-artifact@v2

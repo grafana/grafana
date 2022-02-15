@@ -23,7 +23,7 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
 export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
   const filter1 = createRetentionPeriodBoundary(timeFilter[0], true); // probably the vars should have a different name
   const filter2 = createRetentionPeriodBoundary(timeFilter[1], false);
-  return queries.filter((q) => q.ts < filter1 && q.ts > filter2);
+  return queries.filter((q) => q.createdAt < filter1 && q.createdAt > filter2);
 }
 
 export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
@@ -53,10 +53,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
   let sortFunc;
 
   if (sortOrder === SortOrder.Ascending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0;
   }
   if (sortOrder === SortOrder.Descending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
+      a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
   }
 
   if (sortOrder === SortOrder.DatasourceZA) {

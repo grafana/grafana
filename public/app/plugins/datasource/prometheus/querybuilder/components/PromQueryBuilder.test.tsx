@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, getByText } from '@testing-library/react';
+import { render, screen, getByText, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { PrometheusDatasource } from '../../datasource';
@@ -7,6 +7,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import PromQlLanguageProvider from '../../language_provider';
 import { PromVisualQuery } from '../types';
 import { getLabelSelects } from '../testUtils';
+import { LoadingState, MutableDataFrame, PanelData, TimeRange } from '@grafana/data';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -70,7 +71,7 @@ describe('PromQueryBuilder', () => {
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
     openMetricSelect(container);
-    expect(languageProvider.getLabelValues).toBeCalledWith('__name__');
+    await waitFor(() => expect(languageProvider.getLabelValues).toBeCalledWith('__name__'));
   });
 
   it('tries to load metrics with labels', async () => {
@@ -79,27 +80,27 @@ describe('PromQueryBuilder', () => {
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
     openMetricSelect(container);
-    expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true);
+    await waitFor(() => expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true));
   });
 
   it('tries to load variables in metric field', async () => {
     const { datasource, container } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
     openMetricSelect(container);
-    expect(datasource.getVariables).toBeCalled();
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     openLabelNameSelect();
-    expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}');
+    await waitFor(() => expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}'));
   });
 
   it('tries to load variables in label field', async () => {
     const { datasource } = setup();
     datasource.getVariables = jest.fn().mockReturnValue([]);
     openLabelNameSelect();
-    expect(datasource.getVariables).toBeCalled();
+    await waitFor(() => expect(datasource.getVariables).toBeCalled());
   });
 
   it('tries to load labels when metric selected and other labels are already present', async () => {
@@ -111,7 +112,9 @@ describe('PromQueryBuilder', () => {
       ],
     });
     openLabelNameSelect(1);
-    expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}');
+    await waitFor(() =>
+      expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
+    );
   });
 
   it('tries to load labels when metric is not selected', async () => {
@@ -120,11 +123,66 @@ describe('PromQueryBuilder', () => {
       metric: '',
     });
     openLabelNameSelect();
-    expect(languageProvider.fetchLabels).toBeCalled();
+    await waitFor(() => expect(languageProvider.fetchLabels).toBeCalled());
+  });
+
+  it('shows hints for histogram metrics', async () => {
+    const { container } = setup({
+      metric: 'histogram_metric_bucket',
+      labels: [],
+      operations: [],
+    });
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_bucket'));
+    await waitFor(() => expect(screen.getByText('hint: add histogram_quantile()')).toBeInTheDocument());
+  });
+
+  it('shows hints for counter metrics', async () => {
+    const { container } = setup({
+      metric: 'histogram_metric_sum',
+      labels: [],
+      operations: [],
+    });
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
+  });
+
+  it('shows hints for counter metrics', async () => {
+    const { container } = setup({
+      metric: 'histogram_metric_sum',
+      labels: [],
+      operations: [],
+    });
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
+  });
+
+  it('shows multiple hints', async () => {
+    const data: PanelData = {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: {} as TimeRange,
+    };
+    for (let i = 0; i < 25; i++) {
+      data.series.push(new MutableDataFrame());
+    }
+    const { container } = setup(
+      {
+        metric: 'histogram_metric_sum',
+        labels: [],
+        operations: [],
+      },
+      data
+    );
+    openMetricSelect(container);
+    userEvent.click(screen.getByText('histogram_metric_sum'));
+    await waitFor(() => expect(screen.getAllByText(/hint:/g)).toHaveLength(2));
   });
 });
 
-function setup(query: PromVisualQuery = defaultQuery) {
+function setup(query: PromVisualQuery = defaultQuery, data?: PanelData) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
   const datasource = new PrometheusDatasource(
     {
@@ -140,6 +198,7 @@ function setup(query: PromVisualQuery = defaultQuery) {
     datasource,
     onRunQuery: () => {},
     onChange: () => {},
+    data,
   };
 
   const { container } = render(<PromQueryBuilder {...props} query={query} />);
