@@ -7,7 +7,6 @@ import {
   rangeUtil,
   RawTimeRange,
   TimeRange,
-  TimeZone,
   toUtc,
 } from '@grafana/data';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
@@ -17,15 +16,7 @@ import { locationService } from '@grafana/runtime';
 import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../types/events';
 import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
-
-interface TimeModel {
-  time: any;
-  fiscalYearStartMonth?: number;
-  refresh: any;
-  timepicker: any;
-  getTimezone(): TimeZone;
-  timeRangeUpdated(timeRange: TimeRange): void;
-}
+import { TimeModel } from '../state/TimeModel';
 
 export class TimeSrv {
   time: any;

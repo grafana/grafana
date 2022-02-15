@@ -14,6 +14,7 @@ import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { TimeModel } from '../../dashboard/state/TimeModel';
 import { runQueries } from './query';
 import { syncTimesAction, stateSave } from './main';
 
@@ -94,8 +95,7 @@ export const updateTime = (config: {
 
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-
-    getTimeSrv().init({
+    const timeModel: TimeModel = {
       time: range.raw,
       refresh: false,
       timepicker: {},
@@ -103,7 +103,9 @@ export const updateTime = (config: {
       timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
         dispatch(updateTimeRange({ exploreId: exploreId, rawRange: rawTimeRange }));
       },
-    });
+    };
+
+    getTimeSrv().init(timeModel);
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
