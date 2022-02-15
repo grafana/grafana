@@ -453,6 +453,63 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 	}
 }
 
+type accessControlGuardianCanCreateTestCase struct {
+	desc        string
+	isFolder    bool
+	folderID    int64
+	permissions []*accesscontrol.Permission
+	expected    bool
+}
+
+func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
+	tests := []accessControlGuardianCanCreateTestCase{
+		{
+			desc:     "should be able to create dashboard in folder 0",
+			isFolder: false,
+			folderID: 0,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:id:0"},
+			},
+			expected: true,
+		},
+		{
+			desc:     "should be able to create dashboard in with wildcard scope",
+			isFolder: false,
+			folderID: 100,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:*"},
+			},
+			expected: true,
+		},
+		{
+			desc:        "should not be able to create dashboard without permissions",
+			isFolder:    false,
+			folderID:    100,
+			permissions: []*accesscontrol.Permission{},
+			expected:    false,
+		},
+		{
+			desc:     "should be able to create folder with correct permissions",
+			isFolder: true,
+			folderID: 0,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionFoldersCreate},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			guardian := setupAccessControlGuardianTest(t, 0, tt.permissions)
+
+			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, can)
+		})
+	}
+}
+
 func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*accesscontrol.Permission) *AccessControlDashboardGuardian {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
