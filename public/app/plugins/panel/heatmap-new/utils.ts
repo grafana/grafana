@@ -366,13 +366,29 @@ export function heatmapPaths(opts: PathbuilderOpts) {
 
 export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) => {
   let counts = u.data[seriesIdx][2] as unknown as number[];
-  let maxCount = counts.length > 65535 ? Math.max(...new Set(counts)) : Math.max(...counts);
-  let cols = palette.length;
+
+  // TODO: integrate 1e-9 hideThreshold?
+  const hideThreshold = 0;
+
+  let minCount = Infinity;
+  let maxCount = -Infinity;
+
+  for (let i = 0; i < counts.length; i++) {
+    if (counts[i] > hideThreshold) {
+      minCount = Math.min(minCount, counts[i]);
+      maxCount = Math.max(maxCount, counts[i]);
+    }
+  }
+
+  let range = maxCount - minCount;
+
+  let paletteSize = palette.length;
 
   let indexedFills = Array(counts.length);
 
   for (let i = 0; i < counts.length; i++) {
-    indexedFills[i] = counts[i] === 0 ? -1 : Math.max(Math.round((counts[i] / maxCount) * cols) - 1, 0);
+    indexedFills[i] =
+      counts[i] === 0 ? -1 : Math.min(paletteSize - 1, Math.floor((paletteSize * (counts[i] - minCount)) / range));
   }
 
   return indexedFills;
