@@ -1,4 +1,3 @@
-import angular from 'angular';
 import { castArray, isEqual } from 'lodash';
 import {
   DataQuery,
@@ -601,7 +600,7 @@ const timeRangeUpdated =
     const updatedVariable = getVariable<VariableWithOptions>(identifier.id, getState());
     const updatedOptions = updatedVariable.options;
 
-    if (angular.toJson(previousOptions) !== angular.toJson(updatedOptions)) {
+    if (JSON.stringify(previousOptions) !== JSON.stringify(updatedOptions)) {
       const dashboard = getState().dashboard.getModel();
       dashboard?.templateVariableValueUpdated();
     }

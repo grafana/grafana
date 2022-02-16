@@ -9,6 +9,7 @@ import './services/popover_srv';
 import './services/timer';
 import './services/AngularLoader';
 
+import '../angular/jquery_extended';
 import './dropdown_typeahead';
 import './autofill_event_fix';
 import './metric_segment';
