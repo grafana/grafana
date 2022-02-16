@@ -24,8 +24,8 @@ describe('Heatmap Migrations', () => {
           "overrides": Array [],
         },
         "options": Object {
-          "cellPadding": 2,
-          "cellRadius": 10,
+          "cellGap": 2,
+          "cellSize": 10,
           "color": Object {
             "exponent": 0.5,
             "fill": "dark-orange",
