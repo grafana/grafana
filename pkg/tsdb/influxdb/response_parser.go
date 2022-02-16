@@ -112,18 +112,16 @@ func transformRows(rows []Row, query Query) data.Frames {
 					}
 				}
 
+				timeField := data.NewField("time", nil, timeArray)
 				if valType == "string" {
-					timeField := data.NewField("time", nil, timeArray)
 					valueField := data.NewField("value", row.Tags, stringArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				} else if valType == "json.Number" {
-					timeField := data.NewField("time", nil, timeArray)
 					valueField := data.NewField("value", row.Tags, floatArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				} else if valType == "bool" {
-					timeField := data.NewField("time", nil, timeArray)
 					valueField := data.NewField("value", row.Tags, boolArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
