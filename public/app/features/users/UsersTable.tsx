@@ -26,27 +26,20 @@ const UsersTable: FC<Props> = (props) => {
         if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
           let options = await fetchRoleOptions(orgId);
           setRoleOptions(options);
-        } else {
-          setRoleOptions([]);
         }
 
         if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
           const builtInRoles = await fetchBuiltinRoles(orgId);
           setBuiltinRoles(builtInRoles);
-        } else {
-          setBuiltinRoles({});
         }
       } catch (e) {
         console.error('Error loading options');
       }
     }
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchOptions();
     }
   }, [orgId]);
-
-  const getRoleOptions = async () => roleOptions;
-  const getBuiltinRoles = async () => builtinRoles;
 
   return (
     <>
@@ -88,14 +81,14 @@ const UsersTable: FC<Props> = (props) => {
                 <td className="width-1">{user.lastSeenAtAge}</td>
 
                 <td className="width-8">
-                  {contextSrv.accessControlEnabled() ? (
+                  {contextSrv.licensedAccessControlEnabled() ? (
                     <UserRolePicker
                       userId={user.userId}
                       orgId={orgId}
                       builtInRole={user.role}
                       onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
-                      getRoleOptions={getRoleOptions}
-                      getBuiltinRoles={getBuiltinRoles}
+                      roleOptions={roleOptions}
+                      builtInRoles={builtinRoles}
                       disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRoleUpdate, user)}
                     />
                   ) : (

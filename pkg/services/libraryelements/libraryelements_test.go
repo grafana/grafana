@@ -9,14 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	dboards "github.com/grafana/grafana/pkg/dashboards"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -194,16 +193,9 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 		User:      &user,
 		Overwrite: false,
 	}
-	origUpdateAlerting := dashboards.UpdateAlerting
-	t.Cleanup(func() {
-		dashboards.UpdateAlerting = origUpdateAlerting
-	})
-	dashboards.UpdateAlerting = func(ctx context.Context, store dboards.Store, orgID int64, dashboard *models.Dashboard,
-		user *models.SignedInUser) error {
-		return nil
-	}
 
-	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(context.Background(), dashItem, true)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -213,17 +205,19 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
-	s := dashboards.NewFolderService(user.OrgId, &user, sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	d := dashboardservice.ProvideDashboardService(dashboardStore)
+	s := dashboardservice.ProvideFolderService(d, dashboardStore, nil)
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), title, title)
+	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
 	require.NoError(t, err)
 
-	updateFolderACL(t, sqlStore, folder.Id, items)
+	updateFolderACL(t, dashboardStore, folder.Id, items)
 
 	return folder
 }
 
-func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, folderID int64, items []folderACLItem) {
 	t.Helper()
 
 	if len(items) == 0 {
@@ -243,7 +237,7 @@ func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, 
 		})
 	}
 
-	err := sqlStore.UpdateDashboardACL(context.Background(), folderID, aclItems)
+	err := dashboardStore.UpdateDashboardACL(context.Background(), folderID, aclItems)
 	require.NoError(t, err)
 }
 
@@ -289,13 +283,20 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		ctx := web.Context{Req: &http.Request{}}
+		ctx := web.Context{Req: &http.Request{
+			Header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+		}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
+		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboardService := dashboardservice.ProvideDashboardService(dashboardStore)
 		service := LibraryElementService{
-			Cfg:      setting.NewCfg(),
-			SQLStore: sqlStore,
+			Cfg:           setting.NewCfg(),
+			SQLStore:      sqlStore,
+			folderService: dashboardservice.ProvideFolderService(dashboardService, dashboardStore, nil),
 		}
 
 		user := models.SignedInUser{

@@ -25,11 +25,30 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     ]);
   }
 
-  renderQuery(query: PromVisualQuery) {
+  renderQuery(query: PromVisualQuery, nested?: boolean) {
     let queryString = `${query.metric}${this.renderLabels(query.labels)}`;
     queryString = this.renderOperations(queryString, query.operations);
+
+    if (!nested && this.hasBinaryOp(query) && Boolean(query.binaryQueries?.length)) {
+      queryString = `(${queryString})`;
+    }
+
     queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
+
+    if (nested && (this.hasBinaryOp(query) || Boolean(query.binaryQueries?.length))) {
+      queryString = `(${queryString})`;
+    }
+
     return queryString;
+  }
+
+  hasBinaryOp(query: PromVisualQuery): boolean {
+    return (
+      query.operations.find((op) => {
+        const def = this.getOperationDef(op.id);
+        return def.category === PromVisualQueryOperationCategory.BinaryOps;
+      }) !== undefined
+    );
   }
 
   getQueryPatterns(): PromQueryPattern[] {

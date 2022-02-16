@@ -16,13 +16,12 @@ import * as React from 'react';
 import jsonMarkup from 'json-markup';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import CopyIcon from '../../common/CopyIcon';
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
@@ -89,10 +88,9 @@ function parseIfComplexJson(value: any) {
 }
 
 export const LinkValue = (props: { href: string; title?: string; children: React.ReactNode }) => {
-  const styles = useStyles2(getStyles);
   return (
     <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer">
-      {props.children} <UIIcon className={styles.linkIcon} type="export" />
+      {props.children} <Icon name="external-link-alt" />
     </a>
   );
 };
@@ -100,17 +98,6 @@ export const LinkValue = (props: { href: string; title?: string; children: React
 LinkValue.defaultProps = {
   title: '',
 };
-
-const linkValueList = (links: TraceLink[]) => (
-  <UIMenu>
-    {links.map(({ text, url }, index) => (
-      // `index` is necessary in the key because url can repeat
-      <UIMenuItem key={`${url}-${index}`}>
-        <LinkValue href={url}>{text}</LinkValue>
-      </UIMenuItem>
-    ))}
-  </UIMenu>
-);
 
 type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
@@ -131,22 +118,13 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             const jsonTable = <div className={ubInlineBlock} dangerouslySetInnerHTML={markup} />;
             const links = linksGetter ? linksGetter(data, i) : null;
             let valueMarkup;
-            if (links && links.length === 1) {
+            if (links && links.length) {
+              // TODO: handle multiple items
               valueMarkup = (
                 <div>
                   <LinkValue href={links[0].url} title={links[0].text}>
                     {jsonTable}
                   </LinkValue>
-                </div>
-              );
-            } else if (links && links.length > 1) {
-              valueMarkup = (
-                <div>
-                  <UIDropdown overlay={linkValueList(links)} placement="bottomRight" trigger={['click']}>
-                    <a>
-                      {jsonTable} <UIIcon className={styles.linkIcon} type="profile" />
-                    </a>
-                  </UIDropdown>
                 </div>
               );
             } else {

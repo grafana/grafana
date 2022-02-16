@@ -5,7 +5,6 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   MutableDataFrame,
-  toUtc,
 } from '@grafana/data';
 
 import { MysqlDatasource } from '../datasource';
@@ -20,34 +19,23 @@ describe('MySQLDatasource', () => {
     jest.clearAllMocks();
     setBackendSrv(backendSrv);
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
-    const instanceSettings = ({
+    const instanceSettings = {
       jsonData: {
         defaultProject: 'testproject',
       },
-    } as unknown) as DataSourceInstanceSettings<MySQLOptions>;
+    } as unknown as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
-    const raw = {
-      from: toUtc('2018-04-25 10:00'),
-      to: toUtc('2018-04-25 11:00'),
-    };
-    const timeSrvMock: any = {
-      timeRange: () => ({
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      }),
-    };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
+    const ds = new MysqlDatasource(instanceSettings, templateSrv);
 
     return { ds, variable, templateSrv, fetchMock };
   };
 
   describe('When performing a query with hidden target', () => {
     it('should return empty result and backendSrv.fetch should not be called', async () => {
-      const options = ({
+      const options = {
         range: {
           from: dateTime(1432288354),
           to: dateTime(1432288401),
@@ -62,7 +50,7 @@ describe('MySQLDatasource', () => {
             hide: true,
           },
         ],
-      } as unknown) as DataQueryRequest<MySQLQuery>;
+      } as unknown as DataQueryRequest<MySQLQuery>;
 
       const { ds, fetchMock } = setupTextContext({});
 
@@ -435,6 +423,6 @@ const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
   type: 'basic',
   statusText: 'Ok',
   redirected: false,
-  headers: ({} as unknown) as Headers,
+  headers: {} as unknown as Headers,
   ok: true,
 });

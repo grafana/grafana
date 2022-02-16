@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useMemo, useReducer } from 'react';
 import { FolderDTO } from 'app/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardQuery, DashboardSection, OnDeleteItems, OnMoveItems, OnToggleChecked, SearchLayout } from '../types';
@@ -8,6 +8,7 @@ import { useSearch } from './useSearch';
 import { GENERAL_FOLDER_ID } from '../constants';
 import { useShowDashboardPreviews } from './useShowDashboardPreviews';
 import { reportInteraction } from '@grafana/runtime/src';
+import { useDebounce } from 'react-use';
 
 const hasChecked = (section: DashboardSection) => {
   return section.checked || section.items.some((item) => item.checked);
@@ -17,12 +18,22 @@ export const reportDashboardListViewed = (
   dashboardListType: 'manage_dashboards' | 'dashboard_search',
   showPreviews: boolean,
   previewsEnabled: boolean,
-  searchLayout: SearchLayout
+  query: {
+    layout?: SearchLayout;
+    starred?: boolean;
+    sortValue?: string;
+    query?: string;
+    tagCount?: number;
+  }
 ) => {
   const previews = previewsEnabled ? (showPreviews ? 'on' : 'off') : 'feature_disabled';
   reportInteraction(`${dashboardListType}_viewed`, {
     previews,
-    layout: searchLayout,
+    layout: query.layout,
+    starredFilter: query.starred ?? false,
+    sort: query.sortValue ?? '',
+    tagCount: query.tagCount ?? 0,
+    queryLength: query.query?.length ?? 0,
   });
 };
 
@@ -36,10 +47,28 @@ export const useManageDashboards = (
     ...state,
   });
 
-  const { showPreviews, onShowPreviewsChange, previewFeatureEnabled } = useShowDashboardPreviews();
-  useEffect(() => {
-    reportDashboardListViewed('manage_dashboards', showPreviews, previewFeatureEnabled, query.layout);
-  }, [showPreviews, previewFeatureEnabled, query.layout]);
+  const { showPreviews, setShowPreviews, previewFeatureEnabled } = useShowDashboardPreviews();
+  useDebounce(
+    () => {
+      reportDashboardListViewed('manage_dashboards', showPreviews, previewFeatureEnabled, {
+        layout: query.layout,
+        starred: query.starred,
+        sortValue: query.sort?.value,
+        query: query.query,
+        tagCount: query.tag?.length,
+      });
+    },
+    1000,
+    [
+      showPreviews,
+      previewFeatureEnabled,
+      query.layout,
+      query.starred,
+      query.sort?.value,
+      query.query?.length,
+      query.tag?.length,
+    ]
+  );
 
   const {
     state: { results, loading, initialLoading, allChecked },
@@ -94,6 +123,6 @@ export const useManageDashboards = (
     onMoveItems,
     noFolders,
     showPreviews,
-    onShowPreviewsChange,
+    setShowPreviews,
   };
 };

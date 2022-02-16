@@ -11,6 +11,7 @@ import { config, RefreshEvent } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { Stack } from '@grafana/experimental';
 
 interface DsQuery {
   isLoading: boolean;
@@ -236,14 +237,14 @@ export class QueryInspector extends PureComponent<Props, State> {
       <div>
         {executedQueries.map((info) => {
           return (
-            <div key={info.refId}>
+            <Stack key={info.refId} gap={1} direction="column">
               <div>
                 <span className={styles.refId}>{info.refId}:</span>
                 {info.frames > 1 && <span>{info.frames} frames, </span>}
                 <span>{info.rows} rows</span>
               </div>
               <pre>{info.query}</pre>
-            </div>
+            </Stack>
           );
         })}
       </div>

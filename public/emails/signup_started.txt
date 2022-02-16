@@ -8,4 +8,4 @@ in the sign up form or use the link below.
 
 {{.SignUpUrl}}
 
-Sent by Grafana v{{.BuildVersion}} (c) 2021 Grafana Labs
+Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs

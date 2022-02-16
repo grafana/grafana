@@ -87,8 +87,7 @@ describe('datasource', () => {
       expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
-          url:
-            "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
+          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
         },
       ]);
     });
@@ -224,6 +223,36 @@ describe('datasource', () => {
       await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data.length).toEqual(2);
+      });
+    });
+
+    it('sets fields.config.interval based on period', async () => {
+      const { datasource } = setupMockedDataSource({
+        data: {
+          results: {
+            a: {
+              refId: 'a',
+              series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 60 } } }],
+            },
+            b: {
+              refId: 'b',
+              series: [{ name: 'cpu', points: [1, 2], meta: { custom: { period: 120 } } }],
+            },
+          },
+        },
+      });
+
+      const observable = datasource.performTimeSeriesQuery(
+        {
+          queries: [{ datasourceId: 1, refId: 'a' }],
+        } as any,
+        { from: dateTime(), to: dateTime() } as any
+      );
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const response = received[0];
+        expect(response.data[0].fields[0].config.interval).toEqual(60000);
+        expect(response.data[1].fields[0].config.interval).toEqual(120000);
       });
     });
   });

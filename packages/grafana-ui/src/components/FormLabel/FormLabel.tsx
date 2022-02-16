@@ -1,6 +1,6 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
+import { Tooltip, PopoverContent } from '../Tooltip';
 import { Icon } from '../Icon/Icon';
 
 interface Props {

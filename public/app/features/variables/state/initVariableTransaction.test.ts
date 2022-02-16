@@ -91,7 +91,7 @@ describe('initVariablesTransaction', () => {
 
     describe('and there are variables that have data source that need to be migrated', () => {
       it('then correct actions are dispatched', async () => {
-        const legacyDs = ('${ds}' as unknown) as DataSourceRef;
+        const legacyDs = '${ds}' as unknown as DataSourceRef;
         const ds = datasourceBuilder().withId('ds').withName('ds').withQuery('prom').build();
         const query = queryBuilder().withId('query').withName('query').withDatasource(legacyDs).build();
         const adhoc = adHocBuilder().withId('adhoc').withName('adhoc').withDatasource(legacyDs).build();
@@ -153,14 +153,14 @@ describe('initVariablesTransaction', () => {
       const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
 
       const tester = await reduxTester<RootReducerType>({
-        preloadedState: ({
+        preloadedState: {
           templating: {
             transaction: transactionState,
             variables: {},
             optionsPicker: { ...initialState },
             editor: { ...initialVariableEditorState },
           },
-        } as unknown) as RootReducerType,
+        } as unknown as RootReducerType,
       })
         .givenRootReducer(getRootReducer())
         .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));

@@ -316,24 +316,43 @@ class UnthemedLogs extends PureComponent<Props, State> {
         ) : undefined}
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
-            <InlineField label="Time" transparent>
-              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent id="show-time" />
+            <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={showTime}
+                onChange={this.onChangeTime}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id="show-time"
+              />
             </InlineField>
-            <InlineField label="Unique labels" transparent>
-              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent id="unique-labels" />
+            <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={showLabels}
+                onChange={this.onChangeLabels}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id="unique-labels"
+              />
             </InlineField>
-            <InlineField label="Wrap lines" transparent>
-              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent id="wrap-lines" />
+            <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={wrapLogMessage}
+                onChange={this.onChangewrapLogMessage}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id="wrap-lines"
+              />
             </InlineField>
-            <InlineField label="Prettify JSON" transparent>
+            <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
               <InlineSwitch
                 value={prettifyLogMessage}
                 onChange={this.onChangePrettifyLogMessage}
+                className={styles.horizontalInlineSwitch}
                 transparent
                 id="prettify"
               />
             </InlineField>
-            <InlineField label="Dedup" transparent>
+            <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
               <RadioButtonGroup
                 options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                   label: capitalize(dedupType),
@@ -452,8 +471,16 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
     headerButton: css`
       margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
+    horizontalInlineLabel: css`
+      > label {
+        margin-right: 0;
+      }
+    `,
+    horizontalInlineSwitch: css`
+      padding: 0 ${theme.spacing(1)} 0 0;
+    `,
     radioButtons: css`
-      margin: 0 ${theme.spacing(1)};
+      margin: 0;
     `,
     logsSection: css`
       display: flex;

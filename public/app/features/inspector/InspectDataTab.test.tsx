@@ -1,8 +1,12 @@
 import React, { ComponentProps } from 'react';
-import { FieldType, DataFrame } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InspectDataTab } from './InspectDataTab';
+
+// the mock below gets rid of this warning from recompose:
+// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
+jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {
@@ -62,7 +66,7 @@ describe('InspectDataTab', () => {
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
     it('should show download logs button if logs data', () => {
-      const dataWithLogs = ([
+      const dataWithLogs = [
         {
           name: 'Data frame with logs',
           fields: [
@@ -75,7 +79,7 @@ describe('InspectDataTab', () => {
             preferredVisualisationType: 'logs',
           },
         },
-      ] as unknown) as DataFrame[];
+      ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
     });
@@ -84,7 +88,7 @@ describe('InspectDataTab', () => {
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
     it('should show download traces button if traces data', () => {
-      const dataWithtraces = ([
+      const dataWithtraces = [
         {
           name: 'Data frame with traces',
           fields: [
@@ -133,7 +137,7 @@ describe('InspectDataTab', () => {
             },
           },
         },
-      ] as unknown) as DataFrame[];
+      ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
       expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
     });

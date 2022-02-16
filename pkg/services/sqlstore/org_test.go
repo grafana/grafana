@@ -9,8 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +34,7 @@ func TestAccountDataAccess(t *testing.T) {
 			}
 
 			query := &models.SearchOrgsQuery{Ids: ids}
-			err = SearchOrgs(context.Background(), query)
+			err = sqlStore.SearchOrgs(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(query.Result), 3)
@@ -48,7 +50,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to search with defaults", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{}
-				err := SearchOrgs(context.Background(), query)
+				err := sqlStore.SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 3)
@@ -56,7 +58,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to limit search", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{Limit: 1}
-				err := SearchOrgs(context.Background(), query)
+				err := sqlStore.SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
@@ -64,7 +66,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			t.Run("Should be able to limit and paginate search", func(t *testing.T) {
 				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
-				err := SearchOrgs(context.Background(), query)
+				err := sqlStore.SearchOrgs(context.Background(), query)
 
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
@@ -329,12 +331,12 @@ func TestAccountDataAccess(t *testing.T) {
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
 					dash2 := insertTestDashboard(t, sqlStore, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
 
-					err = testHelperUpdateDashboardAcl(t, sqlStore, dash1.Id, models.DashboardAcl{
+					err = updateDashboardAcl(t, sqlStore, dash1.Id, &models.DashboardAcl{
 						DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
-					err = testHelperUpdateDashboardAcl(t, sqlStore, dash2.Id, models.DashboardAcl{
+					err = updateDashboardAcl(t, sqlStore, dash2.Id, &models.DashboardAcl{
 						DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
@@ -370,16 +372,92 @@ func TestAccountDataAccess(t *testing.T) {
 	})
 }
 
-func testHelperUpdateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64,
-	items ...models.DashboardAcl) error {
+//TODO: Use FakeDashboardStore when org has its own service
+func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+	cmd := models.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+
+	var dash *models.Dashboard
+	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		dash = cmd.GetDashboardModel()
+		dash.SetVersion(1)
+		dash.Created = time.Now()
+		dash.Updated = time.Now()
+		dash.Uid = util.GenerateShortUID()
+		_, err := sess.Insert(dash)
+		return err
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		dashVersion := &models.DashboardVersion{
+			DashboardId:   dash.Id,
+			ParentVersion: dash.Version,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+
+		if affectedRows, err := sess.Insert(dashVersion); err != nil {
+			return err
+		} else if affectedRows == 0 {
+			return models.ErrDashboardNotFound
+		}
+
+		return nil
+	})
+
+	return dash
+}
+
+//TODO: Use FakeDashboardStore when org has its own service
+func updateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64, items ...*models.DashboardAcl) error {
 	t.Helper()
 
-	var itemPtrs []*models.DashboardAcl
-	for _, it := range items {
-		item := it
-		item.Created = time.Now()
-		item.Updated = time.Now()
-		itemPtrs = append(itemPtrs, &item)
-	}
-	return sqlStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
+	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
+		if err != nil {
+			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
+		}
+
+		for _, item := range items {
+			item.Created = time.Now()
+			item.Updated = time.Now()
+			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
+				return models.ErrDashboardAclInfoMissing
+			}
+
+			if item.DashboardID == 0 {
+				return models.ErrDashboardPermissionDashboardEmpty
+			}
+
+			sess.Nullable("user_id", "team_id")
+			if _, err := sess.Insert(item); err != nil {
+				return err
+			}
+		}
+
+		// Update dashboard HasAcl flag
+		dashboard := models.Dashboard{HasAcl: true}
+		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
+		return err
+	})
+	return err
 }

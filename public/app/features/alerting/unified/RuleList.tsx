@@ -26,7 +26,7 @@ const VIEWS = {
   state: RuleListStateView,
 };
 
-export const RuleList = withErrorBoundary(
+const RuleList = withErrorBoundary(
   () => {
     const dispatch = useDispatch();
     const styles = useStyles2(getStyles);
@@ -133,3 +133,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
   `,
 });
+
+export default RuleList;

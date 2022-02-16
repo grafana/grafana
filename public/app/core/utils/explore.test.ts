@@ -11,6 +11,7 @@ import {
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRangeFromUrl,
+  getTimeRange,
 } from './explore';
 import store from 'app/core/store';
 import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
@@ -22,7 +23,6 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
-  originPanelId: undefined,
 };
 
 describe('state functions', () => {
@@ -223,7 +223,7 @@ describe('state functions', () => {
 });
 
 describe('getExploreUrl', () => {
-  const args = ({
+  const args = {
     panel: {
       getSavedId: () => 1,
       targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
@@ -239,7 +239,7 @@ describe('getExploreUrl', () => {
     timeSrv: {
       timeRangeForUrl: () => '1',
     },
-  } as unknown) as GetExploreUrlArguments;
+  } as unknown as GetExploreUrlArguments;
 
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
@@ -358,6 +358,19 @@ describe('getTimeRangeFromUrl', () => {
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+  });
+});
+
+describe('getTimeRange', () => {
+  describe('should flip from and to when from is after to', () => {
+    const rawRange = {
+      from: 'now',
+      to: 'now-6h',
+    };
+
+    const range = getTimeRange('utc', rawRange, 0);
+
+    expect(range.from.isBefore(range.to)).toBe(true);
   });
 });
 

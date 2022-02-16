@@ -6,7 +6,7 @@ interface VariableTextFieldProps {
   name: string;
   placeholder: string;
   onChange: (event: FormEvent<HTMLInputElement>) => void;
-  ariaLabel?: string;
+  testId?: string;
   tooltip?: PopoverContent;
   required?: boolean;
   width?: number;
@@ -20,7 +20,7 @@ export function VariableTextField({
   name,
   placeholder,
   onChange,
-  ariaLabel,
+  testId,
   width,
   labelWidth,
   required,
@@ -39,7 +39,7 @@ export function VariableTextField({
         onChange={onChange}
         onBlur={onBlur}
         width={grow ? undefined : width ?? 25}
-        aria-label={ariaLabel}
+        data-testid={testId}
         required={required}
       />
     </InlineField>

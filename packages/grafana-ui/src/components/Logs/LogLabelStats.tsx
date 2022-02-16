@@ -15,10 +15,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     logsStats: css`
       label: logs-stats;
-      column-span: 2;
       background: inherit;
       color: ${theme.colors.text};
       word-break: break-all;
+      width: fit-content;
+      max-width: 100%;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
@@ -74,7 +75,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <td className={style.logsStats} data-testid="logLabelStats">
+      <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
             {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
@@ -89,7 +90,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
             <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
           )}
         </div>
-      </td>
+      </div>
     );
   }
 }

@@ -55,6 +55,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		if err != nil {
 			return errutil.Wrap("failed to initialize tracer service", err)
 		}
+
 		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
@@ -182,6 +183,16 @@ var adminCommands = []*cli.Command{
 				Name:   "re-encrypt",
 				Usage:  "Re-encrypts secrets by decrypting and re-encrypting them with the currently configured encryption. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsmigrations.ReEncryptSecrets),
+			},
+			{
+				Name:   "rollback",
+				Usage:  "Rolls back secrets to legacy encryption. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.RollBackSecrets),
+			},
+			{
+				Name:   "re-encrypt-data-keys",
+				Usage:  "Rotates persisted data encryption keys. Returns ok unless there is an error. Safe to execute multiple times.",
+				Action: runRunnerCommand(secretsmigrations.ReEncryptDEKS),
 			},
 		},
 	},
