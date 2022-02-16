@@ -26,7 +26,7 @@ For authentication options and configuration details, see [AWS authentication]({
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics and EC2 tags/instances/regions/alarms. You can attach these permissions to the IAM role or IAM user configured in the previous step.
 
-Here is a minimal policy example:
+Here is a minimal CloudWatch Metrics only policy example:
 
 ```json
 {
@@ -45,7 +45,17 @@ Here is a minimal policy example:
         "cloudwatch:GetInsightRuleReport"
       ],
       "Resource": "*"
-    },
+    }
+  ]
+}
+```
+
+Here is a minimal CloudWatch Logs only policy example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
     {
       "Sid": "AllowReadingLogsFromCloudWatch",
       "Effect": "Allow",
@@ -57,18 +67,6 @@ Here is a minimal policy example:
         "logs:GetQueryResults",
         "logs:GetLogEvents"
       ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
-      "Effect": "Allow",
-      "Action": ["ec2:DescribeTags", "ec2:DescribeInstances", "ec2:DescribeRegions"],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowReadingResourcesForTags",
-      "Effect": "Allow",
-      "Action": "tag:GetResources",
       "Resource": "*"
     }
   ]
