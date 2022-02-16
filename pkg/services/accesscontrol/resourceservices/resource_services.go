@@ -149,6 +149,16 @@ func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegiste
 
 			return nil
 		},
+		UidSolver: func(ctx context.Context, orgID int64, uid string) (int64, error) {
+			query := &models.GetDashboardQuery{
+				Uid:   uid,
+				OrgId: orgID,
+			}
+			if err := sql.GetDashboard(ctx, query); err != nil {
+				return 0, err
+			}
+			return query.Result.Id, nil
+		},
 		Assignments: resourcepermissions.Assignments{
 			Users:        true,
 			Teams:        true,
@@ -185,6 +195,16 @@ func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, 
 			}
 
 			return nil
+		},
+		UidSolver: func(ctx context.Context, orgID int64, uid string) (int64, error) {
+			query := &models.GetDashboardQuery{
+				Uid:   uid,
+				OrgId: orgID,
+			}
+			if err := sql.GetDashboard(ctx, query); err != nil {
+				return 0, err
+			}
+			return query.Result.Id, nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:        true,
