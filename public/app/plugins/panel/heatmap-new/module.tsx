@@ -153,31 +153,26 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           ],
         },
       })
-      .addNumberInput({
-        path: 'cellGap',
+      .addSliderInput({
         name: 'Cell gap',
-        category,
-      })
-      .addSliderInput({
-        name: 'Cell padding',
-        path: 'cellPadding',
-        defaultValue: defaultPanelOptions.cellPadding,
-        category,
-        settings: {
-          min: -10,
-          max: 20,
-        },
-      })
-      .addSliderInput({
-        name: 'Cell radius',
-        path: 'cellRadius',
-        defaultValue: defaultPanelOptions.cellRadius,
+        path: 'cellGap',
+        defaultValue: defaultPanelOptions.cellGap,
         category,
         settings: {
           min: 0,
-          max: 100,
+          max: 25,
         },
       })
+      // .addSliderInput({
+      //   name: 'Cell radius',
+      //   path: 'cellRadius',
+      //   defaultValue: defaultPanelOptions.cellRadius,
+      //   category,
+      //   settings: {
+      //     min: 0,
+      //     max: 100,
+      //   },
+      // })
       .addRadio({
         path: 'yAxisLabels',
         name: 'Axis labels',

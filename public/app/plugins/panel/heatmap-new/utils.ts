@@ -260,8 +260,9 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         let xGap = gap != null ? gap * devicePixelRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
         let yGap = xGap;
 
-        xSize = Math.round(xSize - xGap);
-        ySize = Math.round(ySize - yGap);
+        // clamp min tile size to 1px
+        xSize = Math.max(1, Math.round(xSize - xGap));
+        ySize = Math.max(1, Math.round(ySize - yGap));
 
         // bucket agg direction
         let xCeil = false;

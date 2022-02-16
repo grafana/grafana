@@ -50,14 +50,12 @@ export interface PanelOptions extends OptionsWithLegend {
   heatmap?: HeatmapCalculationOptions;
   showValue: VisibilityMode;
 
-  cellPadding?: number; // was cardPadding
-  cellRadius?: number; // was cardRadius
+  cellGap?: number; // was cardPadding
+  cellSize?: number; // was cardRadius
 
   hideZeroBuckets?: boolean;
   yAxisLabels?: string;
   yAxisReverse?: boolean;
-
-  cellGap?: number | null;
 
   tooltip: HeatmapTooltip;
 }
@@ -82,6 +80,7 @@ export const defaultPanelOptions: PanelOptions = {
     show: true,
     yHistogram: false,
   },
+  cellGap: 3,
 };
 
 export interface PanelFieldConfig extends HideableFieldConfig {
