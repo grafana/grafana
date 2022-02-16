@@ -17,7 +17,7 @@ const searchSrv = new SearchSrv();
 
 interface Props {
   onLayoutChange: (layout: SearchLayout) => void;
-  onShowPreviewsChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  setShowPreviews: (newValue: boolean) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
@@ -29,7 +29,7 @@ interface Props {
 
 export const ActionRow: FC<Props> = ({
   onLayoutChange,
-  onShowPreviewsChange,
+  setShowPreviews,
   onSortChange,
   onStarredFilterChange = () => {},
   onTagFilterChange,
@@ -56,7 +56,7 @@ export const ActionRow: FC<Props> = ({
               label="Show previews"
               showLabel
               value={showPreviews}
-              onChange={onShowPreviewsChange}
+              onChange={(ev: ChangeEvent<HTMLInputElement>) => setShowPreviews(ev.target.checked)}
               transparent
             />
           )}
