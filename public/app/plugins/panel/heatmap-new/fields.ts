@@ -2,12 +2,15 @@ import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@g
 import {
   calculateHeatmapFromData,
   createHeatmapFromBuckets,
+  sortAscStrInf,
 } from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export interface HeatmapData {
   // List of heatmap frames
   heatmap?: DataFrame;
+
+  yAxisValues?: Array<number | string | null>;
 
   xBucketSize?: number;
   yBucketSize?: number;
@@ -48,7 +51,10 @@ export function prepareHeatmapData(
   // detect a frame-per-bucket heatmap frame
   // TODO: improve heuristic?
   if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.endsWith('Inf'))) {
-    return getHeatmapData(createHeatmapFromBuckets(frames), theme);
+    return {
+      yAxisValues: frames.map((f) => f.name ?? null).sort(sortAscStrInf),
+      ...getHeatmapData(createHeatmapFromBuckets(frames), theme),
+    };
   }
 
   // TODO, check for error etc
@@ -58,7 +64,7 @@ export function prepareHeatmapData(
 const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapScanLines) {
     return {
-      warning: 'Expected heatmap scan lines format',
+      warning: 'Expected heatmap scanlines format',
       heatmap: frame,
     };
   }

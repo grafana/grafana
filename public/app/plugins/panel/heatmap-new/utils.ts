@@ -1,4 +1,4 @@
-import { MutableRefObject } from 'react';
+import { MutableRefObject, RefObject } from 'react';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -10,6 +10,7 @@ import { HeatmapData } from './fields';
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
+  hideThreshold?: number;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -25,7 +26,7 @@ export interface HeatmapHoverEvent {
 }
 
 interface PrepConfigOpts {
-  data: HeatmapData;
+  dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
   onhover: (evt?: HeatmapHoverEvent | null) => void;
   onclick: (evt?: any) => void;
@@ -34,10 +35,12 @@ interface PrepConfigOpts {
   timeRange: TimeRange; // should be getTimeRange() cause dynamic?
   palette: string[];
   cellGap?: number | null; // in css pixels
+  hideThreshold?: number;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { theme, onhover, onclick, isToolTipOpen, timeZone, timeRange, palette, cellGap } = opts;
+  const { dataRef, theme, onhover, onclick, isToolTipOpen, timeZone, timeRange, palette, cellGap, hideThreshold } =
+    opts;
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -135,6 +138,19 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: 'y',
     placement: AxisPlacement.Left,
     theme: theme,
+    splits: () => {
+      let ys = dataRef.current?.heatmap?.fields[1].values.toArray();
+      return ys?.slice(0, ys.length - ys.lastIndexOf(ys[0])) ?? [];
+    },
+    values: (u, splits) => {
+      let yAxisValues = dataRef.current?.yAxisValues;
+
+      if (yAxisValues) {
+        return yAxisValues;
+      } else {
+        return splits;
+      }
+    },
   });
 
   builder.addSeries({
@@ -161,6 +177,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         });
       },
       gap: cellGap,
+      hideThreshold,
       disp: {
         fill: {
           values: (u, seriesIdx) => countsToFills(u, seriesIdx, palette),
@@ -208,7 +225,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 }
 
 export function heatmapPaths(opts: PathbuilderOpts) {
-  const { disp, each, gap } = opts;
+  const { disp, each, gap, hideThreshold = 0 } = opts;
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -280,7 +297,7 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         for (let i = 0; i < dlen; i++) {
           // filter out 0 counts and out of view
           if (
-            counts[i] > 0 &&
+            counts[i] > hideThreshold &&
             xs[i] + xBinIncr >= scaleX.min! &&
             xs[i] - xBinIncr <= scaleX.max! &&
             ys[i] + yBinIncr >= scaleY.min! &&

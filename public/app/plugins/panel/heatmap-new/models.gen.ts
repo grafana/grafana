@@ -53,7 +53,7 @@ export interface PanelOptions extends OptionsWithLegend {
   cellGap?: number; // was cardPadding
   cellSize?: number; // was cardRadius
 
-  hideZeroBuckets?: boolean;
+  hideThreshold?: number; // was hideZeroBuckets
   yAxisLabels?: string;
   yAxisReverse?: boolean;
 

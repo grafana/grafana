@@ -38,18 +38,20 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   },
 };
 
+export function sortAscStrInf(aName?: string | null, bName?: string | null) {
+  let aBound = aName === '+Inf' ? Infinity : +(aName ?? 0);
+  let bBound = bName === '+Inf' ? Infinity : +(bName ?? 0);
+
+  return aBound - bBound;
+}
+
 /** Given existing buckets, create a values style frame */
 export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
   frames = frames.slice();
 
   // sort ASC by frame.name (Prometheus bucket bound)
   // or use frame.fields[1].config.displayNameFromDS ?
-  frames.sort((a, b) => {
-    let aBound = a.name === '+Inf' ? Infinity : +(a.name ?? 0);
-    let bBound = b.name === '+Inf' ? Infinity : +(b.name ?? 0);
-
-    return aBound - bBound;
-  });
+  frames.sort((a, b) => sortAscStrInf(a.name, b.name));
 
   const bucketBounds = frames.map((frame, i) => {
     return i; // until we have y ordinal scales working for facets/scatter

@@ -4,7 +4,7 @@ import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
-import { prepareHeatmapData } from './fields';
+import { HeatmapData, prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
@@ -61,9 +61,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     [options, data.structureRev]
   );
 
+  const dataRef = useRef<HeatmapData>(info);
+
+  dataRef.current = info;
+
   const builder = useMemo(() => {
     return prepConfig({
-      data: info,
+      dataRef,
       theme,
       onhover: options.tooltip.show ? onhover : () => {},
       onclick: options.tooltip.show ? onclick : () => {},
@@ -72,6 +76,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       timeRange,
       palette,
       cellGap: options.cellGap,
+      hideThreshold: options.hideThreshold,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
