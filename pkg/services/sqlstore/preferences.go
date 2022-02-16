@@ -42,10 +42,11 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 		}
 
 		res := &models.Preferences{
-			Theme:           ss.Cfg.DefaultTheme,
-			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
-			WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
-			HomeDashboardId: 0,
+			Theme:             ss.Cfg.DefaultTheme,
+			Timezone:          ss.Cfg.DateFormats.DefaultTimezone,
+			WeekStart:         ss.Cfg.DateFormats.DefaultWeekStart,
+			HomeDashboardId:   0,
+			NavbarPreferences: nil,
 		}
 
 		for _, p := range prefs {
@@ -60,6 +61,9 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			}
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
+			}
+			if p.NavbarPreferences != nil {
+				res.NavbarPreferences = p.NavbarPreferences
 			}
 		}
 
@@ -97,15 +101,16 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 
 		if !exists {
 			prefs = models.Preferences{
-				UserId:          cmd.UserId,
-				OrgId:           cmd.OrgId,
-				TeamId:          cmd.TeamId,
-				HomeDashboardId: cmd.HomeDashboardId,
-				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
-				Theme:           cmd.Theme,
-				Created:         time.Now(),
-				Updated:         time.Now(),
+				UserId:            cmd.UserId,
+				OrgId:             cmd.OrgId,
+				TeamId:            cmd.TeamId,
+				HomeDashboardId:   cmd.HomeDashboardId,
+				Timezone:          cmd.Timezone,
+				WeekStart:         cmd.WeekStart,
+				Theme:             cmd.Theme,
+				Created:           time.Now(),
+				Updated:           time.Now(),
+				NavbarPreferences: cmd.NavbarPreferences,
 			}
 			_, err = sess.Insert(&prefs)
 			return err
@@ -115,6 +120,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()
+		prefs.NavbarPreferences = cmd.NavbarPreferences
 		prefs.Version += 1
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
 		return err

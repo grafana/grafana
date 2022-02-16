@@ -391,18 +391,22 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 }
 
 func (hs *HTTPServer) setNavPreferences(c *models.ReqContext, navTree []*dtos.NavLink) ([]*dtos.NavLink, error) {
-	// query navbar_preference table for any preferences
-	navbarPref, err := hs.NavbarPreferencesService.GetNavbarPreferences(c.Req.Context(), c.SignedInUser)
-
-	if err != nil {
+	// query preferences table for any navbar preferences
+	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
+	navbarPref := prefsQuery.Result.NavbarPreferences
 
-	for _, navItem := range navTree {
-		// override with preference if exists
-		for _, pref := range navbarPref {
-			if navItem.Id == pref.NavItemID {
-				navItem.HideFromNavbar = pref.HideFromNavbar
+	if navbarPref != nil {
+		for _, navItem := range navTree {
+			navItem.HideFromNavbar = true
+			// Set any that exist in the navbar preferences to hide=false
+			for _, pref := range navbarPref.MustArray() {
+				if navItem.Id == pref.(map[string]interface{})["id"] {
+					navItem.HideFromNavbar = false
+					break
+				}
 			}
 		}
 	}

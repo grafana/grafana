@@ -16,6 +16,22 @@ const (
 	lightTheme   string = "light"
 )
 
+// PUT /api/preferences/set-navbar-preferences
+func (hs *HTTPServer) SetNavbarPreferences(c *models.ReqContext) response.Response {
+	cmd := models.SavePreferencesCommand{}
+	if err := web.Bind(c.Req, &cmd.NavbarPreferences); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.UserId = c.UserId
+	cmd.OrgId = c.OrgId
+
+	if err := hs.SQLStore.SavePreferences(c.Req.Context(), &cmd); err != nil {
+		return response.Error(500, "Failed to set navbar preferences", err)
+	}
+
+	return response.Success("Navbar preferences set")
+}
+
 // POST /api/preferences/set-home-dash
 func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd := models.SavePreferencesCommand{}
