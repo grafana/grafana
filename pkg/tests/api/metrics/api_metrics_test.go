@@ -32,7 +32,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
 
 	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
-	setUpDatabase(t, sqlStore)
+	setUpDatabase(t, sqlStore, "metrics")
 
 	origNewCWClient := cloudwatch.NewCWClient
 	t.Cleanup(func() {
@@ -76,7 +76,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 func TestQueryCloudWatchLogs(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
 	addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
-	setUpDatabase(t, store)
+	setUpDatabase(t, store, "logs")
 
 	origNewCWLogsClient := cloudwatch.NewCWLogsClient
 	t.Cleanup(func() {
@@ -173,12 +173,13 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) backend.Qu
 	return tr
 }
 
-func setUpDatabase(t *testing.T, store *sqlstore.SQLStore) {
+func setUpDatabase(t *testing.T, store *sqlstore.SQLStore, uid string) {
 	t.Helper()
 
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(&models.DataSource{
-			Id: 1,
+			Id:  1,
+			Uid: uid,
 			// This will be the ID of the main org
 			OrgId:   2,
 			Name:    "Test",
