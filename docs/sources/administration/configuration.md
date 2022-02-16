@@ -635,7 +635,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages]({{< relref "../manage-users/server-admin/server-admin-manage-users.md" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 

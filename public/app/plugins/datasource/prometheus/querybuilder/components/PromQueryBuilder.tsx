@@ -105,11 +105,11 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
         />
-        {query.binaryQueries && query.binaryQueries.length > 0 && (
-          <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-        )}
         <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
+      {query.binaryQueries && query.binaryQueries.length > 0 && (
+        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+      )}
     </>
   );
 });

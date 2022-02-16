@@ -47,6 +47,10 @@ const (
 	// Use grafana live websocket to execute backend queries
 	FlagQueryOverLive = "queryOverLive"
 
+	// FlagPanelTitleSearch
+	// Search for dashboards using panel title
+	FlagPanelTitleSearch = "panelTitleSearch"
+
 	// FlagTempoSearch
 	// Enable searching in tempo datasources
 	FlagTempoSearch = "tempoSearch"
