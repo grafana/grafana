@@ -84,7 +84,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(400, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, getPermissionName(cmd.Permission))
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, getPermissionName(cmd.Permission))
 	if err != nil {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
@@ -124,7 +124,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(404, "Team member not found.", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, userId, orgId, teamId, getPermissionName(cmd.Permission))
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, userId, orgId, teamId, getPermissionName(cmd.Permission))
 	if err != nil {
 		return response.Error(500, "Failed to update team member.", err)
 	}
@@ -160,7 +160,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := hs.TeamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
+	if _, err := hs.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}

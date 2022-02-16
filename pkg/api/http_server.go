@@ -127,7 +127,7 @@ type HTTPServer struct {
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	TeamPermissionsService       accesscontrol.PermissionsService
+	teamPermissionsService       accesscontrol.PermissionsService
 	NotificationService          *notifications.NotificationService
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
@@ -225,7 +225,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
-		TeamPermissionsService:       permissionsServices.GetTeamService(),
+		teamPermissionsService:       permissionsServices.GetTeamService(),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
