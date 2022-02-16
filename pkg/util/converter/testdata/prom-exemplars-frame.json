@@ -2,9 +2,6 @@
   "frames": [
     {
       "schema": {
-        "meta": {
-          "type": "timeseries-many"
-        },
         "fields": [
           {
             "type": "time",
@@ -13,14 +10,22 @@
             }
           },
           {
-            "name": "up",
+            "name": "test_exemplar_metric_total",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
-              "instance": "localhost:9090",
-              "job": "prometheus"
+              "instance": "localhost:8090",
+              "job": "prometheus",
+              "service": "bar"
+            }
+          },
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
             }
           }
         ]
@@ -28,19 +33,19 @@
       "data": {
         "values": [
           [
-            1435781430000,1435781445000,1435781460000
+            1600096945000
           ],
           [
-            1,1,1
+            6
+          ],
+          [
+            "EpTxMJ40fUus7aGY"
           ]
         ]
       }
     },
     {
       "schema": {
-        "meta": {
-          "type": "timeseries-many"
-        },
         "fields": [
           {
             "type": "time",
@@ -49,14 +54,22 @@
             }
           },
           {
-            "name": "up",
+            "name": "test_exemplar_metric_total",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
-              "job": "node",
-              "instance": "localhost:9091"
+              "instance": "localhost:8090",
+              "job": "prometheus",
+              "service": "foo"
+            }
+          },
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
             }
           }
         ]
@@ -64,10 +77,13 @@
       "data": {
         "values": [
           [
-            1435781430000,1435781445000,1435781460000
+            1600096955000,1600096965000
           ],
           [
-            0,0,1
+            19,20
+          ],
+          [
+            "Olp9XHlq763ccsfa","hCtjygkIHwAN9vs4"
           ]
         ]
       }

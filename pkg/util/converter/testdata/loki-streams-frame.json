@@ -20,9 +20,9 @@
               "frame": "string"
             },
             "labels": {
+              "level": "info",
               "filename": "/var/log/myproject.log",
-              "job": "varlogs",
-              "level": "info"
+              "job": "varlogs"
             }
           },
           {

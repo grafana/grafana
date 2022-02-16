@@ -14,13 +14,13 @@ import (
 
 func TestReadPromFrames(t *testing.T) {
 	files := []string{
-		"simple-labels",
-		"simple-matrix",
-		"simple-matrix-with-nans",
-		"simple-vector",
-		"simple-streams",
-		"simple-series",
-		"simple-exemplars",
+		"prom-labels",
+		"prom-matrix",
+		"prom-matrix-with-nans",
+		"prom-vector",
+		"prom-series",
+		"prom-exemplars",
+		"loki-streams",
 	}
 
 	for _, name := range files {
