@@ -1,9 +1,9 @@
-import { LoadingState, NavModelItem, DataFrame } from '@grafana/data';
+import { LoadingState, NavModelItem } from '@grafana/data';
 import { Input } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import Page from 'app/core/components/Page/Page';
 import { useAsync } from 'react-use';
-import { filterDataFrame, getDashboardData } from './data';
+import { buildStatsTable, filterDataFrame, getDashboardData } from './data';
 import { config, PanelRenderer } from '@grafana/runtime';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -18,16 +18,16 @@ export default function SearchPage() {
   const data = useAsync(getDashboardData, []);
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => {
-    if (!data.value?.dashboards.length) {
-      const empty: DataFrame = { length: 0, fields: [] };
-      return {
-        dashboards: empty,
-        panels: empty,
-      };
+    if (!data.value?.dashboards.length || !query.length) {
+      return data.value!; // everything
     }
+    const dashboards = filterDataFrame(query, data.value.dashboards, 'Name', 'Description', 'Tags');
+    const panels = filterDataFrame(query, data.value.panels, 'Name', 'Description', 'Type');
     return {
-      dashboards: filterDataFrame(query, data.value.dashboards, 'Name', 'Description', 'Tags'),
-      panels: filterDataFrame(query, data.value.panels, 'Name', 'Description', 'Type'),
+      dashboards,
+      panels,
+      panelTypes: buildStatsTable(panels.fields.find((f) => f.name === 'Type')),
+      schemaVersions: buildStatsTable(dashboards.fields.find((f) => f.name === 'SchemaVersion')),
     };
   }, [query, data]);
 
@@ -43,7 +43,7 @@ export default function SearchPage() {
         {data.loading && <div>Loading....</div>}
         {!data.loading && (
           <div>
-            <AutoSizer style={{ width: '100%', height: '800px' }}>
+            <AutoSizer style={{ width: '100%', height: '1500px' }}>
               {({ width, height }) => {
                 return (
                   <div>
@@ -79,6 +79,37 @@ export default function SearchPage() {
                         />
                       </>
                     )}
+
+                    <br />
+                    <h1>Stats</h1>
+                    <table style={{ width: '100%' }}>
+                      <tr>
+                        <td>
+                          <PanelRenderer
+                            pluginId="table"
+                            title="Panels"
+                            data={{ series: [filtered.panelTypes], state: LoadingState.Done } as any}
+                            options={{}}
+                            width={width / 2 - 50} // ?????? otherwise it keeps growing!!!
+                            height={200}
+                            fieldConfig={{ defaults: {}, overrides: [] }}
+                            timeZone="browser"
+                          />
+                        </td>
+                        <td>
+                          <PanelRenderer
+                            pluginId="table"
+                            title="Panels"
+                            data={{ series: [filtered.schemaVersions], state: LoadingState.Done } as any}
+                            options={{}}
+                            width={width / 2 - 50} // ?????? otherwise it keeps growing!!!
+                            height={200}
+                            fieldConfig={{ defaults: {}, overrides: [] }}
+                            timeZone="browser"
+                          />
+                        </td>
+                      </tr>
+                    </table>
                   </div>
                 );
               }}
