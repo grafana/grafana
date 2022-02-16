@@ -107,7 +107,6 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **404** - Query in query history not found
 - **500** – Unable to delete query from the database
 
 ## Update comment of query in Query history by UID
@@ -164,7 +163,6 @@ Status codes:
 
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
-- **404** - Query in query history not found
 - **500** – Unable to update comment of query in the database
 
 ## Star query in Query history
@@ -213,7 +211,6 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **404** - Query in query history to star not found
 - **500** – Unable to star query in the database
 
 ## Unstar query in Query history
@@ -262,5 +259,4 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **404** - Starred query in query history not found
 - **500** – Unable to unstar query in the database

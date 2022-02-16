@@ -12,7 +12,7 @@ func TestUnstarQueryInQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "When users tries to unstar query in query history that does not exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.starHandler(sc.reqContext)
-			require.Equal(t, 404, resp.Status())
+			require.Equal(t, 500, resp.Status())
 		})
 
 	testScenarioWithQueryInQueryHistory(t, "When users tries to unstar starred query in query history, it should succeed",
