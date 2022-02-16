@@ -1,6 +1,7 @@
 import React, { FC, useMemo } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
 import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
@@ -10,6 +11,9 @@ import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
+import GrafanaManagedRuleType from './rule-types/GrafanaManaged';
+import PrometheusFlavoredType from './rule-types/PrometheusFlavor';
+import RecordingRuleType from './rule-types/RecordingRule';
 
 interface Props {
   editingExistingRule: boolean;
@@ -87,7 +91,12 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           autoFocus={true}
         />
       </Field>
-      <div className={styles.flexRow}>
+      <Stack direction="row">
+        <GrafanaManagedRuleType selected />
+        <PrometheusFlavoredType />
+        <RecordingRuleType />
+      </Stack>
+      {/* <div className={styles.flexRow}>
         <Field
           disabled={editingExistingRule}
           label="Rule type"
@@ -140,7 +149,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             />
           </Field>
         )}
-      </div>
+      </div> */}
       {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
