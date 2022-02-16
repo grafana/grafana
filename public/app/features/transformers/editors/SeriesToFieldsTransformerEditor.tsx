@@ -9,7 +9,7 @@ import {
 import { Select } from '@grafana/ui';
 
 import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
-import { useAllFieldNamesFromDataFrames } from './utils';
+import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<SeriesToColumnsOptions>> = ({
   input,
