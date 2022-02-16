@@ -194,9 +194,6 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/Select/MetricSelect.test.tsx:3409251428": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/specs/OrgSwitcher.test.tsx:848670248": [
-      [2, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/alerting/AlertRuleList.test.tsx:1800339390": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
