@@ -17,13 +17,11 @@ function applySpanNullsThresholds(frame: DataFrame) {
       continue;
     }
 
-    if (field.type === FieldType.number) {
-      let spanNulls = field.config.custom?.spanNulls;
+    let spanNulls = field.config.custom?.spanNulls;
 
-      if (typeof spanNulls === 'number') {
-        if (spanNulls !== -1) {
-          field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
-        }
+    if (typeof spanNulls === 'number') {
+      if (spanNulls !== -1) {
+        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
       }
     }
   }

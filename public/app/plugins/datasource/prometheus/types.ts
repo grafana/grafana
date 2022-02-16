@@ -1,6 +1,5 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 import { QueryEditorMode } from './querybuilder/shared/types';
-import { PromVisualQuery } from './querybuilder/types';
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -18,9 +17,10 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
-  /** Temporary until we have a parser */
-  visualQuery?: PromVisualQuery;
+  /** Controls if the query preview is shown */
+  editorPreview?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {

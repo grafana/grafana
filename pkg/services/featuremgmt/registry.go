@@ -34,6 +34,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardPreviewsScheduler",
+			Description: "Schedule automatic updates to dashboard previews",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "live-config",
 			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
@@ -73,9 +78,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "fullRangeLogsVolume",
-			Description:  "Show full range logs volume in explore",
-			State:        FeatureStateBeta,
+			Name:         "lokiBackendMode",
+			Description:  "Loki datasource works as backend datasource",
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
@@ -87,6 +92,12 @@ var (
 			Name:        "prometheus_azure_auth",
 			Description: "Use azure authentication for prometheus datasource",
 			State:       FeatureStateBeta,
+		},
+		{
+			Name:         "influxdbBackendMigration",
+			Description:  "Query InfluxDB InfluxQL without the proxy",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "newNavigation",
@@ -109,6 +120,11 @@ var (
 			Description:     "only execute the query saved in a panel",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "swaggerUi",
+			Description: "Serves swagger UI",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "featureHighlights",

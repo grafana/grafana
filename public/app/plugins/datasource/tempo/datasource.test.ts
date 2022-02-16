@@ -347,7 +347,7 @@ const serviceGraphLinks = [
     title: 'Request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__interval])',
+        expr: 'rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval])',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
@@ -358,7 +358,7 @@ const serviceGraphLinks = [
     title: 'Request histogram',
     internal: {
       query: {
-        expr: 'histogram_quantile(0.9, rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__interval]))',
+        expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',
@@ -369,7 +369,7 @@ const serviceGraphLinks = [
     title: 'Failed request rate',
     internal: {
       query: {
-        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__interval])',
+        expr: 'rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval])',
       },
       datasourceUid: 'prom',
       datasourceName: 'Prometheus',

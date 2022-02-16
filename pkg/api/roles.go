@@ -215,11 +215,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams.",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -244,10 +245,25 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
+	annotationsReaderRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:annotations:reader",
+			DisplayName: "Annotation reader",
+			Description: "Read annotations and tags",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll},
+			},
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
-		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
+		teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
 	)
 }
 
@@ -297,4 +313,27 @@ var orgsAccessEvaluator = accesscontrol.EvalPermission(ActionOrgsRead)
 var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
 	accesscontrol.EvalPermission(ActionOrgsRead),
 	accesscontrol.EvalPermission(ActionOrgsCreate),
+)
+
+// teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
+// grants access to a user when they can either create teams or can read and update a team
+var teamsAccessEvaluator = accesscontrol.EvalAny(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+	accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+		accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+		),
+	),
+)
+
+// teamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
+var teamsEditAccessEvaluator = accesscontrol.EvalAll(
+	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
+	accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
+		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+	),
 )

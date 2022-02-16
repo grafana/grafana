@@ -290,23 +290,25 @@ describe('enhanceDataFrame', () => {
      * NOTE on time parameters:
      * - Input time series data has timestamps in sec (like Prometheus)
      * - Output time series has timestamps in ms (as expected for the chart lib)
-     * - Start/end parameters are in ns (as expected for Loki)
-     * - Step is in sec (like in Prometheus)
      */
     const data: Array<[number, string]> = [
       [1, '1'],
       [2, '0'],
       [4, '1'],
+      [7, 'NaN'],
+      [8, '+Inf'],
+      [9, '-Inf'],
     ];
 
     it('returns data as is if step, start, and end align', () => {
-      const options: Partial<TransformerOptions> = { start: 1 * 1e9, end: 4 * 1e9, step: 1 };
-      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
+      const result = ResultTransformer.lokiPointsToTimeseriesPoints(data);
       expect(result).toEqual([
         [1, 1000],
         [0, 2000],
-        [null, 3000],
         [1, 4000],
+        [null, 7000],
+        [Infinity, 8000],
+        [-Infinity, 9000],
       ]);
     });
   });

@@ -16,7 +16,6 @@ import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, runQueries } from './state/query';
-import ReturnToDashboardButton from './ReturnToDashboardButton';
 import { isSplit } from './state/selectors';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 
@@ -102,8 +101,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         ].filter(Boolean)}
       >
         <ToolbarButtonRow>
-          <ReturnToDashboardButton exploreId={exploreId} />
-
           {!splitted ? (
             <ToolbarButton title="Split" onClick={() => split()} icon="columns" disabled={isLive}>
               Split
