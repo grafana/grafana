@@ -191,7 +191,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   actionIcons: css`
     & > * + * {
-      margin-left: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(0.5)};
     }
   `,
   rulesTable: css`

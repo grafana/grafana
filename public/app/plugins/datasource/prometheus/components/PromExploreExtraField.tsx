@@ -124,7 +124,7 @@ export function getQueryTypeOptions(includeBoth: boolean) {
 export function getQueryTypeChangeHandler(query: PromQuery, onChange: (update: PromQuery) => void) {
   return (queryType: string) => {
     if (queryType === 'instant') {
-      onChange({ ...query, instant: true, range: false });
+      onChange({ ...query, instant: true, range: false, exemplar: false });
     } else if (queryType === 'range') {
       onChange({ ...query, instant: false, range: true });
     } else {

@@ -405,6 +405,7 @@ func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, h
 
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID

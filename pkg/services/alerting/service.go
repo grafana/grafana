@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -77,6 +78,7 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 
 	model := models.AlertNotification{
 		Id:       cmd.Id,
+		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -137,7 +139,11 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *mo
 			return nil, err
 		}
 
-		if query.Result != nil && query.Result.SecureSettings != nil {
+		if query.Result == nil {
+			return nil, fmt.Errorf("unable to find the alert notification")
+		}
+
+		if query.Result.SecureSettings != nil {
 			var err error
 			secureSettingsMap, err = s.EncryptionService.DecryptJsonData(ctx, query.Result.SecureSettings, setting.SecretKey)
 			if err != nil {

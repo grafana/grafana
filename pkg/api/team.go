@@ -110,7 +110,7 @@ func (hs *HTTPServer) getTeamsAccessControlMetadata(c *models.ReqContext, teamID
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		hs.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
 		return nil, err
@@ -130,9 +130,10 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		page = 1
 	}
 
-	var userIdFilter int64
-	if hs.Cfg.EditorsCanAdmin && c.OrgRole != models.ROLE_ADMIN {
-		userIdFilter = c.SignedInUser.UserId
+	// Using accesscontrol the filtering is done based on user permissions
+	userIdFilter := models.FilterIgnoreUser
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		userIdFilter = userFilter(c)
 	}
 
 	query := models.SearchTeamsQuery{
@@ -174,7 +175,7 @@ func (hs *HTTPServer) getTeamAccessControlMetadata(c *models.ReqContext, teamID 
 		return nil, nil
 	}
 
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		hs.log.Warn("could not fetch accesscontrol metadata", "team", teamID, "error", err)
 		return nil, err
@@ -186,17 +187,36 @@ func (hs *HTTPServer) getTeamAccessControlMetadata(c *models.ReqContext, teamID 
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "teams", teamIDs)[key], nil
 }
 
+// UserFilter returns the user ID used in a filter when querying a team
+// 1. If the user is a viewer or editor, this will return the user's ID.
+// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
+func userFilter(c *models.ReqContext) int64 {
+	userIdFilter := c.SignedInUser.UserId
+	if c.OrgRole == models.ROLE_ADMIN {
+		userIdFilter = models.FilterIgnoreUser
+	}
+	return userIdFilter
+}
+
 // GET /api/teams/:teamId
 func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
+
+	// Using accesscontrol the filtering has already been performed at middleware layer
+	userIdFilter := models.FilterIgnoreUser
+	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		userIdFilter = userFilter(c)
+	}
+
 	query := models.GetTeamByIdQuery{
 		OrgId:        c.OrgId,
 		Id:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
+		UserIdFilter: userIdFilter,
 	}
 
 	if err := hs.SQLStore.GetTeamById(c.Req.Context(), &query); err != nil {

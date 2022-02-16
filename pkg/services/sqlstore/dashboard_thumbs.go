@@ -84,7 +84,7 @@ func (ss *SQLStore) UpdateThumbnailState(ctx context.Context, cmd *models.Update
 func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
 	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
 		sess.Table("dashboard")
-		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id")
+		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id AND dashboard_thumbnail.theme = ? AND dashboard_thumbnail.kind = ?", cmd.Theme, cmd.Kind)
 		sess.Where("dashboard.is_folder = ?", dialect.BooleanStr(false))
 		sess.Where("(dashboard.version != dashboard_thumbnail.dashboard_version "+
 			"OR dashboard_thumbnail.state = ? "+

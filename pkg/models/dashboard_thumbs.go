@@ -119,6 +119,8 @@ type DashboardWithStaleThumbnail struct {
 
 type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeManuallyUploadedThumbnails bool
+	Theme                             Theme
+	Kind                              ThumbnailKind
 	Result                            []*DashboardWithStaleThumbnail
 }
 
