@@ -16,7 +16,6 @@ function mapStateToProps(state: StoreState, props: RouteProps) {
   const uid = props.match.params.uid;
   return {
     uid: uid,
-    resourceId: state.folder.id,
     navModel: getNavModel(state.navIndex, `folder-permissions-${uid}`, getLoadingNav(1)),
   };
 }
@@ -28,7 +27,7 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = ConnectedProps<typeof connector>;
 
-export const AccessControlFolderPermissions = ({ resourceId, uid, getFolderByUid, navModel }: Props) => {
+export const AccessControlFolderPermissions = ({ uid, getFolderByUid, navModel }: Props) => {
   useEffect(() => {
     getFolderByUid(uid);
   }, [getFolderByUid, uid]);
@@ -41,7 +40,7 @@ export const AccessControlFolderPermissions = ({ resourceId, uid, getFolderByUid
       <Page.Contents>
         <Permissions
           resource="folders"
-          resourceId={resourceId}
+          resourceId={uid}
           canListUsers={canListUsers}
           canSetPermissions={canSetPermissions}
         />

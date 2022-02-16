@@ -114,7 +114,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
           title: 'Permissions',
           id: 'permissions',
           icon: 'lock',
-          component: <AccessControlDashboardPermissions id={dashboard.id} />,
+          component: <AccessControlDashboardPermissions dashboard={dashboard} />,
         });
       }
     }
