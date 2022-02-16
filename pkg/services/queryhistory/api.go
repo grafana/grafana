@@ -41,13 +41,6 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
-	// Unstar the query first
-	_, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
-	if err != nil && err != ErrStarredQueryNotFound {
-		s.log.Error("Failed to unstar query while deleting it from query history", "query", queryUID, "user", c.SignedInUser.UserId, "error", err)
-	}
-
-	// Then delete it
 	id, err := s.DeleteQueryFromQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete query from query history", err)

@@ -43,13 +43,24 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *models.Signe
 
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
 	var queryID int64
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		// Try to unstar the query first
+		_, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
+		if err != nil && err != ErrStarredQueryNotFound {
+			s.log.Error("Failed to unstar query while deleting it from query history", "query", UID, "user", user.UserId, "error", err)
+		}
+
+		// Then delete it
 		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Delete(QueryHistory{})
+		if err != nil {
+			return err
+		}
 		if id == 0 {
 			return ErrQueryNotFound
 		}
+
 		queryID = id
-		return err
+		return nil
 	})
 
 	return queryID, err
