@@ -58,48 +58,37 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
   const [isLoading, setIsLoading] = useState<{
     serviceName: boolean;
-    operationName: boolean;
+    spanName: boolean;
   }>({
     serviceName: false,
-    operationName: false,
+    spanName: false,
   });
 
-  async function loadOptionsAsync(nameType: string, lp: TempoLanguageProvider) {
+  async function fetchOptionsCallback(nameType: string, lp: TempoLanguageProvider) {
     const res = await lp.getOptions(nameType === 'serviceName' ? 'service.name' : 'name');
-    setIsLoading({
-      serviceName: nameType === 'serviceName' && false,
-      operationName: nameType === 'spanName' && false, // The terms 'span' and 'operation' are interchangeable
-    });
+    setIsLoading((prevValue) => ({ ...prevValue, [nameType]: false }));
     return res;
   }
 
-  const loadOptions = useCallback(
+  const loadOptionsOfType = useCallback(
     (nameType: string) => {
-      setIsLoading({
-        serviceName: nameType === 'serviceName' && true,
-        operationName: nameType === 'spanName' && true,
-      });
-      return loadOptionsAsync(nameType, languageProvider);
+      setIsLoading((prevValue) => ({ ...prevValue, [nameType]: true }));
+      return fetchOptionsCallback(nameType, languageProvider);
     },
     [languageProvider]
   );
 
-  const fetchServiceNameOptions = useMemo(
-    () => debounce(() => loadOptions('serviceName'), 500, { leading: true, trailing: true }),
-    [loadOptions]
-  );
-
-  const fetchSpanNameOptions = useMemo(
-    () => debounce(() => loadOptions('spanName'), 500, { leading: true, trailing: true }),
-    [loadOptions]
+  const fetchOptionsOfType = useCallback(
+    (nameType: string) => debounce(() => loadOptionsOfType(nameType), 500, { leading: true, trailing: true }),
+    [loadOptionsOfType]
   );
 
   useEffect(() => {
     const fetchOptions = async () => {
       try {
         await languageProvider.start();
-        loadOptionsAsync('serviceName', languageProvider);
-        loadOptionsAsync('spanName', languageProvider);
+        fetchOptionsCallback('serviceName', languageProvider);
+        fetchOptionsCallback('spanName', languageProvider);
         setHasSyntaxLoaded(true);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
@@ -112,7 +101,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       }
     };
     fetchOptions();
-  }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
+  }, [languageProvider, fetchOptionsOfType]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);
@@ -140,7 +129,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <AsyncSelect
               inputId="service"
               menuShouldPortal
-              loadOptions={fetchServiceNameOptions}
+              loadOptions={fetchOptionsOfType('serviceName')}
               isLoading={isLoading.serviceName}
               value={asyncServiceNameValue.value}
               onChange={(v) => {
@@ -165,8 +154,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <AsyncSelect
               inputId="spanName"
               menuShouldPortal
-              loadOptions={fetchSpanNameOptions}
-              isLoading={isLoading.operationName}
+              loadOptions={fetchOptionsOfType('spanName')}
+              isLoading={isLoading.spanName}
               value={asyncSpanNameValue.value}
               onChange={(v) => {
                 setAsyncSpanNameValue({ value: v });
