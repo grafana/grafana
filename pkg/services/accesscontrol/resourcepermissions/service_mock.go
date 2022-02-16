@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var _ accesscontrol.ResourcePermissionsService = new(MockService)
+var _ accesscontrol.PermissionsService = new(MockService)
 
 type MockService struct {
 	mock.Mock

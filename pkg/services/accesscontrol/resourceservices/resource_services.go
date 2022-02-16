@@ -27,8 +27,13 @@ type ResourceServices struct {
 	services map[string]*resourcepermissions.Service
 }
 
-func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
+func (s *ResourceServices) GetTeamService() accesscontrol.PermissionsService {
 	return s.services["teams"]
+}
+
+func (s *ResourceServices) GetDataSourceService() accesscontrol.PermissionsService {
+	// not used in oss
+	return nil
 }
 
 var (
