@@ -25,13 +25,13 @@ type dashIdQueryResult struct {
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
-
-	dialect := a.sql.Dialect
-
+	// this filter works on the legacy `dashboard_acl` table
+	// we will also need to use `accesscontrol` after https://github.com/grafana/grafana/pull/44702/files is merged
+	// see https://github.com/grafana/grafana/blob/e355bd6d3a04111b8c9959f85e81beabbeb746bf/pkg/services/sqlstore/permissions/dashboard.go#L84
 	filter := permissions.DashboardPermissionFilter{
 		OrgRole:         user.OrgRole,
 		OrgId:           user.OrgId,
-		Dialect:         dialect,
+		Dialect:         a.sql.Dialect,
 		UserId:          user.UserId,
 		PermissionLevel: models.PERMISSION_VIEW,
 	}
