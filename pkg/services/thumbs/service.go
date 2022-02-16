@@ -27,6 +27,7 @@ type Service interface {
 	Run(ctx context.Context) error
 	Enabled() bool
 	GetImage(c *models.ReqContext)
+	GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig
 
 	// from dashboard page
 	SetImage(c *models.ReqContext) // form post
@@ -41,6 +42,7 @@ type Service interface {
 type thumbService struct {
 	scheduleOptions            crawlerScheduleOptions
 	renderer                   dashRenderer
+	renderingService           rendering.Service
 	thumbnailRepo              thumbnailRepo
 	lockService                *serverlock.ServerLockService
 	features                   featuremgmt.FeatureToggles
@@ -71,6 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		OrgRole: models.ROLE_ADMIN,
 	}
 	return &thumbService{
+		renderingService:           renderService,
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo),
 		thumbnailRepo:              thumbnailRepo,
 		features:                   features,
@@ -193,6 +196,44 @@ func (hs *thumbService) GetImage(c *models.ReqContext) {
 	c.Resp.Header().Set("Content-Type", res.MimeType)
 	if _, err := c.Resp.Write(res.Image); err != nil {
 		hs.log.Error("Error writing to response", "dashboardUid", req.UID, "err", err)
+	}
+}
+
+func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) dashboardPreviewsSetupConfig {
+	systemRequirements := hs.getSystemRequirements()
+	thumbnailsExist, err := hs.thumbnailRepo.doThumbnailsExist(c.Req.Context())
+
+	if err != nil {
+		return dashboardPreviewsSetupConfig{
+			SystemRequirements: systemRequirements,
+			ThumbnailsExist:    false,
+		}
+	}
+
+	return dashboardPreviewsSetupConfig{
+		SystemRequirements: systemRequirements,
+		ThumbnailsExist:    thumbnailsExist,
+	}
+}
+
+func (hs *thumbService) getSystemRequirements() dashboardPreviewsSystemRequirements {
+	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
+	if err != nil {
+		hs.log.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
+		return dashboardPreviewsSystemRequirements{
+			Met: false,
+		}
+	}
+
+	if !res.IsSupported {
+		return dashboardPreviewsSystemRequirements{
+			Met:                                false,
+			RequiredImageRendererPluginVersion: res.SemverConstraint,
+		}
+	}
+
+	return dashboardPreviewsSystemRequirements{
+		Met: true,
 	}
 }
 

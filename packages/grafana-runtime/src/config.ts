@@ -66,6 +66,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  dashboardPreviews: {
+    systemRequirements: {
+      met: boolean;
+      requiredImageRendererPluginVersion: string;
+    };
+    thumbnailsExist: boolean;
+  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;

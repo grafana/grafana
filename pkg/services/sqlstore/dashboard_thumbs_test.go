@@ -185,6 +185,23 @@ func TestSqlStorage(t *testing.T) {
 		require.Len(t, res, 1)
 		require.Equal(t, dash.Id, res[0].Id)
 	})
+
+	t.Run("Should count all dashboard thumbnails", func(t *testing.T) {
+		setup()
+		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, 1)
+		dash2 := insertTestDashboard(t, sqlStore, "test dash 23", 2, savedFolder.Id, false, "prod", "webapp")
+		upsertTestDashboardThumbnail(t, sqlStore, dash2.Uid, dash2.OrgId, 1)
+
+		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
+			"tags": "different-tag",
+		})
+
+		cmd := models.FindDashboardThumbnailCountCommand{}
+		res, err := sqlStore.FindThumbnailCount(context.Background(), &cmd)
+		require.NoError(t, err)
+		require.Equal(t, res, int64(2))
+	})
 }
 
 func getThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string, orgId int64) *models.DashboardThumbnail {

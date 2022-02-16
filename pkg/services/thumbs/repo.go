@@ -63,7 +63,7 @@ func (r *sqlThumbnailRepository) saveFromBytes(ctx context.Context, content []by
 
 	_, err := r.store.SaveThumbnail(ctx, cmd)
 	if err != nil {
-		r.log.Error("error saving to the db", "dashboardUID", meta.DashboardUID, "err", err)
+		r.log.Error("Error saving to the db", "dashboardUID", meta.DashboardUID, "err", err)
 		return 0, err
 	}
 
@@ -90,4 +90,14 @@ func (r *sqlThumbnailRepository) findDashboardsWithStaleThumbnails(ctx context.C
 		Theme:                             theme,
 		Kind:                              kind,
 	})
+}
+
+func (r *sqlThumbnailRepository) doThumbnailsExist(ctx context.Context) (bool, error) {
+	cmd := &models.FindDashboardThumbnailCountCommand{}
+	count, err := r.store.FindThumbnailCount(ctx, cmd)
+	if err != nil {
+		r.log.Error("Error finding thumbnails", "err", err)
+		return false, err
+	}
+	return count > 0, err
 }

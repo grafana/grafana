@@ -275,6 +275,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
 	}
 
+	if hs.ThumbService != nil {
+		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
+	}
+
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
 		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
 	}
