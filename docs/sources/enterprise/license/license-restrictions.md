@@ -38,10 +38,10 @@ Your Grafana license includes a maximum number of _Viewer_ and _Editor/Admin_ ac
 
 You can assign role permissions _globally_ and restrict access to a specific dashboard or set of dashboards.
 
-**Organization permissions**: When you create a user, you select a role on the user details page. Your selection applies to all Grafana dashboards within the Organization. For example, a user with the viewer role can see all dashboards, but cannot create or edit dashboards. For more information about user roles and permissions, refer to
-[Organization roles]({{< relref "../../permissions/organization_roles.md" >}}).
+**Organization permissions**: When you create a user, you select a role on the user details page. Your selection applies to all Grafana dashboards within the Organization. For example, a user with the viewer role can see all dashboards, but cannot create or edit dashboards. For more information about user roles and permissions, refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
 
-**Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a viewer to also have editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to [Dashboard and Folder Permissions]({{< relref "../../permissions/dashboard-folder-permissions.md" >}}).
+**Dashboard permissions**: You can also assign permissions to dashboards or groups (folders) of dashboards. For example, you might want a viewer to also have editor permissions for a specific dashboard. While that user can see _all_ dashboards, they can only update one of them. For more information about dashboard permissions, refer to
+[Dashboard permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#dashboard-permissions" >}}).
 
 When you grant editor/admin dashboard permissions to a viewer, the editor/admin active-user count increases by one as shown on the **Utilization** panel of the **Statistics and licensing** page, and the user’s licensed role changes to editor/admin.
 
