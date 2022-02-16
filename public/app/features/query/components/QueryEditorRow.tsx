@@ -480,7 +480,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   const error = data.error && data.error.refId === refId ? data.error : undefined;
   if (error) {
     state = LoadingState.Error;
-  } else {
+  } else if (!error && data.state === LoadingState.Error) {
     state = LoadingState.Done;
   }
 
