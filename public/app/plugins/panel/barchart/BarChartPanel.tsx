@@ -271,7 +271,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
               <VizTooltipContainer
                 position={{ x: coords.x, y: coords.y }}
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                allowPointerEvents
+                allowPointerEvents={isToolTipOpen.current}
               >
                 {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>
