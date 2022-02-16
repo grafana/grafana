@@ -117,6 +117,10 @@ type DashboardWithStaleThumbnail struct {
 	Slug    string
 }
 
+type FindDashboardThumbnailCountCommand struct {
+	Result int64
+}
+
 type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeManuallyUploadedThumbnails bool
 	Theme                             Theme

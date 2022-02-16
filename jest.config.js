@@ -13,7 +13,7 @@ module.exports = {
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
   ],
   moduleDirectories: ['node_modules', 'public'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts'],
+  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-shim.ts', './public/test/jest-setup.ts'],

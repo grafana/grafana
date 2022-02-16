@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
@@ -41,7 +42,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(makeMockedClient(200, "application/json", bytes), &lokiQuery{})
+			frames, err := runQuery(makeMockedClient(200, "application/json", bytes), &lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42})
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{

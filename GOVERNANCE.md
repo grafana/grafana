@@ -100,7 +100,7 @@ The current team members are:
 - Ryan McKinley ([Grafana Labs](https://grafana.com/))
 - Sofia Papagiannaki ([Grafana Labs](https://grafana.com/))
 - Stephanie Closson ([Grafana Labs](https://grafana.com/))
-- Tobias Skarhed ([Grafana Labs](https://grafana.com/))
+- Tobias Skarhed ([CERN](https://home.web.cern.ch/))
 - Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 - Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
 - Will Browne ([Grafana Labs](https://grafana.com/))

@@ -205,6 +205,6 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     rawSql = rawSql.replace('$__', '');
 
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.containsTemplate(rawSql);
   }
 }
