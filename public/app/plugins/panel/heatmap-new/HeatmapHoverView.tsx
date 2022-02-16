@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Field, FieldType, formattedValueToString, LinkModel } from '@grafana/data';
 
 import { HeatmapHoverEvent } from './utils';
-import { HeatmapData } from './fields';
+import { BucketLayout, HeatmapData } from './fields';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -50,8 +50,12 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   }
 
   const yValueIdx = hover.index % data.yBucketCount! ?? 0;
-  const yBucketMin = yDispSrc?.[yValueIdx];
-  const yBucketMax = yDispSrc?.[yValueIdx + 1];
+
+  const yMinIdx = data.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
+  const yMaxIdx = data.yLayout === BucketLayout.le ? yValueIdx : yValueIdx + 1;
+
+  const yBucketMin = yDispSrc?.[yMinIdx];
+  const yBucketMax = yDispSrc?.[yMaxIdx];
 
   const xBucketMin = xVals?.[hover.index];
   const xBucketMax = xBucketMin + data.xBucketSize;

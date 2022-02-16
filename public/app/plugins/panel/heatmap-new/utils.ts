@@ -148,43 +148,41 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
   });
 
+  const hasLabeledY = dataRef.current?.yAxisValues != null;
+
   builder.addAxis({
     scaleKey: 'y',
     placement: AxisPlacement.Left,
     theme: theme,
-    splits: () => {
-      let ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
-      let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+    splits: hasLabeledY
+      ? () => {
+          let ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
+          let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
 
-      let bucketSize = dataRef.current?.yBucketSize!;
+          let bucketSize = dataRef.current?.yBucketSize!;
 
-      if (dataRef.current?.yLayout === BucketLayout.le) {
-        splits.unshift(ys[0] - bucketSize);
-      } else {
-        splits.push(ys[ys.length - 1] + bucketSize);
-      }
+          if (dataRef.current?.yLayout === BucketLayout.le) {
+            splits.unshift(ys[0] - bucketSize);
+          } else {
+            splits.push(ys[ys.length - 1] + bucketSize);
+          }
 
-      return splits;
-    },
-    values: (u, splits) => {
-      let yAxisValues = dataRef.current?.yAxisValues;
-
-      if (yAxisValues) {
-        yAxisValues = yAxisValues.slice();
-
-        if (dataRef.current?.yLayout === BucketLayout.le) {
-          yAxisValues.unshift('0.0');
+          return splits;
         }
-        // assumes dense layout where lowest bucket's low bound is 0-ish
-        else {
-          yAxisValues.push('+Inf');
-        }
+      : undefined,
+    values: hasLabeledY
+      ? () => {
+          let yAxisValues = dataRef.current?.yAxisValues?.slice()!;
 
-        return yAxisValues;
-      } else {
-        return splits;
-      }
-    },
+          if (dataRef.current?.yLayout === BucketLayout.le) {
+            yAxisValues.unshift('0.0'); // assumes dense layout where lowest bucket's low bound is 0-ish
+          } else {
+            yAxisValues.push('+Inf');
+          }
+
+          return yAxisValues;
+        }
+      : undefined,
   });
 
   builder.addSeries({
