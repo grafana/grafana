@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -40,9 +42,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
+	folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore), dashboardStore, nil)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,
-		nil, nil, nil, nil, secretsService, nil, m,
+		nil, nil, nil, nil, secretsService, nil, m, folderService,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
