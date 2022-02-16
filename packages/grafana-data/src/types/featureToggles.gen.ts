@@ -41,5 +41,4 @@ export interface FeatureToggles {
   validatedQueries?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
-  migrationLocking?: boolean;
 }

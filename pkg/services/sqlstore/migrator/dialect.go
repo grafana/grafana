@@ -7,11 +7,6 @@ import (
 	"xorm.io/xorm"
 )
 
-var (
-	ErrLockDB        = fmt.Errorf("failed to obtain lock")
-	ErrReleaseLockDB = fmt.Errorf("failed to release lock")
-)
-
 type Dialect interface {
 	DriverName() string
 	Quote(string) string
@@ -58,13 +53,6 @@ type Dialect interface {
 	IsUniqueConstraintViolation(err error) bool
 	ErrorMessage(err error) string
 	IsDeadlock(err error) bool
-	Lock(LockCfg) error
-	Unlock(LockCfg) error
-}
-
-type LockCfg struct {
-	Session *xorm.Session
-	Timeout int
 }
 
 type dialectFunc func(*xorm.Engine) Dialect
@@ -299,12 +287,4 @@ func (b *BaseDialect) TruncateDBTables() error {
 //UpsertSQL returns empty string
 func (b *BaseDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
 	return ""
-}
-
-func (b *BaseDialect) Lock(_ LockCfg) error {
-	return nil
-}
-
-func (b *BaseDialect) Unlock(_ LockCfg) error {
-	return nil
 }
