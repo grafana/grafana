@@ -12,8 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -395,12 +393,11 @@ func (st DBstore) GetRuleGroupAlertRules(ctx context.Context, query *ngmodels.Li
 
 // GetNamespaces returns the folders that are visible to the user
 func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
-	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	namespaceMap := make(map[string]*models.Folder)
 	var page int64 = 1
 	for {
 		// if limit is negative; it fetches at most 1000
-		folders, err := s.GetFolders(ctx, -1, page)
+		folders, err := st.FolderService.GetFolders(ctx, user, orgID, -1, page)
 		if err != nil {
 			return nil, err
 		}
@@ -419,8 +416,7 @@ func (st DBstore) GetNamespaces(ctx context.Context, orgID int64, user *models.S
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
-	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByTitle(ctx, namespace)
+	folder, err := st.FolderService.GetFolderByTitle(ctx, user, orgID, namespace)
 	if err != nil {
 		return nil, err
 	}

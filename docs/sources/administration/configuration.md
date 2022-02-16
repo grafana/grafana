@@ -582,6 +582,21 @@ Set Content Security Policy template used when adding the Content-Security-Polic
 
 <hr />
 
+### angular_support_enabled
+
+This currently defaults to `true` but will in Grafana v9 default to `false`. When set to false the angular framework and support components will not be loaded. This means that
+all plugins and core features that depend on angular support will stop working.
+
+Current core features that will stop working:
+
+- Heatmap panel
+- Old graph panel
+- Old table panel
+- Postgres, MySQL and MSSQL data source query editors
+- Legacy alerting edit rule UI
+
+Before we disable angular support by default we plan to migrate these remaining areas to React.
+
 ## [snapshots]
 
 ### external_enabled
@@ -635,7 +650,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages]({{< relref "../manage-users/server-admin/server-admin-manage-users.md" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 

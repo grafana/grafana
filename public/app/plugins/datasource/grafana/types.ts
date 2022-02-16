@@ -13,6 +13,7 @@ export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
   List = 'list',
   Read = 'read',
+  Search = 'search',
 }
 
 export interface GrafanaQuery extends DataQuery {
@@ -21,6 +22,7 @@ export interface GrafanaQuery extends DataQuery {
   filter?: LiveDataFilter;
   buffer?: number;
   path?: string; // for list and read
+  query?: string; // for query endpoint
 }
 
 export const defaultQuery: GrafanaQuery = {

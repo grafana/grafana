@@ -27,6 +27,7 @@ export interface FeatureToggles {
   ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
+  panelTitleSearch?: boolean;
   tempoSearch?: boolean;
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
