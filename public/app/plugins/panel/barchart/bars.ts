@@ -76,7 +76,8 @@ interface ValueLabelArray {
  */
 interface ValueLabel {
   text: string;
-  value: number;
+  value: number | null;
+  hidden: boolean;
   bbox?: Rect;
   textMetrics?: TextMetrics;
   x?: number;
@@ -314,7 +315,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         if (labels[dataIdx] === undefined) {
           labels[dataIdx] = {};
         }
-        labels[dataIdx][seriesIdx] = { text: text, value: val };
+        labels[dataIdx][seriesIdx] = { text: text, value: rawValue(seriesIdx, dataIdx), hidden: false };
 
         // Calculate font size when it's set to be automatic
         if (hasAutoValueSize) {
@@ -467,8 +468,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       for (const sidx in labels[didx]) {
         const { text, value, x = 0, y = 0, bbox = { x: 0, y: 0, w: 1, h: 1 } } = labels[didx][sidx];
 
-        let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
-        let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'alphabetic') : 'middle';
+        let align: CanvasTextAlign = isXHorizontal ? 'center' : value !== null && value < 0 ? 'right' : 'left';
+        let baseline: CanvasTextBaseline = isXHorizontal
+          ? value !== null && value < 0
+            ? 'top'
+            : 'alphabetic'
+          : 'middle';
 
         if (align !== curAlign) {
           u.ctx.textAlign = curAlign = align;
@@ -485,10 +490,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
           // Test for any collisions
           for (const subsidx in labels[didx]) {
-            const r = labels[didx][subsidx].bbox;
+            const r = labels[didx][subsidx].bbox!;
 
-            if (r !== undefined && sidx !== subsidx && intersects(bbox, r)) {
+            if (!labels[didx][subsidx].hidden && sidx !== subsidx && intersects(bbox, r)) {
               intersectsLabel = true;
+              labels[didx][sidx].hidden = true;
+              break;
             }
           }
 
