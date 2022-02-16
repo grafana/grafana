@@ -402,9 +402,11 @@ func (hs *HTTPServer) setNavPreferences(c *models.ReqContext, navTree []*dtos.Na
 		for _, navItem := range navTree {
 			navItem.HideFromNavbar = true
 			// Set any that exist in the navbar preferences to hide=false
+			// Fix me: how can we type this json properly
 			for _, pref := range navbarPref.MustArray() {
-				if navItem.Id == pref.(map[string]interface{})["id"] {
-					navItem.HideFromNavbar = false
+				mapPrefs := pref.(map[string]interface{})
+				if navItem.Id == mapPrefs["id"] {
+					navItem.HideFromNavbar = mapPrefs["hideFromNavbar"].(bool)
 					break
 				}
 			}
