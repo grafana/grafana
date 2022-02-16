@@ -88,7 +88,7 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash 
 	// create a list of all viewable dashboards for this user
 	res := make([]dashMeta, 0, len(dash))
 	for _, dash := range dash {
-		if filter.check(dash.dash.UID) {
+		if filter(dash.dash.UID) {
 			res = append(res, dash)
 		}
 	}
