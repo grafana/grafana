@@ -2,7 +2,7 @@
 title = "DRAFT"
 description = "DRAFT"
 keywords = ["grafana", "image", "rendering", "plugin"]
-draft = true
+draft = true 
 +++
 
 [//]: # 'TODO: put it below https://github.com/grafana/grafana/blob/e904f423e4f8caf495c285e4fc28fbcc44638048/docs/sources/image-rendering/_index.md#L77'
