@@ -53,6 +53,16 @@ type crawlStatus struct {
 	Last     time.Time    `json:"last,omitempty"`
 }
 
+type dashboardPreviewsSystemRequirements struct {
+	Met                                bool   `json:"met"`
+	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
+}
+
+type dashboardPreviewsSetupConfig struct {
+	SystemRequirements dashboardPreviewsSystemRequirements `json:"systemRequirements"`
+	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
+}
+
 type dashRenderer interface {
 
 	// Run Assumes you have already authenticated as admin.
@@ -69,6 +79,7 @@ type dashRenderer interface {
 
 type thumbnailRepo interface {
 	updateThumbnailState(ctx context.Context, state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
+	doThumbnailsExist(ctx context.Context) (bool, error)
 	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
 	getThumbnail(ctx context.Context, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)

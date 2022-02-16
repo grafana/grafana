@@ -57,7 +57,7 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
   });
 
-  it('highlihts matching string', async () => {
+  it('highlights matching string', async () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
@@ -65,7 +65,7 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(1));
   });
 
-  it('highlihts multiple matching strings in 1 input row', async () => {
+  it('highlights multiple matching strings in 1 input row', async () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
@@ -73,7 +73,7 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(2));
   });
 
-  it('highlihts multiple matching strings in multiple input rows', async () => {
+  it('highlights multiple matching strings in multiple input rows', async () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');

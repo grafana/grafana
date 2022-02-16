@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package sqlstore
+package database
 
 import (
 	"context"
@@ -14,24 +14,25 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardDataAccess(t *testing.T) {
-	var sqlStore *SQLStore
+	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
+	var dashboardStore *DashboardStore
 
 	setup := func() {
-		sqlStore = InitTestDB(t)
-		savedFolder = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
-		savedDash = insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-		insertTestDashboard(t, sqlStore, "test dash 45", 1, savedFolder.Id, false, "prod")
-		savedDash2 = insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod")
+		sqlStore = sqlstore.InitTestDB(t)
+		dashboardStore = ProvideDashboardStore(sqlStore)
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
+		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
+		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
 		insertTestRule(t, sqlStore, savedFolder.OrgId, savedFolder.Uid)
 	}
 
@@ -115,36 +116,13 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to delete dashboard", func(t *testing.T) {
 		setup()
-		dash := insertTestDashboard(t, sqlStore, "delete me", 1, 0, false, "delete this")
+		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, false, "delete this")
 
 		err := sqlStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
 			Id:    dash.Id,
 			OrgId: 1,
 		})
 		require.NoError(t, err)
-	})
-
-	t.Run("Should retry generation of uid once if it fails.", func(t *testing.T) {
-		setup()
-		timesCalled := 0
-		generateNewUid = func() string {
-			timesCalled += 1
-			if timesCalled <= 2 {
-				return savedDash.Uid
-			}
-			return util.GenerateShortUID()
-		}
-		cmd := models.SaveDashboardCommand{
-			OrgId: 1,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"title": "new dash 12334",
-				"tags":  []interface{}{},
-			}),
-		}
-		_, err := sqlStore.SaveDashboard(cmd)
-		require.NoError(t, err)
-
-		generateNewUid = util.GenerateShortUID
 	})
 
 	t.Run("Should be able to create dashboard", func(t *testing.T) {
@@ -157,13 +135,14 @@ func TestDashboardDataAccess(t *testing.T) {
 			}),
 			UserId: 100,
 		}
-		dashboard, err := sqlStore.SaveDashboard(cmd)
+		dashboard, err := dashboardStore.SaveDashboard(cmd)
 		require.NoError(t, err)
 		require.EqualValues(t, dashboard.CreatedBy, 100)
 		require.False(t, dashboard.Created.IsZero())
 		require.EqualValues(t, dashboard.UpdatedBy, 100)
 		require.False(t, dashboard.Updated.IsZero())
 	})
+
 	t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
 		setup()
 		cmd := models.SaveDashboardCommand{
@@ -177,7 +156,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			FolderId:  2,
 			UserId:    100,
 		}
-		dash, err := sqlStore.SaveDashboard(cmd)
+		dash, err := dashboardStore.SaveDashboard(cmd)
 		require.NoError(t, err)
 		require.EqualValues(t, dash.FolderId, 2)
 
@@ -192,7 +171,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Overwrite: true,
 			UserId:    100,
 		}
-		_, err = sqlStore.SaveDashboard(cmd)
+		_, err = dashboardStore.SaveDashboard(cmd)
 		require.NoError(t, err)
 
 		query := models.GetDashboardQuery{
@@ -211,7 +190,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to delete empty folder", func(t *testing.T) {
 		setup()
-		emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
+		emptyFolder := insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 		deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 		err := sqlStore.DeleteDashboard(context.Background(), deleteCmd)
@@ -242,7 +221,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 		require.Equal(t, len(query.Result), 0)
 
-		sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+		sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var existingRuleID int64
 			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.Id).Cols("id").Get(&existingRuleID)
 			require.NoError(t, err)
@@ -258,7 +237,6 @@ func TestDashboardDataAccess(t *testing.T) {
 	})
 
 	t.Run("Should return error if no dashboard is found for update when dashboard id is greater than zero", func(t *testing.T) {
-		setup()
 		cmd := models.SaveDashboardCommand{
 			OrgId:     1,
 			Overwrite: true,
@@ -269,12 +247,11 @@ func TestDashboardDataAccess(t *testing.T) {
 			}),
 		}
 
-		_, err := sqlStore.SaveDashboard(cmd)
+		_, err := dashboardStore.SaveDashboard(cmd)
 		require.Equal(t, err, models.ErrDashboardNotFound)
 	})
 
 	t.Run("Should not return error if no dashboard is found for update when dashboard id is zero", func(t *testing.T) {
-		setup()
 		cmd := models.SaveDashboardCommand{
 			OrgId:     1,
 			Overwrite: true,
@@ -284,7 +261,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				"tags":  []interface{}{},
 			}),
 		}
-		_, err := sqlStore.SaveDashboard(cmd)
+		_, err := dashboardStore.SaveDashboard(cmd)
 		require.NoError(t, err)
 	})
 
@@ -405,7 +382,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to search for starred dashboards", func(t *testing.T) {
 		setup()
-		starredDash := insertTestDashboard(t, sqlStore, "starred dash", 1, 0, false)
+		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
 		err := sqlStore.StarDashboard(context.Background(), &models.StarDashboardCommand{
 			DashboardId: starredDash.Id,
 			UserId:      10,
@@ -431,29 +408,32 @@ func TestDashboardDataAccess(t *testing.T) {
 }
 
 func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
-	sqlStore := InitTestDB(t)
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := ProvideDashboardStore(sqlStore)
 	pluginId := "test-app"
 
-	appFolder := insertTestDashboardForPlugin(t, sqlStore, "app-test", 1, 0, true, pluginId)
-	insertTestDashboardForPlugin(t, sqlStore, "app-dash1", 1, appFolder.Id, false, pluginId)
-	insertTestDashboardForPlugin(t, sqlStore, "app-dash2", 1, appFolder.Id, false, pluginId)
+	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
+	insertTestDashboardForPlugin(t, dashboardStore, "app-dash1", 1, appFolder.Id, false, pluginId)
+	insertTestDashboardForPlugin(t, dashboardStore, "app-dash2", 1, appFolder.Id, false, pluginId)
 
 	query := models.GetDashboardsByPluginIdQuery{
 		PluginId: pluginId,
 		OrgId:    1,
 	}
 
-	err := GetDashboardsByPluginId(context.Background(), &query)
+	err := sqlstore.GetDashboardsByPluginId(context.Background(), &query)
 	require.NoError(t, err)
 	require.Equal(t, len(query.Result), 2)
 }
 
 func TestDashboard_SortingOptions(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := ProvideDashboardStore(sqlStore)
 	// insertTestDashboard uses GoConvey's assertions. Workaround.
 	t.Run("test with multiple sorting options", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
-		dashB := insertTestDashboard(t, sqlStore, "Beta", 1, 0, false)
-		dashA := insertTestDashboard(t, sqlStore, "Alfa", 1, 0, false)
+		sqlStore := sqlstore.InitTestDB(t)
+		dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
+		dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 		assert.NotZero(t, dashA.Id)
 		assert.Less(t, dashB.Id, dashA.Id)
 		q := &search.FindPersistedDashboardsQuery{
@@ -464,35 +444,16 @@ func TestDashboard_SortingOptions(t *testing.T) {
 				searchstore.TitleSorter{Descending: true},
 			},
 		}
-		dashboards, err := sqlStore.findDashboards(context.Background(), q)
+		dashboards, err := sqlStore.FindDashboards(context.Background(), q)
 		require.NoError(t, err)
 		require.Len(t, dashboards, 2)
 		assert.Equal(t, dashA.Id, dashboards[0].ID)
 		assert.Equal(t, dashB.Id, dashboards[1].ID)
 	})
 }
-func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
-	t.Helper()
-	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
-		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
-			"title": title,
-			"tags":  tags,
-		}),
-	}
-	dash, err := sqlStore.SaveDashboard(cmd)
-	require.NoError(t, err)
-	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.Id)
-	dash.Data.Set("uid", dash.Uid)
-	return dash
-}
-func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUID string) {
-	sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+
+func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
+	sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string
@@ -562,7 +523,44 @@ func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUI
 		return err
 	})
 }
-func insertTestDashboardForPlugin(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
+
+func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {
+	t.Helper()
+	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = 1
+	setting.AutoAssignOrgRole = role
+	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
+	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
+	require.NoError(t, err)
+	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
+	err = sqlStore.GetUserOrgList(context.Background(), &q1)
+	require.NoError(t, err)
+	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
+	return *currentUser
+}
+
+func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+	cmd := models.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+	dash, err := dashboardStore.SaveDashboard(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
+	return dash
+}
+
+func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, pluginId string) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
@@ -576,22 +574,23 @@ func insertTestDashboardForPlugin(t *testing.T, sqlStore *SQLStore, title string
 		PluginId: pluginId,
 	}
 
-	dash, err := sqlStore.SaveDashboard(cmd)
+	dash, err := dashboardStore.SaveDashboard(cmd)
 	require.NoError(t, err)
 
 	return dash
 }
-func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAdmin bool) models.User {
+
+func updateDashboardAcl(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
+	items ...models.DashboardAcl) error {
 	t.Helper()
-	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgId = 1
-	setting.AutoAssignOrgRole = role
-	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
-	require.NoError(t, err)
-	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
-	err = sqlStore.GetUserOrgList(context.Background(), &q1)
-	require.NoError(t, err)
-	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
-	return *currentUser
+
+	var itemPtrs []*models.DashboardAcl
+	for _, it := range items {
+		item := it
+		item.Created = time.Now()
+		item.Updated = time.Now()
+		itemPtrs = append(itemPtrs, &item)
+	}
+
+	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
 }
