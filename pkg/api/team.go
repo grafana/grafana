@@ -133,7 +133,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	// Using accesscontrol the filtering is done based on user permissions
 	userIdFilter := models.FilterIgnoreUser
 	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+		userIdFilter = userFilter(c)
 	}
 
 	query := models.SearchTeamsQuery{
@@ -189,14 +189,12 @@ func (hs *HTTPServer) getTeamAccessControlMetadata(c *models.ReqContext, teamID 
 
 // UserFilter returns the user ID used in a filter when querying a team
 // 1. If the user is a viewer or editor, this will return the user's ID.
-// 2. If EditorsCanAdmin is enabled and the user is an editor, this will return models.FilterIgnoreUser (0)
-// 3. If the user is an admin, this will return models.FilterIgnoreUser (0)
-func userFilter(editorsCanAdmin bool, c *models.ReqContext) int64 {
+// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
+func userFilter(c *models.ReqContext) int64 {
 	userIdFilter := c.SignedInUser.UserId
-	if (editorsCanAdmin && c.OrgRole == models.ROLE_EDITOR) || c.OrgRole == models.ROLE_ADMIN {
+	if c.OrgRole == models.ROLE_ADMIN {
 		userIdFilter = models.FilterIgnoreUser
 	}
-
 	return userIdFilter
 }
 
@@ -210,7 +208,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	// Using accesscontrol the filtering has already been performed at middleware layer
 	userIdFilter := models.FilterIgnoreUser
 	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+		userIdFilter = userFilter(c)
 	}
 
 	query := models.GetTeamByIdQuery{

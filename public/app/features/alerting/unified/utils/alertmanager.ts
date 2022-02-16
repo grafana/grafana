@@ -118,14 +118,6 @@ const matcherOperators = [
   MatcherOperator.equal,
 ];
 
-function unescapeMatcherValue(value: string) {
-  let trimmed = value.trim().replace(/\\"/g, '"');
-  if (trimmed.startsWith('"') && trimmed.endsWith('"') && !trimmed.endsWith('\\"')) {
-    trimmed = trimmed.substr(1, trimmed.length - 2);
-  }
-  return trimmed.replace(/\\"/g, '"');
-}
-
 export function parseMatcher(matcher: string): Matcher {
   const trimmed = matcher.trim();
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
@@ -141,7 +133,7 @@ export function parseMatcher(matcher: string): Matcher {
   }
   const [operator, idx] = operatorsFound[0];
   const name = trimmed.substr(0, idx).trim();
-  const value = unescapeMatcherValue(trimmed.substr(idx + operator.length).trim());
+  const value = trimmed.substr(idx + operator.length).trim();
   if (!name) {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }
