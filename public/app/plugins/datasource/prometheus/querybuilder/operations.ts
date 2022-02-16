@@ -281,7 +281,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   return list;
 }
 
-function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBuilderOperationDef {
+export function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBuilderOperationDef {
   return {
     ...definition,
     id: definition.id!,
@@ -294,7 +294,7 @@ function createFunction(definition: Partial<QueryBuilderOperationDef>): QueryBui
   };
 }
 
-function createRangeFunction(name: string): QueryBuilderOperationDef {
+export function createRangeFunction(name: string): QueryBuilderOperationDef {
   return {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
@@ -307,7 +307,7 @@ function createRangeFunction(name: string): QueryBuilderOperationDef {
   };
 }
 
-function operationWithRangeVectorRenderer(
+export function operationWithRangeVectorRenderer(
   model: QueryBuilderOperation,
   def: QueryBuilderOperationDef,
   innerExpr: string
