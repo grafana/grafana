@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { EditorField } from '@grafana/experimental';
 import { SelectableValue } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
@@ -24,14 +24,13 @@ const legendModeOptions = [
  * Tests for this component are on the parent level (PromQueryBuilderOptions).
  */
 export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRunQuery }) => {
-  const [mode, setMode] = useState(getLegendMode(query.legendFormat));
+  const mode = getLegendMode(query.legendFormat);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onLegendFormatChanged = (evt: React.FocusEvent<HTMLInputElement>) => {
     let legendFormat = evt.currentTarget.value;
     if (legendFormat.length === 0) {
       legendFormat = LegendFormatMode.Auto;
-      setMode(LegendFormatMode.Auto);
     }
     onChange({ ...query, legendFormat });
     onRunQuery();
@@ -53,7 +52,6 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
         onChange({ ...query, legendFormat: '' });
         break;
     }
-    setMode(value.value!);
     onRunQuery();
   };
 
