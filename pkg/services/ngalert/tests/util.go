@@ -74,6 +74,7 @@ func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBsto
 						RefID: "A",
 					},
 				},
+				Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
 				IntervalSeconds: intervalSeconds,
 				NamespaceUID:    "namespace",
 				RuleGroup:       ruleGroup,
