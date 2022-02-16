@@ -41,11 +41,6 @@ type dashMeta struct {
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	if user == nil || user.Role != string(models.ROLE_ADMIN) {
-		rsp.Error = fmt.Errorf("search is only supported for admin users while in early development")
-		return rsp
-	}
-
 	// Load and parse all dashboards for given orgId
 	dash, err := loadDashboards(ctx, orgId, s.sql)
 	if err != nil {
