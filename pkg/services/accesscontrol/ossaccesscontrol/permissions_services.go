@@ -13,28 +13,25 @@ import (
 )
 
 func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsService, error) {
-	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
+	teamPermissions, err := provideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PermissionsService{services: map[string]accesscontrol.PermissionsService{
-		"teams":      teamPermissions,
-		"datasource": provideEmptyPermissionsService(),
-	}}, nil
+	return &PermissionsService{teams: teamPermissions, datasources: provideEmptyPermissionsService()}, nil
 }
 
 type PermissionsService struct {
-	services map[string]accesscontrol.PermissionsService
+	teams       accesscontrol.PermissionsService
+	datasources accesscontrol.PermissionsService
 }
 
 func (s *PermissionsService) GetTeamService() accesscontrol.PermissionsService {
-	return s.services["teams"]
+	return s.teams
 }
 
 func (s *PermissionsService) GetDataSourceService() accesscontrol.PermissionsService {
-	// not used in oss
-	return nil
+	return s.datasources
 }
 
 var (
@@ -51,7 +48,7 @@ var (
 	}
 )
 
-func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
