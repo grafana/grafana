@@ -117,17 +117,17 @@ export function createHeatmapFromBuckets(frames: DataFrame[]): DataFrame {
   return {
     length: xs.length,
     meta: {
-      type: DataFrameType.HeatmapScanLines,
+      type: DataFrameType.HeatmapScanlines,
     },
     fields: [
       {
-        name: 'xMin',
+        name: 'xMax',
         type: xField.type,
         values: new ArrayVector(xs),
         config: xField.config,
       },
       {
-        name: 'yMin',
+        name: 'yMax',
         type: FieldType.number,
         values: new ArrayVector(ys),
         config: yField.config,
@@ -198,7 +198,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     length: heat2d.x.length,
     name: getFieldDisplayName(yField),
     meta: {
-      type: DataFrameType.HeatmapScanLines,
+      type: DataFrameType.HeatmapScanlines,
     },
     fields: [
       {

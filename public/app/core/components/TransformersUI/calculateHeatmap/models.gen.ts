@@ -14,5 +14,5 @@ export interface HeatmapCalculationOptions {
   xAxis?: HeatmapCalculationAxisConfig;
   yAxis?: HeatmapCalculationAxisConfig;
   xAxisField?: string; // name of the x field
-  encoding?: DataFrameType.HeatmapBuckets | DataFrameType.HeatmapScanLines;
+  encoding?: DataFrameType.HeatmapBuckets | DataFrameType.HeatmapScanlines;
 }

@@ -5,12 +5,14 @@ import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
-import { HeatmapData } from './fields';
+import { BucketLayout, HeatmapData } from './fields';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
   gap?: number | null;
   hideThreshold?: number;
+  xCeil?: boolean;
+  yCeil?: boolean;
   disp: {
     fill: {
       values: (u: uPlot, seriesIndex: number) => number[];
@@ -117,6 +119,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
+    // TODO: expand by x bucket size and layout
     range: [timeRange.from.valueOf(), timeRange.to.valueOf()],
   });
 
@@ -132,6 +135,17 @@ export function prepConfig(opts: PrepConfigOpts) {
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
+    range: (u, dataMin, dataMax) => {
+      let bucketSize = dataRef.current?.yBucketSize;
+
+      if (dataRef.current?.yLayout === BucketLayout.le) {
+        dataMin -= bucketSize!;
+      } else {
+        dataMax += bucketSize!;
+      }
+
+      return [dataMin, dataMax];
+    },
   });
 
   builder.addAxis({
@@ -139,13 +153,33 @@ export function prepConfig(opts: PrepConfigOpts) {
     placement: AxisPlacement.Left,
     theme: theme,
     splits: () => {
-      let ys = dataRef.current?.heatmap?.fields[1].values.toArray();
-      return ys?.slice(0, ys.length - ys.lastIndexOf(ys[0])) ?? [];
+      let ys = dataRef.current?.heatmap?.fields[1].values.toArray()!;
+      let splits = ys.slice(0, ys.length - ys.lastIndexOf(ys[0]));
+
+      let bucketSize = dataRef.current?.yBucketSize!;
+
+      if (dataRef.current?.yLayout === BucketLayout.le) {
+        splits.unshift(ys[0] - bucketSize);
+      } else {
+        splits.push(ys[ys.length - 1] + bucketSize);
+      }
+
+      return splits;
     },
     values: (u, splits) => {
       let yAxisValues = dataRef.current?.yAxisValues;
 
       if (yAxisValues) {
+        yAxisValues = yAxisValues.slice();
+
+        if (dataRef.current?.yLayout === BucketLayout.le) {
+          yAxisValues.unshift('0.0');
+        }
+        // assumes dense layout where lowest bucket's low bound is 0-ish
+        else {
+          yAxisValues.push('+Inf');
+        }
+
         return yAxisValues;
       } else {
         return splits;
@@ -178,6 +212,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       },
       gap: cellGap,
       hideThreshold,
+      xCeil: dataRef.current?.xLayout === BucketLayout.le,
+      yCeil: dataRef.current?.yLayout === BucketLayout.le,
       disp: {
         fill: {
           values: (u, seriesIdx) => countsToFills(u, seriesIdx, palette),
@@ -225,7 +261,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 }
 
 export function heatmapPaths(opts: PathbuilderOpts) {
-  const { disp, each, gap, hideThreshold = 0 } = opts;
+  const { disp, each, gap, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -282,8 +318,8 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         ySize = Math.max(1, Math.round(ySize - yGap));
 
         // bucket agg direction
-        let xCeil = false;
-        let yCeil = false;
+        // let xCeil = false;
+        // let yCeil = false;
 
         let xOffset = xCeil ? -xSize : 0;
         let yOffset = yCeil ? 0 : -ySize;

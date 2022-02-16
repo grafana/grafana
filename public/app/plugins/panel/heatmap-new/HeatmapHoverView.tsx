@@ -29,22 +29,32 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     return `${v}XX`;
   };
 
-  const yDisp = (v: any) => {
-    if (yField?.display) {
-      return formattedValueToString(yField.display(v));
-    }
-    return `${v}YYY`;
-  };
-
   const xVals = xField?.values.toArray();
   const yVals = yField?.values.toArray();
   const countVals = countField?.values.toArray();
 
-  const xBucketMin = xVals?.[hover.index];
-  const yBucketMin = yVals?.[hover.index];
+  let yDispSrc, yDisp;
 
+  // labeled buckets
+  if (data.yAxisValues) {
+    yDispSrc = data.yAxisValues;
+    yDisp = (v: any) => v;
+  } else {
+    yDispSrc = yVals;
+    yDisp = (v: any) => {
+      if (yField?.display) {
+        return formattedValueToString(yField.display(v));
+      }
+      return `${v}YYY`;
+    };
+  }
+
+  const yValueIdx = hover.index % data.yBucketCount! ?? 0;
+  const yBucketMin = yDispSrc?.[yValueIdx];
+  const yBucketMax = yDispSrc?.[yValueIdx + 1];
+
+  const xBucketMin = xVals?.[hover.index];
   const xBucketMax = xBucketMin + data.xBucketSize;
-  const yBucketMax = yBucketMin + data.yBucketSize;
 
   const count = countVals?.[hover.index];
 

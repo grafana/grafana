@@ -6,6 +6,11 @@ import {
 } from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
+export const enum BucketLayout {
+  le = 'le',
+  ge = 'ge',
+}
+
 export interface HeatmapData {
   // List of heatmap frames
   heatmap?: DataFrame;
@@ -17,6 +22,9 @@ export interface HeatmapData {
 
   xBucketCount?: number;
   yBucketCount?: number;
+
+  xLayout?: BucketLayout;
+  yLayout?: BucketLayout;
 
   // Errors
   warning?: string;
@@ -38,7 +46,7 @@ export function prepareHeatmapData(
   }
 
   // Find a well defined heatmap
-  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanLines);
+  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
   if (heatmap) {
     return getHeatmapData(heatmap, theme);
   }
@@ -49,8 +57,8 @@ export function prepareHeatmapData(
   }
 
   // detect a frame-per-bucket heatmap frame
-  // TODO: improve heuristic?
-  if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.endsWith('Inf'))) {
+  // TODO: improve heuristic? infer from fields[1].labels.le === '+Inf' ?
+  if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.startsWith('+Inf'))) {
     return {
       yAxisValues: frames.map((f) => f.name ?? null).sort(sortAscStrInf),
       ...getHeatmapData(createHeatmapFromBuckets(frames), theme),
@@ -62,7 +70,7 @@ export function prepareHeatmapData(
 }
 
 const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapScanLines) {
+  if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
     return {
       warning: 'Expected heatmap scanlines format',
       heatmap: frame,
@@ -94,5 +102,14 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
-  return { heatmap: frame, xBucketSize: xBinIncr, yBucketSize: yBinIncr, xBucketCount: xBinQty, yBucketCount: yBinQty };
+  return {
+    heatmap: frame,
+    xBucketSize: xBinIncr,
+    yBucketSize: yBinIncr,
+    xBucketCount: xBinQty,
+    yBucketCount: yBinQty,
+    // TODO: improve heuristic
+    xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
+    yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
+  };
 };
