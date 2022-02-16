@@ -91,6 +91,85 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
+	t.Run("Influxdb response parser should parse metricFindQueries normally", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"refId": "metricFindQuery",
+							"name": "cpu",
+							"values": [
+								["cpu"],
+								["disk"],
+								["logs"]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		var queries []Query
+		queries = append(queries, Query{RefID: "metricFindQuery"})
+		newField := data.NewField("value", nil, []string{
+			"cpu", "disk", "logs",
+		})
+		testFrame := data.NewFrame("cpu",
+			newField,
+		)
+
+		result := parser.Parse(prepare(response), queries)
+
+		frame := result.Responses["metricFindQuery"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("Influxdb response parser should parse metricFindQueries->SHOW TAG VALUES normally", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu",
+							"values": [
+								["values", "cpu-total"],
+								["values", "cpu0"],
+								["values", "cpu1"]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		var queries []Query
+		queries = append(queries, Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
+		newField := data.NewField("value", nil, []string{
+			"cpu-total", "cpu0", "cpu1",
+		})
+		testFrame := data.NewFrame("cpu",
+			newField,
+		)
+
+		result := parser.Parse(prepare(response), queries)
+
+		frame := result.Responses["metricFindQuery"]
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("Influxdb response parser should parse two responses with different refIDs", func(t *testing.T) {
 		parser := &ResponseParser{}
 
@@ -130,7 +209,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					"series": [
 						{
 							"name": "cpu",
-							"columns": ["time","mean"]
+							"columns": ["time","cpu"],
+							"values": [
+								["values", "cpu-total"],
+								["values", "cpu0"],
+								["values", "cpu1"]
+							]
 						}
 					]
 				}
