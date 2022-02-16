@@ -45,6 +45,7 @@ type thumbService struct {
 	features                   featuremgmt.FeatureToggles
 	crawlLockServiceActionName string
 	log                        log.Logger
+	sqlStore                   sqlstore.Store
 }
 
 type crawlerScheduleOptions struct {

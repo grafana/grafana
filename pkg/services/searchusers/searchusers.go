@@ -19,8 +19,12 @@ type OSSService struct {
 	sqlStore         sqlstore.Store
 }
 
-func ProvideUsersService(bus bus.Bus, searchUserFilter models.SearchUserFilter) *OSSService {
-	return &OSSService{bus: bus, searchUserFilter: searchUserFilter}
+func ProvideUsersService(bus bus.Bus, searchUserFilter models.SearchUserFilter, sqlStore sqlstore.Store) *OSSService {
+	return &OSSService{
+		bus:              bus,
+		searchUserFilter: searchUserFilter,
+		sqlStore:         sqlStore,
+	}
 }
 
 func (s *OSSService) SearchUsers(c *models.ReqContext) response.Response {

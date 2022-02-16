@@ -35,6 +35,8 @@ type SQLStoreMock struct {
 	ExpectedDataSources            []*models.DataSource
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
+	ExpectedSearchUser             models.SearchUserQueryResult
+	ExpectedUserProfile            models.UserProfileDTO
 
 	ExpectedError error
 }
@@ -149,7 +151,7 @@ func (m *SQLStoreMock) CreateServiceAccountForApikey(ctx context.Context, orgId 
 }
 
 func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
-	return nil, m.ExpectedError
+	return m.ExpectedUser, m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
@@ -158,6 +160,7 @@ func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByI
 }
 
 func (m *SQLStoreMock) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
+	query.Result = m.ExpectedUser
 	return m.ExpectedError
 }
 
@@ -182,6 +185,7 @@ func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgC
 }
 
 func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
+	query.Result = m.ExpectedUserProfile
 	return m.ExpectedError
 }
 
@@ -221,6 +225,7 @@ func (m *SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserH
 }
 
 func (m *SQLStoreMock) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	query.Result = m.ExpectedSearchUser
 	return m.ExpectedError
 }
 

@@ -31,9 +31,10 @@ import (
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := sqlstore.InitTestDB(t)
+	mock := mockstore.NewSQLStoreMock()
 	hs := &HTTPServer{
 		Cfg:      settings,
-		SQLStore: sqlStore,
+		SQLStore: mock,
 	}
 
 	mockResult := models.SearchUserQueryResult{
@@ -43,7 +44,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		},
 		TotalCount: 2,
 	}
-	mock := mockstore.NewSQLStoreMock()
+
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -51,15 +52,19 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		srv := authinfoservice.ProvideAuthInfoService(&authinfoservice.OSSUserProtectionImpl{}, authInfoStore)
 		hs.authInfoService = srv
 
-		createUserCmd := models.CreateUserCommand{
-			Email:   fmt.Sprint("user", "@test.com"),
-			Name:    "user",
-			Login:   "loginuser",
-			IsAdmin: true,
+		avatarUrl := dtos.GetGravatarUrl("@test.com")
+		mock.ExpectedUserProfile = models.UserProfileDTO{
+			Id:             1,
+			Email:          "user@test.com",
+			Name:           "user",
+			Login:          "loginuser",
+			OrgId:          1,
+			IsGrafanaAdmin: true,
+			AuthLabels:     []string{},
+			CreatedAt:      fakeNow,
+			UpdatedAt:      fakeNow,
+			AvatarUrl:      avatarUrl,
 		}
-		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
-		require.Nil(t, err)
-
 		sc.handlerFunc = hs.GetUserByID
 
 		token := &oauth2.Token{
@@ -72,15 +77,15 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
 		query := &models.GetUserByAuthInfoQuery{Login: "loginuser", AuthModule: "test", AuthId: "test"}
 		cmd := &models.UpdateAuthInfoCommand{
-			UserId:     user.Id,
+			UserId:     333,
 			AuthId:     query.AuthId,
 			AuthModule: query.AuthModule,
 			OAuthToken: token,
 		}
-		err = srv.UpdateAuthInfo(context.Background(), cmd)
+		err := srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
-		avatarUrl := dtos.GetGravatarUrl("@test.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.Id)}).exec()
+
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", 333)}).exec()
 
 		expected := models.UserProfileDTO{
 			Id:             1,
@@ -106,40 +111,23 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
-		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
-			require.Equal(t, "danlee", query.LoginOrEmail)
-
-			query.Result = &models.User{
-				Id:         int64(1),
-				Email:      "daniel@grafana.com",
-				Name:       "Daniel",
-				Login:      "danlee",
-				Theme:      "light",
-				IsAdmin:    true,
-				OrgId:      int64(2),
-				IsDisabled: false,
-				Updated:    fakeNow,
-				Created:    fakeNow,
-			}
-
-			return nil
-		})
-		createUserCmd := models.CreateUserCommand{
-			Email:   fmt.Sprint("admin", "@test.com"),
-			Name:    "admin",
-			Login:   "admin",
-			IsAdmin: true,
+		mock.ExpectedUser = &models.User{
+			Id:         int64(1),
+			Email:      "admin@test.com",
+			Name:       "Daniel",
+			Login:      "admin",
+			Theme:      "light",
+			IsAdmin:    true,
+			OrgId:      int64(2),
+			IsDisabled: false,
 		}
-		_, err := sqlStore.CreateUser(context.Background(), createUserCmd)
-		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
 		var resp models.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
-		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		require.Equal(t, "admin", resp.Login)
 		require.Equal(t, "admin@test.com", resp.Email)
@@ -147,92 +135,47 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
-
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		mock.ExpectedSearchUser = mockResult
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter(), mock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
-		assert.Equal(t, 1000, sentLimit)
-		assert.Equal(t, 1, sendPage)
-
 		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 		require.NoError(t, err)
+
 		assert.Equal(t, 2, len(respJSON.MustArray()))
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
-
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter(), mock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
-
-		assert.Equal(t, 10, sentLimit)
-		assert.Equal(t, 2, sendPage)
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
-
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		mock.ExpectedSearchUser = mockResult
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter(), mock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-		assert.Equal(t, 1000, sentLimit)
-		assert.Equal(t, 1, sendPage)
 
 		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 		require.NoError(t, err)
 
 		assert.Equal(t, 2, respJSON.Get("totalCount").MustInt())
 		assert.Equal(t, 2, len(respJSON.Get("users").MustArray()))
+		assert.Equal(t, 1000, respJSON.Get("perPage").MustInt())
+		assert.Equal(t, 1, respJSON.Get("page").MustInt())
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
-		var sentLimit int
-		var sendPage int
-		bus.AddHandler("test", func(ctx context.Context, query *models.SearchUsersQuery) error {
-			query.Result = mockResult
-
-			sentLimit = query.Limit
-			sendPage = query.Page
-
-			return nil
-		})
-
-		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter())
+		mock.ExpectedSearchUser = mockResult
+		searchUsersService := searchusers.ProvideUsersService(bus.GetBus(), filters.ProvideOSSSearchUserFilter(), mock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
-		assert.Equal(t, 10, sentLimit)
-		assert.Equal(t, 2, sendPage)
+		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+		require.NoError(t, err)
+		assert.Equal(t, 10, respJSON.Get("perPage").MustInt())
+		assert.Equal(t, 2, respJSON.Get("page").MustInt())
 	}, mock)
 }
