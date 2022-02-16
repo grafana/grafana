@@ -2,6 +2,7 @@ package setting
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +48,12 @@ const (
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
-	schedulerDefaultMinInterval             = 10 * time.Second
+	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
+	// changing this value is discouraged because this could cause existing alert definition
+	// with intervals that are not exactly divided by this number not to be evaluated
+	SchedulerBaseInterval = 10 * time.Second
+	// DefaultAlertForDuration indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
+	DefaultAlertForDuration = 60 * time.Second
 )
 
 type UnifiedAlertingSettings struct {
@@ -66,6 +72,11 @@ type UnifiedAlertingSettings struct {
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
+	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
+	// Only for internal use and not user configuration.
+	BaseInterval time.Duration
+	// DefaultAlertForDuration default time for how long an alert rule should be evaluated before change state.
+	DefaultAlertForDuration time.Duration
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -205,16 +216,33 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", schedulerDefaultMinInterval.String()))
-	if err != nil || uaMinInterval == schedulerDefaultMinInterval { // unified option is invalid duration or equals the default
+	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
+	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(schedulerDefaultMinInterval.Seconds()))) * time.Second
-		if legacyMinInterval != schedulerDefaultLegacyMinInterval {
+		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(uaCfg.BaseInterval.Seconds()))) * time.Second
+		if legacyMinInterval > uaCfg.BaseInterval {
 			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+			uaMinInterval = legacyMinInterval
+		} else {
+			// if legacy interval is smaller than the base interval, adjust it to the base interval
+			uaMinInterval = uaCfg.BaseInterval
 		}
-		uaMinInterval = legacyMinInterval
+	}
+
+	if uaMinInterval < uaCfg.BaseInterval {
+		return fmt.Errorf("value of setting 'min_interval' should be greater than the base interval (%v)", uaCfg.BaseInterval)
+	}
+	if uaMinInterval%uaCfg.BaseInterval != 0 {
+		return fmt.Errorf("value of setting 'min_interval' should be times of base interval (%v)", uaCfg.BaseInterval)
 	}
 	uaCfg.MinInterval = uaMinInterval
+
+	uaCfg.DefaultAlertForDuration = DefaultAlertForDuration
+	if uaMinInterval > uaCfg.DefaultAlertForDuration {
+		uaCfg.DefaultAlertForDuration = uaMinInterval
+	}
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

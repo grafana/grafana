@@ -22,15 +22,16 @@ export interface FeatureToggles {
   ['service-accounts']?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
+  dashboardPreviewsScheduler?: boolean;
   ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
+  panelTitleSearch?: boolean;
   tempoSearch?: boolean;
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
   lokiBackendMode?: boolean;
-  fullRangeLogsVolume?: boolean;
   accesscontrol?: boolean;
   prometheus_azure_auth?: boolean;
   influxdbBackendMigration?: boolean;
@@ -42,4 +43,5 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;
+  migrationLocking?: boolean;
 }

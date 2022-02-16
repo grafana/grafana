@@ -85,15 +85,8 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        labels: [
-          { label: 'label1', op: '=', value: 'foo' },
-          { label: 'label2', op: '=', value: 'bar' },
-        ],
-        metric: 'metric',
-        operations: [],
-      },
     });
   });
 
@@ -106,6 +99,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Builder,
       editorPreview: true,
     });
@@ -115,11 +109,7 @@ describe('PromQueryEditorSelector', () => {
     renderWithProps({
       editorPreview: true,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        metric: 'my_metric',
-        labels: [],
-        operations: [],
-      },
+      expr: 'my_metric',
     });
     expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
   });
@@ -130,6 +120,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Code,
     });
   });
@@ -140,6 +131,7 @@ describe('PromQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      range: true,
       editorMode: QueryEditorMode.Explain,
     });
   });
@@ -187,7 +179,7 @@ function expectCodeEditor() {
 }
 
 function expectBuilder() {
-  expect(screen.getByText('Select metric')).toBeInTheDocument();
+  expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
 function expectExplain() {

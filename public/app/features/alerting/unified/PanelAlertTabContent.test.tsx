@@ -15,7 +15,6 @@ import {
   mockRulerGrafanaRule,
 } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules } from './api/ruler';
@@ -47,10 +46,10 @@ dataSources.prometheus.meta.alerting = true;
 dataSources.default.meta.alerting = true;
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
   api: {
-    fetchRules: typeAsJestMock(fetchRules),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    fetchRules: jest.mocked(fetchRules),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
   },
 };
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -36,14 +38,15 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			{Name: "BBB"},
 			{Name: "aaa"},
 		}
-		mockSQLStore.ExpectedDatasources = ds
 		mockDatasourcePermissionService.dsResult = ds
 
 		// handler func being tested
 		hs := &HTTPServer{
-			Cfg:                          setting.NewCfg(),
-			pluginStore:                  &fakePluginStore{},
-			SQLStore:                     mockSQLStore,
+			Cfg:         setting.NewCfg(),
+			pluginStore: &fakePluginStore{},
+			DataSourcesService: &dataSourcesServiceMock{
+				expectedDatasources: ds,
+			},
 			DatasourcePermissionsService: mockDatasourcePermissionService,
 		}
 		sc.handlerFunc = hs.GetDataSources
@@ -76,7 +79,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 	hs := &HTTPServer{
-		SQLStore: mockstore.NewSQLStoreMock(),
+		DataSourcesService: &dataSourcesServiceMock{},
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -99,10 +102,10 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	const name = "Test"
 	const url = "localhost:5432"
 
-	mockSQLStore := mockstore.NewSQLStoreMock()
-	mockSQLStore.ExpectedDatasource = &models.DataSource{}
 	hs := &HTTPServer{
-		SQLStore: mockSQLStore,
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &models.DataSource{},
+		},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
@@ -125,7 +128,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 // Updating data sources with invalid URLs should lead to an error.
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	hs := &HTTPServer{
-		SQLStore: mockstore.NewSQLStoreMock(),
+		DataSourcesService: &dataSourcesServiceMock{},
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -149,12 +152,11 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const name = "Test"
 	const url = "localhost:5432"
 
-	mockSQLStore := mockstore.NewSQLStoreMock()
 	hs := &HTTPServer{
-		SQLStore: mockSQLStore,
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &models.DataSource{},
+		},
 	}
-	// Stub handler
-	mockSQLStore.ExpectedDatasource = &models.DataSource{}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
@@ -204,8 +206,9 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 		return bytes.NewReader(s)
 	}
 
-	sqlStore := mockstore.NewSQLStoreMock()
-	sqlStore.ExpectedDatasource = &testDatasource
+	dsServiceMock := &dataSourcesServiceMock{
+		expectedDatasource: &testDatasource,
+	}
 	dsPermissionService := newMockDatasourcePermissionService()
 	dsPermissionService.dsResult = []*models.DataSource{
 		&testDatasource,
@@ -500,14 +503,13 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 
 			// mock sqlStore and datasource permission service
-			sqlStore.ExpectedError = test.expectedSQLError
-			sqlStore.ExpectedDatasource = test.expectedDS
+			dsServiceMock.expectedError = test.expectedSQLError
+			dsServiceMock.expectedDatasource = test.expectedDS
 			dsPermissionService.dsResult = []*models.DataSource{test.expectedDS}
 			if test.expectedDS == nil {
 				dsPermissionService.dsResult = nil
 			}
-			sc.sqlStore = sqlStore
-			hs.SQLStore = sqlStore
+			hs.DataSourcesService = dsServiceMock
 			hs.DatasourcePermissionsService = dsPermissionService
 
 			// Create a middleware to pretend user is logged in
@@ -538,4 +540,44 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			assert.Equal(t, test.expectedCode, sc.resp.Code)
 		})
 	}
+}
+
+type dataSourcesServiceMock struct {
+	datasources.DataSourceService
+
+	expectedDatasources []*models.DataSource
+	expectedDatasource  *models.DataSource
+	expectedError       error
+}
+
+func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+	query.Result = m.expectedDatasource
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	query.Result = m.expectedDatasources
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	cmd.Result = m.expectedDatasource
+	return m.expectedError
+}
+
+func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	cmd.Result = m.expectedDatasource
+	return m.expectedError
 }

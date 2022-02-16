@@ -314,6 +314,10 @@ The maximum number of open connections to the database.
 
 Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
 
+### locking_attempt_timeout_sec
+
+For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+
 ### log_queries
 
 Set to `true` to log the sql calls and execution times.
@@ -631,7 +635,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users from the [Grafana Admin Pages]({{< relref "../manage-users/server-admin/server-admin-manage-users.md" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../administration/manage-users-and-permissions/manage-server-users/add-user.md" >}}).
 
 ### allow_org_create
 
