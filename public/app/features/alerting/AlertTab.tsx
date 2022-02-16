@@ -59,7 +59,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
       await import(/* webpackChunkName: "AlertTabCtrl" */ 'app/features/alerting/AlertTabCtrl');
       this.loadAlertTab();
     } else {
-      // TODO probably need to migrate AlertTab to react this
+      // TODO probably need to migrate AlertTab to react
       alert('Angular support disabled, legacy alerting cannot function without angular support');
     }
   }
