@@ -381,6 +381,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           } else {
             // Adjust from the baseline which is "middle" in this case
             yAdjust = ((textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor) / 2;
+
+            // Adjust for baseline being "right" in the x direction
+            xAdjust = value < 0 ? textMetrics.width * scaleFactor : 0;
           }
 
           // Construct final bounding box for the label text
@@ -392,21 +395,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             w: textMetrics.width * scaleFactor,
             h: (textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent) * scaleFactor,
           };
-
-          // DEBUG - remove
-          if (labels[dataIdx][seriesIdx].bbox && value < 0) {
-            console.log('collected bbox', labels[dataIdx][seriesIdx].bbox);
-            u.ctx.beginPath();
-            u.ctx.rect(
-              labels[dataIdx][seriesIdx].bbox!.x,
-              labels[dataIdx][seriesIdx].bbox!.y,
-              labels[dataIdx][seriesIdx].bbox!.w,
-              labels[dataIdx][seriesIdx].bbox!.h
-            );
-            u.ctx.strokeStyle = 'yellow';
-            u.ctx.stroke();
-            u.ctx.closePath();
-          }
         }
       }
     },
