@@ -5,12 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../../Icon/Icon';
-// import { getBodyStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 
 import { InlineField } from '../../Forms/InlineField';
 import { InlineSwitch } from '../../Switch/Switch';
-
 /** @public */
 export interface DatePickerWithEmptyProps {
   isOpen?: boolean;

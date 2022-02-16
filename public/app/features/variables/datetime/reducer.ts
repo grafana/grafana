@@ -19,11 +19,13 @@ export const dateTimeVariableSlice = createSlice({
       const instanceState = getInstanceState<DateTimeVariableModel>(state, action.payload.id);
       const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
       instanceState.current = option;
-      if (instanceState.returnValue === 'end') {
-        instanceState.options = [option];
-      } else {
-        instanceState.options = [];
-      }
+      instanceState.options = [option];
+
+      // if (instanceState.returnValue === 'end') {
+      //   instanceState.options = [option];
+      // } else {
+      //   instanceState.options = [];
+      // }
     },
   },
 });

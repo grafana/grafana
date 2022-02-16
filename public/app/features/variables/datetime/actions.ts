@@ -14,6 +14,7 @@ export const updateDateTimeVariableOptions = (identifier: VariableIdentifier): T
     await dispatch(createDateTimeOptions(toVariablePayload(identifier)));
 
     const variableInState = getVariable<DateTimeVariableModel>(identifier.id, getState());
+
     await variableAdapters.get(identifier.type).setValue(variableInState, variableInState.options[0], true);
   };
 };
