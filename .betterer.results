@@ -11,14 +11,8 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/BigValue/BigValue.test.tsx:261212211": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/CallToActionCard/CallToActionCard.test.tsx:2771878691": [
-      [1, 18, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:1355456933": [
       [1, 31, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/ConfirmButton/ConfirmButton.test.tsx:3194817479": [
-      [2, 33, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.test.tsx:3838344574": [
       [1, 17, 13, "RegExp match", "2409514259"]
@@ -197,9 +191,6 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/Select/MetricSelect.test.tsx:3409251428": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/specs/OrgSwitcher.test.tsx:848670248": [
-      [2, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/alerting/AlertRuleList.test.tsx:1800339390": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -359,7 +350,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:1661240493": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:2317141020": [
+    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:3844880066": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:1527527456": [
