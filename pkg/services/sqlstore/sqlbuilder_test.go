@@ -244,7 +244,7 @@ func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps Dashb
 		saveDashboardCmd.OrgId = 1
 	}
 
-	dash, err := sqlStore.SaveDashboard(saveDashboardCmd)
+	dash := insertTestDashboard(t, sqlStore, "", saveDashboardCmd.OrgId, 0, false, nil)
 	require.NoError(t, err)
 
 	t.Logf("Created dashboard with ID %d and org ID %d\n", dash.Id, dash.OrgId)
@@ -287,7 +287,7 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 		acl.Role = &dashboardPermission.Role
 	}
 
-	err := sqlStore.UpdateDashboardACL(context.Background(), dashboardID, []*models.DashboardAcl{acl})
+	err := updateDashboardAcl(t, sqlStore, dashboardID, acl)
 	require.NoError(t, err)
 	if user != nil {
 		return user.Id

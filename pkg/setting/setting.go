@@ -254,7 +254,8 @@ type Cfg struct {
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
-	CSPTemplate string
+	CSPTemplate           string
+	AngularSupportEnabled bool
 
 	TempDataLifetime                 time.Duration
 	PluginsEnableAlpha               bool
@@ -1191,6 +1192,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
+	cfg.AngularSupportEnabled = security.Key("angular_support_enabled").MustBool(true)
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
