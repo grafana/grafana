@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -14,7 +13,7 @@ func addQueryHistoryStarMigrations(mg *Migrator) {
 			{Name: "user_id", Type: DB_Int, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"user_id", "query_uid"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"user_id", "query_uid"}, Type: UniqueIndex},
 		},
 	}
 

@@ -46,7 +46,7 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.Signe
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
 		// Try to unstar the query first
 		_, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
-		if err != nil && err != ErrStarredQueryNotFound {
+		if err != nil {
 			s.log.Error("Failed to unstar query while deleting it from query history", "query", UID, "user", user.UserId, "error", err)
 		}
 
