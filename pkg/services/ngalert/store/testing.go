@@ -42,11 +42,32 @@ type FakeRuleStore struct {
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
-func (f *FakeRuleStore) PutRule(_ context.Context, r *models.AlertRule) {
+func (f *FakeRuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{
-		r,
+mainloop:
+	for _, r := range rules {
+		rgs, ok := f.Rules[r.OrgID]
+		if !ok {
+			f.Rules[r.OrgID] = map[string]map[string][]*models.AlertRule{}
+		}
+
+		rg, ok := rgs[r.RuleGroup]
+		if !ok {
+			f.Rules[r.OrgID][r.RuleGroup] = map[string][]*models.AlertRule{}
+		}
+
+		_, ok = rg[r.NamespaceUID]
+		if !ok {
+			f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = []*models.AlertRule{}
+		}
+		for idx, rulePtr := range f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] {
+			if rulePtr.UID == r.UID {
+				f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID][idx] = r
+				continue mainloop
+			}
+		}
+		f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID] = append(f.Rules[r.OrgID][r.RuleGroup][r.NamespaceUID], r)
 	}
 }
 
