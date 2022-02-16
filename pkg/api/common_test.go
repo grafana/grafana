@@ -25,7 +25,6 @@ import (
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -375,7 +374,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 			acmock = acmock.WithDisabled()
 		}
 		hs.AccessControl = acmock
-		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)
 		hs.TeamPermissionsService = teamPermissionService
 	} else {
@@ -387,7 +386,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		require.NoError(t, err)
 		err = ac.RegisterFixedRoles()
 		require.NoError(t, err)
-		teamPermissionService, err := resourceservices.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
+		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)
 		hs.TeamPermissionsService = teamPermissionService
 	}

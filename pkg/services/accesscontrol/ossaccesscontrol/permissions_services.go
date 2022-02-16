@@ -13,7 +13,7 @@ import (
 )
 
 func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsService, error) {
-	teamPermissions, err := provideTeamPermissions(router, sql, ac, store)
+	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ var (
 	}
 )
 
-func provideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:    "teams",
 		OnlyManaged: true,
