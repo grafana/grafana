@@ -53,8 +53,26 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	// TODO!!! get user from context?
-	dash, err = s.applyAuthFilter(nil, dash)
+	getSignedInUserQuery := &models.GetSignedInUserQuery{
+		Login: user.Login,
+		Email: user.Email,
+		OrgId: orgId,
+	}
+
+	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	if err != nil {
+		fmt.Printf("error while retrieving user %s\n", err)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	if getSignedInUserQuery.Result == nil {
+		fmt.Printf("no user %s", user.Email)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	dash, err = s.applyAuthFilter(getSignedInUserQuery.Result, dash)
 	if err != nil {
 		rsp.Error = err
 		return rsp
