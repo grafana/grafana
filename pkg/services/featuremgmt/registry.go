@@ -61,6 +61,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "panelTitleSearch",
+			Description:     "Search for dashboards using panel title",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // only supported in dev mode right now
+		},
+		{
 			Name:         "tempoSearch",
 			Description:  "Enable searching in tempo datasources",
 			State:        FeatureStateBeta,
@@ -130,6 +136,11 @@ var (
 			Name:        "featureHighlights",
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:        "migrationLocking",
+			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
 		},
 	}
 )

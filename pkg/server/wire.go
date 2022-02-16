@@ -60,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -150,6 +151,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Store), new(*authinfodatabase.AuthInfoStore)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
+	searchV2.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
