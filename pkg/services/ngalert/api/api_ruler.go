@@ -414,7 +414,6 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		}
 
 		if existing == nil {
-			r.Version = 1
 			upsert = append(upsert, store.UpsertRule{
 				Existing: nil,
 				New:      *r,
@@ -423,9 +422,6 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 			continue
 		}
 
-		// TODO check if rule is different and skip update
-		r.ID = existing.ID
-		r.Version = existing.Version + 1
 		upsert = append(upsert, store.UpsertRule{
 			Existing: existing,
 			New:      *r,

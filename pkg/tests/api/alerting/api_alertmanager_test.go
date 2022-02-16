@@ -1379,7 +1379,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: failed to get alert rule unknown: could not find alert rule"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: failed to add or update rules: failed to get alert rule unknown: could not find alert rule"}`, string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
