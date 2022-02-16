@@ -16,7 +16,6 @@ import (
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -78,8 +77,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	api.ProvideDatasourcePermissionsService,
 	wire.Bind(new(api.DatasourcePermissionsService), new(*api.OSSDatasourcePermissionsService)),
-	resourceservices.ProvideResourceServices,
-	wire.Bind(new(accesscontrol.PermissionsServices), new(*resourceservices.ResourceServices)),
+	ossaccesscontrol.ProvidePermissionsServices,
+	wire.Bind(new(accesscontrol.PermissionsServices), new(*ossaccesscontrol.PermissionsService)),
 )
 
 var wireExtsSet = wire.NewSet(
