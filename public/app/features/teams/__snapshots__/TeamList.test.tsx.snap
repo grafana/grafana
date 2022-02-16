@@ -445,42 +445,50 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               <td
                 className="width-4 text-center link-td"
               >
-                <a
-                  href="org/teams/edit/1"
-                >
-                  <img
-                    alt="Team avatar"
-                    className="filter-table__avatar"
-                    src="some/url/"
-                  />
-                </a>
+                <img
+                  alt="Team avatar"
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
               </td>
               <td
                 className="link-td"
               >
-                <a
-                  href="org/teams/edit/1"
+                <div
+                  style={
+                    Object {
+                      "padding": "0px 8px",
+                    }
+                  }
                 >
                   test-1
-                </a>
+                </div>
               </td>
               <td
                 className="link-td"
               >
-                <a
-                  href="org/teams/edit/1"
+                <div
+                  style={
+                    Object {
+                      "padding": "0px 8px",
+                    }
+                  }
                 >
                   test-1@test.com
-                </a>
+                </div>
               </td>
               <td
                 className="link-td"
               >
-                <a
-                  href="org/teams/edit/1"
+                <div
+                  style={
+                    Object {
+                      "padding": "0px 8px",
+                    }
+                  }
                 >
                   1
-                </a>
+                </div>
               </td>
               <td
                 className="text-right"
@@ -583,42 +591,50 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               <td
                 className="width-4 text-center link-td"
               >
-                <a
-                  href="org/teams/edit/1"
-                >
-                  <img
-                    alt="Team avatar"
-                    className="filter-table__avatar"
-                    src="some/url/"
-                  />
-                </a>
+                <img
+                  alt="Team avatar"
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
               </td>
               <td
                 className="link-td"
               >
-                <a
-                  href="org/teams/edit/1"
+                <div
+                  style={
+                    Object {
+                      "padding": "0px 8px",
+                    }
+                  }
                 >
                   test-1
-                </a>
+                </div>
               </td>
               <td
                 className="link-td"
               >
-                <a
-                  href="org/teams/edit/1"
+                <div
+                  style={
+                    Object {
+                      "padding": "0px 8px",
+                    }
+                  }
                 >
                   test-1@test.com
-                </a>
+                </div>
               </td>
               <td
                 className="link-td"
               >
-                <a
-                  href="org/teams/edit/1"
+                <div
+                  style={
+                    Object {
+                      "padding": "0px 8px",
+                    }
+                  }
                 >
                   1
-                </a>
+                </div>
               </td>
               <td
                 className="text-right"

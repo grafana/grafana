@@ -106,6 +106,11 @@ func (s *Service) runQueries(ctx context.Context, client apiv1.API, queries []*P
 			return &result, err
 		}
 
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		for _, frame := range frames {
+			frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
+		}
+
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frames,
 		}

@@ -55,6 +55,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		if err != nil {
 			return errutil.Wrap("failed to initialize tracer service", err)
 		}
+
 		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
