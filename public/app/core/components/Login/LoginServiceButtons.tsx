@@ -62,13 +62,13 @@ const loginServices: () => LoginServices = () => {
       bgColor: '#2f2f2f',
       enabled: oauthEnabled && Boolean(config.oauth.okta),
       name: config.oauth?.okta?.name || 'Okta',
-      icon: config.oauth?.okta?.icon || 'okta',
+      icon: (config.oauth?.okta?.icon as IconName) || 'okta',
     },
     oauth: {
       bgColor: '#262628',
       enabled: oauthEnabled && Boolean(config.oauth.generic_oauth),
       name: config.oauth?.generic_oauth?.name || 'OAuth',
-      icon: config.oauth?.generic_oauth?.icon || 'signin',
+      icon: (config.oauth?.generic_oauth?.icon as IconName) || 'signin',
       hrefName: 'generic_oauth',
     },
   };
