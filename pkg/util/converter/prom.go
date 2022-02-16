@@ -1,4 +1,4 @@
-package parsers
+package converter
 
 import (
 	"fmt"
@@ -186,7 +186,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 
 					case "timestamp":
 						tv := iter.ReadFloat64()
-						ts := time.Unix(int64(tv), 0)
+						ts := time.Unix(int64(tv), 0) // HELP!!!
 						timeField.Append(ts)
 
 					case "labels":
