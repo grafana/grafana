@@ -7,7 +7,7 @@ weight = 115
 
 # Manage role assignments
 
-To grant or revoke access to your users, you can assign [Roles]({{< relref "../roles.md" >}}) to users and teams, or to [Organization roles]({{< relref "../../../permissions/organization_roles.md" >}}) and [Grafana Server Admin]({{< relref "../../../permissions/_index.md#grafana-server-admin-role" >}}) role.
+To grant or revoke access to your users, you can assign [Roles]({{< relref "../roles.md" >}}) to users and teams, or to [Organization roles]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions.md#organization-users-and-permissions" >}}) and the [Grafana Server Admin]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions.md#grafana-server-administrators" >}}) role.
 
 The following pages provide more information on how to manage role assignments:
 

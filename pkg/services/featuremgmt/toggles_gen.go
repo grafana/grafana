@@ -47,6 +47,10 @@ const (
 	// Use grafana live websocket to execute backend queries
 	FlagQueryOverLive = "queryOverLive"
 
+	// FlagPanelTitleSearch
+	// Search for dashboards using panel title
+	FlagPanelTitleSearch = "panelTitleSearch"
+
 	// FlagTempoSearch
 	// Enable searching in tempo datasources
 	FlagTempoSearch = "tempoSearch"
@@ -98,4 +102,8 @@ const (
 	// FlagFeatureHighlights
 	// Highlight Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
+
+	// FlagMigrationLocking
+	// Lock database during migrations
+	FlagMigrationLocking = "migrationLocking"
 )

@@ -54,3 +54,40 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.Signe
 
 	return queryID, err
 }
+
+func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *models.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error) {
+	var queryHistory QueryHistory
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Get(&queryHistory)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return ErrQueryNotFound
+		}
+
+		queryHistory.Comment = cmd.Comment
+		_, err = session.ID(queryHistory.ID).Update(queryHistory)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return QueryHistoryDTO{}, err
+	}
+
+	dto := QueryHistoryDTO{
+		UID:           queryHistory.UID,
+		DatasourceUID: queryHistory.DatasourceUID,
+		CreatedBy:     queryHistory.CreatedBy,
+		CreatedAt:     queryHistory.CreatedAt,
+		Comment:       queryHistory.Comment,
+		Queries:       queryHistory.Queries,
+		Starred:       false,
+	}
+
+	return dto, nil
+}

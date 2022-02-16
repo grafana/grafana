@@ -125,7 +125,7 @@ type Store interface {
 	DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error
 	AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error
 	UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error
-	Migrate() error
+	Migrate(bool) error
 	Sync() error
 	Reset() error
 	Quote(value string) string

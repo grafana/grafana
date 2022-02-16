@@ -11,7 +11,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
-  const histogramMetric = query.trim().match(/^\w+_bucket$/);
+  const histogramMetric = query.trim().match(/^\w+_bucket$|^\w+_bucket{.*}$/);
   if (histogramMetric) {
     const label = 'Selected metric has buckets.';
     hints.push({
@@ -53,12 +53,13 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     }
 
     if (counterNameMetric) {
-      const simpleMetric = query.trim().match(/^\w+$/);
+      // FixableQuery consists of metric name and optionally label-value pairs. We are not offering fix for complex queries yet.
+      const fixableQuery = query.trim().match(/^\w+$|^\w+{.*}$/);
       const verb = certain ? 'is' : 'looks like';
       let label = `Selected metric ${verb} a counter.`;
       let fix: QueryFix | undefined;
 
-      if (simpleMetric) {
+      if (fixableQuery) {
         fix = {
           label: 'Consider calculating rate of counter by adding rate().',
           action: {

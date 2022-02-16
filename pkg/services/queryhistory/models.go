@@ -26,6 +26,10 @@ type CreateQueryInQueryHistoryCommand struct {
 	Queries       *simplejson.Json `json:"queries"`
 }
 
+type PatchQueryCommentInQueryHistoryCommand struct {
+	Comment string `json:"comment"`
+}
+
 type QueryHistoryDTO struct {
 	UID           string           `json:"uid"`
 	DatasourceUID string           `json:"datasourceUid"`
