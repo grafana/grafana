@@ -453,7 +453,7 @@ func (m SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *models.UpdateDa
 	return nil // TODO: Implement
 }
 
-func (m SQLStoreMock) Migrate() error {
+func (m SQLStoreMock) Migrate(_ bool) error {
 	return nil // TODO: Implement
 }
 
