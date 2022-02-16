@@ -40,8 +40,6 @@ export function OperationEditor({
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
 
-  console.log('rendering OperationEditor', operation.params);
-
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
     const update: QueryBuilderOperation = { ...operation, params: [...operation.params] };
     update.params[paramIdx] = value;
