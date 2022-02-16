@@ -64,8 +64,6 @@ describe('PromQueryBuilder', () => {
 
     const avgBys = screen.getAllByTestId('operations.0.wrapper');
     expect(getByText(avgBys[1], 'app')).toBeInTheDocument();
-
-    expect(screen.getByText('Binary operations')).toBeInTheDocument();
     expect(screen.getByText('Operator')).toBeInTheDocument();
     expect(screen.getByText('Vector matches')).toBeInTheDocument();
   });
