@@ -112,7 +112,7 @@ jobs:
 
       - name: Get link for the Github Action job
         id: job
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: |
               const script = require('./.github/workflows/scripts/pr-get-job-link.js')
