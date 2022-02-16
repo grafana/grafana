@@ -123,12 +123,12 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 	return resourcepermissions.New(options, router, ac, store, sql)
 }
 
-var dashboardsView = []string{accesscontrol.ActionDashboardsRead}
-var dashboardsEdit = append(dashboardsView, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
-var dashboardsAdmin = append(dashboardsEdit, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
-var foldersView = []string{accesscontrol.ActionFoldersRead}
-var foldersEdit = append(foldersView, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
-var foldersAdmin = append(foldersEdit, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
+var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
+var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
+var FolderViewActions = []string{accesscontrol.ActionFoldersRead}
+var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
+var FolderAdminActions = append(FolderEditActions, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
 
 func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegister, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
@@ -165,9 +165,9 @@ func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegiste
 			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  dashboardsView,
-			"Edit":  dashboardsEdit,
-			"Admin": dashboardsAdmin,
+			"View":  DashboardViewActions,
+			"Edit":  DashboardEditActions,
+			"Admin": DashboardAdminActions,
 		},
 		ReaderRoleName: "Dashboard permission reader",
 		WriterRoleName: "Dashboard permission writer",
@@ -212,9 +212,9 @@ func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, 
 			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(dashboardsView, foldersView...),
-			"Edit":  append(dashboardsEdit, foldersEdit...),
-			"Admin": append(dashboardsAdmin, foldersAdmin...),
+			"View":  append(DashboardViewActions, FolderViewActions...),
+			"Edit":  append(DashboardEditActions, FolderEditActions...),
+			"Admin": append(DashboardAdminActions, FolderAdminActions...),
 		},
 		ReaderRoleName: "Folder permission reader",
 		WriterRoleName: "Folder permission writer",
