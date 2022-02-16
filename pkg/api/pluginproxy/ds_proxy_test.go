@@ -12,8 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -23,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
