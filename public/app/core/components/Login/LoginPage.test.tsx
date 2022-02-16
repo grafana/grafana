@@ -6,7 +6,6 @@ import { LoginPage } from './LoginPage';
 import * as runtimeMock from '@grafana/runtime';
 
 const postMock = jest.fn();
-
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   getBackendSrv: () => ({
