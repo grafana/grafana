@@ -49,3 +49,7 @@ export function defaultAddOperationHandler<T extends QueryWithOperations>(def: Q
 export function getPromAndLokiOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
+
+export function getOperationParamId(operationIndex: number, paramIndex: number) {
+  return `operations.${operationIndex}.param.${paramIndex}`;
+}

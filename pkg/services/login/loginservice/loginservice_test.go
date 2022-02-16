@@ -39,7 +39,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 
 func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	buf := &bytes.Buffer{}
-	logger.SetLogger(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
+	logger.Swap(level.NewFilter(log.NewLogfmtLogger(buf), level.AllowInfo()))
 
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()

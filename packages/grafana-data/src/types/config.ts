@@ -65,6 +65,26 @@ export type PreloadPlugin = {
   version: string;
 };
 
+/** Supported OAuth services
+ *
+ * @public
+ */
+export type OAuth =
+  | 'github'
+  | 'gitlab'
+  | 'google'
+  | 'generic_oauth'
+  // | 'grafananet' Deprecated. Key always changed to "grafana_com"
+  | 'grafana_com'
+  | 'azuread'
+  | 'okta';
+
+/** Map of enabled OAuth services and their respective names
+ *
+ * @public
+ */
+export type OAuthSettings = Partial<Record<OAuth, { name: string }>>;
+
 /**
  * Describes all the different Grafana configuration values available for an instance.
  *
@@ -96,7 +116,7 @@ export interface GrafanaConfig {
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
-  oauth: any;
+  oauth: OAuthSettings;
   disableUserSignUp: boolean;
   loginHint: any;
   passwordHint: any;

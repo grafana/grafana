@@ -31,6 +31,7 @@ type Service interface {
 	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
 	StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
 	UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
+	PatchQueryCommentInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
 }
 
 type QueryHistoryService struct {
@@ -46,6 +47,10 @@ func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user
 
 func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
 	return s.deleteQuery(ctx, user, UID)
+}
+
+func (s QueryHistoryService) PatchQueryCommentInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error) {
+	return s.patchQueryComment(ctx, user, UID, cmd)
 }
 
 func (s QueryHistoryService) StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {

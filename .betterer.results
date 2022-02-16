@@ -1,0 +1,369 @@
+// BETTERER RESULTS V2.
+// 
+// If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
+// https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
+//
+exports[`no enzyme tests`] = {
+  value: `{
+    "packages/grafana-ui/src/components/BarGauge/BarGauge.test.tsx:2315765050": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/BigValue/BigValue.test.tsx:261212211": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:1355456933": [
+      [1, 31, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.test.tsx:3838344574": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/FileUpload/FileUpload.test.tsx:3475964456": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/FormField/FormField.test.tsx:2387359174": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.test.tsx:4019574269": [
+      [2, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Gauge/Gauge.test.tsx:1435004725": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Graph/Graph.test.tsx:2882401917": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Graph/GraphTooltip/MultiModeGraphTooltip.test.tsx:3734531523": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/List/AbstractList.test.tsx:2210654375": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Logs/LogLabels.test.tsx:1113070745": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Logs/LogMessageAnsi.test.tsx:1478948568": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:636540759": [
+      [3, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Logs/LogRows.test.tsx:2288254498": [
+      [3, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Modal/Modal.test.tsx:4235780832": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:1906163280": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Slider/Slider.test.tsx:2110443485": [
+      [3, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Typeahead/PartialHighlighter.test.tsx:3831493850": [
+      [1, 31, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Typeahead/Typeahead.test.tsx:1026793168": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/components/Typeahead/TypeaheadInfo.test.tsx:3968135869": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:2551821825": [
+      [3, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:4145618392": [
+      [3, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/slate-plugins/runner.test.tsx:2165687770": [
+      [3, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:4138775391": [
+      [1, 18, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/CanvasSpanGraph.test.js:3515574241": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/GraphTicks.test.js:1837731860": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/Scrubber.test.js:1200884350": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/TickLabels.test.js:3094256278": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/ViewingLayer.test.js:2643658696": [
+      [14, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/index.test.js:4118842298": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/TracePageHeader.test.js:3669774385": [
+      [15, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:1298620967": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:793239444": [
+      [15, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:2288177454": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2545268168": [
+      [15, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:2454947085": [
+      [15, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2200354834": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianLogs.test.js:3242453659": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianReferences.test.js:3043344541": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianText.test.js:2881451220": [
+      [15, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/KeyValuesTable.test.js:2159985979": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/TextList.test.js:3713828679": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:3788127934": [
+      [17, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetailRow.test.js:1119974018": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:232429058": [
+      [14, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/Ticks.test.js:2626977087": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineCollapser.test.js:954294244": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:208811948": [
+      [15, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineHeaderRow.test.js:1197952226": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:3714128222": [
+      [15, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:2249890922": [
+      [14, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:4107025050": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/common/CopyIcon.test.js:3119664776": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/common/NewWindowIcon.test.js:3878561197": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/common/UiFindInput.test.js:2258975438": [
+      [15, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/jaeger-ui-components/src/url/ReferenceLink.test.js:830986413": [
+      [15, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/core/components/PageActionBar/PageActionBar.test.tsx:2111991019": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/core/components/QueryOperationRow/QueryOperationAction.test.tsx:1284778262": [
+      [2, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:4115956163": [
+      [2, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/core/components/Select/FolderPicker.test.tsx:3389713532": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/core/components/Select/MetricSelect.test.tsx:3409251428": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/alerting/AlertRuleList.test.tsx:1800339390": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/alerting/TestRuleResult.test.tsx:4118445705": [
+      [3, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/api-keys/ApiKeysAddedModal.test.tsx:3516294961": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:2934056165": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.test.tsx:2536713486": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:4134073823": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1141305288": [
+      [1, 35, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:1798654441": [
+      [1, 35, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderCorner.test.tsx:3293585799": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/datasources/DashboardsTable.test.tsx:1799076152": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/datasources/DataSourceDashboards.test.tsx:3705773301": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/datasources/DataSourcesListPage.test.tsx:1470540840": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/datasources/settings/BasicSettings.test.tsx:3867031406": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/datasources/settings/ButtonRow.test.tsx:1546608090": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:2556927610": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/ErrorContainer.test.tsx:2082593062": [
+      [2, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/Explore.test.tsx:1509039437": [
+      [11, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/ExploreDrawer.test.tsx:2094071178": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/LiveLogs.test.tsx:1667605379": [
+      [2, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/MetaInfoText.test.tsx:802018588": [
+      [1, 27, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistory.test.tsx:409631018": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx:689438177": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryContainer.test.tsx:396471778": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryQueriesTab.test.tsx:3436519226": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistorySettings.test.tsx:538589654": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3948011811": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/RunButton.test.tsx:138299098": [
+      [3, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/SecondaryActions.test.tsx:2096700362": [
+      [2, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/explore/TimeSyncButton.test.tsx:4230066214": [
+      [2, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/folders/FolderSettingsPage.test.tsx:1751147194": [
+      [2, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/org/OrgDetailsPage.test.tsx:2540662821": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/org/OrgProfile.test.tsx:4200739179": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/CreateTeam.test.tsx:262744099": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/TeamGroupSync.test.tsx:1549471437": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/TeamList.test.tsx:3009556824": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/TeamMemberRow.test.tsx:7032440": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/TeamMembers.test.tsx:3993436101": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/TeamPages.test.tsx:2493626076": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/teams/TeamSettings.test.tsx:2628968507": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/users/InviteesTable.test.tsx:2271264692": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/users/UsersActionBar.test.tsx:4031641375": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/users/UsersListPage.test.tsx:2523261097": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/features/users/UsersTable.test.tsx:3051231816": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/cloud-monitoring/components/Aggregation.test.tsx:2813729913": [
+      [2, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:2974837543": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:4272466995": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:1089831034": [
+      [1, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:2916632804": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/InsightsConfig.test.tsx:866257119": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:767000341": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:2608233977": [
+      [1, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:2337402520": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:1661240493": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:3844880066": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:1527527456": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2923116422": [
+      [1, 17, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:1231427": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
+    "public/app/plugins/panel/bargauge/BarGaugePanel.test.tsx:1206229922": [
+      [1, 31, 13, "RegExp match", "2409514259"]
+    ]
+  }`
+};

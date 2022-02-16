@@ -17,6 +17,7 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.deleteHandler))
 		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
 		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
+		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
 	})
 }
 
@@ -36,10 +37,6 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 
 func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if len(queryUID) == 0 {
-		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
-	}
-
 	if !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
@@ -60,6 +57,25 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 		Message: "Query deleted",
 		ID:      id,
 	})
+}
+
+func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response.Response {
+	queryUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(queryUID) {
+		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
+	}
+
+	cmd := PatchQueryCommentInQueryHistoryCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	query, err := s.PatchQueryCommentInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update comment of query in query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
 func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {

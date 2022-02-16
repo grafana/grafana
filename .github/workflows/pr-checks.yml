@@ -12,7 +12,8 @@ on:
     types:
       - milestoned
       - demilestoned
-
+concurrency:
+  group: pr-checks-${{ github.event.issue.number }}
 jobs:
   main:
     runs-on: ubuntu-latest

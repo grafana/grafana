@@ -7,7 +7,6 @@ package log
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,18 +16,20 @@ import (
 
 	gokitlog "github.com/go-kit/log"
 	"github.com/go-stack/stack"
-	"github.com/mattn/go-isatty"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/mattn/go-isatty"
+	"gopkg.in/ini.v1"
 )
 
-var loggersToClose []DisposableHandler
-var loggersToReload []ReloadableHandler
-var root *logManager
+var (
+	loggersToClose  []DisposableHandler
+	loggersToReload []ReloadableHandler
+	root            *logManager
+	now             = time.Now
+)
 
 const (
 	// top 7 calls in the stack are within logger
@@ -50,7 +51,7 @@ func init() {
 type logManager struct {
 	*ConcreteLogger
 	loggersByName map[string]*ConcreteLogger
-	logFilters    []LogWithFilters
+	logFilters    []logWithFilters
 	mutex         sync.RWMutex
 }
 
@@ -61,7 +62,7 @@ func newManager(logger gokitlog.Logger) *logManager {
 	}
 }
 
-func (lm *logManager) initialize(loggers []LogWithFilters) {
+func (lm *logManager) initialize(loggers []logWithFilters) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -70,7 +71,7 @@ func (lm *logManager) initialize(loggers []LogWithFilters) {
 		defaultLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)
 	}
 
-	lm.ConcreteLogger.SetLogger(&compositeLogger{loggers: defaultLoggers})
+	lm.ConcreteLogger.Swap(&compositeLogger{loggers: defaultLoggers})
 	lm.logFilters = loggers
 
 	loggersByName := []string{}
@@ -83,43 +84,27 @@ func (lm *logManager) initialize(loggers []LogWithFilters) {
 		ctxLoggers := make([]gokitlog.Logger, len(loggers))
 
 		for index, logger := range loggers {
+			ctxLogger := gokitlog.With(logger.val, lm.loggersByName[name].ctx...)
 			if filterLevel, exists := logger.filters[name]; !exists {
-				ctxLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)
+				ctxLoggers[index] = level.NewFilter(ctxLogger, logger.maxLevel)
 			} else {
-				ctxLoggers[index] = level.NewFilter(logger.val, filterLevel)
+				ctxLoggers[index] = level.NewFilter(ctxLogger, filterLevel)
 			}
 		}
 
-		lm.loggersByName[name].SetLogger(&compositeLogger{loggers: ctxLoggers})
+		lm.loggersByName[name].Swap(&compositeLogger{loggers: ctxLoggers})
 	}
-}
-
-func (lm *logManager) SetLogger(logger gokitlog.Logger) {
-	lm.ConcreteLogger.SetLogger(logger)
-}
-
-func (lm *logManager) GetLogger() gokitlog.Logger {
-	return lm.ConcreteLogger.GetLogger()
-}
-
-func (lm *logManager) Log(args ...interface{}) error {
-	lm.mutex.RLock()
-	defer lm.mutex.RUnlock()
-	if err := lm.ConcreteLogger.Log(args...); err != nil {
-		log.Println("Logging error", "error", err)
-	}
-
-	return nil
 }
 
 func (lm *logManager) New(ctx ...interface{}) *ConcreteLogger {
-	lm.mutex.Lock()
-	defer lm.mutex.Unlock()
 	if len(ctx) == 0 {
 		return lm.ConcreteLogger
 	}
 
-	loggerName, ok := ctx[0].(string)
+	lm.mutex.Lock()
+	defer lm.mutex.Unlock()
+
+	loggerName, ok := ctx[1].(string)
 	if !ok {
 		return lm.ConcreteLogger
 	}
@@ -128,10 +113,8 @@ func (lm *logManager) New(ctx ...interface{}) *ConcreteLogger {
 		return logger
 	}
 
-	ctx = append([]interface{}{"logger"}, ctx...)
-
 	if len(lm.logFilters) == 0 {
-		ctxLogger := newConcreteLogger(lm.logger, ctx...)
+		ctxLogger := newConcreteLogger(&lm.SwapLogger, ctx...)
 		lm.loggersByName[loggerName] = ctxLogger
 		return ctxLogger
 	}
@@ -154,34 +137,28 @@ func (lm *logManager) New(ctx ...interface{}) *ConcreteLogger {
 }
 
 type ConcreteLogger struct {
-	ctx    []interface{}
-	logger gokitlog.Logger
-	mutex  sync.RWMutex
+	ctx []interface{}
+	gokitlog.SwapLogger
 }
 
 func newConcreteLogger(logger gokitlog.Logger, ctx ...interface{}) *ConcreteLogger {
+	var swapLogger gokitlog.SwapLogger
+
 	if len(ctx) == 0 {
 		ctx = []interface{}{}
+		swapLogger.Swap(logger)
 	} else {
-		logger = gokitlog.With(logger, ctx...)
+		swapLogger.Swap(gokitlog.With(logger, ctx...))
 	}
 
 	return &ConcreteLogger{
-		ctx:    ctx,
-		logger: logger,
+		ctx:        ctx,
+		SwapLogger: swapLogger,
 	}
 }
 
-func (cl *ConcreteLogger) SetLogger(logger gokitlog.Logger) {
-	cl.mutex.Lock()
-	cl.logger = gokitlog.With(logger, cl.ctx...)
-	cl.mutex.Unlock()
-}
-
-func (cl *ConcreteLogger) GetLogger() gokitlog.Logger {
-	cl.mutex.Lock()
-	defer cl.mutex.Unlock()
-	return cl.logger
+func (cl ConcreteLogger) GetLogger() gokitlog.Logger {
+	return &cl.SwapLogger
 }
 
 func (cl *ConcreteLogger) Warn(msg string, args ...interface{}) {
@@ -189,7 +166,6 @@ func (cl *ConcreteLogger) Warn(msg string, args ...interface{}) {
 }
 
 func (cl *ConcreteLogger) Debug(msg string, args ...interface{}) {
-	// args = append([]interface{}{level.Key(), level.DebugValue(), "msg", msg}, args...)
 	_ = cl.log(msg, level.DebugValue(), args...)
 }
 
@@ -202,19 +178,10 @@ func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
 }
 
 func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
-	cl.mutex.RLock()
-	logger := gokitlog.With(cl.logger, "t", gokitlog.TimestampFormat(time.Now, "2006-01-02T15:04:05.99-0700"))
-	cl.mutex.RUnlock()
-
+	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, "2006-01-02T15:04:05.99-0700"))
 	args = append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)
 
 	return logger.Log(args...)
-}
-
-func (cl *ConcreteLogger) Log(keyvals ...interface{}) error {
-	cl.mutex.RLock()
-	defer cl.mutex.RUnlock()
-	return cl.logger.Log(keyvals...)
 }
 
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
@@ -222,35 +189,16 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 		root.New()
 	}
 
-	keyvals := []interface{}{}
-
-	if len(cl.ctx)%2 == 1 {
-		cl.ctx = append(cl.ctx, nil)
-	}
-
-	for i := 0; i < len(cl.ctx); i += 2 {
-		k, v := cl.ctx[i], cl.ctx[i+1]
-
-		if k == "logger" {
-			continue
-		}
-
-		keyvals = append(keyvals, k, v)
-	}
-
-	keyvals = append(keyvals, ctx...)
-
-	return root.New(keyvals...)
+	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
 }
 
 func New(ctx ...interface{}) *ConcreteLogger {
-	return root.New(ctx...)
-}
+	if len(ctx) == 0 {
+		return root.New()
+	}
 
-type LogWithFilters struct {
-	val      gokitlog.Logger
-	filters  map[string]level.Option
-	maxLevel level.Option
+	ctx = append([]interface{}{"logger"}, ctx...)
+	return root.New(ctx...)
 }
 
 func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) *ConcreteLogger {
@@ -258,7 +206,7 @@ func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface
 		return ctxLogger
 	}
 
-	ctxLogger.logger = withFunc(ctxLogger.logger, ctx...)
+	ctxLogger.Swap(withFunc(ctxLogger.GetLogger(), ctx...))
 	return ctxLogger
 }
 
@@ -303,7 +251,16 @@ func getLogLevelFromString(levelName string) level.Option {
 func getFilters(filterStrArray []string) map[string]level.Option {
 	filterMap := make(map[string]level.Option)
 
-	for _, filterStr := range filterStrArray {
+	for i := 0; i < len(filterStrArray); i++ {
+		filterStr := strings.TrimSpace(filterStrArray[i])
+
+		if strings.HasPrefix(filterStr, ";") || strings.HasPrefix(filterStr, "#") {
+			if len(filterStr) == 1 {
+				i++
+			}
+			continue
+		}
+
 		parts := strings.Split(filterStr, ":")
 		if len(parts) > 1 {
 			filterMap[parts[0]] = getLogLevelFromString(parts[1])
@@ -384,6 +341,12 @@ func Reload() error {
 	return nil
 }
 
+type logWithFilters struct {
+	val      gokitlog.Logger
+	filters  map[string]level.Option
+	maxLevel level.Option
+}
+
 func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	if err := Close(); err != nil {
 		return err
@@ -392,7 +355,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
-	var configLoggers []LogWithFilters
+	var configLoggers []logWithFilters
 	for _, mode := range modes {
 		mode = strings.TrimSpace(mode)
 		sec, err := cfg.GetSection("log." + mode)
@@ -407,7 +370,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 		format := getLogFormat(sec.Key("format").MustString(""))
 
-		var handler LogWithFilters
+		var handler logWithFilters
 
 		switch mode {
 		case "console":

@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { mount } from 'enzyme';
-import UIElementsContext, { UIPopover } from '../uiElementsContext';
+import { Popover } from '../common/Popover';
 
 import SpanBar from './SpanBar';
 
@@ -74,11 +74,7 @@ describe('<SpanBar>', () => {
   };
 
   it('renders without exploding', () => {
-    const wrapper = mount(
-      <UIElementsContext.Provider value={{ Popover: () => '' }}>
-        <SpanBar {...props} />
-      </UIElementsContext.Provider>
-    );
+    const wrapper = mount(<SpanBar {...props} />);
     expect(wrapper).toBeDefined();
     const { onMouseOver, onMouseLeave } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
     const labelElm = wrapper.find('[data-test-id="SpanBar--label"]');
@@ -91,11 +87,7 @@ describe('<SpanBar>', () => {
 
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
-    const wrapper = mount(
-      <UIElementsContext.Provider value={{ Popover: () => '' }}>
-        <SpanBar {...props} />
-      </UIElementsContext.Provider>
-    );
-    expect(wrapper.find(UIPopover).length).toEqual(2);
+    const wrapper = mount(<SpanBar {...props} />);
+    expect(wrapper.find(Popover).length).toEqual(2);
   });
 });

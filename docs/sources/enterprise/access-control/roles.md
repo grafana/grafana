@@ -7,7 +7,7 @@ weight = 105
 
 # Roles
 
-A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [Permissions]({{< relref "./permissions.md" >}}) to understand how permissions work.
+A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) to understand how permissions work.
 
 There are two types of roles:
 
@@ -81,7 +81,7 @@ Note that you won't be able to create, update or delete a custom role with permi
 
 ## Assign roles
 
-[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) and to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
+[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, the existing [Organization roles]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#organization-users-and-permissions" >}}) and to the [Grafana Server Admin]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#grafana-server-administrators" >}}) role.
 
 Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for more details.
 
