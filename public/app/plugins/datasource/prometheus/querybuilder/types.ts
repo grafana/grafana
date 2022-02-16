@@ -1,5 +1,5 @@
 import { CoreApp } from '@grafana/data';
-import { PromQuery } from '../types';
+import { LegendFormatMode, PromQuery } from '../types';
 import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryEditorMode } from './shared/types';
 
@@ -69,7 +69,7 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
   }
 
   if (query.expr == null) {
-    result = { ...result, expr: '' };
+    result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
   }
 
   // Default to range query
@@ -78,12 +78,8 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
   }
 
   // In explore we default to both instant & range
-  if (query.instant == null && query.range == null) {
-    if (app === CoreApp.Explore) {
-      result = { ...result, instant: true };
-    } else {
-      result = { ...result, instant: false, range: true };
-    }
+  if (query.instant == null && app === CoreApp.Explore) {
+    result = { ...result, instant: true };
   }
 
   return result;
