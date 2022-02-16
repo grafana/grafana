@@ -20,6 +20,7 @@ import { prepareTimeseriesTransformerRegistryItem } from '../components/Transfor
 import { convertFieldTypeTransformRegistryItem } from '../components/TransformersUI/ConvertFieldTypeTransformerEditor';
 import { fieldLookupTransformRegistryItem } from '../components/TransformersUI/lookupGazetteer/FieldLookupTransformerEditor';
 import { extractFieldsTransformRegistryItem } from '../components/TransformersUI/extractFields/ExtractFieldsTransformerEditor';
+import { heatmapTransformRegistryItem } from '../components/TransformersUI/calculateHeatmap/HeatmapTransformerEditor';
 import { spatialTransformRegistryItem } from '../components/TransformersUI/spatial/SpatialTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
@@ -46,5 +47,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     spatialTransformRegistryItem,
     fieldLookupTransformRegistryItem,
     extractFieldsTransformRegistryItem,
+    heatmapTransformRegistryItem,
   ];
 };
