@@ -9,7 +9,9 @@ import (
 )
 
 // ResourceFilter checks if a given a uid (resource identifier) check if we have the requested permission
-type ResourceFilter func(uid string) bool
+type ResourceFilter interface {
+	check(uid string) bool
+}
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
@@ -61,14 +63,16 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser)
 		uids = append(uids, rows[i].UID)
 	}
 
-	return uidFilter{uids: uids}.filter, err
+	return &uidFilter{
+		uids: uids,
+	}, err
 }
 
 type uidFilter struct {
 	uids []string
 }
 
-func (f *uidFilter) filter(uid string) bool {
+func (f *uidFilter) check(uid string) bool {
 	for _, u := range f.uids {
 		if u == uid {
 			return true
@@ -76,12 +80,4 @@ func (f *uidFilter) filter(uid string) bool {
 	}
 
 	return false
-}
-
-func alwaysTrueFilter(uid string) bool {
-	return true
-}
-
-func alwaysFalseFilter(uid string) bool {
-	return true
 }
