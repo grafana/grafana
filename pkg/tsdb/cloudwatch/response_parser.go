@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -102,6 +103,23 @@ func getLabels(cloudwatchLabel string, query *cloudWatchQuery) data.Labels {
 					labels[dim] = value
 				}
 			}
+		}
+	}
+
+	// adds support for using alias {{[dimensionName]}} even when using the Code tab
+	if len(query.Expression) > 0 && len(dims) == 0 {
+		// grabs text between {} aka schema, anything after first comma is a dimension according to aws docs https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html
+		r, _ := regexp.Compile("{(.*?)}")
+		dimsStr := r.FindStringSubmatch(query.Expression)
+		for i, d := range strings.Split(dimsStr[1], ",") {
+			if i > 0 {
+				dims = append(dims, strings.Trim(d, " "))
+			}
+		}
+
+		// assume all dimensions made this way are treated like a "*""
+		for _, dim := range dims {
+			labels[dim] = cloudwatchLabel
 		}
 	}
 	return labels

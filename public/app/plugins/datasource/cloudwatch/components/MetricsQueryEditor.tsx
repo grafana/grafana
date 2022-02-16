@@ -101,7 +101,15 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
               <MathExpressionQueryField
                 onRunQuery={onRunQuery}
                 expression={query.expression ?? ''}
-                onChange={(expression) => this.props.onChange({ ...query, expression })}
+                onChange={(expression) =>
+                  this.props.onChange({
+                    ...query,
+                    namespace: '',
+                    metricName: '',
+                    dimensions: {},
+                    expression,
+                  })
+                }
                 datasource={datasource}
               ></MathExpressionQueryField>
             )}
