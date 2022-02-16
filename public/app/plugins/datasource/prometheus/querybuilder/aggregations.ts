@@ -17,6 +17,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation('max'),
     ...createAggregationOperation('count'),
     ...createAggregationOperation('topk'),
+    ...createAggregationOperation('bottomk'),
     createAggregationOverTime('sum'),
     createAggregationOverTime('avg'),
     createAggregationOverTime('min'),
@@ -73,7 +74,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
   ];
 
   // Handle some special aggregations that have parameters
-  if (name === 'topk') {
+  if (name === 'topk' || name === 'bottomk') {
     const param: QueryBuilderOperationParamDef = {
       name: 'K-value',
       type: 'number',

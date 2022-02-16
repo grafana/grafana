@@ -1,4 +1,3 @@
-import { defaultPadding } from 'ol/render/canvas';
 import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   defaultAddOperationHandler,
@@ -110,10 +109,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createFunction({
       id: PromOperationId.Atanh,
       category: PromVisualQueryOperationCategory.Trigonometric,
-    }),
-    createFunction({
-      id: PromOperationId.BottomK,
-      category: PromVisualQueryOperationCategory.Aggregations,
     }),
     createFunction({ id: PromOperationId.Ceil }),
     createFunction({
