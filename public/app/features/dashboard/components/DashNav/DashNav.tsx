@@ -152,6 +152,26 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
+    if (dashboard.uid && config.featureToggles.dashboardComments) {
+      buttons.push(
+        <ModalsController key="button-dashboard-comments">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip="Show dashboard comments"
+              icon="comment-alt-message"
+              iconSize="lg"
+              onClick={() => {
+                showModal(DashboardCommentsModal, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
     this.addCustomContent(customLeftActions, buttons);
     return buttons;
   }
@@ -206,25 +226,6 @@ class DashNav extends PureComponent<Props> {
               icon="save"
               onClick={() => {
                 showModal(SaveDashboardModalProxy, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      );
-    }
-
-    if (dashboard.uid && config.featureToggles.dashboardComments) {
-      buttons.push(
-        <ModalsController key="button-chat">
-          {({ showModal, hideModal }) => (
-            <ToolbarButton
-              tooltip="Show dashboard comments"
-              icon="chat"
-              onClick={() => {
-                showModal(DashboardCommentsModal, {
                   dashboard,
                   onDismiss: hideModal,
                 });
