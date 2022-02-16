@@ -13,6 +13,50 @@ func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", ss.SavePreferences)
+	bus.AddHandler("sql", ss.GetNavbarPreferences)
+	bus.AddHandler("sql", ss.GetNavbarPreferencesWithDefaults)
+	bus.AddHandler("sql", ss.SaveNavbarPreferences)
+}
+
+func (ss *SQLStore) GetNavbarPreferencesWithDefaults(ctx context.Context, query *models.GetNavbarPreferencesWithDefaultsQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		params := make([]interface{}, 0)
+		filter := ""
+
+		if len(query.User.Teams) > 0 {
+			filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.User.Teams)-1) + ")) OR "
+			params = append(params, query.User.OrgId)
+			for _, v := range query.User.Teams {
+				params = append(params, v)
+			}
+		}
+
+		filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
+		params = append(params, query.User.OrgId)
+		params = append(params, query.User.UserId)
+		params = append(params, query.User.OrgId)
+		prefs := make([]*models.Preferences, 0)
+		err := dbSession.Where(filter, params...).
+			OrderBy("user_id ASC, team_id ASC").
+			Find(&prefs)
+
+		if err != nil {
+			return err
+		}
+
+		res := &models.Preferences{
+			NavbarPreferences: nil,
+		}
+
+		for _, p := range prefs {
+			if p.NavbarPreferences != nil {
+				res.NavbarPreferences = p.NavbarPreferences
+			}
+		}
+
+		query.Result = res
+		return nil
+	})
 }
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
@@ -42,11 +86,10 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 		}
 
 		res := &models.Preferences{
-			Theme:             ss.Cfg.DefaultTheme,
-			Timezone:          ss.Cfg.DateFormats.DefaultTimezone,
-			WeekStart:         ss.Cfg.DateFormats.DefaultWeekStart,
-			HomeDashboardId:   0,
-			NavbarPreferences: nil,
+			Theme:           ss.Cfg.DefaultTheme,
+			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
+			WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
+			HomeDashboardId: 0,
 		}
 
 		for _, p := range prefs {
@@ -62,12 +105,28 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 			if p.HomeDashboardId != 0 {
 				res.HomeDashboardId = p.HomeDashboardId
 			}
-			if p.NavbarPreferences != nil {
-				res.NavbarPreferences = p.NavbarPreferences
-			}
 		}
 
 		query.Result = res
+		return nil
+	})
+}
+
+func (ss *SQLStore) GetNavbarPreferences(ctx context.Context, query *models.GetNavbarPreferencesQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		var prefs models.Preferences
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
+
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			query.Result = &prefs
+		} else {
+			query.Result = new(models.Preferences)
+		}
+
 		return nil
 	})
 }
@@ -101,16 +160,15 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 
 		if !exists {
 			prefs = models.Preferences{
-				UserId:            cmd.UserId,
-				OrgId:             cmd.OrgId,
-				TeamId:            cmd.TeamId,
-				HomeDashboardId:   cmd.HomeDashboardId,
-				Timezone:          cmd.Timezone,
-				WeekStart:         cmd.WeekStart,
-				Theme:             cmd.Theme,
-				Created:           time.Now(),
-				Updated:           time.Now(),
-				NavbarPreferences: cmd.NavbarPreferences,
+				UserId:          cmd.UserId,
+				OrgId:           cmd.OrgId,
+				TeamId:          cmd.TeamId,
+				HomeDashboardId: cmd.HomeDashboardId,
+				Timezone:        cmd.Timezone,
+				WeekStart:       cmd.WeekStart,
+				Theme:           cmd.Theme,
+				Created:         time.Now(),
+				Updated:         time.Now(),
 			}
 			_, err = sess.Insert(&prefs)
 			return err
@@ -120,8 +178,30 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()
-		prefs.NavbarPreferences = cmd.NavbarPreferences
 		prefs.Version += 1
+		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
+		return err
+	})
+}
+
+func (ss *SQLStore) SaveNavbarPreferences(ctx context.Context, cmd *models.SaveNavbarPreferencesCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		var prefs models.Preferences
+		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			prefs = models.Preferences{
+				UserId:            cmd.UserId,
+				OrgId:             cmd.OrgId,
+				NavbarPreferences: cmd.NavbarPreferences,
+			}
+			_, err = sess.Insert(&prefs)
+			return err
+		}
+		prefs.NavbarPreferences = cmd.NavbarPreferences
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
 		return err
 	})

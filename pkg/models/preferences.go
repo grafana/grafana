@@ -16,9 +16,9 @@ type Preferences struct {
 	Timezone          string
 	WeekStart         string
 	Theme             string
-	NavbarPreferences *simplejson.Json
 	Created           time.Time
 	Updated           time.Time
+	NavbarPreferences *simplejson.Json
 }
 
 // ---------------------
@@ -29,6 +29,21 @@ type GetPreferencesQuery struct {
 	OrgId  int64
 	UserId int64
 	TeamId int64
+
+	Result *Preferences
+}
+
+type GetNavbarPreferencesQuery struct {
+	Id     int64
+	OrgId  int64
+	UserId int64
+	TeamId int64
+
+	Result *Preferences
+}
+
+type GetNavbarPreferencesWithDefaultsQuery struct {
+	User *SignedInUser
 
 	Result *Preferences
 }
@@ -46,9 +61,16 @@ type SavePreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	HomeDashboardId   int64            `json:"homeDashboardId"`
-	Timezone          string           `json:"timezone"`
-	WeekStart         string           `json:"weekStart"`
-	Theme             string           `json:"theme"`
+	HomeDashboardId int64  `json:"homeDashboardId"`
+	Timezone        string `json:"timezone"`
+	WeekStart       string `json:"weekStart"`
+	Theme           string `json:"theme"`
+}
+
+type SaveNavbarPreferencesCommand struct {
+	UserId int64
+	OrgId  int64
+	TeamId int64
+
 	NavbarPreferences *simplejson.Json `json:"navbarPreferences"`
 }
