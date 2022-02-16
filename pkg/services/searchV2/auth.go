@@ -21,7 +21,7 @@ type simpleSQLAuthService struct {
 }
 
 type dashIdQueryResult struct {
-	Id int64
+	UID string `xorm:"uid"`
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
@@ -39,12 +39,10 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser)
 	rows := make([]*dashIdQueryResult, 0)
 
 	err := a.sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-
 		sql, params := filter.Where()
-
 		sess.Table("dashboard").
 			Where(sql, params...).
-			Cols("id")
+			Cols("uid")
 
 		err := sess.Find(&rows)
 		if err != nil {
@@ -58,23 +56,26 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser)
 		return nil, err
 	}
 
-	var ids []int64
+	var uids []string
 	for i := 0; i < len(rows); i++ {
-		ids = append(ids, rows[i].Id)
+		uids = append(uids, rows[i].UID)
 	}
 
-	idFi := idFilter{ids: ids}
-
-	return idFi.filter, err
+	return uidFilter{uids: uids}.filter, err
 }
 
-type idFilter struct {
-	ids []int64
+type uidFilter struct {
+	uids []string
 }
 
-func (f *idFilter) filter(uid string) bool {
+func (f *uidFilter) filter(uid string) bool {
+	for _, u := range f.uids {
+		if u == uid {
+			return true
+		}
+	}
 
-	return true
+	return false
 }
 
 func alwaysTrueFilter(uid string) bool {
