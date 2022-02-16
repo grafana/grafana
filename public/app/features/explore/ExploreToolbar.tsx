@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
-import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
+import { DataFrame, DataQuery, DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -71,6 +71,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       containerWidth,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
+      queries,
+      mainVisualization,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
@@ -128,7 +130,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             />
           )}
 
-          <AddToDashboardButton exploreId={exploreId} />
+          <AddToDashboardButton queries={queries} visualization={mainVisualization} />
 
           <RunButton
             refreshInterval={refreshInterval}
@@ -163,11 +165,47 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   }
 }
 
+const isActive = (query: DataQuery) => !query.hide;
+const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
+
+const getMainVisualization = (
+  queries: DataQuery[],
+  graphFrames: DataFrame[],
+  logsFrames: DataFrame[],
+  nodeGraphFrames: DataFrame[]
+) => {
+  for (const { refId } of queries.filter(isActive)) {
+    // traceview is not supported in dashboards, skipping it for now.
+    const hasQueryRefId = hasRefId(refId);
+    if (graphFrames?.some(hasQueryRefId)) {
+      return 'timeseries';
+    }
+    if (logsFrames?.some(hasQueryRefId)) {
+      return 'logs';
+    }
+    if (nodeGraphFrames?.some(hasQueryRefId)) {
+      return 'nodeGraph';
+    }
+  }
+
+  return 'table';
+};
+
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const { syncedTimes } = state.explore;
-  const exploreItem: ExploreItemState = state.explore[exploreId]!;
-  const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
-    exploreItem;
+  const exploreItem = state.explore[exploreId]!;
+  const {
+    datasourceInstance,
+    datasourceMissing,
+    range,
+    refreshInterval,
+    loading,
+    isLive,
+    isPaused,
+    containerWidth,
+    queries,
+    queryResponse: { graphFrames, logsFrames, nodeGraphFrames },
+  } = exploreItem;
 
   const hasLiveOption = !!datasourceInstance?.meta?.streaming;
 
@@ -185,6 +223,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
+    queries,
+    mainVisualization: getMainVisualization(queries, graphFrames, logsFrames, nodeGraphFrames),
   };
 };
 

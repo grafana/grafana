@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ToolbarButton } from '@grafana/ui';
 import { AddToDashboardModal } from './AddToDashboardModal';
-import { ExploreId } from 'app/types';
+import { DataQuery } from '@grafana/data';
 
 interface Props {
-  exploreId: ExploreId;
+  queries: DataQuery[];
+  visualization: string;
 }
-export const AddToDashboardButton = ({ exploreId }: Props) => {
+export const AddToDashboardButton = ({ queries, visualization }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -15,7 +16,9 @@ export const AddToDashboardButton = ({ exploreId }: Props) => {
         Add to Dashboard
       </ToolbarButton>
 
-      {isOpen && <AddToDashboardModal onClose={() => setIsOpen(false)} exploreId={exploreId} />}
+      {isOpen && (
+        <AddToDashboardModal onClose={() => setIsOpen(false)} queries={queries} visualization={visualization} />
+      )}
     </>
   );
 };

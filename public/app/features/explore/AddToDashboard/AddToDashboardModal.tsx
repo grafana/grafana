@@ -1,15 +1,14 @@
-import { SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, Field, Input, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { DashboardPicker } from 'app/core/components/editors/DashboardPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { ExploreId } from 'app/types';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import React, { useState } from 'react';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
-import { SaveToExistingDashboardDTO, SaveToNewDashboardDTO, useAddToDashboard } from '../hooks/useAddToDashboard';
+import { addToDashboard, SaveToExistingDashboardDTO, SaveToNewDashboardDTO } from './addToDashboard';
 
 const isSaveToNewDashboard = (
   errors: DeepMap<FormDTO, FieldError>,
@@ -27,14 +26,15 @@ type FormDTO = SaveToExistingDashboardDTO | SaveToNewDashboardDTO;
 
 interface Props {
   onClose: () => void;
-  exploreId: ExploreId;
+  queries: DataQuery[];
+  visualization: string;
 }
 
 function withRedirect<T extends any[]>(fn: (...args: T) => Promise<string>) {
   return async (...args: T) => locationService.push(await fn(...args));
 }
 
-export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
+export const AddToDashboardModal = ({ onClose, queries, visualization }: Props) => {
   const [saveTarget, setSaveTarget] = useState<SaveTarget>('new');
   const dispatch = useDispatch();
   const {
@@ -43,14 +43,14 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO>();
-
-  const execute = useAddToDashboard(exploreId);
+  } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
 
   const onSubmit = async (data: FormDTO) => {
     try {
-      const res = await execute(data);
+      const res = await addToDashboard(data);
+      dispatch(notifyApp(createSuccessNotification('dashboard created')));
       onClose();
+
       return res.data.url;
     } catch (error) {
       switch (error.data.status) {
@@ -77,6 +77,9 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
       <RadioButtonGroup options={options} fullWidth value={saveTarget} onChange={setSaveTarget} />
 
       <form>
+        <input type="hidden" {...register('queries')} />
+        <input type="hidden" {...register('visualization')} />
+
         {isSaveToNewDashboard(errors, saveTarget) ? (
           <>
             <Field label="Dashboard name" error={errors.dashboardName?.message} invalid={!!errors.dashboardName}>
