@@ -135,6 +135,7 @@ type HTTPServer struct {
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
 	DatasourcePermissionsService DatasourcePermissionsService
+	AlertNotificationService     *alerting.AlertNotificationService
 }
 
 type ServerOptions struct {
@@ -162,8 +163,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
-	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService, dashboardProvisioningService dashboards.DashboardProvisioningService,
-	folderService dashboards.FolderService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
+	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
+	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
+	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
+) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -228,6 +231,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
+		AlertNotificationService:     alertNotificationService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
