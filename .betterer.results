@@ -11,9 +11,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/BigValue/BigValue.test.tsx:261212211": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/CallToActionCard/CallToActionCard.test.tsx:2771878691": [
-      [1, 18, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:1355456933": [
       [1, 31, 13, "RegExp match", "2409514259"]
     ],
