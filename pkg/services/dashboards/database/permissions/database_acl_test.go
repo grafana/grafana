@@ -1,11 +1,16 @@
 //go:build integration
 // +build integration
 
-package sqlstore
+package permissions
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -13,20 +18,22 @@ import (
 )
 
 func TestDashboardAclDataAccess(t *testing.T) {
-	var sqlStore *SQLStore
+	var sqlStore *sqlstore.SQLStore
 	var currentUser models.User
 	var savedFolder, childDash *models.Dashboard
+	var dashboardStore *database.DashboardStore
 
 	setup := func(t *testing.T) {
-		sqlStore = InitTestDB(t)
+		sqlStore = sqlstore.InitTestDB(t)
+		dashboardStore = database.ProvideDashboardStore(sqlStore)
 		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
-		savedFolder = insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
-		childDash = insertTestDashboard(t, sqlStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
+		childDash = insertTestDashboard(t, dashboardStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 	}
 
 	t.Run("Dashboard permission with userId and teamId set to 0", func(t *testing.T) {
 		setup(t)
-		err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+		err := updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 			OrgID:       1,
 			DashboardID: savedFolder.Id,
 			Permission:  models.PERMISSION_EDIT,
@@ -70,7 +77,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 	t.Run("Folder with removed default permissions returns no acl items", func(t *testing.T) {
 		setup(t)
-		err := sqlStore.UpdateDashboardACL(context.Background(), savedFolder.Id, nil)
+		err := dashboardStore.UpdateDashboardACL(context.Background(), savedFolder.Id, nil)
 		require.Nil(t, err)
 
 		query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
@@ -84,7 +91,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 		t.Run("Given dashboard folder permission", func(t *testing.T) {
 			setup(t)
-			err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+			err := updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 				OrgID:       1,
 				UserID:      currentUser.Id,
 				DashboardID: savedFolder.Id,
@@ -103,7 +110,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			t.Run("Given child dashboard permission", func(t *testing.T) {
-				err := testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
+				err := updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
 					OrgID:       1,
 					UserID:      currentUser.Id,
 					DashboardID: childDash.Id,
@@ -128,7 +135,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 		t.Run("Reading dashboard acl should include default acl for parent folder and the child acl", func(t *testing.T) {
 			setup(t)
-			err := testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
+			err := updateDashboardAcl(t, dashboardStore, childDash.Id, models.DashboardAcl{
 				OrgID:       1,
 				UserID:      currentUser.Id,
 				DashboardID: childDash.Id,
@@ -155,7 +162,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 		t.Run("Add and delete dashboard permission", func(t *testing.T) {
 			setup(t)
-			err := testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+			err := updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 				OrgID:       1,
 				UserID:      currentUser.Id,
 				DashboardID: savedFolder.Id,
@@ -174,7 +181,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			require.Equal(t, currentUser.Login, q1.Result[0].UserLogin)
 			require.Equal(t, currentUser.Email, q1.Result[0].UserEmail)
 
-			err = testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id)
+			err = updateDashboardAcl(t, dashboardStore, savedFolder.Id)
 			require.Nil(t, err)
 
 			q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
@@ -188,7 +195,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 
-			err = testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+			err = updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 				OrgID:       1,
 				TeamID:      team1.Id,
 				DashboardID: savedFolder.Id,
@@ -208,7 +215,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			setup(t)
 			team1, err := sqlStore.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
-			err = testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
+			err = updateDashboardAcl(t, dashboardStore, savedFolder.Id, models.DashboardAcl{
 				OrgID:       1,
 				TeamID:      team1.Id,
 				DashboardID: savedFolder.Id,
@@ -229,7 +236,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 	t.Run("Default permissions for root folder dashboards", func(t *testing.T) {
 		setup(t)
 		var rootFolderId int64 = 0
-		sqlStore := InitTestDB(t)
+		sqlStore := sqlstore.InitTestDB(t)
 
 		query := models.GetDashboardAclInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
 
@@ -245,4 +252,55 @@ func TestDashboardAclDataAccess(t *testing.T) {
 		require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
 		require.False(t, query.Result[1].Inherited)
 	})
+}
+
+func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) models.User {
+	t.Helper()
+	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = 1
+	setting.AutoAssignOrgRole = role
+	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
+	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
+	require.NoError(t, err)
+	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
+	err = sqlStore.GetUserOrgList(context.Background(), &q1)
+	require.NoError(t, err)
+	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
+	return *currentUser
+}
+
+func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+	cmd := models.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+	dash, err := dashboardStore.SaveDashboard(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
+	return dash
+}
+
+func updateDashboardAcl(t *testing.T, dashboardStore *database.DashboardStore, dashboardID int64,
+	items ...models.DashboardAcl) error {
+	t.Helper()
+
+	var itemPtrs []*models.DashboardAcl
+	for _, it := range items {
+		item := it
+		item.Created = time.Now()
+		item.Updated = time.Now()
+		itemPtrs = append(itemPtrs, &item)
+	}
+
+	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
 }
