@@ -56,51 +56,78 @@ func parseJSON(buf io.ReadCloser) (Response, error) {
 func transformRows(rows []Row, query Query) data.Frames {
 	frames := data.Frames{}
 	for _, row := range rows {
-		for colIndex, column := range row.Columns {
-			if column == "time" {
-				continue
-			}
+		var hasTimeCol = false
 
-			var timeArray []time.Time
-			var floatArray []*float64
-			var stringArray []string
-			var boolArray []bool
-			valType := typeof(row.Values[0][colIndex])
-			name := formatFrameName(row, column, query)
+		for _, column := range row.Columns {
+			if column == "time" {
+				hasTimeCol = true
+			}
+		}
+
+		if !hasTimeCol {
+			var values []string
 
 			for _, valuePair := range row.Values {
-				timestamp, timestampErr := parseTimestamp(valuePair[0])
-				// we only add this row if the timestamp is valid
-				if timestampErr == nil {
-					timeArray = append(timeArray, timestamp)
-					if valType == "string" {
-						value := valuePair[colIndex].(string)
-						stringArray = append(stringArray, value)
-					} else if valType == "json.Number" {
-						value := parseNumber(valuePair[colIndex])
-						floatArray = append(floatArray, value)
-					} else if valType == "bool" {
-						value := valuePair[colIndex].(bool)
-						boolArray = append(boolArray, value)
+				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+					if len(valuePair) >= 2 {
+						values = append(values, valuePair[1].(string))
+					}
+				} else {
+					if len(valuePair) >= 1 {
+						values = append(values, valuePair[0].(string))
 					}
 				}
 			}
 
-			if valType == "string" {
-				timeField := data.NewField("time", nil, timeArray)
-				valueField := data.NewField("value", row.Tags, stringArray)
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-			} else if valType == "json.Number" {
-				timeField := data.NewField("time", nil, timeArray)
-				valueField := data.NewField("value", row.Tags, floatArray)
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-			} else if valType == "bool" {
-				timeField := data.NewField("time", nil, timeArray)
-				valueField := data.NewField("value", row.Tags, boolArray)
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-				frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+			field := data.NewField("value", nil, values)
+			frames = append(frames, data.NewFrame(row.Name, field))
+		} else {
+			for colIndex, column := range row.Columns {
+				if column == "time" {
+					continue
+				}
+
+				var timeArray []time.Time
+				var floatArray []*float64
+				var stringArray []string
+				var boolArray []bool
+				valType := typeof(row.Values[0][colIndex])
+				name := formatFrameName(row, column, query)
+
+				for _, valuePair := range row.Values {
+					timestamp, timestampErr := parseTimestamp(valuePair[0])
+					// we only add this row if the timestamp is valid
+					if timestampErr == nil {
+						timeArray = append(timeArray, timestamp)
+						if valType == "string" {
+							value := valuePair[colIndex].(string)
+							stringArray = append(stringArray, value)
+						} else if valType == "json.Number" {
+							value := parseNumber(valuePair[colIndex])
+							floatArray = append(floatArray, value)
+						} else if valType == "bool" {
+							value := valuePair[colIndex].(bool)
+							boolArray = append(boolArray, value)
+						}
+					}
+				}
+
+				if valType == "string" {
+					timeField := data.NewField("time", nil, timeArray)
+					valueField := data.NewField("value", row.Tags, stringArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "json.Number" {
+					timeField := data.NewField("time", nil, timeArray)
+					valueField := data.NewField("value", row.Tags, floatArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "bool" {
+					timeField := data.NewField("time", nil, timeArray)
+					valueField := data.NewField("value", row.Tags, boolArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				}
 			}
 		}
 	}

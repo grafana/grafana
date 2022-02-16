@@ -2,6 +2,7 @@ import React, { FormEvent } from 'react';
 import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { Stack } from '@grafana/experimental';
 
 interface Props {
   className?: string;
@@ -20,17 +21,19 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString, q
   return (
     <div className={className}>
       <Label>
-        <Tooltip
-          content={
-            <div>
-              Filter alerts using label querying, ex:
-              <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-            </div>
-          }
-        >
-          <Icon className={styles.icon} name="info-circle" size="xs" />
-        </Tooltip>
-        Search by label
+        <Stack gap={0.5}>
+          <span>Search by label</span>
+          <Tooltip
+            content={
+              <div>
+                Filter alerts using label querying, ex:
+                <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+              </div>
+            }
+          >
+            <Icon className={styles.icon} name="info-circle" size="sm" />
+          </Tooltip>
+        </Stack>
       </Label>
       <Input
         placeholder="Search"

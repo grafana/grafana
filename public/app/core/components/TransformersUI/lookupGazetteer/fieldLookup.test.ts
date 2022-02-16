@@ -101,6 +101,7 @@ describe('Lookup gazetteer', () => {
           "name": "values",
           "state": Object {
             "displayName": "values",
+            "multipleFrames": false,
           },
           "type": "number",
           "values": Array [
