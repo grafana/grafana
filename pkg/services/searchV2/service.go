@@ -41,11 +41,6 @@ type dashMeta struct {
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	if user == nil || user.Role != string(models.ROLE_ADMIN) {
-		rsp.Error = fmt.Errorf("search is only supported for admin users while in early development")
-		return rsp
-	}
-
 	// Load and parse all dashboards for given orgId
 	dash, err := loadDashboards(ctx, orgId, s.sql)
 	if err != nil {
@@ -53,8 +48,27 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	// TODO!!! get user from context?
-	dash, err = s.applyAuthFilter(nil, dash)
+	// TODO - get user from context?
+	getSignedInUserQuery := &models.GetSignedInUserQuery{
+		Login: user.Login,
+		Email: user.Email,
+		OrgId: orgId,
+	}
+
+	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	if err != nil {
+		fmt.Printf("error while retrieving user %s\n", err)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	if getSignedInUserQuery.Result == nil {
+		fmt.Printf("no user %s", user.Email)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	dash, err = s.applyAuthFilter(getSignedInUserQuery.Result, dash)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -74,7 +88,7 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash 
 	// create a list of all viewable dashboards for this user
 	res := make([]dashMeta, 0, len(dash))
 	for _, dash := range dash {
-		if filter(dash.dash.UID) {
+		if filter.check(dash.dash.UID) {
 			res = append(res, dash)
 		}
 	}

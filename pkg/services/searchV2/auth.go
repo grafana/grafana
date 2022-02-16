@@ -1,14 +1,17 @@
 package searchV2
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 )
 
 // ResourceFilter checks if a given a uid (resource identifier) check if we have the requested permission
-type ResourceFilter func(uid string) bool
+type ResourceFilter interface {
+	check(uid string) bool
+}
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
@@ -19,20 +22,62 @@ type simpleSQLAuthService struct {
 	sql *sqlstore.SQLStore
 }
 
+type dashIdQueryResult struct {
+	UID string `xorm:"uid"`
+}
+
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
-	if user == nil || user.HasRole(models.ROLE_ADMIN) {
-		return alwaysTrueFilter, nil
+	// this filter works on the legacy `dashboard_acl` table
+	// we will also need to use `accesscontrol` after https://github.com/grafana/grafana/pull/44702/files is merged
+	// see https://github.com/grafana/grafana/blob/e355bd6d3a04111b8c9959f85e81beabbeb746bf/pkg/services/sqlstore/permissions/dashboard.go#L84
+	filter := permissions.DashboardPermissionFilter{
+		OrgRole:         user.OrgRole,
+		OrgId:           user.OrgId,
+		Dialect:         a.sql.Dialect,
+		UserId:          user.UserId,
+		PermissionLevel: models.PERMISSION_VIEW,
 	}
 
-	// TODO: find all matching IDs for the user and check results
-	fmt.Printf("TODO, SELECT all ids for user: %v\n", a.sql)
-	return alwaysFalseFilter, nil
+	rows := make([]*dashIdQueryResult, 0)
+
+	err := a.sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		sql, params := filter.Where()
+		sess.Table("dashboard").
+			Where(sql, params...).
+			Cols("uid")
+
+		err := sess.Find(&rows)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var uids []string
+	for i := 0; i < len(rows); i++ {
+		uids = append(uids, rows[i].UID)
+	}
+
+	return &uidFilter{
+		uids: uids,
+	}, err
 }
 
-func alwaysTrueFilter(uid string) bool {
-	return true
+type uidFilter struct {
+	uids []string
 }
 
-func alwaysFalseFilter(uid string) bool {
-	return true
+func (f *uidFilter) check(uid string) bool {
+	for _, u := range f.uids {
+		if u == uid {
+			return true
+		}
+	}
+
+	return false
 }
