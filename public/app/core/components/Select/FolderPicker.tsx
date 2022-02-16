@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, Button, useTheme2 } from '@grafana/ui';
@@ -91,7 +91,9 @@ const FolderPicker: FC<Props> = ({
     [enableReset, initialFolderId, initialTitle, permissionLevel, rootName, showRoot]
   );
 
-  const debouncedSearch = debounce(getOptions, 300, { leading: true });
+  const debouncedSearch = useMemo(() => {
+    return debounce(getOptions, 300, { leading: true });
+  }, [getOptions]);
 
   const loadInitialValue = useCallback(async () => {
     const resetFolder: SelectedFolder = { label: initialTitle, value: undefined };
