@@ -37,7 +37,7 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type PermissionsServicesManager interface {
+type PermissionsServices interface {
 	GetTeamService() PermissionsService
 	GetDataSourceService() PermissionsService
 }

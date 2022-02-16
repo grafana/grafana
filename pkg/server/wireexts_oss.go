@@ -79,7 +79,7 @@ var wireExtsBasicSet = wire.NewSet(
 	api.ProvideDatasourcePermissionsService,
 	wire.Bind(new(api.DatasourcePermissionsService), new(*api.OSSDatasourcePermissionsService)),
 	resourceservices.ProvideResourceServices,
-	wire.Bind(new(accesscontrol.PermissionsServicesManager), new(*resourceservices.ResourceServices)),
+	wire.Bind(new(accesscontrol.PermissionsServices), new(*resourceservices.ResourceServices)),
 )
 
 var wireExtsSet = wire.NewSet(

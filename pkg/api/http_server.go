@@ -159,7 +159,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, permissionServices accesscontrol.PermissionsServicesManager,
+	authInfoService login.AuthInfoService, permissionServices accesscontrol.PermissionsServices,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService, dashboardProvisioningService dashboards.DashboardProvisioningService,
 	folderService dashboards.FolderService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
 	web.Env = cfg.Env
