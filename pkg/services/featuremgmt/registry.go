@@ -77,6 +77,7 @@ var (
 			Description:  "Show full range logs volume in explore",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:        "accesscontrol",
@@ -109,6 +110,21 @@ var (
 			Description:     "only execute the query saved in a panel",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "swaggerUi",
+			Description: "Serves swagger UI",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "featureHighlights",
+			Description: "Highlight Enterprise features",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "migrationLocking",
+			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
 		},
 	}
 )

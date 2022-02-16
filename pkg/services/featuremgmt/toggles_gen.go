@@ -82,4 +82,16 @@ const (
 	// FlagValidatedQueries
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
+
+	// FlagSwaggerUi
+	// Serves swagger UI
+	FlagSwaggerUi = "swaggerUi"
+
+	// FlagFeatureHighlights
+	// Highlight Enterprise features
+	FlagFeatureHighlights = "featureHighlights"
+
+	// FlagMigrationLocking
+	// Lock database during migrations
+	FlagMigrationLocking = "migrationLocking"
 )

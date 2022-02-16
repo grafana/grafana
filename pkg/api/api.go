@@ -13,7 +13,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	sa "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 )
 
 var plog = log.New("api")
@@ -28,7 +27,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqOrgAdminFolderAdminOrTeamAdmin := middleware.OrgAdminFolderAdminOrTeamAdmin
-	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
+	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := acmiddleware.Middleware(hs.AccessControl)
@@ -58,8 +57,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
-	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
-	r.Get("/org/teams/*", reqCanAccessTeams, hs.Index)
+	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
+	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
+	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
 	r.Get("/org/serviceaccounts", middleware.ReqOrgAdmin, hs.Index)
 	r.Get("/org/serviceaccounts/:serviceAccountId", middleware.ReqOrgAdmin, hs.Index)
 	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
@@ -140,6 +140,10 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
+	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
+		r.Get("/swagger-ui", swaggerUI)
+	}
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -194,8 +198,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", routing.Wrap(hs.GetTeamByID))
-			teamsRoute.Get("/search", routing.Wrap(hs.SearchTeams))
+			teamsRoute.Get("/:teamId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamByID))
+			teamsRoute.Get("/search", authorize(reqSignedIn, ac.EvalPermission(ac.ActionTeamsRead)), routing.Wrap(hs.SearchTeams))
 		})
 
 		// org information available to all users.
@@ -256,10 +260,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", authorize(reqOrgAdmin, sa.ActionApikeyListEv), routing.Wrap(GetAPIKeys))
-			keysRoute.Post("/", authorize(reqOrgAdmin, sa.ActionApikeyAddEv), quota("api_key"), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Post("/additional", authorize(reqOrgAdmin, sa.ActionApikeyAddAdditionalEv), quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
-			keysRoute.Delete("/:id", authorize(reqOrgAdmin, sa.ActionApikeyRemoveEv), routing.Wrap(DeleteAPIKey))
+			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
+			keysRoute.Post("/", quota("api_key"), routing.Wrap(hs.AddAPIKey))
+			keysRoute.Post("/additional", quota("api_key"), routing.Wrap(hs.AdditionalAPIKey))
+			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences

@@ -158,22 +158,43 @@ var (
 // Commands
 
 // CreateLibraryElementCommand is the command for adding a LibraryElement
+// swagger:model
 type CreateLibraryElementCommand struct {
-	FolderID int64           `json:"folderId"`
-	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model"`
-	Kind     int64           `json:"kind" binding:"Required"`
-	UID      string          `json:"uid"`
+	// ID of the folder where the library element is stored.
+	FolderID int64 `json:"folderId"`
+	// Name of the library element.
+	Name string `json:"name"`
+	// The JSON model for the library element.
+	// swagger:type object
+	Model json.RawMessage `json:"model"`
+	// Kind of element to create, Use 1 for library panels or 2 for c.
+	// Description:
+	// * 1 - library panels
+	// * 2 - library variables
+	// Enum: 1,2
+	Kind int64 `json:"kind" binding:"Required"`
+	// required: false
+	UID string `json:"uid"`
 }
 
-// patchLibraryElementCommand is the command for patching a LibraryElement
-type patchLibraryElementCommand struct {
-	FolderID int64           `json:"folderId" binding:"Default(-1)"`
-	Name     string          `json:"name"`
-	Model    json.RawMessage `json:"model,omitempty"`
-	Kind     int64           `json:"kind" binding:"Required"`
-	Version  int64           `json:"version" binding:"Required"`
-	UID      string          `json:"uid"`
+// PatchLibraryElementCommand is the command for patching a LibraryElement
+type PatchLibraryElementCommand struct {
+	// ID of the folder where the library element is stored.
+	FolderID int64 `json:"folderId" binding:"Default(-1)"`
+	// Name of the library element.
+	Name string `json:"name"`
+	// The JSON model for the library element.
+	Model json.RawMessage `json:"model,omitempty"`
+	// Kind of element to create, Use 1 for library panels or 2 for c.
+	// Description:
+	// * 1 - library panels
+	// * 2 - library variables
+	// Enum: 1,2
+	Kind int64 `json:"kind" binding:"Required"`
+	// Version of the library element you are updating.
+	Version int64 `json:"version" binding:"Required"`
+	// required: false
+	UID string `json:"uid"`
 }
 
 // searchLibraryElementsQuery is the query used for searching for Elements

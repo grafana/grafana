@@ -53,6 +53,7 @@ type Store interface {
 	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
 	IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
+	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
 	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
@@ -116,7 +117,7 @@ type Store interface {
 	DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error
 	AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error
 	UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error
-	Migrate() error
+	Migrate(bool) error
 	Sync() error
 	Reset() error
 	Quote(value string) string

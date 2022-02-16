@@ -4,6 +4,7 @@ import { FetchError } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import { appEvents } from 'app/core/core';
+import { isFetchError } from './alertmanager';
 
 export interface AsyncRequestState<T> {
   result?: T;
@@ -138,10 +139,6 @@ export function withAppEvents<T>(
     });
 }
 
-export function isFetchError(e: unknown): e is FetchError {
-  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
-}
-
 export function messageFromError(e: Error | FetchError | SerializedError): string {
   if (isFetchError(e)) {
     if (e.data?.message) {
@@ -160,4 +157,20 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
     }
   }
   return (e as Error)?.message || String(e);
+}
+
+export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateFulfilled);
+}
+
+export function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading && !state.error;
+}
+
+export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestStatePending<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && state.loading;
 }
