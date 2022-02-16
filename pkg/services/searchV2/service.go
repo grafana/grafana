@@ -48,6 +48,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
+	// TODO - get user from context?
 	getSignedInUserQuery := &models.GetSignedInUserQuery{
 		Login: user.Login,
 		Email: user.Email,
