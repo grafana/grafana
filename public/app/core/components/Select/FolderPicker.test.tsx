@@ -16,6 +16,17 @@ describe('FolderPicker', () => {
     const wrapper = shallow(<FolderPicker onChange={jest.fn()} />);
     expect(wrapper).toMatchSnapshot();
   });
+
+  it('should render with optional enableCreateNew', () => {
+    jest
+      .spyOn(api, 'searchFolders')
+      .mockResolvedValue([
+        { title: 'Dash 1', id: 1 } as DashboardSearchHit,
+        { title: 'Dash 2', id: 2 } as DashboardSearchHit,
+      ]);
+    const wrapper = shallow(<FolderPicker enableCreateNew onChange={jest.fn()} />);
+    expect(wrapper).toMatchSnapshot();
+  });
 });
 
 describe('getInitialValues', () => {

@@ -191,7 +191,7 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx:4115956163": [
       [2, 26, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/components/Select/FolderPicker.test.tsx:3389713532": [
+    "public/app/core/components/Select/FolderPicker.test.tsx:3020380342": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/core/components/Select/MetricSelect.test.tsx:3409251428": [
