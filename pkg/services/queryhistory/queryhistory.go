@@ -29,9 +29,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister
 type Service interface {
 	CreateQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error)
 	DeleteQueryFromQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
-	StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
-	UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error)
 	PatchQueryCommentInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
+	StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error)
+	UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error)
 }
 
 type QueryHistoryService struct {
@@ -53,10 +53,10 @@ func (s QueryHistoryService) PatchQueryCommentInQueryHistory(ctx context.Context
 	return s.patchQueryComment(ctx, user, UID, cmd)
 }
 
-func (s QueryHistoryService) StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
+func (s QueryHistoryService) StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
 	return s.starQuery(ctx, user, UID)
 }
 
-func (s QueryHistoryService) UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
+func (s QueryHistoryService) UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
 	return s.unstarQuery(ctx, user, UID)
 }

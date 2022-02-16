@@ -11,7 +11,7 @@ func TestPatchQueryCommentInQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "When user tries to patch comment of query in query history that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.patchCommentHandler(sc.reqContext)
-			require.Equal(t, 500, resp.Status())
+			require.Equal(t, 404, resp.Status())
 		})
 
 	testScenarioWithQueryInQueryHistory(t, "When user tries to patch comment of query in query history that exists, it should succeed",

@@ -80,34 +80,28 @@ func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response
 
 func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if len(queryUID) == 0 || !util.IsValidShortUID(queryUID) {
+	if !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
-	id, err := s.StarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	query, err := s.StarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star query in query history", err)
 	}
 
-	return response.JSON(http.StatusOK, StarQueryInQueryHistoryResponse{
-		Message: "Query starred",
-		ID:      id,
-	})
+	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }
 
 func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
-	if len(queryUID) == 0 || !util.IsValidShortUID(queryUID) {
+	if !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
 
-	id, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
+	query, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar query in query history", err)
 	}
 
-	return response.JSON(http.StatusOK, UnstarQueryInQueryHistoryResponse{
-		Message: "Query unstarred",
-		ID:      id,
-	})
+	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
 }

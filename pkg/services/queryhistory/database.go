@@ -99,11 +99,13 @@ func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *models
 	return dto, nil
 }
 
-func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
-	var queryID int64
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
+	var queryHistory QueryHistory
+	var isStarred bool
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
 		// Check if query exists as we want to star only existing queries
-		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Exist()
+		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Get(&queryHistory)
 		if err != nil {
 			return err
 		}
@@ -117,7 +119,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedI
 			QueryUID: UID,
 		}
 
-		id, err := session.Insert(&queryHistoryStar)
+		_, err = session.Insert(&queryHistoryStar)
 		if err != nil {
 			if s.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return ErrQueryAlreadyStarred
@@ -125,23 +127,65 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *models.SignedI
 			return err
 		}
 
-		queryID = id
-		return err
+		isStarred = true
+		return nil
 	})
 
-	return queryID, err
+	if err != nil {
+		return QueryHistoryDTO{}, err
+	}
+
+	dto := QueryHistoryDTO{
+		UID:           queryHistory.UID,
+		DatasourceUID: queryHistory.DatasourceUID,
+		CreatedBy:     queryHistory.CreatedBy,
+		CreatedAt:     queryHistory.CreatedAt,
+		Comment:       queryHistory.Comment,
+		Queries:       queryHistory.Queries,
+		Starred:       isStarred,
+	}
+
+	return dto, nil
 }
 
-func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {
-	var queryID int64
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		id, err := session.Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
+func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
+	var queryHistory QueryHistory
+	var isStarred bool
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Get(&queryHistory)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return ErrQueryNotFound
+		}
+
+		id, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
 		if id == 0 {
 			return ErrStarredQueryNotFound
 		}
-		queryID = id
-		return err
+		if err != nil {
+			return err
+		}
+
+		isStarred = false
+		return nil
 	})
 
-	return queryID, err
+	if err != nil {
+		return QueryHistoryDTO{}, err
+	}
+
+	dto := QueryHistoryDTO{
+		UID:           queryHistory.UID,
+		DatasourceUID: queryHistory.DatasourceUID,
+		CreatedBy:     queryHistory.CreatedBy,
+		CreatedAt:     queryHistory.CreatedAt,
+		Comment:       queryHistory.Comment,
+		Queries:       queryHistory.Queries,
+		Starred:       isStarred,
+	}
+
+	return dto, nil
 }

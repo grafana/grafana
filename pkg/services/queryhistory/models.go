@@ -58,15 +58,3 @@ type DeleteQueryFromQueryHistoryResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }
-
-// StarQueryInQueryHistoryResponse is the response struct for starring a query in query history
-type StarQueryInQueryHistoryResponse struct {
-	ID      int64  `json:"id"`
-	Message string `json:"message"`
-}
-
-// UnstarQueryInQueryHistoryResponse is the response struct for unstarring a query in query history
-type UnstarQueryInQueryHistoryResponse struct {
-	ID      int64  `json:"id"`
-	Message string `json:"message"`
-}
