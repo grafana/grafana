@@ -20,13 +20,11 @@
   },
   "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
   "editable": true,
-  "fiscalYearStartMonth": 0,
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
   "iteration": 1644348036942,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "collapsed": false,

@@ -38,7 +38,7 @@
       },
       "id": 22,
       "panels": [],
-      "title": "Top N Charts",
+      "title": "Top Virtual Machines and Scale Sets by Performance Metrics",
       "type": "row"
     },
     {
@@ -154,12 +154,7 @@
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": "$sub",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscriptions": []
         }
       ],
       "title": "${agg:text} CPU Utilization %",
@@ -297,13 +292,8 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscription": "",
+          "subscriptions": []
         }
       ],
       "title": "${agg:text} Available Memory",
@@ -441,13 +431,8 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscription": "",
+          "subscriptions": []
         }
       ],
       "title": "${agg:text} Bytes Sent Rate",
@@ -586,13 +571,8 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscription": "",
+          "subscriptions": []
         }
       ],
       "title": "${agg:text} Bytes Received Rate",
@@ -730,13 +710,8 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-          "subscriptions": [
-            "4dc2cd39-7a89-43d8-bebe-8bb501359891",
-            "39a6a513-91ca-4958-aa57-8374048b16ab",
-            "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc",
-            "263177d8-32b8-465a-b939-be00c75e88c5"
-          ]
+          "subscription": "",
+          "subscriptions": []
         }
       ],
       "title": "${agg:text} Logical Disk Space Used %",
