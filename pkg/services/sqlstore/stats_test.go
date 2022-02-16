@@ -124,7 +124,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	require.NoError(t, err)
 
 	// force renewal of user stats
-	err = updateUserRoleCountsIfNecessary(context.Background(), true)
+	err = sqlStore.updateUserRoleCountsIfNecessary(context.Background(), true)
 	require.NoError(t, err)
 
 	// add 1st api key

@@ -443,7 +443,7 @@ func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 		OrgId:    1,
 	}
 
-	err := GetDashboardsByPluginId(context.Background(), &query)
+	err := sqlStore.GetDashboardsByPluginId(context.Background(), &query)
 	require.NoError(t, err)
 	require.Equal(t, len(query.Result), 2)
 }
