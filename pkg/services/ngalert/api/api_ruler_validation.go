@@ -138,7 +138,7 @@ func validateRuleGroup(
 	}
 
 	if interval < 0 || int64(interval.Seconds())%int64(cfg.BaseInterval.Seconds()) != 0 {
-		return nil, fmt.Errorf("rule evaluation interval %d should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
+		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
 	}
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
