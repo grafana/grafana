@@ -34,4 +34,6 @@ type Options struct {
 	OnSetTeam func(session *sqlstore.DBSession, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role
 	OnSetBuiltInRole func(session *sqlstore.DBSession, orgID int64, builtInRole, resourceID, permission string) error
+	// UidSolver if configured will be used in a middleware to translate an uid to id for each request
+	UidSolver uidSolver
 }

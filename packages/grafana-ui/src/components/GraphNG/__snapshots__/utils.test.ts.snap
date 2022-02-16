@@ -60,12 +60,14 @@ Object {
   ],
   "bands": Array [
     Object {
+      "dir": -1,
       "series": Array [
         2,
         1,
       ],
     },
     Object {
+      "dir": -1,
       "series": Array [
         4,
         3,

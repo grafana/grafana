@@ -207,7 +207,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 	return response.Success("Organization deleted")
 }
 
-func SearchOrgs(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgs(c *models.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -222,7 +222,7 @@ func SearchOrgs(c *models.ReqContext) response.Response {
 		Limit: perPage,
 	}
 
-	if err := sqlstore.SearchOrgs(c.Req.Context(), &query); err != nil {
+	if err := hs.SQLStore.SearchOrgs(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to search orgs", err)
 	}
 

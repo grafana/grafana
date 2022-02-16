@@ -17,6 +17,7 @@ import { ActionIcon } from '../rules/ActionIcon';
 import { useDispatch } from 'react-redux';
 import { expireSilenceAction } from '../../state/actions';
 import { SilenceDetails } from './SilenceDetails';
+import { Stack } from '@grafana/experimental';
 
 export interface SilenceTableItem extends Silence {
   silencedAlerts: AlertmanagerAlert[];
@@ -221,7 +222,7 @@ function useColumns(alertManagerSourceName: string) {
         label: 'Actions',
         renderCell: function renderActions({ data: silence }) {
           return (
-            <>
+            <Stack gap={0.5}>
               {silence.status.state === 'expired' ? (
                 <Link href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}>
                   <ActionButton icon="sync">Recreate</ActionButton>
@@ -239,10 +240,10 @@ function useColumns(alertManagerSourceName: string) {
                   tooltip="edit"
                 />
               )}
-            </>
+            </Stack>
           );
         },
-        size: '140px',
+        size: '147px',
       });
     }
     return columns;

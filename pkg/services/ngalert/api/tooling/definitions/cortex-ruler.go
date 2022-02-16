@@ -355,6 +355,7 @@ type ExecutionErrorState string
 
 const (
 	AlertingErrState ExecutionErrorState = "Alerting"
+	ErrorErrState    ExecutionErrorState = "Error"
 )
 
 // swagger:model
