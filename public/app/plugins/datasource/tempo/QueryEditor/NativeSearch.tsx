@@ -65,9 +65,20 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   });
 
   async function fetchOptionsCallback(nameType: string, lp: TempoLanguageProvider) {
-    const res = await lp.getOptions(nameType === 'serviceName' ? 'service.name' : 'name');
-    setIsLoading((prevValue) => ({ ...prevValue, [nameType]: false }));
-    return res;
+    try {
+      const res = await lp.getOptions(nameType === 'serviceName' ? 'service.name' : 'name');
+      setIsLoading((prevValue) => ({ ...prevValue, [nameType]: false }));
+      return res;
+    } catch (error) {
+      if (error?.status === 404) {
+        setIsLoading((prevValue) => ({ ...prevValue, [nameType]: false }));
+      } else {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
+        setIsLoading((prevValue) => ({ ...prevValue, [nameType]: false }));
+      }
+      setError(error);
+      return [];
+    }
   }
 
   const loadOptionsOfType = useCallback(
@@ -129,7 +140,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <AsyncSelect
               inputId="service"
               menuShouldPortal
+              cacheOptions={false}
               loadOptions={fetchOptionsOfType('serviceName')}
+              onOpenMenu={fetchOptionsOfType('serviceName')}
               isLoading={isLoading.serviceName}
               value={asyncServiceNameValue.value}
               onChange={(v) => {
@@ -154,7 +167,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <AsyncSelect
               inputId="spanName"
               menuShouldPortal
+              cacheOptions={false}
               loadOptions={fetchOptionsOfType('spanName')}
+              onOpenMenu={fetchOptionsOfType('spanName')}
               isLoading={isLoading.spanName}
               value={asyncSpanNameValue.value}
               onChange={(v) => {
