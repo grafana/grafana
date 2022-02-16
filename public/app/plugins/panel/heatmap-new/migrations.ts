@@ -53,8 +53,8 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       ...defaultPanelOptions.color,
       steps: 256, // best match with existing colors
     },
-    cellPadding: asNumber(angular.cards?.cardPadding),
-    cellRadius: asNumber(angular.cards?.cardRound),
+    cellGap: asNumber(angular.cards?.cardPadding),
+    cellSize: asNumber(angular.cards?.cardRound),
     yAxisLabels: angular.yBucketBound,
     yAxisReverse: angular.reverseYBuckets,
     legend: {
