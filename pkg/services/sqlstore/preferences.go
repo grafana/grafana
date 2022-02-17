@@ -13,12 +13,12 @@ func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", ss.SavePreferences)
-	bus.AddHandler("sql", ss.GetNavbarPreferences)
-	bus.AddHandler("sql", ss.GetNavbarPreferencesWithDefaults)
-	bus.AddHandler("sql", ss.SaveNavbarPreferences)
+	bus.AddHandler("sql", ss.GetJsonData)
+	bus.AddHandler("sql", ss.GetJsonDataWithDefaults)
+	bus.AddHandler("sql", ss.SaveJsonData)
 }
 
-func (ss *SQLStore) GetNavbarPreferencesWithDefaults(ctx context.Context, query *models.GetNavbarPreferencesWithDefaultsQuery) error {
+func (ss *SQLStore) GetJsonDataWithDefaults(ctx context.Context, query *models.GetJsonDataWithDefaultsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		params := make([]interface{}, 0)
 		filter := ""
@@ -45,12 +45,12 @@ func (ss *SQLStore) GetNavbarPreferencesWithDefaults(ctx context.Context, query 
 		}
 
 		res := &models.Preferences{
-			NavbarPreferences: nil,
+			JsonData: nil,
 		}
 
 		for _, p := range prefs {
-			if p.NavbarPreferences != nil {
-				res.NavbarPreferences = p.NavbarPreferences
+			if p.JsonData != nil {
+				res.JsonData = p.JsonData
 			}
 		}
 
@@ -112,7 +112,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 	})
 }
 
-func (ss *SQLStore) GetNavbarPreferences(ctx context.Context, query *models.GetNavbarPreferencesQuery) error {
+func (ss *SQLStore) GetJsonData(ctx context.Context, query *models.GetJsonDataQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
@@ -184,7 +184,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 	})
 }
 
-func (ss *SQLStore) SaveNavbarPreferences(ctx context.Context, cmd *models.SaveNavbarPreferencesCommand) error {
+func (ss *SQLStore) SaveJsonData(ctx context.Context, cmd *models.SaveJsonDataCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
@@ -194,14 +194,14 @@ func (ss *SQLStore) SaveNavbarPreferences(ctx context.Context, cmd *models.SaveN
 
 		if !exists {
 			prefs = models.Preferences{
-				UserId:            cmd.UserId,
-				OrgId:             cmd.OrgId,
-				NavbarPreferences: cmd.NavbarPreferences,
+				UserId:   cmd.UserId,
+				OrgId:    cmd.OrgId,
+				JsonData: cmd.JsonData,
 			}
 			_, err = sess.Insert(&prefs)
 			return err
 		}
-		prefs.NavbarPreferences = cmd.NavbarPreferences
+		prefs.JsonData = cmd.JsonData
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)
 		return err
 	})

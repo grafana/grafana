@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -50,14 +49,11 @@ func addPreferencesMigrations(mg *Migrator) {
 		Name: "week_start", Type: DB_NVarchar, Length: 10, Nullable: true,
 	}))
 
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation) {
-			mg.AddMigration("Add column navbar_preferences in preferences", NewAddColumnMigration(preferencesV2, &Column{
-				Name: "navbar_preferences", Type: DB_Text, Nullable: true,
-			}))
-			// change column type of preferences.navbar_preferences
-			mg.AddMigration("alter preferences.navbar_preferences to mediumtext v1", NewRawSQLMigration("").
-				Mysql("ALTER TABLE preferences MODIFY navbar_preferences MEDIUMTEXT;"))
-		}
-	}
+	mg.AddMigration("Add column json_data in preferences", NewAddColumnMigration(preferencesV2, &Column{
+		Name: "json_data", Type: DB_Text, Nullable: true,
+	}))
+	// change column type of preferences.json_data
+	mg.AddMigration("alter preferences.json_data to mediumtext v1", NewRawSQLMigration("").
+		Mysql("ALTER TABLE preferences MODIFY json_data MEDIUMTEXT;"))
+
 }

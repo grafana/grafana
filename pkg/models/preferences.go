@@ -7,18 +7,18 @@ import (
 )
 
 type Preferences struct {
-	Id                int64
-	OrgId             int64
-	UserId            int64
-	TeamId            int64
-	Version           int
-	HomeDashboardId   int64
-	Timezone          string
-	WeekStart         string
-	Theme             string
-	Created           time.Time
-	Updated           time.Time
-	NavbarPreferences *simplejson.Json
+	Id              int64
+	OrgId           int64
+	UserId          int64
+	TeamId          int64
+	Version         int
+	HomeDashboardId int64
+	Timezone        string
+	WeekStart       string
+	Theme           string
+	Created         time.Time
+	Updated         time.Time
+	JsonData        *simplejson.Json
 }
 
 // ---------------------
@@ -33,7 +33,7 @@ type GetPreferencesQuery struct {
 	Result *Preferences
 }
 
-type GetNavbarPreferencesQuery struct {
+type GetJsonDataQuery struct {
 	Id     int64
 	OrgId  int64
 	UserId int64
@@ -42,7 +42,7 @@ type GetNavbarPreferencesQuery struct {
 	Result *Preferences
 }
 
-type GetNavbarPreferencesWithDefaultsQuery struct {
+type GetJsonDataWithDefaultsQuery struct {
 	User *SignedInUser
 
 	Result *Preferences
@@ -67,10 +67,10 @@ type SavePreferencesCommand struct {
 	Theme           string `json:"theme"`
 }
 
-type SaveNavbarPreferencesCommand struct {
+type SaveJsonDataCommand struct {
 	UserId int64
 	OrgId  int64
 	TeamId int64
 
-	NavbarPreferences *simplejson.Json `json:"navbarPreferences"`
+	JsonData *simplejson.Json `json:"jsonData"`
 }

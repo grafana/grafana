@@ -281,16 +281,16 @@ func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTr
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetNavbarPreferencesWithDefaults(ctx context.Context, query *models.GetNavbarPreferencesWithDefaultsQuery) error {
+func (m *SQLStoreMock) GetJsonDataWithDefaults(ctx context.Context, query *models.GetJsonDataWithDefaultsQuery) error {
 	query.Result = &models.Preferences{}
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetNavbarPreferences(ctx context.Context, query *models.GetNavbarPreferencesQuery) error {
+func (m *SQLStoreMock) GetJsonData(ctx context.Context, query *models.GetJsonDataQuery) error {
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) SaveNavbarPreferences(ctx context.Context, cmd *models.SaveNavbarPreferencesCommand) error {
+func (m *SQLStoreMock) SaveJsonData(ctx context.Context, cmd *models.SaveJsonDataCommand) error {
 	return m.ExpectedError
 }
 

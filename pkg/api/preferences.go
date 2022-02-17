@@ -16,20 +16,20 @@ const (
 	lightTheme   string = "light"
 )
 
-// PUT /api/preferences/set-navbar-preferences
-func (hs *HTTPServer) SetNavbarPreferences(c *models.ReqContext) response.Response {
-	cmd := models.SaveNavbarPreferencesCommand{}
-	if err := web.Bind(c.Req, &cmd.NavbarPreferences); err != nil {
+// PUT /api/preferences/set-json-data
+func (hs *HTTPServer) SetJsonData(c *models.ReqContext) response.Response {
+	cmd := models.SaveJsonDataCommand{}
+	if err := web.Bind(c.Req, &cmd.JsonData); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 
-	if err := hs.SQLStore.SaveNavbarPreferences(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to set navbar preferences", err)
+	if err := hs.SQLStore.SaveJsonData(c.Req.Context(), &cmd); err != nil {
+		return response.Error(500, "Failed to set json data preferences", err)
 	}
 
-	return response.Success("Navbar preferences set")
+	return response.Success("Json data preferences set")
 }
 
 // POST /api/preferences/set-home-dash

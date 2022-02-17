@@ -268,7 +268,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
 			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
-			prefRoute.Put("/set-navbar-preferences", routing.Wrap(hs.SetNavbarPreferences))
+			prefRoute.Put("/set-json-data", routing.Wrap(hs.SetJsonData))
 		})
 
 		// Data sources
