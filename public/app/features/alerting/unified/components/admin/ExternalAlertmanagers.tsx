@@ -96,7 +96,7 @@ export const ExternalAlertmanagers = () => {
 
   const onChangeAlertmanagerChoice = (alertmanagersChoice: string) => {
     dispatch(
-      addExternalAlertmanagersAction({ alertmanagers: externalAlertManagers!.map((am) => am.url), alertmanagersChoice })
+      addExternalAlertmanagersAction({ alertmanagers: externalAlertManagers.map((am) => am.url), alertmanagersChoice })
     );
   };
 
