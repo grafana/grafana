@@ -23,6 +23,7 @@ export function getPageStyles(theme: GrafanaTheme2) {
       flex-grow: 1;
       height: 100%;
       flex: 1 1 0;
+      overflow: auto;
     }
 
     .page-scrollbar-wrapper {
