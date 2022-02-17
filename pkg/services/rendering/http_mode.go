@@ -267,7 +267,7 @@ func (rs *RenderingService) refreshRemotePluginVersion() {
 	}
 
 	currentVersion := rs.Version()
-	if newVersion != "" && currentVersion != newVersion {
+	if currentVersion != newVersion {
 		rs.versionMutex.Lock()
 		defer rs.versionMutex.Unlock()
 
