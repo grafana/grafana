@@ -6,6 +6,7 @@ import * as dashboardApi from 'app/features/manage-dashboards/state/actions';
 import * as api from './addToDashboard';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { locationService } from '@grafana/runtime';
 
 const createFolder = (title: string, id: number): DashboardSearchHit => ({
   title,
@@ -34,6 +35,41 @@ const openModal = async () => {
 };
 
 describe('Add to Dashboard', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('navigation', () => {
+    jest
+      .spyOn(api, 'addToDashboard')
+      .mockImplementation(() => Promise.resolve(createFetchResponse({ url: '/dashboard/1' })));
+    locationService.push = jest.fn();
+
+    it('Navigates to dashboard when clicking on "Save and go to dashboard"', async () => {
+      render(<AddToDashboardButton queries={[]} visualization="table" />);
+
+      await openModal();
+
+      userEvent.click(screen.getByRole('button', { name: /save and go to dashboard/i }));
+
+      await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
+
+      expect(locationService.push).toHaveBeenCalledWith('/dashboard/1');
+    });
+
+    it('Does NOT navigate to dashboard when clicking on "Save and keep exploring"', async () => {
+      render(<AddToDashboardButton queries={[]} visualization="table" />);
+
+      await openModal();
+
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+
+      await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+  });
+
   it('Opens and closes the modal correctly', async () => {
     render(<AddToDashboardButton queries={[]} visualization="table" />);
 
@@ -69,7 +105,7 @@ describe('Add to Dashboard', () => {
       // dashboard name is required
       userEvent.clear(dashboardNameInput);
 
-      act(() => userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i })));
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       // The error message should appear
       await screen.findByRole('alert');
@@ -92,9 +128,7 @@ describe('Add to Dashboard', () => {
 
       const dashboardNameInput = screen.getByRole<HTMLInputElement>('textbox', { name: /dashboard name/i });
 
-      act(() => {
-        userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
-      });
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
       await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
