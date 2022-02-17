@@ -45,6 +45,7 @@ type DashboardPageRouteSearchParams = {
   viewPanel?: string;
   editview?: string;
   inspect?: string;
+  public?: string;
   from?: string;
   to?: string;
   refresh?: string;
@@ -122,6 +123,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlUid: match.params.uid,
       urlType: match.params.type,
       urlFolderId: queryParams.folderId,
+      // this is just to test, a public dashboard needs a unique URL & route
+      // But for now we can just test with a &public URL query param
+      isPublic: queryParams.public != null,
       routeName: this.props.route.routeName,
       fixUrl: true,
     });

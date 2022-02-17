@@ -38,6 +38,7 @@ import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { PanelModel } from '../../dashboard/state';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+import { PublicDashboardDataSource } from 'app/features/dashboard/services/PublicDashboardDataSource';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -47,6 +48,8 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId?: number;
   dashboardId?: number;
+  dashboardUid?: string;
+  isPublic?: boolean;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -195,6 +198,8 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
+      dashboardUid,
+      isPublic,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -214,6 +219,7 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
+      dashboardUid,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -229,7 +235,7 @@ export class PanelQueryRunner {
     (request as any).rangeRaw = timeRange.raw;
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars, isPublic);
 
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
@@ -344,10 +350,17 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars
+  scopedVars: ScopedVars,
+  isPublic?: boolean
 ): Promise<DataSourceApi> {
+  if (isPublic) {
+    // Public dashboard requests go via PublicDashboardDataSource
+    return new PublicDashboardDataSource();
+  }
+
   if (datasource && (datasource as any).query) {
     return datasource as DataSourceApi;
   }
+
   return await getDatasourceSrv().get(datasource as string, scopedVars);
 }

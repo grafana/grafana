@@ -30,7 +30,14 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
     const timeData = applyPanelTimeOverrides(panel, timeSrv.timeRange());
 
     const sub = panel.events.subscribe(RefreshEvent, () => {
-      panel.runAllPanelQueries(dashboard.id, dashboard.getTimezone(), timeData, width);
+      panel.runAllPanelQueries(
+        dashboard.id,
+        dashboard.uid,
+        dashboard.meta.isPublic,
+        dashboard.getTimezone(),
+        timeData,
+        width
+      );
     });
     return () => {
       sub.unsubscribe();

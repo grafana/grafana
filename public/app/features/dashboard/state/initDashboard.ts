@@ -31,6 +31,7 @@ export interface InitDashboardArgs {
   urlFolderId?: string | null;
   routeName?: string;
   fixUrl: boolean;
+  isPublic: boolean;
 }
 
 async function fetchDashboard(
@@ -59,6 +60,7 @@ async function fetchDashboard(
       }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+        dashDTO.meta.isPublic = args.isPublic;
 
         if (args.fixUrl && dashDTO.meta.url) {
           // check if the current url is correct (might be old slug)

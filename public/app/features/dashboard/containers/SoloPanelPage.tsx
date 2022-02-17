@@ -46,6 +46,8 @@ export class SoloPanelPage extends Component<Props, State> {
       urlType: match.params.type,
       routeName: route.routeName,
       fixUrl: false,
+      // this is just temp test
+      isPublic: false,
     });
   }
 

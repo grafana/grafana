@@ -34,6 +34,7 @@ export interface DashboardMeta {
   updatedBy?: string;
   fromScript?: boolean;
   fromFile?: boolean;
+  isPublic?: boolean;
   hasUnsavedFolderChange?: boolean;
 }
 

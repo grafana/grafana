@@ -102,6 +102,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       args: {
         urlUid: 'DGmvKKxZz',
         fixUrl: false,
+        isPublic: false,
         routeName: DashboardRoutes.Normal,
       },
       backendSrv: getBackendSrv(),
