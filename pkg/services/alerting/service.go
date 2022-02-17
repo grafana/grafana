@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AlertNotificationService struct {
@@ -57,6 +58,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 	}
 
 	model := models.AlertNotification{
+		Uid:      cmd.Uid,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -77,6 +79,7 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 	}
 
 	model := models.AlertNotification{
+		Uid:      cmd.Uid,
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
@@ -116,6 +119,24 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Cont
 }
 
 func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	var err error
+	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
+	model := models.AlertNotification{
+		Uid:      cmd.NewUid,
+		OrgId:    cmd.OrgId,
+		Name:     cmd.Name,
+		Type:     cmd.Type,
+		Settings: cmd.Settings,
+	}
+
+	if err := s.validateAlertNotification(ctx, &model, cmd.SecureSettings); err != nil {
+		return err
+	}
+
 	return s.SQLStore.UpdateAlertNotificationWithUid(ctx, cmd)
 }
 
@@ -129,6 +150,10 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(ctx contex
 
 func (s *AlertNotificationService) createNotifier(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) (Notifier, error) {
 	secureSettingsMap := map[string]string{}
+
+	if util.IsShortUIDTooLong(model.Uid) {
+		return nil, ValidationError{Reason: "Invalid UID: Must 40 characters or less"}
+	}
 
 	if model.Id > 0 {
 		query := &models.GetAlertNotificationsQuery{

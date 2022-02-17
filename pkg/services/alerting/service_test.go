@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -112,6 +113,29 @@ func TestService(t *testing.T) {
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
+	})
+
+	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
+		uid, err := util.GetRandomString(41)
+		require.NoError(t, err)
+
+		err = s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, ValidationError{Reason: "Invalid UID: Must 40 characters or less"})
+	})
+
+	t.Run("update alert notification should reject an invalid command", func(t *testing.T) {
+		ctx := context.Background()
+
+		uid, err := util.GetRandomString(41)
+		require.NoError(t, err)
+
+		expectedErr := ValidationError{Reason: "Invalid UID: Must 40 characters or less"}
+
+		err = s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, expectedErr)
+
+		err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUid: uid})
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
 
