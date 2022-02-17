@@ -152,6 +152,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
+    // backward compatibility
+    request.scopedVars.interval = request.scopedVars.__interval;
+
     // for not-flux queries we call `this.classicQuery`, and that
     // handles the is-hidden situation.
     // for the flux-case, we do the filtering here
