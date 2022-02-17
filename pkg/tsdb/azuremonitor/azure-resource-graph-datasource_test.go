@@ -161,7 +161,7 @@ func TestUnmarshalResponse400(t *testing.T) {
 		Body:       io.NopCloser(strings.NewReader(("Azure Error Message"))),
 	})
 
-	expectedErrMsg := "400 Bad Request. Error returned from Azure: Azure Error Message"
+	expectedErrMsg := "400 Bad Request. Azure Resource Graph error: Azure Error Message"
 
 	assert.Equal(t, expectedErrMsg, err.Error())
 	assert.Empty(t, res)

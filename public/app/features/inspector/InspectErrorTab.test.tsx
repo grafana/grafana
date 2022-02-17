@@ -15,9 +15,10 @@ describe('InspectErrorTab', () => {
         error: 'my error',
       },
     };
-    const { container } = render(<InspectErrorTab error={error} />);
-    expect(container.childElementCount).toEqual(2);
+    render(<InspectErrorTab error={error} />);
     expect(screen.getByText('This is an error')).toBeInTheDocument();
+    expect(screen.getByText('error:')).toBeInTheDocument();
+    expect(screen.getByText('"my error"')).toBeInTheDocument();
   });
 
   it('should return a jsonFormatter object of error.message if it exists and data does not exist', () => {
@@ -53,8 +54,7 @@ describe('InspectErrorTab', () => {
       const error = {
         message: errMsg,
       };
-      const { container } = render(<InspectErrorTab error={error} />);
-      expect(container.childElementCount).toEqual(1);
+      render(<InspectErrorTab error={error} />);
       expect(screen.queryByRole('heading')).toBeNull();
       expect(screen.getByText(errMsg)).toBeInTheDocument();
     });

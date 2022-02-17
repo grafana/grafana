@@ -6,6 +6,15 @@ interface InspectErrorTabProps {
   error?: DataQueryError;
 }
 
+const parseErrorMessage = (message: string): { msg: string; json: any } => {
+  const [msg, json] = message.split(/(\{.+)/);
+  const jsonError = JSON.parse(json);
+  return {
+    msg,
+    json: jsonError,
+  };
+};
+
 export const InspectErrorTab: React.FC<InspectErrorTabProps> = ({ error }) => {
   if (!error) {
     return null;
@@ -20,13 +29,11 @@ export const InspectErrorTab: React.FC<InspectErrorTabProps> = ({ error }) => {
   }
   if (error.message) {
     try {
-      const [msg, json] = error.message.split(/\{(.+)/);
-      const jsonError = JSON.parse('{' + json);
-      const title = msg && msg !== '' ? <h3>{msg}</h3> : null;
+      const { msg, json } = parseErrorMessage(error.message);
       return (
         <>
-          {title}
-          <JSONFormatter json={jsonError} open={5} />
+          {msg && msg !== '' && <h3>{msg}</h3>}
+          {json && json !== '' && <JSONFormatter json={json} open={5} />}
         </>
       );
     } catch {
