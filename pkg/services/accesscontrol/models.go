@@ -323,9 +323,16 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
-	ActionAnnotationsRead = "annotations:read"
+	ActionAnnotationsCreate = "annotations:create"
+	ActionAnnotationsDelete = "annotations:delete"
+	ActionAnnotationsRead   = "annotations:read"
+	ActionAnnotationsUpdate = "annotations:update"
 
-	ActionAnnotationsTagsRead = "annotations.tags:read"
+	ActionAnnotationsGraphiteCreate = "annotations:graphite:create"
+	ActionAnnotationsMassDelete     = "annotations:mass:delete"
+
+	ActionAnnotationsTagsRead  = "annotations.tags:read"
+	ActionAnnotationsTagsWrite = "annotations.tags:write"
 
 	ScopeAnnotationsAll     = "annotations:*"
 	ScopeAnnotationsTagsAll = "annotations:tags:*"
@@ -333,7 +340,8 @@ const (
 
 var (
 	// Team scope
-	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+	ScopeTeamsID       = Scope("teams", "id", Parameter(":teamId"))
+	ScopeAnnotationsID = Scope("annotations", "id", Parameter(":annotationId"))
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
@@ -344,4 +352,19 @@ const FixedRolePrefix = "fixed:"
 var LicensingPageReaderAccess = EvalAny(
 	EvalPermission(ActionLicensingRead),
 	EvalPermission(ActionServerStatsRead),
+)
+
+var AnnotationCreateAccessEvaluator = EvalAll(
+	EvalPermission(ActionAnnotationsCreate),
+	EvalPermission(ActionAnnotationsTagsWrite),
+)
+
+var AnnotationDeleteAccessEvaluator = EvalAll(
+	EvalPermission(ActionAnnotationsDelete),
+	EvalPermission(ActionAnnotationsTagsWrite),
+)
+
+var AnnotationGraphiteCreateAccessEvaluator = EvalAll(
+	EvalPermission(ActionAnnotationsGraphiteCreate),
+	EvalPermission(ActionAnnotationsTagsWrite),
 )

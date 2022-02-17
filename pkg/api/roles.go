@@ -204,7 +204,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ActionOrgsQuotasWrite},
 			}),
 		},
-		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+		Grants: []string{accesscontrol.RoleGrafanaAdmin},
 	}
 
 	teamCreatorGrants := []string{string(models.ROLE_ADMIN)}
@@ -220,7 +220,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionTeamsCreate},
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -245,25 +244,59 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	annotationsReaderRole := accesscontrol.RoleRegistration{
+	annotationsWriterRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:annotations:reader",
-			DisplayName: "Annotation reader",
-			Description: "Read annotations and tags",
+			Name:        "fixed:annotations:writer",
+			DisplayName: "Annotation writer",
+			Description: "Create, read, write, or delete annotations and tags",
 			Group:       "Annotations",
 			Version:     1,
 			Permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
+				{Action: accesscontrol.ActionAnnotationsCreate},
+				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsID},
+				{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsID},
+				{Action: accesscontrol.ActionAnnotationsUpdate, Scope: accesscontrol.ScopeAnnotationsID},
+				{Action: accesscontrol.ActionAnnotationsTagsWrite},
 				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	annotationsMassDeleteRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:annotations:mass:delete",
+			DisplayName: "Annotation mass delete",
+			Description: "Mass delete annotations ",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsMassDelete},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	annotationsGraphiteCreatorRole := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:annotations:graphite:creator",
+			DisplayName: "Annotation Graphite creator",
+			Description: "Create graphite annotations and tags",
+			Group:       "Annotations",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsGraphiteCreate},
+				{Action: accesscontrol.ActionAnnotationsTagsWrite},
+			},
+		},
+		Grants: []string{string(models.ROLE_EDITOR)},
+	}
+
 	return hs.AccessControl.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole, datasourcesIdReaderRole,
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole, orgMaintainerRole, teamsCreatorRole,
-		teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
+		teamsWriterRole, datasourcesExplorerRole, annotationsWriterRole, annotationsGraphiteCreatorRole,
+		annotationsMassDeleteRole,
 	)
 }
 

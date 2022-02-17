@@ -412,12 +412,209 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			},
 			want: 403,
 		},
+		{
+			name: "AccessControl post annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+					{Action: accesscontrol.ActionAnnotationsTagsWrite},
+				},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostAnnotationsCmd{
+					Time:        1000,
+					Text:        "annotation text",
+					Tags:        []string{"tag1", "tag2"},
+					DashboardId: 1,
+					PanelId:     1,
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl post annotations without correct permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+				},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostAnnotationsCmd{
+					Time:        1000,
+					Text:        "annotation text",
+					Tags:        []string{"tag1", "tag2"},
+					DashboardId: 1,
+					PanelId:     1,
+				}),
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl delete annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsDelete, Scope: "annotations:id:1",
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodDelete,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl delete annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodDelete,
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl mass delete annotations with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsMassDelete,
+				}},
+				url:    "/api/annotations/mass-delete",
+				method: http.MethodPost,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl mass delete annotations without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/mass-delete",
+				method:      http.MethodPost,
+			},
+			want: 403,
+		},
+
+		{
+			name: "AccessControl update annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsUpdate, Scope: "annotations:id:1",
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPut,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+					Id:   1,
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl update annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPut,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+					Id:   1,
+				}),
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl update with patch annotation with permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsUpdate, Scope: "annotations:id:1",
+				}},
+				url:    "/api/annotations/1",
+				method: http.MethodPatch,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl update with patch annotation without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations/1",
+				method:      http.MethodPatch,
+				body: mockRequestBody(dtos.UpdateAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl getting tags for annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll}},
+				url:         "/api/annotations/tags",
+				method:      http.MethodGet,
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead}},
+				url:         "/api/annotations/tags",
+				method:      http.MethodGet,
+			},
+			want: 403,
+		},
+		{
+			name: "AccessControl post graphite annotations with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsGraphiteCreate},
+					{Action: accesscontrol.ActionAnnotationsTagsWrite},
+				},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostGraphiteAnnotationsCmd{
+					When: 1000,
+					What: "annotation text",
+					Data: "myData",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 200,
+		},
+		{
+			name: "AccessControl post graphite annotations without correct permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAnnotationsCreate},
+				},
+				url:    "/api/annotations/graphite",
+				method: http.MethodPost,
+				body: mockRequestBody(dtos.PostGraphiteAnnotationsCmd{
+					When: 1000,
+					What: "annotation text",
+					Data: "myData",
+					Tags: []string{"tag1", "tag2"},
+				}),
+			},
+			want: 403,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setUpACL()
+			fakeAnnoRepo = &fakeAnnotationsRepo{}
+			annotations.SetRepository(fakeAnnoRepo)
+
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
-			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
-			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
+			response := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
+			assert.Equalf(t, tt.want, response.Code, "Annotations API(%v)", tt.args.url)
 		})
 	}
 }

@@ -89,11 +89,9 @@ func PostAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to save annotation", err)
 	}
 
-	startID := item.Id
-
 	return response.JSON(200, util.DynMap{
 		"message": "Annotation added",
-		"id":      startID,
+		"id":      item.Id,
 	})
 }
 
