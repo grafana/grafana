@@ -32,7 +32,7 @@ You can change your Grafana password at any time.
 
 1. Sign in to Grafana.
 1. Hover your mouse over the user icon in the lower-left corner of the page.
-1. Click **Change Password**. 
+1. Click **Change Password**.
 
    Grafana opens the **Change Password** tab.
 
