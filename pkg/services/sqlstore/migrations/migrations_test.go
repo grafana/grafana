@@ -291,7 +291,8 @@ func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
 		f, err := os.CreateTemp(".", "grafana-test-db-")
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			os.Remove(f.Name())
+			err := os.Remove(f.Name())
+			require.NoError(t, err)
 		})
 
 		return sqlutil.TestDB{
