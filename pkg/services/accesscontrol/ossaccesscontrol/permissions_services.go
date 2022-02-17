@@ -1,4 +1,4 @@
-package resourceservices
+package ossaccesscontrol
 
 import (
 	"context"
@@ -12,23 +12,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*ResourceServices, error) {
+func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsService, error) {
 	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ResourceServices{services: map[string]*resourcepermissions.Service{
-		"teams": teamPermissions,
-	}}, nil
+	return &PermissionsService{teams: teamPermissions, datasources: provideEmptyPermissionsService()}, nil
 }
 
-type ResourceServices struct {
-	services map[string]*resourcepermissions.Service
+type PermissionsService struct {
+	teams       accesscontrol.PermissionsService
+	datasources accesscontrol.PermissionsService
 }
 
-func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
-	return s.services["teams"]
+func (s *PermissionsService) GetTeamService() accesscontrol.PermissionsService {
+	return s.teams
+}
+
+func (s *PermissionsService) GetDataSourceService() accesscontrol.PermissionsService {
+	return s.datasources
 }
 
 var (
@@ -100,4 +103,32 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 	}
 
 	return resourcepermissions.New(options, router, ac, store, sql)
+}
+
+func provideEmptyPermissionsService() accesscontrol.PermissionsService {
+	return &emptyPermissionsService{}
+}
+
+var _ accesscontrol.PermissionsService = new(emptyPermissionsService)
+
+type emptyPermissionsService struct{}
+
+func (e emptyPermissionsService) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
 }
