@@ -180,6 +180,19 @@ describe('InfluxDataSource', () => {
     const ds = new InfluxDatasource(instanceSettings, templateSrv);
     const text = 'interpolationText';
 
+    it('Should interpolate all variables with Flux mode', () => {
+      const query = {
+        refId: 'x',
+        query: '$interpolationVar',
+      };
+
+      templateSrv.replace.mockReturnValue(text);
+      ds.isFlux = true;
+      const queries = ds.interpolateVariablesInQueries([query], { interpolationVar: { text: text, value: text } });
+      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(queries[0].query).toBe(text);
+    });
+
     it('Should interpolate all variables with InfluxQL mode', () => {
       const query = {
         refId: 'x',
