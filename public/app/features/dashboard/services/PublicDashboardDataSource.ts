@@ -19,7 +19,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, dashboardUid } = request;
+    const { intervalMs, maxDataPoints, range, requestId, dashboardUid, panelId } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -40,7 +40,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       return of({ data: [] });
     }
 
-    const body: any = { queries };
+    const body: any = { queries, dashboardUid, panelId };
 
     if (range) {
       body.range = range;
