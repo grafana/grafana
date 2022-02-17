@@ -24,59 +24,69 @@ const KeyValueInput = ({
 
   return (
     <div className={styles.wrapper}>
-      {values.map((value, idx) => (
-        <div className={styles.pair} key={idx}>
-          <SegmentInput
-            id={`${id}-key-${idx}`}
-            placeholder={keyPlaceholder}
-            value={value.key}
-            onChange={(e) => {
-              onChange(
-                values.map((v, i) => {
-                  if (i === idx) {
-                    v.key = String(e);
-                  }
-                  return v;
-                })
-              );
-            }}
-          />
-          <InlineLabel aria-label="equals" className={styles.operator} width={EQ_WIDTH}>
-            =
-          </InlineLabel>
-          <SegmentInput
-            id={`${id}-value-${idx}`}
-            placeholder={valuePlaceholder}
-            value={value.value}
-            onChange={(e) => {
-              onChange(
-                values.map((v, i) => {
-                  if (i === idx) {
-                    v.value = String(e);
-                  }
-                  return v;
-                })
-              );
-            }}
-          />
-          <button
-            onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
-            className="gf-form-label query-part"
-            aria-label="Remove tag"
-          >
-            <Icon name="times" />
-          </button>
-          {idx === values.length - 1 ? (
+      {values.length ? (
+        values.map((value, idx) => (
+          <div className={styles.pair} key={idx}>
+            <SegmentInput
+              id={`${id}-key-${idx}`}
+              placeholder={keyPlaceholder}
+              value={value.key}
+              onChange={(e) => {
+                onChange(
+                  values.map((v, i) => {
+                    if (i === idx) {
+                      v.key = String(e);
+                    }
+                    return v;
+                  })
+                );
+              }}
+            />
+            <InlineLabel aria-label="equals" className={styles.operator} width={EQ_WIDTH}>
+              =
+            </InlineLabel>
+            <SegmentInput
+              id={`${id}-value-${idx}`}
+              placeholder={valuePlaceholder}
+              value={value.value}
+              onChange={(e) => {
+                onChange(
+                  values.map((v, i) => {
+                    if (i === idx) {
+                      v.value = String(e);
+                    }
+                    return v;
+                  })
+                );
+              }}
+            />
             <button
-              onClick={() => onChange([...values, { key: '', value: '' }])}
+              onClick={() => onChange([...values.slice(0, idx), ...values.slice(idx + 1)])}
               className="gf-form-label query-part"
-              aria-label="Add tag"
+              aria-label="Remove tag"
             >
-              <Icon name="plus" />
+              <Icon name="times" />
             </button>
-          ) : null}
-        </div>
-      ))}
+            {idx === values.length - 1 ? (
+              <button
+                onClick={() => onChange([...values, { key: '', value: '' }])}
+                className="gf-form-label query-part"
+                aria-label="Add tag"
+              >
+                <Icon name="plus" />
+              </button>
+            ) : null}
+          </div>
+        ))
+      ) : (
+        <button
+          onClick={() => onChange([...values, { key: '', value: '' }])}
+          className="gf-form-label query-part"
+          aria-label="Add tag"
+        >
+          <Icon name="plus" />
+        </button>
+      )}
     </div>
   );
 };

@@ -107,7 +107,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         >
           <InlineSwitch
             id="mapTagNames"
-            value={options.jsonData.tracesToLogs?.mapTagNamesEnabled}
+            value={options.jsonData.tracesToLogs?.mapTagNamesEnabled ?? false}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
