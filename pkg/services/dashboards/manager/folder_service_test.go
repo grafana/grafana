@@ -1,25 +1,34 @@
-package dashboards
+//go:build integration
+// +build integration
+
+package service
 
 import (
 	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
+
+var orgID = int64(1)
+var user = &models.SignedInUser{UserId: 1}
 
 func TestFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
-		service := dashboardServiceImpl{
-			orgId:          1,
-			user:           &models.SignedInUser{UserId: 1},
-			dashboardStore: &fakeDashboardStore{},
-		}
+		store := &database.FakeDashboardStore{}
+		defer store.AssertExpectations(t)
+		service := ProvideFolderService(
+			&dashboards.FakeDashboardService{DashboardService: ProvideDashboardService(store)},
+			store,
+			nil,
+		)
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
@@ -30,37 +39,30 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			origStore := service.dashboardStore
-			t.Cleanup(func() {
-				service.dashboardStore = origStore
-			})
-			service.dashboardStore = &fakeDashboardStore{
-				validationError: models.ErrDashboardUpdateAccessDenied,
-			}
-
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
-				_, err := service.GetFolderByID(context.Background(), 1)
+				_, err := service.GetFolderByID(context.Background(), user, 1, orgID)
 				require.Equal(t, err, models.ErrFolderAccessDenied)
 			})
 
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
-				folder, err := service.GetFolderByID(context.Background(), 0)
+				folder, err := service.GetFolderByID(context.Background(), user, 0, orgID)
 				require.NoError(t, err)
 				require.Equal(t, folder, &models.Folder{Id: 0, Title: "General"})
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.GetFolderByUID(context.Background(), "uid")
+				_, err := service.GetFolderByUID(context.Background(), user, orgID, "uid")
 				require.Equal(t, err, models.ErrFolderAccessDenied)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
-				_, err := service.CreateFolder(context.Background(), "Folder", "")
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
+				_, err := service.CreateFolder(context.Background(), user, orgID, "Folder", "")
 				require.Equal(t, err, models.ErrFolderAccessDenied)
 			})
 
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				err := service.UpdateFolder(context.Background(), "uid", &models.UpdateFolderCommand{
+				err := service.UpdateFolder(context.Background(), user, orgID, "uid", &models.UpdateFolderCommand{
 					Uid:   "uid",
 					Title: "Folder",
 				})
@@ -68,7 +70,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), "uid", false)
+				_, err := service.DeleteFolder(context.Background(), user, orgID, "uid", false)
 				require.Error(t, err)
 				require.Equal(t, err, models.ErrFolderAccessDenied)
 			})
@@ -90,15 +92,6 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			origUpdateAlerting := UpdateAlerting
-			t.Cleanup(func() {
-				UpdateAlerting = origUpdateAlerting
-			})
-			UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard,
-				user *models.SignedInUser) error {
-				return nil
-			}
-
 			bus.AddHandler("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
 				cmd.Result = dash
 				return nil
@@ -109,12 +102,15 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
-				_, err := service.CreateFolder(context.Background(), "Folder", "")
+				store.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Times(2)
+				store.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
+				_, err := service.CreateFolder(context.Background(), user, orgID, "Folder", "")
 				require.NoError(t, err)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
-				err := service.UpdateFolder(context.Background(), "uid", &models.UpdateFolderCommand{
+				store.On("SaveDashboard", mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
+				err := service.UpdateFolder(context.Background(), user, orgID, "uid", &models.UpdateFolderCommand{
 					Uid:   "uid",
 					Title: "Folder",
 				})
@@ -122,7 +118,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				_, err := service.DeleteFolder(context.Background(), "uid", false)
+				_, err := service.DeleteFolder(context.Background(), user, orgID, "uid", false)
 				require.NoError(t, err)
 			})
 
@@ -145,14 +141,14 @@ func TestFolderService(t *testing.T) {
 			})
 
 			t.Run("When get folder by id should return folder", func(t *testing.T) {
-				f, _ := service.GetFolderByID(context.Background(), 1)
+				f, _ := service.GetFolderByID(context.Background(), user, orgID, 1)
 				require.Equal(t, f.Id, dashFolder.Id)
 				require.Equal(t, f.Uid, dashFolder.Uid)
 				require.Equal(t, f.Title, dashFolder.Title)
 			})
 
 			t.Run("When get folder by uid should return folder", func(t *testing.T) {
-				f, _ := service.GetFolderByUID(context.Background(), "uid")
+				f, _ := service.GetFolderByUID(context.Background(), user, orgID, "uid")
 				require.Equal(t, f.Id, dashFolder.Id)
 				require.Equal(t, f.Uid, dashFolder.Uid)
 				require.Equal(t, f.Title, dashFolder.Title)

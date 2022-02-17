@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -31,4 +32,5 @@ type DBstore struct {
 	DefaultInterval time.Duration
 	SQLStore        *sqlstore.SQLStore
 	Logger          log.Logger
+	FolderService   dashboards.FolderService
 }

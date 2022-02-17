@@ -1,4 +1,4 @@
-package dashboards
+package service
 
 import (
 	"context"
@@ -6,46 +6,42 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/dashboards"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-// FolderService is a service for operating on folders.
-type FolderService interface {
-	GetFolders(ctx context.Context, limit int64, page int64) ([]*models.Folder, error)
-	GetFolderByID(ctx context.Context, id int64) (*models.Folder, error)
-	GetFolderByUID(ctx context.Context, uid string) (*models.Folder, error)
-	GetFolderByTitle(ctx context.Context, title string) (*models.Folder, error)
-	CreateFolder(ctx context.Context, title, uid string) (*models.Folder, error)
-	UpdateFolder(ctx context.Context, uid string, cmd *models.UpdateFolderCommand) error
-	DeleteFolder(ctx context.Context, uid string, forceDeleteRules bool) (*models.Folder, error)
-	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
+type FolderServiceImpl struct {
+	dashboardService dashboards.DashboardService
+	dashboardStore   dashboards.Store
+	searchService    *search.SearchService
+	log              log.Logger
 }
 
-// NewFolderService is a factory for creating a new folder service.
-var NewFolderService = func(orgID int64, user *models.SignedInUser, store dashboards.Store) FolderService {
-	return &dashboardServiceImpl{
-		orgId:          orgID,
-		user:           user,
-		dashboardStore: store,
+func ProvideFolderService(dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, searchService *search.SearchService) *FolderServiceImpl {
+	return &FolderServiceImpl{
+		dashboardService: dashboardService,
+		dashboardStore:   dashboardStore,
+		searchService:    searchService,
+		log:              log.New("folder-service"),
 	}
 }
 
-func (dr *dashboardServiceImpl) GetFolders(ctx context.Context, limit int64, page int64) ([]*models.Folder, error) {
+func (f *FolderServiceImpl) GetFolders(ctx context.Context, user *models.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	searchQuery := search.Query{
-		SignedInUser: dr.user,
+		SignedInUser: user,
 		DashboardIds: make([]int64, 0),
 		FolderIds:    make([]int64, 0),
 		Limit:        limit,
-		OrgId:        dr.orgId,
+		OrgId:        orgID,
 		Type:         "dash-folder",
 		Permission:   models.PERMISSION_VIEW,
 		Page:         page,
 	}
 
-	if err := bus.Dispatch(ctx, &searchQuery); err != nil {
+	if err := f.searchService.SearchHandler(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 
@@ -62,17 +58,17 @@ func (dr *dashboardServiceImpl) GetFolders(ctx context.Context, limit int64, pag
 	return folders, nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByID(ctx context.Context, id int64) (*models.Folder, error) {
+func (f *FolderServiceImpl) GetFolderByID(ctx context.Context, user *models.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
 	if id == 0 {
 		return &models.Folder{Id: id, Title: "General"}, nil
 	}
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: id}
+	query := models.GetDashboardQuery{OrgId: orgID, Id: id}
 	dashFolder, err := getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -83,15 +79,15 @@ func (dr *dashboardServiceImpl) GetFolderByID(ctx context.Context, id int64) (*m
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByUID(ctx context.Context, uid string) (*models.Folder, error) {
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
+func (f *FolderServiceImpl) GetFolderByUID(ctx context.Context, user *models.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+	query := models.GetDashboardQuery{OrgId: orgID, Uid: uid}
 	dashFolder, err := getFolder(ctx, query)
 
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -102,13 +98,13 @@ func (dr *dashboardServiceImpl) GetFolderByUID(ctx context.Context, uid string) 
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByTitle(ctx context.Context, title string) (*models.Folder, error) {
-	dashFolder, err := dr.dashboardStore.GetFolderByTitle(dr.orgId, title)
+func (f *FolderServiceImpl) GetFolderByTitle(ctx context.Context, user *models.SignedInUser, orgID int64, title string) (*models.Folder, error) {
+	dashFolder, err := f.dashboardStore.GetFolderByTitle(orgID, title)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	g := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
+	g := guardian.New(ctx, dashFolder.Id, orgID, user)
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -119,11 +115,11 @@ func (dr *dashboardServiceImpl) GetFolderByTitle(ctx context.Context, title stri
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) CreateFolder(ctx context.Context, title, uid string) (*models.Folder, error) {
+func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
 	dashFolder := models.NewDashboardFolder(title)
-	dashFolder.OrgId = dr.orgId
+	dashFolder.OrgId = orgID
 	dashFolder.SetUid(strings.TrimSpace(uid))
-	userID := dr.user.UserId
+	userID := user.UserId
 	if userID == 0 {
 		userID = -1
 	}
@@ -131,23 +127,23 @@ func (dr *dashboardServiceImpl) CreateFolder(ctx context.Context, title, uid str
 	dashFolder.UpdatedBy = userID
 	dashFolder.UpdateSlug()
 
-	dto := &SaveDashboardDTO{
+	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     dr.orgId,
-		User:      dr.user,
+		OrgId:     orgID,
+		User:      user,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
+	saveDashboardCmd, err := f.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	dash, err := dr.dashboardStore.SaveDashboard(*saveDashboardCmd)
+	dash, err := f.dashboardStore.SaveDashboard(*saveDashboardCmd)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: dash.Id}
+	query := models.GetDashboardQuery{OrgId: orgID, Id: dash.Id}
 	dashFolder, err = getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
@@ -156,33 +152,33 @@ func (dr *dashboardServiceImpl) CreateFolder(ctx context.Context, title, uid str
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) UpdateFolder(ctx context.Context, existingUid string, cmd *models.UpdateFolderCommand) error {
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: existingUid}
+func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
 	dashFolder, err := getFolder(ctx, query)
 	if err != nil {
 		return toFolderError(err)
 	}
 
-	cmd.UpdateDashboardModel(dashFolder, dr.orgId, dr.user.UserId)
+	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserId)
 
-	dto := &SaveDashboardDTO{
+	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     dr.orgId,
-		User:      dr.user,
+		OrgId:     orgID,
+		User:      user,
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(ctx, dto, false, false)
+	saveDashboardCmd, err := f.dashboardService.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return toFolderError(err)
 	}
 
-	dash, err := dr.dashboardStore.SaveDashboard(*saveDashboardCmd)
+	dash, err := f.dashboardStore.SaveDashboard(*saveDashboardCmd)
 	if err != nil {
 		return toFolderError(err)
 	}
 
-	query = models.GetDashboardQuery{OrgId: dr.orgId, Id: dash.Id}
+	query = models.GetDashboardQuery{OrgId: orgID, Id: dash.Id}
 	dashFolder, err = getFolder(ctx, query)
 	if err != nil {
 		return toFolderError(err)
@@ -193,14 +189,14 @@ func (dr *dashboardServiceImpl) UpdateFolder(ctx context.Context, existingUid st
 	return nil
 }
 
-func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
+func (f *FolderServiceImpl) DeleteFolder(ctx context.Context, user *models.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
+	query := models.GetDashboardQuery{OrgId: orgID, Uid: uid}
 	dashFolder, err := getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	guardian := guardian.New(ctx, dashFolder.Id, dr.orgId, dr.user)
+	guardian := guardian.New(ctx, dashFolder.Id, orgID, user)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -208,12 +204,16 @@ func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string, fo
 		return nil, models.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: dr.orgId, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
 	if err := bus.Dispatch(ctx, &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
 	return dashToFolder(dashFolder), nil
+}
+
+func (f *FolderServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
+	return f.dashboardService.MakeUserAdmin(ctx, orgID, userID, folderID, setViewAndEditPermissions)
 }
 
 func getFolder(ctx context.Context, query models.GetDashboardQuery) (*models.Dashboard, error) {
