@@ -53,7 +53,7 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval = SchedulerBaseInterval * time.Duration(6) // == 60 seconds
+	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 )
 
 type UnifiedAlertingSettings struct {
