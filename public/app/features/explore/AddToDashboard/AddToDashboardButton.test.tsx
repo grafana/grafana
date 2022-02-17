@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, act, waitForElementToBeRemoved } from '@testing-library/react';
-import { AddToDashboardButton } from '.';
+import { AddToDashboardButton } from './AddToDashboardButton';
 import userEvent from '@testing-library/user-event';
 import * as dashboardApi from 'app/features/manage-dashboards/state/actions';
 import * as api from './addToDashboard';
