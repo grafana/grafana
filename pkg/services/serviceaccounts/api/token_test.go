@@ -44,8 +44,6 @@ func createTokenforSA(t *testing.T, keyName string, orgID int64, saID int64, sec
 	}
 	err = bus.Dispatch(context.Background(), &cmd)
 	require.NoError(t, err)
-
-	fmt.Printf("%+v", cmd.Result)
 	return cmd.Result
 }
 

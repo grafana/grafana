@@ -67,7 +67,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 				HasExpired:             isExpired,
 			}
 		}
-    
+
 		return response.JSON(http.StatusOK, result)
 	} else {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
