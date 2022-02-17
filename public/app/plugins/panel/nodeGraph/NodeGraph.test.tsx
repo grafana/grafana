@@ -68,7 +68,6 @@ describe('NodeGraph', () => {
   });
 
   it('shows context menu when clicking on node or edge', async () => {
-    // TODO: Fix Nan for left in css
     render(
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]}
