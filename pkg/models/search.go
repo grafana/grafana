@@ -1,6 +1,10 @@
-package search
+package models
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+)
 
 type HitType string
 
@@ -42,4 +46,46 @@ func (s HitList) Less(i, j int) bool {
 	}
 
 	return strings.ToLower(s[i].Title) < strings.ToLower(s[j].Title)
+}
+
+type DashboardSearchProjection struct {
+	ID          int64  `xorm:"id"`
+	UID         string `xorm:"uid"`
+	Title       string
+	Slug        string
+	Term        string
+	IsFolder    bool
+	FolderID    int64  `xorm:"folder_id"`
+	FolderUID   string `xorm:"folder_uid"`
+	FolderSlug  string
+	FolderTitle string
+	SortMeta    int64
+}
+
+type FindPersistedDashboardsQuery struct {
+	Title        string
+	OrgId        int64
+	SignedInUser *SignedInUser
+	IsStarred    bool
+	DashboardIds []int64
+	Type         string
+	FolderIds    []int64
+	Tags         []string
+	Limit        int64
+	Page         int64
+	Permission   PermissionType
+	Sort         SortOption
+
+	Filters []interface{}
+
+	Result HitList
+}
+
+type SortOption struct {
+	Name        string
+	DisplayName string
+	Description string
+	Index       int
+	MetaName    string
+	Filter      []searchstore.SortOptionFilter
 }

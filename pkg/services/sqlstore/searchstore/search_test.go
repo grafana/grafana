@@ -43,7 +43,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 		Dialect: db.Dialect,
 	}
 
-	res := []sqlstore.DashboardSearchProjection{}
+	res := []models.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
@@ -52,7 +52,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 
 	assert.Len(t, res, 1)
 	res[0].UID = ""
-	assert.EqualValues(t, []sqlstore.DashboardSearchProjection{
+	assert.EqualValues(t, []models.DashboardSearchProjection{
 		{
 			ID:    dashIds[0],
 			Title: "A",
@@ -80,9 +80,9 @@ func TestBuilder_Pagination(t *testing.T) {
 		Dialect: db.Dialect,
 	}
 
-	resPg1 := []sqlstore.DashboardSearchProjection{}
-	resPg2 := []sqlstore.DashboardSearchProjection{}
-	resPg3 := []sqlstore.DashboardSearchProjection{}
+	resPg1 := []models.DashboardSearchProjection{}
+	resPg2 := []models.DashboardSearchProjection{}
+	resPg3 := []models.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(15, 1)
 		err := sess.SQL(sql, params...).Find(&resPg1)
@@ -135,7 +135,7 @@ func TestBuilder_Permissions(t *testing.T) {
 		Dialect: db.Dialect,
 	}
 
-	res := []sqlstore.DashboardSearchProjection{}
+	res := []models.DashboardSearchProjection{}
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
