@@ -3,7 +3,6 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"os"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,7 +23,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(context.Context, string, dashboards.Store, alerting.DashAlertExtractor) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -35,7 +34,7 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, service dashboards.DashboardProvisioningService) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig(ctx)
@@ -43,7 +42,7 @@ func New(ctx context.Context, configDirectory string, store dashboards.Store, da
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, store, dashAlertExtractor)
+	fileReaders, err := getFileReaders(configs, logger, service)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -121,14 +120,13 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor) ([]*FileReader, error) {
+func getFileReaders(configs []*config, logger log.Logger, service dashboards.DashboardProvisioningService) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
 		case "file":
-			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name),
-				store, dashAlertExtractor)
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name), service)
 			if err != nil {
 				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}

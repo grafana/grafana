@@ -161,7 +161,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    appEvents.publish(new ZoomOutEvent(2));
+    appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   }
 
   onRender() {

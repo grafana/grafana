@@ -12,7 +12,7 @@ import { stylesFactory, useTheme, Input, IconButton, Icon, FieldValidationMessag
 
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
-import { useAllFieldNamesFromDataFrames } from './utils';
+import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 

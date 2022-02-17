@@ -15,7 +15,7 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
-import { useAllFieldNamesFromDataFrames } from './utils';
+import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
   fieldName: string;

@@ -54,11 +54,11 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -108,11 +108,11 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -169,15 +169,15 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": twoDashboardsWithUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader3, err := NewDashboardFileReader(cfg3, logger, nil, nil)
+		reader3, err := NewDashboardFileReader(cfg3, logger, nil)
 		reader3.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
