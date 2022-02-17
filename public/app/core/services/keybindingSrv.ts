@@ -173,19 +173,19 @@ export class KeybindingSrv {
 
   setupTimeRangeBindings(updateUrl = true) {
     this.bind('t z', () => {
-      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl: updateUrl }));
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
 
     this.bind('ctrl+z', () => {
-      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl: updateUrl }));
+      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
 
     this.bind('t left', () => {
-      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl: updateUrl }));
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
     });
 
     this.bind('t right', () => {
-      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl: updateUrl }));
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
     });
   }
 
