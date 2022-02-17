@@ -62,6 +62,10 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 		return false, err
 	}
 
+	if setting.ViewersCanEdit {
+		return a.CanView()
+	}
+
 	if a.dashboard.IsFolder {
 		return a.ac.Evaluate(a.ctx, a.user, accesscontrol.EvalPermission(accesscontrol.ActionFoldersEdit, folderScope(a.dashboardID)))
 	}
