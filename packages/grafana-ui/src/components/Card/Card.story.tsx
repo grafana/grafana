@@ -157,7 +157,7 @@ export const Full: Story<Props> = ({ disabled }) => {
 
 export const Selected: Story<Props> = () => {
   return (
-    <Card isSelected disabled>
+    <Card isSelected>
       <Card.Heading>Spaces</Card.Heading>
       <Card.Description>Spaces are the superior form of indenting code.</Card.Description>
       <Card.Figure>
@@ -169,7 +169,7 @@ export const Selected: Story<Props> = () => {
 
 export const NotSelected: Story<Props> = () => {
   return (
-    <Card isSelected={false} disabled>
+    <Card isSelected={false}>
       <Card.Heading>Tabs</Card.Heading>
       <Card.Description>Tabs are the preferred way of indentation.</Card.Description>
       <Card.Figure>

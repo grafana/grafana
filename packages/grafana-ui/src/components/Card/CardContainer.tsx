@@ -66,6 +66,8 @@ export const CardContainer = ({
 
 export const getCardContainerStyles = stylesFactory(
   (theme: GrafanaTheme2, disabled = false, disableHover = false, isSelected = false) => {
+    const isSelectable = isSelected !== undefined;
+
     return {
       container: css({
         display: 'grid',
@@ -96,6 +98,10 @@ export const getCardContainerStyles = stylesFactory(
             zIndex: 1,
           },
           '&:focus': styleMixins.getFocusStyles(theme),
+        }),
+
+        ...(isSelectable && {
+          cursor: 'pointer',
         }),
 
         ...(isSelected && {
