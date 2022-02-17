@@ -608,7 +608,7 @@
     },
     {
       "datasource": "${ds}",
-      "description": "The resource path for this panel was configured using the dashboard JSON directly if you would like to change the resource path please go to Settings > Save as. In your new copy go to Settings > JSON Model and look for \"resource\": \"/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res\"",
+      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > Save As. Edit as you'd like in your new copy by going to Settings > JSON Model.",
       "fieldConfig": {
         "defaults": {
           "color": {
