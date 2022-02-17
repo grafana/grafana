@@ -78,12 +78,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 		}
 	}
-
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewNavigation) {
-			addNavbarPreferencesMigrations(mg)
-		}
-	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
