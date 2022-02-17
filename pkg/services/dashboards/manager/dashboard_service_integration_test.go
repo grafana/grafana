@@ -1,20 +1,20 @@
 //go:build integration
 // +build integration
 
-package dashboards
+package service
 
 import (
 	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/dashboards"
+	"github.com/grafana/grafana/pkg/models"
+	dashbboardservice "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const testOrgID int64 = 1
@@ -25,7 +25,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 		t.Cleanup(func() {
 			UpdateAlerting = origUpdateAlerting
 		})
-		UpdateAlerting = func(ctx context.Context, store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+		UpdateAlerting = func(ctx context.Context, store dashbboardservice.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 			return nil
 		}
 
@@ -860,7 +860,8 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	res, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	res, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -868,7 +869,8 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	_, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
 	return err
 }
 
@@ -885,7 +887,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		}),
 	}
 
-	dto := SaveDashboardDTO{
+	dto := dashbboardservice.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -894,7 +896,8 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		},
 	}
 
-	res, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	res, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -912,7 +915,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		}),
 	}
 
-	dto := SaveDashboardDTO{
+	dto := dashbboardservice.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -921,16 +924,17 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		},
 	}
 
-	res, err := NewService(sqlStore).SaveDashboard(context.Background(), &dto, false)
+	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	res, err := ProvideDashboardService(dashboardStore).SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
 	return res
 }
 
-func toSaveDashboardDto(cmd models.SaveDashboardCommand) SaveDashboardDTO {
+func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashbboardservice.SaveDashboardDTO {
 	dash := (&cmd).GetDashboardModel()
 
-	return SaveDashboardDTO{
+	return dashbboardservice.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,

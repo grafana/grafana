@@ -81,6 +81,20 @@ func (ss *SQLStore) UpdateThumbnailState(ctx context.Context, cmd *models.Update
 	return err
 }
 
+func (ss *SQLStore) FindThumbnailCount(ctx context.Context, cmd *models.FindDashboardThumbnailCountCommand) (int64, error) {
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+		count, err := sess.Count(&models.DashboardThumbnail{})
+		if err != nil {
+			return err
+		}
+
+		cmd.Result = count
+		return nil
+	})
+
+	return cmd.Result, err
+}
+
 func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
 	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
 		sess.Table("dashboard")

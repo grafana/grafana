@@ -1,19 +1,16 @@
-//go:build integration
-// +build integration
-
 // package search_test contains integration tests for search
 package searchstore_test
 
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -171,11 +168,27 @@ func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, o
 			"version": 0
 		}`))
 		require.NoError(t, err)
-		dash, err := db.SaveDashboard(models.SaveDashboardCommand{
-			Dashboard: dashboard,
-			UserId:    1,
-			OrgId:     orgID,
-			UpdatedAt: time.Now(),
+
+		var dash *models.Dashboard
+		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			dash = models.NewDashboardFromJson(dashboard)
+			dash.OrgId = orgID
+			dash.Uid = util.GenerateShortUID()
+			dash.CreatedBy = 1
+			dash.UpdatedBy = 1
+			_, err := sess.Insert(dash)
+			require.NoError(t, err)
+
+			tags := dash.GetTags()
+			if len(tags) > 0 {
+				for _, tag := range tags {
+					if _, err := sess.Insert(&sqlstore.DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
 		})
 		require.NoError(t, err)
 

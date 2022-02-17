@@ -74,4 +74,21 @@ describe('filterPanelDataToQuery', () => {
     expect(panelDataA?.series[0].refId).toBe('A');
     expect(panelDataA?.state).toBe(LoadingState.Done);
   });
+
+  it('should not set the state to done if the frame is loading and has no errors', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [
+        toDataFrame({ refId: 'A', fields: [{ name: 'AAA' }], meta: {} }),
+        toDataFrame({ refId: 'B', fields: [{ name: 'B111' }], meta: {} }),
+      ],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    const panelDataB = filterPanelDataToQuery(loadingData, 'B');
+    expect(panelDataB?.state).toBe(LoadingState.Loading);
+
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
+  });
 });
