@@ -16,13 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type accessControlGuardianTestCase struct {
-	desc        string
-	dashboardID int64
-	permissions []*accesscontrol.Permission
-	expected    bool
+	desc           string
+	dashboardID    int64
+	permissions    []*accesscontrol.Permission
+	viewersCanEdit bool
+	expected       bool
 }
 
 func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
@@ -174,11 +176,28 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			desc:        "should be able to edit with read action when viewer_can_edit is true",
+			dashboardID: 1,
+			permissions: []*accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionDashboardsRead,
+					Scope:  "dashboards:id:1",
+				},
+			},
+			viewersCanEdit: true,
+			expected:       true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			guardian := setupAccessControlGuardianTest(t, tt.dashboardID, tt.permissions)
+
+			if tt.viewersCanEdit {
+				setting.ViewersCanEdit = true
+				defer func() { setting.ViewersCanEdit = false }()
+			}
 
 			can, err := guardian.CanEdit()
 			require.NoError(t, err)
