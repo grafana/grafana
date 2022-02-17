@@ -137,7 +137,7 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Update is_service_account column to nullable",
 		NewRawSQLMigration("").
 			SQLite(migSQLITEisServiceAccountNullable).
-			Postgres("ALTER TABLE user ALTER COLUMN is_service_account DROP NOT NULL;").
+			Postgres("ALTER TABLE `user` ALTER COLUMN is_service_account DROP NOT NULL;").
 			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
 }
 
