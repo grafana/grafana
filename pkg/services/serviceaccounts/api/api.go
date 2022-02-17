@@ -163,7 +163,7 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, sa
 		return nil, nil
 	}
 
-	userPermissions, err := api.accesscontrol.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+	userPermissions, err := api.accesscontrol.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
 	if err != nil || len(userPermissions) == 0 {
 		api.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
 		return nil, err

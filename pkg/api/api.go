@@ -198,8 +198,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", routing.Wrap(hs.GetTeamByID))
-			teamsRoute.Get("/search", routing.Wrap(hs.SearchTeams))
+			teamsRoute.Get("/:teamId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionTeamsRead, ac.ScopeTeamsID)), routing.Wrap(hs.GetTeamByID))
+			teamsRoute.Get("/search", authorize(reqSignedIn, ac.EvalPermission(ac.ActionTeamsRead)), routing.Wrap(hs.SearchTeams))
 		})
 
 		// org information available to all users.
@@ -340,7 +340,7 @@ func (hs *HTTPServer) registerRoutes() {
 				dashboardRoute.Put("/uid/:uid/img/:kind/:theme", hs.ThumbService.UpdateThumbnailState)
 			}
 
-			dashboardRoute.Post("/calculate-diff", routing.Wrap(CalculateDashboardDiff))
+			dashboardRoute.Post("/calculate-diff", routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", routing.Wrap(hs.PostDashboard))
@@ -414,7 +414,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
 		})
 
-		apiRoute.Get("/annotations", routing.Wrap(GetAnnotations))
+		apiRoute.Get("/annotations", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsAll)), routing.Wrap(GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, routing.Wrap(DeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
@@ -423,7 +423,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Put("/:annotationId", routing.Wrap(UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", routing.Wrap(PatchAnnotation))
 			annotationsRoute.Post("/graphite", reqEditorRole, routing.Wrap(PostGraphiteAnnotation))
-			annotationsRoute.Get("/tags", routing.Wrap(GetAnnotationTags))
+			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead, ac.ScopeAnnotationsTagsAll)), routing.Wrap(GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))

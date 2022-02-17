@@ -263,12 +263,12 @@ func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthReques
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *Plugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CollectMetrics(ctx)
+	return pluginClient.CollectMetrics(ctx, req)
 }
 
 func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {

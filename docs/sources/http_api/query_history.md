@@ -109,3 +109,59 @@ Status codes:
 - **200** – OK
 - **404** - Query in query history not found
 - **500** – Unable to delete query from the database
+
+### Update comment of query in Query history by UID
+
+`PATCH /api/query-history/:uid`
+
+Updates comment of a query with a specific uid that is stored in the query history.
+
+Query parameters:
+
+- **comment** – New comment that will be added to the specified query.
+
+**Example Request**:
+
+```http
+PATCH /api/query-history/P8zM2I1nz HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+{
+  "comment": "Debugging query",
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "result": {
+    "uid": "P8zM2I1nz",
+    "datasourceUid": "PE1C5CBDA0504A6A3",
+    "createdBy": 1,
+    "createdAt": 1643630762,
+    "starred": false,
+    "comment": "Debugging query",
+    "queries": [
+      {
+        "refId": "A",
+        "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0",
+        "scenarioId": "csv_content",
+        "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+        }
+      }
+    ]
+  }
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **400** - Errors (invalid JSON, missing or invalid fields)
+- **500** – Unable to update comment of query in the database

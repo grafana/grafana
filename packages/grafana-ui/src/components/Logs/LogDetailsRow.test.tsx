@@ -20,7 +20,13 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<LogDetailsRow {...props} />);
+  return render(
+    <table>
+      <tbody>
+        <LogDetailsRow {...props} />
+      </tbody>
+    </table>
+  );
 };
 
 describe('LogDetailsRow', () => {
