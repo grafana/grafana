@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AnnotationQuery, DataSourceInstanceSettings } from '@grafana/data';
+import { AnnotationQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
@@ -44,7 +44,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     onUpdate({
       ...annotation,
-      datasource: ds.name,
+      datasource: getDataSourceRef(ds),
     });
   };
 

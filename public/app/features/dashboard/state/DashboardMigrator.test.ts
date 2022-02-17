@@ -17,6 +17,11 @@ const dataSources = {
   prom: mockDataSource({
     name: 'prom',
     type: 'prometheus',
+    isDefault: true,
+  }),
+  prom2: mockDataSource({
+    name: 'prom2',
+    type: 'prometheus',
   }),
   [MIXED_DATASOURCE_NAME]: mockDataSource({
     name: MIXED_DATASOURCE_NAME,
@@ -179,7 +184,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(35);
+      expect(model.schemaVersion).toBe(36);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1824,7 +1829,7 @@ describe('DashboardModel', () => {
     });
 
     it('should update panel datasource props to refs for default data source', () => {
-      expect(model.panels[1].datasource).toEqual(null);
+      expect(model.panels[1].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
     });
 
     it('should update panel datasource props to refs for mixed data source', () => {
@@ -1874,6 +1879,67 @@ describe('DashboardModel', () => {
           },
         ]
       `);
+    });
+  });
+
+  describe('when migrating default (null) datasource', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'var',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 0,
+              datasource: null,
+            },
+          ],
+        },
+        annotations: {
+          list: [
+            {
+              datasource: null,
+            },
+            {
+              datasource: 'prom2',
+            },
+          ],
+        },
+        panels: [
+          {
+            id: 2,
+            datasource: null,
+            targets: [
+              {
+                datasource: null,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should set data source to current default', () => {
+      expect(model.templating.list[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should migrate annotation null query to default ds', () => {
+      expect(model.annotations.list[1].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should migrate annotation query to refs', () => {
+      expect(model.annotations.list[2].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-3' });
+    });
+
+    it('should update panel datasource props to refs for named data source', () => {
+      expect(model.panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update target datasource props to refs', () => {
+      expect(model.panels[0].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
     });
   });
 });

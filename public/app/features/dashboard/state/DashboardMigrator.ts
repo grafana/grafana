@@ -71,7 +71,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 35;
+    this.dashboard.schemaVersion = 36;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -732,6 +732,37 @@ export class DashboardMigrator {
       panelUpgrades.push(ensureXAxisVisibility);
     }
 
+    if (oldVersion < 36) {
+      // Migrate datasource to refs in annotations
+      for (const query of this.dashboard.annotations.list) {
+        query.datasource = migrateDatasourceNameToRef(query.datasource);
+      }
+
+      // Migrate datasource: null to current default
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      if (defaultDs) {
+        for (const variable of this.dashboard.templating.list) {
+          if (variable.type === 'query' && variable.datasource === null) {
+            variable.datasource = getDataSourceRef(defaultDs);
+          }
+        }
+
+        panelUpgrades.push((panel: PanelModel) => {
+          if (panel.datasource === null) {
+            panel.datasource = getDataSourceRef(defaultDs);
+          }
+          if (panel.targets) {
+            for (const target of panel.targets) {
+              if (target.datasource === null) {
+                target.datasource = getDataSourceRef(defaultDs);
+              }
+            }
+          }
+          return panel;
+        });
+      }
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -1051,10 +1082,6 @@ function migrateSinglestat(panel: PanelModel) {
 }
 
 export function migrateDatasourceNameToRef(nameOrRef?: string | DataSourceRef | null): DataSourceRef | null {
-  if (nameOrRef == null || nameOrRef === 'default') {
-    return null;
-  }
-
   if (isDataSourceRef(nameOrRef)) {
     return nameOrRef;
   }
