@@ -165,7 +165,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super.query(filteredRequest);
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy' && request.app === CoreApp.Explore) {
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
       return super.query(filteredRequest).pipe(
         map((res) => {
           if (res.error) {
