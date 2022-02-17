@@ -57,7 +57,9 @@ function rangeRendererWithParams(
 
   const str = model.id + '(';
 
-  // Frame the first paramater as a range vector
+  // Depending on the renderLeft variable, render parameters to the left or right
+  // renderLeft === true (renderLeft) => (param1, param2, rangeVector[...])
+  // renderLeft === false (renderRight) => (rangeVector[...], param1, param2)
   if (innerExpr) {
     renderLeft ? params.push(`${innerExpr}[${rangeVector}]`) : params.unshift(`${innerExpr}[${rangeVector}]`);
   }
