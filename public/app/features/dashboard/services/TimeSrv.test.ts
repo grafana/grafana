@@ -244,6 +244,11 @@ describe('timeSrv', () => {
 
       expect(locationUpdates[1].search).toEqual('?kiosk&from=now-1h&to=now-10s');
     });
+
+    it('should not change the URL if the updateUrl param is false', () => {
+      timeSrv.setTime({ from: '1644340584281', to: '1644340584281' }, false);
+      expect(locationUpdates.length).toBe(0);
+    });
   });
 
   describe('pauseAutoRefresh', () => {
