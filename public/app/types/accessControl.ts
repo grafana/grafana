@@ -1,7 +1,7 @@
 /**
  * UserPermission is a map storing permissions in a form of
  * {
- *   action: enabled;
+ *   action: true;
  * }
  */
 export type UserPermission = Record<string, boolean>;
