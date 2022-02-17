@@ -140,4 +140,48 @@ describe('Add to Dashboard', () => {
       });
     });
   });
+
+  describe('API errors', () => {
+    it('Correctly sets error related to dashboard name', async () => {
+      const spy = jest.spyOn(api, 'addToDashboard');
+
+      render(<AddToDashboardButton queries={[]} visualization="table" />);
+
+      await openModal();
+
+      // name-exists, triggered when trying to create a dashboard in a folder that already has a dashboard with the same name
+      spy.mockImplementation(() =>
+        Promise.reject(createFetchResponse({ status: 'name-exists', message: 'name exists' }))
+      );
+
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+
+      await screen.findByRole('alert');
+      expect(await screen.findByRole('alert')).toHaveTextContent('name exists');
+
+      // empty-name, triggered when trying to create a dashboard having an empty name.
+      // FE validation usually avoids this use case, but can be triggered by using only whitespaces in
+      // dashboard name field
+      spy.mockImplementation(() =>
+        Promise.reject(createFetchResponse({ status: 'empty-name', message: 'empty name' }))
+      );
+
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+
+      await screen.findByRole('alert');
+      expect(await screen.findByRole('alert')).toHaveTextContent('empty name');
+
+      // name-match, triggered when trying to create a dashboard in a folder that has the same name.
+      // it doesn't seem to ever be triggered, but matches the error in
+      // https://github.com/grafana/grafana/blob/44f1e381cbc7a5e236b543bc6bd06b00e3152d7f/pkg/models/dashboards.go#L71
+      spy.mockImplementation(() =>
+        Promise.reject(createFetchResponse({ status: 'name-match', message: 'name match' }))
+      );
+
+      userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
+
+      await screen.findByRole('alert');
+      expect(await screen.findByRole('alert')).toHaveTextContent('name match');
+    });
+  });
 });
