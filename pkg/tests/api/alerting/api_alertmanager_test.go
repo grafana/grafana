@@ -2194,6 +2194,7 @@ func TestQuota(t *testing.T) {
 					 "rules":[
 					    {
 					       "expr":"",
+						   "for": "2m",
 					       "grafana_alert":{
 						  "id":1,
 						  "orgId":1,
