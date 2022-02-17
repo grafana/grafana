@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	service "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -24,8 +27,9 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	pmCfg := plugins.FromGrafanaCfg(cfg)
+	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
 	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
-		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}))
+		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}), dashboardService)
 	require.NoError(t, err)
 
 	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardQuery) error {

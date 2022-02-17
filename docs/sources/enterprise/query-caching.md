@@ -47,7 +47,7 @@ To tell if a data source works with query caching, follow the instructions below
 
 ## Enable and configure query caching
 
-You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, visit the [Permissions page]({{< relref "../permissions/_index.md" >}}).
+You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, refer to [About users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}).
 
 By default, data source queries are not cached. To enable query caching for a single data source:
 

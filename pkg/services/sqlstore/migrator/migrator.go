@@ -7,11 +7,17 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/atomic"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+)
+
+var (
+	ErrMigratorIsLocked   = fmt.Errorf("migrator is locked")
+	ErrMigratorIsUnlocked = fmt.Errorf("migrator is unlocked")
 )
 
 type Migrator struct {
@@ -20,6 +26,7 @@ type Migrator struct {
 	migrations []Migration
 	Logger     log.Logger
 	Cfg        *setting.Cfg
+	isLocked   atomic.Bool
 }
 
 type MigrationLog struct {
@@ -87,7 +94,32 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
-func (mg *Migrator) Start() error {
+func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
+	if !isDatabaseLockingEnabled {
+		return mg.run()
+	}
+
+	return mg.InTransaction(func(sess *xorm.Session) error {
+		mg.Logger.Info("Locking database")
+		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, LockCfg{Session: sess, Timeout: lockAttemptTimeout}); err != nil {
+			mg.Logger.Error("Failed to lock database", "error", err)
+			return err
+		}
+
+		defer func() {
+			mg.Logger.Info("Unlocking database")
+			unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, LockCfg{Session: sess})
+			if unlockErr != nil {
+				mg.Logger.Error("Failed to unlock database", "error", unlockErr)
+			}
+		}()
+
+		// migration will run inside a nested transaction
+		return mg.run()
+	})
+}
+
+func (mg *Migrator) run() (err error) {
 	mg.Logger.Info("Starting DB migrations")
 
 	logMap, err := mg.GetMigrationLog()
@@ -209,5 +241,17 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 		return err
 	}
 
+	return nil
+}
+
+func casRestoreOnErr(lock *atomic.Bool, o, n bool, casErr error, f func(LockCfg) error, lockCfg LockCfg) error {
+	if !lock.CAS(o, n) {
+		return casErr
+	}
+	if err := f(lockCfg); err != nil {
+		// Automatically unlock/lock on error
+		lock.Store(o)
+		return err
+	}
 	return nil
 }

@@ -321,6 +321,14 @@ const (
 
 	// Team related scopes
 	ScopeTeamsAll = "teams:*"
+
+	// Annotations related actions
+	ActionAnnotationsRead = "annotations:read"
+
+	ActionAnnotationsTagsRead = "annotations.tags:read"
+
+	ScopeAnnotationsAll     = "annotations:*"
+	ScopeAnnotationsTagsAll = "annotations:tags:*"
 )
 
 var (

@@ -95,7 +95,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.17.0",
-    "@grafana/tsconfig": "^1.0.0-rc1",
+    "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-commonjs": "21.0.1",
     "@rollup/plugin-image": "2.1.1",

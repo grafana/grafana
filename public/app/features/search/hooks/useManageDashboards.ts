@@ -47,7 +47,7 @@ export const useManageDashboards = (
     ...state,
   });
 
-  const { showPreviews, onShowPreviewsChange, previewFeatureEnabled } = useShowDashboardPreviews();
+  const { showPreviews, setShowPreviews, previewFeatureEnabled } = useShowDashboardPreviews();
   useDebounce(
     () => {
       reportDashboardListViewed('manage_dashboards', showPreviews, previewFeatureEnabled, {
@@ -123,6 +123,6 @@ export const useManageDashboards = (
     onMoveItems,
     noFolders,
     showPreviews,
-    onShowPreviewsChange,
+    setShowPreviews,
   };
 };

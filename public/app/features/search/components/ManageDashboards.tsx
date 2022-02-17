@@ -62,7 +62,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     onMoveItems,
     noFolders,
     showPreviews,
-    onShowPreviewsChange,
+    setShowPreviews,
   } = useManageDashboards(query, {}, folder);
 
   const onMoveTo = () => {
@@ -108,7 +108,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
           canMove={hasEditPermissionInFolders && canMove}
           deleteItem={onItemDelete}
           moveTo={onMoveTo}
-          onShowPreviewsChange={(ev) => onShowPreviewsChange(ev.target.checked)}
+          setShowPreviews={setShowPreviews}
           onToggleAllChecked={onToggleAllChecked}
           onStarredFilterChange={onStarredFilterChange}
           onSortChange={onSortChange}

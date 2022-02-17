@@ -140,7 +140,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   }
 
   targetContainsTemplate(query: AzureMonitorQuery) {
-    if (query.subscription && this.templateSrv.variableExists(query.subscription)) {
+    if (query.subscription && this.templateSrv.containsTemplate(query.subscription)) {
       return true;
     }
 
@@ -153,7 +153,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       subQuery = JSON.stringify([query.azureResourceGraph, query.subscriptions]);
     }
 
-    return !!subQuery && this.templateSrv.variableExists(subQuery);
+    return !!subQuery && this.templateSrv.containsTemplate(subQuery);
   }
 
   async annotationQuery(options: any) {
