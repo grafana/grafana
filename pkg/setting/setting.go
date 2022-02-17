@@ -696,7 +696,7 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 				defaultSec, _ = masterFile.NewSection(section.Name())
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
-			if err != nil {
+			if _, exists := defaultSec.KeysHash()[key.Name()]; !exists || err != nil {
 				defaultKey, _ = defaultSec.NewKey(key.Name(), key.Value())
 			}
 			defaultKey.SetValue(key.Value())
