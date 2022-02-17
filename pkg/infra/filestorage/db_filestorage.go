@@ -3,6 +3,7 @@ package filestorage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,13 +35,13 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 	var result *File
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		table := &file{}
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", filePath).Get(table)
+		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Get(table)
 		if !exists {
 			return nil
 		}
 
 		var meta = make([]*fileMeta, 0)
-		if err := sess.Table("file_meta").Where("LOWER(path) = ?", filePath).Find(&meta); err != nil {
+		if err := sess.Table("file_meta").Where("LOWER(path) = ?", strings.ToLower(filePath)).Find(&meta); err != nil {
 			return err
 		}
 
@@ -74,7 +75,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 	now := time.Now()
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		exists, err := sess.Table("file").Where("LOWER(path) = ?", cmd.Path).Get(existing)
+		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(cmd.Path)).Get(existing)
 
 		if exists {
 			existing.Updated = now
@@ -82,7 +83,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				existing.Contents = *cmd.Contents
 			}
 
-			_, err = sess.Where("LOWER(path) = ?", cmd.Path).Update(existing)
+			_, err = sess.Where("LOWER(path) = ?", strings.ToLower(cmd.Path)).Update(existing)
 			if err != nil {
 				return err
 			}
@@ -133,7 +134,7 @@ func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCo
 
 func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key string, val string) error {
 	existing := &fileMeta{}
-	exists, err := sess.Table("file_meta").Where("LOWER(path) = ? AND key = ?", path, key).Get(existing)
+	exists, err := sess.Table("file_meta").Where("LOWER(path) = ? AND key = ?", strings.ToLower(path), key).Get(existing)
 	if err != nil {
 		return err
 	}
@@ -141,7 +142,7 @@ func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key st
 	if exists {
 		existing.Updated = now
 		existing.Value = val
-		_, err = sess.Where("LOWER(path) = ? AND key = ?", path, key).Update(existing)
+		_, err = sess.Where("LOWER(path) = ? AND key = ?", strings.ToLower(path), key).Update(existing)
 	} else {
 		_, err = sess.Insert(&fileMeta{
 			Path:    path,
@@ -162,9 +163,9 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 
 		sess.Table("file")
 		if recursive {
-			sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", folderPath, "%"))
+			sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(folderPath), "%"))
 		} else {
-			sess.Where("LOWER(parent_folder_path) = ?", folderPath)
+			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(folderPath))
 		}
 		sess.OrderBy("path")
 
