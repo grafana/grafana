@@ -55,5 +55,4 @@ func addPreferencesMigrations(mg *Migrator) {
 	// change column type of preferences.json_data
 	mg.AddMigration("alter preferences.json_data to mediumtext v1", NewRawSQLMigration("").
 		Mysql("ALTER TABLE preferences MODIFY json_data MEDIUMTEXT;"))
-
 }
