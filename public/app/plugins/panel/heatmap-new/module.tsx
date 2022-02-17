@@ -11,7 +11,7 @@ import {
 } from './models.gen';
 import { HeatmapSuggestionsSupplier } from './suggestions';
 import { heatmapChangedHandler } from './migrations';
-import { addHeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/editor/helper';
+import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { colorSchemes } from './palettes';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
