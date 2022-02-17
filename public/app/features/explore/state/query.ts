@@ -197,7 +197,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 export interface AddResultsToCachePayload {
   exploreId: ExploreId;
   cacheKey: string;
-  queryResponse: PanelData;
+  queryResponse: ExplorePanelData;
 }
 export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 
@@ -798,6 +798,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     const CACHE_LIMIT = 5;
     const { cache } = state;
     const { queryResponse, cacheKey } = action.payload;
+    console.log({ queryResponse });
 
     let newCache = [...cache];
     const isDuplicateKey = newCache.some((c) => c.key === cacheKey);

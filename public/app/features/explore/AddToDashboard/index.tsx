@@ -12,7 +12,7 @@ export const AddToDashboardButton = ({ queries, visualization }: Props) => {
 
   return (
     <>
-      <ToolbarButton icon="apps" onClick={() => setIsOpen(true)}>
+      <ToolbarButton icon="apps" onClick={() => setIsOpen(true)} aria-label="Add to Dashboard">
         Add to Dashboard
       </ToolbarButton>
 

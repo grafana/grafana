@@ -1,14 +1,14 @@
+import React, { useState } from 'react';
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, Field, Input, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { DashboardPicker } from 'app/core/components/editors/DashboardPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
-import React, { useState } from 'react';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import { addToDashboard, SaveToExistingDashboardDTO, SaveToNewDashboardDTO } from './addToDashboard';
+// import { notifyApp } from 'app/core/actions';
+// import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+// import { useDispatch } from 'react-redux';
 
 const isSaveToNewDashboard = (
   errors: DeepMap<FormDTO, FieldError>,
@@ -36,19 +36,19 @@ function withRedirect<T extends any[]>(fn: (...args: T) => Promise<string>) {
 
 export const AddToDashboardModal = ({ onClose, queries, visualization }: Props) => {
   const [saveTarget, setSaveTarget] = useState<SaveTarget>('new');
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const {
     register,
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
+  } = useForm<FormDTO, { error: string }>({ defaultValues: { queries, visualization } });
 
   const onSubmit = async (data: FormDTO) => {
     try {
       const res = await addToDashboard(data);
-      dispatch(notifyApp(createSuccessNotification('dashboard created')));
+      // dispatch(notifyApp(createSuccessNotification('dashboard created')));
       onClose();
 
       return res.data.url;
@@ -60,7 +60,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization }: Props) 
           setError('dashboardName', { message: error.data.message, shouldFocus: true });
           break;
         default:
-          dispatch(notifyApp(createErrorNotification(error.data.message)));
+        // dispatch(notifyApp(createErrorNotification(error.data.message)));
       }
 
       throw error.data.status;
@@ -79,7 +79,6 @@ export const AddToDashboardModal = ({ onClose, queries, visualization }: Props) 
       <form>
         <input type="hidden" {...register('queries')} />
         <input type="hidden" {...register('visualization')} />
-
         {isSaveToNewDashboard(errors, saveTarget) ? (
           <>
             <Field label="Dashboard name" error={errors.dashboardName?.message} invalid={!!errors.dashboardName}>
