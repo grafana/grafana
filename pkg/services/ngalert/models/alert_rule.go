@@ -245,3 +245,37 @@ func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.Data) != 0
 }
+
+// PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
+// There are several exceptions:
+// 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
+// 2. There are fields that are patched together:
+//    - AlertRule.Condition and AlertRule.Data
+// If either of the pair is specified, neither is patched.
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
+	if ruleToPatch.Title == "" {
+		ruleToPatch.Title = existingRule.Title
+	}
+	if ruleToPatch.Condition == "" || len(ruleToPatch.Data) == 0 {
+		ruleToPatch.Condition = existingRule.Condition
+		ruleToPatch.Data = existingRule.Data
+	}
+	if ruleToPatch.IntervalSeconds == 0 {
+		ruleToPatch.IntervalSeconds = existingRule.IntervalSeconds
+	}
+	if ruleToPatch.NamespaceUID == "" {
+		ruleToPatch.NamespaceUID = existingRule.NamespaceUID
+	}
+	if ruleToPatch.RuleGroup == "" {
+		ruleToPatch.RuleGroup = existingRule.RuleGroup
+	}
+	if ruleToPatch.ExecErrState == "" {
+		ruleToPatch.ExecErrState = existingRule.ExecErrState
+	}
+	if ruleToPatch.NoDataState == "" {
+		ruleToPatch.NoDataState = existingRule.NoDataState
+	}
+	if ruleToPatch.For == 0 {
+		ruleToPatch.For = existingRule.For
+	}
+}

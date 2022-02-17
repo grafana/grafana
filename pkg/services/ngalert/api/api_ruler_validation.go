@@ -22,6 +22,7 @@ func validateRuleNode(
 	namespace *models.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
+
 	intervalSeconds := int64(interval.Seconds())
 
 	baseIntervalSeconds := int64(cfg.BaseInterval.Seconds())
@@ -38,7 +39,10 @@ func validateRuleNode(
 		return nil, fmt.Errorf("not Grafana managed alert rule")
 	}
 
-	if ruleNode.GrafanaManagedAlert.Title == "" {
+	// if UID is specified then we can accept partial model. Therefore, some validation can be skipped as it will be patched later
+	canPatch := ruleNode.GrafanaManagedAlert.UID != ""
+
+	if ruleNode.GrafanaManagedAlert.Title == "" && !canPatch {
 		return nil, errors.New("alert rule title cannot be empty")
 	}
 
@@ -47,6 +51,10 @@ func validateRuleNode(
 	}
 
 	noDataState := ngmodels.NoData
+	if ruleNode.GrafanaManagedAlert.NoDataState == "" && canPatch {
+		noDataState = ""
+	}
+
 	if ruleNode.GrafanaManagedAlert.NoDataState != "" {
 		var err error
 		noDataState, err = ngmodels.NoDataStateFromString(string(ruleNode.GrafanaManagedAlert.NoDataState))
@@ -56,6 +64,11 @@ func validateRuleNode(
 	}
 
 	errorState := ngmodels.AlertingErrState
+
+	if ruleNode.GrafanaManagedAlert.ExecErrState == "" && canPatch {
+		errorState = ""
+	}
+
 	if ruleNode.GrafanaManagedAlert.ExecErrState != "" {
 		var err error
 		errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
@@ -65,16 +78,24 @@ func validateRuleNode(
 	}
 
 	if len(ruleNode.GrafanaManagedAlert.Data) == 0 {
-		return nil, fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
+		if canPatch {
+			if ruleNode.GrafanaManagedAlert.Condition != "" {
+				return nil, fmt.Errorf("%w: query is not specified by condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
+			}
+		} else {
+			return nil, fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
+		}
 	}
 
-	cond := ngmodels.Condition{
-		Condition: ruleNode.GrafanaManagedAlert.Condition,
-		OrgID:     orgId,
-		Data:      ruleNode.GrafanaManagedAlert.Data,
-	}
-	if err := conditionValidator(cond); err != nil {
-		return nil, fmt.Errorf("failed to validate condition of alert rule %s: %w", ruleNode.GrafanaManagedAlert.Title, err)
+	if len(ruleNode.GrafanaManagedAlert.Data) != 0 {
+		cond := ngmodels.Condition{
+			Condition: ruleNode.GrafanaManagedAlert.Condition,
+			OrgID:     orgId,
+			Data:      ruleNode.GrafanaManagedAlert.Data,
+		}
+		if err := conditionValidator(cond); err != nil {
+			return nil, fmt.Errorf("failed to validate condition of alert rule %s: %w", ruleNode.GrafanaManagedAlert.Title, err)
+		}
 	}
 
 	newAlertRule := ngmodels.AlertRule{

@@ -206,12 +206,12 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 	}
 }
 
-func TestValidateRuleNode(t *testing.T) {
+func TestValidateRuleNode_NoUID(t *testing.T) {
 	orgId := rand.Int63()
 	folder := randFolder()
 	name := util.GenerateShortUID()
 	var cfg = config(t)
-	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10))
+	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
 
 	testCases := []struct {
 		name   string
@@ -302,6 +302,8 @@ func TestValidateRuleNode(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := testCase.rule()
+			r.GrafanaManagedAlert.UID = ""
+
 			alert, err := validateRuleNode(r, name, interval, orgId, folder, func(condition models.Condition) error {
 				return nil
 			}, cfg)
@@ -320,7 +322,7 @@ func TestValidateRuleNode(t *testing.T) {
 	})
 }
 
-func TestValidateRuleNodeFailures(t *testing.T) {
+func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 	orgId := rand.Int63()
 	folder := randFolder()
 	cfg := config(t)
@@ -334,6 +336,7 @@ func TestValidateRuleNodeFailures(t *testing.T) {
 		rule                func() *apimodels.PostableExtendedRuleNode
 		conditionValidation func(condition models.Condition) error
 		assert              func(t *testing.T, model *apimodels.PostableExtendedRuleNode, err error)
+		allowedIfNoUId      bool
 	}{
 		{
 			name: "fail if GrafanaManagedAlert is not specified",
@@ -390,6 +393,226 @@ func TestValidateRuleNodeFailures(t *testing.T) {
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0, 1)
+				return &r
+			},
+		},
+		{
+			name: "fail if validator function returns error",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				return &r
+			},
+			conditionValidation: func(condition models.Condition) error {
+				return errors.New("BAD alert condition")
+			},
+		},
+		{
+			name: "fail if Dashboard UID is specified but not Panel ID",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.ApiRuleNode.Annotations = map[string]string{
+					models.DashboardUIDAnnotation: util.GenerateShortUID(),
+				}
+				return &r
+			},
+		},
+		{
+			name: "fail if Dashboard UID is specified and Panel ID is NaN",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.ApiRuleNode.Annotations = map[string]string{
+					models.DashboardUIDAnnotation: util.GenerateShortUID(),
+					models.PanelIDAnnotation:      util.GenerateShortUID(),
+				}
+				return &r
+			},
+		},
+		{
+			name: "fail if PanelID is specified but not Dashboard UID ",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.ApiRuleNode.Annotations = map[string]string{
+					models.PanelIDAnnotation: "0",
+				}
+				return &r
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			r := testCase.rule()
+			if r.GrafanaManagedAlert != nil {
+				r.GrafanaManagedAlert.UID = ""
+			}
+			f := successValidation
+			if testCase.conditionValidation != nil {
+				f = testCase.conditionValidation
+			}
+
+			interval := cfg.BaseInterval
+			if testCase.interval != nil {
+				interval = *testCase.interval
+			}
+
+			_, err := validateRuleNode(r, "", interval, orgId, folder, f, cfg)
+			require.Error(t, err)
+			if testCase.assert != nil {
+				testCase.assert(t, r, err)
+			}
+		})
+	}
+}
+
+func TestValidateRuleNode_UID(t *testing.T) {
+	orgId := rand.Int63()
+	folder := randFolder()
+	name := util.GenerateShortUID()
+	var cfg = config(t)
+	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
+
+	testCases := []struct {
+		name   string
+		rule   func() *apimodels.PostableExtendedRuleNode
+		assert func(t *testing.T, model *apimodels.PostableExtendedRuleNode, rule *models.AlertRule)
+	}{
+		{
+			name: "use empty Title",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Title = ""
+				return &r
+			},
+			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
+				require.Equal(t, "", alert.Title)
+			},
+		},
+		{
+			name: "use empty NoData if NoDataState is empty",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.NoDataState = ""
+				return &r
+			},
+			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
+				require.Equal(t, models.NoDataState(""), alert.NoDataState)
+			},
+		},
+		{
+			name: "use empty Alerting if ExecErrState is empty",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.ExecErrState = ""
+				return &r
+			},
+			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
+				require.Equal(t, models.ExecutionErrorState(""), alert.ExecErrState)
+			},
+		},
+		{
+			name: "use empty Condition and Data if they are empty",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Condition = ""
+				r.GrafanaManagedAlert.Data = nil
+				if rand.Int63()%2 == 0 {
+					r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0)
+				}
+				return &r
+			},
+			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
+				require.Equal(t, "", alert.Condition)
+				require.Len(t, alert.Data, 0)
+			},
+		},
+		{
+			name: "extracts Dashboard UID and Panel Id from annotations",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.ApiRuleNode.Annotations = map[string]string{
+					models.DashboardUIDAnnotation: util.GenerateShortUID(),
+					models.PanelIDAnnotation:      strconv.Itoa(rand.Int()),
+				}
+				return &r
+			},
+			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
+				require.Equal(t, api.ApiRuleNode.Annotations[models.DashboardUIDAnnotation], *alert.DashboardUID)
+				panelId, err := strconv.Atoi(api.ApiRuleNode.Annotations[models.PanelIDAnnotation])
+				require.NoError(t, err)
+				require.Equal(t, int64(panelId), *alert.PanelID)
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			r := testCase.rule()
+			alert, err := validateRuleNode(r, name, interval, orgId, folder, func(condition models.Condition) error {
+				return nil
+			}, cfg)
+			require.NoError(t, err)
+			testCase.assert(t, r, alert)
+		})
+	}
+
+	t.Run("accepts empty group name", func(t *testing.T) {
+		r := validRule()
+		alert, err := validateRuleNode(&r, "", interval, orgId, folder, func(condition models.Condition) error {
+			return nil
+		}, cfg)
+		require.NoError(t, err)
+		require.Equal(t, "", alert.RuleGroup)
+	})
+}
+
+func TestValidateRuleNodeFailures_UID(t *testing.T) {
+	orgId := rand.Int63()
+	folder := randFolder()
+	cfg := config(t)
+	successValidation := func(condition models.Condition) error {
+		return nil
+	}
+
+	testCases := []struct {
+		name                string
+		interval            *time.Duration
+		rule                func() *apimodels.PostableExtendedRuleNode
+		conditionValidation func(condition models.Condition) error
+		assert              func(t *testing.T, model *apimodels.PostableExtendedRuleNode, err error)
+	}{
+		{
+			name: "fail if GrafanaManagedAlert is not specified",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert = nil
+				return &r
+			},
+		},
+		{
+			name: "fail if title is too long",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				for len(r.GrafanaManagedAlert.Title) < store.AlertRuleMaxTitleLength {
+					r.GrafanaManagedAlert.Title += r.GrafanaManagedAlert.Title
+				}
+				return &r
+			},
+		},
+		{
+			name: "fail if there are not data (nil) but condition is set",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Data = nil
+				r.GrafanaManagedAlert.Condition = "A"
+				return &r
+			},
+		},
+		{
+			name: "fail if there are not data (empty) but condition is set",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0, 1)
+				r.GrafanaManagedAlert.Condition = "A"
 				return &r
 			},
 		},

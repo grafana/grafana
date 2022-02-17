@@ -1847,6 +1847,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 				 "rules":[
 				    {
 				       "expr":"",
+                       "for": "30s",
 				       "grafana_alert":{
 					  "id":1,
 					  "orgId":1,

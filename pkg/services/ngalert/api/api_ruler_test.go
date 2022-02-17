@@ -78,7 +78,7 @@ func TestCalculateChanges(t *testing.T) {
 		namespace := randFolder()
 		groupName := util.GenerateShortUID()
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace)))
-		submittedMap, submitted := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace), withUIDs(inDatabaseMap)))
+		submittedMap, submitted := models.GenerateUniqueAlertRules(len(inDatabase), models.AlertRuleGen(simulateSubmitted, withOrgID(orgId), withGroup(groupName), withNamespace(namespace), withUIDs(inDatabaseMap)))
 
 		fakeStore := store.NewFakeRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
@@ -97,6 +97,69 @@ func TestCalculateChanges(t *testing.T) {
 		require.Equal(t, 0, changes.newRules)
 	})
 
+	t.Run("should patch rule with UID specified by existing rule", func(t *testing.T) {
+		testCases := []struct {
+			name    string
+			mutator func(r *models.AlertRule)
+		}{
+			{
+				name: "title is empty",
+				mutator: func(r *models.AlertRule) {
+					r.Title = ""
+				},
+			},
+			{
+				name: "condition and data are empty",
+				mutator: func(r *models.AlertRule) {
+					r.Condition = ""
+					r.Data = nil
+				},
+			},
+			{
+				name: "ExecErrState is empty",
+				mutator: func(r *models.AlertRule) {
+					r.ExecErrState = ""
+				},
+			},
+			{
+				name: "NoDataState is empty",
+				mutator: func(r *models.AlertRule) {
+					r.NoDataState = ""
+				},
+			},
+			{
+				name: "For is 0",
+				mutator: func(r *models.AlertRule) {
+					r.For = 0
+				},
+			},
+		}
+
+		dbRule := models.AlertRuleGen(withOrgID(orgId))()
+
+		fakeStore := store.NewFakeRuleStore(t)
+		fakeStore.PutRule(context.Background(), dbRule)
+
+		namespace := randFolder()
+		groupName := util.GenerateShortUID()
+
+		for _, testCase := range testCases {
+			t.Run(testCase.name, func(t *testing.T) {
+				expected := models.AlertRuleGen(simulateSubmitted, testCase.mutator)()
+				expected.UID = dbRule.UID
+				submitted := *expected
+				changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, []*models.AlertRule{&submitted})
+				require.NoError(t, err)
+				require.Len(t, changes.Upsert, 1)
+				ch := changes.Upsert[0]
+				require.Equal(t, ch.Existing, dbRule)
+				fixed := *expected
+				models.PatchPartialAlertRule(dbRule, &fixed)
+				require.Equal(t, fixed, ch.New)
+			})
+		}
+	})
+
 	t.Run("should be able to find alerts by UID in other group/namespace", func(t *testing.T) {
 		inDatabaseMap, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(10)+10, models.AlertRuleGen(withOrgID(orgId)))
 
@@ -105,7 +168,7 @@ func TestCalculateChanges(t *testing.T) {
 
 		namespace := randFolder()
 		groupName := util.GenerateShortUID()
-		submittedMap, submitted := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace), withUIDs(inDatabaseMap)))
+		submittedMap, submitted := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(simulateSubmitted, withOrgID(orgId), withGroup(groupName), withNamespace(namespace), withUIDs(inDatabaseMap)))
 
 		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, submitted)
 		require.NoError(t, err)

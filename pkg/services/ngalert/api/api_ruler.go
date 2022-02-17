@@ -422,6 +422,8 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 			continue
 		}
 
+		ngmodels.PatchPartialAlertRule(existing, r)
+		// TODO diff between patched and existing, as well as between submitted
 		upsert = append(upsert, store.UpsertRule{
 			Existing: existing,
 			New:      *r,
