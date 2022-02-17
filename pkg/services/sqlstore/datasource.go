@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
@@ -20,24 +21,28 @@ func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSour
 	metrics.MDBDataSourceQueryByID.Inc()
 
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
-			return models.ErrDataSourceIdentifierNotSet
-		}
-
-		datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-		has, err := sess.Get(datasource)
-
-		if err != nil {
-			sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
-			return err
-		} else if !has {
-			return models.ErrDataSourceNotFound
-		}
-
-		query.Result = datasource
-
-		return nil
+		return ss.getDataSource(ctx, query, sess)
 	})
+}
+
+func (ss *SQLStore) getDataSource(ctx context.Context, query *models.GetDataSourceQuery, sess *DBSession) error {
+	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+		return models.ErrDataSourceIdentifierNotSet
+	}
+
+	datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+	has, err := sess.Get(datasource)
+
+	if err != nil {
+		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+		return err
+	} else if !has {
+		return models.ErrDataSourceNotFound
+	}
+
+	query.Result = datasource
+
+	return nil
 }
 
 func (ss *SQLStore) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
@@ -82,30 +87,22 @@ func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetD
 }
 
 // DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
-// and is added to the bus.
+// and is added to the bus. It also removes permissions related to the team.
 func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-	params := make([]interface{}, 0)
-
-	makeQuery := func(sql string, p ...interface{}) {
-		params = append(params, sql)
-		params = append(params, p...)
-	}
-
-	switch {
-	case cmd.OrgID == 0:
-		return models.ErrDataSourceIdentifierNotSet
-	case cmd.UID != "":
-		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.UID, cmd.OrgID)
-	case cmd.ID != 0:
-		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.ID, cmd.OrgID)
-	case cmd.Name != "":
-		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgID)
-	default:
-		return models.ErrDataSourceIdentifierNotSet
-	}
-
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		result, err := sess.Exec(params...)
+		dsQuery := &models.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
+		if err := ss.getDataSource(ctx, dsQuery, sess); err != nil {
+			return err
+		}
+
+		ds := dsQuery.Result
+
+		// Delete the datasource
+		result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
+		if err != nil {
+			return err
+		}
+
 		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
 
 		sess.publishAfterCommit(&events.DataSourceDeleted{
@@ -115,6 +112,9 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 			UID:       cmd.UID,
 			OrgID:     cmd.OrgID,
 		})
+
+		// Remove associated AccessControl permissions
+		_, err = sess.Exec("DELETE FROM permission WHERE scope=?", ac.Scope("datasources", "id", fmt.Sprint(ds.Id)))
 
 		return err
 	})

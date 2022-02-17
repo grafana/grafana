@@ -6,6 +6,7 @@ package sqlstore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -226,8 +228,10 @@ func TestDataAccess(t *testing.T) {
 			sqlStore := InitTestDB(t)
 			ds := initDatasource(sqlStore)
 
-			err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
-			require.NoError(t, err)
+			err := sqlStore.DeleteDataSource(context.Background(),
+				&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
+			require.ErrorIs(t, err, models.ErrDataSourceNotFound)
+
 			query := models.GetDataSourcesQuery{OrgId: 10}
 			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
@@ -246,7 +250,8 @@ func TestDataAccess(t *testing.T) {
 			return nil
 		})
 
-		err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: ds.Id, UID: "nisse-uid", Name: "nisse", OrgID: 123123})
+		err := sqlStore.DeleteDataSource(context.Background(),
+			&models.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
@@ -254,9 +259,9 @@ func TestDataAccess(t *testing.T) {
 		}, time.Second, time.Millisecond)
 
 		require.Equal(t, ds.Id, deleted.ID)
-		require.Equal(t, int64(123123), deleted.OrgID)
-		require.Equal(t, "nisse", deleted.Name)
-		require.Equal(t, "nisse-uid", deleted.UID)
+		require.Equal(t, ds.OrgId, deleted.OrgID)
+		require.Equal(t, ds.Name, deleted.Name)
+		require.Equal(t, ds.Uid, deleted.UID)
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {
@@ -269,6 +274,42 @@ func TestDataAccess(t *testing.T) {
 
 		err = sqlStore.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
+
+		require.Equal(t, 0, len(query.Result))
+	})
+
+	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
+		sqlStore := InitTestDB(t)
+		ds := initDatasource(sqlStore)
+
+		// Init associated permission
+		errAddPermissions := sqlStore.WithTransactionalDbSession(context.TODO(), func(sess *DBSession) error {
+			_, err := sess.Table("permission").Insert(ac.Permission{
+				RoleID:  1,
+				Action:  "datasources:read",
+				Scope:   ac.Scope("datasources", "id", fmt.Sprintf("%d", ds.Id)),
+				Updated: time.Now(),
+				Created: time.Now(),
+			})
+			return err
+		})
+		require.NoError(t, errAddPermissions)
+		query := models.GetDataSourcesQuery{OrgId: 10}
+
+		errDeletingDS := sqlStore.DeleteDataSource(context.Background(),
+			&models.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId},
+		)
+		require.NoError(t, errDeletingDS)
+
+		// Check associated permission
+		permCount := int64(0)
+		errGetPermissions := sqlStore.WithTransactionalDbSession(context.TODO(), func(sess *DBSession) error {
+			var err error
+			permCount, err = sess.Table("permission").Count()
+			return err
+		})
+		require.NoError(t, errGetPermissions)
+		require.Zero(t, permCount, "permissions associated to the data source should have been removed")
 
 		require.Equal(t, 0, len(query.Result))
 	})
