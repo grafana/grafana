@@ -15,6 +15,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import UIElementsContext, { UIPopover } from '../uiElementsContext';
+import { act } from 'react-dom/test-utils';
 
 import SpanBar from './SpanBar';
 
@@ -83,9 +84,13 @@ describe('<SpanBar>', () => {
     const { onMouseOver, onMouseLeave } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
     const labelElm = wrapper.find('[data-test-id="SpanBar--label"]');
     expect(labelElm.text()).toBe(shortLabel);
-    onMouseOver();
+    act(() => {
+      onMouseOver();
+    });
     expect(labelElm.text()).toBe(longLabel);
-    onMouseLeave();
+    act(() => {
+      onMouseLeave();
+    });
     expect(labelElm.text()).toBe(shortLabel);
   });
 
