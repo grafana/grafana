@@ -5,7 +5,6 @@ import InfluxDatasource from '../datasource';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import config from 'app/core/config';
-import { InfluxQuery } from '../types';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
