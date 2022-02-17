@@ -110,4 +110,8 @@ const (
 	// FlagMigrationLocking
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
+
+	// FlagDBFileStorage
+	// Store files in the database
+	FlagDBFileStorage = "dbFileStorage"
 )
