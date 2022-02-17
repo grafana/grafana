@@ -25,7 +25,7 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceaccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, sa *serviceaccounts.CreateServiceAccountForm) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
 	// create a new service account - "user" with empty permissions
 	generatedLogin := "Service-Account-" + uuid.New().String()
 	cmd := models.CreateUserCommand{
@@ -183,6 +183,64 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		Login: query.Result[0].Login,
 	}
 	return saProfile, err
+}
+
+func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
+	orgID, serviceAccountID int64,
+	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	updatedUser := &models.OrgUserDTO{}
+
+	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		query := models.GetOrgUsersQuery{UserID: serviceAccountID, OrgId: orgID, IsServiceAccount: true}
+		if err := s.sqlStore.GetOrgUsers(ctx, &query); err != nil {
+			return err
+		}
+		if len(query.Result) != 1 {
+			return serviceaccounts.ErrServiceAccountNotFound
+		}
+
+		updatedUser = query.Result[0]
+
+		if saForm.Name == nil && saForm.Role == nil {
+			return nil
+		}
+
+		updateTime := time.Now()
+		if saForm.Role != nil {
+			var orgUser models.OrgUser
+			orgUser.Role = *saForm.Role
+			orgUser.Updated = updateTime
+
+			if _, err := sess.ID(orgUser.Id).Update(&orgUser); err != nil {
+				return err
+			}
+
+			updatedUser.Role = string(*saForm.Role)
+		}
+
+		if saForm.Name != nil {
+			user := models.User{
+				Name:    *saForm.Name,
+				Updated: updateTime,
+			}
+
+			if _, err := sess.ID(serviceAccountID).Update(&user); err != nil {
+				return err
+			}
+
+			updatedUser.Name = *saForm.Name
+		}
+
+		return nil
+	})
+
+	return &serviceaccounts.ServiceAccountDTO{
+		Id:    updatedUser.UserId,
+		Name:  updatedUser.Name,
+		Login: updatedUser.Login,
+		Role:  updatedUser.Role,
+		OrgId: updatedUser.OrgId,
+	}, err
 }
 
 func contains(s []int64, e int64) bool {

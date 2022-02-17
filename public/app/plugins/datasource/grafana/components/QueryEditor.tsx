@@ -11,7 +11,6 @@ import {
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
@@ -47,7 +46,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    if (config.featureToggles.panelTitleSearch && contextSrv.isGrafanaAdmin) {
+    if (config.featureToggles.panelTitleSearch) {
       this.queryTypes.push({
         label: 'Search',
         value: GrafanaQueryType.Search,

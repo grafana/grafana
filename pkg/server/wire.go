@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -202,7 +201,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	resourceservices.ProvideResourceServices,
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,

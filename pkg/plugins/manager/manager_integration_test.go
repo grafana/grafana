@@ -118,6 +118,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
+		"heatmap-new":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},

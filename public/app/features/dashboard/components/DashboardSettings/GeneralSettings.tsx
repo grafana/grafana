@@ -122,7 +122,9 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         </Field>
       </div>
 
-      {config.featureToggles.dashboardPreviews && <PreviewSettings uid={dashboard.uid} />}
+      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
+        <PreviewSettings uid={dashboard.uid} />
+      )}
 
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}
