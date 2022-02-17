@@ -27,7 +27,7 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	pmCfg := plugins.FromGrafanaCfg(cfg)
-	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
+	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}), nil)
 	pm, err := ProvideService(cfg, loader.New(pmCfg, nil,
 		signature.NewUnsignedAuthorizer(pmCfg), &provider.Service{}), dashboardService)
 	require.NoError(t, err)

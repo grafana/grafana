@@ -11,9 +11,13 @@ import (
 // AlertTest makes a test alert.
 func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
-
-	extractor := NewDashAlertExtractor(dash, orgID, user)
-	alerts, err := extractor.GetAlerts(context.Background())
+	extractor := ProvideDashAlertExtractorService(nil)
+	dashInfo := DashAlertInfo{
+		User:  user,
+		Dash:  dash,
+		OrgID: orgID,
+	}
+	alerts, err := extractor.GetAlerts(context.Background(), dashInfo)
 	if err != nil {
 		return nil, err
 	}

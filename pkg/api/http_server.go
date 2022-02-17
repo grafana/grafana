@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -134,7 +135,7 @@ type HTTPServer struct {
 	dashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                dashboards.FolderService
-	DatasourcePermissionsService DatasourcePermissionsService
+	DatasourcePermissionsService permissions.DatasourcePermissionsService
 }
 
 type ServerOptions struct {
@@ -163,7 +164,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, resourcePermissionServices *resourceservices.ResourceServices,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService, dashboardProvisioningService dashboards.DashboardProvisioningService,
-	folderService dashboards.FolderService, datasourcePermissionsService DatasourcePermissionsService) (*HTTPServer, error) {
+	folderService dashboards.FolderService, datasourcePermissionsService permissions.DatasourcePermissionsService) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 

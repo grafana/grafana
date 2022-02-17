@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -41,7 +42,7 @@ type FileReader struct {
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, store dashboards.Store) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -62,7 +63,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, store dashboards.Store)
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboardservice.ProvideDashboardService(store),
+		dashboardProvisioningService: dashboardservice.ProvideDashboardService(store, dashAlertExtractor),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
 	}, nil

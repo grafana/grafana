@@ -67,8 +67,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		require.Equal(t, getTarget(dashJSON), "")
 
-		extractor := NewDashAlertExtractor(dash, 1, nil)
-		_, _ = extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		_, _ = extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 
 		require.Equal(t, getTarget(dashJSON), "")
 	})
@@ -78,9 +82,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Nil(t, err)
 
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
-
-		alerts, err := extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 
 		require.Nil(t, err)
 
@@ -128,9 +135,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutID)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		_, err = extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 
 		require.NotNil(t, err)
 	})
@@ -142,9 +153,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithIDZero)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
-
-		_, err = extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 
 		require.NotNil(t, err)
 	})
@@ -155,9 +169,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithQuery)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true))
+		extractor := ProvideDashAlertExtractorService(nil)
+		_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())
 	})
 
@@ -168,9 +186,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 		require.Nil(t, err)
 
 		condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
@@ -185,9 +207,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 2)
@@ -210,9 +236,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 1)
@@ -235,9 +265,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Nil(t, err)
 
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		})
 		require.Nil(t, err)
 
 		require.Len(t, alerts, 4)
@@ -250,13 +284,18 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		err = extractor.ValidateAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		dashAlertInfo := DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		}
 
+		err = extractor.ValidateAlerts(context.Background(), dashAlertInfo)
 		require.Nil(t, err)
 
-		_, err = extractor.GetAlerts(context.Background())
+		_, err = extractor.GetAlerts(context.Background(), dashAlertInfo)
 		require.Equal(t, err.Error(), "alert validation error: Panel id is not correct, alertName=Influxdb, panelId=1")
 	})
 
@@ -267,13 +306,18 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := NewDashAlertExtractor(dash, 1, nil)
 
-		err = extractor.ValidateAlerts(context.Background())
+		extractor := ProvideDashAlertExtractorService(nil)
+		dashAlertInfo := DashAlertInfo{
+			User:  nil,
+			Dash:  dash,
+			OrgID: 1,
+		}
 
+		err = extractor.ValidateAlerts(context.Background(), dashAlertInfo)
 		require.Nil(t, err)
 
-		alerts, err := extractor.GetAlerts(context.Background())
+		alerts, err := extractor.GetAlerts(context.Background(), dashAlertInfo)
 		require.Nil(t, err)
 
 		condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])

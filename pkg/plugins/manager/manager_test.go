@@ -469,7 +469,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
+	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}), nil)
 	pm := New(&plugins.Cfg{}, nil, &fakeLoader{}, dashboardService)
 
 	for _, cb := range cbs {
@@ -524,7 +524,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	loader := &fakeLoader{}
-	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}))
+	dashboardService := service.ProvideDashboardService(database.ProvideDashboardStore(&sqlstore.SQLStore{}), nil)
 	manager := New(cfg, nil, loader, dashboardService)
 	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{

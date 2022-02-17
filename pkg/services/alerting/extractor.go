@@ -10,27 +10,28 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 )
 
-// DashAlertExtractor extracts alerts from the dashboard json.
-type DashAlertExtractor struct {
-	User  *models.SignedInUser
-	Dash  *models.Dashboard
-	OrgID int64
-	log   log.Logger
+type DashAlertExtractor interface {
+	GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*models.Alert, error)
+	ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error
 }
 
-// NewDashAlertExtractor returns a new DashAlertExtractor.
-func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.SignedInUser) *DashAlertExtractor {
-	return &DashAlertExtractor{
-		User:  user,
-		Dash:  dash,
-		OrgID: orgID,
-		log:   log.New("alerting.extractor"),
+// DashAlertExtractorService extracts alerts from the dashboard json.
+type DashAlertExtractorService struct {
+	datasourcePermissionsService permissions.DatasourcePermissionsService
+	log                          log.Logger
+}
+
+func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService) *DashAlertExtractorService {
+	return &DashAlertExtractorService{
+		datasourcePermissionsService: datasourcePermissionsService,
+		log:                          log.New("alerting.extractor"),
 	}
 }
 
-func (e *DashAlertExtractor) lookupQueryDataSource(ctx context.Context, panel *simplejson.Json, panelQuery *simplejson.Json) (*models.DataSource, error) {
+func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, panel *simplejson.Json, panelQuery *simplejson.Json, orgID int64) (*models.DataSource, error) {
 	dsName := ""
 	dsUid := ""
 
@@ -47,14 +48,14 @@ func (e *DashAlertExtractor) lookupQueryDataSource(ctx context.Context, panel *s
 	}
 
 	if dsName == "" && dsUid == "" {
-		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
+		query := &models.GetDefaultDataSourceQuery{OrgId: orgID}
 		if err := bus.Dispatch(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
-	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: e.OrgID}
+	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: orgID}
 	if err := bus.Dispatch(ctx, query); err != nil {
 		return nil, err
 	}
@@ -101,7 +102,7 @@ func UAEnabled(ctx context.Context) bool {
 	return enabled
 }
 
-func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
@@ -111,7 +112,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 		// check if the panel is collapsed
 		if collapsed && collapsedJSON.MustBool() {
 			// extract alerts from sub panels for collapsed panels
-			alertSlice, err := e.getAlertFromPanels(ctx, panel, validateAlertFunc, logTranslationFailures)
+			alertSlice, err := e.getAlertFromPanels(ctx, panel, validateAlertFunc, logTranslationFailures, dashAlertInfo)
 			if err != nil {
 				return nil, err
 			}
@@ -143,8 +144,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 					Err:     validationErr.Err,
 					PanelID: panelID,
 				}
-				if e.Dash != nil {
-					ve.DashboardID = e.Dash.Id
+				if dashAlertInfo.Dash != nil {
+					ve.DashboardID = dashAlertInfo.Dash.Id
 				}
 				return ve
 			}
@@ -170,8 +171,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 		}
 
 		alert := &models.Alert{
-			DashboardId: e.Dash.Id,
-			OrgId:       e.OrgID,
+			DashboardId: dashAlertInfo.Dash.Id,
+			OrgId:       dashAlertInfo.OrgID,
 			PanelId:     panelID,
 			Id:          jsonAlert.Get("id").MustInt64(),
 			Name:        jsonAlert.Get("name").MustString(),
@@ -198,13 +199,13 @@ func (e *DashAlertExtractor) getAlertFromPanels(ctx context.Context, jsonWithPan
 				return nil, ValidationError{Reason: reason}
 			}
 
-			datasource, err := e.lookupQueryDataSource(ctx, panel, panelQuery)
+			datasource, err := e.lookupQueryDataSource(ctx, panel, panelQuery, dashAlertInfo.OrgID)
 			if err != nil {
 				return nil, err
 			}
 
 			dsFilterQuery := models.DatasourcesPermissionFilterQuery{
-				User:        e.User,
+				User:        dashAlertInfo.User,
 				Datasources: []*models.DataSource{datasource},
 			}
 
@@ -250,12 +251,12 @@ func validateAlertRule(alert *models.Alert) bool {
 }
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
-func (e *DashAlertExtractor) GetAlerts(ctx context.Context) ([]*models.Alert, error) {
-	return e.extractAlerts(ctx, validateAlertRule, true)
+func (e *DashAlertExtractorService) GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+	return e.extractAlerts(ctx, validateAlertRule, true, dashAlertInfo)
 }
 
-func (e *DashAlertExtractor) extractAlerts(ctx context.Context, validateFunc func(alert *models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
-	dashboardJSON, err := copyJSON(e.Dash.Data)
+func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+	dashboardJSON, err := copyJSON(dashAlertInfo.Dash.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +269,7 @@ func (e *DashAlertExtractor) extractAlerts(ctx context.Context, validateFunc fun
 	if len(rows) > 0 {
 		for _, rowObj := range rows {
 			row := simplejson.NewFromAny(rowObj)
-			a, err := e.getAlertFromPanels(ctx, row, validateFunc, logTranslationFailures)
+			a, err := e.getAlertFromPanels(ctx, row, validateFunc, logTranslationFailures, dashAlertInfo)
 			if err != nil {
 				return nil, err
 			}
@@ -276,7 +277,7 @@ func (e *DashAlertExtractor) extractAlerts(ctx context.Context, validateFunc fun
 			alerts = append(alerts, a...)
 		}
 	} else {
-		a, err := e.getAlertFromPanels(ctx, dashboardJSON, validateFunc, logTranslationFailures)
+		a, err := e.getAlertFromPanels(ctx, dashboardJSON, validateFunc, logTranslationFailures, dashAlertInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -290,9 +291,9 @@ func (e *DashAlertExtractor) extractAlerts(ctx context.Context, validateFunc fun
 
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
-func (e *DashAlertExtractor) ValidateAlerts(ctx context.Context) error {
+func (e *DashAlertExtractorService) ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error {
 	_, err := e.extractAlerts(ctx, func(alert *models.Alert) bool {
 		return alert.OrgId != 0 && alert.PanelId != 0
-	}, false)
+	}, false, dashAlertInfo)
 	return err
 }

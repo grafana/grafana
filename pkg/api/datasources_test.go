@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -29,7 +30,7 @@ const (
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	mockSQLStore := mockstore.NewSQLStoreMock()
-	mockDatasourcePermissionService := newMockDatasourcePermissionService()
+	mockDatasourcePermissionService := permissions.NewMockDatasourcePermissionService()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
 		ds := []*models.DataSource{
@@ -38,7 +39,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			{Name: "BBB"},
 			{Name: "aaa"},
 		}
-		mockDatasourcePermissionService.dsResult = ds
+		mockDatasourcePermissionService.DsResult = ds
 
 		// handler func being tested
 		hs := &HTTPServer{
@@ -209,8 +210,8 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 	dsServiceMock := &dataSourcesServiceMock{
 		expectedDatasource: &testDatasource,
 	}
-	dsPermissionService := newMockDatasourcePermissionService()
-	dsPermissionService.dsResult = []*models.DataSource{
+	dsPermissionService := permissions.NewMockDatasourcePermissionService()
+	dsPermissionService.DsResult = []*models.DataSource{
 		&testDatasource,
 	}
 
@@ -505,9 +506,9 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// mock sqlStore and datasource permission service
 			dsServiceMock.expectedError = test.expectedSQLError
 			dsServiceMock.expectedDatasource = test.expectedDS
-			dsPermissionService.dsResult = []*models.DataSource{test.expectedDS}
+			dsPermissionService.DsResult = []*models.DataSource{test.expectedDS}
 			if test.expectedDS == nil {
-				dsPermissionService.dsResult = nil
+				dsPermissionService.DsResult = nil
 			}
 			hs.DataSourcesService = dsServiceMock
 			hs.DatasourcePermissionsService = dsPermissionService

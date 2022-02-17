@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"testing"
 	"time"
 
@@ -1416,7 +1417,8 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	}
 
 	dashboadStore := database.ProvideDashboardStore(sqlStore)
-	dashboard, err := dashboardservice.ProvideDashboardService(dashboadStore).SaveDashboard(context.Background(), dashItem, true)
+	dashAlertService := alerting.ProvideDashAlertExtractorService(nil)
+	dashboard, err := dashboardservice.ProvideDashboardService(dashboadStore, dashAlertService).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
@@ -1427,7 +1429,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	t.Helper()
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	d := dashboardservice.ProvideDashboardService(dashboardStore)
+	d := dashboardservice.ProvideDashboardService(dashboardStore, nil)
 	s := dashboardservice.ProvideFolderService(d, dashboardStore, nil)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
@@ -1516,7 +1518,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		role := models.ROLE_ADMIN
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
-		folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore), dashboardStore, nil)
+		folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore, &alerting.DashAlertExtractorService{}), dashboardStore, nil)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
 		service := LibraryPanelService{
