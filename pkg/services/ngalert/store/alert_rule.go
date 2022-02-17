@@ -220,6 +220,9 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 
 				// no way to update multiple rules at once
 				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
+					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+						return ngmodels.ErrAlertRuleUniqueConstraintViolation
+					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
 				parentVersion = r.Existing.Version
@@ -247,6 +250,9 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 
 		if len(newRules) > 0 {
 			if _, err := sess.Insert(&newRules); err != nil {
+				if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					return ngmodels.ErrAlertRuleUniqueConstraintViolation
+				}
 				return fmt.Errorf("failed to create new rules: %w", err)
 			}
 		}

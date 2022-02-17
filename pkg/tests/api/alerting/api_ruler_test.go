@@ -10,15 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAlertRulePermissions(t *testing.T) {
@@ -430,7 +431,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: failed to add or update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {

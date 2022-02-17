@@ -10,15 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPrometheusRules(t *testing.T) {
@@ -207,7 +208,7 @@ func TestPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: invalid alert rule: cannot have Panel ID without a Dashboard UID"}`, string(b))
+		require.JSONEq(t, `{"message": "invalid rule specification at index [0]: both annotations __dashboardUid__ and __panelId__ must be specified"}`, string(b))
 	}
 
 	// Now, let's see how this looks like.
