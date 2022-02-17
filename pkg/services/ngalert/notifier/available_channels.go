@@ -394,6 +394,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Description:  "Provide a Slack API token (starts with \"xoxb\") - required unless you provide a webhook",
 					PropertyName: "token",
 					Secure:       true,
+					Required:     true,
 				},
 				{
 					Label:        "Username",
