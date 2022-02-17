@@ -13,7 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -514,7 +515,7 @@ func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*a
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
 	// seed dashboard
-	_, err := store.SaveDashboard(models.SaveDashboardCommand{
+	_, err := dashdb.ProvideDashboardStore(store).SaveDashboard(models.SaveDashboardCommand{
 		Dashboard: &simplejson.Json{},
 		UserId:    1,
 		OrgId:     1,
@@ -523,7 +524,7 @@ func setupAccessControlGuardianTest(t *testing.T, dashID int64, permissions []*a
 	require.NoError(t, err)
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	services, err := resourceservices.ProvideResourceServices(routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	services, err := ossaccesscontrol.ProvidePermissionsServices(routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
 	return NewAccessControlDashboardGuardian(context.Background(), dashID, &models.SignedInUser{OrgId: 1}, store, ac, services)

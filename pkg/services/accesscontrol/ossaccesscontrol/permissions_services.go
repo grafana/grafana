@@ -13,25 +13,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsService, error) {
+func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsServices, error) {
 	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PermissionsService{teams: teamPermissions, datasources: provideEmptyPermissionsService()}, nil
+	return &PermissionsServices{teams: teamPermissions, datasources: provideEmptyPermissionsService()}, nil
 }
 
-type PermissionsService struct {
+type PermissionsServices struct {
 	teams       accesscontrol.PermissionsService
+	folder      accesscontrol.PermissionsService
+	dashboard   accesscontrol.PermissionsService
 	datasources accesscontrol.PermissionsService
 }
 
-func (s *PermissionsService) GetTeamService() accesscontrol.PermissionsService {
+func (s *PermissionsServices) GetTeamService() accesscontrol.PermissionsService {
 	return s.teams
 }
 
-func (s *PermissionsService) GetDataSourceService() accesscontrol.PermissionsService {
+func (s *PermissionsServices) GetFolderService() accesscontrol.PermissionsService {
+	return s.folder
+}
+
+func (s *PermissionsServices) GetDashboardService() accesscontrol.PermissionsService {
+	return s.dashboard
+}
+
+func (s *PermissionsServices) GetDataSourceService() accesscontrol.PermissionsService {
 	return s.datasources
 }
 

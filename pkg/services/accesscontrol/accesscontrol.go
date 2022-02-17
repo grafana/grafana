@@ -39,6 +39,8 @@ type PermissionsProvider interface {
 
 type PermissionsServices interface {
 	GetTeamService() PermissionsService
+	GetFolderService() PermissionsService
+	GetDashboardService() PermissionsService
 	GetDataSourceService() PermissionsService
 }
 
