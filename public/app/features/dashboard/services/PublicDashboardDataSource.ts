@@ -22,10 +22,6 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
     const { intervalMs, maxDataPoints, range, requestId, dashboardUid, panelId } = request;
     let targets = request.targets;
 
-    if (this.filterQuery) {
-      targets = targets.filter((q) => this.filterQuery!(q));
-    }
-
     const queries = targets.map((q) => {
       return {
         ...q,
