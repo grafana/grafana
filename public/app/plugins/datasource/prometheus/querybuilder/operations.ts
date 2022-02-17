@@ -139,7 +139,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       id: PromOperationId.Cosh,
       category: PromVisualQueryOperationCategory.Trigonometric,
     }),
-    // *** Need to double check this one ***
     createFunction({
       id: PromOperationId.CountValues,
       params: [{ name: 'Identifier', type: 'string' }],
