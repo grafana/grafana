@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -49,11 +50,18 @@ func TestAlertRuleExtraction(t *testing.T) {
 	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
 
+	dsPermissions := permissions.NewMockDatasourcePermissionService()
+	dsPermissions.DsResult = []*models.DataSource{
+		{
+			Id: 1,
+		},
+	}
+
+	extractor := ProvideDashAlertExtractorService(dsPermissions)
+
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
-
-		dash := models.NewDashboardFromJson(dashJSON)
 
 		getTarget := func(j *simplejson.Json) string {
 			rowObj := j.Get("rows").MustArray()[0]
@@ -67,10 +75,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		require.Equal(t, getTarget(dashJSON), "")
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		_, _ = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -81,11 +88,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
-		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := ProvideDashAlertExtractorService(nil)
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -134,12 +139,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(panelWithoutID)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
 		extractor := ProvideDashAlertExtractorService(nil)
 		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -152,11 +156,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(panelWithIDZero)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
-		extractor := ProvideDashAlertExtractorService(nil)
+
 		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -168,12 +171,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 		require.Nil(t, err)
 		dashJSON, err := simplejson.NewJson(panelWithQuery)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())
@@ -185,12 +186,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Nil(t, err)
@@ -206,12 +205,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Nil(t, err)
@@ -235,12 +232,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Nil(t, err)
@@ -266,7 +261,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  dash,
@@ -283,12 +277,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		dashAlertInfo := DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		}
 
@@ -305,12 +297,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
-		dash := models.NewDashboardFromJson(dashJSON)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		dashAlertInfo := DashAlertInfo{
 			User:  nil,
-			Dash:  dash,
+			Dash:  models.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		}
 
