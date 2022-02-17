@@ -101,23 +101,23 @@ var (
 	MinRefreshInterval      string
 
 	// User settings
-	AllowUserSignUp         bool
-	AllowUserOrgCreate      bool
-	AutoAssignOrg           bool
-	AutoAssignOrgId         int
-	SkipOrgRoleUpdateSync   bool
-	AutoAssignOrgRole       string
-	VerifyEmailEnabled      bool
-	LoginHint               string
-	PasswordHint            string
-	DisableLoginForm        bool
-	DisableSignoutMenu      bool
-	SignoutRedirectUrl      string
-	ExternalUserMngLinkUrl  string
-	ExternalUserMngLinkName string
-	ExternalUserMngInfo     string
-	OAuthAutoLogin          bool
-	ViewersCanEdit          bool
+	AllowUserSignUp            bool
+	AllowUserOrgCreate         bool
+	AutoAssignOrg              bool
+	AutoAssignOrgId            int
+	OAuthSkipOrgRoleUpdateSync bool
+	AutoAssignOrgRole          string
+	VerifyEmailEnabled         bool
+	LoginHint                  string
+	PasswordHint               string
+	DisableLoginForm           bool
+	DisableSignoutMenu         bool
+	SignoutRedirectUrl         string
+	ExternalUserMngLinkUrl     string
+	ExternalUserMngLinkName    string
+	ExternalUserMngInfo        string
+	OAuthAutoLogin             bool
+	ViewersCanEdit             bool
 
 	// HTTP auth
 	SigV4AuthEnabled bool
@@ -395,10 +395,10 @@ type Cfg struct {
 	DefaultTheme string
 	HomePage     string
 
-	AutoAssignOrg         bool
-	AutoAssignOrgId       int
-	AutoAssignOrgRole     string
-	SkipOrgRoleUpdateSync bool
+	AutoAssignOrg              bool
+	AutoAssignOrgId            int
+	AutoAssignOrgRole          string
+	OAuthSkipOrgRoleUpdateSync bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
@@ -1254,6 +1254,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+	OAuthSkipOrgRoleUpdateSync = cfg.OAuthSkipOrgRoleUpdateSync
 
 	// SigV4
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
@@ -1328,8 +1330,6 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AutoAssignOrg = cfg.AutoAssignOrg
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	AutoAssignOrgId = cfg.AutoAssignOrgId
-	cfg.SkipOrgRoleUpdateSync = users.Key("skip_org_role_update_sync").MustBool(false)
-	SkipOrgRoleUpdateSync = cfg.SkipOrgRoleUpdateSync
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)

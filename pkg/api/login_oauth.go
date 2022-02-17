@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -20,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -278,7 +279,7 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 		Groups:     userInfo.Groups,
 	}
 
-	if userInfo.Role != "" && !setting.SkipOrgRoleUpdateSync {
+	if userInfo.Role != "" && !setting.OAuthSkipOrgRoleUpdateSync {
 		rt := models.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
