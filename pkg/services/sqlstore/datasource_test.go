@@ -230,7 +230,7 @@ func TestDataAccess(t *testing.T) {
 
 			err := sqlStore.DeleteDataSource(context.Background(),
 				&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
-			require.ErrorIs(t, err, models.ErrDataSourceNotFound)
+			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
 			err = sqlStore.GetDataSources(context.Background(), &query)
@@ -251,7 +251,7 @@ func TestDataAccess(t *testing.T) {
 		})
 
 		err := sqlStore.DeleteDataSource(context.Background(),
-			&models.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
+			&models.DeleteDataSourceCommand{ID: ds.Id, UID: "nisse-uid", Name: "nisse", OrgID: int64(123123)})
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
@@ -259,9 +259,9 @@ func TestDataAccess(t *testing.T) {
 		}, time.Second, time.Millisecond)
 
 		require.Equal(t, ds.Id, deleted.ID)
-		require.Equal(t, ds.OrgId, deleted.OrgID)
-		require.Equal(t, ds.Name, deleted.Name)
-		require.Equal(t, ds.Uid, deleted.UID)
+		require.Equal(t, int64(123123), deleted.OrgID)
+		require.Equal(t, "nisse", deleted.Name)
+		require.Equal(t, "nisse-uid", deleted.UID)
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {

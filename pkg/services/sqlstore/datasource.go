@@ -98,10 +98,9 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 			return errGettingDS
 		}
 
-		if !errors.Is(errGettingDS, models.ErrDataSourceNotFound) {
+		ds := dsQuery.Result
+		if ds != nil {
 			// Delete the data source
-			ds := dsQuery.Result
-
 			result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
 			if err != nil {
 				return err
