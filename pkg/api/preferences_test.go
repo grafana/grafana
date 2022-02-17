@@ -11,10 +11,13 @@ import (
 )
 
 var (
-	getOrgPreferencesURL = "/api/org/preferences/"
-	putOrgPreferencesURL = "/api/org/preferences/"
+	getOrgPreferencesURL      = "/api/org/preferences/"
+	putOrgPreferencesURL      = "/api/org/preferences/"
+	putJsonDataPreferencesURL = "/api/preferences/set-json-data"
 
-	testUpdateOrgPreferencesCmd = `{ "theme": "light", "homeDashboardId": 1 }`
+	testUpdateOrgPreferencesCmd         = `{ "theme": "light", "homeDashboardId": 1 }`
+	testUpdateJsonDataPreferencesCmd    = `[{"id": "explore", "hideFromNavbar": true}]`
+	testUpdateJsonDataPreferencesCmdBad = `this is not json`
 )
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
@@ -107,5 +110,25 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
+func TestAPIEndpoint_PutJsonDataPreferences(t *testing.T) {
+	sc := setupHTTPServer(t, true, false)
+
+	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
+	require.NoError(t, err)
+
+	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	input := strings.NewReader(testUpdateJsonDataPreferencesCmd)
+	t.Run("Returns 200 on success", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPut, putJsonDataPreferencesURL, input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	input = strings.NewReader(testUpdateJsonDataPreferencesCmdBad)
+	t.Run("Returns 400 with bad data", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPut, putJsonDataPreferencesURL, input, t)
+		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 }

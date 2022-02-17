@@ -194,9 +194,16 @@ func (ss *SQLStore) SaveJsonData(ctx context.Context, cmd *models.SaveJsonDataCo
 
 		if !exists {
 			prefs = models.Preferences{
-				UserId:   cmd.UserId,
-				OrgId:    cmd.OrgId,
-				JsonData: cmd.JsonData,
+				UserId:          cmd.UserId,
+				OrgId:           cmd.OrgId,
+				TeamId:          cmd.TeamId,
+				JsonData:        cmd.JsonData,
+				Theme:           ss.Cfg.DefaultTheme,
+				Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
+				WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
+				HomeDashboardId: 0,
+				Created:         time.Now(),
+				Updated:         time.Now(),
 			}
 			_, err = sess.Insert(&prefs)
 			return err
