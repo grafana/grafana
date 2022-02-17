@@ -169,7 +169,20 @@ function toStringProcessor(value: any): DisplayValue {
 
 export function getRawDisplayProcessor(): DisplayProcessor {
   return (value: any) => ({
-    text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value)}` : `${value}`,
-    numeric: (null as unknown) as number,
+    text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
+    numeric: null as unknown as number,
   });
 }
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (_key: any, value: object | null) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
