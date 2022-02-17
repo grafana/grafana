@@ -275,7 +275,7 @@ func (hs *HTTPServer) GetAlertNotifications(c *models.ReqContext) response.Respo
 func (hs *HTTPServer) getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
 	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
-	if err := hs.SQLStore.GetAllAlertNotifications(c.Req.Context(), query); err != nil {
+	if err := hs.AlertNotificationService.GetAllAlertNotifications(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
 
@@ -296,7 +296,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
-	if err := hs.SQLStore.GetAlertNotifications(c.Req.Context(), query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotifications(c.Req.Context(), query); err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
 
@@ -317,7 +317,7 @@ func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.R
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
-	if err := hs.SQLStore.GetAlertNotificationsWithUid(c.Req.Context(), query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotificationsWithUid(c.Req.Context(), query); err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
 	}
 
@@ -335,7 +335,7 @@ func (hs *HTTPServer) CreateAlertNotification(c *models.ReqContext) response.Res
 	}
 	cmd.OrgId = c.OrgId
 
-	if err := hs.SQLStore.CreateAlertNotificationCommand(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.CreateAlertNotificationCommand(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationWithSameNameExists) || errors.Is(err, models.ErrAlertNotificationWithSameUIDExists) {
 			return response.Error(409, "Failed to create alert notification", err)
 		}
@@ -361,7 +361,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
-	if err := hs.SQLStore.UpdateAlertNotification(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.UpdateAlertNotification(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), err)
 		}
@@ -377,7 +377,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 		Id:    cmd.Id,
 	}
 
-	if err := hs.SQLStore.GetAlertNotifications(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotifications(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get alert notification", err)
 	}
 
@@ -397,7 +397,7 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
-	if err := hs.SQLStore.UpdateAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.UpdateAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
@@ -409,7 +409,7 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 		Uid:   cmd.Uid,
 	}
 
-	if err := hs.SQLStore.GetAlertNotificationsWithUid(c.Req.Context(), &query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotificationsWithUid(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get alert notification", err)
 	}
 
@@ -426,7 +426,7 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *model
 		Id:    cmd.Id,
 	}
 
-	if err := hs.SQLStore.GetAlertNotifications(ctx, query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotifications(ctx, query); err != nil {
 		return err
 	}
 
@@ -454,7 +454,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 		Uid:   cmd.Uid,
 	}
 
-	if err := hs.SQLStore.GetAlertNotificationsWithUid(ctx, query); err != nil {
+	if err := hs.AlertNotificationService.GetAlertNotificationsWithUid(ctx, query); err != nil {
 		return err
 	}
 
@@ -483,7 +483,7 @@ func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Res
 		Id:    notificationId,
 	}
 
-	if err := hs.SQLStore.DeleteAlertNotification(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.DeleteAlertNotification(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
@@ -499,7 +499,7 @@ func (hs *HTTPServer) DeleteAlertNotificationByUID(c *models.ReqContext) respons
 		Uid:   web.Params(c.Req)[":uid"],
 	}
 
-	if err := hs.SQLStore.DeleteAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
+	if err := hs.AlertNotificationService.DeleteAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
