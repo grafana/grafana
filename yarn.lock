@@ -13123,12 +13123,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:0.25.0":
-  version: 0.25.0
-  resolution: "axios@npm:0.25.0"
+"axios@npm:0.26.0":
+  version: 0.26.0
+  resolution: "axios@npm:0.26.0"
   dependencies:
-    follow-redirects: ^1.14.7
-  checksum: 2a8a3787c05f2a0c9c3878f49782357e2a9f38945b93018fb0c4fd788171c43dceefbb577988628e09fea53952744d1ecebde234b561f1e703aa43e0a598a3ad
+    follow-redirects: ^1.14.8
+  checksum: d7a8b898f4157bedeb2e06c03b16133b91b354c041205bea732ce58b7a21f373d22057b0eea0d482838145ce6ff482b359750d9bcb8dd19d45e3928e3c65c280
   languageName: node
   linkType: hard
 
@@ -19328,13 +19328,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.14.7":
-  version: 1.14.7
-  resolution: "follow-redirects@npm:1.14.7"
+"follow-redirects@npm:^1.14.8":
+  version: 1.14.8
+  resolution: "follow-redirects@npm:1.14.8"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: f6d03e5e30877431065bca0d1b2e3db93949eb799d368a5c07ea8a4b71205f0349a3f8f0191bf13a07c93885522834dca1dc8e527dc99a772c6911fba24edc5f
+  checksum: 40c67899c2e3149a27e8b6498a338ff27f39fe138fde8d7f0756cb44b073ba0bfec3d52af28f20c5bdd67263d564d0d8d7b5efefd431de95c18c42f7b4aef457
   languageName: node
   linkType: hard
 
@@ -20441,7 +20441,7 @@ __metadata:
     angular-sanitize: 1.8.2
     app: "link:./public/app"
     autoprefixer: 10.4.2
-    axios: 0.25.0
+    axios: 0.26.0
     babel-jest: 27.5.0
     babel-loader: 8.2.3
     babel-plugin-angularjs-annotate: 0.10.0
