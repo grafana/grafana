@@ -77,7 +77,11 @@ export function Modal(props: PropsWithChildren<Props>) {
         <div className={cx(styles.modal, className)} ref={ref} {...overlayProps} {...dialogProps}>
           <div className={headerClass}>
             {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleProps.id} />}
-            {typeof title !== 'string' && <div id={titleProps.id}>{title}</div>}
+            {
+              // FIXME: custom title components won't get an accessible title.
+              // Do we really want to support them or shall we just limit this ModalTabsHeader?
+              typeof title !== 'string' && { title }
+            }
             <div className={styles.modalHeaderClose}>
               <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
             </div>
