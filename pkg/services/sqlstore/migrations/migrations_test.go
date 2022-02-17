@@ -65,7 +65,7 @@ func TestMigrationLock(t *testing.T) {
 		t.Skip()
 	}
 
-	testDB := getTestDB(dbType)
+	testDB := getTestDB(t, dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestMigrationLock(t *testing.T) {
 
 func TestMigratorLocking(t *testing.T) {
 	dbType := getDBType()
-	testDB := getTestDB(dbType)
+	testDB := getTestDB(t, dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
@@ -172,7 +172,7 @@ func TestMigratorLocking(t *testing.T) {
 			i := i // capture i variable
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
-				err = mg.Start(true, 0)
+				err := mg.Start(true, 0)
 				if err != nil {
 					if errors.Is(err, ErrMigratorIsLocked) {
 						atomic.AddInt64(&errorNum, 1)
@@ -191,7 +191,7 @@ func TestDatabaseLocking(t *testing.T) {
 		t.Skip()
 	}
 
-	testDB := getTestDB(dbType)
+	testDB := getTestDB(t, dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
@@ -281,14 +281,24 @@ func getDBType() string {
 	return dbType
 }
 
-func getTestDB(dbType string) sqlutil.TestDB {
+func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
 	switch dbType {
 	case "mysql":
 		return sqlutil.MySQLTestDB()
 	case "postgres":
 		return sqlutil.PostgresTestDB()
 	default:
-		return sqlutil.SQLite3TestDB()
+		f, err := os.CreateTemp(".", "grafana-test-db-")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := os.Remove(f.Name())
+			require.NoError(t, err)
+		})
+
+		return sqlutil.TestDB{
+			DriverName: "sqlite3",
+			ConnStr:    f.Name(),
+		}
 	}
 }
 
