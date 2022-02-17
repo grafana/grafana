@@ -54,6 +54,7 @@ const defaultInitialState = {
       datasourceInstance: {
         query: jest.fn(),
         getRef: jest.fn(),
+        getLogsVolumeDataProvider: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -99,6 +100,22 @@ describe('runQueries', () => {
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
+  });
+
+  it('should modify the request-id for log-volume queries', async () => {
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
+      ...(defaultInitialState as any),
+    });
+    setupQueryResponse(getState());
+    await dispatch(runQueries(ExploreId.left));
+
+    const state = getState().explore[ExploreId.left];
+    expect(state.queryResponse.request?.requestId).toBe('explore_left');
+    // need to cast to `any` to get through with typescript
+    const provider = (state.datasourceInstance as any).getLogsVolumeDataProvider;
+    const lastCall = provider.mock.calls[provider.mock.calls.length - 1];
+    expect(lastCall[0].requestId).toBe('explore_left_log_volume');
   });
 
   it('should set state to done if query completes without emitting', async () => {
