@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -91,20 +92,31 @@ func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetD
 func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		dsQuery := &models.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
-		if err := ss.getDataSource(ctx, dsQuery, sess); err != nil {
-			return err
+		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
+
+		if errGettingDS != nil && !errors.Is(errGettingDS, models.ErrDataSourceNotFound) {
+			return errGettingDS
 		}
 
-		ds := dsQuery.Result
+		if !errors.Is(errGettingDS, models.ErrDataSourceNotFound) {
+			// Delete the data source
+			ds := dsQuery.Result
 
-		// Delete the datasource
-		result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
-		if err != nil {
-			return err
+			result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
+			if err != nil {
+				return err
+			}
+
+			cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
+
+			// Remove associated AccessControl permissions
+			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
+				ac.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); errDeletingPerms != nil {
+				return errDeletingPerms
+			}
 		}
 
-		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
-
+		// Publish data source deletion event
 		sess.publishAfterCommit(&events.DataSourceDeleted{
 			Timestamp: time.Now(),
 			Name:      cmd.Name,
@@ -113,10 +125,7 @@ func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteData
 			OrgID:     cmd.OrgID,
 		})
 
-		// Remove associated AccessControl permissions
-		_, err = sess.Exec("DELETE FROM permission WHERE scope=?", ac.Scope("datasources", "id", fmt.Sprint(ds.Id)))
-
-		return err
+		return nil
 	})
 }
 
