@@ -476,6 +476,17 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         };
       });
     }
+
+    return {
+      ...query,
+      query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
+      alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
+      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
+      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
+      policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
+      slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
+      tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
+    };
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
