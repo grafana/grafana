@@ -38,9 +38,9 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 			}
 		}
 
-		return response.JSON(200, result)
+		return response.JSON(http.StatusOK, result)
 	} else {
-		return response.Error(500, "Internal server error", err)
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 }
 
@@ -71,33 +71,33 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	cmd.OrgId = c.OrgId
 
 	if !cmd.Role.IsValid() {
-		return response.Error(400, "Invalid role specified", nil)
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
 
 	if api.cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
-			return response.Error(400, "Number of seconds before expiration should be set", nil)
+			return response.Error(http.StatusBadRequest, "Number of seconds before expiration should be set", nil)
 		}
 		if cmd.SecondsToLive > api.cfg.ApiKeyMaxSecondsToLive {
-			return response.Error(400, "Number of seconds before expiration is greater than the global limit", nil)
+			return response.Error(http.StatusBadRequest, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {
-		return response.Error(500, "Generating API key failed", err)
+		return response.Error(http.StatusInternalServerError, "Generating API key failed", err)
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := api.apiKeyStore.AddAPIKey(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
-			return response.Error(400, err.Error(), nil)
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 		if errors.Is(err, models.ErrDuplicateApiKey) {
-			return response.Error(409, err.Error(), nil)
+			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
-		return response.Error(500, "Failed to add API Key", err)
+		return response.Error(http.StatusInternalServerError, "Failed to add API Key", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
@@ -106,7 +106,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		Key:  newKeyInfo.ClientSecret,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 // DeleteToken deletes service account tokens
@@ -134,9 +134,9 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	// confirm API key belongs to service account. TODO: refactor get & delete to single call
 	cmdGet := &models.GetApiKeyByIdQuery{ApiKeyId: tokenID}
 	if err = api.apiKeyStore.GetApiKeyById(c.Req.Context(), cmdGet); err != nil {
-		status := 404
+		status := http.StatusNotFound
 		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
-			status = 500
+			status = http.StatusInternalServerError
 		} else {
 			err = models.ErrApiKeyNotFound
 		}
@@ -146,14 +146,14 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 
 	// verify service account ID matches the URL
 	if *cmdGet.Result.ServiceAccountId != saID {
-		return response.Error(404, failedToDeleteMsg, err)
+		return response.Error(http.StatusNotFound, failedToDeleteMsg, err)
 	}
 
 	cmdDel := &models.DeleteApiKeyCommand{Id: tokenID, OrgId: c.OrgId}
 	if err = api.apiKeyStore.DeleteApiKey(c.Req.Context(), cmdDel); err != nil {
-		status := 404
+		status := http.StatusNotFound
 		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
-			status = 500
+			status = http.StatusInternalServerError
 		} else {
 			err = models.ErrApiKeyNotFound
 		}

@@ -122,7 +122,7 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context()); err == nil {
 		return response.Success("service accounts upgraded")
 	} else {
-		return response.Error(500, "Internal server error", err)
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 }
 
