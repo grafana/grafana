@@ -196,7 +196,8 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore, alerting.ProvideDashAlertExtractorService(nil)).SaveDashboard(context.Background(), dashItem, true)
+	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
+	dashboard, err := dashboardservice.ProvideDashboardService(dashboardStore, dashAlertExtractor).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard

@@ -3,11 +3,11 @@ package alerting
 import (
 	"context"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"io/ioutil"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -22,30 +22,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 	// mock data
 	defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
 	graphite2Ds := &models.DataSource{Id: 15, OrgId: 1, Name: "graphite2", Uid: "graphite2-uid"}
-	influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB", Uid: "InfluxDB-uid"}
-	prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus", Uid: "Prometheus-uid"}
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
-		query.Result = defaultDs
-		return nil
-	})
-
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-		if query.Name == defaultDs.Name || query.Uid == defaultDs.Uid {
-			query.Result = defaultDs
-		}
-		if query.Name == graphite2Ds.Name || query.Uid == graphite2Ds.Uid {
-			query.Result = graphite2Ds
-		}
-		if query.Name == influxDBDs.Name || query.Uid == influxDBDs.Uid {
-			query.Result = influxDBDs
-		}
-		if query.Name == prom.Name || query.Uid == prom.Uid {
-			query.Result = prom
-		}
-
-		return nil
-	})
 
 	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
@@ -57,7 +33,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 		},
 	}
 
-	extractor := ProvideDashAlertExtractorService(dsPermissions)
+	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore.ExpectedDatasource = defaultDs
+	extractor := ProvideDashAlertExtractorService(dsPermissions, sqlStore)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
@@ -88,6 +66,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
+		sqlStore.ExpectedDatasource = &models.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -140,7 +119,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutID)
 		require.Nil(t, err)
 
-		extractor := ProvideDashAlertExtractorService(nil)
 		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -187,6 +165,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 		require.Nil(t, err)
 
+		sqlStore.ExpectedDatasource = &models.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -298,6 +277,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
+		sqlStore.ExpectedDatasource = graphite2Ds
 		dashAlertInfo := DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),

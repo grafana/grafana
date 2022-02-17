@@ -1417,7 +1417,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	}
 
 	dashboadStore := database.ProvideDashboardStore(sqlStore)
-	dashAlertService := alerting.ProvideDashAlertExtractorService(nil)
+	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil)
 	dashboard, err := dashboardservice.ProvideDashboardService(dashboadStore, dashAlertService).SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 

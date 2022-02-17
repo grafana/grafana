@@ -3,6 +3,7 @@ package alerting
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,7 +12,7 @@ import (
 // AlertTest makes a test alert.
 func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
-	extractor := ProvideDashAlertExtractorService(nil)
+	extractor := ProvideDashAlertExtractorService(nil, mockstore.NewSQLStoreMock())
 	dashInfo := DashAlertInfo{
 		User:  user,
 		Dash:  dash,
