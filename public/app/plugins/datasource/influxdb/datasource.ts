@@ -386,67 +386,21 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return [];
     }
 
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map((query) => {
-        if (this.isFlux) {
-          return {
-            ...query,
-            datasource: this.getRef(),
-            query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'),
-          };
-        }
-
-        const expandedQuery = {
+    return queries.map((query) => {
+      if (this.isFlux) {
+        return {
           ...query,
           datasource: this.getRef(),
-          measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
-          policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
-          limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
-          slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
-          tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
+          query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
         };
+      }
 
-        if (query.rawQuery) {
-          expandedQuery.query = this.templateSrv.replace(query.query ?? '', scopedVars, 'regex');
-        }
-
-        if (query.groupBy) {
-          expandedQuery.groupBy = query.groupBy.map((groupBy) => {
-            return {
-              ...groupBy,
-              params: groupBy.params?.map((param) => {
-                return this.templateSrv.replace(param.toString(), undefined, 'regex');
-              }),
-            };
-          });
-        }
-
-        if (query.select) {
-          expandedQuery.select = query.select.map((selects) => {
-            return selects.map((select: any) => {
-              return {
-                ...select,
-                params: select.params?.map((param: any) => {
-                  return this.templateSrv.replace(param.toString(), undefined, 'regex');
-                }),
-              };
-            });
-          });
-        }
-
-        if (query.tags) {
-          expandedQuery.tags = query.tags.map((tag) => {
-            return {
-              ...tag,
-              value: this.templateSrv.replace(tag.value, undefined, 'regex'),
-            };
-          });
-        }
-        return expandedQuery;
-      });
-    }
-    return expandedQueries;
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars, scopedVars),
+      };
+    });
   }
 
   applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
