@@ -386,6 +386,22 @@ func TestTimeSeriesFilter(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "114250375703598695", labels["resource.label.instance_id"])
 	})
+
+	t.Run("Parse labels for distribution", func(t *testing.T) {
+		data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(data.TimeSeries))
+		res := &backend.DataResponse{}
+		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
+		err = query.parseResponse(res, data, "")
+		require.NoError(t, err)
+		frames := res.Frames
+		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
+		require.True(t, ok)
+		labels, ok := custom["labels"].(map[string]string)
+		require.True(t, ok)
+		assert.Equal(t, "grafana-prod", labels["resource.label.project_id"])
+	})
 }
 
 func loadTestFile(path string) (cloudMonitoringResponse, error) {
