@@ -16,12 +16,16 @@ import (
 )
 
 type StandardSearchService struct {
-	sql *sqlstore.SQLStore
+	sql  *sqlstore.SQLStore
+	auth FutureAuthService // eventually injected from elsewhere
 }
 
 func ProvideService(sql *sqlstore.SQLStore) SearchService {
 	return &StandardSearchService{
 		sql: sql,
+		auth: &simpleSQLAuthService{
+			sql: sql,
+		},
 	}
 }
 
@@ -37,13 +41,34 @@ type dashMeta struct {
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	if user == nil || user.Role != string(models.ROLE_ADMIN) {
-		rsp.Error = fmt.Errorf("search is only supported for admin users while in early development")
+	// Load and parse all dashboards for given orgId
+	dash, err := loadDashboards(ctx, orgId, s.sql)
+	if err != nil {
+		rsp.Error = err
 		return rsp
 	}
 
-	// Load and parse all dashboards for given orgId
-	dash, err := loadDashboards(ctx, orgId, s.sql)
+	// TODO - get user from context?
+	getSignedInUserQuery := &models.GetSignedInUserQuery{
+		Login: user.Login,
+		Email: user.Email,
+		OrgId: orgId,
+	}
+
+	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	if err != nil {
+		fmt.Printf("error while retrieving user %s\n", err)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	if getSignedInUserQuery.Result == nil {
+		fmt.Printf("no user %s", user.Email)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	dash, err = s.applyAuthFilter(getSignedInUserQuery.Result, dash)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -52,6 +77,22 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	rsp.Frames = metaToFrame(dash)
 
 	return rsp
+}
+
+func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashMeta) ([]dashMeta, error) {
+	filter, err := s.auth.GetDashboardReadFilter(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a list of all viewable dashboards for this user
+	res := make([]dashMeta, 0, len(dash))
+	for _, dash := range dash {
+		if filter(dash.dash.UID) {
+			res = append(res, dash)
+		}
+	}
+	return res, nil
 }
 
 type dashDataQueryResult struct {

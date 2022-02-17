@@ -5,12 +5,11 @@ import (
 	"net/url"
 
 	"github.com/benbjohnson/clock"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
@@ -25,11 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert) (*AlertNG, error) {
+	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert, folderService dashboards.FolderService) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -41,8 +41,9 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		QuotaService:        quotaService,
 		SecretsService:      secretsService,
 		Metrics:             m,
-		NotificationService: notificationService,
 		Log:                 log.New("ngalert"),
+		NotificationService: notificationService,
+		folderService:       folderService,
 	}
 
 	if ng.IsDisabled() {
@@ -72,6 +73,7 @@ type AlertNG struct {
 	Log                 log.Logger
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
+	folderService       dashboards.FolderService
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -85,6 +87,7 @@ func (ng *AlertNG) init() error {
 		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultAlertForDuration,
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
+		FolderService:   ng.folderService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue

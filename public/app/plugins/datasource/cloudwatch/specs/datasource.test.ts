@@ -506,16 +506,15 @@ describe('CloudWatchDatasource', () => {
         });
       });
     });
-
     describe('when regions query is used', () => {
       describe('and region param is left out', () => {
         it('should use the default region', async () => {
           const { ds, instanceSettings } = getTestContext();
-          ds.doMetricQueryRequest = jest.fn().mockResolvedValue([]);
+          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
 
           await ds.metricFindQuery('metrics(testNamespace)');
 
-          expect(ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
             namespace: 'testNamespace',
             region: instanceSettings.jsonData.defaultRegion,
           });
@@ -525,11 +524,11 @@ describe('CloudWatchDatasource', () => {
       describe('and region param is defined by user', () => {
         it('should use the user defined region', async () => {
           const { ds } = getTestContext();
-          ds.doMetricQueryRequest = jest.fn().mockResolvedValue([]);
+          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
 
           await ds.metricFindQuery('metrics(testNamespace2, custom-region)');
 
-          expect(ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
             namespace: 'testNamespace2',
             region: 'custom-region',
           });
