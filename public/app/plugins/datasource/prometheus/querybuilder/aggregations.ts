@@ -17,6 +17,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation(PromOperationId.Max),
     ...createAggregationOperation(PromOperationId.Count),
     ...createAggregationOperation(PromOperationId.Topk),
+    ...createAggregationOperation(PromOperationId.BottomK),
     createAggregationOverTime(PromOperationId.SumOverTime),
     createAggregationOverTime(PromOperationId.AvgOverTime),
     createAggregationOverTime(PromOperationId.MinOverTime),
@@ -25,7 +26,6 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     createAggregationOverTime(PromOperationId.LastOverTime),
     createAggregationOverTime(PromOperationId.PresentOverTime),
     createAggregationOverTime(PromOperationId.StddevOverTime),
-    createAggregationOverTime(PromOperationId.StdvarOverTime),
   ];
 }
 
@@ -94,7 +94,7 @@ function createAggregationOperation(name: string): QueryBuilderOperationDef[] {
   ];
 
   // Handle some special aggregations that have parameters
-  if (name === 'topk') {
+  if (name === 'topk' || name === 'bottomk') {
     const param: QueryBuilderOperationParamDef = {
       name: 'K-value',
       type: 'number',
