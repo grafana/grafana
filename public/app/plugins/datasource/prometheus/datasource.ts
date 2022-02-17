@@ -72,7 +72,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>(10);
+  metricsNameCache = new LRU<string, string[]>({ max: 10 });
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
