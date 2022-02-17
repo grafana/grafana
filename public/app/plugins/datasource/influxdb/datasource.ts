@@ -22,7 +22,6 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
-  CoreApp,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -442,6 +441,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
     return expandedQueries;
+  }
+
+  applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+    if (query.groupBy) {
+      query.groupBy = query.groupBy.map((groupBy) => {
+        return {
+          ...groupBy,
+          params: groupBy.params?.map((param) => {
+            return this.templateSrv.replace(param.toString(), undefined, 'regex');
+          }),
+        };
+      });
+    }
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
