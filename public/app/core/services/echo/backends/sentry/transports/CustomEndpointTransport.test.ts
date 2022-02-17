@@ -3,7 +3,18 @@ import { CustomEndpointTransport } from './CustomEndpointTransport';
 
 describe('CustomEndpointTransport', () => {
   const fetchSpy = (window.fetch = jest.fn());
-  beforeEach(() => jest.resetAllMocks());
+  let consoleSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    // The code logs a warning to console
+    // Let's stub this out so we don't pollute the test output
+    consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
   const now = new Date();
 
   const event: Event = {
@@ -87,7 +98,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('will drop events if max concurrency is reached', async () => {
+  it('will drop events and log a warning to console if max concurrency is reached', async () => {
     const calls: Array<(value: unknown) => void> = [];
     fetchSpy.mockImplementation(
       () =>

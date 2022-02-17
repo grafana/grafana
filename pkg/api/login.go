@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
@@ -93,7 +92,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	enabledOAuths := make(map[string]interface{})
 	providers := hs.SocialService.GetOAuthInfoProviders()
 	for key, oauth := range providers {
-		enabledOAuths[key] = map[string]string{"name": oauth.Name}
+		enabledOAuths[key] = map[string]string{
+			"name": oauth.Name,
+			"icon": oauth.Icon,
+		}
 	}
 
 	viewData.Settings["oauth"] = enabledOAuths
@@ -207,7 +209,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		Cfg:        hs.Cfg,
 	}
 
-	err := bus.Dispatch(c.Req.Context(), authQuery)
+	err := login.AuthenticateUserFunc(c.Req.Context(), authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)

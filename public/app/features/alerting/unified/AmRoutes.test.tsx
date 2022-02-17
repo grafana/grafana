@@ -11,7 +11,6 @@ import {
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
@@ -26,12 +25,12 @@ jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
 
 const mocks = {
-  getAllDataSourcesMock: typeAsJestMock(getAllDataSources),
+  getAllDataSourcesMock: jest.mocked(getAllDataSources),
 
   api: {
-    fetchAlertManagerConfig: typeAsJestMock(fetchAlertManagerConfig),
-    updateAlertManagerConfig: typeAsJestMock(updateAlertManagerConfig),
-    fetchStatus: typeAsJestMock(fetchStatus),
+    fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
+    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
+    fetchStatus: jest.mocked(fetchStatus),
   },
 };
 

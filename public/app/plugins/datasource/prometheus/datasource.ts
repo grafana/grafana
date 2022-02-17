@@ -225,7 +225,7 @@ export class PrometheusDatasource
   }
 
   targetContainsTemplate(target: PromQuery) {
-    return this.templateSrv.variableExists(target.expr);
+    return this.templateSrv.containsTemplate(target.expr);
   }
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -904,11 +904,11 @@ export class PrometheusDatasource
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
-        expression = `histogram_quantile(0.95, sum(rate(${expression}[5m])) by (le))`;
+        expression = `histogram_quantile(0.95, sum(rate(${expression}[$__rate_interval])) by (le))`;
         break;
       }
       case 'ADD_RATE': {
-        expression = `rate(${expression}[5m])`;
+        expression = `rate(${expression}[$__rate_interval])`;
         break;
       }
       case 'ADD_SUM': {

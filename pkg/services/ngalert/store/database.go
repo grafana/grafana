@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -17,10 +18,10 @@ const AlertDefinitionMaxTitleLength = 190
 
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 	GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([]*models.AlertConfiguration, error)
-	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
-	SaveAlertmanagerConfigurationWithCallback(*models.SaveAlertmanagerConfigurationCmd, SaveCallback) error
+	SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+	SaveAlertmanagerConfigurationWithCallback(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback SaveCallback) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
@@ -31,4 +32,5 @@ type DBstore struct {
 	DefaultInterval time.Duration
 	SQLStore        *sqlstore.SQLStore
 	Logger          log.Logger
+	FolderService   dashboards.FolderService
 }
