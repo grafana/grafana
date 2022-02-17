@@ -263,7 +263,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			secondsToLive: 0,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -278,7 +278,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			secondsToLive: 1000,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -293,7 +293,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			secondsToLive: 1,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
 					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -330,18 +330,11 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 			_ = json.Unmarshal(actual.Body.Bytes(), &actualBody)
 			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
-			t.Logf("%+v", actualBody)
 
-			if tc.expectedCode != http.StatusOK {
-				t.Fatalf("expected code %d, got %d", tc.expectedCode, actualCode)
-			}
-			if tc.expectedHasExpired != actualBody[i]["hasExpired"] {
-				t.Fatalf("expected hasExpired %t, got %t", tc.expectedHasExpired, actualBody[i]["hasExpired"])
-			}
-			_, ok := actualBody[i][tc.expectedResponseBodyField]
-			if ok != true {
-				t.Fatalf("expected %s to be present in response body", tc.expectedResponseBodyField)
-			}
+			require.Equal(t, tc.expectedCode, actualCode)
+			require.Equal(t, tc.expectedHasExpired, actualBody[i]["hasExpired"])
+			_, exists := actualBody[i][tc.expectedResponseBodyField]
+			require.Equal(t, exists, true)
 		})
 	}
 }
