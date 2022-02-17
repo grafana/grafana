@@ -78,6 +78,12 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 		}
 	}
+
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDBFileStorage) {
+			addDbFileStorageMigration(mg)
+		}
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
