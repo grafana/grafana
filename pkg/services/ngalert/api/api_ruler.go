@@ -405,7 +405,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 				if err := ruleStore.GetAlertRuleByUID(ctx, q); err != nil || q.Result == nil {
 					// if rule has UID then it is considered an update. Therefore, fail if there is no rule to update
 					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) || q.Result == nil && err == nil {
-						return nil, fmt.Errorf("failed to update rule with UID %s because it does not exist in database", r.UID)
+						return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
 					}
 					return nil, fmt.Errorf("failed to query database for an alert rule with UID %s: %w", r.UID, err)
 				}

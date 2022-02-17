@@ -1379,7 +1379,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: failed to add or update rules: failed to get alert rule unknown: could not find alert rule"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: failed to update rule with UID unknown because could not find alert rule"}`, string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1498,7 +1498,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, fmt.Sprintf(`{"message": "failed to validate alert rule \"AlwaysAlerting\": conflicting UID \"%s\" found"}`, ruleUID), string(b))
+		require.JSONEq(t, fmt.Sprintf(`{"message": "rule [1] has UID %s that is already assigned to another rule at index 0"}`, ruleUID), string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
