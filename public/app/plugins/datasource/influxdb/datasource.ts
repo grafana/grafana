@@ -236,6 +236,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
     }
 
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+      query = this.applyVariables(query, scopedVars, rest);
+    }
+
     return query;
   }
 
