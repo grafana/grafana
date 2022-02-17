@@ -16,7 +16,7 @@ var (
 	putJsonDataPreferencesURL = "/api/preferences/set-json-data"
 
 	testUpdateOrgPreferencesCmd         = `{ "theme": "light", "homeDashboardId": 1 }`
-	testUpdateJsonDataPreferencesCmd    = `[{"id": "explore", "hideFromNavbar": true}]`
+	testUpdateJsonDataPreferencesCmd    = `{"navbar":[{"id": "explore", "hideFromNavbar": true}]}`
 	testUpdateJsonDataPreferencesCmdBad = `this is not json`
 )
 

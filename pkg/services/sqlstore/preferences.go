@@ -198,10 +198,10 @@ func (ss *SQLStore) SaveJsonData(ctx context.Context, cmd *models.SaveJsonDataCo
 				OrgId:           cmd.OrgId,
 				TeamId:          cmd.TeamId,
 				JsonData:        cmd.JsonData,
-				Theme:           ss.Cfg.DefaultTheme,
-				Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
-				WeekStart:       ss.Cfg.DateFormats.DefaultWeekStart,
 				HomeDashboardId: 0,
+				Timezone:        "",
+				WeekStart:       "",
+				Theme:           "",
 				Created:         time.Now(),
 				Updated:         time.Now(),
 			}

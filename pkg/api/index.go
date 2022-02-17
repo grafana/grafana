@@ -396,16 +396,16 @@ func (hs *HTTPServer) setNavPreferences(c *models.ReqContext, navTree []*dtos.Na
 	if err := hs.SQLStore.GetJsonDataWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
-	navbarPref := prefsQuery.Result.JsonData
+	jsonDataPref := prefsQuery.Result.JsonData
 
-	if navbarPref != nil {
+	if jsonDataPref != nil {
 		for _, navItem := range navTree {
 			// Set any that exist in the navbar preferences to hide=false
 			// Fix me: how can we type this json properly
-			for _, pref := range navbarPref.MustArray() {
-				mapPrefs := pref.(map[string]interface{})
-				if navItem.Id == mapPrefs["id"] {
-					navItem.HideFromNavbar = mapPrefs["hideFromNavbar"].(bool)
+			for _, pref := range jsonDataPref.Get("navbar").MustArray() {
+				typedPref := pref.(map[string]interface{})
+				if navItem.Id == typedPref["id"] {
+					navItem.HideFromNavbar = typedPref["hideFromNavbar"].(bool)
 					break
 				}
 			}
