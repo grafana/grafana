@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/models"
@@ -43,7 +42,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
-	if err := bus.Dispatch(context.Background(), &userQuery); err != nil {
+	if err := sqlStore.GetUserById(context.Background(), &userQuery); err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
@@ -57,7 +56,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(context.Background(), &cmd); err != nil {
+	if err := sqlStore.ChangeUserPassword(context.Background(), &cmd); err != nil {
 		return errutil.Wrapf(err, "failed to update user password")
 	}
 

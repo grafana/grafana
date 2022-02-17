@@ -131,12 +131,12 @@ export const updateTimeZoneDashboard =
   (timeZone: TimeZone): ThunkResult<void> =>
   (dispatch) => {
     dispatch(updateTimeZoneForSession(timeZone));
-    getTimeSrv().refreshDashboard();
+    getTimeSrv().refreshTimeModel();
   };
 
 export const updateWeekStartDashboard =
   (weekStart: string): ThunkResult<void> =>
   (dispatch) => {
     dispatch(updateWeekStartForSession(weekStart));
-    getTimeSrv().refreshDashboard();
+    getTimeSrv().refreshTimeModel();
   };

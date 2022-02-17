@@ -6,11 +6,13 @@ import { DataResponse, FetchError } from '@grafana/runtime';
 import { StartQueryRequest } from '../types';
 
 describe('runWithRetry', () => {
+  const timeoutPass = () => false;
+  const timeoutFail = () => true;
   it('returns results if no retry is needed', async () => {
     const queryFunc = jest.fn();
     queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
     const targets = [targetA];
-    const values = await lastValueFrom(runWithRetry(queryFunc, targets).pipe(toArray()));
+    const values = await lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     expect(queryFunc).toBeCalledTimes(1);
     expect(queryFunc).toBeCalledWith(targets);
     expect(values).toEqual([{ frames: [createResponseFrame('A')] }]);
@@ -23,7 +25,7 @@ describe('runWithRetry', () => {
     queryFunc.mockReturnValueOnce(throwError(() => createErrorResponse(targets)));
     queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
 
-    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets).pipe(toArray()));
+    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     jest.runAllTimers();
     const values = await valuesPromise;
 
@@ -33,14 +35,14 @@ describe('runWithRetry', () => {
     expect(values).toEqual([{ frames: [createResponseFrame('A')] }]);
   });
 
-  it('fails if reaching timoeut and no data was retrieved', async () => {
+  it('fails if reaching timeout and no data was retrieved', async () => {
     jest.useFakeTimers();
     const targets = [targetA];
     const queryFunc = jest.fn();
     queryFunc.mockReturnValueOnce(throwError(() => createErrorResponse(targets)));
     queryFunc.mockReturnValueOnce(of([createResponseFrame('A')]));
 
-    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, { timeout: 0 }).pipe(toArray()));
+    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutFail).pipe(toArray()));
     jest.runAllTimers();
     let error;
     try {
@@ -60,7 +62,7 @@ describe('runWithRetry', () => {
     const queryFunc = jest.fn();
     queryFunc.mockReturnValueOnce(throwError(() => 'random error'));
 
-    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets).pipe(toArray()));
+    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     jest.runAllTimers();
     let error;
     try {
@@ -79,7 +81,7 @@ describe('runWithRetry', () => {
     const queryFunc = jest.fn();
     queryFunc.mockReturnValueOnce(of([createResponseFrame('A'), createResponseFrame('B')]));
 
-    const values = await lastValueFrom(runWithRetry(queryFunc, targets).pipe(toArray()));
+    const values = await lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
 
     expect(queryFunc).toBeCalledTimes(1);
     expect(queryFunc).nthCalledWith(1, targets);
@@ -101,7 +103,7 @@ describe('runWithRetry', () => {
 
     queryFunc.mockReturnValueOnce(of([createResponseFrame('B')]));
 
-    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets).pipe(toArray()));
+    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutPass).pipe(toArray()));
     jest.runAllTimers();
     const values = await valuesPromise;
 
@@ -129,7 +131,7 @@ describe('runWithRetry', () => {
       )
     );
 
-    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, { timeout: 0 }).pipe(toArray()));
+    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, timeoutFail).pipe(toArray()));
     jest.runAllTimers();
     const values = await valuesPromise;
 
@@ -172,9 +174,7 @@ describe('runWithRetry', () => {
       )
     );
 
-    const valuesPromise = lastValueFrom(
-      runWithRetry(queryFunc, targets, { timeoutFunc: (retry) => retry >= 2 }).pipe(toArray())
-    );
+    const valuesPromise = lastValueFrom(runWithRetry(queryFunc, targets, (retry) => retry >= 2).pipe(toArray()));
     jest.runAllTimers();
     const values = await valuesPromise;
 

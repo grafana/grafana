@@ -16,7 +16,6 @@ type Store interface {
 	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
 	DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error
-
 	GetUserById(id int64) (bool, *models.User, error)
 	GetUser(user *models.User) (bool, error)
 }

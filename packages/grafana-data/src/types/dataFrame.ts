@@ -175,6 +175,12 @@ export interface FieldState {
    * @internal -- we will try to make this unnecessary
    */
   origin?: DataFrameFieldIndex;
+
+  /**
+   * Boolean value is true if field is in a larger data set with multiple frames.
+   * This is only related to the cached displayName property above.
+   */
+  multipleFrames?: boolean;
 }
 
 /** @public */

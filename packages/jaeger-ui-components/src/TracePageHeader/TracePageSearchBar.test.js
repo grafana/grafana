@@ -25,7 +25,7 @@ const defaultProps = {
   nextResult: () => {},
   prevResult: () => {},
   resultCount: 0,
-  textFilter: 'something',
+  searchValue: 'something',
 };
 
 describe('<TracePageSearchBar>', () => {
@@ -50,29 +50,27 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('renders buttons', () => {
-      const buttons = wrapper.find('UIButton');
+      const buttons = wrapper.find('Button');
       expect(buttons.length).toBe(4);
       buttons.forEach((button) => {
-        expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
-        expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(false);
         expect(button.prop('disabled')).toBe(false);
       });
-      expect(wrapper.find('UIButton[icon="up"]').prop('onClick')).toBe(defaultProps.prevResult);
-      expect(wrapper.find('UIButton[icon="down"]').prop('onClick')).toBe(defaultProps.nextResult);
-      expect(wrapper.find('UIButton[icon="close"]').prop('onClick')).toBe(defaultProps.clearSearch);
+      expect(wrapper.find('Button[icon="arrow-up"]').prop('onClick')).toBe(defaultProps.prevResult);
+      expect(wrapper.find('Button[icon="arrow-down"]').prop('onClick')).toBe(defaultProps.nextResult);
+      expect(wrapper.find('Button[icon="times"]').prop('onClick')).toBe(defaultProps.clearSearch);
     });
 
     it('hides navigation buttons when not navigable', () => {
       wrapper.setProps({ navigable: false });
-      const button = wrapper.find('UIButton');
+      const button = wrapper.find('Button');
       expect(button.length).toBe(1);
-      expect(button.prop('icon')).toBe('close');
+      expect(button.prop('icon')).toBe('times');
     });
   });
 
   describe('falsy textFilter', () => {
     beforeEach(() => {
-      wrapper.setProps({ textFilter: '' });
+      wrapper.setProps({ searchValue: '' });
     });
 
     it('renders UiFindInput with correct props', () => {
@@ -80,11 +78,9 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('renders buttons', () => {
-      const buttons = wrapper.find('UIButton');
+      const buttons = wrapper.find('Button');
       expect(buttons.length).toBe(4);
       buttons.forEach((button) => {
-        expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
-        expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(true);
         expect(button.prop('disabled')).toBe(true);
       });
     });

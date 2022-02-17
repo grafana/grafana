@@ -12,7 +12,7 @@ import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import ServiceAccountPage from 'app/features/serviceaccounts/ServiceAccountPage';
+import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -202,6 +202,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/org/serviceaccounts/create',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/serviceaccounts/ServiceAccountCreatePage'
+          )
+      ),
+    },
+    {
       path: '/org/serviceaccounts/:id',
       component: ServiceAccountPage,
     },
@@ -210,7 +219,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsRead]
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
     },
@@ -228,7 +237,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(
           () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
-          [AccessControlAction.ActionTeamsWrite, AccessControlAction.ActionTeamsPermissionsWrite]
+          [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
     },

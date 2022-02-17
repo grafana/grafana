@@ -9,15 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Req.Context(), web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -68,8 +66,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return response.Error(400, err.Error(), err)
 	}
 
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Req.Context(), web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -117,7 +114,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := updateDashboardACL(c.Req.Context(), hs.SQLStore, folder.Id, items); err != nil {
+	if err := hs.dashboardService.UpdateDashboardACL(c.Req.Context(), folder.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
 			err = models.ErrFolderAclInfoMissing
 		}

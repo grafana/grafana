@@ -20,6 +20,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERT
 import { contextSrv } from 'app/core/services/context_srv';
 // Types
 import { GridPos, PanelModel } from './PanelModel';
+import { TimeModel } from './TimeModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AnnotationQuery,
@@ -78,7 +79,7 @@ export interface DashboardLink {
   includeVars: boolean;
 }
 
-export class DashboardModel {
+export class DashboardModel implements TimeModel {
   id: any;
   uid: string;
   title: string;

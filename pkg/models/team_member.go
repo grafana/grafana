@@ -51,11 +51,12 @@ type RemoveTeamMemberCommand struct {
 // QUERIES
 
 type GetTeamMembersQuery struct {
-	OrgId    int64
-	TeamId   int64
-	UserId   int64
-	External bool
-	Result   []*TeamMemberDTO
+	OrgId        int64
+	TeamId       int64
+	UserId       int64
+	External     bool
+	SignedInUser *SignedInUser
+	Result       []*TeamMemberDTO
 }
 
 // ----------------------
