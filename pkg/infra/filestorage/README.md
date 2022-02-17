@@ -35,5 +35,6 @@ We need at least:
 - cloudstorage https://github.com/lytics/cloudstorage
 - afero https://github.com/spf13/afero
 - rclone https://github.com/rclone/rclone
+- nats https://github.com/nats-io/nats.go/blob/main/object.go#L48
 
 ## compare libs
