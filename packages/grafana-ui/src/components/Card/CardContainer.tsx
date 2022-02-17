@@ -39,7 +39,7 @@ export interface CardContainerProps extends HTMLAttributes<HTMLOrSVGElement>, Ca
   disableEvents?: boolean;
   /** No style change on hover */
   disableHover?: boolean;
-  /** Make card selected */
+  /** Makes the card selectable, set to "true" to apply selected styles */
   isSelected?: boolean;
   /** Custom container styles */
   className?: string;
