@@ -24,7 +24,7 @@ You can now share links to your playlists the same way as with dashboards, to ea
 
 {{< figure src="/static/img/docs/dashboards/share-playlists-8-4.png" max-width="1200px" caption="Share playlist" >}}
 
-### $**interval and $**interval_ms in panel title
+### $\_\_interval and $\_\_interval_ms in panel title
 
 We’ve expanded the functionality of this existing and popular feature. You can now use $**interval and $**interval_ms in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
 
