@@ -226,18 +226,17 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
-    // this only works in flux-mode, it should not be called in non-flux-mode
-    if (!this.isFlux) {
-      return query;
-    }
-
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
-    return {
-      ...query,
-      query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
-    };
+    if (this.isFlux) {
+      return {
+        ...query,
+        query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
+      };
+    }
+
+    return query;
   }
 
   /**
