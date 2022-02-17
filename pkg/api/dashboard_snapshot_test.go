@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	editorRole := models.ROLE_EDITOR
 	sqlmock := mockstore.NewSQLStoreMock()
 	aclMockResp := []*models.DashboardAclInfoDTO{}
-	hs := &HTTPServer{SQLStore: sqlmock}
+	hs := &HTTPServer{DashboardsnapshotsService: &dashboardsnapshots.Service{SQLStore: sqlmock}}
 
 	setUpSnapshotTest := func(t *testing.T) *models.DashboardSnapshot {
 		t.Helper()
