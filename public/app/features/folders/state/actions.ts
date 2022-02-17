@@ -9,6 +9,8 @@ import appEvents from 'app/core/app_events';
 import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
 import { lastValueFrom } from 'rxjs';
 import { createWarningNotification } from 'app/core/copy/appNotification';
+import { useDispatch } from 'react-redux';
+import { useCallback } from 'react';
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -16,6 +18,19 @@ export function getFolderByUid(uid: string): ThunkResult<void> {
     dispatch(loadFolder(folder));
     dispatch(updateNavIndex(buildNavModel(folder)));
   };
+}
+
+export function useGetFolderByUid() {
+  const dispatch = useDispatch();
+
+  return useCallback(
+    async (folderUid: string) => {
+      const folder = await backendSrv.getFolderByUid(folderUid);
+      dispatch(loadFolder(folder));
+      dispatch(updateNavIndex(buildNavModel(folder)));
+    },
+    [dispatch]
+  );
 }
 
 export function saveFolder(folder: FolderState): ThunkResult<void> {
