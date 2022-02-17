@@ -50,7 +50,6 @@ import {
   StartQueryRequest,
   TSDBResponse,
   Dimensions,
-  MetricFindSuggestData,
   CloudWatchLogsRequest,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
@@ -557,40 +556,8 @@ export class CloudWatchDatasource
     );
   }
 
-  transformSuggestDataFromDataframes(suggestData: TSDBResponse): MetricFindSuggestData[] {
-    const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
-    const table = toLegacyResponseData(frames[0]) as TableData;
-
-    return table.rows.map(([text, value]) => ({
-      text,
-      value,
-      label: value,
-    }));
-  }
-
-  doMetricQueryRequest(subtype: string, parameters: any): Promise<MetricFindSuggestData[]> {
-    const range = this.timeSrv.timeRange();
-    return lastValueFrom(
-      this.awsRequest(DS_QUERY_ENDPOINT, {
-        from: range.from.valueOf().toString(),
-        to: range.to.valueOf().toString(),
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasource: this.getRef(),
-            type: 'metricFindQuery',
-            subtype: subtype,
-            ...parameters,
-          },
-        ],
-      }).pipe(
-        map((r) => {
-          return this.transformSuggestDataFromDataframes(r);
-        })
-      )
-    );
+  doMetricResourceRequest(subtype: string, parameters?: any): Promise<Array<{ text: any; label: any; value: any }>> {
+    return this.getResource(subtype, parameters);
   }
 
   makeLogActionRequest(
@@ -677,14 +644,14 @@ export class CloudWatchDatasource
   }
 
   getRegions(): Promise<Array<{ label: string; value: string; text: string }>> {
-    return this.doMetricQueryRequest('regions', null).then((regions: any) => [
+    return this.doMetricResourceRequest('regions').then((regions: any) => [
       { label: 'default', value: 'default', text: 'default' },
       ...regions,
     ]);
   }
 
   getNamespaces() {
-    return this.doMetricQueryRequest('namespaces', null);
+    return this.doMetricResourceRequest('namespaces');
   }
 
   async getMetrics(namespace: string | undefined, region?: string) {
@@ -692,14 +659,14 @@ export class CloudWatchDatasource
       return [];
     }
 
-    return this.doMetricQueryRequest('metrics', {
+    return this.doMetricResourceRequest('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
     });
   }
 
   async getAllMetrics(region: string): Promise<Array<{ metricName: string; namespace: string }>> {
-    const values = await this.doMetricQueryRequest('all_metrics', {
+    const values = await this.doMetricResourceRequest('all-metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
 
@@ -716,10 +683,10 @@ export class CloudWatchDatasource
       return [];
     }
 
-    return this.doMetricQueryRequest('dimension_keys', {
+    return this.doMetricResourceRequest('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-      dimensionFilters: this.convertDimensionFormat(dimensionFilters, {}),
+      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       metricName,
     });
   }
@@ -735,115 +702,38 @@ export class CloudWatchDatasource
       return [];
     }
 
-    const values = await this.doMetricQueryRequest('dimension_values', {
+    const values = await this.doMetricResourceRequest('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
-      dimensions: this.convertDimensionFormat(filterDimensions, {}),
+      dimensions: JSON.stringify(this.convertDimensionFormat(filterDimensions, {})),
     });
 
     return values;
   }
 
   getEbsVolumeIds(region: string, instanceId: string) {
-    return this.doMetricQueryRequest('ebs_volume_ids', {
+    return this.doMetricResourceRequest('ebs-volume-ids', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       instanceId: this.templateSrv.replace(instanceId),
     });
   }
 
   getEc2InstanceAttribute(region: string, attributeName: string, filters: any) {
-    return this.doMetricQueryRequest('ec2_instance_attribute', {
+    return this.doMetricResourceRequest('ec2-instance-attribute', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       attributeName: this.templateSrv.replace(attributeName),
-      filters: filters,
+      filters: JSON.stringify(filters),
     });
   }
 
   getResourceARNs(region: string, resourceType: string, tags: any) {
-    return this.doMetricQueryRequest('resource_arns', {
+    return this.doMetricResourceRequest('resource-arns', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),
-      tags: tags,
+      tags: JSON.stringify(tags),
     });
-  }
-
-  async metricFindQuery(query: string) {
-    let region;
-    let namespace;
-    let metricName;
-    let filterJson;
-
-    const regionQuery = query.match(/^regions\(\)/);
-    if (regionQuery) {
-      return this.getRegions();
-    }
-
-    const namespaceQuery = query.match(/^namespaces\(\)/);
-    if (namespaceQuery) {
-      return this.getNamespaces();
-    }
-
-    const metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
-    if (metricNameQuery) {
-      namespace = metricNameQuery[1];
-      region = metricNameQuery[3];
-      return this.getMetrics(namespace, region);
-    }
-
-    const dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
-    if (dimensionKeysQuery) {
-      namespace = dimensionKeysQuery[1];
-      region = dimensionKeysQuery[3];
-      return this.getDimensionKeys(namespace, region);
-    }
-
-    const dimensionValuesQuery = query.match(
-      /^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?(.+))?\)/
-    );
-    if (dimensionValuesQuery) {
-      region = dimensionValuesQuery[1];
-      namespace = dimensionValuesQuery[2];
-      metricName = dimensionValuesQuery[3];
-      const dimensionKey = dimensionValuesQuery[4];
-      filterJson = {};
-      if (dimensionValuesQuery[6]) {
-        filterJson = JSON.parse(this.templateSrv.replace(dimensionValuesQuery[6]));
-      }
-
-      return this.getDimensionValues(region, namespace, metricName, dimensionKey, filterJson);
-    }
-
-    const ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
-    if (ebsVolumeIdsQuery) {
-      region = ebsVolumeIdsQuery[1];
-      const instanceId = ebsVolumeIdsQuery[2];
-      return this.getEbsVolumeIds(region, instanceId);
-    }
-
-    const ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
-    if (ec2InstanceAttributeQuery) {
-      region = ec2InstanceAttributeQuery[1];
-      const targetAttributeName = ec2InstanceAttributeQuery[2];
-      filterJson = JSON.parse(this.templateSrv.replace(ec2InstanceAttributeQuery[3]));
-      return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
-    }
-
-    const resourceARNsQuery = query.match(/^resource_arns\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
-    if (resourceARNsQuery) {
-      region = resourceARNsQuery[1];
-      const resourceType = resourceARNsQuery[2];
-      const tagsJSON = JSON.parse(this.templateSrv.replace(resourceARNsQuery[3]));
-      return this.getResourceARNs(region, resourceType, tagsJSON);
-    }
-
-    const statsQuery = query.match(/^statistics\(\)/);
-    if (statsQuery) {
-      return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
-    }
-
-    return Promise.resolve([]);
   }
 
   annotationQuery(options: any) {

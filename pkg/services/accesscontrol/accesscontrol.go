@@ -37,7 +37,14 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type ResourcePermissionsService interface {
+type PermissionsServices interface {
+	GetTeamService() PermissionsService
+	GetFolderService() PermissionsService
+	GetDashboardService() PermissionsService
+	GetDataSourceService() PermissionsService
+}
+
+type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user

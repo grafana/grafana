@@ -367,9 +367,3 @@ export interface MetricQuery {
   maxDataPoints?: number;
   intervalMs?: number;
 }
-
-export interface MetricFindSuggestData {
-  text: string;
-  label: string;
-  value: string;
-}

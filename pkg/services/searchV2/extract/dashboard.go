@@ -1,14 +1,13 @@
 package extract
 
 import (
-	"fmt"
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
 )
 
 func logf(format string, a ...interface{}) {
-	fmt.Printf(format, a...)
+	//fmt.Printf(format, a...)
 }
 
 // nolint:gocyclo

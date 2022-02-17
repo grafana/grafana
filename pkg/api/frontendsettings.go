@@ -229,6 +229,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
 		"viewersCanEdit":                      setting.ViewersCanEdit,
+		"angularSupportEnabled":               hs.Cfg.AngularSupportEnabled,
 		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":                    pluginsToPreload,
@@ -272,6 +273,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
 		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
+	}
+
+	if hs.ThumbService != nil {
+		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {

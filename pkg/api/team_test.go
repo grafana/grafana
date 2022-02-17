@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -112,7 +111,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
-		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService *resourcepermissions.Service, userID, orgID, teamID int64,
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.PermissionsService, userID, orgID, teamID int64,
 			permission string) error {
 			addTeamMemberCalled++
 			return nil

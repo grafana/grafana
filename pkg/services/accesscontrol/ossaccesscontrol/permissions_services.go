@@ -1,4 +1,4 @@
-package resourceservices
+package ossaccesscontrol
 
 import (
 	"context"
@@ -13,43 +13,36 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideResourceServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*ResourceServices, error) {
+func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl, store resourcepermissions.Store) (*PermissionsServices, error) {
 	teamPermissions, err := ProvideTeamPermissions(router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
 
-	dashboardsService, err := provideDashboardService(sql, router, ac, store)
-	if err != nil {
-		return nil, err
-	}
-
-	folderService, err := provideFolderService(sql, router, ac, store)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ResourceServices{services: map[string]*resourcepermissions.Service{
-		"teams":      teamPermissions,
-		"folders":    folderService,
-		"dashboards": dashboardsService,
-	}}, nil
+	return &PermissionsServices{teams: teamPermissions, datasources: provideEmptyPermissionsService()}, nil
 }
 
-type ResourceServices struct {
-	services map[string]*resourcepermissions.Service
+type PermissionsServices struct {
+	teams       accesscontrol.PermissionsService
+	folder      accesscontrol.PermissionsService
+	dashboard   accesscontrol.PermissionsService
+	datasources accesscontrol.PermissionsService
 }
 
-func (s *ResourceServices) GetTeamService() *resourcepermissions.Service {
-	return s.services["teams"]
+func (s *PermissionsServices) GetTeamService() accesscontrol.PermissionsService {
+	return s.teams
 }
 
-func (s *ResourceServices) GetDashboardService() *resourcepermissions.Service {
-	return s.services["dashboards"]
+func (s *PermissionsServices) GetFolderService() accesscontrol.PermissionsService {
+	return s.folder
 }
 
-func (s *ResourceServices) GetFolderService() *resourcepermissions.Service {
-	return s.services["folders"]
+func (s *PermissionsServices) GetDashboardService() accesscontrol.PermissionsService {
+	return s.dashboard
+}
+
+func (s *PermissionsServices) GetDataSourceService() accesscontrol.PermissionsService {
+	return s.datasources
 }
 
 var (
@@ -123,12 +116,12 @@ func ProvideTeamPermissions(router routing.RouteRegister, sql *sqlstore.SQLStore
 	return resourcepermissions.New(options, router, ac, store, sql)
 }
 
-var dashboardsView = []string{accesscontrol.ActionDashboardsRead}
-var dashboardsEdit = append(dashboardsView, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
-var dashboardsAdmin = append(dashboardsEdit, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
-var foldersView = []string{accesscontrol.ActionFoldersRead}
-var foldersEdit = append(foldersView, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
-var foldersAdmin = append(foldersEdit, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
+var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete, accesscontrol.ActionDashboardsEdit}...)
+var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
+var FolderViewActions = []string{accesscontrol.ActionFoldersRead}
+var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
+var FolderAdminActions = append(FolderEditActions, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
 
 func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegister, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
@@ -165,9 +158,9 @@ func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegiste
 			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  dashboardsView,
-			"Edit":  dashboardsEdit,
-			"Admin": dashboardsAdmin,
+			"View":  DashboardViewActions,
+			"Edit":  DashboardEditActions,
+			"Admin": DashboardAdminActions,
 		},
 		ReaderRoleName: "Dashboard permission reader",
 		WriterRoleName: "Dashboard permission writer",
@@ -212,9 +205,9 @@ func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, 
 			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(dashboardsView, foldersView...),
-			"Edit":  append(dashboardsEdit, foldersEdit...),
-			"Admin": append(dashboardsAdmin, foldersAdmin...),
+			"View":  append(DashboardViewActions, FolderViewActions...),
+			"Edit":  append(DashboardEditActions, FolderEditActions...),
+			"Admin": append(DashboardAdminActions, FolderAdminActions...),
 		},
 		ReaderRoleName: "Folder permission reader",
 		WriterRoleName: "Folder permission writer",
@@ -222,4 +215,36 @@ func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, 
 	}
 
 	return resourcepermissions.New(options, router, accesscontrol, store, sql)
+}
+
+func provideEmptyPermissionsService() accesscontrol.PermissionsService {
+	return &emptyPermissionsService{}
+}
+
+var _ accesscontrol.PermissionsService = new(emptyPermissionsService)
+
+type emptyPermissionsService struct{}
+
+func (e emptyPermissionsService) GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e emptyPermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
+	return ""
 }
