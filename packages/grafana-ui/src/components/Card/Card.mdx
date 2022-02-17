@@ -384,6 +384,28 @@ Card can have a disabled state, effectively making it and its actions non-clicka
   </Card>
 </Preview>
 
+### Selectable
+
+```jsx
+<Card isSelected disabled>
+  <Card.Heading>Option #1</Card.Heading>
+  <Card.Meta>This is a really great option, you won't regret it.</Card.Meta>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+</Card>
+```
+
+<Preview>
+  <Card isSelected disabled>
+    <Card.Heading>Option #1</Card.Heading>
+    <Card.Description>This is a really great option, you won't regret it.</Card.Description>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
+  </Card>
+</Preview>
+
 ### Props
 
 <Props of={Card} />
