@@ -1,7 +1,15 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, VizTooltipContainer } from '@grafana/ui';
+import {
+  Portal,
+  UPlotChart,
+  useStyles2,
+  useTheme2,
+  VizLayout,
+  VizTooltipContainer,
+  LegendDisplayMode,
+} from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
 import { HeatmapData, prepareHeatmapData } from './fields';
@@ -81,13 +89,25 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
+  const renderLegend = () => {
+    if (options.legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    return (
+      <VizLayout.Legend placement="bottom" maxHeight="20%">
+        scale from: {JSON.stringify(palette)}
+      </VizLayout.Legend>
+    );
+  };
+
   if (info.warning || !info.heatmap) {
     return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
   }
 
   return (
     <>
-      <VizLayout width={width} height={height}>
+      <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
           //   {JSON.stringify(scatterData, null, 2)}
