@@ -637,3 +637,7 @@ func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQ
 	query.Result = m.ExpectedSearchOrgList
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	return m.ExpectedError
+}
