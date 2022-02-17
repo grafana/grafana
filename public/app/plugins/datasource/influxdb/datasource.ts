@@ -467,6 +467,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         });
       });
     }
+
+    if (query.tags) {
+      query.tags = query.tags.map((tag) => {
+        return {
+          ...tag,
+          value: this.templateSrv.replace(tag.value, undefined, 'regex'),
+        };
+      });
+    }
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
