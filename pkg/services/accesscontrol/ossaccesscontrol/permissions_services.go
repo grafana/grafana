@@ -18,8 +18,21 @@ func ProvidePermissionsServices(router routing.RouteRegister, sql *sqlstore.SQLS
 	if err != nil {
 		return nil, err
 	}
+	folderPermissions, err := provideFolderService(router, sql, ac, store)
+	if err != nil {
+		return nil, err
+	}
+	dashboardPermissions, err := provideDashboardService(router, sql, ac, store)
+	if err != nil {
+		return nil, err
+	}
 
-	return &PermissionsServices{teams: teamPermissions, datasources: provideEmptyPermissionsService()}, nil
+	return &PermissionsServices{
+		teams:       teamPermissions,
+		folder:      folderPermissions,
+		dashboard:   dashboardPermissions,
+		datasources: provideEmptyPermissionsService(),
+	}, nil
 }
 
 type PermissionsServices struct {
@@ -123,7 +136,7 @@ var FolderViewActions = []string{accesscontrol.ActionFoldersRead}
 var FolderEditActions = append(FolderViewActions, []string{accesscontrol.ActionFoldersWrite, accesscontrol.ActionFoldersDelete, accesscontrol.ActionFoldersEdit, accesscontrol.ActionDashboardsCreate}...)
 var FolderAdminActions = append(FolderEditActions, []string{accesscontrol.ActionFoldersPermissionsRead, accesscontrol.ActionFoldersPermissionsWrite}...)
 
-func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegister, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func provideDashboardService(router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource: "dashboards",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -170,7 +183,7 @@ func provideDashboardService(sql *sqlstore.SQLStore, router routing.RouteRegiste
 	return resourcepermissions.New(options, router, accesscontrol, store, sql)
 }
 
-func provideFolderService(sql *sqlstore.SQLStore, router routing.RouteRegister, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
+func provideFolderService(router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource: "folders",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
