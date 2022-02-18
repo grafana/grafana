@@ -143,10 +143,6 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(ctx contex
 func (s *AlertNotificationService) createNotifier(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) (Notifier, error) {
 	secureSettingsMap := map[string]string{}
 
-	if util.IsShortUIDTooLong(model.Uid) {
-		return nil, ValidationError{Reason: "Invalid UID: Must 40 characters or less"}
-	}
-
 	if model.Id > 0 {
 		query := &models.GetAlertNotificationsQuery{
 			OrgId: model.OrgId,
