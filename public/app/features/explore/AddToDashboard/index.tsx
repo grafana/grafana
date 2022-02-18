@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { getExploreItemSelector } from '../state/selectors';
 import { AddToDashboardButton } from './AddToDashboardButton';
 
-const isActive = (query: DataQuery) => !query.hide;
+const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
 const getMainVisualization = (
@@ -14,7 +14,7 @@ const getMainVisualization = (
   logsFrames?: DataFrame[],
   nodeGraphFrames?: DataFrame[]
 ) => {
-  for (const { refId } of queries.filter(isActive)) {
+  for (const { refId } of queries.filter(isVisible)) {
     // traceview is not supported in dashboards, skipping it for now.
     const hasQueryRefId = hasRefId(refId);
     if (graphFrames?.some(hasQueryRefId)) {
