@@ -150,7 +150,7 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetO
 		filteredUsers = append(filteredUsers, user)
 	}
 
-	accessControlMetadata := hs.getAllAccessControlMetadata(c, "users", userIDs)
+	accessControlMetadata := hs.getMultiAccessControlMetadata(c, "users", userIDs)
 	if len(accessControlMetadata) > 0 {
 		for i := range filteredUsers {
 			filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserId)]
