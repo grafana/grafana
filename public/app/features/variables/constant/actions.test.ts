@@ -4,9 +4,10 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { updateConstantVariableOptions } from './actions';
 import { getRootReducer, RootReducerType } from '../state/helpers';
 import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);
@@ -22,6 +23,7 @@ describe('constant actions', () => {
       const variable: ConstantVariableModel = {
         ...initialVariableModelState,
         id: '0',
+        rootStateKey: 'key',
         index: 0,
         type: 'constant',
         name: 'Constant',
@@ -36,12 +38,14 @@ describe('constant actions', () => {
 
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        createConstantOptionsFromQuery(toVariablePayload(variable)),
-        setCurrentVariableValue(toVariablePayload(variable, { option }))
+        toKeyedAction('key', createConstantOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
   });

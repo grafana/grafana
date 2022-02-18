@@ -317,7 +317,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgRole:      models.ROLE_ADMIN,
 					}
 
-					err := sqlstore.GetDashboardPermissionsForUser(context.Background(), &query)
+					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
@@ -340,7 +340,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := sqlstore.HasAdminPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasAdminPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.True(t, query.Result)
 				})
@@ -370,7 +370,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgRole:      models.ROLE_EDITOR,
 					}
 
-					err := sqlstore.GetDashboardPermissionsForUser(context.Background(), &query)
+					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
@@ -406,7 +406,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := sqlstore.HasAdminPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasAdminPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})
@@ -436,7 +436,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgRole:      models.ROLE_VIEWER,
 					}
 
-					err := sqlstore.GetDashboardPermissionsForUser(context.Background(), &query)
+					err := sqlStore.GetDashboardPermissionsForUser(context.Background(), &query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
@@ -474,7 +474,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := sqlstore.HasAdminPermissionInFolders(context.Background(), query)
+					err := sqlStore.HasAdminPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
 					require.False(t, query.Result)
 				})

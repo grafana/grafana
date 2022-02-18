@@ -13,14 +13,23 @@ import (
 )
 
 type TestUser struct {
+	Name             string
+	Role             string
 	Login            string
 	IsServiceAccount bool
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *models.User {
+	role := string(models.ROLE_VIEWER)
+	if testUser.Role != "" {
+		role = testUser.Role
+	}
+
 	u1, err := sqlStore.CreateUser(context.Background(), models.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
+		DefaultOrgRole:   role,
+		Name:             testUser.Name,
 	})
 	require.NoError(t, err)
 	return u1
@@ -29,7 +38,7 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 // create mock for serviceaccountservice
 type ServiceAccountMock struct{}
 
-func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceaccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return nil, nil
 }
 
@@ -65,13 +74,14 @@ type Calls struct {
 	UpgradeServiceAccounts []interface{}
 	ConvertServiceAccounts []interface{}
 	ListTokens             []interface{}
+	UpdateServiceAccount   []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
 	Calls Calls
 }
 
-func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd *serviceaccounts.CreateServiceaccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (s *ServiceAccountsStoreMock) CreateServiceAccount(ctx context.Context, cmd *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	// now we can test that the mock has these calls when we call the function
 	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, cmd})
 	return nil, nil
@@ -104,5 +114,13 @@ func (s *ServiceAccountsStoreMock) ListServiceAccounts(ctx context.Context, orgI
 
 func (s *ServiceAccountsStoreMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
+	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
+	orgID, serviceAccountID int64,
+	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
+
 	return nil, nil
 }

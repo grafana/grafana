@@ -3,6 +3,7 @@ package serviceaccounts
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -22,7 +23,12 @@ type ServiceAccount struct {
 	Id int64
 }
 
-type CreateServiceaccountForm struct {
+type UpdateServiceAccountForm struct {
+	Name *string          `json:"name"`
+	Role *models.RoleType `json:"role"`
+}
+
+type CreateServiceAccountForm struct {
 	OrgID int64  `json:"-"`
 	Name  string `json:"name" binding:"Required"`
 }

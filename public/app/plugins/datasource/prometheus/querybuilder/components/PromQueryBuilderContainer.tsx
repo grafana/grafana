@@ -1,5 +1,6 @@
 import { PanelData } from '@grafana/data';
-import React, { useEffect, useState } from 'react';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import React, { useEffect, useReducer } from 'react';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
@@ -27,20 +28,17 @@ export interface State {
  */
 export function PromQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource, data } = props;
-  const [state, setState] = useState<State>({ expr: query.expr });
+  const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
 
   // Only rebuild visual query if expr changes from outside
   useEffect(() => {
-    if (!state.visQuery || state.expr !== query.expr) {
-      const result = buildVisualQueryFromString(query.expr || '');
-      setState({ visQuery: result.query, expr: query.expr });
-    }
-  }, [query.expr, state.visQuery, state.expr]);
+    dispatch(exprChanged(query.expr));
+  }, [query.expr]);
 
-  const onVisQueryChange = (newVisQuery: PromVisualQuery) => {
-    const rendered = promQueryModeller.renderQuery(newVisQuery);
-    onChange({ ...query, expr: rendered });
-    setState({ visQuery: newVisQuery, expr: rendered });
+  const onVisQueryChange = (visQuery: PromVisualQuery) => {
+    const expr = promQueryModeller.renderQuery(visQuery);
+    dispatch(visualQueryChange({ visQuery, expr }));
+    onChange({ ...props.query, expr: expr });
   };
 
   if (!state.visQuery) {
@@ -60,3 +58,23 @@ export function PromQueryBuilderContainer(props: Props) {
     </>
   );
 }
+
+const stateSlice = createSlice({
+  name: 'prom-builder-container',
+  initialState: { expr: '' } as State,
+  reducers: {
+    visualQueryChange: (state, action: PayloadAction<{ visQuery: PromVisualQuery; expr: string }>) => {
+      state.expr = action.payload.expr;
+      state.visQuery = action.payload.visQuery;
+    },
+    exprChanged: (state, action: PayloadAction<string>) => {
+      if (!state.visQuery || state.expr !== action.payload) {
+        state.expr = action.payload;
+        const parseResult = buildVisualQueryFromString(action.payload);
+        state.visQuery = parseResult.query;
+      }
+    },
+  },
+});
+
+const { visualQueryChange, exprChanged } = stateSlice.actions;
