@@ -93,7 +93,7 @@
     "@microsoft/api-extractor": "7.19.4",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.4",
     "@react-types/button": "3.4.1",
-    "@react-types/menu": "3.4.1",
+    "@react-types/menu": "3.5.1",
     "@react-types/overlays": "3.5.1",
     "@react-types/shared": "3.10.1",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
