@@ -28,10 +28,9 @@ type FileMetadata struct {
 }
 
 type ListFilesResponse struct {
-	Files      []FileMetadata
-	HasMore    bool
-	LastPath   string
-	TotalCount int
+	Files    []FileMetadata
+	HasMore  bool
+	LastPath string
 }
 
 type Folder struct {
@@ -39,9 +38,9 @@ type Folder struct {
 	Path string
 }
 
-type Cursor struct {
-	AfterPath string
-	First     int
+type Paging struct {
+	After string
+	First int
 }
 
 type UpsertFileCommand struct {
@@ -55,7 +54,7 @@ type FileStorage interface {
 	Delete(ctx context.Context, filePath string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
-	ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Cursor) (*ListFilesResponse, error)
+	ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Paging) (*ListFilesResponse, error)
 	ListFolders(ctx context.Context, parentFolderPath string) (*[]Folder, error)
 
 	CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error

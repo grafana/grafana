@@ -155,7 +155,7 @@ func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key st
 	return err
 }
 
-func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Cursor) (*ListFilesResponse, error) {
+func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, paging *Paging) (*ListFilesResponse, error) {
 	var resp *ListFilesResponse
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -169,12 +169,19 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 		}
 		sess.OrderBy("path")
 
+		pageSize := 10
+		if paging != nil && paging.First != 0 {
+			pageSize = paging.First
+		}
+
+		sess.Limit(pageSize + 1)
+
 		if err := sess.Find(&foundFiles); err != nil {
 			return err
 		}
 
 		files := make([]FileMetadata, 0)
-		for i := range foundFiles {
+		for i := 0; i < len(foundFiles); i++ {
 			files = append(files, FileMetadata{
 				Name:       getName(foundFiles[i].Path),
 				FullPath:   foundFiles[i].Path,
@@ -183,8 +190,15 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 			})
 		}
 
+		lastPath := ""
+		if len(files) > 0 {
+			lastPath = files[len(files)-1].FullPath
+		}
+
 		resp = &ListFilesResponse{
-			Files: files,
+			Files:    files,
+			LastPath: lastPath,
+			HasMore:  len(foundFiles) == pageSize+1,
 		}
 		return nil
 	})

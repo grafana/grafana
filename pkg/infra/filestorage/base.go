@@ -91,7 +91,7 @@ func (b baseFilestorageService) Upsert(ctx context.Context, file *UpsertFileComm
 	return b.wrapped.Upsert(ctx, file)
 }
 
-func (b baseFilestorageService) ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Cursor) (*ListFilesResponse, error) {
+func (b baseFilestorageService) ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Paging) (*ListFilesResponse, error) {
 	if err := validatePath(folderPath); err != nil {
 		return nil, err
 	}
