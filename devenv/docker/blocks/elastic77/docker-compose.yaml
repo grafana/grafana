@@ -1,7 +1,7 @@
 # You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
 
   elasticsearch77:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
     command: elasticsearch
     environment:
       - "discovery.type=single-node"
@@ -19,7 +19,7 @@
       FD_PORT: 9200
 
   filebeat77:
-    image: docker.elastic.co/beats/filebeat:7.7.1
+    image: docker.elastic.co/beats/filebeat:7.17.0
     command: filebeat -e -strict.perms=false
     volumes:
       - ./docker/blocks/elastic77/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
@@ -27,7 +27,7 @@
       - ../data/log:/var/log/grafana:ro
 
   metricbeat77:
-    image: docker.elastic.co/beats/metricbeat:7.7.1
+    image: docker.elastic.co/beats/metricbeat:7.17.0
     command: metricbeat -e -strict.perms=false
     user: root
     volumes:
