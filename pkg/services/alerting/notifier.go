@@ -34,18 +34,18 @@ type NotifierPlugin struct {
 
 // NotifierOption holds information about options specific for the NotifierPlugin.
 type NotifierOption struct {
-	Element         ElementType    `json:"element"`
-	InputType       InputType      `json:"inputType"`
-	Label           string         `json:"label"`
-	Description     string         `json:"description"`
-	Placeholder     string         `json:"placeholder"`
-	PropertyName    string         `json:"propertyName"`
-	SelectOptions   []SelectOption `json:"selectOptions"`
-	ShowWhen        ShowWhen       `json:"showWhen"`
-	Required        bool           `json:"required"`
-	ValidationRule  string         `json:"validationRule"`
-	Secure          bool           `json:"secure"`
-	RequiredIfEmpty string         `json:"requiredIfEmpty"`
+	Element        ElementType    `json:"element"`
+	InputType      InputType      `json:"inputType"`
+	Label          string         `json:"label"`
+	Description    string         `json:"description"`
+	Placeholder    string         `json:"placeholder"`
+	PropertyName   string         `json:"propertyName"`
+	SelectOptions  []SelectOption `json:"selectOptions"`
+	ShowWhen       ShowWhen       `json:"showWhen"`
+	Required       bool           `json:"required"`
+	ValidationRule string         `json:"validationRule"`
+	Secure         bool           `json:"secure"`
+	DependsOn      string         `json:"dependsOn"`
 }
 
 // InputType is the type of input that can be rendered in the frontend.
