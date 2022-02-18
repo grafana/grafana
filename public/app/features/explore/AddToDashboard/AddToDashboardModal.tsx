@@ -33,7 +33,6 @@ function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}
 
 export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }: Props) => {
   const [saveTarget, setSaveTarget] = useState<SaveTarget>('new');
-  // const dispatch = useDispatch();
   const {
     register,
     handleSubmit,
