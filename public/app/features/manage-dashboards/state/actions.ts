@@ -12,7 +12,7 @@ import {
   setJsonDashboard,
   setLibraryPanelInputs,
 } from './reducers';
-import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
+import { DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -21,6 +21,7 @@ import { DashboardSearchHit } from '../../search/types';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -256,22 +257,10 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export interface SaveDashboardOptions {
-  dashboard: DashboardDataDTO;
-  message?: string;
-  folderId?: number;
-  overwrite?: boolean;
-}
-
-export function saveDashboard(options: SaveDashboardOptions) {
+export function saveDashboard(options: Parameters<DashboardSrv['saveDashboard']>[0]) {
   dashboardWatcher.ignoreNextSave();
 
-  return getBackendSrv().post('/api/dashboards/db/', {
-    dashboard: options.dashboard,
-    message: options.message ?? '',
-    overwrite: options.overwrite ?? false,
-    folderId: options.folderId,
-  });
+  return getDashboardSrv().saveDashboard(options);
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
