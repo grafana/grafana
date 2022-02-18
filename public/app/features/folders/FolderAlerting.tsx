@@ -5,6 +5,7 @@ import { StoreState } from 'app/types';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useAsync } from 'react-use';
+import { AlertsFolderView } from '../alerting/unified/AlertsFolderView';
 import { useGetFolderByUid } from './state/actions';
 import { getLoadingNav } from './state/navModel';
 
@@ -13,6 +14,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const FolderAlerting = ({ match }: OwnProps) => {
   const getFolderByUid = useGetFolderByUid();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
+  const folder = useSelector((state: StoreState) => state.folder);
 
   const uid = match.params.uid;
   const navModel = getNavModel(navIndex, `folder-alerting-${uid}`, getLoadingNav(1));
@@ -22,7 +24,7 @@ const FolderAlerting = ({ match }: OwnProps) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        <div>Alerting!!!</div>
+        <AlertsFolderView folder={folder} />
       </Page.Contents>
     </Page>
   );
