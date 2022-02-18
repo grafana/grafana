@@ -1,6 +1,12 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
+import {
+  useSelector as useSelectorUntyped,
+  TypedUseSelectorHook,
+  useDispatch as useDispatchUntyped,
+} from 'react-redux';
 import { Action, PayloadAction } from '@reduxjs/toolkit';
 import type { createRootReducer } from 'app/core/reducers/root';
+import { configureStore } from 'app/store/configureStore';
 
 export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 
@@ -10,3 +16,8 @@ export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction<any>>;
 
 export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, Action>;
+
+// Typed useDispatch & useSelector hooks
+export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
+export const useDispatch = () => useDispatchUntyped<AppDispatch>();
+export const useSelector: TypedUseSelectorHook<StoreState> = useSelectorUntyped;
