@@ -3,6 +3,7 @@ package thumbs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"strings"
 	"sync"
@@ -83,6 +84,17 @@ func (r *simpleCrawler) broadcastStatus() {
 }
 
 func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
+	res, err := r.renderService.HasCapability(rendering.ScalingDownImages)
+	if err != nil {
+		return err
+	}
+
+	if !res.IsSupported {
+		message := "cant run dashboard crawler - rendering service needs to be updated"
+		r.log.Error(message, "imageRendererVersion", r.renderService.Version(), "requiredVersion", res.SemverConstraint)
+		return errors.New(message)
+	}
+
 	r.queueMutex.Lock()
 	if r.IsRunning() {
 		r.queueMutex.Unlock()
