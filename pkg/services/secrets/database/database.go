@@ -87,3 +87,42 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) erro
 		return err
 	})
 }
+
+func (ss *SecretsStoreImpl) ReEncryptDataKeys(
+	ctx context.Context,
+	providers map[secrets.ProviderID]secrets.Provider,
+	currProvider secrets.ProviderID,
+) error {
+	return ss.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		keys := make([]*secrets.DataKey, 0)
+		if err := sess.Table(dataKeysTable).Find(&keys); err != nil {
+			return err
+		}
+
+		for _, k := range keys {
+			provider, ok := providers[k.Provider]
+			if !ok {
+				return fmt.Errorf("could not find encryption provider '%s'", k.Provider)
+			}
+
+			decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
+			if err != nil {
+				return err
+			}
+
+			// Updating current data key by re-encrypting it with current provider.
+			// Accessing the current provider within providers map should be safe.
+			k.Provider = currProvider
+			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
+			if err != nil {
+				return err
+			}
+
+			if _, err := sess.Table(dataKeysTable).Where("name = ?", k.Name).Update(k); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}

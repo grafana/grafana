@@ -302,7 +302,7 @@ const prepConfig = (
           arc
         ) => {
           const scatterInfo = scatterSeries[seriesIdx - 1];
-          let d = (u.data[seriesIdx] as unknown) as FacetSeries;
+          let d = u.data[seriesIdx] as unknown as FacetSeries;
 
           let showLine = scatterInfo.line !== ScatterLineMode.None;
           let showPoints = scatterInfo.point === VisibilityMode.Always;
@@ -328,11 +328,8 @@ const prepConfig = (
 
           let deg360 = 2 * Math.PI;
 
-          // leon forgot to add these to the uPlot's Scale interface, but they exist!
-          //let xKey = scaleX.key as string;
-          //let yKey = scaleY.key as string;
-          let xKey = series.facets![0].scale;
-          let yKey = series.facets![1].scale;
+          let xKey = scaleX.key!;
+          let yKey = scaleY.key!;
 
           let pointHints = scatterInfo.hints.pointSize;
           const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;

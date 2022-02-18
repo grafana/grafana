@@ -8,10 +8,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -63,7 +61,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 	return response.JSON(200, result)
 }
 
-func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Response {
 	form := dtos.AdminUpdateUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -80,7 +78,7 @@ func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
 
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.Dispatch(c.Req.Context(), &userQuery); err != nil {
+	if err := hs.SQLStore.GetUserById(c.Req.Context(), &userQuery); err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
@@ -94,7 +92,7 @@ func AdminUpdateUserPassword(c *models.ReqContext) response.Response {
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.ChangeUserPassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update user password", err)
 	}
 
@@ -112,7 +110,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	err = updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
+	err = hs.SQLStore.UpdateUserPermissions(userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
@@ -124,7 +122,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 	return response.Success("User permissions updated")
 }
 
-func AdminDeleteUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -132,7 +130,7 @@ func AdminDeleteUser(c *models.ReqContext) response.Response {
 
 	cmd := models.DeleteUserCommand{UserId: userID}
 
-	if err := bus.Dispatch(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.DeleteUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -151,12 +149,12 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
-	if err := bus.Dispatch(c.Req.Context(), &disableCmd); err != nil {
+	if err := hs.SQLStore.DisableUser(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -172,7 +170,7 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 }
 
 // POST /api/admin/users/:id/enable
-func AdminEnableUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -180,12 +178,12 @@ func AdminEnableUser(c *models.ReqContext) response.Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
+	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
-	if err := bus.Dispatch(c.Req.Context(), &disableCmd); err != nil {
+	if err := hs.SQLStore.DisableUser(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -229,11 +227,4 @@ func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
-}
-
-// updateUserPermissions updates the user's permissions.
-//
-// Stubbable by tests.
-var updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
-	return sqlStore.UpdateUserPermissions(userID, isAdmin)
 }

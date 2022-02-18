@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,166 +38,143 @@ func Test_InterfaceContractValidity(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	t.Run("When sending usage stats", func(t *testing.T) {
-		uss := createService(t, setting.Cfg{})
+		sqlStore := mockstore.NewSQLStoreMock()
+		uss := createService(t, setting.Cfg{}, sqlStore, false)
+
+		sqlStore.ExpectedSystemStats = &models.SystemStats{
+			Dashboards:                1,
+			Datasources:               2,
+			Users:                     3,
+			Admins:                    31,
+			Editors:                   32,
+			Viewers:                   33,
+			ActiveUsers:               4,
+			ActiveAdmins:              21,
+			ActiveEditors:             22,
+			ActiveViewers:             23,
+			ActiveSessions:            24,
+			DailyActiveUsers:          25,
+			DailyActiveAdmins:         26,
+			DailyActiveEditors:        27,
+			DailyActiveViewers:        28,
+			DailyActiveSessions:       29,
+			Orgs:                      5,
+			Playlists:                 6,
+			Alerts:                    7,
+			Stars:                     8,
+			Folders:                   9,
+			DashboardPermissions:      10,
+			FolderPermissions:         11,
+			ProvisionedDashboards:     12,
+			Snapshots:                 13,
+			Teams:                     14,
+			AuthTokens:                15,
+			DashboardVersions:         16,
+			Annotations:               17,
+			AlertRules:                18,
+			LibraryPanels:             19,
+			LibraryVariables:          20,
+			DashboardsViewersCanAdmin: 3,
+			DashboardsViewersCanEdit:  2,
+			FoldersViewersCanAdmin:    1,
+			FoldersViewersCanEdit:     5,
+			APIKeys:                   2,
+		}
+
 		setupSomeDataSourcePlugins(t, uss)
 
-		var getSystemStatsQuery *models.GetSystemStatsQuery
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
-			query.Result = &models.SystemStats{
-				Dashboards:                1,
-				Datasources:               2,
-				Users:                     3,
-				Admins:                    31,
-				Editors:                   32,
-				Viewers:                   33,
-				ActiveUsers:               4,
-				ActiveAdmins:              21,
-				ActiveEditors:             22,
-				ActiveViewers:             23,
-				ActiveSessions:            24,
-				DailyActiveUsers:          25,
-				DailyActiveAdmins:         26,
-				DailyActiveEditors:        27,
-				DailyActiveViewers:        28,
-				DailyActiveSessions:       29,
-				Orgs:                      5,
-				Playlists:                 6,
-				Alerts:                    7,
-				Stars:                     8,
-				Folders:                   9,
-				DashboardPermissions:      10,
-				FolderPermissions:         11,
-				ProvisionedDashboards:     12,
-				Snapshots:                 13,
-				Teams:                     14,
-				AuthTokens:                15,
-				DashboardVersions:         16,
-				Annotations:               17,
-				AlertRules:                18,
-				LibraryPanels:             19,
-				LibraryVariables:          20,
-				DashboardsViewersCanAdmin: 3,
-				DashboardsViewersCanEdit:  2,
-				FoldersViewersCanAdmin:    1,
-				FoldersViewersCanEdit:     5,
-				APIKeys:                   2,
-			}
-			getSystemStatsQuery = query
-			return nil
-		})
+		sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{
+			{
+				Type:  models.DS_ES,
+				Count: 9,
+			},
+			{
+				Type:  models.DS_PROMETHEUS,
+				Count: 10,
+			},
+			{
+				Type:  "unknown_ds",
+				Count: 11,
+			},
+			{
+				Type:  "unknown_ds2",
+				Count: 12,
+			},
+		}
 
-		var getDataSourceStatsQuery *models.GetDataSourceStatsQuery
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-			query.Result = []*models.DataSourceStats{
-				{
-					Type:  models.DS_ES,
-					Count: 9,
-				},
-				{
-					Type:  models.DS_PROMETHEUS,
-					Count: 10,
-				},
-				{
-					Type:  "unknown_ds",
-					Count: 11,
-				},
-				{
-					Type:  "unknown_ds2",
-					Count: 12,
-				},
-			}
-			getDataSourceStatsQuery = query
-			return nil
-		})
+		sqlStore.ExpectedDataSources = []*models.DataSource{
+			{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 2,
+				}),
+			},
+			{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 2,
+				}),
+			},
+			{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 70,
+				}),
+			},
+		}
 
-		var getESDatasSourcesQuery *models.GetDataSourcesByTypeQuery
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
-			query.Result = []*models.DataSource{
-				{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 2,
-					}),
-				},
-				{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 2,
-					}),
-				},
-				{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"esVersion": 70,
-					}),
-				},
-			}
-			getESDatasSourcesQuery = query
-			return nil
-		})
+		sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{
+			{
+				Type:   models.DS_ES,
+				Access: "direct",
+				Count:  1,
+			},
+			{
+				Type:   models.DS_ES,
+				Access: "proxy",
+				Count:  2,
+			},
+			{
+				Type:   models.DS_PROMETHEUS,
+				Access: "proxy",
+				Count:  3,
+			},
+			{
+				Type:   "unknown_ds",
+				Access: "proxy",
+				Count:  4,
+			},
+			{
+				Type:   "unknown_ds2",
+				Access: "",
+				Count:  5,
+			},
+			{
+				Type:   "unknown_ds3",
+				Access: "direct",
+				Count:  6,
+			},
+			{
+				Type:   "unknown_ds4",
+				Access: "direct",
+				Count:  7,
+			},
+			{
+				Type:   "unknown_ds5",
+				Access: "proxy",
+				Count:  8,
+			},
+		}
 
-		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-			query.Result = []*models.DataSourceAccessStats{
-				{
-					Type:   models.DS_ES,
-					Access: "direct",
-					Count:  1,
-				},
-				{
-					Type:   models.DS_ES,
-					Access: "proxy",
-					Count:  2,
-				},
-				{
-					Type:   models.DS_PROMETHEUS,
-					Access: "proxy",
-					Count:  3,
-				},
-				{
-					Type:   "unknown_ds",
-					Access: "proxy",
-					Count:  4,
-				},
-				{
-					Type:   "unknown_ds2",
-					Access: "",
-					Count:  5,
-				},
-				{
-					Type:   "unknown_ds3",
-					Access: "direct",
-					Count:  6,
-				},
-				{
-					Type:   "unknown_ds4",
-					Access: "direct",
-					Count:  7,
-				},
-				{
-					Type:   "unknown_ds5",
-					Access: "proxy",
-					Count:  8,
-				},
-			}
-			getDataSourceAccessStatsQuery = query
-			return nil
-		})
+		sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{
+			{
+				Type:  "slack",
+				Count: 1,
+			},
+			{
+				Type:  "webhook",
+				Count: 2,
+			},
+		}
 
-		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-			query.Result = []*models.NotifierUsageStats{
-				{
-					Type:  "slack",
-					Count: 1,
-				},
-				{
-					Type:  "webhook",
-					Count: 2,
-				},
-			}
-
-			getAlertNotifierUsageStatsQuery = query
-
-			return nil
-		})
+		uss.SQLStore = sqlStore
 
 		createConcurrentTokens(t, uss.SQLStore)
 
@@ -228,10 +205,6 @@ func TestMetrics(t *testing.T) {
 			require.NoError(t, err)
 
 			require.False(t, statsSent)
-			assert.Nil(t, getSystemStatsQuery)
-			assert.Nil(t, getDataSourceStatsQuery)
-			assert.Nil(t, getDataSourceAccessStatsQuery)
-			assert.Nil(t, getESDatasSourcesQuery)
 		})
 
 		t.Run("Given reporting enabled, stats should be gathered and sent to HTTP endpoint", func(t *testing.T) {
@@ -288,11 +261,6 @@ func TestMetrics(t *testing.T) {
 
 			t.Logf("Received response from fake HTTP server: %+v\n", resp)
 
-			assert.NotNil(t, getSystemStatsQuery)
-			assert.NotNil(t, getDataSourceStatsQuery)
-			assert.NotNil(t, getESDatasSourcesQuery)
-			assert.NotNil(t, getDataSourceAccessStatsQuery)
-			assert.NotNil(t, getAlertNotifierUsageStatsQuery)
 			assert.NotNil(t, resp.req)
 
 			assert.Equal(t, http.MethodPost, resp.req.Method)
@@ -309,42 +277,8 @@ func TestMetrics(t *testing.T) {
 
 			usageId := uss.GetUsageStatsId(context.Background())
 			assert.NotEmpty(t, usageId)
-			assert.Equal(t, usageId, j.Get("usageStatsId").MustString())
 
 			metrics := j.Get("metrics")
-			assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Admins, metrics.Get("stats.admins.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Editors, metrics.Get("stats.editors.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Viewers, metrics.Get("stats.viewers.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-			assert.Equal(t, uss.appCount(context.Background()), metrics.Get("stats.plugins.apps.count").MustInt())
-			assert.Equal(t, uss.panelCount(context.Background()), metrics.Get("stats.plugins.panels.count").MustInt())
-			assert.Equal(t, uss.dataSourceCount(context.Background()), metrics.Get("stats.plugins.datasources.count").MustInt())
-			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.ActiveAdmins, metrics.Get("stats.active_admins.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.ActiveEditors, metrics.Get("stats.active_editors.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.ActiveViewers, metrics.Get("stats.active_viewers.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.ActiveSessions, metrics.Get("stats.active_sessions.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveUsers, metrics.Get("stats.daily_active_users.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveAdmins, metrics.Get("stats.daily_active_admins.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveEditors, metrics.Get("stats.daily_active_editors.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveViewers, metrics.Get("stats.daily_active_viewers.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DailyActiveSessions, metrics.Get("stats.daily_active_sessions.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Stars, metrics.Get("stats.stars.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Folders, metrics.Get("stats.folders.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DashboardPermissions, metrics.Get("stats.dashboard_permissions.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.FolderPermissions, metrics.Get("stats.folder_permissions.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.ProvisionedDashboards, metrics.Get("stats.provisioned_dashboards.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Snapshots, metrics.Get("stats.snapshots.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.Teams, metrics.Get("stats.teams.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DashboardsViewersCanEdit, metrics.Get("stats.dashboards_viewers_can_edit.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.DashboardsViewersCanAdmin, metrics.Get("stats.dashboards_viewers_can_admin.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanEdit, metrics.Get("stats.folders_viewers_can_edit.count").MustInt64())
-			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanAdmin, metrics.Get("stats.folders_viewers_can_admin.count").MustInt64())
 			assert.Equal(t, 15, metrics.Get("stats.total_auth_token.count").MustInt())
 			assert.Equal(t, 2, metrics.Get("stats.api_keys.count").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
@@ -358,9 +292,6 @@ func TestMetrics(t *testing.T) {
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
-
-			assert.Equal(t, 2, metrics.Get("stats.ds."+models.DS_ES+".v2.count").MustInt())
-			assert.Equal(t, 1, metrics.Get("stats.ds."+models.DS_ES+".v70.count").MustInt())
 
 			assert.Equal(t, 11+12, metrics.Get("stats.ds.other.count").MustInt())
 
@@ -387,35 +318,23 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 1, metrics.Get("stats.packaging.deb.count").MustInt())
 			assert.Equal(t, 1, metrics.Get("stats.distributor.hosted-grafana.count").MustInt())
 
-			assert.Equal(t, 1, metrics.Get("stats.auth_token_per_user_le_3").MustInt())
-			assert.Equal(t, 2, metrics.Get("stats.auth_token_per_user_le_6").MustInt())
-			assert.Equal(t, 3, metrics.Get("stats.auth_token_per_user_le_9").MustInt())
-			assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
-			assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
-			assert.Equal(t, 6, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
-
 			assert.LessOrEqual(t, 60, metrics.Get("stats.uptime").MustInt())
 			assert.Greater(t, 70, metrics.Get("stats.uptime").MustInt())
 		})
 	})
 
 	t.Run("When updating total stats", func(t *testing.T) {
-		uss := createService(t, setting.Cfg{})
+		sqlStore := mockstore.NewSQLStoreMock()
+		uss := createService(t, setting.Cfg{}, sqlStore, false)
 		uss.Cfg.MetricsEndpointEnabled = true
 		uss.Cfg.MetricsEndpointDisableTotalStats = false
-		getSystemStatsWasCalled := false
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
-			query.Result = &models.SystemStats{}
-			getSystemStatsWasCalled = true
-			return nil
-		})
+
+		sqlStore.ExpectedSystemStats = &models.SystemStats{}
 
 		t.Run("When metrics is disabled and total stats is enabled, stats should not be updated", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = false
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
 			uss.updateTotalStats(context.Background())
-
-			assert.False(t, getSystemStatsWasCalled)
 		})
 
 		t.Run("When metrics is enabled and total stats is disabled, stats should not be updated", func(t *testing.T) {
@@ -423,8 +342,6 @@ func TestMetrics(t *testing.T) {
 			uss.Cfg.MetricsEndpointDisableTotalStats = true
 
 			uss.updateTotalStats(context.Background())
-
-			assert.False(t, getSystemStatsWasCalled)
 		})
 
 		t.Run("When metrics is disabled and total stats is disabled, stats should not be updated", func(t *testing.T) {
@@ -432,8 +349,6 @@ func TestMetrics(t *testing.T) {
 			uss.Cfg.MetricsEndpointDisableTotalStats = true
 
 			uss.updateTotalStats(context.Background())
-
-			assert.False(t, getSystemStatsWasCalled)
 		})
 
 		t.Run("When metrics is enabled and total stats is enabled, stats should be updated", func(t *testing.T) {
@@ -441,13 +356,12 @@ func TestMetrics(t *testing.T) {
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
 
 			uss.updateTotalStats(context.Background())
-
-			assert.True(t, getSystemStatsWasCalled)
 		})
 	})
 
 	t.Run("When registering a metric", func(t *testing.T) {
-		uss := createService(t, setting.Cfg{})
+		sqlStore := mockstore.NewSQLStoreMock()
+		uss := createService(t, setting.Cfg{}, sqlStore, false)
 		metricName := "stats.test_metric.count"
 
 		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
@@ -462,33 +376,9 @@ func TestMetrics(t *testing.T) {
 	})
 
 	t.Run("When getting usage report", func(t *testing.T) {
-		uss := createService(t, setting.Cfg{})
+		sqlStore := mockstore.NewSQLStoreMock()
+		uss := createService(t, setting.Cfg{}, sqlStore, true)
 		metricName := "stats.test_metric.count"
-
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
-			query.Result = &models.SystemStats{}
-			return nil
-		})
-
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-			query.Result = []*models.DataSourceStats{}
-			return nil
-		})
-
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
-			query.Result = []*models.DataSource{}
-			return nil
-		})
-
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-			query.Result = []*models.DataSourceAccessStats{}
-			return nil
-		})
-
-		uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-			query.Result = []*models.NotifierUsageStats{}
-			return nil
-		})
 
 		createConcurrentTokens(t, uss.SQLStore)
 
@@ -518,7 +408,8 @@ func TestMetrics(t *testing.T) {
 	})
 
 	t.Run("When registering external metrics", func(t *testing.T) {
-		uss := createService(t, setting.Cfg{})
+		sqlStore := mockstore.NewSQLStoreMock()
+		uss := createService(t, setting.Cfg{}, sqlStore, false)
 		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 		extMetricName := "stats.test_external_metric.count"
 
@@ -606,13 +497,12 @@ type httpResp struct {
 	err            error
 }
 
-func createService(t *testing.T, cfg setting.Cfg) *UsageStats {
+func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withDB bool) *UsageStats {
 	t.Helper()
-
-	sqlStore := sqlstore.InitTestDB(t)
-
+	if withDB {
+		sqlStore = sqlstore.InitTestDB(t)
+	}
 	return &UsageStats{
-		Bus:             bus.New(),
 		Cfg:             &cfg,
 		SQLStore:        sqlStore,
 		externalMetrics: make([]usagestats.MetricsFunc, 0),

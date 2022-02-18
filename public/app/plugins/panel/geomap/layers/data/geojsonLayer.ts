@@ -1,4 +1,11 @@
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -16,6 +23,8 @@ import { StyleEditor } from './StyleEditor';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -49,6 +58,8 @@ export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
     value: '',
   },
 };
+
+let publicGeoJSONFiles: Array<SelectableValue<string>> | undefined = undefined;
 
 export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   id: 'geojson',
@@ -151,16 +162,16 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
           rxjsmap((v) => getLayerPropertyInfo(v))
         );
 
+        if (!publicGeoJSONFiles) {
+          initGeojsonFiles();
+        }
+
         builder
           .addSelect({
             path: 'config.src',
             name: 'GeoJSON URL',
             settings: {
-              options: [
-                { label: 'public/maps/countries.geojson', value: 'public/maps/countries.geojson' },
-                { label: 'public/maps/usa-states.geojson', value: 'public/maps/usa-states.geojson' },
-                { label: 'public/gazetteer/airports.geojson', value: 'public/gazetteer/airports.geojson' },
-              ],
+              options: publicGeoJSONFiles ?? [],
               allowCustomValue: true,
             },
             defaultValue: defaultOptions.src,
@@ -194,3 +205,28 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   },
   defaultOptions,
 };
+
+// This will find all geojson files in the maps and gazetteer folders
+async function initGeojsonFiles() {
+  if (publicGeoJSONFiles) {
+    return;
+  }
+  publicGeoJSONFiles = [];
+
+  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  for (let folder of ['maps', 'gazetteer']) {
+    ds.listFiles(folder).subscribe({
+      next: (frame) => {
+        frame.forEach((item) => {
+          if (item.name.endsWith('.geojson')) {
+            const value = `public/${folder}/${item.name}`;
+            publicGeoJSONFiles!.push({
+              value,
+              label: value,
+            });
+          }
+        });
+      },
+    });
+  }
+}

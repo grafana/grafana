@@ -3,14 +3,14 @@ import { MetricSelect } from './MetricSelect';
 import { PromVisualQuery } from '../types';
 import { LabelFilters } from '../shared/LabelFilters';
 import { OperationList } from '../shared/OperationList';
-import { EditorRows, EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/experimental';
 import { PrometheusDatasource } from '../../datasource';
 import { NestedQueryList } from './NestedQueryList';
 import { promQueryModeller } from '../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../shared/types';
-import { QueryPreview } from './QueryPreview';
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
+import { PromQueryBuilderHints } from './PromQueryBuilderHints';
 
 export interface Props {
   query: PromVisualQuery;
@@ -18,11 +18,18 @@ export interface Props {
   onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
   nested?: boolean;
+  data?: PanelData;
 }
 
-export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, nested }) => {
+export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, data }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
+  };
+
+  const withTemplateVariableOptions = async (optionsPromise: Promise<string[]>): Promise<SelectableValue[]> => {
+    const variables = datasource.getVariables();
+    const options = await optionsPromise;
+    return [...variables, ...options].map((value) => ({ label: value, value }));
   };
 
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
@@ -58,7 +65,8 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
     const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    return result[forLabel.label] ?? [];
+    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
+    return result[forLabelInterpolated] ?? [];
   };
 
   const onGetMetrics = async () => {
@@ -71,14 +79,22 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
   };
 
   return (
-    <EditorRows>
+    <>
       <EditorRow>
-        <MetricSelect query={query} onChange={onChange} onGetMetrics={onGetMetrics} />
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={() => withTemplateVariableOptions(onGetMetrics())}
+        />
         <LabelFilters
           labelsFilters={query.labels}
           onChange={onChangeLabels}
-          onGetLabelNames={onGetLabelNames}
-          onGetLabelValues={onGetLabelValues}
+          onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
+            withTemplateVariableOptions(onGetLabelNames(forLabel))
+          }
+          onGetLabelValues={(forLabel: Partial<QueryBuilderLabelFilter>) =>
+            withTemplateVariableOptions(onGetLabelValues(forLabel))
+          }
         />
       </EditorRow>
       <OperationsEditorRow>
@@ -89,16 +105,12 @@ export const PromQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
         />
-        {query.binaryQueries && query.binaryQueries.length > 0 && (
-          <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-        )}
+        <PromQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
-      {!nested && (
-        <EditorRow>
-          <QueryPreview query={query} />
-        </EditorRow>
+      {query.binaryQueries && query.binaryQueries.length > 0 && (
+        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
       )}
-    </EditorRows>
+    </>
   );
 });
 

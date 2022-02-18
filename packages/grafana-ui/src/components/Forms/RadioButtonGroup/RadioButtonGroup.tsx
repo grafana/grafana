@@ -9,6 +9,7 @@ import { useStyles2 } from '../../../themes';
 
 export interface RadioButtonGroupProps<T> {
   value?: T;
+  id?: string;
   disabled?: boolean;
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
@@ -28,6 +29,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
+  id,
   className,
   fullWidth = false,
   autoFocus = false,
@@ -52,8 +54,9 @@ export function RadioButtonGroup<T>({
     },
     [onClick]
   );
-  const id = uniqueId('radiogroup-');
-  const groupName = useRef(id);
+
+  const internalId = id ?? uniqueId('radiogroup-');
+  const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
 
   const activeButtonRef = useRef<HTMLInputElement | null>(null);
@@ -76,7 +79,7 @@ export function RadioButtonGroup<T>({
             aria-label={o.ariaLabel}
             onChange={handleOnChange(o)}
             onClick={handleOnClick(o)}
-            id={`option-${o.value}-${id}`}
+            id={`option-${o.value}-${internalId}`}
             name={groupName.current}
             description={o.description}
             fullWidth={fullWidth}

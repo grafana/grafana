@@ -8,6 +8,7 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { FocusScope } from '@react-aria/focus';
+import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 
 export interface Props {
@@ -34,6 +35,11 @@ export interface Props {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, scrollableContent: boolean) => {
   return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    `,
     drawer: css`
       .drawer-content {
         background-color: ${theme.colors.background.primary};
@@ -76,10 +82,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, scrollableContent: boolea
     `,
     content: css`
       padding: ${theme.spacing(2)};
-      flex-grow: 1;
+      flex: 1;
       overflow: ${!scrollableContent ? 'hidden' : 'auto'};
       z-index: 0;
-      height: 100%;
     `,
   };
 });
@@ -101,6 +106,7 @@ export const Drawer: FC<Props> = ({
   const [isOpen, setIsOpen] = useState(false);
   const currentWidth = isExpanded ? '100%' : width;
   const overlayRef = React.useRef(null);
+  const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -132,45 +138,47 @@ export const Drawer: FC<Props> = ({
       }
     >
       <FocusScope restoreFocus contain autoFocus>
-        {typeof title === 'string' && (
-          <div className={drawerStyles.header} {...overlayProps} ref={overlayRef}>
-            <div className={drawerStyles.actions}>
-              {expandable && !isExpanded && (
+        <div className={drawerStyles.container} {...overlayProps} {...dialogProps} ref={overlayRef}>
+          {typeof title === 'string' && (
+            <div className={drawerStyles.header}>
+              <div className={drawerStyles.actions}>
+                {expandable && !isExpanded && (
+                  <IconButton
+                    name="angle-left"
+                    size="xl"
+                    onClick={() => setIsExpanded(true)}
+                    surface="header"
+                    aria-label={selectors.components.Drawer.General.expand}
+                  />
+                )}
+                {expandable && isExpanded && (
+                  <IconButton
+                    name="angle-right"
+                    size="xl"
+                    onClick={() => setIsExpanded(false)}
+                    surface="header"
+                    aria-label={selectors.components.Drawer.General.contract}
+                  />
+                )}
                 <IconButton
-                  name="angle-left"
+                  name="times"
                   size="xl"
-                  onClick={() => setIsExpanded(true)}
+                  onClick={onClose}
                   surface="header"
-                  aria-label={selectors.components.Drawer.General.expand}
+                  aria-label={selectors.components.Drawer.General.close}
                 />
-              )}
-              {expandable && isExpanded && (
-                <IconButton
-                  name="angle-right"
-                  size="xl"
-                  onClick={() => setIsExpanded(false)}
-                  surface="header"
-                  aria-label={selectors.components.Drawer.General.contract}
-                />
-              )}
-              <IconButton
-                name="times"
-                size="xl"
-                onClick={onClose}
-                surface="header"
-                aria-label={selectors.components.Drawer.General.close}
-              />
+              </div>
+              <div className={drawerStyles.titleWrapper}>
+                <h3 {...titleProps}>{title}</h3>
+                {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
+                {typeof subtitle !== 'string' && subtitle}
+              </div>
             </div>
-            <div className={drawerStyles.titleWrapper}>
-              <h3>{title}</h3>
-              {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-              {typeof subtitle !== 'string' && subtitle}
-            </div>
+          )}
+          {typeof title !== 'string' && title}
+          <div className={drawerStyles.content}>
+            {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
           </div>
-        )}
-        {typeof title !== 'string' && title}
-        <div className={drawerStyles.content} {...overlayProps} ref={overlayRef}>
-          {!scrollableContent ? children : <CustomScrollbar>{children}</CustomScrollbar>}
         </div>
       </FocusScope>
     </RcDrawer>

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
@@ -155,6 +156,9 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
 		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
 				OrgId:   12,
@@ -170,6 +174,9 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 403 Forbidden when applying config while not Editor", func(t *testing.T) {
 		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_VIEWER,
 				OrgId:   1,
@@ -185,6 +192,9 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
 		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
 				OrgId:   1,
@@ -200,6 +210,9 @@ func TestAlertmanagerConfig(t *testing.T) {
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
 		sut := createSut(t)
 		rc := models.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
 			SignedInUser: &models.SignedInUser{
 				OrgRole: models.ROLE_EDITOR,
 				OrgId:   3, // Org 3 was initialized with broken config.

@@ -19,7 +19,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := models.GetSystemStatsQuery{}
-		err := GetSystemStats(context.Background(), &query)
+		err := sqlStore.GetSystemStats(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), query.Result.Users)
 		assert.Equal(t, int64(0), query.Result.Editors)
@@ -32,31 +32,31 @@ func TestStatsDataAccess(t *testing.T) {
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
 		query := models.GetSystemUserCountStatsQuery{}
-		err := GetSystemUserCountStats(context.Background(), &query)
+		err := sqlStore.GetSystemUserCountStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get datasource stats should not results in error", func(t *testing.T) {
 		query := models.GetDataSourceStatsQuery{}
-		err := GetDataSourceStats(context.Background(), &query)
+		err := sqlStore.GetDataSourceStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
 		query := models.GetDataSourceAccessStatsQuery{}
-		err := GetDataSourceAccessStats(context.Background(), &query)
+		err := sqlStore.GetDataSourceAccessStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
 		query := models.GetAlertNotifierUsageStatsQuery{}
-		err := GetAlertNotifiersUsageStats(context.Background(), &query)
+		err := sqlStore.GetAlertNotifiersUsageStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get admin stats should not result in error", func(t *testing.T) {
 		query := models.GetAdminStatsQuery{}
-		err := GetAdminStats(context.Background(), &query)
+		err := sqlStore.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 }
@@ -124,7 +124,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	require.NoError(t, err)
 
 	// force renewal of user stats
-	err = updateUserRoleCountsIfNecessary(context.Background(), true)
+	err = sqlStore.updateUserRoleCountsIfNecessary(context.Background(), true)
 	require.NoError(t, err)
 
 	// add 1st api key

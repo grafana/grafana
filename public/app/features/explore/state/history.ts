@@ -23,26 +23,30 @@ export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore
 // Action creators
 //
 
-export const updateRichHistory = (ts: number, property: string, updatedProperty?: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    // Side-effect: Saving rich history in localstorage
-    let nextRichHistory;
-    if (property === 'starred') {
-      nextRichHistory = updateStarredInRichHistory(getState().explore.richHistory, ts);
-    }
-    if (property === 'comment') {
-      nextRichHistory = updateCommentInRichHistory(getState().explore.richHistory, ts, updatedProperty);
-    }
-    if (property === 'delete') {
-      nextRichHistory = deleteQueryInRichHistory(getState().explore.richHistory, ts);
-    }
+export const starHistoryItem = (id: string, starred: boolean): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const nextRichHistory = await updateStarredInRichHistory(getState().explore.richHistory, id, starred);
+    dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+  };
+};
+
+export const commentHistoryItem = (id: string, comment?: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const nextRichHistory = await updateCommentInRichHistory(getState().explore.richHistory, id, comment);
+    dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+  };
+};
+
+export const deleteHistoryItem = (id: string): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const nextRichHistory = await deleteQueryInRichHistory(getState().explore.richHistory, id);
     dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
   };
 };
 
 export const deleteRichHistory = (): ThunkResult<void> => {
-  return (dispatch) => {
-    deleteAllFromRichHistory();
+  return async (dispatch) => {
+    await deleteAllFromRichHistory();
     dispatch(richHistoryUpdatedAction({ richHistory: [] }));
   };
 };

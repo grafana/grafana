@@ -32,15 +32,16 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 
 func (a *api) registerEndpoints() {
 	auth := middleware.Middleware(a.ac)
+	uidSolver := solveUID(a.service.options.UidSolver)
 	disable := middleware.Disable(a.ac.IsDisabled())
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		idScope := accesscontrol.Scope(a.service.options.Resource, "id", accesscontrol.Parameter(":resourceID"))
 		actionWrite, actionRead := fmt.Sprintf("%s.permissions:write", a.service.options.Resource), fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
-		r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
-		r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
+		r.Get("/:resourceID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionRead, idScope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID/users/:userID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setUserPermission))
+		r.Post("/:resourceID/teams/:teamID", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setTeamPermission))
+		r.Post("/:resourceID/builtInRoles/:builtInRole", uidSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, idScope)), routing.Wrap(a.setBuiltinRolePermission))
 	})
 }
 
@@ -131,7 +132,7 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgId, userID, resourceID, cmd.Permission)
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}

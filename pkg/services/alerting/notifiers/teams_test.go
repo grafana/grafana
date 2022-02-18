@@ -22,7 +22,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -39,7 +39,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			teamsNotifier := not.(*TeamsNotifier)
 
 			require.Nil(t, err)
@@ -61,7 +61,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewTeamsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 			teamsNotifier := not.(*TeamsNotifier)
 
 			require.Nil(t, err)

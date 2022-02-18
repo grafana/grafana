@@ -1,9 +1,7 @@
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
-import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import angular from 'angular';
 import jquery from 'jquery';
 
 // Experimental module exports
@@ -21,12 +19,10 @@ import * as redux from 'redux';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import { coreModule } from 'app/angular/core_module';
 import { appEvents, contextSrv } from 'app/core/core';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { promiseToDigest } from 'app/angular/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -75,7 +71,7 @@ grafanaRuntime.SystemJS.config({
   },
 });
 
-function exposeToPlugin(name: string, component: any) {
+export function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
@@ -87,7 +83,6 @@ exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
-exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs', rxjs);
 exposeToPlugin('rxjs/operators', rxjsOperators);
@@ -120,24 +115,16 @@ exposeToPlugin('app/core/services/backend_srv', {
   getBackendSrv,
 });
 
-exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
 exposeToPlugin('app/core/utils/ticks', ticks);
-exposeToPlugin('app/core/utils/promiseToDigest', {
-  promiseToDigest: promiseToDigest,
-  __esModule: true,
-});
-
 exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core_module', coreModule);
 exposeToPlugin('app/core/core', {
-  coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
   __esModule: true,
