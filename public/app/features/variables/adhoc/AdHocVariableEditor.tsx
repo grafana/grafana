@@ -5,15 +5,31 @@ import { DataSourceRef, SelectableValue } from '@grafana/data';
 
 import { AdHocVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
+import { initialVariableEditorState } from '../editor/reducer';
 import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { StoreState } from 'app/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { getAdhocVariableEditorState } from '../editor/selectors';
+import { getVariablesState } from '../state/selectors';
+import { toKeyedVariableIdentifier } from '../utils';
 
-const mapStateToProps = (state: StoreState) => ({
-  extended: getAdhocVariableEditorState(state.templating.editor),
-});
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { rootStateKey } = ownProps.variable;
+
+  if (!rootStateKey) {
+    console.error('AdHocVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getAdhocVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+
+  return {
+    extended: getAdhocVariableEditorState(editor),
+  };
+};
 
 const mapDispatchToProps = {
   initAdHocVariableEditor,
@@ -28,11 +44,17 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initAdHocVariableEditor();
+    const { rootStateKey } = this.props.variable;
+    if (!rootStateKey) {
+      console.error('AdHocVariableEditor: variable has no rootStateKey');
+      return;
+    }
+
+    this.props.initAdHocVariableEditor(rootStateKey);
   }
 
   onDatasourceChanged = (option: SelectableValue<DataSourceRef>) => {
-    this.props.changeVariableDatasource(option.value);
+    this.props.changeVariableDatasource(toKeyedVariableIdentifier(this.props.variable), option.value);
   };
 
   render() {

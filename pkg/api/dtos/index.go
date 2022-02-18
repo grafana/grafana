@@ -71,6 +71,7 @@ type NavLink struct {
 	HideFromTabs  bool       `json:"hideFromTabs,omitempty"`
 	Children      []*NavLink `json:"children,omitempty"`
 	HighlightText string     `json:"highlightText,omitempty"`
+	HighlightID   string     `json:"highlightId,omitempty"`
 }
 
 // NavIDCfg is the id for org configuration navigation node

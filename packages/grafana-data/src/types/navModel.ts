@@ -26,6 +26,8 @@ export interface NavModelItem extends NavLinkDTO {
   showOrgSwitcher?: boolean;
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
+  highlightText?: string;
+  highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
 }
 

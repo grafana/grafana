@@ -50,7 +50,6 @@ import {
   StartQueryRequest,
   TSDBResponse,
   Dimensions,
-  MetricFindSuggestData,
   CloudWatchLogsRequest,
 } from './types';
 import { CloudWatchLanguageProvider } from './language_provider';
@@ -557,40 +556,8 @@ export class CloudWatchDatasource
     );
   }
 
-  transformSuggestDataFromDataframes(suggestData: TSDBResponse): MetricFindSuggestData[] {
-    const frames = toDataQueryResponse({ data: suggestData }).data as DataFrame[];
-    const table = toLegacyResponseData(frames[0]) as TableData;
-
-    return table.rows.map(([text, value]) => ({
-      text,
-      value,
-      label: value,
-    }));
-  }
-
-  doMetricQueryRequest(subtype: string, parameters: any): Promise<MetricFindSuggestData[]> {
-    const range = this.timeSrv.timeRange();
-    return lastValueFrom(
-      this.awsRequest(DS_QUERY_ENDPOINT, {
-        from: range.from.valueOf().toString(),
-        to: range.to.valueOf().toString(),
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasource: this.getRef(),
-            type: 'metricFindQuery',
-            subtype: subtype,
-            ...parameters,
-          },
-        ],
-      }).pipe(
-        map((r) => {
-          return this.transformSuggestDataFromDataframes(r);
-        })
-      )
-    );
+  doMetricResourceRequest(subtype: string, parameters?: any): Promise<Array<{ text: any; label: any; value: any }>> {
+    return this.getResource(subtype, parameters);
   }
 
   makeLogActionRequest(
@@ -677,14 +644,14 @@ export class CloudWatchDatasource
   }
 
   getRegions(): Promise<Array<{ label: string; value: string; text: string }>> {
-    return this.doMetricQueryRequest('regions', null).then((regions: any) => [
+    return this.doMetricResourceRequest('regions').then((regions: any) => [
       { label: 'default', value: 'default', text: 'default' },
       ...regions,
     ]);
   }
 
   getNamespaces() {
-    return this.doMetricQueryRequest('namespaces', null);
+    return this.doMetricResourceRequest('namespaces');
   }
 
   async getMetrics(namespace: string | undefined, region?: string) {
@@ -692,14 +659,14 @@ export class CloudWatchDatasource
       return [];
     }
 
-    return this.doMetricQueryRequest('metrics', {
+    return this.doMetricResourceRequest('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
     });
   }
 
   async getAllMetrics(region: string): Promise<Array<{ metricName: string; namespace: string }>> {
-    const values = await this.doMetricQueryRequest('all_metrics', {
+    const values = await this.doMetricResourceRequest('all-metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
     });
 
@@ -716,10 +683,10 @@ export class CloudWatchDatasource
       return [];
     }
 
-    return this.doMetricQueryRequest('dimension_keys', {
+    return this.doMetricResourceRequest('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-      dimensionFilters: this.convertDimensionFormat(dimensionFilters, {}),
+      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       metricName,
     });
   }
@@ -735,37 +702,37 @@ export class CloudWatchDatasource
       return [];
     }
 
-    const values = await this.doMetricQueryRequest('dimension_values', {
+    const values = await this.doMetricResourceRequest('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
-      dimensions: this.convertDimensionFormat(filterDimensions, {}),
+      dimensions: JSON.stringify(this.convertDimensionFormat(filterDimensions, {})),
     });
 
     return values;
   }
 
   getEbsVolumeIds(region: string, instanceId: string) {
-    return this.doMetricQueryRequest('ebs_volume_ids', {
+    return this.doMetricResourceRequest('ebs-volume-ids', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       instanceId: this.templateSrv.replace(instanceId),
     });
   }
 
   getEc2InstanceAttribute(region: string, attributeName: string, filters: any) {
-    return this.doMetricQueryRequest('ec2_instance_attribute', {
+    return this.doMetricResourceRequest('ec2-instance-attribute', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       attributeName: this.templateSrv.replace(attributeName),
-      filters: filters,
+      filters: JSON.stringify(filters),
     });
   }
 
   getResourceARNs(region: string, resourceType: string, tags: any) {
-    return this.doMetricQueryRequest('resource_arns', {
+    return this.doMetricResourceRequest('resource-arns', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),
-      tags: tags,
+      tags: JSON.stringify(tags),
     });
   }
 
@@ -894,12 +861,12 @@ export class CloudWatchDatasource
 
   targetContainsTemplate(target: any) {
     return (
-      this.templateSrv.variableExists(target.region) ||
-      this.templateSrv.variableExists(target.namespace) ||
-      this.templateSrv.variableExists(target.metricName) ||
-      this.templateSrv.variableExists(target.expression!) ||
-      target.logGroupNames?.some((logGroup: string) => this.templateSrv.variableExists(logGroup)) ||
-      find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
+      this.templateSrv.containsTemplate(target.region) ||
+      this.templateSrv.containsTemplate(target.namespace) ||
+      this.templateSrv.containsTemplate(target.metricName) ||
+      this.templateSrv.containsTemplate(target.expression!) ||
+      target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
+      find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
   }
 

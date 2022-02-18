@@ -84,7 +84,7 @@ export type OAuth =
  *
  * @public
  */
-export type OAuthSettings = Partial<Record<OAuth, { name: string }>>;
+export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string }>>;
 
 /** Current user info included in bootData
  *
@@ -178,4 +178,5 @@ export interface GrafanaConfig {
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
+  angularSupportEnabled: boolean;
 }
