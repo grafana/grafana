@@ -1,9 +1,9 @@
 package models
 
 import (
+	"bytes"
+	"encoding/json"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type Preferences struct {
@@ -18,7 +18,33 @@ type Preferences struct {
 	Theme           string
 	Created         time.Time
 	Updated         time.Time
-	JsonData        *simplejson.Json
+	JsonData        *PreferencesJsonData
+}
+
+// The following needed for to implement the xorm/database ORM Conversion interface do the
+// conversion when reading/writing to the database, see https://gobook.io/read/gitea.com/xorm/manual-en-US/chapter-02/4.columns.html.
+
+func (j *PreferencesJsonData) FromDB(data []byte) error {
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.UseNumber()
+	return dec.Decode(j)
+}
+
+func (j *PreferencesJsonData) ToDB() ([]byte, error) {
+	if j == nil {
+		return nil, nil
+	}
+
+	return json.Marshal(j)
+}
+
+type NavbarPreference struct {
+	Id             string `json:"id"`
+	HideFromNavbar bool   `json:"hideFromNavbar"`
+}
+
+type PreferencesJsonData struct {
+	Navbar []NavbarPreference `json:"navbar"`
 }
 
 // ---------------------
@@ -72,5 +98,5 @@ type SavePreferencesJsonDataCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	JsonData *simplejson.Json `json:"jsonData"`
+	JsonData *PreferencesJsonData `json:"jsonData"`
 }

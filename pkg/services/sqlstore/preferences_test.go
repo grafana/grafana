@@ -139,4 +139,155 @@ func TestPreferencesDataAccess(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
+
+	userNavbarPreferences := []models.NavbarPreference{{
+		Id:             "explore",
+		HideFromNavbar: true,
+	}}
+	orgNavbarPreferences := []models.NavbarPreference{{
+		Id:             "alerting",
+		HideFromNavbar: true,
+	}}
+	team1NavbarPreferences := []models.NavbarPreference{{
+		Id:             "dashboards",
+		HideFromNavbar: true,
+	}}
+	team2NavbarPreferences := []models.NavbarPreference{{
+		Id:             "home",
+		HideFromNavbar: true,
+	}}
+
+	emptyPreferencesJsonData := models.PreferencesJsonData{}
+	userPreferencesJsonData := models.PreferencesJsonData{
+		Navbar: userNavbarPreferences,
+	}
+	orgPreferencesJsonData := models.PreferencesJsonData{
+		Navbar: orgNavbarPreferences,
+	}
+	team1PreferencesJsonData := models.PreferencesJsonData{
+		Navbar: team1NavbarPreferences,
+	}
+	team2PreferencesJsonData := models.PreferencesJsonData{
+		Navbar: team2NavbarPreferences,
+	}
+
+	t.Run("GetPreferencesJsonDataWithDefaults with no saved preferences should return defaults", func(t *testing.T) {
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{User: &models.SignedInUser{}}
+		err := ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &emptyPreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("GetPreferencesJsonDataWithDefaults with saved org and user json data should return user json data", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, JsonData: &orgPreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, UserId: 1, JsonData: &userPreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &userPreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("GetPreferencesJsonDataWithDefaults with saved org and other user json data should return org json data", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, JsonData: &orgPreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, UserId: 1, JsonData: &userPreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 2}}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &orgPreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("GetPreferencesJsonDataWithDefaults with saved org and teams json data should return last team json data", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, JsonData: &orgPreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 2, JsonData: &team1PreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 3, JsonData: &team2PreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{
+			User: &models.SignedInUser{OrgId: 1, Teams: []int64{2, 3}},
+		}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &team2PreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("GetPreferencesJsonDataWithDefaults with saved org and other teams json data should return org json data", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, JsonData: &orgPreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 2, JsonData: &team1PreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 3, JsonData: &team2PreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1}}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &orgPreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("GetPreferencesJsonDataWithDefaults with saved org, teams and user json data should return user json data", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, JsonData: &orgPreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 2, JsonData: &team1PreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 3, JsonData: &team2PreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, UserId: 1, JsonData: &userPreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{
+			User: &models.SignedInUser{OrgId: 1, UserId: 1, Teams: []int64{2, 3}},
+		}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &userPreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("GetPreferencesJsonDataWithDefaults with saved org, other teams and user json data should return org json data", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, JsonData: &orgPreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 2, JsonData: &team1PreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, TeamId: 3, JsonData: &team2PreferencesJsonData})
+		require.NoError(t, err)
+		err = ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{OrgId: 1, UserId: 1, JsonData: &userPreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{
+			User: &models.SignedInUser{OrgId: 1, UserId: 2},
+		}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &orgPreferencesJsonData, query.Result.JsonData)
+	})
+
+	t.Run("SavePreferencesJsonData for a user should store correct values", func(t *testing.T) {
+		err := ss.SavePreferencesJsonData(context.Background(), &models.SavePreferencesJsonDataCommand{UserId: models.SignedInUser{}.UserId, JsonData: &userPreferencesJsonData})
+		require.NoError(t, err)
+
+		query := &models.GetPreferencesJsonDataWithDefaultsQuery{User: &models.SignedInUser{}}
+		err = ss.GetPreferencesJsonDataWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		expected := &models.Preferences{
+			Id:              query.Result.Id,
+			Version:         query.Result.Version,
+			JsonData:        &userPreferencesJsonData,
+			HomeDashboardId: 0,
+			Timezone:        "",
+			WeekStart:       "",
+			Theme:           "",
+			Created:         query.Result.Created,
+			Updated:         query.Result.Updated,
+		}
+		if diff := cmp.Diff(expected, query.Result); diff != "" {
+			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
 }
