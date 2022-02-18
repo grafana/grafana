@@ -28,7 +28,7 @@
       "data": {
         "values": [
           [
-            1435781451000
+            1435781451781
           ],
           [
             1
@@ -55,8 +55,8 @@
               "frame": "float64"
             },
             "labels": {
-              "instance": "localhost:9100",
-              "job": "node"
+              "job": "node",
+              "instance": "localhost:9100"
             }
           }
         ]
@@ -64,7 +64,7 @@
       "data": {
         "values": [
           [
-            1435781451000
+            1435781451781
           ],
           [
             0

@@ -36,7 +36,7 @@
       "data": {
         "values": [
           [
-            0
+            1645030244810
           ],
           [
             "log line error 1"
@@ -83,7 +83,7 @@
       "data": {
         "values": [
           [
-            0,0,0,0
+            1645030247027,1645030246277,1645030245539,1645030244091
           ],
           [
             "log line info 1","log line info 2","log line info 3","log line info 4"

@@ -185,8 +185,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 						valueField.Append(v)
 
 					case "timestamp":
-						tv := iter.ReadFloat64()
-						ts := time.Unix(int64(tv), 0) // HELP!!!
+						ts := timeFromFloat(iter.ReadFloat64())
 						timeField.Append(ts)
 
 					case "labels":
@@ -275,7 +274,7 @@ func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 	v := iter.ReadString()
 	iter.ReadArray()
 
-	tt := time.Unix(int64(t), 0) // HELP! only second precision!!!
+	tt := timeFromFloat(t)
 	fv, err := strconv.ParseFloat(v, 64)
 	return tt, fv, err
 }
@@ -307,7 +306,7 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 					line := iter.ReadString()
 					iter.ReadArray()
 
-					t := time.Unix(0, 0) // HELP!!!
+					t := timeFromLokiString(ts)
 
 					timeField.Append(t)
 					lineField.Append(line)
@@ -322,4 +321,17 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	}
 
 	return rsp
+}
+
+func timeFromFloat(fv float64) time.Time {
+	ms := int64(fv * 1000.0)
+	return time.UnixMilli(ms)
+}
+
+func timeFromLokiString(str string) time.Time {
+	// 1645228233
+	// 1645030246277587968
+	ss, _ := strconv.ParseInt(str[0:10], 10, 64)
+	ns, _ := strconv.ParseInt(str[10:], 10, 64)
+	return time.Unix(ss, ns)
 }

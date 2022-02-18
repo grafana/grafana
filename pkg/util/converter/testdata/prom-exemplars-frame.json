@@ -33,7 +33,7 @@
       "data": {
         "values": [
           [
-            1600096945000
+            1600096945479
           ],
           [
             6
@@ -60,9 +60,9 @@
               "frame": "float64"
             },
             "labels": {
+              "service": "foo",
               "instance": "localhost:8090",
-              "job": "prometheus",
-              "service": "foo"
+              "job": "prometheus"
             }
           },
           {
@@ -77,7 +77,7 @@
       "data": {
         "values": [
           [
-            1600096955000,1600096965000
+            1600096955479,1600096965489
           ],
           [
             19,20
