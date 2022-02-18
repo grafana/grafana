@@ -1918,7 +1918,16 @@ describe('DashboardModel', () => {
               },
             ],
           },
+          {
+            id: 3,
+            targets: [
+              {
+                refId: 'A',
+              },
+            ],
+          },
         ],
+        schemaVersion: 35,
       });
     });
 
@@ -1936,6 +1945,10 @@ describe('DashboardModel', () => {
 
     it('should update panel datasource props to refs for named data source', () => {
       expect(model.panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+
+    it('should update panel datasource props even when undefined', () => {
+      expect(model.panels[1].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
     });
 
     it('should update target datasource props to refs', () => {

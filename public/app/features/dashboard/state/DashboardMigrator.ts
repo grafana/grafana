@@ -748,10 +748,11 @@ export class DashboardMigrator {
         }
 
         panelUpgrades.push((panel: PanelModel) => {
-          if (panel.datasource === null) {
-            panel.datasource = getDataSourceRef(defaultDs);
-          }
           if (panel.targets) {
+            if (panel.datasource == null && panel.targets.length > 0) {
+              panel.datasource = getDataSourceRef(defaultDs);
+            }
+
             for (const target of panel.targets) {
               if (target.datasource === null) {
                 target.datasource = getDataSourceRef(defaultDs);
