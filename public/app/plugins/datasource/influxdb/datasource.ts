@@ -22,6 +22,7 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
+  CoreApp,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -167,7 +168,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super.query(filteredRequest);
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy' && request.app === CoreApp.Explore) {
       return super.query(filteredRequest).pipe(
         map((res) => {
           if (res.error) {
