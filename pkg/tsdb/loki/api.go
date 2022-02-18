@@ -49,8 +49,7 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 	// 1. we are missing "dynamic" http params, like OAuth data.
 	// this never worked before (and it is not needed for alerting scenarios),
 	// so it is not a regression.
-	// i am just making a note here,
-	// that we need to have that when we migrate to backend-queries.
+	// twe need to have that when we migrate to backend-queries.
 	//
 	// 2. we will have to send a custom http header based on the VolumeQuery prop
 	// (again, not needed for the alerting scenario)
