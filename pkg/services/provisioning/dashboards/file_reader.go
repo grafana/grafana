@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -40,10 +41,14 @@ type FileReader struct {
 	usageTracker            *usageTracker
 	dbWriteAccessRestricted bool
 	permissionsServices     accesscontrol.PermissionsServices
+	features                featuremgmt.FeatureToggles
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService, permissionsServices accesscontrol.PermissionsServices) (*FileReader, error) {
+func NewDashboardFileReader(
+	cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -67,6 +72,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		dashboardProvisioningService: service,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
+		features:                     features,
 		permissionsServices:          permissionsServices,
 	}, nil
 }
@@ -142,7 +148,7 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
-	folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder, fr.permissionsServices.GetFolderService())
+	folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder, fr.features, fr.permissionsServices.GetFolderService())
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
 	}
@@ -172,7 +178,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
-		folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName, fr.permissionsServices.GetFolderService())
+		folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName, fr.features, fr.permissionsServices.GetFolderService())
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
@@ -273,7 +279,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			return provisioningMetadata, err
 		}
 
-		if !alreadyProvisioned {
+		if !alreadyProvisioned && fr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 			svc := fr.permissionsServices.GetDashboardService()
 			_, err := svc.SetPermissions(ctx, savedDash.OrgId, strconv.FormatInt(savedDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
 				BuiltinRole: "Viewer",
@@ -311,7 +317,7 @@ func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningServ
 
 func getOrCreateFolderID(
 	ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService,
-	folderName string, folderPermissionsService accesscontrol.PermissionsService,
+	folderName string, features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.PermissionsService,
 ) (int64, error) {
 	if folderName == "" {
 		return 0, ErrFolderNameMissing
@@ -338,15 +344,17 @@ func getOrCreateFolderID(
 			return 0, err
 		}
 
-		_, err = folderPermissionsService.SetPermissions(ctx, dbDash.OrgId, strconv.FormatInt(dbDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Viewer",
-			Permission:  "View",
-		}, accesscontrol.SetResourcePermissionCommand{
-			BuiltinRole: "Editor",
-			Permission:  "Edit",
-		})
-		if err != nil {
-			return 0, err
+		if features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			_, err = folderPermissionsService.SetPermissions(ctx, dbDash.OrgId, strconv.FormatInt(dbDash.Id, 10), accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Viewer",
+				Permission:  "View",
+			}, accesscontrol.SetResourcePermissionCommand{
+				BuiltinRole: "Editor",
+				Permission:  "Edit",
+			})
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		return dbDash.Id, nil

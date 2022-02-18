@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -24,7 +25,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, accesscontrol.PermissionsServices) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, featuremgmt.FeatureToggles, accesscontrol.PermissionsServices) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -35,7 +36,10 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, service dashboards.DashboardProvisioningService, permissionsServices accesscontrol.PermissionsServices) (DashboardProvisioner, error) {
+func New(
+	ctx context.Context, configDirectory string, service dashboards.DashboardProvisioningService,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig(ctx)
@@ -43,7 +47,7 @@ func New(ctx context.Context, configDirectory string, service dashboards.Dashboa
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, service, permissionsServices)
+	fileReaders, err := getFileReaders(configs, logger, service, features, permissionsServices)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -121,13 +125,16 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger, service dashboards.DashboardProvisioningService, permissionsServices accesscontrol.PermissionsServices) ([]*FileReader, error) {
+func getFileReaders(
+	configs []*config, logger log.Logger, service dashboards.DashboardProvisioningService,
+	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
 		case "file":
-			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name), service, permissionsServices)
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name), service, features, permissionsServices)
 			if err != nil {
 				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}

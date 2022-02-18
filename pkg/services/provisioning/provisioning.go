@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -23,7 +24,8 @@ import (
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
 	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
-	dashboardService dashboardservice.DashboardProvisioningService, permissionsServices accesscontrol.PermissionsServices,
+	dashboardService dashboardservice.DashboardProvisioningService, features featuremgmt.FeatureToggles,
+	permissionsServices accesscontrol.PermissionsServices,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
@@ -36,6 +38,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 		dashboardService:        dashboardService,
+		features:                features,
 		permissionsServices:     permissionsServices,
 	}
 	return s, nil
@@ -94,6 +97,7 @@ type ProvisioningServiceImpl struct {
 	provisionPlugins        func(context.Context, string, plugifaces.Store) error
 	mutex                   sync.Mutex
 	dashboardService        dashboardservice.DashboardProvisioningService
+	features                featuremgmt.FeatureToggles
 	permissionsServices     accesscontrol.PermissionsServices
 }
 
@@ -177,7 +181,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) e
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardService, ps.permissionsServices)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardService, ps.features, ps.permissionsServices)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}
