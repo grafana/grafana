@@ -5,9 +5,11 @@ import { useTheme2 } from '@grafana/ui';
 
 type Props = {
   colorPalette: string[];
+  min: number;
+  max: number;
 };
 
-export const ColorScale = ({ colorPalette }: Props) => {
+export const ColorScale = ({ colorPalette, min, max }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   useEffect(() => {
     setColors(getGradientStops({ colorArray: colorPalette }));
@@ -16,10 +18,15 @@ export const ColorScale = ({ colorPalette }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
 
-  // @ts-ignore
   return (
     <div className={styles.scaleWrapper}>
-      <div className={styles.scaleGradient} />
+      <div>
+        <div className={styles.scaleGradient} />
+        <div className={styles.scaleValues}>
+          <span>{min}</span>
+          <span className={styles.maxDisplay}>{max}</span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -49,6 +56,12 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
     height: 6px;
-    margin: 10px;
+  `,
+  scaleValues: css`
+    color: #ccccdc;
+    font-size: 11px;
+  `,
+  maxDisplay: css`
+    float: right;
   `,
 });
