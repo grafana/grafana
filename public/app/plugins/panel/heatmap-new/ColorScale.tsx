@@ -43,10 +43,11 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
     margin: 0 16px;
     padding-top: 4px;
+    width: 100%;
+    max-width: 300px;
   `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
-    width: 35%;
     height: 6px;
     margin: 10px;
   `,
