@@ -52,6 +52,30 @@ func TestPrometheus_timeSeriesQuery_formatLeged(t *testing.T) {
 
 		require.Equal(t, `{job="grafana"}`, formatLegend(metric, query))
 	})
+
+	t.Run("When legendFormat = __auto and no labels", func(t *testing.T) {
+		metric := map[p.LabelName]p.LabelValue{}
+
+		query := &PrometheusQuery{
+			LegendFormat: legendFormatAuto,
+			Expr:         `{job="grafana"}`,
+		}
+
+		require.Equal(t, `{job="grafana"}`, formatLegend(metric, query))
+	})
+
+	t.Run("When legendFormat = __auto with labels", func(t *testing.T) {
+		metric := map[p.LabelName]p.LabelValue{
+			p.LabelName("app"): p.LabelValue("backend"),
+		}
+
+		query := &PrometheusQuery{
+			LegendFormat: legendFormatAuto,
+			Expr:         `{job="grafana"}`,
+		}
+
+		require.Equal(t, "", formatLegend(metric, query))
+	})
 }
 
 func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {

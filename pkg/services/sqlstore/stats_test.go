@@ -32,7 +32,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
 		query := models.GetSystemUserCountStatsQuery{}
-		err := GetSystemUserCountStats(context.Background(), &query)
+		err := sqlStore.GetSystemUserCountStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
@@ -124,7 +124,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	require.NoError(t, err)
 
 	// force renewal of user stats
-	err = updateUserRoleCountsIfNecessary(context.Background(), true)
+	err = sqlStore.updateUserRoleCountsIfNecessary(context.Background(), true)
 	require.NoError(t, err)
 
 	// add 1st api key

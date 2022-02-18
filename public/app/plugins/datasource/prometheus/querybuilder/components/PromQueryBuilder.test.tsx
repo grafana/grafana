@@ -36,7 +36,7 @@ const bugQuery: PromVisualQuery = {
         labels: [{ label: 'foo', op: '=', value: 'bar' }],
         operations: [
           {
-            id: '__sum_by',
+            id: '__avg_by',
             params: ['app'],
           },
         ],
@@ -58,11 +58,12 @@ describe('PromQueryBuilder', () => {
     expect(screen.getByText('random_metric')).toBeInTheDocument();
     expect(screen.getByText('localhost:9090')).toBeInTheDocument();
     expect(screen.getByText('Rate')).toBeInTheDocument();
-    const sumBys = screen.getAllByTestId('operation-wrapper-for-__sum_by');
+    const sumBys = screen.getAllByTestId('operations.1.wrapper');
     expect(getByText(sumBys[0], 'instance')).toBeInTheDocument();
     expect(getByText(sumBys[0], 'job')).toBeInTheDocument();
 
-    expect(getByText(sumBys[1], 'app')).toBeInTheDocument();
+    const avgBys = screen.getAllByTestId('operations.0.wrapper');
+    expect(getByText(avgBys[1], 'app')).toBeInTheDocument();
     expect(screen.getByText('Operator')).toBeInTheDocument();
     expect(screen.getByText('Vector matches')).toBeInTheDocument();
   });
