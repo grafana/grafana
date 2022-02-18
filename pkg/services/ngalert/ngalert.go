@@ -84,7 +84,7 @@ func (ng *AlertNG) init() error {
 
 	store := &store.DBstore{
 		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
-		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultAlertForDuration,
+		DefaultInterval: ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval,
 		SQLStore:        ng.SQLStore,
 		Logger:          ng.Log,
 		FolderService:   ng.folderService,

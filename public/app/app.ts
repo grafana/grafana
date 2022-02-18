@@ -41,7 +41,7 @@ import 'app/features/all';
 import { getScrollbarWidth } from '@grafana/ui';
 import { variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
-import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 import { configureStore } from './store/configureStore';

@@ -23,11 +23,6 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandler("sql", GetDashboardSlugById)
-	bus.AddHandler("sql", GetDashboardsByPluginId)
-	bus.AddHandler("sql", GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", HasAdminPermissionInFolders)
-
 	prometheus.MustRegister(shadowSearchCounter)
 }
 
@@ -39,12 +34,16 @@ func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.DeleteDashboard)
 	bus.AddHandler("sql", ss.GetDashboards)
 	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
+	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", ss.GetDashboardsByPluginId)
+	bus.AddHandler("sql", ss.GetDashboardSlugById)
+	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
 
 func (ss *SQLStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
@@ -211,7 +210,8 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 }
 
 func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
-	sql := `SELECT
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		sql := `SELECT
 					  COUNT(*) as count,
 						term
 					FROM dashboard
@@ -220,10 +220,11 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 					GROUP BY term
 					ORDER BY term`
 
-	query.Result = make([]*models.DashboardTagCloudItem, 0)
-	sess := x.SQL(sql, query.OrgId)
-	err := sess.Find(&query.Result)
-	return err
+		query.Result = make([]*models.DashboardTagCloudItem, 0)
+		sess := dbSession.SQL(sql, query.OrgId)
+		err := sess.Find(&query.Result)
+		return err
+	})
 }
 
 func (ss *SQLStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
@@ -326,65 +327,68 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 }
 
 func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
-	if len(query.DashboardIds) == 0 {
-		return models.ErrCommandValidationFailed
-	}
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if len(query.DashboardIds) == 0 {
+			return models.ErrCommandValidationFailed
+		}
 
-	var dashboards = make([]*models.Dashboard, 0)
+		var dashboards = make([]*models.Dashboard, 0)
 
-	err := x.In("id", query.DashboardIds).Find(&dashboards)
-	query.Result = dashboards
-	return err
+		err := dbSession.In("id", query.DashboardIds).Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
 }
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
 // The function takes in a list of dashboard ids and the user id and role
-func GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
-	if len(query.DashboardIds) == 0 {
-		return models.ErrCommandValidationFailed
-	}
-
-	if query.OrgRole == models.ROLE_ADMIN {
-		var permissions = make([]*models.DashboardPermissionForUser, 0)
-		for _, d := range query.DashboardIds {
-			permissions = append(permissions, &models.DashboardPermissionForUser{
-				DashboardId:    d,
-				Permission:     models.PERMISSION_ADMIN,
-				PermissionName: models.PERMISSION_ADMIN.String(),
-			})
+func (ss *SQLStore) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if len(query.DashboardIds) == 0 {
+			return models.ErrCommandValidationFailed
 		}
-		query.Result = permissions
 
-		return nil
-	}
+		if query.OrgRole == models.ROLE_ADMIN {
+			var permissions = make([]*models.DashboardPermissionForUser, 0)
+			for _, d := range query.DashboardIds {
+				permissions = append(permissions, &models.DashboardPermissionForUser{
+					DashboardId:    d,
+					Permission:     models.PERMISSION_ADMIN,
+					PermissionName: models.PERMISSION_ADMIN.String(),
+				})
+			}
+			query.Result = permissions
 
-	params := make([]interface{}, 0)
+			return nil
+		}
 
-	// check dashboards that have ACLs via user id, team id or role
-	sql := `SELECT d.id AS dashboard_id, MAX(COALESCE(da.permission, pt.permission)) AS permission
+		params := make([]interface{}, 0)
+
+		// check dashboards that have ACLs via user id, team id or role
+		sql := `SELECT d.id AS dashboard_id, MAX(COALESCE(da.permission, pt.permission)) AS permission
 	FROM dashboard AS d
 		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
 		LEFT JOIN team_member as ugm on ugm.team_id =  da.team_id
 		LEFT JOIN org_user ou ON ou.role = da.role AND ou.user_id = ?
 	`
-	params = append(params, query.UserId)
+		params = append(params, query.UserId)
 
-	// check the user's role for dashboards that do not have hasAcl set
-	sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
-	params = append(params, query.UserId)
-	params = append(params, query.OrgId)
+		// check the user's role for dashboards that do not have hasAcl set
+		sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
+		params = append(params, query.UserId)
+		params = append(params, query.OrgId)
 
-	sql += `
+		sql += `
 		LEFT JOIN (SELECT 1 AS permission, 'Viewer' AS role
 			UNION SELECT 2 AS permission, 'Editor' AS role
 			UNION SELECT 4 AS permission, 'Admin' AS role) pt ON ouRole.role = pt.role
 	WHERE
 	d.Id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `) `
-	for _, id := range query.DashboardIds {
-		params = append(params, id)
-	}
+		for _, id := range query.DashboardIds {
+			params = append(params, id)
+		}
 
-	sql += ` AND
+		sql += ` AND
 	d.org_id = ? AND
 	  (
 		(d.has_acl = ?  AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
@@ -392,48 +396,53 @@ func GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashbo
 	)
 	group by d.id
 	order by d.id asc`
-	params = append(params, query.OrgId)
-	params = append(params, dialect.BooleanStr(true))
-	params = append(params, query.UserId)
-	params = append(params, query.UserId)
-	params = append(params, dialect.BooleanStr(false))
+		params = append(params, query.OrgId)
+		params = append(params, dialect.BooleanStr(true))
+		params = append(params, query.UserId)
+		params = append(params, query.UserId)
+		params = append(params, dialect.BooleanStr(false))
 
-	err := x.SQL(sql, params...).Find(&query.Result)
+		err := dbSession.SQL(sql, params...).Find(&query.Result)
 
-	for _, p := range query.Result {
-		p.PermissionName = p.Permission.String()
-	}
+		for _, p := range query.Result {
+			p.PermissionName = p.Permission.String()
+		}
 
-	return err
+		return err
+	})
 }
 
-func GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	var dashboards = make([]*models.Dashboard, 0)
-	whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
+func (ss *SQLStore) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var dashboards = make([]*models.Dashboard, 0)
+		whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
 
-	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
-	query.Result = dashboards
-	return err
+		err := dbSession.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
+		query.Result = dashboards
+		return err
+	})
 }
 
 type DashboardSlugDTO struct {
 	Slug string
 }
 
-func GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
-	var rawSQL = `SELECT slug from dashboard WHERE Id=?`
-	var slug = DashboardSlugDTO{}
+func (ss *SQLStore) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var rawSQL = `SELECT slug from dashboard WHERE Id=?`
+		var slug = DashboardSlugDTO{}
 
-	exists, err := x.SQL(rawSQL, query.Id).Get(&slug)
+		exists, err := dbSession.SQL(rawSQL, query.Id).Get(&slug)
 
-	if err != nil {
-		return err
-	} else if !exists {
-		return models.ErrDashboardNotFound
-	}
+		if err != nil {
+			return err
+		} else if !exists {
+			return models.ErrDashboardNotFound
+		}
 
-	query.Result = slug.Slug
-	return nil
+		query.Result = slug.Slug
+		return nil
+	})
 }
 
 func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
@@ -457,7 +466,7 @@ func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDa
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
-	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
 			query.Result = true
 			return nil
@@ -483,26 +492,28 @@ func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *model
 	})
 }
 
-func HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
-	if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
-		query.Result = true
+func (ss *SQLStore) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
+			query.Result = true
+			return nil
+		}
+
+		builder := &SQLBuilder{}
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
+		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
+
+		type folderCount struct {
+			Count int64
+		}
+
+		resp := make([]*folderCount, 0)
+		if err := dbSession.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+			return err
+		}
+
+		query.Result = len(resp) > 0 && resp[0].Count > 0
+
 		return nil
-	}
-
-	builder := &SQLBuilder{}
-	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
-
-	type folderCount struct {
-		Count int64
-	}
-
-	resp := make([]*folderCount, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
-		return err
-	}
-
-	query.Result = len(resp) > 0 && resp[0].Count > 0
-
-	return nil
+	})
 }
