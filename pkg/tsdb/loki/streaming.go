@@ -2,6 +2,7 @@ package loki
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -31,13 +32,26 @@ func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStrea
 	}
 
 	query, err := parseQueryModel(req.Data)
+	if err != nil {
+		return nil, err
+	}
 	if query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, fmt.Errorf("missing expr in channel (subscribe)")
 	}
 
-	s.plog.Info("TODO: backfill query", "query", query.Expr, "ds", dsInfo.URL)
+	dsInfo.streamsMu.RLock()
+	defer dsInfo.streamsMu.RUnlock()
+
+	cache, ok := dsInfo.streams[req.Path]
+	if ok {
+		msg, err := backend.NewInitialData(cache.Bytes(data.IncludeAll))
+		return &backend.SubscribeStreamResponse{
+			Status:      backend.SubscribeStreamStatusOK,
+			InitialData: msg,
+		}, err
+	}
 
 	// nothing yet
 	return &backend.SubscribeStreamResponse{
@@ -93,12 +107,17 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 
 	defer func() {
+		dsInfo.streamsMu.Lock()
+		delete(dsInfo.streams, req.Path)
+		dsInfo.streamsMu.Unlock()
 		if r != nil {
 			_ = r.Body.Close()
 		}
 		err = c.Close()
-		s.plog.Error("error closing loki websocket", "err", err)
+		s.plog.Error("closing loki websocket", "err", err)
 	}()
+
+	prev := data.FrameJSONCache{}
 
 	// Read all messages
 	done := make(chan struct{})
@@ -110,18 +129,32 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 				s.plog.Error("websocket read:", "err", err)
 				return
 			}
+
+			frame := &data.Frame{}
 			if isV1 {
 				// fmt.Printf("\n\n%s\n", string(message))
-				var f *data.Frame
-				f, err = lokiBytesToLabeledFrame(message)
-				if err == nil {
-					err = sender.SendFrame(f, data.IncludeAll)
-				}
+				frame, err = lokiBytesToLabeledFrame(message)
 			} else {
-				err = sender.SendBytes(message)
+				err = json.Unmarshal(message, &frame)
 			}
+
+			if err == nil && frame != nil {
+				next, _ := data.FrameToJSONCache(frame)
+				if next.SameSchema(&prev) {
+					err = sender.SendBytes(next.Bytes(data.IncludeDataOnly))
+				} else {
+					err = sender.SendFrame(frame, data.IncludeAll)
+				}
+				prev = next
+
+				// Cache the initial data
+				dsInfo.streamsMu.Lock()
+				dsInfo.streams[req.Path] = prev
+				dsInfo.streamsMu.Unlock()
+			}
+
 			if err != nil {
-				s.plog.Error("websocket write:", "err", err)
+				s.plog.Error("websocket write:", "err", err, "raw", message)
 				return
 			}
 		}

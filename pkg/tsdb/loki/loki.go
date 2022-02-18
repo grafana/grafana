@@ -2,10 +2,12 @@ package loki
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -47,6 +49,10 @@ var (
 type datasourceInfo struct {
 	HTTPClient *http.Client
 	URL        string
+
+	// open streams
+	streams   map[string]data.FrameJSONCache
+	streamsMu sync.RWMutex
 }
 
 type QueryModel struct {
@@ -79,6 +85,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		model := &datasourceInfo{
 			HTTPClient: client,
 			URL:        settings.URL,
+			streams:    make(map[string]data.FrameJSONCache),
 		}
 		return model, nil
 	}
