@@ -8,19 +8,20 @@ interface Props {
   name: string;
   description: ReactNode;
   selected?: boolean;
+  onClick: () => void;
 }
 
 const RuleType: FC<Props> = (props) => {
-  const { name, description, image, selected = false } = props;
+  const { name, description, image, selected = false, onClick } = props;
   const styles = useStyles2((theme) => getStyles(theme, selected));
 
   return (
-    <Card className={cx(styles.wrapper, styles.selected)}>
+    <Card className={cx(styles.wrapper, styles.selected)} onClick={onClick}>
       <Card.Figure>
         <img src={image} />
       </Card.Figure>
-      <Card.Heading>
-        <div className={styles.heading}>
+      <Card.Heading className={styles.heading}>
+        <div className={styles.headWrapper}>
           <div className={styles.name}>{name}</div>
           <div className={styles.radioButton}>
             <input type="radio" checked={selected} />
@@ -46,14 +47,19 @@ const getStyles = (theme: GrafanaTheme2, selected: boolean) => ({
   radioButton: css`
     align-self: flex-end;
   `,
-  heading: css`
+  headWrapper: css`
     flex: 1;
     display: flex;
     flex-direction: row;
+  `,
+  heading: css`
+    > button {
+      width: 100%;
+    }
   `,
   name: css`
     flex: 1;
   `,
 });
 
-export default RuleType;
+export { RuleType };
