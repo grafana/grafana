@@ -21,7 +21,9 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugifaces.Store,
-	encryptionService encryption.Internal, notificatonService *notifications.NotificationService, dashboardsStore dashboardservice.Store) (*ProvisioningServiceImpl, error) {
+	encryptionService encryption.Internal, notificatonService *notifications.NotificationService,
+	dashboardService dashboardservice.DashboardProvisioningService,
+) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                     cfg,
 		pluginStore:             pluginStore,
@@ -32,7 +34,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
-		dashboardsStore:         dashboardsStore,
+		dashboardService:        dashboardService,
 	}
 	return s, nil
 }
@@ -89,7 +91,7 @@ type ProvisioningServiceImpl struct {
 	provisionDatasources    func(context.Context, string) error
 	provisionPlugins        func(context.Context, string, plugifaces.Store) error
 	mutex                   sync.Mutex
-	dashboardsStore         dashboardservice.Store
+	dashboardService        dashboardservice.DashboardProvisioningService
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -172,7 +174,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) e
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardsStore)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardService)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

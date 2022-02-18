@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,9 +24,11 @@ import (
 )
 
 type Service struct {
-	Bus            bus.Bus
-	SQLStore       *sqlstore.SQLStore
-	SecretsService secrets.Service
+	Bus                bus.Bus
+	SQLStore           *sqlstore.SQLStore
+	SecretsService     secrets.Service
+	features           featuremgmt.FeatureToggles
+	permissionsService accesscontrol.PermissionsService
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -51,7 +54,10 @@ type cachedDecryptedJSON struct {
 	json    map[string]string
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, ac accesscontrol.AccessControl) *Service {
+func ProvideService(
+	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+) *Service {
 	s := &Service{
 		Bus:            bus,
 		SQLStore:       store,
@@ -62,6 +68,8 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 		dsDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		features:           features,
+		permissionsService: permissionsServices.GetDataSourceService(),
 	}
 
 	s.Bus.AddHandler(s.GetDataSources)
@@ -128,7 +136,23 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		return err
 	}
 
-	return s.SQLStore.AddDataSource(ctx, cmd)
+	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		return err
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, strconv.FormatInt(cmd.Result.Id, 10), accesscontrol.SetResourcePermissionCommand{
+			BuiltinRole: "Viewer",
+			Permission:  "Query",
+		}, accesscontrol.SetResourcePermissionCommand{
+			BuiltinRole: "Editor",
+			Permission:  "Query",
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {

@@ -11,6 +11,7 @@ describe('createTextBoxVariableAdapter', () => {
       it('then the model should be correct', () => {
         const text = textboxBuilder()
           .withId('text')
+          .withRootStateKey('key')
           .withName('text')
           .withQuery('query')
           .withOriginalQuery('original')
@@ -41,6 +42,7 @@ describe('createTextBoxVariableAdapter', () => {
       it('then the model should be correct', () => {
         const text = textboxBuilder()
           .withId('text')
+          .withRootStateKey('key')
           .withName('text')
           .withQuery('query')
           .withOriginalQuery('original')
