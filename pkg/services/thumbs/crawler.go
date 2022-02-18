@@ -3,7 +3,7 @@ package thumbs
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -90,9 +90,8 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	}
 
 	if !res.IsSupported {
-		message := "cant run dashboard crawler - rendering service needs to be updated"
-		r.log.Error(message, "imageRendererVersion", r.renderService.Version(), "requiredVersion", res.SemverConstraint)
-		return errors.New(message)
+		return fmt.Errorf("cant run dashboard crawler - rendering service needs to be updated. "+
+			"current version: %s, requiredVersion: %s", r.renderService.Version(), res.SemverConstraint)
 	}
 
 	r.queueMutex.Lock()
