@@ -51,6 +51,10 @@ func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, qu
 }
 
 func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) {
+		return ValidationError{Reason: "Invalid UID: Must 40 characters or less"}
+	}
+
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
@@ -58,7 +62,6 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 	}
 
 	model := models.AlertNotification{
-		Uid:      cmd.Uid,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -72,6 +75,10 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 }
 
 func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
+	if util.IsShortUIDTooLong(cmd.Uid) {
+		return ValidationError{Reason: "Invalid UID: Must 40 characters or less"}
+	}
+
 	var err error
 	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
 	if err != nil {
@@ -79,7 +86,6 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 	}
 
 	model := models.AlertNotification{
-		Uid:      cmd.Uid,
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
@@ -119,22 +125,8 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Cont
 }
 
 func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
-	var err error
-	cmd.EncryptedSecureSettings, err = s.EncryptionService.EncryptJsonData(ctx, cmd.SecureSettings, setting.SecretKey)
-	if err != nil {
-		return err
-	}
-
-	model := models.AlertNotification{
-		Uid:      cmd.NewUid,
-		OrgId:    cmd.OrgId,
-		Name:     cmd.Name,
-		Type:     cmd.Type,
-		Settings: cmd.Settings,
-	}
-
-	if err := s.validateAlertNotification(ctx, &model, cmd.SecureSettings); err != nil {
-		return err
+	if util.IsShortUIDTooLong(cmd.Uid) || util.IsShortUIDTooLong(cmd.NewUid) {
+		return ValidationError{Reason: "Invalid UID: Must 40 characters or less"}
 	}
 
 	return s.SQLStore.UpdateAlertNotificationWithUid(ctx, cmd)
