@@ -17,7 +17,11 @@ export const ColorScale = ({ colorPalette }: Props) => {
   const styles = getStyles(theme, colors);
 
   // @ts-ignore
-  return <div className={styles.scaleGradient} />;
+  return (
+    <div className={styles.scaleWrapper}>
+      <div className={styles.scaleGradient} />
+    </div>
+  );
 };
 
 const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; stops?: number }): string[] => {
@@ -36,9 +40,13 @@ const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; st
 };
 
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
+  scaleWrapper: css`
+    margin: 0 16px;
+    padding-top: 4px;
+  `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
-    width: 20%;
+    width: 35%;
     height: 6px;
     margin: 10px;
   `,
