@@ -231,11 +231,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 			}
 		}
 		for i := 0; i < len(buckets); i++ {
-			if buckets[i].Meta != nil {
-				buckets[i].Meta.Custom = customFrameMeta
-			} else {
-				buckets[i].SetMeta(&data.FrameMeta{Custom: customFrameMeta})
-			}
+			buckets[i].Meta.Custom = customFrameMeta
 			frames = append(frames, buckets[i])
 		}
 		if len(buckets) == 0 {
