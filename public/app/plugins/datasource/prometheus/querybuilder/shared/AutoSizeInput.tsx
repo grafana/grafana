@@ -14,7 +14,7 @@ export interface Props extends InputProps {
 }
 
 export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { defaultValue = '', minWidth = 10, maxWidth, onCommitChange, ...restProps } = props;
+  const { defaultValue = '', minWidth = 10, maxWidth, onCommitChange, onKeyDown, onBlur, ...restProps } = props;
   const [value, setValue] = React.useState(defaultValue);
   const [inputWidth, setInputWidth] = React.useState(minWidth);
 
@@ -23,8 +23,8 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
 
   useEffect(() => {
     const extraSpace = 4;
-    const calculateWidth = (number: number) => number / 8;
-    let newInputWidth = sizerRef.current ? calculateWidth(sizerRef.current.scrollWidth) + extraSpace : 0;
+    const calculateWidth = (number: number) => number / 8 + extraSpace;
+    let newInputWidth = sizerRef.current ? calculateWidth(sizerRef.current.scrollWidth) : 0;
 
     if (!value) {
       newInputWidth = minWidth;
@@ -57,10 +57,16 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
           if (onCommitChange) {
             onCommitChange(event);
           }
+          if (onBlur) {
+            onBlur(event);
+          }
         }}
-        onKeyDown={(evt) => {
-          if (evt.key === 'Enter' && onCommitChange) {
-            onCommitChange(evt);
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && onCommitChange) {
+            onCommitChange(event);
+          }
+          if (onKeyDown) {
+            onKeyDown(event);
           }
         }}
       />
