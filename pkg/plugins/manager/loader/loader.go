@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -240,7 +241,7 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 		Class:     class,
 	}
 
-	plugin.SetLogger(logger.New("pluginID", plugin.ID))
+	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	setImages(plugin)
 
 	return plugin

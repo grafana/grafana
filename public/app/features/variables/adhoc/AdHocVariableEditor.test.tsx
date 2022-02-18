@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
-import { AdHocVariableEditorUnConnected as AdHocVariableEditor } from './AdHocVariableEditor';
-import { initialAdHocVariableModelState } from './reducer';
 import { selectOptionInTest } from '@grafana/ui';
 import { getSelectParent } from '@grafana/ui/src/components/Select/test-utils';
+
+import { AdHocVariableEditorUnConnected as AdHocVariableEditor } from './AdHocVariableEditor';
+import { adHocBuilder } from '../shared/testing/builders';
 
 const props = {
   extended: {
@@ -13,7 +13,7 @@ const props = {
       { text: 'Loki', value: { type: 'loki-ds', uid: 'abc' } },
     ],
   },
-  variable: { ...initialAdHocVariableModelState },
+  variable: adHocBuilder().withId('adhoc').withRootStateKey('key').withName('adhoc').build(),
   onPropChange: jest.fn(),
 
   // connected actions
@@ -37,7 +37,10 @@ describe('AdHocVariableEditor', () => {
     render(<AdHocVariableEditor {...props} />);
     await selectOptionInTest(screen.getByLabelText('Data source'), 'Loki');
 
-    expect(props.changeVariableDatasource).toBeCalledWith({ type: 'loki-ds', uid: 'abc' });
+    expect(props.changeVariableDatasource).toBeCalledWith(
+      { type: 'adhoc', id: 'adhoc', rootStateKey: 'key' },
+      { type: 'loki-ds', uid: 'abc' }
+    );
   });
 
   it('renders informational text', () => {
