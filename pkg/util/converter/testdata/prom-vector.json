@@ -18,6 +18,18 @@
                 "instance" : "localhost:9100"
              },
              "value" : [ 1435781451.781, "0" ]
+          },
+          {
+            "metric": { "level": "error", "location": "moon"},
+            "value": [1645029699, "+Inf"]
+          },
+          {
+            "metric": { "level": "info", "location": "moon" },
+            "value": [1645029699, "-Inf"]
+          },
+          {
+            "metric": { "level": "debug", "location": "moon" },
+            "value": [1645029699, "NaN"]
           }
        ]
     }

@@ -20,9 +20,8 @@
               "frame": "string"
             },
             "labels": {
-              "level": "info",
-              "filename": "/var/log/myproject.log",
-              "job": "varlogs"
+              "level": "error",
+              "location": "moon"
             }
           },
           {
@@ -37,13 +36,60 @@
       "data": {
         "values": [
           [
-            0,0
+            0
           ],
           [
-            "foo","bar"
+            "log line error 1"
           ],
           [
-            "1568234281726420425","1568234269716526880"
+            "1645030244810757120"
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            },
+            "labels": {
+              "level": "info",
+              "location": "moon"
+            }
+          },
+          {
+            "name": "TS",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            0,0,0,0
+          ],
+          [
+            "log line info 1","log line info 2","log line info 3","log line info 4"
+          ],
+          [
+            "1645030247027735040","1645030246277587968","1645030245539423744","1645030244091700992"
           ]
         ]
       }
