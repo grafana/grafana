@@ -11,7 +11,11 @@ import { DataQuery, MutableDataFrame } from '@grafana/data';
 import { createEmptyQueryResponse } from '../state/utils';
 import { locationService } from '@grafana/runtime';
 
-const setup = (children: JSX.Element, queries: DataQuery[], queryResponse: ExplorePanelData) => {
+const setup = (
+  children: JSX.Element,
+  queries: DataQuery[] = [],
+  queryResponse: ExplorePanelData = createEmptyQueryResponse()
+) => {
   const store = configureStore({ explore: { left: { queries, queryResponse } } });
 
   return render(<Provider store={store}>{children}</Provider>);
@@ -28,7 +32,7 @@ describe('Add to Dashboard', () => {
     it('Navigates to dashboard when clicking on "Save and go to dashboard"', async () => {
       locationService.push = jest.fn();
 
-      setup(<AddToDashboard exploreId={ExploreId.left} />, [], createEmptyQueryResponse());
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
 
@@ -42,7 +46,7 @@ describe('Add to Dashboard', () => {
     it('Does NOT navigate to dashboard when clicking on "Save and keep exploring"', async () => {
       locationService.push = jest.fn();
 
-      setup(<AddToDashboard exploreId={ExploreId.left} />, [], createEmptyQueryResponse());
+      setup(<AddToDashboard exploreId={ExploreId.left} />);
 
       await openModal();
 
@@ -59,7 +63,7 @@ describe('Add to Dashboard', () => {
     const addToDashboard = jest.spyOn(api, 'addToDashboard');
 
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, createEmptyQueryResponse());
+    setup(<AddToDashboard exploreId={ExploreId.left} />, queries);
 
     await openModal();
 
@@ -97,7 +101,7 @@ describe('Add to Dashboard', () => {
     const addToDashboard = jest.spyOn(api, 'addToDashboard');
 
     const queries: DataQuery[] = [{ refId: 'A', hide: true }];
-    setup(<AddToDashboard exploreId={ExploreId.left} />, queries, createEmptyQueryResponse());
+    setup(<AddToDashboard exploreId={ExploreId.left} />, queries);
 
     await openModal();
 
@@ -115,7 +119,7 @@ describe('Add to Dashboard', () => {
   it('Defaults to table if no query', async () => {
     const addToDashboard = jest.spyOn(api, 'addToDashboard');
 
-    setup(<AddToDashboard exploreId={ExploreId.left} />, [], createEmptyQueryResponse());
+    setup(<AddToDashboard exploreId={ExploreId.left} />, []);
 
     await openModal();
 
