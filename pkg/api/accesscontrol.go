@@ -346,11 +346,11 @@ func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource st
 	key := fmt.Sprintf("%d", id)
 	ids := map[string]bool{key: true}
 
-	return hs.getAllAccessControlMetadata(c, resource, ids)[key]
+	return hs.getMultiAccessControlMetadata(c, resource, ids)[key]
 }
 
-// getAllAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
-func (hs *HTTPServer) getAllAccessControlMetadata(c *models.ReqContext, resource string, ids map[string]bool) map[string]ac.Metadata {
+// getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
+func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resource string, ids map[string]bool) map[string]ac.Metadata {
 	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return nil
 	}
