@@ -107,5 +107,25 @@ func TestSqlStorage(t *testing.T) {
 				FullPath: "/folder1/folder2/file.jpg",
 			},
 		}, extractNameFullPath(resp.Files))
+
+		resp, err = filestorage.ListFiles(ctx, "/folder1", false, nil)
+		require.NoError(t, err)
+
+		require.Equal(t, []NameFullPath{
+			{
+				Name:     "file-inner.jpg",
+				FullPath: "/folder1/file-inner.jpg",
+			},
+		}, extractNameFullPath(resp.Files))
+
+		resp, err = filestorage.ListFiles(ctx, "/folder1/folder2", true, nil)
+		require.NoError(t, err)
+
+		require.Equal(t, []NameFullPath{
+			{
+				Name:     "file.jpg",
+				FullPath: "/folder1/folder2/file.jpg",
+			},
+		}, extractNameFullPath(resp.Files))
 	})
 }

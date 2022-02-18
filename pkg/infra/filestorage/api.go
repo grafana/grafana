@@ -10,7 +10,7 @@ var (
 	ErrRelativePath          = errors.New("path cant be relative")
 	ErrNonCanonicalPath      = errors.New("path must be canonical")
 	ErrPathTooLong           = errors.New("path is too long")
-	ErrNameInvalid           = errors.New("name is invalid")
+	ErrPathInvalid           = errors.New("path is invalid")
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
 	Delimiter                = "/"
 )

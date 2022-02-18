@@ -54,7 +54,7 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 		result = &File{
 			Contents: table.Contents,
 			FileMetadata: FileMetadata{
-				Name:       extractName(filePath),
+				Name:       getName(filePath),
 				FullPath:   filePath,
 				Created:    table.Created,
 				Properties: metaProperties,
@@ -176,7 +176,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 		files := make([]FileMetadata, 0)
 		for i := range foundFiles {
 			files = append(files, FileMetadata{
-				Name:       extractName(foundFiles[i].Path),
+				Name:       getName(foundFiles[i].Path),
 				FullPath:   foundFiles[i].Path,
 				Created:    foundFiles[i].Created,
 				Properties: make(map[string]string, 0),

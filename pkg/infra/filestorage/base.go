@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	nameRegex = regexp.MustCompile("[A-Za-z0-9!\\-_.*'()]+")
+	pathRegex = regexp.MustCompile("(^/$)|(^(/[A-Za-z0-9!\\-_.*'()]+)+$)")
 )
 
 func getPath(folderPath string, name string) string {
@@ -28,7 +28,7 @@ func getParentFolderPath(path string) string {
 	return strings.Join(splitWithoutLastPart, Delimiter)
 }
 
-func extractName(path string) string {
+func getName(path string) string {
 	if path == Delimiter || path == "" {
 		return ""
 	}
@@ -40,16 +40,6 @@ func extractName(path string) string {
 type baseFilestorageService struct {
 	log     log.Logger
 	wrapped FileStorage
-}
-
-func validateName(name string) error {
-	matches := nameRegex.MatchString(name)
-
-	if !matches {
-		return ErrNameInvalid
-	}
-
-	return nil
 }
 
 func validatePath(path string) error {
@@ -67,6 +57,11 @@ func validatePath(path string) error {
 
 	if len(path) > 1000 {
 		return ErrPathTooLong
+	}
+
+	matches := pathRegex.MatchString(path)
+	if !matches {
+		return ErrPathInvalid
 	}
 
 	return nil
