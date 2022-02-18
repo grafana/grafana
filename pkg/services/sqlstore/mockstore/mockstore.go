@@ -650,3 +650,19 @@ func (m *SQLStoreMock) SearchOrgs(ctx context.Context, query *models.SearchOrgsQ
 	query.Result = m.ExpectedSearchOrgList
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
+	return m.ExpectedError
+}

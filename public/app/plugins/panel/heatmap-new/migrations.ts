@@ -3,7 +3,7 @@ import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
-} from 'app/core/components/TransformersUI/calculateHeatmap/models.gen';
+} from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapSourceMode, PanelOptions, defaultPanelOptions } from './models.gen';
 
 /**

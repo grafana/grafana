@@ -11,12 +11,12 @@ import * as redux from 'app/store/store';
 import { CloudWatchDatasource } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import {
-  MetricEditorMode,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   LogAction,
+  MetricEditorMode,
   MetricQueryType,
 } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -705,9 +705,11 @@ describe('CloudWatchDatasource', () => {
   describe('When performing CloudWatch query with template variables', () => {
     let templateSrv: TemplateSrv;
     beforeEach(() => {
+      const key = 'key';
       const var1: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var1',
+        rootStateKey: key,
         name: 'var1',
         index: 0,
         current: { value: 'var1-foo', text: 'var1-foo', selected: true },
@@ -721,6 +723,7 @@ describe('CloudWatchDatasource', () => {
       const var2: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var2',
+        rootStateKey: key,
         name: 'var2',
         index: 1,
         current: { value: 'var2-foo', text: 'var2-foo', selected: true },
@@ -734,6 +737,7 @@ describe('CloudWatchDatasource', () => {
       const var3: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var3',
+        rootStateKey: key,
         name: 'var3',
         index: 2,
         current: { value: ['var3-foo', 'var3-baz'], text: 'var3-foo + var3-baz', selected: true },
@@ -751,6 +755,7 @@ describe('CloudWatchDatasource', () => {
       const var4: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'var4',
+        rootStateKey: key,
         name: 'var4',
         index: 3,
         options: [
@@ -766,7 +771,7 @@ describe('CloudWatchDatasource', () => {
         type: 'custom',
       };
       const variables = [var1, var2, var3, var4];
-      const state = convertToStoreState(variables);
+      const state = convertToStoreState(key, variables);
       templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
       templateSrv.init(variables);
     });
