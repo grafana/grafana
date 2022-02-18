@@ -5,6 +5,8 @@ import (
 	"sort"
 	"testing"
 
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -41,7 +43,8 @@ func TestDuplicatesValidator(t *testing.T) {
 		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(2)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(2)
 
-		folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, folderName, featuremgmt.WithFeatures(), nil)
+		permissionsServices := acmock.NewPermissionsServicesMock()
+		folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, folderName, featuremgmt.WithFeatures(), permissionsServices.GetFolderService())
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
@@ -55,11 +58,11 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -95,7 +98,8 @@ func TestDuplicatesValidator(t *testing.T) {
 		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(2)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(2)
 
-		folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, folderName, featuremgmt.WithFeatures(), nil)
+		permissionsServices := acmock.NewPermissionsServicesMock()
+		folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, folderName, featuremgmt.WithFeatures(), permissionsServices.GetFolderService())
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
@@ -109,11 +113,11 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), nil)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
@@ -169,16 +173,16 @@ func TestDuplicatesValidator(t *testing.T) {
 			Name: "third", Type: "file", OrgID: 2, Folder: "duplicates-validator-folder",
 			Options: map[string]interface{}{"path": twoDashboardsWithUID},
 		}
-
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), nil)
+		permissionsServices := acmock.NewPermissionsServicesMock()
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader1.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), nil)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader2.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
-		reader3, err := NewDashboardFileReader(cfg3, logger, nil, featuremgmt.WithFeatures(), nil)
+		reader3, err := NewDashboardFileReader(cfg3, logger, nil, featuremgmt.WithFeatures(), permissionsServices)
 		reader3.dashboardProvisioningService = fakeService
 		require.NoError(t, err)
 
