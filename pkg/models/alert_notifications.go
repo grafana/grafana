@@ -88,8 +88,7 @@ type UpdateAlertNotificationWithUidCommand struct {
 	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId int64 `json:"-"`
-
+	OrgId  int64              `json:"-"`
 	Result *AlertNotification `json:"-"`
 }
 
