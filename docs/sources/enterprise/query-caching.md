@@ -71,6 +71,22 @@ To disable query caching for a single data source:
 
 To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
+## Clear cache
+
+If you experience performance issues or repeated queries become slower to execute, consider clearing your cache.
+
+> **Note:** This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
+
+**To clear the cache**:
+
+1. Sign in to Grafana and click **Settings > Data Sources**.
+
+1. Select a data source.
+
+1. Click the **Cache** tab.
+
+1. Click **Clear cache**.
+
 ## Sending a request without cache
 
 If a data source query request contains an `X-Cache-Skip` header, then Grafana skips the caching middleware, and does not search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
