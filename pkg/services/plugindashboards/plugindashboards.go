@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -20,31 +19,28 @@ type pluginSettingsStore interface {
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
 }
 
-func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, pluginStore plugins.Store,
+func ProvideService(sqlStore *sqlstore.SQLStore, pluginStore plugins.Store,
 	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
-	s := new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService)
+	s := new(sqlStore, pluginStore, pluginDashboardManager, dashboardImportService)
 	s.updateAppDashboards()
 	return s
 }
 
-func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugins.Store,
+func new(pluginSettingsStore pluginSettingsStore, pluginStore plugins.Store,
 	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service) *Service {
 	s := &Service{
 		pluginSettingsStore:    pluginSettingsStore,
-		bus:                    bus,
 		pluginStore:            pluginStore,
 		pluginDashboardManager: pluginDashboardManager,
 		dashboardImportService: dashboardImportService,
 		logger:                 log.New("plugindashboards"),
 	}
-	bus.AddEventListener(s.handlePluginStateChanged)
 
 	return s
 }
 
 type Service struct {
 	pluginSettingsStore    pluginSettingsStore
-	bus                    bus.Bus
 	pluginStore            plugins.Store
 	pluginDashboardManager plugins.PluginDashboardManager
 	dashboardImportService dashboardimport.Service

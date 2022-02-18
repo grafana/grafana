@@ -581,7 +581,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		return nil
 	})
 
-	sCtx.s = new(sCtx.pluginSettingsStore, sCtx.bus, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService)
+	sCtx.s = new(sCtx.pluginSettingsStore, sCtx.pluginStore, sCtx.pluginDashboardManager, sCtx.importDashboardService)
 
 	t.Cleanup(bus.ClearBusHandlers)
 
