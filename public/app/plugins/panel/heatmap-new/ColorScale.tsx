@@ -26,17 +26,17 @@ export const ColorScale = ({ colorPalette }: Props) => {
 
 const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; stops?: number }): string[] => {
   const gradientEnd = colorArray[colorArray.length - 1];
+  const colorCount = colorArray.length;
+  const skip = Math.ceil(colorCount / stops);
+  const gradientStops = new Set<string>();
 
-  let gradientStops = colorArray.filter((color, index) => {
-    let sections = Math.ceil(colorArray.length / stops);
-    return index % sections === 0;
-  });
-
-  if (!gradientStops.includes(gradientEnd)) {
-    gradientStops.push(gradientEnd);
+  for (let i = 0; i < colorCount; i += skip) {
+    gradientStops.add(colorArray[i]);
   }
 
-  return gradientStops;
+  gradientStops.add(gradientEnd);
+
+  return [...gradientStops];
 };
 
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
