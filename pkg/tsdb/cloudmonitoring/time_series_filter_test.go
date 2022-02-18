@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkdata "github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -387,39 +389,75 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, "114250375703598695", labels["resource.label.instance_id"])
 	})
 
-	t.Run("Parse labels for distribution", func(t *testing.T) {
-		data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(data.TimeSeries))
-		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
-		err = query.parseResponse(res, data, "test_query")
-		require.NoError(t, err)
-		frames := res.Frames
-		assert.Equal(t, "test_query", frames[0].Meta.ExecutedQueryString)
-		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
-		require.True(t, ok)
-		labels, ok := custom["labels"].(map[string]string)
-		require.True(t, ok)
-		assert.Equal(t, "grafana-prod", labels["resource.label.project_id"])
-	})
+	t.Run("parseResponse successfully parses metadata for distribution valueType", func(t *testing.T) {
+		t.Run("exponential bounds", func(t *testing.T) {
+			data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(data.TimeSeries))
 
-	t.Run("Parse labels for distribution without points", func(t *testing.T) {
-		data, err := loadTestFile("./test-data/9-series-response-distribution-without-points.json")
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(data.TimeSeries))
-		res := &backend.DataResponse{}
-		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
-		err = query.parseResponse(res, data, "test_query")
-		require.NoError(t, err)
-		frames := res.Frames
-		assert.Equal(t, 1, len(frames))
-		assert.Equal(t, "test_query", frames[0].Meta.ExecutedQueryString)
-		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
-		require.True(t, ok)
-		labels, ok := custom["labels"].(map[string]string)
-		require.True(t, ok)
-		assert.Equal(t, "grafana-prod", labels["resource.label.project_id"])
+			res := &backend.DataResponse{}
+			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{}).parseResponse(res, data, "test_query"))
+
+			require.NotNil(t, res.Frames[0].Meta)
+			assert.Equal(t, sdkdata.FrameMeta{
+				ExecutedQueryString: "test_query",
+				Custom: map[string]interface{}{
+					"groupBys":        []string(nil),
+					"alignmentPeriod": "",
+					"labels": map[string]string{
+						"resource.label.project_id": "grafana-prod",
+						"resource.type":             "https_lb_rule",
+					},
+					"perSeriesAligner": "",
+				},
+			}, *res.Frames[0].Meta)
+		})
+
+		t.Run("explicit bounds", func(t *testing.T) {
+			data, err := loadTestFile("./test-data/4-series-response-distribution-explicit.json")
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(data.TimeSeries))
+
+			res := &backend.DataResponse{}
+			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{}).parseResponse(res, data, "test_query"))
+
+			require.NotNil(t, res.Frames[0].Meta)
+			assert.Equal(t, sdkdata.FrameMeta{
+				ExecutedQueryString: "test_query",
+				Custom: map[string]interface{}{
+					"groupBys":        []string(nil),
+					"alignmentPeriod": "",
+					"labels": map[string]string{
+						"resource.label.project_id": "grafana-demo",
+						"resource.type":             "global",
+					},
+					"perSeriesAligner": "",
+				},
+			}, *res.Frames[0].Meta)
+		})
+
+		t.Run("without series points", func(t *testing.T) {
+			data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(data.TimeSeries))
+
+			res := &backend.DataResponse{}
+			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{}).parseResponse(res, data, "test_query"))
+
+			require.NotNil(t, res.Frames[0].Meta)
+			assert.Equal(t, sdkdata.FrameMeta{
+				ExecutedQueryString: "test_query",
+				Custom: map[string]interface{}{
+					"groupBys":        []string(nil),
+					"alignmentPeriod": "",
+					"labels": map[string]string{
+						"resource.label.project_id": "grafana-prod",
+						"resource.type":             "https_lb_rule",
+					},
+					"perSeriesAligner": "",
+				},
+			}, *res.Frames[0].Meta)
+		})
 	})
 }
 
