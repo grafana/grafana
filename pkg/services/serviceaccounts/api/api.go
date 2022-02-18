@@ -162,7 +162,7 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
 	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil
+		return map[string]accesscontrol.Metadata{}
 	}
 
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.Permissions[c.OrgId], "serviceaccounts", saIDs)

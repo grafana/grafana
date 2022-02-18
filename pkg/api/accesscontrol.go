@@ -352,7 +352,7 @@ func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource st
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
 func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resource string, ids map[string]bool) map[string]ac.Metadata {
 	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil
+		return map[string]ac.Metadata{}
 	}
 
 	return ac.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.Permissions[c.OrgId], resource, ids)
