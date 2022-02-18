@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type DashAlertExtractor interface {

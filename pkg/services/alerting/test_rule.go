@@ -3,10 +3,10 @@ package alerting
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
 
 // AlertTest makes a test alert.
