@@ -12,8 +12,9 @@ import (
 )
 
 type cdkBlobStorage struct {
-	log    log.Logger
-	bucket *blob.Bucket
+	log        log.Logger
+	bucket     *blob.Bucket
+	rootFolder string
 }
 
 func (c cdkBlobStorage) closeReader(reader *blob.Reader) {
@@ -161,9 +162,10 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 				return nil, err
 			}
 
+			fullPath := fixPath(path)
 			files = append(files, FileMetadata{
-				Name:       getName(path),
-				FullPath:   path,
+				Name:       getName(fullPath),
+				FullPath:   fullPath,
 				Created:    attributes.CreateTime,
 				Properties: attributes.Metadata,
 			})
@@ -182,15 +184,26 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 	}, nil
 }
 
-func appendDelimiter(path string) string {
-	if strings.HasSuffix(path, "/") {
-		return path
+func (c cdkBlobStorage) getPrefix(path string) string {
+	if path == Delimiter || path == "" {
+		return c.rootFolder
+	}
+	if strings.HasPrefix(path, Delimiter) {
+		path = fmt.Sprintf("%s%s", c.rootFolder, strings.TrimPrefix(path, Delimiter))
 	}
 	return fmt.Sprintf("%s%s", path, Delimiter)
 }
 
+func fixPath(path string) string {
+	newPath := strings.TrimSuffix(path, Delimiter)
+	if !strings.HasPrefix(newPath, Delimiter) {
+		newPath = fmt.Sprintf("%s%s", Delimiter, newPath)
+	}
+	return newPath
+}
+
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, paging *Paging) (*ListFilesResponse, error) {
-	return c.listFiles(ctx, appendDelimiter(folderPath), recursive, paging)
+	return c.listFiles(ctx, c.getPrefix(folderPath), recursive, paging)
 }
 
 func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
@@ -214,7 +227,7 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 		if obj.IsDir {
 			path := obj.Key
 
-			folderPath := strings.TrimSuffix(path, Delimiter)
+			folderPath := fixPath(path)
 			folders = append(folders, Folder{
 				Name: getName(folderPath),
 				Path: folderPath,
@@ -225,14 +238,16 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 				return nil, err
 			}
 
-			folders = append(folders, resp...)
+			if resp != nil && len(resp) > 0 {
+				folders = append(folders, resp...)
+			}
 		}
 	}
 	return folders, nil
 }
 
 func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
-	folders, err := c.listFolders(ctx, appendDelimiter(parentFolderPath))
+	folders, err := c.listFolders(ctx, c.getPrefix(parentFolderPath))
 	return folders, err
 }
 

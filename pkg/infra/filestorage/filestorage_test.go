@@ -36,7 +36,9 @@ func TestSqlStorage(t *testing.T) {
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		filestorage, _ = ProvideService(setting.NewCfg(), sqlStore)
+
+		mode := "db" // "db" or "mem"
+		filestorage, _ = ProvideService(setting.NewCfg(), sqlStore, mode)
 		ctx = context.Background()
 	}
 

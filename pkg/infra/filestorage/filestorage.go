@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"gocloud.dev/blob"
 
+	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 )
 
@@ -15,22 +16,34 @@ const (
 	ServiceName = "FileStorage"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (FileStorage, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, mode string) (FileStorage, error) {
 	var wrappedFileStorage FileStorage
-	if false {
+	if mode == "db" {
 		wrappedFileStorage = &dbFileStorage{
 			db:  sqlStore,
 			log: log.New("dbFileStorage"),
 		}
-	} else {
+	} else if mode == "mem" {
 		bucket, err := blob.OpenBucket(context.Background(), "mem://")
 		if err != nil {
 			return nil, err
 		}
 
 		wrappedFileStorage = &cdkBlobStorage{
-			log:    log.New("cdkBlobStorage"),
-			bucket: bucket,
+			log:        log.New("cdkBlobStorage"),
+			bucket:     bucket,
+			rootFolder: Delimiter,
+		}
+	} else if mode == "localfs" {
+		bucket, err := blob.OpenBucket(context.Background(), "file://./test_fs")
+		if err != nil {
+			return nil, err
+		}
+
+		wrappedFileStorage = &cdkBlobStorage{
+			log:        log.New("cdkBlobStorage"),
+			bucket:     bucket,
+			rootFolder: "",
 		}
 	}
 
