@@ -1,7 +1,6 @@
 import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
-import { DataResponse } from 'src';
 import { FetchError, FetchResponse } from 'src/services';
-import { BackendDataSourceResponse, toDataQueryResponse, toTestingStatus } from './queryResponse';
+import { BackendDataSourceResponse, cachedResponseNotice, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
 const resp = {
   data: {
@@ -302,9 +301,7 @@ describe('Query Response parser', () => {
     test('adds notice for responses with X-Cache: HIT header', () => {
       const queries: DataQuery[] = [{ refId: 'A' }];
       resp.headers.set('X-Cache', 'HIT');
-      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([
-        { severity: 'info', text: 'Cached response' },
-      ]);
+      expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([cachedResponseNotice]);
     });
 
     test('does not remove existing notices', () => {
@@ -313,7 +310,7 @@ describe('Query Response parser', () => {
       resp.data.results.A.frames[0].schema.meta = { notices: [{ severity: 'info', text: 'Example' }] };
       expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([
         { severity: 'info', text: 'Example' },
-        { severity: 'info', text: 'Cached response' },
+        cachedResponseNotice,
       ]);
     });
 

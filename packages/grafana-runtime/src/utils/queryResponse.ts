@@ -17,6 +17,8 @@ import {
 import { FetchError, FetchResponse } from '../services';
 import { toDataQueryError } from './toDataQueryError';
 
+export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
+
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
  * an error or a some data (but can contain both). Main way to send data is with dataframes attribute as series and
@@ -134,11 +136,14 @@ export function toDataQueryResponse(
 }
 
 function isCachedResponse(res: FetchResponse<BackendDataSourceResponse | undefined>): boolean {
-  return res?.headers?.get('x-cache') === 'HIT';
+  const headers = res?.headers;
+  if (!headers || !headers.get) {
+    return false;
+  }
+  return headers.get('X-Cache') === 'HIT';
 }
 
 function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
-  const cached: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
   return {
     ...frame,
     schema: {
@@ -146,7 +151,7 @@ function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
       fields: [...(frame.schema?.fields ?? [])],
       meta: {
         ...frame.schema?.meta,
-        notices: [...(frame.schema?.meta?.notices ?? []), cached],
+        notices: [...(frame.schema?.meta?.notices ?? []), cachedResponseNotice],
       },
     },
   };
