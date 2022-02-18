@@ -10,6 +10,7 @@ import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
+import { get } from 'lodash';
 
 interface Props {
   editingExistingRule: boolean;
@@ -148,8 +149,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         <Field
           label="Folder"
           className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
+          // Use get to make react-hook-form + TS happy for object fields
+          error={get(errors, 'folder.message')}
+          invalid={!!get(errors, 'folder.message')}
           data-testid="folder-picker"
         >
           <InputControl
