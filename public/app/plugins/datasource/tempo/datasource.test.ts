@@ -16,6 +16,12 @@ import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './dat
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
+  // Mock the console error so that running the test suite doesnt throw the error
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
   it('returns empty response when traceId is empty', async () => {
     const ds = new TempoDatasource(defaultSettings);
     const response = await lastValueFrom(

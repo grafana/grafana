@@ -21,6 +21,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceWithLogsVolumeSupport,
   DefaultTimeZone,
   LoadingState,
   MutableDataFrame,
@@ -54,6 +55,7 @@ const defaultInitialState = {
       datasourceInstance: {
         query: jest.fn(),
         getRef: jest.fn(),
+        getLogsVolumeDataProvider: jest.fn(),
         meta: {
           id: 'something',
         },
@@ -99,6 +101,24 @@ describe('runQueries', () => {
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
+  });
+
+  it('should modify the request-id for log-volume queries', async () => {
+    setTimeSrv({ init() {} } as any);
+    const { dispatch, getState } = configureStore({
+      ...(defaultInitialState as any),
+    });
+    setupQueryResponse(getState());
+    await dispatch(runQueries(ExploreId.left));
+
+    const state = getState().explore[ExploreId.left];
+    expect(state.queryResponse.request?.requestId).toBe('explore_left');
+    const datasource = state.datasourceInstance as any as DataSourceWithLogsVolumeSupport<DataQuery>;
+    expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
+      expect.objectContaining({
+        requestId: 'explore_left_log_volume',
+      })
+    );
   });
 
   it('should set state to done if query completes without emitting', async () => {
