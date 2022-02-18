@@ -323,7 +323,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 func (auth *AuthProxy) getDecodedHeader(headerName string) string {
 	headerValue := auth.ctx.Req.Header.Get(headerName)
 
-	if auth.cfg.AuthProxyEncodedHeaders {
+	if auth.cfg.AuthProxyHeadersEncoded {
 		headerValue = decodeHeader(headerValue)
 	}
 

@@ -33,7 +33,7 @@ whitelist =
 # Example `headers = Name:X-WEBAUTH-NAME Role:X-WEBAUTH-ROLE Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
 # Non-ASCII strings in header values are encoded using XXX encoding
-;encoded_headers = false
+;headers_encoded = false
 # Check out docs on this for more details on the below setting
 enable_login_token = false
 ```
