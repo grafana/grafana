@@ -1,10 +1,16 @@
 package migrations
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 
+	"github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
@@ -32,7 +38,7 @@ func TestMigrations(t *testing.T) {
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)
 
-	err = mg.Start()
+	err = mg.Start(false, 0)
 	require.NoError(t, err)
 
 	has, err := x.SQL(query).Get(&result)
@@ -44,7 +50,7 @@ func TestMigrations(t *testing.T) {
 	mg = NewMigrator(x, &setting.Cfg{})
 	migrations.AddMigration(mg)
 
-	err = mg.Start()
+	err = mg.Start(false, 0)
 	require.NoError(t, err)
 
 	has, err = x.SQL(query).Get(&result)
