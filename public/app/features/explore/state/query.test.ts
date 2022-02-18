@@ -112,10 +112,12 @@ describe('runQueries', () => {
 
     const state = getState().explore[ExploreId.left];
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
-    // need to cast to `any` to get through with typescript
-    const provider = (state.datasourceInstance as any).getLogsVolumeDataProvider;
-    const lastCall = provider.mock.calls[provider.mock.calls.length - 1];
-    expect(lastCall[0].requestId).toBe('explore_left_log_volume');
+    const datasource = state.datasourceInstance as any as DataSourceWithLogsVolumeSupport<DataQuery>;
+    expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
+      expect.objectContaining({
+        requestId: 'explore_left_log_volume',
+      })
+    );
   });
 
   it('should set state to done if query completes without emitting', async () => {
