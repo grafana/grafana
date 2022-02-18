@@ -278,4 +278,40 @@ describe('PromQueryModeller', () => {
       })
     ).toBe('metric_a / on(le) metric_b');
   });
+  it('Can render functions that require a range as a parameter', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'holt_winters', params: ['auto', 0.5, 0.5] }],
+      })
+    ).toBe('holt_winters(metric_a[$__rate_interval], 0.5, 0.5)');
+  });
+  it('Can render functions that require parameters left of a range', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'quantile_over_time', params: ['auto', 1] }],
+      })
+    ).toBe('quantile_over_time(1, metric_a[$__rate_interval])');
+  });
+  it('Can render the label_join function', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'label_join', params: ['label_1', ',', 'label_2'] }],
+      })
+    ).toBe('label_join(metric_a, "label_1", ",", "label_2")');
+  });
+  it('Can render label_join with extra parameters', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'label_join', params: ['label_1', ', ', 'label_2', 'label_3', 'label_4', 'label_5'] }],
+      })
+    ).toBe('label_join(metric_a, "label_1", ", ", "label_2", "label_3", "label_4", "label_5")');
+  });
 });
