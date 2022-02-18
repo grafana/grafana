@@ -321,7 +321,7 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 }
 
 func (ss SQLStore) GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
-	return withDbSession(ctx, x, func(sess *DBSession) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		user := new(models.User)
 		has, err := sess.ID(query.Id).Get(user)
 

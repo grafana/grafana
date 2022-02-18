@@ -8,32 +8,33 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
+	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/oauth2"
-
-	"github.com/grafana/grafana/pkg/services/searchusers"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
-		Cfg:      settings,
-		SQLStore: sqlStore,
+		Cfg:           settings,
+		SQLStore:      sqlStore,
+		AccessControl: &acmock.Mock{},
 	}
 
 	mockResult := models.SearchUserQueryResult{
