@@ -364,6 +364,22 @@ func (m *pluginSettingsStoreMock) GetPluginSettings(ctx context.Context, orgID i
 	return nil, nil
 }
 
+func (m *pluginSettingsStoreMock) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+	return nil
+}
+
+func (m *pluginSettingsStoreMock) GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+	return nil
+}
+
+func (m *pluginSettingsStoreMock) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	return nil
+}
+
+func (m *pluginSettingsStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return nil
+}
+
 type pluginStoreMock struct {
 	plugins.Store
 	pluginFunc func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool)
