@@ -216,8 +216,47 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 }
 
 func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
-	//TODO implement me
-	panic("implement me")
+	folders := make([]Folder, 0)
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var foundPaths []string
+
+		sess.Table("file")
+		sess.Distinct("parent_folder_path")
+		sess.Where("parent_folder_path > ?", parentFolderPath)
+		sess.OrderBy("parent_folder_path")
+		sess.Cols("parent_folder_path")
+
+		if err := sess.Find(&foundPaths); err != nil {
+			return err
+		}
+
+		mem := make(map[string]bool)
+		for i := 0; i < len(foundPaths); i++ {
+			path := foundPaths[i]
+			parts := strings.Split(path, Delimiter)
+			acc := parts[0]
+			j := 1
+			for {
+				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
+				if !mem[acc] && len(acc) > len(parentFolderPath) {
+					folders = append(folders, Folder{
+						Name: getName(acc),
+						Path: acc,
+					})
+				}
+				mem[acc] = true
+
+				j += 1
+				if j >= len(parts) {
+					break
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return folders, err
 }
 
 func (s dbFileStorage) CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error {
