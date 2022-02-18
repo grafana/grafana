@@ -18,6 +18,7 @@ import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { ColorScale } from './ColorScale';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -96,7 +97,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        scale from: {JSON.stringify(palette)}
+        <ColorScale colorPalette={palette} />
       </VizLayout.Legend>
     );
   };
