@@ -70,7 +70,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 90*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
-				require.Equal(t, DefaultAlertForDuration, cfg.UnifiedAlerting.DefaultAlertForDuration)
+				require.Equal(t, DefaultRuleEvaluationInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
 			},
 		},
 		{
@@ -95,7 +95,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
-				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultAlertForDuration)
+				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
 			},
 		},
 		{
@@ -119,7 +119,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, schedulereDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, evaluatorDefaultEvaluationTimeout, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
-				require.Equal(t, DefaultAlertForDuration, cfg.UnifiedAlerting.DefaultAlertForDuration)
+				require.Equal(t, DefaultRuleEvaluationInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
 			},
 		},
 		{
@@ -143,7 +143,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
-				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultAlertForDuration)
+				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
 			},
 		},
 	}
@@ -227,10 +227,12 @@ func TestMinInterval(t *testing.T) {
 			},
 		},
 		{
-			desc:        "should adjust DefaultAlertForDuration to min interval if it is greater",
-			minInterval: randPredicate(func(dur time.Duration) bool { return dur%SchedulerBaseInterval == 0 && dur > DefaultAlertForDuration }),
+			desc: "should adjust DefaultRuleEvaluationInterval to min interval if it is greater",
+			minInterval: randPredicate(func(dur time.Duration) bool {
+				return dur%SchedulerBaseInterval == 0 && dur > DefaultRuleEvaluationInterval
+			}),
 			verifyCfg: func(t *testing.T, cfg *Cfg, err error) {
-				require.Equal(t, cfg.UnifiedAlerting.MinInterval, cfg.UnifiedAlerting.DefaultAlertForDuration)
+				require.Equal(t, cfg.UnifiedAlerting.MinInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
 			},
 		},
 		{
