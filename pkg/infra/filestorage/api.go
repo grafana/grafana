@@ -55,7 +55,7 @@ type FileStorage interface {
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
 	ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Paging) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, parentFolderPath string) (*[]Folder, error)
+	ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error)
 
 	CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error
 	DeleteFolder(ctx context.Context, folderPath string) error

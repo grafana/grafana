@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"gocloud.dev/blob"
@@ -95,38 +96,46 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 		pageSize = paging.First
 	}
 
+	foundCursor := true
+	if paging != nil && paging.After != "" {
+		foundCursor = false
+	}
+
 	hasMore := true
 	var files []FileMetadata
 	for {
-		if len(files) >= pageSize {
-			_, err := iterator.Next(ctx)
-			if err == io.EOF {
-				hasMore = false
-			}
-
-			break
-		}
-
 		obj, err := iterator.Next(ctx)
 		if err == io.EOF {
 			hasMore = false
 			break
 		}
-		path := obj.Key
 
 		if err != nil {
 			c.log.Error("Failed while iterating over files", "err", err)
 			return nil, err
 		}
 
+		if len(files) >= pageSize {
+			break
+		}
+
+		path := obj.Key
 		if obj.IsDir && recursive {
-			newPageSize := pageSize - len(files)
-			resp, err := c.listFiles(ctx, path, true, &Paging{
-				First: newPageSize,
-			})
+			newPaging := &Paging{
+				First: pageSize - len(files),
+			}
+			if paging != nil {
+				newPaging.After = paging.After
+			}
+
+			resp, err := c.listFiles(ctx, path, true, newPaging)
 
 			if err != nil {
 				return nil, err
+			}
+
+			if len(files) > 0 {
+				foundCursor = true
 			}
 
 			files = append(files, resp.Files...)
@@ -134,6 +143,18 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 				hasMore = resp.HasMore
 			}
 		} else if !obj.IsDir {
+			if !foundCursor {
+				res := strings.Compare(obj.Key, paging.After)
+				if res < 0 {
+					continue
+				} else if res == 0 {
+					foundCursor = true
+					continue
+				} else {
+					foundCursor = true
+				}
+			}
+
 			attributes, err := c.bucket.Attributes(ctx, path)
 			if err != nil {
 				c.log.Error("Failed while retrieving attributes", "path", path, "err", err)
@@ -161,13 +182,58 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 	}, nil
 }
 
-func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, paging *Paging) (*ListFilesResponse, error) {
-	return c.listFiles(ctx, fmt.Sprintf("%s%s", folderPath, Delimiter), recursive, paging)
+func appendDelimiter(path string) string {
+	if strings.HasSuffix(path, "/") {
+		return path
+	}
+	return fmt.Sprintf("%s%s", path, Delimiter)
 }
 
-func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string) (*[]Folder, error) {
-	//TODO implement me
-	panic("implement me")
+func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, paging *Paging) (*ListFilesResponse, error) {
+	return c.listFiles(ctx, appendDelimiter(folderPath), recursive, paging)
+}
+
+func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
+	iterator := c.bucket.List(&blob.ListOptions{
+		Prefix:    parentFolderPath,
+		Delimiter: Delimiter,
+	})
+
+	var folders []Folder
+	for {
+		obj, err := iterator.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			c.log.Error("Failed while iterating over files", "err", err)
+			return nil, err
+		}
+
+		if obj.IsDir {
+			path := obj.Key
+
+			folderPath := strings.TrimSuffix(path, Delimiter)
+			folders = append(folders, Folder{
+				Name: getName(folderPath),
+				Path: folderPath,
+			})
+			resp, err := c.listFolders(ctx, obj.Key)
+
+			if err != nil {
+				return nil, err
+			}
+
+			folders = append(folders, resp...)
+		}
+	}
+	return folders, nil
+}
+
+func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
+	folders, err := c.listFolders(ctx, appendDelimiter(parentFolderPath))
+	return folders, err
 }
 
 func (c cdkBlobStorage) CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error {

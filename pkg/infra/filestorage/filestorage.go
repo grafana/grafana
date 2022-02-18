@@ -17,7 +17,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (FileStorage, error) {
 	var wrappedFileStorage FileStorage
-	if true {
+	if false {
 		wrappedFileStorage = &dbFileStorage{
 			db:  sqlStore,
 			log: log.New("dbFileStorage"),

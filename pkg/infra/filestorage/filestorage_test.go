@@ -128,4 +128,88 @@ func TestSqlStorage(t *testing.T) {
 			},
 		}, extractNameFullPath(resp.Files))
 	})
+
+	t.Run("Should be able to list files with pagination", func(t *testing.T) {
+		setup()
+		err := filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/folder2/file.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		require.NoError(t, err)
+
+		err = filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/file-inner.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		require.NoError(t, err)
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folderA/folderB/file.txt",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+
+		resp, err := filestorage.ListFiles(ctx, "/", true, &Paging{
+			After: "/folder1/file-inner.jpg",
+			First: 1,
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, []NameFullPath{
+			{Name: "file.jpg", FullPath: "/folder1/folder2/file.jpg"},
+		}, extractNameFullPath(resp.Files))
+	})
+
+	t.Run("Should be able to list folders", func(t *testing.T) {
+		setup()
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/folder2/file.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/file-inner.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folderX/folderZ/file.txt",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folderA/folderB/file.txt",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+
+		resp, err := filestorage.ListFolders(ctx, "/")
+		require.NoError(t, err)
+
+		require.Equal(t, []Folder{
+			{
+				Name: "folder1",
+				Path: "/folder1",
+			},
+			{
+				Name: "folder2",
+				Path: "/folder1/folder2",
+			},
+			{
+				Name: "folderA",
+				Path: "/folderA",
+			}, {
+				Name: "folderB",
+				Path: "/folderA/folderB",
+			},
+			{
+				Name: "folderX",
+				Path: "/folderX",
+			}, {
+				Name: "folderZ",
+				Path: "/folderX/folderZ",
+			},
+		}, resp)
+	})
 }

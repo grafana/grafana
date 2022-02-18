@@ -167,6 +167,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 		} else {
 			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(folderPath))
 		}
+
 		sess.OrderBy("path")
 
 		pageSize := 10
@@ -176,12 +177,20 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 
 		sess.Limit(pageSize + 1)
 
+		if paging != nil && paging.After != "" {
+			sess.Where("path > ?", paging.After)
+		}
+
 		if err := sess.Find(&foundFiles); err != nil {
 			return err
 		}
 
+		foundLength := len(foundFiles)
+		if foundLength > pageSize {
+			foundLength = pageSize
+		}
 		files := make([]FileMetadata, 0)
-		for i := 0; i < len(foundFiles); i++ {
+		for i := 0; i < foundLength; i++ {
 			files = append(files, FileMetadata{
 				Name:       getName(foundFiles[i].Path),
 				FullPath:   foundFiles[i].Path,
@@ -206,7 +215,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 	return resp, err
 }
 
-func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string) (*[]Folder, error) {
+func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
 	//TODO implement me
 	panic("implement me")
 }
