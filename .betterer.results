@@ -110,7 +110,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:2288177454": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2545268168": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2127169675": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:2454947085": [
@@ -209,7 +209,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:4134073823": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1141305288": [
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1044891955": [
       [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:1798654441": [
