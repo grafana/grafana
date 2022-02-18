@@ -59,4 +59,11 @@ type FileStorage interface {
 
 	CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error
 	DeleteFolder(ctx context.Context, folderPath string) error
+	GetPathPrefix() string // s3://
 }
+
+// Get(ctx, "/myGit/dashboards/xyz123")
+// Get(ctx, "/ryansGit/dashboards/xyz124")
+// Get(ctx, "/general/dashboards/xyz124")    ?? general
+//   VS
+// s3Storage.Get(ctx, "/dashboards/xyz123")
