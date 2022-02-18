@@ -254,7 +254,7 @@
     "@react-aria/button": "3.3.4",
     "@react-aria/dialog": "3.1.4",
     "@react-aria/focus": "3.5.0",
-    "@react-aria/interactions": "3.7.0",
+    "@react-aria/interactions": "3.8.1",
     "@react-aria/menu": "3.3.0",
     "@react-aria/overlays": "3.7.3",
     "@react-aria/utils": "3.11.0",
