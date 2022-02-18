@@ -91,8 +91,8 @@ export function ServiceAccountProfile({
             <ConfirmModal
               isOpen={showDeleteModal}
               title="Delete serviceaccount"
-              body="Are you sure you want to delete this serviceaccount?"
-              confirmText="Delete serviceaccount"
+              body="Are you sure you want to delete this service account?"
+              confirmText="Delete service account"
               onConfirm={handleServiceAccountDelete}
               onDismiss={showDeleteServiceAccountModal(false)}
             />
@@ -109,9 +109,9 @@ export function ServiceAccountProfile({
               </Button>
               <ConfirmModal
                 isOpen={showDisableModal}
-                title="Disable serviceaccount"
-                body="Are you sure you want to disable this serviceaccount?"
-                confirmText="Disable serviceaccount"
+                title="Disable service account"
+                body="Are you sure you want to disable this service account?"
+                confirmText="Disable service account"
                 onConfirm={handleServiceAccountDisable}
                 onDismiss={showDisableServiceAccountModal(false)}
               />
