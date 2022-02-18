@@ -6,10 +6,11 @@ export type Status = 'idle' | 'loading' | 'succeeded' | 'failed';
 
 const invitesAdapter = createEntityAdapter({ selectId: (invite: Invitee) => invite.code });
 export const selectors = invitesAdapter.getSelectors();
+export const initialState = invitesAdapter.getInitialState<{ status: Status }>({ status: 'idle' });
 
 const invitesSlice = createSlice({
   name: 'invites',
-  initialState: invitesAdapter.getInitialState<{ status: Status }>({ status: 'idle' }),
+  initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
