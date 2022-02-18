@@ -393,9 +393,10 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
-		err = query.parseResponse(res, data, "")
+		err = query.parseResponse(res, data, "test_query")
 		require.NoError(t, err)
 		frames := res.Frames
+		assert.Equal(t, "test_query", frames[0].Meta.ExecutedQueryString)
 		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
 		require.True(t, ok)
 		labels, ok := custom["labels"].(map[string]string)
@@ -409,10 +410,11 @@ func TestTimeSeriesFilter(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
-		err = query.parseResponse(res, data, "")
+		err = query.parseResponse(res, data, "test_query")
 		require.NoError(t, err)
 		frames := res.Frames
 		assert.Equal(t, 1, len(frames))
+		assert.Equal(t, "test_query", frames[0].Meta.ExecutedQueryString)
 		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
 		require.True(t, ok)
 		labels, ok := custom["labels"].(map[string]string)
