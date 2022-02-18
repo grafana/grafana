@@ -82,7 +82,7 @@ function LogsNavigation({
 
   useEffect(() => {
     clearCache();
-    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    // We can't enforce the eslint rule here because we only want to run when component is mounted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
