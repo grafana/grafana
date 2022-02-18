@@ -1,4 +1,4 @@
-import { LoadingState, NavModelItem } from '@grafana/data';
+import { DataFrameView, LoadingState, NavModelItem } from '@grafana/data';
 import { Input } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import Page from 'app/core/components/Page/Page';
@@ -6,6 +6,7 @@ import { useAsync } from 'react-use';
 import { buildStatsTable, filterDataFrame, getDashboardData } from './data';
 import { config, PanelRenderer } from '@grafana/runtime';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { DashboardResult } from './types';
 
 export default function SearchPage() {
   const node: NavModelItem = {
@@ -45,8 +46,22 @@ export default function SearchPage() {
           <div>
             <AutoSizer style={{ width: '100%', height: '1500px' }}>
               {({ width, height }) => {
+                // Helper... could be MUCH more efficient, but this approach lets us treat
+                // DataFrame results as well typed objects (the names must match the types)
+                const dashboards = new DataFrameView<DashboardResult>(filtered.dashboards);
                 return (
                   <div>
+                    <div style={{ maxHeight: '300px', overflow: 'scroll' }}>
+                      {dashboards.map((dash) => (
+                        <div key={dash.UID}>
+                          <a href={`/d/${dash.UID}/`}>{dash.Name}</a>
+                        </div>
+                      ))}
+                    </div>
+
+                    <hr />
+                    <hr />
+
                     {filtered.dashboards.length > 0 && (
                       <>
                         <h1>Dashboards ({filtered.dashboards.length})</h1>
