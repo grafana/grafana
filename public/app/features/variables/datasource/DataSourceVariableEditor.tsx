@@ -1,23 +1,38 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { SelectableValue } from '@grafana/data';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { initialVariableEditorState } from '../editor/reducer';
 import { initDataSourceVariableEditor } from './actions';
 import { StoreState } from '../../../types';
 import { changeVariableMultiValue } from '../state/actions';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
-import { SelectableValue } from '@grafana/data';
 import { VariableTextField } from '../editor/VariableTextField';
+import { getVariablesState } from '../state/selectors';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDatasourceVariableEditorState } from '../editor/selectors';
 
-const mapStateToProps = (state: StoreState) => ({
-  extended: getDatasourceVariableEditorState(state.templating.editor),
-});
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const {
+    variable: { rootStateKey },
+  } = ownProps;
+  if (!rootStateKey) {
+    console.error('DataSourceVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getDatasourceVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+  return {
+    extended: getDatasourceVariableEditorState(editor),
+  };
+};
 
 const mapDispatchToProps = {
   initDataSourceVariableEditor,
@@ -32,7 +47,13 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initDataSourceVariableEditor();
+    const { rootStateKey } = this.props.variable;
+    if (!rootStateKey) {
+      console.error('DataSourceVariableEditor: variable has no rootStateKey');
+      return;
+    }
+
+    this.props.initDataSourceVariableEditor(rootStateKey);
   }
 
   onRegExChange = (event: FormEvent<HTMLInputElement>) => {
