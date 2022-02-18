@@ -355,5 +355,14 @@ func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resour
 		return map[string]ac.Metadata{}
 	}
 
-	return ac.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.Permissions[c.OrgId], resource, ids)
+	if c.SignedInUser.Permissions == nil {
+		return map[string]ac.Metadata{}
+	}
+
+	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	if !ok {
+		return map[string]ac.Metadata{}
+	}
+
+	return ac.GetResourcesMetadata(c.Req.Context(), permissions, resource, ids)
 }
