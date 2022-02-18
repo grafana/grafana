@@ -21,6 +21,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceWithLogsVolumeSupport,
   DefaultTimeZone,
   LoadingState,
   MutableDataFrame,
