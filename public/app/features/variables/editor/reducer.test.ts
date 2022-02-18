@@ -14,7 +14,7 @@ import {
   VariableEditorState,
   variableEditorUnMounted,
 } from './reducer';
-import { toVariablePayload } from '../state/types';
+import { toVariablePayload } from '../utils';
 
 describe('variableEditorReducer', () => {
   describe('when setIdInEditor is dispatched', () => {

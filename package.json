@@ -71,7 +71,7 @@
   "devDependencies": {
     "@babel/core": "7.17.0",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.16.7",
-    "@babel/plugin-proposal-object-rest-spread": "7.16.7",
+    "@babel/plugin-proposal-object-rest-spread": "7.17.3",
     "@babel/plugin-proposal-optional-chaining": "7.16.7",
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
     "@babel/plugin-transform-react-constant-elements": "7.16.7",
@@ -158,7 +158,7 @@
     "@typescript-eslint/parser": "5.11.0",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.6",
     "autoprefixer": "10.4.2",
-    "axios": "0.25.0",
+    "axios": "0.26.0",
     "babel-jest": "27.5.0",
     "babel-loader": "8.2.3",
     "babel-plugin-angularjs-annotate": "0.10.0",
