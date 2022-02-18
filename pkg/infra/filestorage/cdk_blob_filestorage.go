@@ -184,7 +184,7 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 	}, nil
 }
 
-func (c cdkBlobStorage) getPrefix(path string) string {
+func (c cdkBlobStorage) convertFolderPathToPrefix(path string) string {
 	if path == Delimiter || path == "" {
 		return c.rootFolder
 	}
@@ -203,7 +203,7 @@ func fixPath(path string) string {
 }
 
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, paging *Paging) (*ListFilesResponse, error) {
-	return c.listFiles(ctx, c.getPrefix(folderPath), recursive, paging)
+	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), recursive, paging)
 }
 
 func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
@@ -247,7 +247,7 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 }
 
 func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
-	folders, err := c.listFolders(ctx, c.getPrefix(parentFolderPath))
+	folders, err := c.listFolders(ctx, c.convertFolderPathToPrefix(parentFolderPath))
 	return folders, err
 }
 
