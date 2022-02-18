@@ -167,6 +167,7 @@ func TestAccountDataAccess(t *testing.T) {
 				err := SearchUsers(context.Background(), &query)
 
 				require.NoError(t, err)
+				require.Len(t, query.Result.Users, 2)
 				require.Equal(t, query.Result.Users[0].Email, "ac1@test.com")
 				require.Equal(t, query.Result.Users[1].Email, "ac2@test.com")
 			})
