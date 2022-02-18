@@ -12,7 +12,7 @@ list = false
 
 We’re excited to announce Grafana v8.4, with a variety of improvements that focus on Grafana’s usability, performance, and security. Read on to learn about Alerting enhancements like a WeCom contact point, improved Alert panel and custom mute timings, as well as visualization improvements and details to help you share playlists more easily. In Grafana Enterprise, we’ve made caching more powerful to save you time and money while loading dashboards, boosted database encryption to keep secrets safe in your Grafana database, and made usability improvements to Recorded Queries, which allow you to track any data point over time.
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+We’ve summarized what’s new in the release here, but you might also be interested in the announcement [blog post](https://grafana.com/blog/2022/02/17/grafana-8.4-release-new-panels-better-query-caching-increased-security-accessibility-features-and-more/). If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 # OSS
 
