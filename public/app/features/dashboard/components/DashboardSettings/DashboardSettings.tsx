@@ -72,7 +72,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
         title: 'Variables',
         id: 'templating',
         icon: 'calculator-alt',
-        component: <VariableEditorContainer />,
+        component: <VariableEditorContainer dashboard={dashboard} />,
       });
 
       pages.push({
