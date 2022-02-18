@@ -1,9 +1,13 @@
 import React from 'react';
 import { DataFrame, DataQuery } from '@grafana/data';
 import { ExploreId, StoreState } from 'app/types';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { getExploreItemSelector } from '../state/selectors';
 import { AddToDashboardButton } from './AddToDashboardButton';
+import { addToDashboard, SaveToExistingDashboardDTO, SaveToNewDashboardDTO } from './addToDashboard';
+import { FetchError, locationService } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
@@ -36,6 +40,7 @@ interface Props {
 }
 
 export const AddToDashboard = ({ exploreId }: Props) => {
+  const dispatch = useDispatch();
   const selectExploreItem = getExploreItemSelector(exploreId);
 
   const { queries, mainVisualization } = useSelector((state: StoreState) => {
@@ -45,5 +50,20 @@ export const AddToDashboard = ({ exploreId }: Props) => {
     return { queries, mainVisualization: getMainVisualization(queries, graphFrames, logsFrames, nodeGraphFrames) };
   });
 
-  return <AddToDashboardButton queries={queries} visualization={mainVisualization} />;
+  const handleSave = async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO, redirect: boolean) => {
+    return addToDashboard(data)
+      .then(
+        redirect
+          ? locationService.push
+          : () => {
+              dispatch(notifyApp(createSuccessNotification('YAY!')));
+            }
+      )
+      .catch((e: FetchError) => {
+        // transform an API error into an error handleable by the component
+        return { message: e.data.message ?? 'Unknown Error', status: e.data.status ?? 'unknown-error' };
+      });
+  };
+
+  return <AddToDashboardButton queries={queries} visualization={mainVisualization} onSave={handleSave} />;
 };

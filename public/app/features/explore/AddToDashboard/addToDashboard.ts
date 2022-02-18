@@ -38,7 +38,8 @@ const createDashboard = (dashboardName: string, folderId: number, queries: DataQ
   return lastValueFrom(createDashboardApiCall(dashboard.getSaveModelClone(), folderId));
 };
 
-export const addToDashboard = (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO) => {
+export const addToDashboard = async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO): Promise<string> => {
   // TODO: if create dashboard...
-  return createDashboard(data.dashboardName, data.folder.id, data.queries, data.visualization);
+  const res = await createDashboard(data.dashboardName, data.folder.id, data.queries, data.visualization);
+  return res.data.url;
 };
