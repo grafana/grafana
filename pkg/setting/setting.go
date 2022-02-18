@@ -306,6 +306,7 @@ type Cfg struct {
 	AuthProxyEnableLoginToken bool
 	AuthProxyWhitelist        string
 	AuthProxyHeaders          map[string]string
+	AuthProxyEncodedHeaders   bool
 	AuthProxySyncTTL          int
 
 	// OAuth
@@ -1314,6 +1315,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 			cfg.AuthProxyHeaders[split[0]] = split[1]
 		}
 	}
+
+	cfg.AuthProxyEncodedHeaders = authProxy.Key("encoded_headers").MustBool(false)
 
 	return nil
 }
