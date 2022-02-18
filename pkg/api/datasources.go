@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -71,23 +70,6 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 	return response.JSON(200, &result)
 }
 
-func (hs *HTTPServer) getDataSourceAccessControlMetadata(c *models.ReqContext, dsID int64) (accesscontrol.Metadata, error) {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
-	}
-
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser,
-		accesscontrol.Options{ReloadCache: false})
-	if err != nil || len(userPermissions) == 0 {
-		return nil, err
-	}
-
-	key := fmt.Sprintf("%d", dsID)
-	dsIDs := map[string]bool{key: true}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "datasources", dsIDs)[key], nil
-}
-
 // GET /api/datasources/:id
 func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
@@ -115,12 +97,9 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	}
 
 	dto := convertModelToDtos(filtered[0])
+
 	// Add accesscontrol metadata
-	metadata, err := hs.getDataSourceAccessControlMetadata(c, dto.Id)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
-	}
-	dto.AccessControl = metadata
+	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
 
 	return response.JSON(200, &dto)
 }
@@ -179,11 +158,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 	dto := convertModelToDtos(filtered[0])
 
 	// Add accesscontrol metadata
-	metadata, err := hs.getDataSourceAccessControlMetadata(c, dto.Id)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to query metadata", err)
-	}
-	dto.AccessControl = metadata
+	dto.AccessControl = hs.getAccessControlMetadata(c, "datasources", dto.Id)
 
 	return response.JSON(200, &dto)
 }
