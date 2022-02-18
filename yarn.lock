@@ -7242,7 +7242,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:3.4.1, @react-types/menu@npm:^3.3.0":
+"@react-types/menu@npm:3.5.1":
+  version: 3.5.1
+  resolution: "@react-types/menu@npm:3.5.1"
+  dependencies:
+    "@react-types/overlays": ^3.5.3
+    "@react-types/shared": ^3.11.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 2cf2e10fb6eff8436b6afd291a3d90542e6459e638ee65e1881e1a52ec4cb2164f51dd9dd2fc4da16e86bca5be0e70d070b3028ea7dc0953dfb8a9ec5504d5c7
+  languageName: node
+  linkType: hard
+
+"@react-types/menu@npm:^3.3.0":
   version: 3.4.1
   resolution: "@react-types/menu@npm:3.4.1"
   dependencies:
@@ -7265,6 +7277,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-types/overlays@npm:^3.5.3":
+  version: 3.5.3
+  resolution: "@react-types/overlays@npm:3.5.3"
+  dependencies:
+    "@react-types/shared": ^3.11.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 883dfecf1386849de2d7e090d7b566071063dae97774a145ec59386a8a3e9c44fb31f35b7d17eaa847d514b10e67a91e194f388f197f894a214c6c6489898258
+  languageName: node
+  linkType: hard
+
 "@react-types/shared@npm:3.10.1, @react-types/shared@npm:^3.10.1":
   version: 3.10.1
   resolution: "@react-types/shared@npm:3.10.1"
@@ -7280,6 +7303,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
   checksum: f3a5648cc4514915571eb648ecba383dc30d0d3c95d2991193dc4a57730c826dcc3effd4c48c21704adc31756d3d6d75dfe1f4e20c40df29a5e99079876e4a7f
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.11.1":
+  version: 3.11.1
+  resolution: "@react-types/shared@npm:3.11.1"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 5d96e63a985227cc98a9172686690f7f58cfc7e8026765e4efd364dd7e059986d1e239453bb19f018b2d369717c28825b386471d1f21fc10ce5c50a3f05d1fba
   languageName: node
   linkType: hard
 
@@ -20328,7 +20360,7 @@ __metadata:
     "@react-stately/menu": 3.2.3
     "@react-stately/tree": 3.2.0
     "@react-types/button": 3.4.1
-    "@react-types/menu": 3.4.1
+    "@react-types/menu": 3.5.1
     "@react-types/overlays": 3.5.1
     "@react-types/shared": 3.10.1
     "@reduxjs/toolkit": 1.7.2
