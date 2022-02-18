@@ -97,7 +97,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
-    logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || null,
+    logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending,
     isFlipping: false,
     showDetectedFields: [],
     forceEscape: false,
@@ -119,9 +119,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.flipOrderTimer = window.setTimeout(() => {
       this.setState((prevState) => {
         const newSortOrder =
-          prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending
-            ? LogsSortOrder.Ascending
-            : LogsSortOrder.Descending;
+          prevState.logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
         store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
         return { logsSortOrder: newSortOrder };
       });
@@ -294,7 +292,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-
     return (
       <>
         {logsSeries && logsSeries.length ? (
@@ -369,16 +366,26 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </InlineField>
           </InlineFieldRow>
           <div>
-            <Button
-              variant="secondary"
-              disabled={isFlipping}
-              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-              aria-label="Flip results order"
-              className={styles.headerButton}
-              onClick={this.onChangeLogsSortOrder}
-            >
-              {isFlipping ? 'Flipping...' : 'Flip results order'}
-            </Button>
+            <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
+              <RadioButtonGroup
+                disabled={isFlipping}
+                options={[
+                  {
+                    label: 'Newest first',
+                    value: LogsSortOrder.Descending,
+                    description: 'Show results newest to oldest',
+                  },
+                  {
+                    label: 'Oldest first',
+                    value: LogsSortOrder.Ascending,
+                    description: 'Show results oldest to newest',
+                  },
+                ]}
+                value={logsSortOrder}
+                onChange={this.onChangeLogsSortOrder}
+                className={styles.radioButtons}
+              />
+            </InlineField>
           </div>
         </div>
         <LogsMetaRow
@@ -393,7 +400,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           clearDetectedFields={this.clearDetectedFields}
         />
         <div className={styles.logsSection}>
-          <div className={styles.logRows}>
+          <div className={styles.logRows} data-testid="logRows">
             <LogRows
               logRows={logRows}
               deduplicatedRows={dedupedRows}
