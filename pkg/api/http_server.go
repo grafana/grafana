@@ -69,12 +69,13 @@ import (
 )
 
 type HTTPServer struct {
-	log                          log.Logger
-	web                          *web.Mux
-	context                      context.Context
-	httpSrv                      *http.Server
-	middlewares                  []web.Handler
-	namedMiddlewares             []routing.RegisterNamedMiddleware
+	log              log.Logger
+	web              *web.Mux
+	context          context.Context
+	httpSrv          *http.Server
+	middlewares      []web.Handler
+	namedMiddlewares []routing.RegisterNamedMiddleware
+
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
 	Bus                          bus.Bus
