@@ -33,18 +33,15 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       }
 
       &:hover {
-        overflow: visible;
-        width: auto !important;
         box-shadow: 0 0 2px ${theme.colors.primary.main};
         background: ${background ?? rowHoverBg};
-        z-index: 1;
-
-        .cell-filter-actions  {
-          display: inline-flex;
-        }
       }
       a {
         color: inherit;
+      }
+
+      .actions {
+        background: ${background};
       }
     `;
   };

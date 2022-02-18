@@ -76,6 +76,12 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           defaultValue: defaultPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
+          path: 'preview',
+          name: 'Cell value preview',
+          description: 'Enables/disables cell value preview in a modal window',
+          defaultValue: false,
+        })
+        .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
