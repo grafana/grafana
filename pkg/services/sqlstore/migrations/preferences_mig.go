@@ -49,7 +49,7 @@ func addPreferencesMigrations(mg *Migrator) {
 		Name: "week_start", Type: DB_NVarchar, Length: 10, Nullable: true,
 	}))
 
-	mg.AddMigration("Add column json_data in preferences", NewAddColumnMigration(preferencesV2, &Column{
+	mg.AddMigration("Add column preferences.json_data", NewAddColumnMigration(preferencesV2, &Column{
 		Name: "json_data", Type: DB_Text, Nullable: true,
 	}))
 	// change column type of preferences.json_data

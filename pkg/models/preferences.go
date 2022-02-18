@@ -33,7 +33,7 @@ type GetPreferencesQuery struct {
 	Result *Preferences
 }
 
-type GetJsonDataQuery struct {
+type GetPreferencesJsonDataQuery struct {
 	Id     int64
 	OrgId  int64
 	UserId int64
@@ -42,7 +42,7 @@ type GetJsonDataQuery struct {
 	Result *Preferences
 }
 
-type GetJsonDataWithDefaultsQuery struct {
+type GetPreferencesJsonDataWithDefaultsQuery struct {
 	User *SignedInUser
 
 	Result *Preferences
@@ -67,7 +67,7 @@ type SavePreferencesCommand struct {
 	Theme           string `json:"theme"`
 }
 
-type SaveJsonDataCommand struct {
+type SavePreferencesJsonDataCommand struct {
 	UserId int64
 	OrgId  int64
 	TeamId int64

@@ -63,9 +63,9 @@ type Store interface {
 	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error
 	GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error
 	SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error
-	GetJsonDataWithDefaults(ctx context.Context, query *models.GetJsonDataWithDefaultsQuery) error
-	GetJsonData(ctx context.Context, query *models.GetJsonDataQuery) error
-	SaveJsonData(ctx context.Context, cmd *models.SaveJsonDataCommand) error
+	GetPreferencesJsonDataWithDefaults(ctx context.Context, query *models.GetPreferencesJsonDataWithDefaultsQuery) error
+	GetPreferencesJsonData(ctx context.Context, query *models.GetPreferencesJsonDataQuery) error
+	SavePreferencesJsonData(ctx context.Context, cmd *models.SavePreferencesJsonDataCommand) error
 	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error)
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error

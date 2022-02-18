@@ -17,15 +17,15 @@ const (
 )
 
 // PUT /api/preferences/set-json-data
-func (hs *HTTPServer) SetJsonData(c *models.ReqContext) response.Response {
-	cmd := models.SaveJsonDataCommand{}
+func (hs *HTTPServer) SetPreferencesJsonData(c *models.ReqContext) response.Response {
+	cmd := models.SavePreferencesJsonDataCommand{}
 	if err := web.Bind(c.Req, &cmd.JsonData); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 
-	if err := hs.SQLStore.SaveJsonData(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SavePreferencesJsonData(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to set json data preferences", err)
 	}
 

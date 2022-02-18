@@ -13,12 +13,12 @@ func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", ss.GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", ss.SavePreferences)
-	bus.AddHandler("sql", ss.GetJsonData)
-	bus.AddHandler("sql", ss.GetJsonDataWithDefaults)
-	bus.AddHandler("sql", ss.SaveJsonData)
+	bus.AddHandler("sql", ss.GetPreferencesJsonData)
+	bus.AddHandler("sql", ss.GetPreferencesJsonDataWithDefaults)
+	bus.AddHandler("sql", ss.SavePreferencesJsonData)
 }
 
-func (ss *SQLStore) GetJsonDataWithDefaults(ctx context.Context, query *models.GetJsonDataWithDefaultsQuery) error {
+func (ss *SQLStore) GetPreferencesJsonDataWithDefaults(ctx context.Context, query *models.GetPreferencesJsonDataWithDefaultsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
 		params := make([]interface{}, 0)
 		filter := ""
@@ -112,7 +112,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *model
 	})
 }
 
-func (ss *SQLStore) GetJsonData(ctx context.Context, query *models.GetJsonDataQuery) error {
+func (ss *SQLStore) GetPreferencesJsonData(ctx context.Context, query *models.GetPreferencesJsonDataQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
@@ -184,7 +184,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 	})
 }
 
-func (ss *SQLStore) SaveJsonData(ctx context.Context, cmd *models.SaveJsonDataCommand) error {
+func (ss *SQLStore) SavePreferencesJsonData(ctx context.Context, cmd *models.SavePreferencesJsonDataCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
