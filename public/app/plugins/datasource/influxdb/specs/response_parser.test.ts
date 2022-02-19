@@ -308,6 +308,7 @@ describe('influxdb response parser', () => {
       annotation: {
         name: 'Anno',
         query: 'select * from logs where time >= now() - 15m and time <= now()',
+        textColumn: 'textColumn',
       },
       range: {
         from: '2018-01-01T00:00:00Z',
@@ -344,6 +345,27 @@ describe('influxdb response parser', () => {
                       ],
                     },
                   },
+                  {
+                    schema: {
+                      name: 'textColumn',
+                      fields: [
+                        {
+                          name: 'time',
+                          type: 'time',
+                        },
+                        {
+                          name: 'value',
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    data: {
+                      values: [
+                        [1645208701000, 1645208702000],
+                        ['text1', 'text2'],
+                      ],
+                    },
+                  },
                 ],
               },
             },
@@ -361,8 +383,10 @@ describe('influxdb response parser', () => {
       expect(response.length).toBe(2);
       expect(response[0].time).toBe(1645208701000);
       expect(response[0].title).toBe('cbfa07e0e3bb');
+      expect(response[0].text).toBe('text1');
       expect(response[1].time).toBe(1645208702000);
       expect(response[1].title).toBe('jfhs07e0e3bb');
+      expect(response[1].text).toBe('text2');
     });
   });
 });
