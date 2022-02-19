@@ -67,7 +67,7 @@ export default class ResponseParser {
       table = getTableCols(dfs, table, target);
 
       // if group by tag(s) added
-      if (dfs[0].fields[1].labels) {
+      if (dfs[0].fields[1] && dfs[0].fields[1].labels) {
         let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
           df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
         );
@@ -105,6 +105,15 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
     }
   });
 
+  // Get cols for annotationQuery
+  if (dfs[0].refId === 'metricFindQuery') {
+    dfs.forEach((field) => {
+      if (field.name) {
+        table.columns.push({ text: field.name });
+      }
+    });
+  }
+
   // Select (metric) column(s)
   for (let i = 0; i < selectedParams.length; i++) {
     table.columns.push({ text: selectedParams[i] });
@@ -119,9 +128,11 @@ function getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): Ta
   for (let i = 0; i < values.length; i++) {
     const time = values[i];
     const metrics = dfs.map((df: DataFrame) => {
-      return df.fields[1].values.toArray()[i];
+      return df.fields[1] ? df.fields[1].values.toArray()[i] : null;
     });
-    table.rows.push([time, ...labels, ...metrics]);
+    if (metrics.indexOf(null) < 0) {
+      table.rows.push([time, ...labels, ...metrics]);
+    }
   }
   return table;
 }
