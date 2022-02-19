@@ -325,7 +325,7 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 
 func timeFromFloat(fv float64) time.Time {
 	ms := int64(fv * 1000.0)
-	return time.UnixMilli(ms)
+	return time.UnixMilli(ms).UTC()
 }
 
 func timeFromLokiString(str string) time.Time {
@@ -333,5 +333,5 @@ func timeFromLokiString(str string) time.Time {
 	// 1645030246277587968
 	ss, _ := strconv.ParseInt(str[0:10], 10, 64)
 	ns, _ := strconv.ParseInt(str[10:], 10, 64)
-	return time.Unix(ss, ns)
+	return time.Unix(ss, ns).UTC()
 }

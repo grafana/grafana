@@ -66,13 +66,13 @@ func TestReadPromFrames(t *testing.T) {
 }
 
 func TestTimeConversions(t *testing.T) {
-	// includ millisecond precision
-	require.Equal(t,
-		time.Date(2020, time.September, 14, 8, 22, 25, 479000000, time.Local),
+	// include millisecond precision
+	assert.Equal(t,
+		time.Date(2020, time.September, 14, 15, 22, 25, 479000000, time.UTC),
 		timeFromFloat(1600096945.479))
 
 	// Loki date parsing
-	require.Equal(t,
-		time.Date(2022, time.February, 16, 8, 50, 46, 277587968, time.Local),
+	assert.Equal(t,
+		time.Date(2022, time.February, 16, 16, 50, 46, 277587968, time.UTC),
 		timeFromLokiString("1645030246277587968"))
 }
