@@ -26,6 +26,22 @@ export const ColorScale = ({ colorPalette }: Props) => {
 
 const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; stops?: number }): string[] => {
   const colorCount = colorArray.length;
+  if (colorCount <= 10) {
+    const incr = (1 / colorCount) * 100;
+    let per = 0;
+    const stops: string[] = [];
+    for (const color of colorArray) {
+      if (per > 0) {
+        stops.push(`${color} ${per}%`);
+      } else {
+        stops.push(color);
+      }
+      per += incr;
+      stops.push(`${color} ${per}%`);
+    }
+    return stops;
+  }
+
   const gradientEnd = colorArray[colorCount - 1];
   const skip = Math.ceil(colorCount / stops);
   const gradientStops = new Set<string>();
