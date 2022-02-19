@@ -28,6 +28,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
   CoreApp,
+  AnnotationQueryRequest,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -344,7 +345,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     );
   }
 
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
       return Promise.reject({
         message: 'Flux requires the standard annotation query',
