@@ -338,7 +338,7 @@ func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 		}
 
 		if value := auth.getDecodedHeader(h); value != "" {
-			fn(field, value)
+			fn(field, strings.TrimSpace(value))
 		}
 	}
 }
