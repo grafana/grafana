@@ -2,6 +2,20 @@ import { size } from 'lodash';
 import ResponseParser, { getSelectedParams } from '../response_parser';
 import InfluxQueryModel from '../influx_query_model';
 import { FieldType, MutableDataFrame } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import InfluxDatasource from '../datasource';
+import { of } from 'rxjs';
+import { FetchResponse } from '@grafana/runtime';
+import { TemplateSrvStub } from 'test/specs/helpers';
+import config from 'app/core/config';
+
+//@ts-ignore
+const templateSrv = new TemplateSrvStub();
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('influxdb response parser', () => {
   const parser = new ResponseParser();
@@ -280,6 +294,75 @@ describe('influxdb response parser', () => {
 
     it('executedQueryString correctly', () => {
       expect(table.meta?.executedQueryString).toBe('SELECT everything!');
+    });
+  });
+
+  describe('When issuing annotationQuery', () => {
+    const ctx: any = {
+      instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
+    };
+
+    const fetchMock = jest.spyOn(backendSrv, 'fetch');
+
+    const queryOptions: any = {
+      annotation: {
+        name: 'Anno',
+        query: 'select * from logs where time >= now() - 15m and time <= now()',
+      },
+      range: {
+        from: '2018-01-01T00:00:00Z',
+        to: '2018-01-02T00:00:00Z',
+      },
+    };
+    let response: any;
+
+    beforeEach(async () => {
+      fetchMock.mockImplementation(() => {
+        return of({
+          data: {
+            results: {
+              metricFindQuery: {
+                frames: [
+                  {
+                    schema: {
+                      name: 'logs.host',
+                      fields: [
+                        {
+                          name: 'time',
+                          type: 'time',
+                        },
+                        {
+                          name: 'value',
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    data: {
+                      values: [
+                        [1645208701000, 1645208702000],
+                        ['cbfa07e0e3bb', 'jfhs07e0e3bb'],
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        } as FetchResponse);
+      });
+
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+      ctx.ds.access = 'proxy';
+      config.featureToggles.influxdbBackendMigration = true;
+      response = await ctx.ds.annotationQuery(queryOptions);
+    });
+
+    it('should return annotation list', () => {
+      expect(response.length).toBe(2);
+      expect(response[0].time).toBe(1645208701000);
+      expect(response[0].title).toBe('cbfa07e0e3bb');
+      expect(response[1].time).toBe(1645208702000);
+      expect(response[1].title).toBe('jfhs07e0e3bb');
     });
   });
 });
