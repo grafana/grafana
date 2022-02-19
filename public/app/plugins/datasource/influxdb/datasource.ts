@@ -364,7 +364,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         datasource: this.getRef(),
-        query: options.annotation.query,
+        query: this.templateSrv.replace(options.annotation.query ?? ''),
         rawQuery: true,
       };
 
