@@ -54,7 +54,7 @@ export default function SearchPage() {
                     <div style={{ maxHeight: '300px', overflow: 'scroll' }}>
                       {dashboards.map((dash) => (
                         <div key={dash.UID}>
-                          <a href={`/d/${dash.UID}/`}>{dash.Name}</a>
+                          <a href={dash.URL}>{dash.Name}</a>
                         </div>
                       ))}
                     </div>

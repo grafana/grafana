@@ -1,5 +1,6 @@
 export interface DashboardResult {
   UID: string;
+  URL: string;
   Name: string;
   Description: string;
   Created: number;
