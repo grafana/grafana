@@ -1,34 +1,82 @@
 import React from 'react';
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
-import { AddToDashboard } from '.';
-import { ExploreId, ExplorePanelData } from 'app/types';
+import { act, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { ExploreId, ExplorePanelData, ExploreState } from 'app/types';
 import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
-import { openModal } from './__test__/utils';
-import * as api from './addToDashboard';
 import userEvent from '@testing-library/user-event';
 import { DataQuery, MutableDataFrame } from '@grafana/data';
 import { createEmptyQueryResponse } from '../state/utils';
 import { locationService } from '@grafana/runtime';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import * as api from './addToDashboard';
+import * as dashboardApi from 'app/features/manage-dashboards/state/actions';
+import { AddToDashboard } from '.';
 
 const setup = (
   children: JSX.Element,
   queries: DataQuery[] = [],
   queryResponse: ExplorePanelData = createEmptyQueryResponse()
 ) => {
-  const store = configureStore({ explore: { left: { queries, queryResponse } } });
+  const store = configureStore({ explore: { left: { queries, queryResponse } } as ExploreState });
 
   return render(<Provider store={store}>{children}</Provider>);
 };
 
-describe('Add to Dashboard', () => {
+const createFolder = (title: string, id: number): DashboardSearchHit => ({
+  title,
+  id,
+  isStarred: false,
+  type: DashboardSearchItemType.DashFolder,
+  items: [],
+  url: '',
+  uri: '',
+  tags: [],
+});
+
+const openModal = async () => {
+  userEvent.click(screen.getByRole('button', { name: /add to dashboard/i }));
+
+  // waiting on https://github.com/grafana/grafana/pull/45472 to properly test this:
+  // expect(await screen.findByText('dialog', { name: 'Add query to dashboard' })).toBeInTheDocument();
+  expect(await screen.findByText('Add query to dashboard')).toBeInTheDocument();
+};
+
+describe('Add to Dashboard Button', () => {
+  const searchFoldersResponse = Promise.resolve([createFolder('Folder 1', 1), createFolder('Folder 2', 2)]);
+  const redirectURL = '/some/redirect/url';
+  let addToDashboardMock: jest.SpyInstance<
+    ReturnType<typeof api.addToDashboard>,
+    Parameters<typeof api.addToDashboard>
+  >;
+
+  const waitForSearchFolderResponse = async () => {
+    return act(async () => {
+      await searchFoldersResponse;
+    });
+  };
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.spyOn(dashboardApi, 'searchFolders').mockReturnValue(searchFoldersResponse);
+    addToDashboardMock = jest.spyOn(api, 'addToDashboard').mockResolvedValue('/some/redirect/url');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('Opens and closes the modal correctly', async () => {
+    setup(<AddToDashboard exploreId={ExploreId.left} />);
+
+    await openModal();
+
+    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    // TODO: once https://github.com/grafana/grafana/pull/45472 is merged replace with
+    // expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('Add query to dashboard')).not.toBeInTheDocument();
   });
 
   describe('navigation', () => {
-    jest.spyOn(api, 'addToDashboard').mockImplementation(() => Promise.resolve('/dashboard/1'));
-
     it('Navigates to dashboard when clicking on "Save and go to dashboard"', async () => {
       locationService.push = jest.fn();
 
@@ -38,9 +86,9 @@ describe('Add to Dashboard', () => {
 
       userEvent.click(screen.getByRole('button', { name: /save and go to dashboard/i }));
 
-      await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
+      await waitForSearchFolderResponse();
 
-      expect(locationService.push).toHaveBeenCalledWith('/dashboard/1');
+      expect(locationService.push).toHaveBeenCalledWith(redirectURL);
     });
 
     it('Does NOT navigate to dashboard when clicking on "Save and keep exploring"', async () => {
@@ -52,16 +100,17 @@ describe('Add to Dashboard', () => {
 
       userEvent.click(screen.getByRole('button', { name: /save and keep exploring/i }));
 
-      await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
+      await waitForSearchFolderResponse();
+
+      // TODO: once https://github.com/grafana/grafana/pull/45472 is merged replace with
+      // expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.queryByText('Add query to dashboard')).not.toBeInTheDocument();
 
       expect(locationService.push).not.toHaveBeenCalled();
     });
   });
 
   it('All queries are correctly passed through', async () => {
-    // TODO: move the save logic in DashboardSrv and test against it instead
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries);
 
@@ -71,7 +120,7 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         queries: queries,
       })
@@ -79,8 +128,6 @@ describe('Add to Dashboard', () => {
   });
 
   it('Defaults to table if no response is available', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
     const queries: DataQuery[] = [{ refId: 'A' }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries, createEmptyQueryResponse());
 
@@ -90,7 +137,7 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'table',
       })
@@ -98,8 +145,6 @@ describe('Add to Dashboard', () => {
   });
 
   it('Defaults to table if no query is active', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
     const queries: DataQuery[] = [{ refId: 'A', hide: true }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries);
 
@@ -109,7 +154,7 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'table',
       })
@@ -117,8 +162,6 @@ describe('Add to Dashboard', () => {
   });
 
   it('Defaults to table if no query', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
     setup(<AddToDashboard exploreId={ExploreId.left} />, []);
 
     await openModal();
@@ -127,7 +170,7 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'table',
       })
@@ -135,8 +178,6 @@ describe('Add to Dashboard', () => {
   });
 
   it('Filters out hidden queries when selecting visualization', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
     const queries: DataQuery[] = [{ refId: 'A', hide: true }, { refId: 'B' }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
       ...createEmptyQueryResponse(),
@@ -151,7 +192,7 @@ describe('Add to Dashboard', () => {
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
     // Query A comes before B, but it's hidden. visualization will be picked according to frames generated by B
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         queries: queries,
         visualization: 'timeseries',
@@ -159,9 +200,7 @@ describe('Add to Dashboard', () => {
     );
   });
 
-  it('Set visualization to logs if there are log frames', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
+  it('Sets visualization to logs if there are log frames', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
       ...createEmptyQueryResponse(),
@@ -175,16 +214,14 @@ describe('Add to Dashboard', () => {
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
     // Query A comes before B, but it's hidden. visualization will be picked according to frames generated by B
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'logs',
       })
     );
   });
 
-  it('Set visualization to timeseries if there are graph frames', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
+  it('Sets visualization to timeseries if there are graph frames', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
       ...createEmptyQueryResponse(),
@@ -197,16 +234,14 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'timeseries',
       })
     );
   });
 
-  it('Set visualization to nodeGraph if there are node graph frames', async () => {
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
+  it('Sets visualization to nodeGraph if there are node graph frames', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
       ...createEmptyQueryResponse(),
@@ -219,17 +254,15 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'nodeGraph',
       })
     );
   });
 
-  it('Set visualization to table if there are trace frames', async () => {
-    // trace view is not supported in dashboards, defaulting to table
-    const addToDashboard = jest.spyOn(api, 'addToDashboard');
-
+  // trace view is not supported in dashboards, defaulting to table
+  it('Sets visualization to table if there are trace frames', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }];
     setup(<AddToDashboard exploreId={ExploreId.left} />, queries, {
       ...createEmptyQueryResponse(),
@@ -242,7 +275,7 @@ describe('Add to Dashboard', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText('Add query to dashboard'));
 
-    expect(addToDashboard).toHaveBeenCalledWith(
+    expect(addToDashboardMock).toHaveBeenCalledWith(
       expect.objectContaining({
         visualization: 'table',
       })

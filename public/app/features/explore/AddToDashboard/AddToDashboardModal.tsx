@@ -54,8 +54,6 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
         default:
         // TODO: Other unknown errors may happen, we should handle them by displaying an error message
       }
-    } else {
-      onClose();
     }
   };
 
@@ -87,12 +85,15 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
               />
             </Field>
 
-            <Field label="Folder">
+            <Field label="Folder" error={errors.folderId?.message} invalid={!!errors.folderId}>
               <InputControl
-                render={({ field: { ref, ...field } }) => <FolderPicker {...field} enableCreateNew inputId="folder" />}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <FolderPicker onChange={(e) => onChange(e.id)} {...field} enableCreateNew inputId="folder" />
+                )}
                 control={control}
-                name="folder"
+                name="folderId"
                 shouldUnregister
+                rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in' } }}
               />
             </Field>
           </>

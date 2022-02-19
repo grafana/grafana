@@ -6,7 +6,7 @@ import { lastValueFrom } from 'rxjs';
 
 export interface SaveToNewDashboardDTO {
   dashboardName: string;
-  folder: { title: string; id: number };
+  folderId: number;
   queries: DataQuery[];
   visualization: string;
 }
@@ -40,6 +40,6 @@ const createDashboard = (dashboardName: string, folderId: number, queries: DataQ
 
 export const addToDashboard = async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO): Promise<string> => {
   // TODO: if create dashboard...
-  const res = await createDashboard(data.dashboardName, data.folder.id, data.queries, data.visualization);
+  const res = await createDashboard(data.dashboardName, data.folderId, data.queries, data.visualization);
   return res.data.url;
 };

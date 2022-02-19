@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DataFrame, DataQuery } from '@grafana/data';
 import { ExploreId, StoreState } from 'app/types';
 import { useSelector, useDispatch } from 'react-redux';
 import { getExploreItemSelector } from '../state/selectors';
-import { AddToDashboardButton } from './AddToDashboardButton';
 import { addToDashboard, SaveToExistingDashboardDTO, SaveToNewDashboardDTO } from './addToDashboard';
-import { FetchError, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { ToolbarButton } from '@grafana/ui';
+import { AddToDashboardModal } from './AddToDashboardModal';
 
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export const AddToDashboard = ({ exploreId }: Props) => {
+  const [isOpen, setIsOpen] = useState(false);
   const dispatch = useDispatch();
   const selectExploreItem = getExploreItemSelector(exploreId);
 
@@ -51,19 +53,36 @@ export const AddToDashboard = ({ exploreId }: Props) => {
   });
 
   const handleSave = async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO, redirect: boolean) => {
-    return addToDashboard(data)
-      .then(
-        redirect
-          ? locationService.push
-          : () => {
-              dispatch(notifyApp(createSuccessNotification('YAY!')));
-            }
-      )
-      .catch((e: FetchError) => {
-        // transform an API error into an error handleable by the component
-        return { message: e.data.message ?? 'Unknown Error', status: e.data.status ?? 'unknown-error' };
-      });
+    try {
+      const redirectURL = await addToDashboard(data);
+
+      if (redirect) {
+        locationService.push(redirectURL);
+      } else {
+        dispatch(notifyApp(createSuccessNotification('YAY!')));
+        setIsOpen(false);
+      }
+      return;
+    } catch (e) {
+      // transform an API error into an error handleable by the component
+      return { message: e.data?.message ?? 'Unknown Error', status: e.data?.status ?? 'unknown-error' };
+    }
   };
 
-  return <AddToDashboardButton queries={queries} visualization={mainVisualization} onSave={handleSave} />;
+  return (
+    <>
+      <ToolbarButton icon="apps" onClick={() => setIsOpen(true)} aria-label="Add to Dashboard">
+        Add to Dashboard
+      </ToolbarButton>
+
+      {isOpen && (
+        <AddToDashboardModal
+          onClose={() => setIsOpen(false)}
+          queries={queries}
+          visualization={mainVisualization}
+          onSave={handleSave}
+        />
+      )}
+    </>
+  );
 };
