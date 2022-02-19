@@ -550,6 +550,27 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         });
     }
 
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        query: 'SHOW TAG KEYS',
+        rawQuery: true,
+      };
+      return lastValueFrom(super.query({ targets: [target] } as DataQueryRequest))
+        .then((res: DataQueryResponse) => {
+          if (!res || !res.data || res.state !== LoadingState.Done) {
+            return { status: 'error', message: 'Error reading InfluxDB' };
+          }
+          if (res.data?.length) {
+            return { status: 'success', message: 'Data source is working' };
+          }
+          return { status: 'error', message: 'Data source is not working' };
+        })
+        .catch((err: any) => {
+          return { status: 'error', message: err.message };
+        });
+    }
+
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
