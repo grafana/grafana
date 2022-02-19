@@ -8,7 +8,6 @@ import (
 	"hash/fnv"
 	"net"
 	"net/mail"
-	"net/url"
 	"path"
 	"reflect"
 	"strings"
@@ -324,7 +323,7 @@ func (auth *AuthProxy) getDecodedHeader(headerName string) string {
 	headerValue := auth.ctx.Req.Header.Get(headerName)
 
 	if auth.cfg.AuthProxyHeadersEncoded {
-		headerValue = decodeHeader(headerValue)
+		headerValue = util.DecodeQuotedPrintable(headerValue)
 	}
 
 	return headerValue
@@ -392,15 +391,4 @@ func coerceProxyAddress(proxyAddr string) (*net.IPNet, error) {
 		return nil, fmt.Errorf("could not parse the network: %w", err)
 	}
 	return network, nil
-}
-
-// decodeHeader decodes non-ASCII header value
-func decodeHeader(headerValue string) string {
-	decodedValue, err := url.QueryUnescape(headerValue)
-	if err != nil {
-		// Fallback to original header value if it cannot be decoded
-		return strings.TrimSpace(headerValue)
-	}
-
-	return decodedValue
 }
