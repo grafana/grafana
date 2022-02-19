@@ -1,24 +1,11 @@
-import React, { useState } from 'react';
-import { DataQuery, SelectableValue } from '@grafana/data';
-import { Button, Field, Input, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
-import { DashboardPicker } from 'app/core/components/editors/DashboardPicker';
+import React from 'react';
+import { DataQuery } from '@grafana/data';
+import { Button, Field, Input, InputControl, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { SaveToExistingDashboardDTO, SaveToNewDashboardDTO } from './addToDashboard';
+import { useForm } from 'react-hook-form';
+import { SaveToNewDashboardDTO } from './addToDashboard';
 
-const isSaveToNewDashboard = (
-  errors: DeepMap<FormDTO, FieldError>,
-  saveTarget: SaveTarget
-): errors is DeepMap<SaveToNewDashboardDTO, FieldError> => saveTarget === 'new';
-
-const options: Array<SelectableValue<SaveTarget>> = [
-  { label: 'New dashboard', value: 'new' },
-  { label: 'Existing dashboard', value: 'existing' },
-];
-
-type SaveTarget = 'new' | 'existing';
-
-type FormDTO = SaveToExistingDashboardDTO | SaveToNewDashboardDTO;
+type FormDTO = SaveToNewDashboardDTO;
 
 interface Props {
   onClose: () => void;
@@ -32,7 +19,6 @@ function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}
 }
 
 export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }: Props) => {
-  const [saveTarget, setSaveTarget] = useState<SaveTarget>('new');
   const {
     register,
     handleSubmit,
@@ -64,52 +50,35 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
       onDismiss={onClose}
       isOpen
     >
-      <RadioButtonGroup options={options} fullWidth value={saveTarget} onChange={setSaveTarget} />
-
       <form>
         <input type="hidden" {...register('queries')} />
         <input type="hidden" {...register('visualization')} />
-        {isSaveToNewDashboard(errors, saveTarget) ? (
-          <>
-            <Field label="Dashboard name" error={errors.dashboardName?.message} invalid={!!errors.dashboardName}>
-              <Input
-                id="dahboard_name"
-                {...register('dashboardName', {
-                  shouldUnregister: true,
-                  required: { value: true, message: 'This field is required' },
-                })}
-                // we set default value here instead of in useForm because this input will be unregistered when switching
-                // to "Existing Dashboard" and default values are not populated with manually registered
-                // inputs (ie. when switching back to "New Dashboard")
-                defaultValue="New dashboard (Explore)"
-              />
-            </Field>
 
-            <Field label="Folder" error={errors.folderId?.message} invalid={!!errors.folderId}>
-              <InputControl
-                render={({ field: { ref, onChange, ...field } }) => (
-                  <FolderPicker onChange={(e) => onChange(e.id)} {...field} enableCreateNew inputId="folder" />
-                )}
-                control={control}
-                name="folderId"
-                shouldUnregister
-                rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in' } }}
-              />
-            </Field>
-          </>
-        ) : (
-          <Field label="Dashboard" error={errors.dashboard?.message} invalid={!!errors.dashboard}>
-            <InputControl
-              // TODO: what should i pass to DashboardPicker to make it stop complaining?
-              // @ts-expect-error
-              render={({ field: { ref, ...field } }) => <DashboardPicker {...field} />}
-              control={control}
-              name="dashboard"
-              shouldUnregister
-              rules={{ required: { value: true, message: 'Select a dashboard to save your panel in' } }}
-            />
-          </Field>
-        )}
+        <Field label="Dashboard name" error={errors.dashboardName?.message} invalid={!!errors.dashboardName}>
+          <Input
+            id="dahboard_name"
+            {...register('dashboardName', {
+              shouldUnregister: true,
+              required: { value: true, message: 'This field is required' },
+            })}
+            // we set default value here instead of in useForm because this input will be unregistered when switching
+            // to "Existing Dashboard" and default values are not populated with manually registered
+            // inputs (ie. when switching back to "New Dashboard")
+            defaultValue="New dashboard (Explore)"
+          />
+        </Field>
+
+        <Field label="Folder" error={errors.folderId?.message} invalid={!!errors.folderId}>
+          <InputControl
+            render={({ field: { ref, onChange, ...field } }) => (
+              <FolderPicker onChange={(e) => onChange(e.id)} {...field} enableCreateNew inputId="folder" />
+            )}
+            control={control}
+            name="folderId"
+            shouldUnregister
+            rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in' } }}
+          />
+        </Field>
 
         <Modal.ButtonRow>
           <Button type="reset" onClick={onClose} fill="outline" variant="secondary" disabled={isSubmitting}>

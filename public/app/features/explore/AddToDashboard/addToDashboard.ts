@@ -11,12 +11,6 @@ export interface SaveToNewDashboardDTO {
   visualization: string;
 }
 
-export interface SaveToExistingDashboardDTO {
-  dashboard: string;
-  queries: DataQuery[];
-  visualization: string;
-}
-
 const createDashboardApiCall = (dashboard: DashboardDataDTO, folderId: number) => {
   // TODO: properly type this
   return getBackendSrv().fetch<any>({
@@ -38,8 +32,7 @@ const createDashboard = (dashboardName: string, folderId: number, queries: DataQ
   return lastValueFrom(createDashboardApiCall(dashboard.getSaveModelClone(), folderId));
 };
 
-export const addToDashboard = async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO): Promise<string> => {
-  // TODO: if create dashboard...
+export const addToDashboard = async (data: SaveToNewDashboardDTO): Promise<string> => {
   const res = await createDashboard(data.dashboardName, data.folderId, data.queries, data.visualization);
   return res.data.url;
 };

@@ -3,7 +3,7 @@ import { DataFrame, DataQuery } from '@grafana/data';
 import { ExploreId, StoreState } from 'app/types';
 import { useSelector, useDispatch } from 'react-redux';
 import { getExploreItemSelector } from '../state/selectors';
-import { addToDashboard, SaveToExistingDashboardDTO, SaveToNewDashboardDTO } from './addToDashboard';
+import { addToDashboard, SaveToNewDashboardDTO } from './addToDashboard';
 import { locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -36,6 +36,7 @@ const getMainVisualization = (
   // falling back to table
   return 'table';
 };
+
 interface Props {
   exploreId: ExploreId;
 }
@@ -52,7 +53,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
     return { queries, mainVisualization: getMainVisualization(queries, graphFrames, logsFrames, nodeGraphFrames) };
   });
 
-  const handleSave = async (data: SaveToNewDashboardDTO | SaveToExistingDashboardDTO, redirect: boolean) => {
+  const handleSave = async (data: SaveToNewDashboardDTO, redirect: boolean) => {
     try {
       const redirectURL = await addToDashboard(data);
 
