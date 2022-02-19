@@ -1,6 +1,7 @@
-import { DataFrame, FieldType, QueryResultMeta } from '@grafana/data';
+import { AnnotationEvent, DataFrame, DataQuery, FieldType, QueryResultMeta } from '@grafana/data';
+import { toDataQueryResponse } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
-import { each, groupBy, isArray } from 'lodash';
+import { each, flatten, groupBy, includes, isArray } from 'lodash';
 import { InfluxQuery } from './types';
 
 export default class ResponseParser {
@@ -83,6 +84,72 @@ export default class ResponseParser {
     }
 
     return table;
+  }
+
+  async transformAnnotationResponse(options: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
+    const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
+
+    if (rsp) {
+      const table = this.getTable(rsp.data, target, {});
+      const list: any[] = [];
+      let titleCol: any = null;
+      let timeCol: any = null;
+      let timeEndCol: any = null;
+      const tagsCol: any = [];
+      let textCol: any = null;
+
+      each(table.columns, (column, index) => {
+        if (column.text.toLowerCase() === 'time') {
+          timeCol = index;
+          return;
+        }
+        if (column.text === options.annotation.titleColumn) {
+          titleCol = index;
+          return;
+        }
+        if (includes((options.annotation.tagsColumn || '').replace(' ', '').split(','), column.text)) {
+          tagsCol.push(index);
+          return;
+        }
+        if (column.text === options.annotation.textColumn) {
+          textCol = index;
+          return;
+        }
+        if (column.text === options.annotation.timeEndColumn) {
+          timeEndCol = index;
+          return;
+        }
+        // legacy case
+        if (!titleCol && textCol !== index) {
+          titleCol = index;
+        }
+      });
+
+      each(table.rows, (value) => {
+        const data = {
+          annotation: options.annotation,
+          time: +new Date(value[timeCol]),
+          title: value[titleCol],
+          timeEnd: value[timeEndCol],
+          // Remove empty values, then split in different tags for comma separated values
+          tags: flatten(
+            tagsCol
+              .filter((t: any) => {
+                return value[t];
+              })
+              .map((t: any) => {
+                return value[t].split(',');
+              })
+          ),
+          text: value[textCol],
+        };
+
+        list.push(data);
+      });
+
+      return list;
+    }
+    return [];
   }
 }
 

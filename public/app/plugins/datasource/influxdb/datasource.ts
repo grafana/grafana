@@ -360,72 +360,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     );
   }
 
-  async transformAnnotationResponse(options: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
-    const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
-
-    if (rsp) {
-      const table = this.responseParser.getTable(rsp.data, target, {});
-      const list: any[] = [];
-      let titleCol: any = null;
-      let timeCol: any = null;
-      let timeEndCol: any = null;
-      const tagsCol: any = [];
-      let textCol: any = null;
-
-      each(table.columns, (column, index) => {
-        if (column.text.toLowerCase() === 'time') {
-          timeCol = index;
-          return;
-        }
-        if (column.text === options.annotation.titleColumn) {
-          titleCol = index;
-          return;
-        }
-        if (includes((options.annotation.tagsColumn || '').replace(' ', '').split(','), column.text)) {
-          tagsCol.push(index);
-          return;
-        }
-        if (column.text === options.annotation.textColumn) {
-          textCol = index;
-          return;
-        }
-        if (column.text === options.annotation.timeEndColumn) {
-          timeEndCol = index;
-          return;
-        }
-        // legacy case
-        if (!titleCol && textCol !== index) {
-          titleCol = index;
-        }
-      });
-
-      each(table.rows, (value) => {
-        const data = {
-          annotation: options.annotation,
-          time: +new Date(value[timeCol]),
-          title: value[titleCol],
-          timeEnd: value[timeEndCol],
-          // Remove empty values, then split in different tags for comma separated values
-          tags: flatten(
-            tagsCol
-              .filter((t: any) => {
-                return value[t];
-              })
-              .map((t: any) => {
-                return value[t].split(',');
-              })
-          ),
-          text: value[textCol],
-        };
-
-        list.push(data);
-      });
-
-      return list;
-    }
-    return [];
-  }
-
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
       return Promise.reject({
@@ -464,7 +398,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           .pipe(
             map(
               async (res: FetchResponse<BackendDataSourceResponse>) =>
-                await this.transformAnnotationResponse(options, res, target)
+                await this.responseParser.transformAnnotationResponse(options, res, target)
             )
           )
       );
