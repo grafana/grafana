@@ -1,11 +1,31 @@
-import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import {
+  cloneDeep,
+  each,
+  extend,
+  flatten,
+  get,
+  groupBy,
+  has,
+  includes,
+  isString,
+  map as _map,
+  omit,
+  pick,
+  reduce,
+} from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { DataSourceWithBackend, frameToMetricFindValue, getBackendSrv } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  frameToMetricFindValue,
+  getBackendSrv,
+  toDataQueryResponse,
+} from '@grafana/runtime';
 import {
   AnnotationEvent,
-  AnnotationQueryRequest,
   ArrayVector,
   DataFrame,
   DataQueryError,
@@ -23,6 +43,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
   CoreApp,
+  DataQuery,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
@@ -339,7 +360,73 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     );
   }
 
-  async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
+  async transformAnnotationResponse(options: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
+    const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
+
+    if (rsp) {
+      const table = this.responseParser.getTable(rsp.data, target, {});
+      const list: any[] = [];
+      let titleCol: any = null;
+      let timeCol: any = null;
+      let timeEndCol: any = null;
+      const tagsCol: any = [];
+      let textCol: any = null;
+
+      each(table.columns, (column, index) => {
+        if (column.text.toLowerCase() === 'time') {
+          timeCol = index;
+          return;
+        }
+        if (column.text === options.annotation.titleColumn) {
+          titleCol = index;
+          return;
+        }
+        if (includes((options.annotation.tagsColumn || '').replace(' ', '').split(','), column.text)) {
+          tagsCol.push(index);
+          return;
+        }
+        if (column.text === options.annotation.textColumn) {
+          textCol = index;
+          return;
+        }
+        if (column.text === options.annotation.timeEndColumn) {
+          timeEndCol = index;
+          return;
+        }
+        // legacy case
+        if (!titleCol && textCol !== index) {
+          titleCol = index;
+        }
+      });
+
+      each(table.rows, (value) => {
+        const data = {
+          annotation: options.annotation,
+          time: +new Date(value[timeCol]),
+          title: value[titleCol],
+          timeEnd: value[timeEndCol],
+          // Remove empty values, then split in different tags for comma separated values
+          tags: flatten(
+            tagsCol
+              .filter((t: any) => {
+                return value[t];
+              })
+              .map((t: any) => {
+                return value[t].split(',');
+              })
+          ),
+          text: value[textCol],
+        };
+
+        list.push(data);
+      });
+
+      return list;
+    }
+    return [];
+  }
+
+  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
       return Promise.reject({
         message: 'Flux requires the standard annotation query',
@@ -351,6 +438,36 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return Promise.reject({
         message: 'Query missing in annotation definition',
       });
+    }
+
+    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+      // We want to send our query to the backend as a raw query
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        datasource: this.getRef(),
+        query: options.annotation.query,
+        rawQuery: true,
+      };
+
+      return lastValueFrom(
+        getBackendSrv()
+          .fetch<BackendDataSourceResponse>({
+            url: '/api/ds/query',
+            method: 'POST',
+            data: {
+              from: options.range.from.valueOf().toString(),
+              to: options.range.to.valueOf().toString(),
+              queries: [target],
+            },
+            requestId: options.annotation.name,
+          })
+          .pipe(
+            map(
+              async (res: FetchResponse<BackendDataSourceResponse>) =>
+                await this.transformAnnotationResponse(options, res, target)
+            )
+          )
+      );
     }
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.dashboard.timezone });
