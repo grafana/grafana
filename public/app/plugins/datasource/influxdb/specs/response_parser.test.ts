@@ -299,7 +299,7 @@ describe('influxdb response parser', () => {
 
   describe('When issuing annotationQuery', () => {
     const ctx: any = {
-      instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
+      instanceSettings: { url: 'url', name: 'influxDb' },
     };
 
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
