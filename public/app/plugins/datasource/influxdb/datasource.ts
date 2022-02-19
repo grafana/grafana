@@ -1,18 +1,4 @@
-import {
-  cloneDeep,
-  each,
-  extend,
-  flatten,
-  get,
-  groupBy,
-  has,
-  includes,
-  isString,
-  map as _map,
-  omit,
-  pick,
-  reduce,
-} from 'lodash';
+import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +8,6 @@ import {
   FetchResponse,
   frameToMetricFindValue,
   getBackendSrv,
-  toDataQueryResponse,
 } from '@grafana/runtime';
 import {
   AnnotationEvent,
@@ -43,7 +28,6 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
   CoreApp,
-  DataQuery,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
