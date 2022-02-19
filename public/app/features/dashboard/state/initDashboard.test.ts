@@ -11,7 +11,7 @@ import { Echo } from '../../../core/services/echo/Echo';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { variablesInitTransaction } from '../../variables/state/transactionReducer';
+import { initialTransactionState, variablesInitTransaction } from '../../variables/state/transactionReducer';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
@@ -22,6 +22,7 @@ import {
 } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 import { TransactionStatus } from '../../variables/types';
+import { getPreloadedState } from '../../variables/state/helpers';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -53,7 +54,7 @@ interface ScenarioContext {
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
-
+const DASH_UID = 'DGmvKKxZz';
 function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
     const loaderSrv = {
@@ -83,6 +84,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
           templating: {
             list: [constantBuilder().build()],
           },
+          uid: DASH_UID,
         },
       })),
     };
@@ -100,7 +102,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     const ctx: ScenarioContext = {
       args: {
-        urlUid: 'DGmvKKxZz',
+        urlUid: DASH_UID,
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
       },
@@ -120,10 +122,10 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
             queries: [],
           },
         },
-        templating: {
+        ...getPreloadedState(DASH_UID, {
           variables: {},
-          transaction: { uid: 'DGmvKKxZz', status: TransactionStatus.Completed },
-        },
+          transaction: { ...initialTransactionState, uid: DASH_UID, status: TransactionStatus.Completed },
+        }),
       },
       setup: (fn: () => void) => {
         setupFn = fn;
@@ -258,7 +260,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   });
 
   it('Should initialize redux variables if newVariables is enabled', () => {
-    expect(ctx.actions[2].type).toBe(variablesInitTransaction.type);
+    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
   });
 });
 
@@ -285,5 +287,16 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   it('Should initialize timeSrv and dashboard query runner', () => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
+  });
+});
+
+describeInitScenario('Initializing snapshot dashboard', (ctx) => {
+  ctx.setup(() => {
+    ctx.args.urlUid = undefined;
+  });
+
+  it('Should send action initVariablesTransaction with correct payload', () => {
+    expect(ctx.actions[2].payload.action.type).toBe(variablesInitTransaction.type);
+    expect(ctx.actions[2].payload.action.payload.uid).toBe(DASH_UID);
   });
 });

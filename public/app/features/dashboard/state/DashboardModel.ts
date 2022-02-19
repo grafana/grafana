@@ -37,7 +37,7 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
+import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
@@ -139,7 +139,7 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
+  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     if (!data) {
       data = {};
     }
@@ -346,7 +346,7 @@ export class DashboardModel implements TimeModel {
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
     const originalVariables = this.originalTemplating;
-    const currentVariables = this.getVariablesFromState();
+    const currentVariables = this.getVariablesFromState(this.uid);
 
     copy.templating = {
       list: currentVariables.map((variable) =>
@@ -374,7 +374,7 @@ export class DashboardModel implements TimeModel {
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
-    dispatch(onTimeRangeUpdated(timeRange));
+    dispatch(onTimeRangeUpdated(this.uid, timeRange));
   }
 
   startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
@@ -1085,11 +1085,11 @@ export class DashboardModel implements TimeModel {
       return;
     }
 
-    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState());
+    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState(this.uid));
   }
 
   hasVariableValuesChanged() {
-    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
+    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState(this.uid));
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
@@ -1164,7 +1164,7 @@ export class DashboardModel implements TimeModel {
   }
 
   getVariables = () => {
-    return this.getVariablesFromState();
+    return this.getVariablesFromState(this.uid);
   };
 
   canAddAnnotations() {
@@ -1179,7 +1179,7 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelRepeatVariable(panel: PanelModel) {
-    return this.getVariablesFromState().find((variable) => variable.name === panel.repeat);
+    return this.getVariablesFromState(this.uid).find((variable) => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
@@ -1187,7 +1187,7 @@ export class DashboardModel implements TimeModel {
   }
 
   private hasVariables() {
-    return this.getVariablesFromState().length > 0;
+    return this.getVariablesFromState(this.uid).length > 0;
   }
 
   private hasVariablesChanged(originalVariables: any[], currentVariables: any[]): boolean {

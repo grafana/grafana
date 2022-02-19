@@ -6,8 +6,8 @@ import { VariableAdapter } from '../adapters';
 import { constantVariableReducer, initialConstantVariableModelState } from './reducer';
 import { ConstantVariableEditor } from './ConstantVariableEditor';
 import { updateConstantVariableOptions } from './actions';
-import { toVariableIdentifier } from '../state/types';
 import { optionPickerFactory } from '../pickers';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
@@ -22,16 +22,16 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
     updateOptions: async (variable) => {
-      await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
+      await dispatch(updateConstantVariableOptions(toKeyedVariableIdentifier(variable)));
     },
     getSaveModel: (variable) => {
-      const { index, id, state, global, current, options, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, current, options, rootStateKey, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: (variable) => {
