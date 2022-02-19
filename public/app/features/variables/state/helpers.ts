@@ -13,9 +13,10 @@ import {
 
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { templatingReducers, TemplatingState } from './reducers';
-import { DashboardState } from '../../../types';
+import { DashboardState, StoreState } from '../../../types';
 import { NEW_VARIABLE_ID } from '../constants';
+import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
+import { getInitialTemplatingState, TemplatingState } from './reducers';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -86,6 +87,7 @@ export const getVariableState = (
   for (let index = 0; index < noOfVariables; index++) {
     variables[index] = {
       id: index.toString(),
+      rootStateKey: 'key',
       type: 'query',
       name: `Name-${index}`,
       hide: VariableHide.dontHide,
@@ -102,6 +104,7 @@ export const getVariableState = (
   if (includeEmpty) {
     variables[NEW_VARIABLE_ID] = {
       id: NEW_VARIABLE_ID,
+      rootStateKey: 'key',
       type: 'query',
       name: `Name-${NEW_VARIABLE_ID}`,
       hide: VariableHide.dontHide,
@@ -122,11 +125,15 @@ export const getVariableTestContext = <Model extends VariableModel>(
   adapter: VariableAdapter<Model>,
   variableOverrides: Partial<Model> = {}
 ) => {
-  const defaultVariable = {
-    ...adapter.initialState,
+  const defaults: Partial<VariableModel> = {
     id: '0',
+    rootStateKey: 'key',
     index: 0,
     name: '0',
+  };
+  const defaultVariable = {
+    ...adapter.initialState,
+    ...defaults,
   };
 
   const initialState: VariablesState = {
@@ -139,14 +146,31 @@ export const getVariableTestContext = <Model extends VariableModel>(
 export const getRootReducer = () =>
   combineReducers({
     dashboard: dashboardReducer,
-    templating: templatingReducers,
+    templating: keyedVariablesReducer,
   });
 
-export type RootReducerType = { dashboard: DashboardState; templating: TemplatingState };
+export type RootReducerType = { dashboard: DashboardState; templating: KeyedVariablesState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
-    templating: templatingReducers,
+    templating: keyedVariablesReducer,
   });
 
-export type TemplatingReducerType = { templating: TemplatingState };
+export type TemplatingReducerType = { templating: KeyedVariablesState };
+
+export function getPreloadedState(
+  key: string,
+  templatingState: Partial<TemplatingState>
+): Pick<StoreState, 'templating'> {
+  return {
+    templating: {
+      lastKey: key,
+      keys: {
+        [key]: {
+          ...getInitialTemplatingState(),
+          ...templatingState,
+        },
+      },
+    },
+  };
+}
