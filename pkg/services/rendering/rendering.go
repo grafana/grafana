@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -119,8 +120,19 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
-		<-ctx.Done()
-		return nil
+
+		refreshTicker := time.NewTicker(remoteVersionRefreshInterval)
+
+		for {
+			select {
+			case <-refreshTicker.C:
+				go rs.refreshRemotePluginVersion()
+			case <-ctx.Done():
+				rs.log.Debug("Grafana is shutting down - stopping image-renderer version refresh")
+				refreshTicker.Stop()
+				return nil
+			}
+		}
 	}
 
 	if rs.pluginAvailable() {
@@ -176,9 +188,9 @@ func (rs *RenderingService) Version() string {
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(theme Theme, err error) (*RenderResult, error) {
+func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*RenderResult, error) {
 	if theme == "" {
-		theme = ThemeDark
+		theme = models.ThemeDark
 	}
 	imgUrl := "public/img/rendering_%s_%s.png"
 	if errors.Is(err, ErrTimeout) {
@@ -224,7 +236,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 
-		theme := ThemeDark
+		theme := models.ThemeDark
 		if opts.Theme != "" {
 			theme = opts.Theme
 		}

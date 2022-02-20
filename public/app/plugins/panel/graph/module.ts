@@ -187,7 +187,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    appEvents.publish(new ZoomOutEvent(2));
+    appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   }
 
   onDataSnapshotLoad(snapshotData: any) {

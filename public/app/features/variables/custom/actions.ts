@@ -1,11 +1,14 @@
 import { validateVariableSelectionState } from '../state/actions';
 import { ThunkResult } from 'app/types';
 import { createCustomOptionsFromQuery } from './reducer';
-import { toVariablePayload, VariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { toVariablePayload } from '../utils';
 
-export const updateCustomVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
+export const updateCustomVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
-    await dispatch(createCustomOptionsFromQuery(toVariablePayload(identifier)));
+    const { rootStateKey } = identifier;
+    await dispatch(toKeyedAction(rootStateKey, createCustomOptionsFromQuery(toVariablePayload(identifier))));
     await dispatch(validateVariableSelectionState(identifier));
   };
 };

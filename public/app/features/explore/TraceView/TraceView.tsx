@@ -18,7 +18,6 @@ import {
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
-  UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -29,7 +28,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
-import { UIElements } from './uiElements';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -77,7 +75,7 @@ export function TraceView(props: Props) {
   const [slim, setSlim] = useState(false);
 
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
 
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId]?.datasourceInstance ?? undefined
@@ -115,10 +113,10 @@ export function TraceView(props: Props) {
   }
 
   return (
-    <UIElementsContext.Provider value={UIElements}>
+    <>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={noop}
+        clearSearch={clearSearch}
         focusUiFindMatches={noop}
         hideMap={false}
         hideSummary={false}
@@ -126,17 +124,14 @@ export function TraceView(props: Props) {
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
         prevResult={noop}
-        resultCount={0}
+        resultCount={spanFindMatches?.size ?? 0}
         slimView={slim}
-        textFilter={null}
         trace={traceProp}
-        traceGraphView={false}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         searchValue={search}
         onSearchValueChange={setSearch}
-        hideSearchButtons={true}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
@@ -175,7 +170,7 @@ export function TraceView(props: Props) {
         focusedSpanId={focusedSpanId}
         createFocusSpanLink={createFocusSpanLink}
       />
-    </UIElementsContext.Provider>
+    </>
   );
 }
 

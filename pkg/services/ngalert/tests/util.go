@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -29,7 +32,9 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	cfg.AlertingBaseInterval = baseInterval
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: setting.SchedulerBaseInterval,
+	}
 	// AlertNG database migrations run and the relative database tables are created only when it's enabled
 	cfg.UnifiedAlerting.Enabled = new(bool)
 	*cfg.UnifiedAlerting.Enabled = true
@@ -37,9 +42,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
+	folderService := dashboardservice.ProvideFolderService(dashboardservice.ProvideDashboardService(dashboardStore), dashboardStore, nil)
 	ng, err := ngalert.ProvideService(
 		cfg, nil, routing.NewRouteRegister(), sqlStore,
-		nil, nil, nil, nil, secretsService, nil, m,
+		nil, nil, nil, nil, secretsService, nil, m, folderService,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
@@ -50,9 +57,9 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
+func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
-	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+	err := dbstore.UpdateRuleGroup(ctx, store.UpdateRuleGroupCmd{
 		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
@@ -92,7 +99,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 		NamespaceUID: "namespace",
 		RuleGroup:    ruleGroup,
 	}
-	err = dbstore.GetRuleGroupAlertRules(&q)
+	err = dbstore.GetRuleGroupAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 
@@ -102,7 +109,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 }
 
 // updateTestAlertRule update a dummy alert definition to be used by the tests.
-func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
+func UpdateTestAlertRuleIntervalSeconds(t *testing.T, ctx context.Context, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
 	cmd := store.UpdateRuleGroupCmd{
 		OrgID:        1,
 		NamespaceUID: "namespace",
@@ -119,7 +126,7 @@ func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 		},
 	}
 
-	err := dbstore.UpdateRuleGroup(cmd)
+	err := dbstore.UpdateRuleGroup(ctx, cmd)
 	require.NoError(t, err)
 
 	q := models.ListRuleGroupAlertRulesQuery{
@@ -127,7 +134,7 @@ func UpdateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 		NamespaceUID: "namespace",
 		RuleGroup:    existingRule.RuleGroup,
 	}
-	err = dbstore.GetRuleGroupAlertRules(&q)
+	err = dbstore.GetRuleGroupAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 

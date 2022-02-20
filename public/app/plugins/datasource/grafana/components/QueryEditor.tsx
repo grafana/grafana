@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
@@ -42,6 +42,18 @@ export class QueryEditor extends PureComponent<Props, State> {
       description: 'Show directory listings for public resources',
     },
   ];
+
+  constructor(props: Props) {
+    super(props);
+
+    if (config.featureToggles.panelTitleSearch) {
+      this.queryTypes.push({
+        label: 'Search',
+        value: GrafanaQueryType.Search,
+        description: 'Search for grafana resources',
+      });
+    }
+  }
 
   loadChannelInfo() {
     getBackendSrv()
@@ -146,20 +158,27 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  checkAndUpdateBuffer = (txt: string) => {
+  checkAndUpdateValue = (key: keyof GrafanaQuery, txt: string) => {
     const { onChange, query, onRunQuery } = this.props;
-    let buffer: number | undefined;
-    if (txt) {
-      try {
-        buffer = rangeUtil.intervalToSeconds(txt) * 1000;
-      } catch (err) {
-        console.warn('ERROR', err);
+    if (key === 'buffer') {
+      let buffer: number | undefined;
+      if (txt) {
+        try {
+          buffer = rangeUtil.intervalToSeconds(txt) * 1000;
+        } catch (err) {
+          console.warn('ERROR', err);
+        }
       }
+      onChange({
+        ...query,
+        buffer,
+      });
+    } else {
+      onChange({
+        ...query,
+        [key]: txt,
+      });
     }
-    onChange({
-      ...query,
-      buffer,
-    });
     onRunQuery();
   };
 
@@ -167,11 +186,11 @@ export class QueryEditor extends PureComponent<Props, State> {
     if (e.key !== 'Enter') {
       return;
     }
-    this.checkAndUpdateBuffer((e.target as any).value);
+    this.checkAndUpdateValue('buffer', (e.target as any).value);
   };
 
   handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    this.checkAndUpdateBuffer(e.target.value);
+    this.checkAndUpdateValue('buffer', e.target.value);
   };
 
   renderMeasurementsQuery() {
@@ -322,6 +341,34 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   }
 
+  handleSearchEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') {
+      return;
+    }
+    this.checkAndUpdateValue('query', (e.target as any).value);
+  };
+
+  handleSearchBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    this.checkAndUpdateValue('query', e.target.value);
+  };
+
+  renderSearch() {
+    let { query } = this.props.query;
+    return (
+      <InlineFieldRow>
+        <InlineField label="Query" grow={true} labelWidth={labelWidth}>
+          <Input
+            placeholder="Everything"
+            defaultValue={query ?? ''}
+            onKeyDown={this.handleSearchEnterKey}
+            onBlur={this.handleSearchBlur}
+            spellCheck={false}
+          />
+        </InlineField>
+      </InlineFieldRow>
+    );
+  }
+
   render() {
     const query = {
       ...defaultQuery,
@@ -342,6 +389,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         </InlineFieldRow>
         {query.queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {query.queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
+        {query.queryType === GrafanaQueryType.Search && this.renderSearch()}
       </>
     );
   }
