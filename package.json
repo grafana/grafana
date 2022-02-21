@@ -95,7 +95,7 @@
     "@react-types/button": "3.4.1",
     "@react-types/menu": "3.5.1",
     "@react-types/overlays": "3.5.1",
-    "@react-types/shared": "3.10.1",
+    "@react-types/shared": "3.11.1",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.2.136",
     "@swc/helpers": "0.3.2",
