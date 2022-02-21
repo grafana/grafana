@@ -124,7 +124,16 @@ func (b *Builder) applyFilters() (ordering string) {
 		for _, o := range orders {
 			o := strings.TrimSuffix(o, " DESC")
 			o = strings.TrimSuffix(o, " ASC")
-			cols = append(cols, o)
+			exists := false
+			for _, g := range groups {
+				if g == o {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				cols = append(cols, o)
+			}
 		}
 		cols = append(cols, groups...)
 		b.sql.WriteString(fmt.Sprintf(" GROUP BY %s", strings.Join(cols, ", ")))
