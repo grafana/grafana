@@ -33,11 +33,6 @@ type ListFilesResponse struct {
 	LastPath string
 }
 
-type Folder struct {
-	Name string
-	Path string
-}
-
 type Paging struct {
 	After string
 	First int
@@ -55,7 +50,7 @@ type FileStorage interface {
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
 	ListFiles(ctx context.Context, path string, recursive bool, cursor *Paging) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, path string) ([]Folder, error)
+	ListFolders(ctx context.Context, path string) ([]FileMetadata, error)
 
 	CreateFolder(ctx context.Context, path string, folderName string) error
 	DeleteFolder(ctx context.Context, path string) error

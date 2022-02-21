@@ -240,8 +240,8 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 	return resp, err
 }
 
-func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
-	folders := make([]Folder, 0)
+func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]FileMetadata, error) {
+	folders := make([]FileMetadata, 0)
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var foundPaths []string
 
@@ -264,9 +264,9 @@ func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string)
 			for {
 				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
 				if !mem[acc] && len(acc) > len(parentFolderPath) {
-					folders = append(folders, Folder{
-						Name: getName(acc),
-						Path: acc,
+					folders = append(folders, FileMetadata{
+						Name:     getName(acc),
+						FullPath: acc,
 					})
 				}
 				mem[acc] = true

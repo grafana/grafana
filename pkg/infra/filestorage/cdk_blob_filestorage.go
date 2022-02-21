@@ -220,13 +220,13 @@ func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, recurs
 	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), recursive, paging)
 }
 
-func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
+func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string) ([]FileMetadata, error) {
 	iterator := c.bucket.List(&blob.ListOptions{
 		Prefix:    parentFolderPath,
 		Delimiter: Delimiter,
 	})
 
-	var folders []Folder
+	var folders []FileMetadata
 	for {
 		obj, err := iterator.Next(ctx)
 		if err == io.EOF {
@@ -242,9 +242,9 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 			path := obj.Key
 
 			folderPath := fixPath(path)
-			folders = append(folders, Folder{
-				Name: getName(folderPath),
-				Path: folderPath,
+			folders = append(folders, FileMetadata{
+				Name:     getName(folderPath),
+				FullPath: folderPath,
 			})
 			resp, err := c.listFolders(ctx, obj.Key)
 
@@ -260,7 +260,7 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 	return folders, nil
 }
 
-func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error) {
+func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]FileMetadata, error) {
 	folders, err := c.listFolders(ctx, c.convertFolderPathToPrefix(parentFolderPath))
 	return folders, err
 }

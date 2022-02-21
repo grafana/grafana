@@ -25,23 +25,23 @@ func TestLocalFsCdkBlobStorage(t *testing.T) {
 		setup()
 		folders, err := filestorage.ListFolders(ctx, "/")
 		require.NoError(t, err)
-		require.Equal(t, []Folder{
+		require.Equal(t, []FileMetadata{
 			{
-				Name: "folderA",
-				Path: "/folderA",
+				Name:     "folderA",
+				FullPath: "/folderA",
 			},
 			{
-				Name: "folderAnestedA",
-				Path: "/folderA/folderAnestedA",
+				Name:     "folderAnestedA",
+				FullPath: "/folderA/folderAnestedA",
 			},
 		}, folders)
 
 		folders, err = filestorage.ListFolders(ctx, "/folderA")
 		require.NoError(t, err)
-		require.Equal(t, []Folder{
+		require.Equal(t, []FileMetadata{
 			{
-				Name: "folderAnestedA",
-				Path: "/folderA/folderAnestedA",
+				Name:     "folderAnestedA",
+				FullPath: "/folderA/folderAnestedA",
 			},
 		}, folders)
 

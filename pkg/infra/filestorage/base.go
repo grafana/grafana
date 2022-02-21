@@ -108,7 +108,7 @@ func (b baseFilestorageService) ListFiles(ctx context.Context, folderPath string
 	return b.wrapped.ListFiles(ctx, folderPath, recursive, cursor)
 }
 
-func (b baseFilestorageService) ListFolders(ctx context.Context, folderPath string) ([]Folder, error) {
+func (b baseFilestorageService) ListFolders(ctx context.Context, folderPath string) ([]FileMetadata, error) {
 	if err := validatePath(folderPath); err != nil {
 		return nil, err
 	}

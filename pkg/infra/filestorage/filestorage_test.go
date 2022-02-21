@@ -189,28 +189,28 @@ func TestSqlStorage(t *testing.T) {
 		resp, err := filestorage.ListFolders(ctx, "/")
 		require.NoError(t, err)
 
-		require.Equal(t, []Folder{
+		require.Equal(t, []FileMetadata{
 			{
-				Name: "folder1",
-				Path: "/folder1",
+				Name:     "folder1",
+				FullPath: "/folder1",
 			},
 			{
-				Name: "folder2",
-				Path: "/folder1/folder2",
+				Name:     "folder2",
+				FullPath: "/folder1/folder2",
 			},
 			{
-				Name: "folderA",
-				Path: "/folderA",
+				Name:     "folderA",
+				FullPath: "/folderA",
 			}, {
-				Name: "folderB",
-				Path: "/folderA/folderB",
+				Name:     "folderB",
+				FullPath: "/folderA/folderB",
 			},
 			{
-				Name: "folderX",
-				Path: "/folderX",
+				Name:     "folderX",
+				FullPath: "/folderX",
 			}, {
-				Name: "folderZ",
-				Path: "/folderX/folderZ",
+				Name:     "folderZ",
+				FullPath: "/folderX/folderZ",
 			},
 		}, resp)
 	})
@@ -230,24 +230,24 @@ func TestSqlStorage(t *testing.T) {
 		resp, err := filestorage.ListFolders(ctx, "/")
 		require.NoError(t, err)
 
-		require.Equal(t, []Folder{
+		require.Equal(t, []FileMetadata{
 			{
-				Name: "folder",
-				Path: "/folder",
+				Name:     "folder",
+				FullPath: "/folder",
 			}, {
-				Name: "icons",
-				Path: "/folder/icons",
+				Name:     "icons",
+				FullPath: "/folder/icons",
 			},
 			{
-				Name: "emojis",
-				Path: "/folder/icons/emojis",
+				Name:     "emojis",
+				FullPath: "/folder/icons/emojis",
 			}, {
-				Name: "folder1",
-				Path: "/folder1",
+				Name:     "folder1",
+				FullPath: "/folder1",
 			},
 			{
-				Name: "folder2",
-				Path: "/folder1/folder2",
+				Name:     "folder2",
+				FullPath: "/folder1/folder2",
 			},
 		}, resp)
 	})
@@ -265,17 +265,17 @@ func TestSqlStorage(t *testing.T) {
 		resp, err := filestorage.ListFolders(ctx, "/")
 		require.NoError(t, err)
 
-		require.Equal(t, []Folder{
+		require.Equal(t, []FileMetadata{
 			{
-				Name: "folder",
-				Path: "/folder",
+				Name:     "folder",
+				FullPath: "/folder",
 			}, {
-				Name: "dashboards",
-				Path: "/folder/dashboards",
+				Name:     "dashboards",
+				FullPath: "/folder/dashboards",
 			},
 			{
-				Name: "myNewFolder",
-				Path: "/folder/dashboards/myNewFolder",
+				Name:     "myNewFolder",
+				FullPath: "/folder/dashboards/myNewFolder",
 			},
 		}, resp)
 
