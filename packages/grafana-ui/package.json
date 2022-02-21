@@ -31,7 +31,7 @@
   ],
   "dependencies": {
     "@emotion/css": "11.7.1",
-    "@emotion/react": "11.7.1",
+    "@emotion/react": "11.8.1",
     "@grafana/aws-sdk": "0.0.33",
     "@grafana/data": "8.5.0-pre",
     "@grafana/e2e-selectors": "8.5.0-pre",
