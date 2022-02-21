@@ -5,8 +5,11 @@ import { Card, FilterInput, Icon, Pagination, TagList, useStyles2 } from '@grafa
 import { FolderState } from 'app/types';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useDebounce } from 'react-use';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
+import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
+import { labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
@@ -14,28 +17,74 @@ interface Props {
   folder: FolderState;
 }
 
+enum AlertFolderViewFilters {
+  nameFilter = 'nameFilter',
+  labelFilter = 'labelFilter',
+}
+
+function useAlertsFolderViewFilters() {
+  const [searchParams, setSearchParams] = useURLSearchParams();
+
+  const [nameFilter, setNameFilter] = useState(searchParams.get(AlertFolderViewFilters.nameFilter) ?? '');
+  const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewFilters.nameFilter) ?? '');
+
+  const [, cancelUrlUpdate] = useDebounce(
+    () =>
+      setSearchParams({
+        [AlertFolderViewFilters.nameFilter]: nameFilter,
+        [AlertFolderViewFilters.labelFilter]: labelFilter,
+      }),
+    400,
+    [nameFilter, labelFilter]
+  );
+
+  useEffect(
+    () => () => {
+      cancelUrlUpdate();
+    },
+    [cancelUrlUpdate]
+  );
+
+  return { nameFilter, labelFilter, setNameFilter, setLabelFilter };
+}
+
 export const AlertsFolderView = ({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-
-  const [nameFilter, setNameFilter] = useState('');
 
   useEffect(() => {
     dispatch(fetchAllPromAndRulerRulesAction());
   }, [dispatch]);
 
   const combinedNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
+  const { nameFilter, labelFilter, setNameFilter, setLabelFilter } = useAlertsFolderViewFilters();
 
   const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
   const alertRules = matchingNamespace?.groups[0]?.rules ?? [];
 
-  const filteredRules = alertRules.filter((rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()));
+  const matchers = parseMatchers(labelFilter);
+  const filteredRules = alertRules.filter(
+    (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
+  );
 
-  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, 10);
+  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, 5);
 
   return (
     <Stack direction="column" gap={1}>
-      <FilterInput value={nameFilter} onChange={setNameFilter} placeholder="Search alert rules by name" />
+      <Stack direction="row">
+        <FilterInput
+          value={nameFilter}
+          onChange={setNameFilter}
+          placeholder="Search alert rules by name"
+          className={styles.filterInput}
+        />
+        <FilterInput
+          value={labelFilter}
+          onChange={setLabelFilter}
+          placeholder="Search alert labels"
+          className={styles.filterInput}
+        />
+      </Stack>
       <div>
         {pageItems.map((currentRule) => (
           <Card key={currentRule.name} href={createViewLink('grafana', currentRule, '')} className={styles.card}>
@@ -86,5 +135,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   pagination: css`
     align-self: center;
+  `,
+  filterInput: css`
+    flex: 1;
+    width: auto;
+    min-width: 240px;
   `,
 });
