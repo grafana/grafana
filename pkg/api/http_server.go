@@ -137,7 +137,7 @@ type HTTPServer struct {
 	DatasourcePermissionsService DatasourcePermissionsService
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
-	PreferencesService           preferences.Service
+	PreferencesService           *preferences.Service
 }
 
 type ServerOptions struct {
@@ -168,7 +168,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service, preferencesService preferences.Service,
+	dashboardsnapshotsService *dashboardsnapshots.Service, preferencesService *preferences.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
