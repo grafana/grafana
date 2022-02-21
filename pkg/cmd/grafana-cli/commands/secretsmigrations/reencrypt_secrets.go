@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -21,11 +20,12 @@ import (
 func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
 	var rows []struct {
 		Id     int
-		Secret string
+		Secret []byte
 	}
 
 	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
-		return err
+		services.Logger.Warnf("Could not find any %s secret to re-encrypt", s.tableName)
+		return nil
 	}
 
 	for _, row := range rows {
@@ -33,17 +33,50 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 			continue
 		}
 
-		var (
-			err     error
-			decoded = []byte(row.Secret)
-		)
+		decrypted, err := secretsSrv.Decrypt(context.Background(), row.Secret)
+		if err != nil {
+			services.Logger.Warnf("Could not decrypt secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
+			continue
+		}
 
-		if s.isBase64Encoded {
-			decoded, err = base64.StdEncoding.DecodeString(row.Secret)
-			if err != nil {
-				services.Logger.Warnf("Could not decode base64-encoded secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
-				continue
-			}
+		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
+		if err != nil {
+			services.Logger.Warnf("Could not encrypt secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
+			continue
+		}
+
+		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+		if _, err = sess.Exec(updateSQL, encrypted, nowInUTC(), row.Id); err != nil {
+			services.Logger.Warnf("Could not update secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
+			continue
+		}
+	}
+
+	services.Logger.Infof("Column %s from %s has been re-encrypted successfully", s.columnName, s.tableName)
+
+	return nil
+}
+
+func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) error {
+	var rows []struct {
+		Id     int
+		Secret string
+	}
+
+	if err := sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+		services.Logger.Warnf("Could not find any %s secret to re-encrypt", s.tableName)
+		return nil
+	}
+
+	for _, row := range rows {
+		if len(row.Secret) == 0 {
+			continue
+		}
+
+		decoded, err := base64.StdEncoding.DecodeString(row.Secret)
+		if err != nil {
+			services.Logger.Warnf("Could not decode base64-encoded secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
+			continue
 		}
 
 		decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
@@ -54,22 +87,13 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 
 		encrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
 		if err != nil {
-			services.Logger.Warnf("Could not decrypt secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
+			services.Logger.Warnf("Could not encrypt secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
 			continue
 		}
 
-		encoded := string(encrypted)
-		if s.isBase64Encoded {
-			encoded = base64.StdEncoding.EncodeToString(encrypted)
-		}
-
-		if s.hasUpdatedCol {
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
-		} else {
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, row.Id)
-		}
+		encoded := base64.StdEncoding.EncodeToString(encrypted)
+		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+		_, err = sess.Exec(updateSQL, encoded, row.Id)
 
 		if err != nil {
 			services.Logger.Warnf("Could not update secret (%s with id: %d) while re-encrypting it: %s", s.tableName, row.Id, err)
@@ -142,10 +166,7 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 		result := result
 		postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 		if err != nil {
-			services.Logger.Warnf(
-				"Could not load configuration (alert_configuration with id: %d) while re-encrypting it: %s",
-				result.Id, err,
-			)
+			services.Logger.Warnf("Could not load configuration (alert_configuration with id: %d) while re-encrypting it: %s", result.Id, err)
 			continue
 		}
 
@@ -154,28 +175,19 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 				for k, v := range gmr.SecureSettings {
 					decoded, err := base64.StdEncoding.DecodeString(v)
 					if err != nil {
-						services.Logger.Warnf(
-							"Could not decode base64-encoded secret (alert_configuration with id: %d, key: %s): %s",
-							k, result.Id, err,
-						)
+						services.Logger.Warnf("Could not decode base64-encoded secret (alert_configuration with id: %d, key: %s): %s", k, result.Id, err)
 						continue
 					}
 
 					decrypted, err := secretsSrv.Decrypt(context.Background(), decoded)
 					if err != nil {
-						services.Logger.Warnf(
-							"Could not decrypt secret (alert_configuration with id: %d, key: %s): %s",
-							k, result.Id, err,
-						)
+						services.Logger.Warnf("Could not decrypt secret (alert_configuration with id: %d, key: %s): %s", k, result.Id, err)
 						continue
 					}
 
 					reencrypted, err := secretsSrv.EncryptWithDBSession(context.Background(), decrypted, secrets.WithoutScope(), sess)
 					if err != nil {
-						services.Logger.Warnf(
-							"Could not re-encrypt secret (alert_configuration with id: %d, key: %s): %s",
-							k, result.Id, err,
-						)
+						services.Logger.Warnf("Could not re-encrypt secret (alert_configuration with id: %d, key: %s): %s", k, result.Id, err)
 						continue
 					}
 
@@ -186,30 +198,20 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 
 		marshalled, err := json.Marshal(postableUserConfig)
 		if err != nil {
-			services.Logger.Warnf(
-				"Could not marshal configuration (alert_configuration with id: %d) while re-encrypting it: %s",
-				result.Id, err,
-			)
+			services.Logger.Warnf("Could not marshal configuration (alert_configuration with id: %d) while re-encrypting it: %s", result.Id, err)
 			continue
 		}
 
 		result.AlertmanagerConfiguration = string(marshalled)
 		if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
-			services.Logger.Warnf(
-				"Could not update secret (alert_configuration with id: %d) while re-encrypting it: %s",
-				result.Id, err,
-			)
+			services.Logger.Warnf("Could not update secret (alert_configuration with id: %d) while re-encrypting it: %s", result.Id, err)
 			continue
 		}
 	}
 
-	services.Logger.Info("Alerting configuration secrets has been re-encrypted successfully")
+	services.Logger.Info("Alerting configuration secrets have been re-encrypted successfully")
 
 	return nil
-}
-
-func nowInUTC() string {
-	return time.Now().UTC().Format("2006-01-02 15:04:05")
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
@@ -221,10 +223,10 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 	toMigrate := []interface {
 		reencrypt(*manager.SecretsService, *xorm.Session) error
 	}{
-		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted", hasUpdatedCol: true},
-		simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token", isBase64Encoded: true},
-		simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token", isBase64Encoded: true},
-		simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type", isBase64Encoded: true},
+		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
+		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
+		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
+		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},
