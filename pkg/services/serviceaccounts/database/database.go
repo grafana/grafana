@@ -182,7 +182,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		Id:        query.Result[0].UserId,
 		Name:      query.Result[0].Name,
 		Login:     query.Result[0].Login,
-		OrgId:     orgID,
+		OrgId:     query.Result[0].OrgId,
 		UpdatedAt: query.Result[0].Updated,
 		CreatedAt: query.Result[0].Created,
 	}
