@@ -104,6 +104,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 				Timezone:        cmd.Timezone,
 				WeekStart:       cmd.WeekStart,
 				Theme:           cmd.Theme,
+				QueryHistory:    cmd.QueryHistory,
 				Created:         time.Now(),
 				Updated:         time.Now(),
 			}
@@ -114,6 +115,7 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 		prefs.Timezone = cmd.Timezone
 		prefs.WeekStart = cmd.WeekStart
 		prefs.Theme = cmd.Theme
+		prefs.QueryHistory = cmd.QueryHistory
 		prefs.Updated = time.Now()
 		prefs.Version += 1
 		_, err = sess.ID(prefs.Id).AllCols().Update(&prefs)

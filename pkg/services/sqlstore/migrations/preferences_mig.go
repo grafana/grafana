@@ -46,4 +46,8 @@ func addPreferencesMigrations(mg *Migrator) {
 	mg.AddMigration("Add column week_start in preferences", NewAddColumnMigration(preferencesV2, &Column{
 		Name: "week_start", Type: DB_NVarchar, Length: 10, Nullable: true,
 	}))
+
+	mg.AddMigration("Add query_history settings in preferences", NewAddColumnMigration(preferencesV2, &Column{
+		Name: "query_history", Type: DB_Text, Nullable: true,
+	}))
 }

@@ -12,6 +12,7 @@ Keys:
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
 - **homeDashboardId** - The numerical `:id` of a favorited dashboard, default: `0`
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
+- **queryHistory** - JSON with preferences for query history. Supported preferences: showOnlyCurrentDs, starredTabFirst
 
 Omitting a key will cause the current value to be replaced with the
 system default value.
@@ -53,7 +54,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
   "theme": "",
   "homeDashboardId":0,
-  "timezone":"utc"
+  "timezone":"utc",
+  "queryHistory": {
+    "showOnlyCurrentDs": true,
+    "starredTabFirst": true
+  }
 }
 ```
 

@@ -1,10 +1,13 @@
 package dtos
 
+import "github.com/grafana/grafana/pkg/components/simplejson"
+
 type Prefs struct {
-	Theme           string `json:"theme"`
-	HomeDashboardID int64  `json:"homeDashboardId"`
-	Timezone        string `json:"timezone"`
-	WeekStart       string `json:"weekStart"`
+	Theme           string           `json:"theme"`
+	HomeDashboardID int64            `json:"homeDashboardId"`
+	Timezone        string           `json:"timezone"`
+	WeekStart       string           `json:"weekStart"`
+	QueryHistory    *simplejson.Json `json:"queryHistory"`
 }
 
 // swagger:model
@@ -15,6 +18,7 @@ type UpdatePrefsCmd struct {
 	// Default:0
 	HomeDashboardID int64 `json:"homeDashboardId"`
 	// Enum: utc,browser
-	Timezone  string `json:"timezone"`
-	WeekStart string `json:"weekStart"`
+	Timezone     string           `json:"timezone"`
+	WeekStart    string           `json:"weekStart"`
+	QueryHistory *simplejson.Json `json:"queryHistory"`
 }
