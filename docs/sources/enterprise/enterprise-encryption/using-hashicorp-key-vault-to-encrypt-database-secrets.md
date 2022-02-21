@@ -5,9 +5,9 @@ keywords = ["grafana", "Hashicorp Vault integration"]
 weight = 3
 +++
 
-# Using Google Cloud KMS to encrypt database secrets
+# Using Hashicorp Vault to encrypt database secrets
 
-You can use an encryption key from Google Cloud Key Management Service to encrypt secrets in the Grafana database.
+You can use an encryption key from Hashicorp Vault to encrypt secrets in the Grafana database.
 
 **Prerequisites:**
 
