@@ -10,22 +10,17 @@ import {
   Field,
   InputControl,
 } from '@grafana/ui';
-import { getConfig } from 'app/core/config';
-import { OrgRole } from 'app/types';
 import { locationService } from '@grafana/runtime';
 import { locationUtil } from '@grafana/data';
-import { userInviteSubmit } from './api';
+import { getConfig } from 'app/core/config';
+import { OrgRole, useDispatch } from 'app/types';
+import { addInvitee } from '../invites/state/actions';
 
 const roles = [
   { label: 'Viewer', value: OrgRole.Viewer },
   { label: 'Editor', value: OrgRole.Editor },
   { label: 'Admin', value: OrgRole.Admin },
 ];
-
-const onSubmit = async (formData: FormModel) => {
-  await userInviteSubmit(formData);
-  locationService.push('/org/users/');
-};
 
 export interface FormModel {
   role: OrgRole;
@@ -35,12 +30,19 @@ export interface FormModel {
   email: string;
 }
 
+const defaultValues: FormModel = {
+  name: '',
+  email: '',
+  role: OrgRole.Editor,
+  sendEmail: true,
+};
+
 export const UserInviteForm = () => {
-  const defaultValues: FormModel = {
-    name: '',
-    email: '',
-    role: OrgRole.Editor,
-    sendEmail: true,
+  const dispatch = useDispatch();
+
+  const onSubmit = async (formData: FormModel) => {
+    await dispatch(addInvitee(formData)).unwrap();
+    locationService.push('/org/users/');
   };
 
   return (
