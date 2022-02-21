@@ -12,7 +12,7 @@ func TestGetResourcesMetadata(t *testing.T) {
 		desc         string
 		resource     string
 		resourcesIDs map[string]bool
-		permissions  []*Permission
+		permissions  map[string][]string
 		expected     map[string]Metadata
 	}{
 		{
@@ -24,10 +24,10 @@ func TestGetResourcesMetadata(t *testing.T) {
 		{
 			desc:     "Should return no permission for resources 1,2,3 given the user has permissions for 4 only",
 			resource: "resources",
-			permissions: []*Permission{
-				{Action: "resources:action1", Scope: Scope("resources", "id", "4")},
-				{Action: "resources:action2", Scope: Scope("resources", "id", "4")},
-				{Action: "resources:action3", Scope: Scope("resources", "id", "4")},
+			permissions: map[string][]string{
+				"resources:action1": {Scope("resources", "id", "4")},
+				"resources:action2": {Scope("resources", "id", "4")},
+				"resources:action3": {Scope("resources", "id", "4")},
 			},
 			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected:     map[string]Metadata{},
@@ -35,10 +35,10 @@ func TestGetResourcesMetadata(t *testing.T) {
 		{
 			desc:     "Should only return permissions for resources 1 and 2, given the user has no permissions for 3",
 			resource: "resources",
-			permissions: []*Permission{
-				{Action: "resources:action1", Scope: Scope("resources", "id", "1")},
-				{Action: "resources:action2", Scope: Scope("resources", "id", "2")},
-				{Action: "resources:action3", Scope: Scope("resources", "id", "2")},
+			permissions: map[string][]string{
+				"resources:action1": {Scope("resources", "id", "1")},
+				"resources:action2": {Scope("resources", "id", "2")},
+				"resources:action3": {Scope("resources", "id", "2")},
 			},
 			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected: map[string]Metadata{
@@ -49,13 +49,13 @@ func TestGetResourcesMetadata(t *testing.T) {
 		{
 			desc:     "Should return permissions with global scopes for resources 1,2,3",
 			resource: "resources",
-			permissions: []*Permission{
-				{Action: "resources:action4", Scope: Scope("resources", "id", "*")},
-				{Action: "resources:action5", Scope: Scope("resources", "*")},
-				{Action: "resources:action6", Scope: "*"},
-				{Action: "resources:action1", Scope: Scope("resources", "id", "1")},
-				{Action: "resources:action2", Scope: Scope("resources", "id", "2")},
-				{Action: "resources:action3", Scope: Scope("resources", "id", "2")},
+			permissions: map[string][]string{
+				"resources:action1": {Scope("resources", "id", "1")},
+				"resources:action2": {Scope("resources", "id", "2")},
+				"resources:action3": {Scope("resources", "id", "2")},
+				"resources:action4": {Scope("resources", "id", "*")},
+				"resources:action5": {Scope("resources", "*")},
+				"resources:action6": {"*"},
 			},
 			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected: map[string]Metadata{
@@ -67,11 +67,10 @@ func TestGetResourcesMetadata(t *testing.T) {
 		{
 			desc:     "Should correctly filter out irrelevant permissions for resources 1,2,3",
 			resource: "resources",
-			permissions: []*Permission{
-				{Action: "resources:action1", Scope: Scope("resources", "id", "1")},
-				{Action: "otherresources:action1", Scope: Scope("resources", "id", "1")},
-				{Action: "resources:action2", Scope: Scope("otherresources", "id", "*")},
-				{Action: "otherresources:action1", Scope: Scope("otherresources", "id", "*")},
+			permissions: map[string][]string{
+				"resources:action1":      {Scope("resources", "id", "1")},
+				"resources:action2":      {Scope("otherresources", "id", "*")},
+				"otherresources:action1": {Scope("resources", "id", "1"), Scope("otherresources", "id", "*")},
 			},
 			resourcesIDs: map[string]bool{"1": true, "2": true, "3": true},
 			expected: map[string]Metadata{
@@ -81,9 +80,8 @@ func TestGetResourcesMetadata(t *testing.T) {
 		{
 			desc:     "Should correctly handle permissions with multilayer scope",
 			resource: "resources:sub",
-			permissions: []*Permission{
-				{Action: "resources:action1", Scope: Scope("resources", "sub", "id", "1")},
-				{Action: "resources:action1", Scope: Scope("resources", "sub", "id", "123")},
+			permissions: map[string][]string{
+				"resources:action1": {Scope("resources", "sub", "id", "1"), Scope("resources", "sub", "id", "123")},
 			},
 			resourcesIDs: map[string]bool{"1": true, "123": true},
 			expected: map[string]Metadata{

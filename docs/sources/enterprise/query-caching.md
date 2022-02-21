@@ -55,11 +55,11 @@ By default, data source queries are not cached. To enable query caching for a si
 1. In the data source list, click the data source that you want to turn on caching for.
 1. Open the Cache tab.
 1. Press the Enable button.
-1. (Optional) Choose a custom TTL for that data source. If you skip this step, then Grafana uses the default TTL.
+1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
-To configure global settings for query caching, refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
+To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
 ## Disable query caching
 
@@ -70,6 +70,19 @@ To disable query caching for a single data source:
 1. In the Cache tab, click Disable.
 
 To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
+
+## Clear cache
+
+If you experience performance issues or repeated queries become slower to execute, consider clearing your cache.
+
+> **Note:** This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
+
+**To clear the cache**:
+
+1. Sign in to Grafana and click **Settings > Data Sources**.
+1. Select a data source.
+1. Click the **Cache** tab.
+1. Click **Clear cache**.
 
 ## Sending a request without cache
 

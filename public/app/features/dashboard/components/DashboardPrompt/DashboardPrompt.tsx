@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { DashboardModel } from '../../state/DashboardModel';
 import { each, filter, find } from 'lodash';
-import angular from 'angular';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 import * as H from 'history';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
@@ -248,8 +247,8 @@ export function hasChanges(current: DashboardModel, original: any) {
     currentTimepicker.now = originalTimepicker.now;
   }
 
-  const currentJson = angular.toJson(currentClean);
-  const originalJson = angular.toJson(originalClean);
+  const currentJson = JSON.stringify(currentClean, null);
+  const originalJson = JSON.stringify(originalClean, null);
 
   return currentJson !== originalJson;
 }

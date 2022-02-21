@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -34,6 +35,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
 
@@ -180,7 +182,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
+		require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -253,7 +255,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	}
 
 	// Remove permissions from ALL folders.
-	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
+	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
