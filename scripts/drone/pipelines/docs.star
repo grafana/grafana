@@ -28,14 +28,11 @@ ver_mode = 'pr'
 def docs_pipelines(edition):
     steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
     steps.extend([
-        lint_frontend_step(),
-        test_frontend_step(),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
     ])
 
     # Insert remaining steps
     steps.extend([
-        build_storybook_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
     ])
