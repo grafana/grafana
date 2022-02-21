@@ -846,25 +846,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana --base alpine --base
-    ubuntu --arch amd64 --arch arm64 --arch armv7
-  depends_on:
-  - build-docker-images
-  - build-docker-images-ubuntu
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_key
-  image: google/cloud-sdk
-  name: publish-images-grafana
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss --base alpine
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-dev --base alpine
     --base ubuntu --arch amd64 --arch arm64 --arch armv7
   depends_on:
   - build-docker-images
@@ -877,7 +859,25 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana-oss
+  name: publish-images-grafana-dev
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss-dev --base
+    alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7
+  depends_on:
+  - build-docker-images
+  - build-docker-images-ubuntu
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: publish-images-grafana-oss-dev
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -4266,6 +4266,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 703b9a44a073ab768a774029cee2c3fc7c5fe7b7e01495e18f048bc7d1f007b0
+hmac: e78250e49d6478a29784471442a347143cfa07f3331e187890923dd73560be91
 
 ...
