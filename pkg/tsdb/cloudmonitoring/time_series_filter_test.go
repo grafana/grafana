@@ -396,13 +396,13 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			res := &backend.DataResponse{}
-			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{}).parseResponse(res, data, "test_query"))
+			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{GroupBys: []string{"test_group_by"}}).parseResponse(res, data, "test_query"))
 
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
 				ExecutedQueryString: "test_query",
 				Custom: map[string]interface{}{
-					"groupBys":        []string(nil),
+					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
 					"labels": map[string]string{
 						"resource.label.project_id": "grafana-prod",
@@ -419,13 +419,13 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			res := &backend.DataResponse{}
-			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{}).parseResponse(res, data, "test_query"))
+			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{GroupBys: []string{"test_group_by"}}).parseResponse(res, data, "test_query"))
 
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
 				ExecutedQueryString: "test_query",
 				Custom: map[string]interface{}{
-					"groupBys":        []string(nil),
+					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
 					"labels": map[string]string{
 						"resource.label.project_id": "grafana-demo",
@@ -442,13 +442,13 @@ func TestTimeSeriesFilter(t *testing.T) {
 			assert.Equal(t, 1, len(data.TimeSeries))
 
 			res := &backend.DataResponse{}
-			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{}).parseResponse(res, data, "test_query"))
+			require.NoError(t, (&cloudMonitoringTimeSeriesFilter{GroupBys: []string{"test_group_by"}}).parseResponse(res, data, "test_query"))
 
 			require.NotNil(t, res.Frames[0].Meta)
 			assert.Equal(t, sdkdata.FrameMeta{
 				ExecutedQueryString: "test_query",
 				Custom: map[string]interface{}{
-					"groupBys":        []string(nil),
+					"groupBys":        []string{"test_group_by"},
 					"alignmentPeriod": "",
 					"labels": map[string]string{
 						"resource.label.project_id": "grafana-prod",
