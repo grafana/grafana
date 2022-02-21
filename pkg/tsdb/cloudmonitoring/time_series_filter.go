@@ -193,6 +193,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 							valueField,
 						},
 						RefID: timeSeriesFilter.RefID,
+						Meta: &data.FrameMeta{
+							ExecutedQueryString: executedQueryString,
+						},
 					}
 
 					if maxKey < i {
@@ -220,12 +223,19 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 							timeField,
 							valueField,
 						},
+						Meta: &data.FrameMeta{
+							ExecutedQueryString: executedQueryString,
+						},
 					}
 				}
 			}
 		}
 		for i := 0; i < len(buckets); i++ {
+			buckets[i].Meta.Custom = customFrameMeta
 			frames = append(frames, buckets[i])
+		}
+		if len(buckets) == 0 {
+			frames = append(frames, frame)
 		}
 	}
 	if len(response.TimeSeries) > 0 {
