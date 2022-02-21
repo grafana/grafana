@@ -8,7 +8,7 @@ import { useDispatch } from 'react-redux';
 import { useDebounce } from 'react-use';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { fetchAllPromAndRulerRulesAction } from './state/actions';
+import { fetchAllPromAndRulerRulesAction, fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
 import { labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { createViewLink } from './utils/misc';
@@ -17,12 +17,15 @@ interface Props {
   folder: FolderState;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export const AlertsFolderView = ({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchAllPromAndRulerRulesAction());
+    dispatch(fetchPromRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+    dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
   }, [dispatch]);
 
   const combinedNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
@@ -37,7 +40,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
   );
 
   const showNoResultsText = alertRules.length === 0 || filteredRules.length === 0;
-  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, 5);
+  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, ITEMS_PER_PAGE);
 
   return (
     <Stack direction="column" gap={1}>
@@ -47,17 +50,24 @@ export const AlertsFolderView = ({ folder }: Props) => {
           onChange={setNameFilter}
           placeholder="Search alert rules by name"
           className={styles.filterInput}
+          data-testid="name-filter"
         />
         <FilterInput
           value={labelFilter}
           onChange={setLabelFilter}
           placeholder="Search alert labels"
           className={styles.filterInput}
+          data-testid="label-filter"
         />
       </Stack>
       <div>
         {pageItems.map((currentRule) => (
-          <Card key={currentRule.name} href={createViewLink('grafana', currentRule, '')} className={styles.card}>
+          <Card
+            key={currentRule.name}
+            href={createViewLink('grafana', currentRule, '')}
+            className={styles.card}
+            data-testid="alert-card-row"
+          >
             <Card.Heading>{currentRule.name}</Card.Heading>
             <Card.Tags>
               <TagList
