@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 )
 
-func commentsToDto(items []*commentmodel.Comment, userMap map[int64]*models.UserSearchHitDTO) []*commentmodel.CommentDto {
+func commentsToDto(items []*commentmodel.Comment, userMap map[int64]*commentmodel.CommentUser) []*commentmodel.CommentDto {
 	result := make([]*commentmodel.CommentDto, 0, len(items))
 	for _, m := range items {
 		result = append(result, commentToDto(m, userMap))
@@ -20,26 +20,32 @@ func commentsToDto(items []*commentmodel.Comment, userMap map[int64]*models.User
 	return result
 }
 
-func commentToDto(comment *commentmodel.Comment, userMap map[int64]*models.UserSearchHitDTO) *commentmodel.CommentDto {
+func commentToDto(comment *commentmodel.Comment, userMap map[int64]*commentmodel.CommentUser) *commentmodel.CommentDto {
 	var u *commentmodel.CommentUser
 	if comment.UserId > 0 {
-		user, ok := userMap[comment.UserId]
+		var ok bool
+		u, ok = userMap[comment.UserId]
 		if !ok {
 			// TODO: handle this gracefully?
 			u = &commentmodel.CommentUser{
 				Id: comment.UserId,
 			}
-		} else {
-			u = &commentmodel.CommentUser{
-				Id:        user.Id,
-				Name:      user.Name,
-				Login:     user.Login,
-				Email:     user.Email,
-				AvatarUrl: dtos.GetGravatarUrl(user.Email),
-			}
 		}
 	}
 	return comment.ToDTO(u)
+}
+
+func searchUserToCommentUser(searchUser *models.UserSearchHitDTO) *commentmodel.CommentUser {
+	if searchUser == nil {
+		return nil
+	}
+	return &commentmodel.CommentUser{
+		Id:        searchUser.Id,
+		Name:      searchUser.Name,
+		Login:     searchUser.Login,
+		Email:     searchUser.Email,
+		AvatarUrl: dtos.GetGravatarUrl(searchUser.Email),
+	}
 }
 
 type UserIDFilter struct {
@@ -89,14 +95,14 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *models.
 		return nil, ErrPermissionDenied
 	}
 
-	userMap := map[int64]*models.UserSearchHitDTO{}
+	userMap := make(map[int64]*commentmodel.CommentUser, 1)
 	if signedInUser.UserId > 0 {
-		q := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter([]int64{signedInUser.UserId})}, Page: 0, Limit: 1}
-		if err := s.sqlStore.SearchUsers(ctx, q); err != nil {
-			return nil, err
-		}
-		for _, u := range q.Result.Users {
-			userMap[u.Id] = u
+		userMap[signedInUser.UserId] = &commentmodel.CommentUser{
+			Id:        signedInUser.UserId,
+			Name:      signedInUser.Name,
+			Login:     signedInUser.Login,
+			Email:     signedInUser.Email,
+			AvatarUrl: dtos.GetGravatarUrl(signedInUser.Email),
 		}
 	}
 
@@ -139,14 +145,15 @@ func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *models.Sig
 		userIds = append(userIds, m.UserId)
 	}
 
+	// NOTE: probably replace with comment and user table join.
 	query := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter(userIds)}, Page: 0, Limit: len(userIds)}
 	if err := s.sqlStore.SearchUsers(ctx, query); err != nil {
 		return nil, err
 	}
 
-	userMap := map[int64]*models.UserSearchHitDTO{}
-	for _, u := range query.Result.Users {
-		userMap[u.Id] = u
+	userMap := make(map[int64]*commentmodel.CommentUser, len(query.Result.Users))
+	for _, v := range query.Result.Users {
+		userMap[v.Id] = searchUserToCommentUser(v)
 	}
 
 	result := commentsToDto(messages, userMap)
