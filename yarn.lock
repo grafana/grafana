@@ -4441,7 +4441,7 @@ __metadata:
     react-dom: 17.0.2
     react-dropzone: 11.5.1
     react-highlight-words: 0.17.0
-    react-hook-form: 7.5.3
+    react-hook-form: 7.27.0
     react-inlinesvg: 2.3.0
     react-popper: 2.2.5
     react-popper-tooltip: ^4.3.1
@@ -7338,12 +7338,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.10.1, @react-types/shared@npm:^3.10.1":
-  version: 3.10.1
-  resolution: "@react-types/shared@npm:3.10.1"
+"@react-types/shared@npm:3.11.1, @react-types/shared@npm:^3.11.1":
+  version: 3.11.1
+  resolution: "@react-types/shared@npm:3.11.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 6c4b7c6d43f84994521c4780f3b969a70c6b2ce69892f03c309f88b5d5d3c862a1a0d07f6060f9f650dbdd834cd16568db957c03543028eb8e52eb7dc97c58ea
+  checksum: 5d96e63a985227cc98a9172686690f7f58cfc7e8026765e4efd364dd7e059986d1e239453bb19f018b2d369717c28825b386471d1f21fc10ce5c50a3f05d1fba
   languageName: node
   linkType: hard
 
@@ -7356,12 +7356,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:^3.11.1":
-  version: 3.11.1
-  resolution: "@react-types/shared@npm:3.11.1"
+"@react-types/shared@npm:^3.10.1":
+  version: 3.10.1
+  resolution: "@react-types/shared@npm:3.10.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 5d96e63a985227cc98a9172686690f7f58cfc7e8026765e4efd364dd7e059986d1e239453bb19f018b2d369717c28825b386471d1f21fc10ce5c50a3f05d1fba
+  checksum: 6c4b7c6d43f84994521c4780f3b969a70c6b2ce69892f03c309f88b5d5d3c862a1a0d07f6060f9f650dbdd834cd16568db957c03543028eb8e52eb7dc97c58ea
   languageName: node
   linkType: hard
 
@@ -18289,14 +18289,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-lodash@npm:^7.2.0":
-  version: 7.3.0
-  resolution: "eslint-plugin-lodash@npm:7.3.0"
+"eslint-plugin-lodash@npm:7.4.0":
+  version: 7.4.0
+  resolution: "eslint-plugin-lodash@npm:7.4.0"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
     eslint: ">=2"
-  checksum: 590c627bd2e58388b198e3a829d5e4729ceb0aa5bdb2a82c963582cf691430d8e857fc0ba67e143ad926197133471baf62ac2b1e4af2e2cac254f71aee92f609
+  checksum: 7557cded64dd0e1042b420214e65ba9d6c5cb6c83c40e471db1f7d33e63584d1260c9ca9a4fded4ca7a2fe2ac2a9cdc303e072105096fa99b583101c6e7ada13
   languageName: node
   linkType: hard
 
@@ -20412,7 +20412,7 @@ __metadata:
     "@react-types/button": 3.4.1
     "@react-types/menu": 3.5.1
     "@react-types/overlays": 3.5.1
-    "@react-types/shared": 3.10.1
+    "@react-types/shared": 3.11.1
     "@reduxjs/toolkit": 1.7.2
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.17.4
@@ -20520,7 +20520,7 @@ __metadata:
     eslint-config-prettier: 8.3.0
     eslint-plugin-jest: ^26.1.0
     eslint-plugin-jsdoc: 37.9.1
-    eslint-plugin-lodash: ^7.2.0
+    eslint-plugin-lodash: 7.4.0
     eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.28.0
     eslint-plugin-react-hooks: 4.3.0
@@ -20596,7 +20596,7 @@ __metadata:
     react-draggable: 4.4.4
     react-grid-layout: 1.3.3
     react-highlight-words: 0.17.0
-    react-hook-form: 7.5.3
+    react-hook-form: 7.27.0
     react-inlinesvg: 2.3.0
     react-loadable: 5.5.0
     react-moveable: 0.30.3
@@ -30610,6 +30610,15 @@ __metadata:
   peerDependencies:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0
   checksum: 41b3d0e4516cbc12fd4e0b620b72d309eaa3e207f1089a377d76040f99edb717b99a34e0bef5f83d7d28d408542f3138ca3a5c06e08359e4f13f241432327485
+  languageName: node
+  linkType: hard
+
+"react-hook-form@npm:7.27.0":
+  version: 7.27.0
+  resolution: "react-hook-form@npm:7.27.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17
+  checksum: 643c643e6d52b2427e73853abe0255e39f4c323c87862b1651e7153adaf1f3db27b843dda9ea32306db102d1e9e1e00e49c2ded13705ede0706235b53ef69e24
   languageName: node
   linkType: hard
 

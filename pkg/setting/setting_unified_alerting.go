@@ -52,8 +52,8 @@ const (
 	// changing this value is discouraged because this could cause existing alert definition
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
-	// DefaultAlertForDuration indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultAlertForDuration = 60 * time.Second
+	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
+	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 )
 
 type UnifiedAlertingSettings struct {
@@ -75,8 +75,8 @@ type UnifiedAlertingSettings struct {
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
 	BaseInterval time.Duration
-	// DefaultAlertForDuration default time for how long an alert rule should be evaluated before change state.
-	DefaultAlertForDuration time.Duration
+	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
+	DefaultRuleEvaluationInterval time.Duration
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -239,9 +239,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MinInterval = uaMinInterval
 
-	uaCfg.DefaultAlertForDuration = DefaultAlertForDuration
-	if uaMinInterval > uaCfg.DefaultAlertForDuration {
-		uaCfg.DefaultAlertForDuration = uaMinInterval
+	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
+	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
+		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
 
 	cfg.UnifiedAlerting = uaCfg
