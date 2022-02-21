@@ -47,9 +47,18 @@ func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, fs filestor
 
 func newService(cfg *setting.Cfg, search searchV2.SearchService, fs filestorage.FileStorage) *Service {
 	s := &Service{
-		fs:     fs,
-		search: search,
-		log:    log.New("grafanads"),
+		fs:             fs,
+		search:         search,
+		staticRootPath: cfg.StaticRootPath,
+		roots: []string{
+			"testdata",
+			"img/icons",
+			"img/bg",
+			"gazetteer",
+			"maps",
+			"upload", // does not exist yet
+		},
+		log: log.New("grafanads"),
 	}
 
 	return s
@@ -179,6 +188,7 @@ func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
 	path := q.Path
 	if path == "" {
 		rootPath := filestorage.Path(filestorage.Delimiter, filestorage.StorageNameGrafanaDS)
+		fmt.Println("listing " + rootPath)
 		folders, err := s.fs.ListFolders(context.Background(), rootPath, nil)
 		if err != nil {
 			s.log.Error("failed when listing folders", "path", rootPath, "err", err)
@@ -201,7 +211,7 @@ func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
 		})
 		response.Frames = data.Frames{frame}
 	} else {
-		frame, err := s.getDirectoryFrame(path, true)
+		frame, err := s.getDirectoryFrame(path, false)
 		if err != nil {
 			response.Error = err
 			return response
@@ -254,6 +264,7 @@ func (s *Service) doReadQuery(query backend.DataQuery) backend.DataResponse {
 	// nolint:gosec
 	fileReader, err := os.Open(path)
 	if err != nil {
+		s.log.Error("Failed to read file", "err", err, "path", path)
 		response.Error = fmt.Errorf("failed to read file")
 		return response
 	}
