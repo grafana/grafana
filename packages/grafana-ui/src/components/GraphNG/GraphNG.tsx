@@ -38,6 +38,7 @@ export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
+  alwaysPrepStateWithConfig?: boolean;
   width: number;
   height: number;
   timeRange: TimeRange;
@@ -216,7 +217,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
     if (frames !== prevProps.frames || propsChanged) {
-      let newState = this.prepState(this.props, false);
+      let newState = this.prepState(this.props, this.props.alwaysPrepStateWithConfig ?? false);
 
       if (newState) {
         const shouldReconfig =

@@ -26,6 +26,7 @@ export interface TimelineProps
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
   legendItems?: VizLegendItem[];
+  alwaysPrepStateWithConfig?: boolean;
 }
 
 const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
@@ -76,6 +77,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
         renderLegend={this.renderLegend}
+        alwaysPrepStateWithConfig={this.props.alwaysPrepStateWithConfig}
       />
     );
   }

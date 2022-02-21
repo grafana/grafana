@@ -101,6 +101,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       legendItems={legendItems}
       {...options}
       mode={TimelineMode.Changes}
+      alwaysPrepStateWithConfig={true}
     >
       {(config, alignedFrame) => {
         return (
