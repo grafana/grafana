@@ -12,21 +12,11 @@ Grafana allows you to manage certain aspects of your user account, including you
 
 You can also view important information about your account, such as the organizations and roles to which you are assigned and the Grafana sessions associated with your account.
 
-## Switch organizations
-
-When you sign in to Grafana, the system signs you in to a default organization. If you are assigned to multiple organizations, then you might need to switch organizations. For example, if you need to view a dashboard not associated with your current organization, then you should switch organizations to view associated dashboards.
-
-**To switch organizations**:
-
-1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page and click **Switch organization**.
-1. Next to the organization that you want to sign in to, click **Switch to**.
-
 ## Change your Grafana password
 
 You can change your Grafana password at any time.
 
-> **Note**: If your Grafana instance uses an external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+> **Note**: If your Grafana instance uses an [external authentication provider]({{< relref "../auth/_index.md">}}), then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
 
 **To change your password**:
 
@@ -50,6 +40,32 @@ Your profile includes your name, user name, and email address, which you can upd
 1. Hover your cursor over the user icon in the lower-left corner of the page and click **Preferences**.
 1. In the **Edit Profile** section, update your profile and click **Save**.
 
+## Edit your preferences
+
+You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a [team]({{< relref "../administration/manage-users-and-permissions/manage-teams/_index.md">}}), for an organization, or Grafana-wide using [configuration settings]({{< relref "../administration/configuration/_index.md">}}). Your user preferences take precedence over team, organization, and Grafana default preferences.
+
+- **UI theme** determines whether Grafana appears in light mode or dark mode. This is set to dark mode by default.
+- **Home dashboard** refers to the first dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.
+- **Timezone** is used by dashboards when you set time ranges, so that you view data in your own time instead of UTC.
+- **Week start** is the first day of the week you prefer to use in certain dashboard time ranges, like the time range `This week`.
+
+**To edit your preferences**:
+1. Sign in to Grafana.
+1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
+1. Update any of the values in the **Preferences** section.
+1. Click **Save** at the bottom of the Preferences section.
+
+
+## Switch organizations
+
+When you sign in to Grafana, the system signs you in to a default organization. If you are assigned to multiple organizations, then you might need to switch organizations. For example, if you need to view a dashboard not associated with your current organization, then you should switch organizations to view associated dashboards.
+
+**To switch organizations**:
+
+1. Sign in to Grafana.
+1. Hover your cursor over the user icon in the lower-left corner of the page and click **Switch organization**.
+1. Next to the organization that you want to sign in to, click **Switch to**.
+
 ## View your assigned organizations
 
 Every user is a member of at least one organization. You can have different roles in each organization of which you are a member.
@@ -72,3 +88,14 @@ Grafana logs your sessions in each Grafana instance. You can review this section
 1. Sign in to Grafana.
 1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
 1. Scroll down to the **Sessions** section.
+
+## Sign out a user session
+
+You can sign out other sessions using your account in order to prevent other people from accessing Grafana using your credentials.
+
+**To sign out one of your Grafana sessions**:
+
+1. Sign in to Grafana.
+1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
+1. Scroll down to the **Sessions** section.
+1. Click the red "sign out" icon next to the session you would like to sign out.
