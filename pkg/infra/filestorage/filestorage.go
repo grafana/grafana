@@ -27,12 +27,12 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (FileStorage,
 
 	grafanaDsStorageLogger := log.New("grafanaDsStorage")
 	prefixes := []string{
-		"testdata",
-		"img/icons",
-		"img/bg",
-		"gazetteer",
-		"maps",
-		"upload",
+		"testdata/",
+		"img/icons/",
+		"img/bg/",
+		"gazetteer/",
+		"maps/",
+		"upload/",
 	}
 	return &service{
 		grafanaDsStorage: &wrapper{
