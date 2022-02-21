@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,12 +21,17 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (FileStorage, error) {
-	bucket, err := blob.OpenBucket(context.Background(), fmt.Sprintf("file://%s", cfg.StaticRootPath))
+	grafanaDsStorageLogger := log.New("grafanaDsStorage")
+
+	path := fmt.Sprintf("file://%s", cfg.StaticRootPath)
+	grafanaDsStorageLogger.Info("Initializing grafana ds storage", "path", path)
+	bucket, err := blob.OpenBucket(context.Background(), path)
 	if err != nil {
+		currentDir, _ := os.Getwd()
+		grafanaDsStorageLogger.Error("Failed to initialize grafana ds storage", "path", path, "error", err, "cwd", currentDir)
 		return nil, err
 	}
 
-	grafanaDsStorageLogger := log.New("grafanaDsStorage")
 	prefixes := []string{
 		"testdata/",
 		"img/icons/",
