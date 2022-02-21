@@ -96,6 +96,7 @@ trigger:
   paths:
     exclude:
     - docs/**
+    - packages/**
 type: docker
 volumes:
 - host:
@@ -316,6 +317,7 @@ trigger:
   paths:
     exclude:
     - docs/**
+    - packages/**
 type: docker
 volumes:
 - host:
@@ -394,6 +396,7 @@ trigger:
   paths:
     exclude:
     - docs/**
+    - packages/**
 type: docker
 volumes:
 - host:
@@ -461,6 +464,7 @@ trigger:
   paths:
     include:
     - docs/**
+    - packages/**
 type: docker
 volumes:
 - host:
@@ -4265,6 +4269,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: fbae5e29bfc4851e37aece52ff0d3637bfae2f81819a6ccc4de03eb10b3adf5e
+hmac: 830d7b2344ebade301dbfcf50665c1080c1ccdb45d06e9a1e2aefaddebba55b5
 
 ...

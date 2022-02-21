@@ -44,6 +44,7 @@ def docs_pipelines(edition):
         'paths': {
             'include': [
                 'docs/**',
+                'packages/**',
             ],
         },
     }
