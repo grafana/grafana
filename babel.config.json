@@ -26,6 +26,9 @@
     ]
   ],
   "plugins": [
+    // added to mitigate https://github.com/babel/babel/issues/14289
+    // package (and following line) can be removed once the issue is fixed and released
+    "@babel/plugin-proposal-class-properties",
     [
       "@babel/plugin-transform-typescript",
       {
