@@ -25,7 +25,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 
-	if err := hs.SQLStore.SavePreferences(c.Req.Context(), &cmd); err != nil {
+	if err := hs.PreferencesService.SavePreferences(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to set home dashboard", err)
 	}
 
@@ -40,7 +40,7 @@ func (hs *HTTPServer) GetUserPreferences(c *models.ReqContext) response.Response
 func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, teamID int64) response.Response {
 	prefsQuery := models.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
 
-	if err := hs.SQLStore.GetPreferences(ctx, &prefsQuery); err != nil {
+	if err := hs.PreferencesService.GetPreferences(ctx, &prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
@@ -77,7 +77,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 
-	if err := hs.SQLStore.SavePreferences(ctx, &saveCmd); err != nil {
+	if err := hs.PreferencesService.SavePreferences(ctx, &saveCmd); err != nil {
 		return response.Error(500, "Failed to save preferences", err)
 	}
 

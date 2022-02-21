@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/preferences"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -136,6 +137,7 @@ type HTTPServer struct {
 	DatasourcePermissionsService DatasourcePermissionsService
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
+	PreferencesService           preferences.Service
 }
 
 type ServerOptions struct {
@@ -166,7 +168,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService *dashboardsnapshots.Service,
+	dashboardsnapshotsService *dashboardsnapshots.Service, preferencesService preferences.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -234,6 +236,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		teamPermissionsService:       permissionsServices.GetTeamService(),
 		AlertNotificationService:     alertNotificationService,
 		DashboardsnapshotsService:    dashboardsnapshotsService,
+		PreferencesService:           preferencesService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
