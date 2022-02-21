@@ -49,6 +49,6 @@ def docs_pipelines(edition):
     }
     return [
         pipeline(
-            name='test-docs-pr', edition=edition, trigger=trigger, services=[], steps=steps,
+            name='pr-docs', edition=edition, trigger=trigger, services=[], steps=steps,
         ),
     ]
