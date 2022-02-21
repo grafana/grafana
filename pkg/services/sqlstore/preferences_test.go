@@ -24,7 +24,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		err := ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, "light", query.Result.Theme)
-		require.Equal(t, "V", query.Result.Timezone)
+		require.Equal(t, "UTC", query.Result.Timezone)
 		require.Equal(t, int64(0), query.Result.HomeDashboardId)
 	})
 
