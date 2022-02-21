@@ -18289,14 +18289,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-lodash@npm:^7.2.0":
-  version: 7.3.0
-  resolution: "eslint-plugin-lodash@npm:7.3.0"
+"eslint-plugin-lodash@npm:7.4.0":
+  version: 7.4.0
+  resolution: "eslint-plugin-lodash@npm:7.4.0"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
     eslint: ">=2"
-  checksum: 590c627bd2e58388b198e3a829d5e4729ceb0aa5bdb2a82c963582cf691430d8e857fc0ba67e143ad926197133471baf62ac2b1e4af2e2cac254f71aee92f609
+  checksum: 7557cded64dd0e1042b420214e65ba9d6c5cb6c83c40e471db1f7d33e63584d1260c9ca9a4fded4ca7a2fe2ac2a9cdc303e072105096fa99b583101c6e7ada13
   languageName: node
   linkType: hard
 
@@ -20520,7 +20520,7 @@ __metadata:
     eslint-config-prettier: 8.3.0
     eslint-plugin-jest: ^26.1.0
     eslint-plugin-jsdoc: 37.9.1
-    eslint-plugin-lodash: ^7.2.0
+    eslint-plugin-lodash: 7.4.0
     eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.28.0
     eslint-plugin-react-hooks: 4.3.0
