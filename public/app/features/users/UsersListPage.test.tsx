@@ -26,7 +26,7 @@ const setup = (propOverrides?: object) => {
     searchQuery: '',
     searchPage: 1,
     externalUserMngInfo: '',
-    loadInvitees: jest.fn(),
+    fetchInvitees: jest.fn(),
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
     removeUser: jest.fn(),

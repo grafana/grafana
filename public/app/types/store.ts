@@ -4,7 +4,14 @@ import {
   TypedUseSelectorHook,
   useDispatch as useDispatchUntyped,
 } from 'react-redux';
-import { Action, PayloadAction } from '@reduxjs/toolkit';
+import {
+  Action,
+  AsyncThunk,
+  AsyncThunkOptions,
+  AsyncThunkPayloadCreator,
+  createAsyncThunk as createAsyncThunkUntyped,
+  PayloadAction,
+} from '@reduxjs/toolkit';
 import type { createRootReducer } from 'app/core/reducers/root';
 import { configureStore } from 'app/store/configureStore';
 
@@ -21,3 +28,10 @@ export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, Action>;
 export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
 export const useDispatch = () => useDispatchUntyped<AppDispatch>();
 export const useSelector: TypedUseSelectorHook<StoreState> = useSelectorUntyped;
+
+type DefaultThunkApiConfig = { dispatch: AppDispatch; state: StoreState };
+export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig = DefaultThunkApiConfig>(
+  typePrefix: string,
+  payloadCreator: AsyncThunkPayloadCreator<Returned, ThunkArg, ThunkApiConfig>,
+  options?: AsyncThunkOptions<ThunkArg, ThunkApiConfig>
+): AsyncThunk<Returned, ThunkArg, ThunkApiConfig> => createAsyncThunkUntyped(typePrefix, payloadCreator, options);

@@ -29,8 +29,9 @@ var netClient = &http.Client{
 }
 
 var (
-	remoteVersionFetchInterval time.Duration = time.Second * 15
-	remoteVersionFetchRetries  uint          = 4
+	remoteVersionFetchInterval   time.Duration = time.Second * 15
+	remoteVersionFetchRetries    uint          = 4
+	remoteVersionRefreshInterval               = time.Minute * 15
 )
 
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
@@ -250,4 +251,27 @@ func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 		return "", err
 	}
 	return info.Version, nil
+}
+
+func (rs *RenderingService) refreshRemotePluginVersion() {
+	newVersion, err := rs.getRemotePluginVersion()
+	if err != nil {
+		rs.log.Info("Failed to refresh remote plugin version", "err", err)
+		return
+	}
+
+	if newVersion == "" {
+		// the image-renderer could have been temporary unavailable - skip updating the version
+		rs.log.Debug("Received empty version when trying to refresh remote plugin version")
+		return
+	}
+
+	currentVersion := rs.Version()
+	if currentVersion != newVersion {
+		rs.versionMutex.Lock()
+		defer rs.versionMutex.Unlock()
+
+		rs.log.Info("Updating remote plugin version", "currentVersion", currentVersion, "newVersion", newVersion)
+		rs.version = newVersion
+	}
 }

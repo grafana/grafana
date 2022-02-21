@@ -76,9 +76,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   const analytics = {
     active: false,
     icon: 'info-circle',
-    id: `datasource-insights-${dataSource.id}`,
+    id: `datasource-insights-${dataSource.uid}`,
     text: 'Insights',
-    url: `datasources/edit/${dataSource.id}/insights`,
+    url: `datasources/edit/${dataSource.uid}/insights`,
   };
 
   if (featureEnabled('analytics')) {
