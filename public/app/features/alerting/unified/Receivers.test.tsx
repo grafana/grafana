@@ -24,6 +24,7 @@ import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
 import { selectOptionInTest } from '@grafana/ui';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -115,6 +116,8 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
   userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
+
+document.addEventListener('click', interceptLinkClicks);
 
 describe('Receivers', () => {
   beforeEach(() => {
@@ -404,11 +407,12 @@ describe('Receivers', () => {
     const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
-    await userEvent.click(byTestId('view').get(receiverRows[0]));
+    userEvent.click(byTestId('view').get(receiverRows[0]));
 
     // check that form is open
     await byRole('heading', { name: /contact point/i }).find();
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/cloud-receiver/edit');
+
     const channelForms = ui.channelFormContainer.queryAll();
     expect(channelForms).toHaveLength(2);
 

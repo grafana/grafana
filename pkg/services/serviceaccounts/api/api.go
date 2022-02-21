@@ -71,6 +71,8 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.updateServiceAccount))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
 		serviceAccountsRoute.Post("/upgradeall", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.UpgradeServiceAccounts))
 		serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
@@ -86,7 +88,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 
 // POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
-	cmd := serviceaccounts.CreateServiceaccountForm{}
+	cmd := serviceaccounts.CreateServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
@@ -120,7 +122,7 @@ func (api *ServiceAccountsAPI) UpgradeServiceAccounts(ctx *models.ReqContext) re
 	if err := api.store.UpgradeServiceAccounts(ctx.Req.Context()); err == nil {
 		return response.Success("service accounts upgraded")
 	} else {
-		return response.Error(500, "Internal server error", err)
+		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 }
 
@@ -148,8 +150,8 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 		saIDs[strconv.FormatInt(serviceAccounts[i].Id, 10)] = true
 	}
 
-	metadata, err := api.getAccessControlMetadata(c, saIDs)
-	if err == nil && len(metadata) != 0 {
+	metadata := api.getAccessControlMetadata(c, saIDs)
+	if len(metadata) > 0 {
 		for i := range serviceAccounts {
 			serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
 		}
@@ -158,18 +160,21 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 	return response.JSON(http.StatusOK, serviceAccounts)
 }
 
-func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
+func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
 	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
+		return map[string]accesscontrol.Metadata{}
 	}
 
-	userPermissions, err := api.accesscontrol.GetUserPermissions(c.Req.Context(), c.SignedInUser)
-	if err != nil || len(userPermissions) == 0 {
-		api.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
-		return nil, err
+	if c.SignedInUser.Permissions == nil {
+		return map[string]accesscontrol.Metadata{}
 	}
 
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "serviceaccounts", saIDs), nil
+	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	if !ok {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts", saIDs)
 }
 
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
@@ -188,4 +193,32 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 		}
 	}
 	return response.JSON(http.StatusOK, serviceAccount)
+}
+
+func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) response.Response {
+	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "serviceAccountId is invalid", err)
+	}
+
+	cmd := &serviceaccounts.UpdateServiceAccountForm{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.Role != nil && !cmd.Role.IsValid() {
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
+	}
+
+	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, cmd)
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed update service account", err)
+		}
+	}
+
+	return response.JSON(http.StatusOK, resp)
 }

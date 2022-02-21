@@ -373,7 +373,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // for influxql-mode we use InfluxQueryModel to create the text-representation
     const queryText = this.isFlux ? target.query : buildRawQuery(target);
 
-    return this.templateSrv.variableExists(queryText);
+    return this.templateSrv.containsTemplate(queryText);
   }
 
   interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
@@ -445,10 +445,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux) {
+    if (this.isFlux || (config.featureToggles.influxdbBackendMigration && this.access === 'proxy')) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
+        rawQuery: true,
       };
       return lastValueFrom(
         super.query({

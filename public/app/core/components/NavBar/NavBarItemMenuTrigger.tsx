@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -13,6 +13,7 @@ import { FocusScope } from '@react-aria/focus';
 
 import { NavBarItemMenuContext } from './context';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
+import { reportExperimentView } from '@grafana/runtime';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
@@ -33,6 +34,12 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   // Get props for the menu trigger and menu elements
   const ref = React.useRef<HTMLButtonElement>(null);
   const { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
+
+  useEffect(() => {
+    if (item.highlightId) {
+      reportExperimentView(`feature-highlights-${item.highlightId}-nav`, 'test', '');
+    }
+  }, [item.highlightId]);
 
   const { hoverProps } = useHover({
     onHoverChange: (isHovering) => {

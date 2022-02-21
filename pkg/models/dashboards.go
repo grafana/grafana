@@ -323,8 +323,8 @@ func GetDashboardUrl(uid string, slug string) string {
 }
 
 // GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
-func GetKioskModeDashboardUrl(uid string, slug string) string {
-	return fmt.Sprintf("%s?kiosk", GetDashboardUrl(uid, slug))
+func GetKioskModeDashboardUrl(uid string, slug string, theme Theme) string {
+	return fmt.Sprintf("%s?kiosk&theme=%s", GetDashboardUrl(uid, slug), string(theme))
 }
 
 // GetFullDashboardUrl returns the full URL for a dashboard.
@@ -455,8 +455,4 @@ type DashboardRef struct {
 type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
-}
-
-type UnprovisionDashboardCommand struct {
-	Id int64
 }

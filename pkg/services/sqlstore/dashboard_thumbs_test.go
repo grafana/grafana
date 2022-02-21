@@ -11,6 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var theme = models.ThemeDark
+var kind = models.ThumbnailKindDefault
+
 func TestSqlStorage(t *testing.T) {
 
 	var sqlStore *SQLStore
@@ -52,7 +55,10 @@ func TestSqlStorage(t *testing.T) {
 
 		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
@@ -64,7 +70,10 @@ func TestSqlStorage(t *testing.T) {
 		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
 		updateThumbnailState(t, sqlStore, dash.Uid, dash.OrgId, models.ThumbnailStateStale)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -78,7 +87,10 @@ func TestSqlStorage(t *testing.T) {
 		updateThumbnailState(t, sqlStore, dash.Uid, dash.OrgId, models.ThumbnailStateStale)
 		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
@@ -88,7 +100,10 @@ func TestSqlStorage(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -104,7 +119,10 @@ func TestSqlStorage(t *testing.T) {
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
@@ -121,7 +139,10 @@ func TestSqlStorage(t *testing.T) {
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
@@ -136,7 +157,10 @@ func TestSqlStorage(t *testing.T) {
 			"tags": "different-tag",
 		})
 
-		cmd := models.FindDashboardsWithStaleThumbnailsCommand{}
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:  kind,
+			Theme: theme,
+		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 0)
@@ -152,12 +176,31 @@ func TestSqlStorage(t *testing.T) {
 		})
 
 		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:                              kind,
+			Theme:                             theme,
 			IncludeManuallyUploadedThumbnails: true,
 		}
 		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		require.Equal(t, dash.Id, res[0].Id)
+	})
+
+	t.Run("Should count all dashboard thumbnails", func(t *testing.T) {
+		setup()
+		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, 1)
+		dash2 := insertTestDashboard(t, sqlStore, "test dash 23", 2, savedFolder.Id, false, "prod", "webapp")
+		upsertTestDashboardThumbnail(t, sqlStore, dash2.Uid, dash2.OrgId, 1)
+
+		updateTestDashboard(t, sqlStore, dash, map[string]interface{}{
+			"tags": "different-tag",
+		})
+
+		cmd := models.FindDashboardThumbnailCountCommand{}
+		res, err := sqlStore.FindThumbnailCount(context.Background(), &cmd)
+		require.NoError(t, err)
+		require.Equal(t, res, int64(2))
 	})
 }
 
@@ -168,8 +211,8 @@ func getThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID string, orgId i
 			DashboardUID: dashboardUID,
 			OrgId:        orgId,
 			PanelID:      0,
-			Kind:         models.ThumbnailKindDefault,
-			Theme:        models.ThemeDark,
+			Kind:         kind,
+			Theme:        theme,
 		},
 	}
 
@@ -185,8 +228,8 @@ func upsertTestDashboardThumbnail(t *testing.T, sqlStore *SQLStore, dashboardUID
 			DashboardUID: dashboardUID,
 			OrgId:        orgId,
 			PanelID:      0,
-			Kind:         models.ThumbnailKindDefault,
-			Theme:        models.ThemeDark,
+			Kind:         kind,
+			Theme:        theme,
 		},
 		DashboardVersion: dashboardVersion,
 		Image:            make([]byte, 0),
@@ -206,8 +249,8 @@ func updateThumbnailState(t *testing.T, sqlStore *SQLStore, dashboardUID string,
 			DashboardUID: dashboardUID,
 			OrgId:        orgId,
 			PanelID:      0,
-			Kind:         models.ThumbnailKindDefault,
-			Theme:        models.ThemeDark,
+			Kind:         kind,
+			Theme:        theme,
 		},
 		State: state,
 	}

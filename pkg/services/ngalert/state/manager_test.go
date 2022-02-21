@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
@@ -1482,9 +1482,9 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		ss := mockstore.NewSQLStoreMock()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &schedule.FakeInstanceStore{}, ss)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, ss)
 		t.Run(tc.desc, func(t *testing.T) {
-			fakeAnnoRepo := schedule.NewFakeAnnotationsRepo()
+			fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
 
 			for _, res := range tc.evalResults {

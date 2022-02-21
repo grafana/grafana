@@ -126,7 +126,9 @@ export function GeneralSettings({ dashboard }: Props) {
         </Field>
       </div>
 
-      {config.featureToggles.dashboardPreviews && <PreviewSettings uid={dashboard.uid} />}
+      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
+        <PreviewSettings uid={dashboard.uid} />
+      )}
 
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}

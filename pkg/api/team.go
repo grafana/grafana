@@ -2,14 +2,12 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,7 +37,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addOrUpdateTeamMember(c.Req.Context(), hs.TeamPermissionsService, c.SignedInUser.UserId, c.OrgId, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserId, c.OrgId, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
@@ -105,20 +103,6 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	return response.Success("Team deleted")
 }
 
-func (hs *HTTPServer) getTeamsAccessControlMetadata(c *models.ReqContext, teamIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
-	}
-
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
-	if err != nil || len(userPermissions) == 0 {
-		hs.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
-		return nil, err
-	}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "teams", teamIDs), nil
-}
-
 // GET /api/teams/search
 func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
@@ -133,7 +117,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	// Using accesscontrol the filtering is done based on user permissions
 	userIdFilter := models.FilterIgnoreUser
 	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+		userIdFilter = userFilter(c)
 	}
 
 	query := models.SearchTeamsQuery{
@@ -157,8 +141,8 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 		teamIDs[strconv.FormatInt(team.Id, 10)] = true
 	}
 
-	metadata, err := hs.getTeamsAccessControlMetadata(c, teamIDs)
-	if err == nil && len(metadata) != 0 {
+	metadata := hs.getMultiAccessControlMetadata(c, "teams", teamIDs)
+	if len(metadata) > 0 {
 		for _, team := range query.Result.Teams {
 			team.AccessControl = metadata[strconv.FormatInt(team.Id, 10)]
 		}
@@ -170,33 +154,14 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	return response.JSON(200, query.Result)
 }
 
-func (hs *HTTPServer) getTeamAccessControlMetadata(c *models.ReqContext, teamID int64) (accesscontrol.Metadata, error) {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
-	}
-
-	userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
-	if err != nil || len(userPermissions) == 0 {
-		hs.log.Warn("could not fetch accesscontrol metadata", "team", teamID, "error", err)
-		return nil, err
-	}
-
-	key := fmt.Sprintf("%d", teamID)
-	teamIDs := map[string]bool{key: true}
-
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "teams", teamIDs)[key], nil
-}
-
 // UserFilter returns the user ID used in a filter when querying a team
 // 1. If the user is a viewer or editor, this will return the user's ID.
-// 2. If EditorsCanAdmin is enabled and the user is an editor, this will return models.FilterIgnoreUser (0)
-// 3. If the user is an admin, this will return models.FilterIgnoreUser (0)
-func userFilter(editorsCanAdmin bool, c *models.ReqContext) int64 {
+// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
+func userFilter(c *models.ReqContext) int64 {
 	userIdFilter := c.SignedInUser.UserId
-	if (editorsCanAdmin && c.OrgRole == models.ROLE_EDITOR) || c.OrgRole == models.ROLE_ADMIN {
+	if c.OrgRole == models.ROLE_ADMIN {
 		userIdFilter = models.FilterIgnoreUser
 	}
-
 	return userIdFilter
 }
 
@@ -210,7 +175,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	// Using accesscontrol the filtering has already been performed at middleware layer
 	userIdFilter := models.FilterIgnoreUser
 	if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		userIdFilter = userFilter(hs.Cfg.EditorsCanAdmin, c)
+		userIdFilter = userFilter(c)
 	}
 
 	query := models.GetTeamByIdQuery{
@@ -229,8 +194,8 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get Team", err)
 	}
 
-	metadata, _ := hs.getTeamAccessControlMetadata(c, query.Result.Id)
-	query.Result.AccessControl = metadata
+	// Add accesscontrol metadata
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, "teams", query.Result.Id)
 
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
 	return response.JSON(200, &query.Result)
