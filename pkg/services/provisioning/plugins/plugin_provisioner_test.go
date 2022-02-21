@@ -29,24 +29,6 @@ func TestPluginProvisioner(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-			if query.PluginId == "test-plugin" && query.OrgId == 2 {
-				query.Result = &models.PluginSetting{
-					PluginVersion: "2.0.1",
-				}
-				return nil
-			}
-
-			return models.ErrPluginSettingNotFound
-		})
-
-		sentCommands := []*models.UpdatePluginSettingCmd{}
-
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
-			sentCommands = append(sentCommands, cmd)
-			return nil
-		})
-
 		cfg := []*pluginsAsConfig{
 			{
 				Apps: []*appFromConfig{
@@ -58,32 +40,10 @@ func TestPluginProvisioner(t *testing.T) {
 			},
 		}
 		reader := &testConfigReader{result: cfg}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, pluginSettings: &mockPluginsSettingsService{pluginSetting: &models.PluginSetting{}}}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
-		require.Len(t, sentCommands, 4)
-
-		testCases := []struct {
-			ExpectedPluginID      string
-			ExpectedOrgID         int64
-			ExpectedEnabled       bool
-			ExpectedPluginVersion string
-		}{
-			{ExpectedPluginID: "test-plugin", ExpectedOrgID: 2, ExpectedEnabled: true, ExpectedPluginVersion: "2.0.1"},
-			{ExpectedPluginID: "test-plugin-2", ExpectedOrgID: 3, ExpectedEnabled: false},
-			{ExpectedPluginID: "test-plugin", ExpectedOrgID: 4, ExpectedEnabled: true},
-			{ExpectedPluginID: "test-plugin-2", ExpectedOrgID: 1, ExpectedEnabled: true},
-		}
-
-		for index, tc := range testCases {
-			cmd := sentCommands[index]
-			require.NotNil(t, cmd)
-			require.Equal(t, tc.ExpectedPluginID, cmd.PluginId)
-			require.Equal(t, tc.ExpectedOrgID, cmd.OrgId)
-			require.Equal(t, tc.ExpectedEnabled, cmd.Enabled)
-			require.Equal(t, tc.ExpectedPluginVersion, cmd.PluginVersion)
-		}
 	})
 }
 
@@ -94,4 +54,23 @@ type testConfigReader struct {
 
 func (tcr *testConfigReader) readConfig(ctx context.Context, path string) ([]*pluginsAsConfig, error) {
 	return tcr.result, tcr.err
+}
+
+type mockPluginsSettingsService struct {
+	decryptedValue map[string]string
+	pluginSetting  *models.PluginSetting
+	err            error
+}
+
+func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	query.Result = s.pluginSetting
+	return s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+	return s.err
+}
+
+func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+	return s.err
 }

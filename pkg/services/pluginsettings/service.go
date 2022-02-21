@@ -25,7 +25,6 @@ type Store interface {
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
-	DecryptedValues(ps *models.PluginSetting) map[string]string
 }
 
 type cachedDecryptedJSON struct {
