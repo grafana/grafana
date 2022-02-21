@@ -274,7 +274,7 @@ class LiveLogs extends PureComponent<Props, State> {
             />
           </tbody>
         </table>
-        {/* <div className={styles.logsSection}>
+        <div className={styles.logsSection}>
           <div className={styles.logRows}>
             <LogRows
               logRows={this.rowsToRender()}
@@ -298,7 +298,7 @@ class LiveLogs extends PureComponent<Props, State> {
               onClickHideDetectedField={this.hideDetectedField}
             />
           </div>
-        </div> */}
+        </div>
         <div className={styles.logsRowsIndicator}>
           <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
             <Icon name={isPaused ? 'play' : 'pause'} />
