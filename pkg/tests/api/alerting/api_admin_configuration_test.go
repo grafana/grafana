@@ -9,15 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
@@ -58,9 +59,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	})
 
 	// Create a couple of "fake" Alertmanagers
-	fakeAM1 := schedule.NewFakeExternalAlertmanager(t)
-	fakeAM2 := schedule.NewFakeExternalAlertmanager(t)
-	fakeAM3 := schedule.NewFakeExternalAlertmanager(t)
+	fakeAM1 := store.NewFakeExternalAlertmanager(t)
+	fakeAM2 := store.NewFakeExternalAlertmanager(t)
+	fakeAM3 := store.NewFakeExternalAlertmanager(t)
 
 	// Now, let's test the configuration API.
 	{

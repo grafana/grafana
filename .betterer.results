@@ -8,20 +8,8 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/BarGauge/BarGauge.test.tsx:2315765050": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/BigValue/BigValue.test.tsx:261212211": [
-      [1, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/CallToActionCard/CallToActionCard.test.tsx:2771878691": [
-      [1, 18, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:1355456933": [
       [1, 31, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/ConfirmButton/ConfirmButton.test.tsx:3194817479": [
-      [2, 33, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.test.tsx:3838344574": [
-      [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/FileUpload/FileUpload.test.tsx:3475964456": [
       [1, 19, 13, "RegExp match", "2409514259"]
@@ -116,7 +104,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:2288177454": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2545268168": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:2127169675": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:2454947085": [
@@ -197,9 +185,6 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/Select/MetricSelect.test.tsx:3409251428": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/core/specs/OrgSwitcher.test.tsx:848670248": [
-      [2, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/alerting/AlertRuleList.test.tsx:1800339390": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -218,7 +203,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.test.tsx:4134073823": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1141305288": [
+    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:1044891955": [
       [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:1798654441": [

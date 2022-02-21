@@ -13,16 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister,
+func ProvideService(routeRegister routing.RouteRegister,
 	quotaService *quota.QuotaService, schemaLoaderService *schemaloader.SchemaLoaderService,
 	pluginDashboardManager plugins.PluginDashboardManager, pluginStore plugins.Store,
-	libraryPanelService librarypanels.Service) *ImportDashboardService {
+	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService) *ImportDashboardService {
 	s := &ImportDashboardService{
 		pluginDashboardManager: pluginDashboardManager,
-		dashboardService:       dashboards.NewService(sqlStore),
+		dashboardService:       dashboardService,
 		libraryPanelService:    libraryPanelService,
 	}
 

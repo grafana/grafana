@@ -9,9 +9,9 @@ import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableV
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
+import { initialVariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
-import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { isLegacyQueryEditor, isQueryEditor } from '../guard';
@@ -20,10 +20,24 @@ import { VariableTextField } from '../editor/VariableTextField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 import { getQueryVariableEditorState } from '../editor/selectors';
+import { getVariablesState } from '../state/selectors';
+import { toKeyedVariableIdentifier } from '../utils';
 
-const mapStateToProps = (state: StoreState) => ({
-  extended: getQueryVariableEditorState(state.templating.editor),
-});
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { rootStateKey } = ownProps.variable;
+  if (!rootStateKey) {
+    console.error('QueryVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getQueryVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+
+  return {
+    extended: getQueryVariableEditorState(editor),
+  };
+};
 
 const mapDispatchToProps = {
   initQueryVariableEditor,
@@ -52,13 +66,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   async componentDidMount() {
-    await this.props.initQueryVariableEditor(toVariableIdentifier(this.props.variable));
+    await this.props.initQueryVariableEditor(toKeyedVariableIdentifier(this.props.variable));
   }
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.variable.datasource !== this.props.variable.datasource) {
       this.props.changeQueryVariableDataSource(
-        toVariableIdentifier(this.props.variable),
+        toKeyedVariableIdentifier(this.props.variable),
         this.props.variable.datasource
       );
     }
@@ -73,7 +87,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onLegacyQueryChange = async (query: any, definition: string) => {
     if (this.props.variable.query !== query) {
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toKeyedVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
@@ -85,7 +99,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         definition = query.query;
       }
 
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toKeyedVariableIdentifier(this.props.variable), query, definition);
     }
   };
 

@@ -88,6 +88,21 @@ describe('getQueryHints()', () => {
     expect(hints).toEqual([]);
   });
 
+  it('returns a rate hint with action for a counter metric with labels', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints('metric_total{job="grafana"}', series);
+    expect(hints!.length).toBe(1);
+    expect(hints![0].label).toContain('Selected metric looks like a counter');
+    expect(hints![0].fix).toBeDefined();
+  });
+
   it('returns a rate hint w/o action for a complex counter metric', () => {
     const series = [
       {
@@ -116,6 +131,21 @@ describe('getQueryHints()', () => {
         },
       },
     });
+  });
+
+  it('returns a histogram hint with action for a bucket with labels', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints('metric_bucket{job="grafana"}', series);
+    expect(hints!.length).toBe(1);
+    expect(hints![0].label).toContain('Selected metric has buckets.');
+    expect(hints![0].fix).toBeDefined();
   });
 
   it('returns a sum hint when many time series results are returned for a simple metric', () => {

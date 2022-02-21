@@ -56,32 +56,77 @@ func parseJSON(buf io.ReadCloser) (Response, error) {
 func transformRows(rows []Row, query Query) data.Frames {
 	frames := data.Frames{}
 	for _, row := range rows {
-		for columnIndex, column := range row.Columns {
-			if column == "time" {
-				continue
-			}
+		var hasTimeCol = false
 
-			var timeArray []time.Time
-			var valueArray []*float64
+		for _, column := range row.Columns {
+			if strings.ToLower(column) == "time" {
+				hasTimeCol = true
+			}
+		}
+
+		if !hasTimeCol {
+			var values []string
 
 			for _, valuePair := range row.Values {
-				timestamp, timestampErr := parseTimestamp(valuePair[0])
-				// we only add this row if the timestamp is valid
-				if timestampErr == nil {
-					value := parseValue(valuePair[columnIndex])
-					timeArray = append(timeArray, timestamp)
-					valueArray = append(valueArray, value)
+				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+					if len(valuePair) >= 2 {
+						values = append(values, valuePair[1].(string))
+					}
+				} else {
+					if len(valuePair) >= 1 {
+						values = append(values, valuePair[0].(string))
+					}
 				}
 			}
-			name := formatFrameName(row, column, query)
 
-			timeField := data.NewField("time", nil, timeArray)
-			valueField := data.NewField("value", row.Tags, valueArray)
+			field := data.NewField("value", nil, values)
+			frames = append(frames, data.NewFrame(row.Name, field))
+		} else {
+			for colIndex, column := range row.Columns {
+				if column == "time" {
+					continue
+				}
 
-			// set a nice name on the value-field
-			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+				var timeArray []time.Time
+				var floatArray []*float64
+				var stringArray []string
+				var boolArray []bool
+				valType := typeof(row.Values[0][colIndex])
+				name := formatFrameName(row, column, query)
 
-			frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				for _, valuePair := range row.Values {
+					timestamp, timestampErr := parseTimestamp(valuePair[0])
+					// we only add this row if the timestamp is valid
+					if timestampErr == nil {
+						timeArray = append(timeArray, timestamp)
+						if valType == "string" {
+							value := valuePair[colIndex].(string)
+							stringArray = append(stringArray, value)
+						} else if valType == "json.Number" {
+							value := parseNumber(valuePair[colIndex])
+							floatArray = append(floatArray, value)
+						} else if valType == "bool" {
+							value := valuePair[colIndex].(bool)
+							boolArray = append(boolArray, value)
+						}
+					}
+				}
+
+				timeField := data.NewField("time", nil, timeArray)
+				if valType == "string" {
+					valueField := data.NewField("value", row.Tags, stringArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "json.Number" {
+					valueField := data.NewField("value", row.Tags, floatArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "bool" {
+					valueField := data.NewField("value", row.Tags, boolArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				}
+			}
 		}
 	}
 
@@ -168,20 +213,14 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	return t, nil
 }
 
-func parseValue(value interface{}) *float64 {
+func typeof(v interface{}) string {
+	return fmt.Sprintf("%T", v)
+}
+
+func parseNumber(value interface{}) *float64 {
 	// NOTE: we use pointers-to-float64 because we need
 	// to represent null-json-values. they come for example
 	// when we do a group-by with fill(null)
-
-	// FIXME: the value of an influxdb-query can be:
-	// - string
-	// - float
-	// - integer
-	// - boolean
-	//
-	// here we only handle numeric values. this is probably
-	// enough for alerting, but later if we want to support
-	// arbitrary queries, we will have to improve the code
 
 	if value == nil {
 		// this is what json-nulls become

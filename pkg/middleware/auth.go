@@ -191,28 +191,30 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) {
-	if c.OrgRole == models.ROLE_ADMIN {
-		return
-	}
+func OrgAdminFolderAdminOrTeamAdmin(ss sqlstore.Store) func(c *models.ReqContext) {
+	return func(c *models.ReqContext) {
+		if c.OrgRole == models.ROLE_ADMIN {
+			return
+		}
 
-	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := sqlstore.HasAdminPermissionInFolders(c.Req.Context(), &hasAdminPermissionInFoldersQuery); err != nil {
-		c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
-	}
+		hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+		if err := ss.HasAdminPermissionInFolders(c.Req.Context(), &hasAdminPermissionInFoldersQuery); err != nil {
+			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
+		}
 
-	if hasAdminPermissionInFoldersQuery.Result {
-		return
-	}
+		if hasAdminPermissionInFoldersQuery.Result {
+			return
+		}
 
-	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-	if err := sqlstore.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
-		c.JsonApiErr(500, "Failed to check if user is a team admin", err)
-	}
+		isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+		if err := sqlstore.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
+			c.JsonApiErr(500, "Failed to check if user is a team admin", err)
+		}
 
-	if isAdminOfTeamsQuery.Result {
-		return
-	}
+		if isAdminOfTeamsQuery.Result {
+			return
+		}
 
-	accessForbidden(c)
+		accessForbidden(c)
+	}
 }
