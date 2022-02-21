@@ -303,9 +303,8 @@ func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *
 }
 
 type mockPluginsSettingsService struct {
-	decryptedValue map[string]string
-	pluginSetting  *models.PluginSetting
-	err            error
+	pluginSetting *models.PluginSetting
+	err           error
 }
 
 func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
@@ -315,10 +314,6 @@ func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, q
 
 func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
 	return s.err
-}
-
-func (s *mockPluginsSettingsService) DecryptedValues(ps *models.PluginSetting) map[string]string {
-	return s.decryptedValue
 }
 
 func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {

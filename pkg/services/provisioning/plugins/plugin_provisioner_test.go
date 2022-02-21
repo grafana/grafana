@@ -57,9 +57,8 @@ func (tcr *testConfigReader) readConfig(ctx context.Context, path string) ([]*pl
 }
 
 type mockPluginsSettingsService struct {
-	decryptedValue map[string]string
-	pluginSetting  *models.PluginSetting
-	err            error
+	pluginSetting *models.PluginSetting
+	err           error
 }
 
 func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
