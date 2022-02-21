@@ -16,6 +16,8 @@ type file struct {
 	Contents         []byte    `xorm:"contents"`
 	Updated          time.Time `xorm:"updated"`
 	Created          time.Time `xorm:"created"`
+	Size             int64     `xorm:"size"`
+	MimeType         string    `xorm:"mime_type"`
 }
 
 type fileMeta struct {
@@ -58,6 +60,9 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 				FullPath:   filePath,
 				Created:    table.Created,
 				Properties: metaProperties,
+				Modified:   table.Updated,
+				Size:       table.Size,
+				MimeType:   table.MimeType,
 			},
 		}
 		return err
@@ -104,7 +109,10 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		if exists {
 			existing.Updated = now
 			if cmd.Contents != nil {
-				existing.Contents = *cmd.Contents
+				contents := *cmd.Contents
+				existing.Contents = contents
+				existing.MimeType = cmd.MimeType
+				existing.Size = int64(len(contents))
 			}
 
 			_, err = sess.Where("LOWER(path) = ?", strings.ToLower(cmd.Path)).Update(existing)
@@ -121,6 +129,8 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				Path:             cmd.Path,
 				ParentFolderPath: getParentFolderPath(cmd.Path),
 				Contents:         contentsToInsert,
+				MimeType:         cmd.MimeType,
+				Size:             int64(len(contentsToInsert)),
 				Updated:          now,
 				Created:          now,
 			}
@@ -221,6 +231,9 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 				FullPath:   foundFiles[i].Path,
 				Created:    foundFiles[i].Created,
 				Properties: make(map[string]string, 0),
+				Modified:   foundFiles[i].Updated,
+				Size:       foundFiles[i].Size,
+				MimeType:   foundFiles[i].MimeType,
 			})
 		}
 

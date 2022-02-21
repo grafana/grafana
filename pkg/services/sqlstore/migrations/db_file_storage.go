@@ -11,6 +11,8 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 			{Name: "contents", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "mime_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"path"}, Type: migrator.UniqueIndex},

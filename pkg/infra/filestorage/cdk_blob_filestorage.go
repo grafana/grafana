@@ -43,6 +43,9 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 			FullPath:   filePath,
 			Created:    attributes.CreateTime,
 			Properties: attributes.Metadata,
+			Modified:   attributes.ModTime,
+			Size:       attributes.Size,
+			MimeType:   detectContentType(filePath, attributes.ContentType),
 		},
 	}, nil
 }
@@ -178,11 +181,15 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 			}
 
 			fullPath := fixPath(path)
+
 			files = append(files, FileMetadata{
 				Name:       getName(fullPath),
 				FullPath:   fullPath,
 				Created:    attributes.CreateTime,
 				Properties: attributes.Metadata,
+				Modified:   attributes.ModTime,
+				Size:       attributes.Size,
+				MimeType:   detectContentType(fullPath, attributes.ContentType),
 			})
 		}
 	}
@@ -252,6 +259,10 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 			folders = append(folders, FileMetadata{
 				Name:     getName(folderPath),
 				FullPath: folderPath,
+				Modified: obj.ModTime,
+				Created:  obj.ModTime,
+				Size:     0,
+				MimeType: "",
 			})
 		}
 

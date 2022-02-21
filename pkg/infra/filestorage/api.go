@@ -43,7 +43,10 @@ type File struct {
 type FileMetadata struct {
 	Name       string
 	FullPath   string
+	MimeType   string
+	Modified   time.Time
 	Created    time.Time
+	Size       int64
 	Properties map[string]string
 }
 
@@ -60,6 +63,7 @@ type Paging struct {
 
 type UpsertFileCommand struct {
 	Path       string
+	MimeType   string
 	Contents   *[]byte
 	Properties map[string]string
 }

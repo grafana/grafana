@@ -36,7 +36,7 @@ func TestSqlStorage(t *testing.T) {
 	var ctx context.Context
 
 	setup := func() {
-		mode := "mem"
+		mode := "db"
 		testLogger := log.New("testStorageLogger")
 		if mode == "db" {
 			sqlStore = sqlstore.InitTestDB(t)

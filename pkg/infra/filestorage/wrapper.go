@@ -3,6 +3,7 @@ package filestorage
 import (
 	"context"
 	"fmt"
+	"mime"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -102,6 +103,17 @@ func (b wrapper) Delete(ctx context.Context, path string) error {
 	return b.wrapped.Delete(ctx, path)
 }
 
+func detectContentType(path string, originalGuess string) string {
+	if originalGuess == "application/octet-stream" || originalGuess == "" {
+		mimeTypeBasedOnExt := mime.TypeByExtension(filepath.Ext(path))
+		if mimeTypeBasedOnExt == "" {
+			return "application/octet-stream"
+		}
+		return mimeTypeBasedOnExt
+	}
+	return originalGuess
+}
+
 func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 	if err := validatePath(file.Path); err != nil {
 		return err
@@ -109,6 +121,10 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 
 	if !b.pathFilters.isAllowed(file.Path) {
 		return nil
+	}
+
+	if file.Contents != nil && file.MimeType == "" {
+		file.MimeType = detectContentType(file.Path, "")
 	}
 
 	return b.wrapped.Upsert(ctx, file)
