@@ -93,6 +93,9 @@ steps:
 trigger:
   event:
   - pull_request
+  paths:
+    exclude:
+    - docs/**
 type: docker
 volumes:
 - host:
@@ -289,20 +292,6 @@ steps:
   image: grafana/docker-puppeteer:1.0.0
   name: test-a11y-frontend
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend
-  image: grafana/build-container:1.4.9
-  name: build-frontend-docs
-- commands:
-  - mkdir -p /hugo/content/docs/grafana
-  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
-  - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
-  image: grafana/docs-base:latest
-  name: build-docs-website
-- commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
@@ -324,6 +313,9 @@ steps:
 trigger:
   event:
   - pull_request
+  paths:
+    exclude:
+    - docs/**
 type: docker
 volumes:
 - host:
@@ -399,6 +391,9 @@ steps:
 trigger:
   event:
   - pull_request
+  paths:
+    exclude:
+    - docs/**
 type: docker
 volumes:
 - host:
@@ -410,6 +405,68 @@ volumes:
 - name: mysql
   temp:
     medium: memory
+---
+depends_on: []
+kind: pipeline
+name: pr-docs
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.3/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.4.9
+  name: initialize
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.4.9
+  name: build-frontend
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - build-frontend
+  image: grafana/build-container:1.4.9
+  name: build-frontend-docs
+- commands:
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
+  depends_on:
+  - build-frontend-docs
+  image: grafana/docs-base:latest
+  name: build-docs-website
+trigger:
+  event:
+  - pull_request
+  paths:
+    include:
+    - docs/**
+    - packages/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 depends_on: []
 kind: pipeline
@@ -4209,6 +4266,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: de49a9ed2dffc5131de65688dc0175fc07029d507d654df360f3e683a138b43c
+hmac: 703b9a44a073ab768a774029cee2c3fc7c5fe7b7e01495e18f048bc7d1f007b0
 
 ...
