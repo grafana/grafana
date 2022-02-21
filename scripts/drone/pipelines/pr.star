@@ -118,7 +118,6 @@ def pr_pipelines(edition):
         'paths': {
             'exclude': [
                 'docs/**',
-                'packages/**',
             ],
         },
     }
