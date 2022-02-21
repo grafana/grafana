@@ -37,7 +37,7 @@ func TestSqlStorage(t *testing.T) {
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
 
-		mode := "db" // "db" or "mem"
+		mode := "mem" // "db" or "mem"
 		filestorage, _ = ProvideService(setting.NewCfg(), sqlStore, mode)
 		ctx = context.Background()
 	}
@@ -213,5 +213,79 @@ func TestSqlStorage(t *testing.T) {
 				Path: "/folderX/folderZ",
 			},
 		}, resp)
+	})
+
+	t.Run("Should be able to create and delete folders", func(t *testing.T) {
+		setup()
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/folder2/file.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		filestorage.CreateFolder(ctx, "/folder/dashboards", "myNewFolder")
+		filestorage.CreateFolder(ctx, "/folder/icons", "emojis")
+		err := filestorage.DeleteFolder(ctx, "/folder/dashboards/myNewFolder")
+		require.NoError(t, err)
+
+		resp, err := filestorage.ListFolders(ctx, "/")
+		require.NoError(t, err)
+
+		require.Equal(t, []Folder{
+			{
+				Name: "folder",
+				Path: "/folder",
+			}, {
+				Name: "icons",
+				Path: "/folder/icons",
+			},
+			{
+				Name: "emojis",
+				Path: "/folder/icons/emojis",
+			}, {
+				Name: "folder1",
+				Path: "/folder1",
+			},
+			{
+				Name: "folder2",
+				Path: "/folder1/folder2",
+			},
+		}, resp)
+	})
+
+	t.Run("Should not be able to delete folders with files", func(t *testing.T) {
+		setup()
+		filestorage.CreateFolder(ctx, "/folder/dashboards", "myNewFolder")
+		filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder/dashboards/myNewFolder/file.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		filestorage.DeleteFolder(ctx, "/folder/dashboards/myNewFolder")
+
+		resp, err := filestorage.ListFolders(ctx, "/")
+		require.NoError(t, err)
+
+		require.Equal(t, []Folder{
+			{
+				Name: "folder",
+				Path: "/folder",
+			}, {
+				Name: "dashboards",
+				Path: "/folder/dashboards",
+			},
+			{
+				Name: "myNewFolder",
+				Path: "/folder/dashboards/myNewFolder",
+			},
+		}, resp)
+
+		files, err := filestorage.ListFiles(ctx, "/", true, nil)
+		require.NoError(t, err)
+		require.Equal(t, []NameFullPath{
+			{
+				Name:     "file.jpg",
+				FullPath: "/folder/dashboards/myNewFolder/file.jpg",
+			},
+		}, extractNameFullPath(files.Files))
 	})
 }

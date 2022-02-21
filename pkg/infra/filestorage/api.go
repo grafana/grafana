@@ -50,15 +50,15 @@ type UpsertFileCommand struct {
 }
 
 type FileStorage interface {
-	Get(ctx context.Context, filePath string) (*File, error)
-	Delete(ctx context.Context, filePath string) error
+	Get(ctx context.Context, path string) (*File, error)
+	Delete(ctx context.Context, path string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
-	ListFiles(ctx context.Context, folderPath string, recursive bool, cursor *Paging) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, parentFolderPath string) ([]Folder, error)
+	ListFiles(ctx context.Context, path string, recursive bool, cursor *Paging) (*ListFilesResponse, error)
+	ListFolders(ctx context.Context, path string) ([]Folder, error)
 
-	CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error
-	DeleteFolder(ctx context.Context, folderPath string) error
+	CreateFolder(ctx context.Context, path string, folderName string) error
+	DeleteFolder(ctx context.Context, path string) error
 }
 
 // Get(ctx, "/myGit/dashboards/xyz123")

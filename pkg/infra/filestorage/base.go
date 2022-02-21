@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	pathRegex = regexp.MustCompile("(^/$)|(^(/[A-Za-z0-9!\\-_.*'()]+)+$)")
+	pathRegex       = regexp.MustCompile("(^/$)|(^(/[A-Za-z0-9!\\-_.*'()]+)+$)")
+	directoryMarker = ".___gf_dir_marker___"
 )
 
 func getPath(folderPath string, name string) string {
@@ -126,6 +127,15 @@ func (b baseFilestorageService) CreateFolder(ctx context.Context, folderPath str
 func (b baseFilestorageService) DeleteFolder(ctx context.Context, folderPath string) error {
 	if err := validatePath(folderPath); err != nil {
 		return err
+	}
+
+	filesInFolder, err := b.ListFiles(ctx, folderPath, true, &Paging{First: 1})
+	if err != nil {
+		return err
+	}
+
+	if len(filesInFolder.Files) > 0 {
+		return fmt.Errorf("folder %s is not empty - cant remove it", folderPath)
 	}
 
 	return b.wrapped.DeleteFolder(ctx, folderPath)

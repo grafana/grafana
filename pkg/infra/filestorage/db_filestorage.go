@@ -67,8 +67,29 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 }
 
 func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
-	//TODO implement me
-	panic("implement me")
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		table := &file{}
+		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Get(table)
+		if !exists {
+			return nil
+		}
+
+		number, err := sess.Table("file").Where("LOWER(path) = ?").Delete(table)
+		if err != nil {
+			return err
+		}
+		s.log.Info("Deleted file", "path", filePath, "affectedRecords", number)
+
+		metaTable := &fileMeta{}
+		number, err = sess.Table("file_meta").Where("LOWER(path) = ?").Delete(metaTable)
+		if err != nil {
+			return err
+		}
+		s.log.Info("Deleted metadata", "path", filePath, "affectedRecords", number)
+		return err
+	})
+
+	return err
 }
 
 func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error {
@@ -76,6 +97,9 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
 		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(cmd.Path)).Get(existing)
+		if err != nil {
+			return err
+		}
 
 		if exists {
 			existing.Updated = now
@@ -167,6 +191,7 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 		} else {
 			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(folderPath))
 		}
+		sess.Where("LOWER(path) NOT LIKE ?", fmt.Sprintf("%s%s%s", "%", Delimiter, directoryMarker))
 
 		sess.OrderBy("path")
 
@@ -260,11 +285,51 @@ func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string)
 }
 
 func (s dbFileStorage) CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error {
-	//TODO implement me
-	panic("implement me")
+	now := time.Now()
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		existing := &file{}
+
+		directoryMarkerParentPath := fmt.Sprintf("%s%s%s", parentFolderPath, Delimiter, folderName)
+		directoryMarkerPath := fmt.Sprintf("%s%s%s", directoryMarkerParentPath, Delimiter, directoryMarker)
+		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(directoryMarkerPath)).Get(existing)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			return nil
+		}
+
+		file := &file{
+			Path:             directoryMarkerPath,
+			ParentFolderPath: directoryMarkerParentPath,
+			Contents:         make([]byte, 0),
+			Updated:          now,
+			Created:          now,
+		}
+		_, err = sess.Insert(file)
+		return err
+	})
+
+	return err
 }
 
 func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) error {
-	//TODO implement me
-	panic("implement me")
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		existing := &file{}
+		directoryMarkerPath := fmt.Sprintf("%s%s%s", folderPath, Delimiter, directoryMarker)
+		exists, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(directoryMarkerPath)).Get(existing)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return nil
+		}
+
+		_, err = sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(directoryMarkerPath)).Delete(existing)
+		return err
+	})
+
+	return err
 }

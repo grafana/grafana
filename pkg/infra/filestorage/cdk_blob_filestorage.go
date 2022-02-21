@@ -48,8 +48,17 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 }
 
 func (c cdkBlobStorage) Delete(ctx context.Context, filePath string) error {
-	//TODO implement me
-	panic("implement me")
+	exists, err := c.bucket.Exists(ctx, filePath)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return nil
+	}
+
+	err = c.bucket.Delete(ctx, filePath)
+	return err
 }
 
 func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) error {
@@ -121,6 +130,11 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, recurs
 		}
 
 		path := obj.Key
+
+		if strings.HasSuffix(path, directoryMarker) {
+			continue
+		}
+
 		if obj.IsDir && recursive {
 			newPaging := &Paging{
 				First: pageSize - len(files),
@@ -252,11 +266,35 @@ func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string
 }
 
 func (c cdkBlobStorage) CreateFolder(ctx context.Context, parentFolderPath string, folderName string) error {
-	//TODO implement me
-	panic("implement me")
+	directoryMarkerParentPath := fmt.Sprintf("%s%s%s", parentFolderPath, Delimiter, folderName)
+	directoryMarkerPath := fmt.Sprintf("%s%s%s", directoryMarkerParentPath, Delimiter, directoryMarker)
+
+	exists, err := c.bucket.Exists(ctx, directoryMarkerPath)
+
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
+	err = c.bucket.WriteAll(ctx, directoryMarkerPath, make([]byte, 0), nil)
+	return err
 }
 
 func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string) error {
-	//TODO implement me
-	panic("implement me")
+	directoryMarkerPath := fmt.Sprintf("%s%s%s", folderPath, Delimiter, directoryMarker)
+	exists, err := c.bucket.Exists(ctx, directoryMarkerPath)
+
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return nil
+	}
+
+	err = c.bucket.Delete(ctx, directoryMarkerPath)
+	return err
 }
