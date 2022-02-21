@@ -32,7 +32,7 @@ type AuthOpts struct {
 
 func getRequestTimeout(opt TimeoutOpts) time.Duration {
 	if opt.RequestTimeoutMultiplier == 0 {
-		return opt.Timeout * 2 // default
+		return opt.Timeout * 3 // default
 	}
 
 	return opt.Timeout * opt.RequestTimeoutMultiplier
