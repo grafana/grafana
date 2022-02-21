@@ -34,13 +34,9 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 
 // GET /api/user/preferences
 func (hs *HTTPServer) GetUserPreferences(c *models.ReqContext) response.Response {
-	return hs.getPreferencesFor(c.Req.Context(), c.OrgId, c.UserId, 0)
-}
+	prefsQuery := models.GetPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId, TeamId: 0}
 
-func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, teamID int64) response.Response {
-	prefsQuery := models.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
-
-	if err := hs.PreferencesService.GetPreferences(ctx, &prefsQuery); err != nil {
+	if err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
@@ -86,7 +82,20 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 
 // GET /api/org/preferences
 func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response {
-	return hs.getPreferencesFor(c.Req.Context(), c.OrgId, 0, 0)
+	prefsQuery := models.GetPreferencesQuery{UserId: 0, OrgId: c.OrgId, TeamId: 0}
+
+	if err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery); err != nil {
+		return response.Error(500, "Failed to get preferences", err)
+	}
+
+	dto := dtos.Prefs{
+		Theme:           prefsQuery.Result.Theme,
+		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
+		Timezone:        prefsQuery.Result.Timezone,
+		WeekStart:       prefsQuery.Result.WeekStart,
+	}
+
+	return response.JSON(200, &dto)
 }
 
 // PUT /api/org/preferences

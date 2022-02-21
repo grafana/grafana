@@ -216,7 +216,20 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 		}
 	}
 
-	return hs.getPreferencesFor(c.Req.Context(), orgId, 0, teamId)
+	prefsQuery := models.GetPreferencesQuery{UserId: 0, OrgId: orgId, TeamId: teamId}
+
+	if err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery); err != nil {
+		return response.Error(500, "Failed to get preferences", err)
+	}
+
+	dto := dtos.Prefs{
+		Theme:           prefsQuery.Result.Theme,
+		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
+		Timezone:        prefsQuery.Result.Timezone,
+		WeekStart:       prefsQuery.Result.WeekStart,
+	}
+
+	return response.JSON(200, &dto)
 }
 
 // PUT /api/teams/:teamId/preferences

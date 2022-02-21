@@ -13,8 +13,8 @@ type Service struct {
 	PreferenceStore pstore.PreferenceStore
 }
 
-func ProvideService(cfg *setting.Cfg, sqlstore sqlstore.Store) Service {
-	return Service{PreferenceStore: pstore.PreferenceStore{SqlStore: sqlstore, Cfg: cfg}}
+func ProvideService(cfg *setting.Cfg, sqlstore sqlstore.Store) *Service {
+	return &Service{PreferenceStore: pstore.PreferenceStore{SqlStore: sqlstore, Cfg: cfg}}
 }
 
 func (s *Service) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {

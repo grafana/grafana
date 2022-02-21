@@ -265,19 +265,6 @@ func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTr
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
-	query.Result = &models.Preferences{}
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
 	return nil, m.ExpectedError
 }

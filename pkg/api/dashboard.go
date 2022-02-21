@@ -386,7 +386,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	homePage := hs.Cfg.HomePage
 
-	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+	if err := hs.PreferencesService.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 

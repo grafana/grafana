@@ -553,7 +553,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+	if err := hs.PreferencesService.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
 	prefs := prefsQuery.Result
