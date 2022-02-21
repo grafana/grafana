@@ -7338,12 +7338,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.10.1, @react-types/shared@npm:^3.10.1":
-  version: 3.10.1
-  resolution: "@react-types/shared@npm:3.10.1"
+"@react-types/shared@npm:3.11.1, @react-types/shared@npm:^3.11.1":
+  version: 3.11.1
+  resolution: "@react-types/shared@npm:3.11.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 6c4b7c6d43f84994521c4780f3b969a70c6b2ce69892f03c309f88b5d5d3c862a1a0d07f6060f9f650dbdd834cd16568db957c03543028eb8e52eb7dc97c58ea
+  checksum: 5d96e63a985227cc98a9172686690f7f58cfc7e8026765e4efd364dd7e059986d1e239453bb19f018b2d369717c28825b386471d1f21fc10ce5c50a3f05d1fba
   languageName: node
   linkType: hard
 
@@ -7356,12 +7356,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:^3.11.1":
-  version: 3.11.1
-  resolution: "@react-types/shared@npm:3.11.1"
+"@react-types/shared@npm:^3.10.1":
+  version: 3.10.1
+  resolution: "@react-types/shared@npm:3.10.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1
-  checksum: 5d96e63a985227cc98a9172686690f7f58cfc7e8026765e4efd364dd7e059986d1e239453bb19f018b2d369717c28825b386471d1f21fc10ce5c50a3f05d1fba
+  checksum: 6c4b7c6d43f84994521c4780f3b969a70c6b2ce69892f03c309f88b5d5d3c862a1a0d07f6060f9f650dbdd834cd16568db957c03543028eb8e52eb7dc97c58ea
   languageName: node
   linkType: hard
 
@@ -20412,7 +20412,7 @@ __metadata:
     "@react-types/button": 3.4.1
     "@react-types/menu": 3.5.1
     "@react-types/overlays": 3.5.1
-    "@react-types/shared": 3.10.1
+    "@react-types/shared": 3.11.1
     "@reduxjs/toolkit": 1.7.2
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.17.4
