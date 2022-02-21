@@ -275,6 +275,9 @@ exports[`no enzyme tests`] = {
     "public/app/features/folders/FolderSettingsPage.test.tsx:1751147194": [
       [2, 19, 13, "RegExp match", "2409514259"]
     ],
+    "public/app/features/invites/InviteesTable.test.tsx:3077684439": [
+      [1, 19, 13, "RegExp match", "2409514259"]
+    ],
     "public/app/features/org/OrgDetailsPage.test.tsx:2540662821": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -302,13 +305,10 @@ exports[`no enzyme tests`] = {
     "public/app/features/teams/TeamSettings.test.tsx:2628968507": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/InviteesTable.test.tsx:2271264692": [
-      [1, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/users/UsersActionBar.test.tsx:4031641375": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/UsersListPage.test.tsx:2523261097": [
+    "public/app/features/users/UsersListPage.test.tsx:2626906707": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/users/UsersTable.test.tsx:3051231816": [
