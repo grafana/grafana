@@ -19,15 +19,8 @@ func TestLocalFsCdkBlobStorage(t *testing.T) {
 
 	setup := func() {
 		bucket, _ := blob.OpenBucket(context.Background(), "file://./test_fs")
-		logger := log.New("testFsStorageLogger")
-		filestorage = wrapper{
-			log: logger,
-			wrapped: &cdkBlobStorage{
-				log:        logger,
-				bucket:     bucket,
-				rootFolder: "",
-			},
-		}
+		testLogger := log.New("testFsStorageLogger")
+		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 		ctx = context.Background()
 	}
 

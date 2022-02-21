@@ -17,6 +17,18 @@ type cdkBlobStorage struct {
 	rootFolder string
 }
 
+func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, pathFilters *PathFilters) FileStorage {
+	return &wrapper{
+		log: log,
+		wrapped: &cdkBlobStorage{
+			log:        log,
+			bucket:     bucket,
+			rootFolder: rootFolder,
+		},
+		pathFilters: pathFilters,
+	}
+}
+
 func (c cdkBlobStorage) closeReader(reader *blob.Reader) {
 	if err := reader.Close(); err != nil {
 		c.log.Error("Failed to close reader", "err", err)

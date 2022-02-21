@@ -36,27 +36,14 @@ func TestSqlStorage(t *testing.T) {
 	var ctx context.Context
 
 	setup := func() {
-		mode := "db"
+		mode := "mem"
 		testLogger := log.New("testStorageLogger")
 		if mode == "db" {
 			sqlStore = sqlstore.InitTestDB(t)
-			filestorage = wrapper{
-				log: testLogger,
-				wrapped: dbFileStorage{
-					db:  sqlStore,
-					log: testLogger,
-				},
-			}
+			filestorage = NewDbStorage(testLogger, sqlStore, nil)
 		} else if mode == "mem" {
 			bucket, _ := blob.OpenBucket(context.Background(), "mem://")
-			filestorage = wrapper{
-				log: testLogger,
-				wrapped: &cdkBlobStorage{
-					log:        testLogger,
-					bucket:     bucket,
-					rootFolder: Delimiter,
-				},
-			}
+			filestorage = NewCdkBlobStorage(testLogger, bucket, Delimiter, nil)
 		}
 
 		ctx = context.Background()

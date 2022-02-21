@@ -33,6 +33,17 @@ type dbFileStorage struct {
 	log log.Logger
 }
 
+func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, pathFilters *PathFilters) FileStorage {
+	return &wrapper{
+		log: log,
+		wrapped: &dbFileStorage{
+			log: log,
+			db:  db,
+		},
+		pathFilters: pathFilters,
+	}
+}
+
 func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) {
 	var result *File
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
