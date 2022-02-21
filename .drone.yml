@@ -413,6 +413,90 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
+name: test-docs-pr
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.4.9
+  name: initialize
+- commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run i18n:compile
+  - yarn run typecheck
+  depends_on:
+  - initialize
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.9
+  name: lint-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - initialize
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.4.9
+  name: test-frontend
+- commands:
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  depends_on:
+  - initialize
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: grafana/build-container:1.4.9
+  name: build-frontend
+- commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - build-frontend
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  image: grafana/build-container:1.4.9
+  name: build-storybook
+- commands:
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - build-frontend
+  image: grafana/build-container:1.4.9
+  name: build-frontend-docs
+- commands:
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
+  depends_on:
+  - build-frontend-docs
+  image: grafana/docs-base:latest
+  name: build-docs-website
+trigger:
+  event:
+    include:
+    - pull_request
+  paths:
+    include:
+    - docs/**
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: main-test
 node:
   type: no-parallel
@@ -4209,6 +4293,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: de49a9ed2dffc5131de65688dc0175fc07029d507d654df360f3e683a138b43c
+hmac: 8901785781c3f833a9aadee5b6a08130c768e0c28b6fce391071211105546d4f
 
 ...
