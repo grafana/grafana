@@ -92,7 +92,7 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *models.
 	userMap := map[int64]*models.UserSearchHitDTO{}
 	if signedInUser.UserId > 0 {
 		q := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter([]int64{signedInUser.UserId})}, Page: 0, Limit: 1}
-		if err := s.bus.Dispatch(ctx, q); err != nil {
+		if err := s.sqlStore.SearchUsers(ctx, q); err != nil {
 			return nil, err
 		}
 		for _, u := range q.Result.Users {
@@ -140,7 +140,7 @@ func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *models.Sig
 	}
 
 	query := &models.SearchUsersQuery{Query: "", Filters: []models.Filter{NewIDFilter(userIds)}, Page: 0, Limit: len(userIds)}
-	if err := s.bus.Dispatch(ctx, query); err != nil {
+	if err := s.sqlStore.SearchUsers(ctx, query); err != nil {
 		return nil, err
 	}
 

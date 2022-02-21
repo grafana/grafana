@@ -3,7 +3,6 @@ package comments
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -13,21 +12,21 @@ import (
 
 type Service struct {
 	cfg         *setting.Cfg
-	bus         bus.Bus
 	live        *live.GrafanaLive
+	sqlStore    *sqlstore.SQLStore
 	storage     Storage
 	permissions *commentmodel.PermissionChecker
 }
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, store *sqlstore.SQLStore, live *live.GrafanaLive, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore, live *live.GrafanaLive, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
-		cfg:  cfg,
-		bus:  bus,
-		live: live,
+		cfg:      cfg,
+		live:     live,
+		sqlStore: store,
 		storage: &sqlStorage{
 			sql: store,
 		},
-		permissions: commentmodel.NewPermissionChecker(bus, features),
+		permissions: commentmodel.NewPermissionChecker(store, features),
 	}
 	return s
 }

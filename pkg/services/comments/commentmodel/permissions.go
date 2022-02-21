@@ -4,7 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -12,17 +13,17 @@ import (
 )
 
 type PermissionChecker struct {
-	bus      bus.Bus
+	sqlStore *sqlstore.SQLStore
 	features featuremgmt.FeatureToggles
 }
 
-func NewPermissionChecker(bus bus.Bus, features featuremgmt.FeatureToggles) *PermissionChecker {
-	return &PermissionChecker{bus: bus, features: features}
+func NewPermissionChecker(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) *PermissionChecker {
+	return &PermissionChecker{sqlStore: sqlStore, features: features}
 }
 
 func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
 	query := models.GetDashboardQuery{Uid: uid, OrgId: orgID}
-	if err := c.bus.Dispatch(ctx, &query); err != nil {
+	if err := c.sqlStore.GetDashboard(ctx, &query); err != nil {
 		return nil, err
 	}
 	return query.Result, nil
@@ -30,7 +31,7 @@ func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, 
 
 func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashboard, error) {
 	query := models.GetDashboardQuery{Id: id, OrgId: orgID}
-	if err := c.bus.Dispatch(ctx, &query); err != nil {
+	if err := c.sqlStore.GetDashboard(ctx, &query); err != nil {
 		return nil, err
 	}
 	return query.Result, nil
