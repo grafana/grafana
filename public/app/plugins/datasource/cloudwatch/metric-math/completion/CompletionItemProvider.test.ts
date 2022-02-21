@@ -5,7 +5,6 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { CloudWatchDatasource } from '../../datasource';
 import cloudWatchMetricMathLanguageDefinition from '../definition';
 import { Monaco, monacoTypes } from '@grafana/ui';
-import { IPosition } from 'monaco-editor';
 import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,
@@ -15,7 +14,7 @@ import {
 } from '../language';
 import * as MetricMathTestData from '../../__mocks__/metric-math-test-data';
 
-const getSuggestions = async (value: string, position: IPosition) => {
+const getSuggestions = async (value: string, position: monacoTypes.IPosition) => {
   const setup = new MetricMathCompletionItemProvider(
     {
       getVariables: () => [],

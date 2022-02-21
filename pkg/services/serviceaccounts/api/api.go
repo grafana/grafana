@@ -150,8 +150,8 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 		saIDs[strconv.FormatInt(serviceAccounts[i].Id, 10)] = true
 	}
 
-	metadata, err := api.getAccessControlMetadata(c, saIDs)
-	if err == nil && len(metadata) != 0 {
+	metadata := api.getAccessControlMetadata(c, saIDs)
+	if len(metadata) > 0 {
 		for i := range serviceAccounts {
 			serviceAccounts[i].AccessControl = metadata[strconv.FormatInt(serviceAccounts[i].Id, 10)]
 		}
@@ -160,18 +160,21 @@ func (api *ServiceAccountsAPI) ListServiceAccounts(c *models.ReqContext) respons
 	return response.JSON(http.StatusOK, serviceAccounts)
 }
 
-func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) (map[string]accesscontrol.Metadata, error) {
+func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
 	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
-		return nil, nil
+		return map[string]accesscontrol.Metadata{}
 	}
 
-	userPermissions, err := api.accesscontrol.GetUserPermissions(c.Req.Context(), c.SignedInUser, accesscontrol.Options{ReloadCache: false})
-	if err != nil || len(userPermissions) == 0 {
-		api.log.Warn("could not fetch accesscontrol metadata for teams", "error", err)
-		return nil, err
+	if c.SignedInUser.Permissions == nil {
+		return map[string]accesscontrol.Metadata{}
 	}
 
-	return accesscontrol.GetResourcesMetadata(c.Req.Context(), userPermissions, "serviceaccounts", saIDs), nil
+	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	if !ok {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts", saIDs)
 }
 
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
