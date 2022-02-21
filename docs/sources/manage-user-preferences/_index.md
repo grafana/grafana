@@ -42,7 +42,7 @@ Your profile includes your name, user name, and email address, which you can upd
 
 ## Edit your preferences
 
-You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a [team]({{< relref "../administration/manage-users-and-permissions/manage-teams/_index.md">}}), for an organization, or Grafana-wide using [configuration settings]({{< relref "../administration/configuration/_index.md">}}). Your user preferences take precedence over team, organization, and Grafana default preferences.
+You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a team, for an organization, or Grafana-wide using configuration settings. Your user preferences take precedence over team, organization, and Grafana default preferences. For more information, see [Grafana Preferences]({{< relref "../administration/preferences/_index.md">}}).
 
 - **UI theme** determines whether Grafana appears in light mode or dark mode. This is set to dark mode by default.
 - **Home dashboard** refers to the first dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.
@@ -51,9 +51,9 @@ You can choose the way you would like data to appear in Grafana, including the U
 
 **To edit your preferences**:
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
-1. Update any of the values in the **Preferences** section.
-1. Click **Save** at the bottom of the Preferences section.
+2. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
+3. Update any of the values in the **Preferences** section.
+4. Click **Save** at the bottom of the Preferences section.
 
 
 ## Switch organizations
