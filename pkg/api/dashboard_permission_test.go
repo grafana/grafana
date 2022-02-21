@@ -1,58 +1,37 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
+		dashboardStore := &database.FakeDashboardStore{}
+		defer dashboardStore.AssertExpectations(t)
+
 		mockSQLStore := mockstore.NewSQLStoreMock()
+
 		hs := &HTTPServer{
-			Cfg:      settings,
-			SQLStore: mockSQLStore,
+			Cfg:              settings,
+			dashboardService: dashboardservice.ProvideDashboardService(dashboardStore),
+			SQLStore:         mockSQLStore,
 		}
-
-		t.Run("Given dashboard not exists", func(t *testing.T) {
-			mockSQLStore.ExpectedError = models.ErrDashboardNotFound
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					callGetDashboardPermissions(sc, hs)
-					assert.Equal(t, 404, sc.resp.Code)
-				}, mockSQLStore)
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-				},
-			}
-
-			updateDashboardPermissionScenario(t, updatePermissionContext{
-				desc:         "When calling POST on",
-				url:          "/api/dashboards/id/1/permissions",
-				routePattern: "/api/dashboards/id/:dashboardId/permissions",
-				cmd:          cmd,
-				fn: func(sc *scenarioContext) {
-					callUpdateDashboardPermissions(t, sc)
-					assert.Equal(t, 404, sc.resp.Code)
-				},
-			}, hs)
-		})
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
@@ -63,7 +42,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
 
 			getDashboardQueryResult := models.NewDashboard("Dash")
-
 			mockSQLStore := mockstore.NewSQLStoreMock()
 			mockSQLStore.ExpectedDashboard = getDashboardQueryResult
 			mockSQLStore.ExpectedError = nil
@@ -80,6 +58,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				},
 			}
 
+			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
@@ -324,26 +303,20 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 			assert.Len(t, cmd.Items, 3)
 
+			var numOfItems []*models.DashboardAcl
+			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				items := args.Get(2).([]*models.DashboardAcl)
+				numOfItems = items
+			}).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
 				routePattern: "/api/dashboards/id/:dashboardId/permissions",
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
-					// TODO: Replace this fake with a fake SQLStore instead (once we can use an interface in its stead)
-					origUpdateDashboardACL := updateDashboardACL
-					t.Cleanup(func() {
-						updateDashboardACL = origUpdateDashboardACL
-					})
-					var gotItems []*models.DashboardAcl
-					updateDashboardACL = func(_ context.Context, _ dashboards.Store, folderID int64, items []*models.DashboardAcl) error {
-						gotItems = items
-						return nil
-					}
-
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					assert.Len(t, gotItems, 4)
+					assert.Len(t, numOfItems, 4)
 				},
 			}, hs)
 		})
@@ -357,15 +330,6 @@ func callGetDashboardPermissions(sc *scenarioContext, hs *HTTPServer) {
 
 func callUpdateDashboardPermissions(t *testing.T, sc *scenarioContext) {
 	t.Helper()
-
-	origUpdateDashboardACL := updateDashboardACL
-	t.Cleanup(func() {
-		updateDashboardACL = origUpdateDashboardACL
-	})
-	updateDashboardACL = func(_ context.Context, _ dashboards.Store, dashID int64, items []*models.DashboardAcl) error {
-		return nil
-	}
-
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 

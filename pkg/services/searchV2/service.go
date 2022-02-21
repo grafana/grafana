@@ -16,12 +16,16 @@ import (
 )
 
 type StandardSearchService struct {
-	sql *sqlstore.SQLStore
+	sql  *sqlstore.SQLStore
+	auth FutureAuthService // eventually injected from elsewhere
 }
 
 func ProvideService(sql *sqlstore.SQLStore) SearchService {
 	return &StandardSearchService{
 		sql: sql,
+		auth: &simpleSQLAuthService{
+			sql: sql,
+		},
 	}
 }
 
@@ -29,6 +33,7 @@ type dashMeta struct {
 	id        int64
 	is_folder bool
 	folder_id int64
+	slug      string
 	created   time.Time
 	updated   time.Time
 	dash      *extract.DashboardInfo
@@ -37,13 +42,34 @@ type dashMeta struct {
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	if user == nil || user.Role != string(models.ROLE_ADMIN) {
-		rsp.Error = fmt.Errorf("search is only supported for admin users while in early development")
+	// Load and parse all dashboards for given orgId
+	dash, err := loadDashboards(ctx, orgId, s.sql)
+	if err != nil {
+		rsp.Error = err
 		return rsp
 	}
 
-	// Load and parse all dashboards for given orgId
-	dash, err := loadDashboards(ctx, orgId, s.sql)
+	// TODO - get user from context?
+	getSignedInUserQuery := &models.GetSignedInUserQuery{
+		Login: user.Login,
+		Email: user.Email,
+		OrgId: orgId,
+	}
+
+	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	if err != nil {
+		fmt.Printf("error while retrieving user %s\n", err)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	if getSignedInUserQuery.Result == nil {
+		fmt.Printf("no user %s", user.Email)
+		rsp.Error = fmt.Errorf("auth error")
+		return rsp
+	}
+
+	dash, err = s.applyAuthFilter(getSignedInUserQuery.Result, dash)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -54,10 +80,27 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return rsp
 }
 
+func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashMeta) ([]dashMeta, error) {
+	filter, err := s.auth.GetDashboardReadFilter(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a list of all viewable dashboards for this user
+	res := make([]dashMeta, 0, len(dash))
+	for _, dash := range dash {
+		if filter(dash.dash.UID) {
+			res = append(res, dash)
+		}
+	}
+	return res, nil
+}
+
 type dashDataQueryResult struct {
 	Id       int64
-	IsFolder bool  `xorm:"is_folder"`
-	FolderID int64 `xorm:"folder_id"`
+	IsFolder bool   `xorm:"is_folder"`
+	FolderID int64  `xorm:"folder_id"`
+	Slug     string `xorm:"slug"`
 	Data     []byte
 	Created  time.Time
 	Updated  time.Time
@@ -76,7 +119,7 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 
 		sess.Table("dashboard").
 			Where("org_id = ?", orgID).
-			Cols("id", "is_folder", "folder_id", "data", "created", "updated")
+			Cols("id", "is_folder", "folder_id", "data", "slug", "created", "updated")
 
 		err := sess.Find(&rows)
 		if err != nil {
@@ -90,6 +133,7 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 				id:        row.Id,
 				is_folder: row.IsFolder,
 				folder_id: row.FolderID,
+				slug:      row.Slug,
 				created:   row.Created,
 				updated:   row.Updated,
 				dash:      dash,
@@ -136,6 +180,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 
 	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	dashURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	dashFolderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	dashDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -153,6 +198,12 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashSchemaVersion.Name = "SchemaVersion"
 	dashCreated.Name = "Created"
 	dashUpdated.Name = "Updated"
+	dashURL.Name = "URL"
+	dashURL.Config = &data.FieldConfig{
+		Links: []data.DataLink{
+			{Title: "link", URL: "${__value.text}"},
+		},
+	}
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{
@@ -199,6 +250,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		dashCreated.Append(row.created)
 		dashUpdated.Append(row.updated)
 
+		url := fmt.Sprintf("/d/%s/%s", row.dash.UID, row.slug)
+		dashURL.Append(url)
+
 		// stats
 		schemaVersionCounter.add(strconv.FormatInt(row.dash.SchemaVersion, 10))
 
@@ -226,7 +280,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 
 	return data.Frames{
 		data.NewFrame("folders", folderID, folderUID, folderName),
-		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
+		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		panelTypeCounter.toFrame("panel-type-counts"),
 		schemaVersionCounter.toFrame("schema-version-counts"),

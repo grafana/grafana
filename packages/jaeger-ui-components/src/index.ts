@@ -6,9 +6,3 @@ export { default as DetailState } from './TraceTimelineViewer/SpanDetail/DetailS
 export { default as transformTraceData } from './model/transform-trace-data';
 export { default as filterSpans } from './utils/filter-spans';
 export * from './Theme';
-
-import { onlyUpdateForKeys } from 'recompose';
-
-export default {
-  onlyUpdateForKeys,
-} as any;

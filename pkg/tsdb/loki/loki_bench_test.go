@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -15,7 +16,7 @@ func BenchmarkMatrixJson(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = runQuery(makeMockedClient(200, "application/json", bytes), &lokiQuery{})
+		_, _ = runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &lokiQuery{})
 	}
 }
 

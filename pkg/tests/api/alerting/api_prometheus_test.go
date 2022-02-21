@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -634,6 +635,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
 
@@ -729,7 +731,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
-	require.NoError(t, store.UpdateDashboardACL(context.Background(), 2, nil))
+	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
 
 	// make sure that folder2 is not included in the response
 	{
@@ -778,7 +780,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from _ALL_ folders
-	require.NoError(t, store.UpdateDashboardACL(context.Background(), 1, nil))
+	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
 
 	// make sure that no folders are included in the response
 	{

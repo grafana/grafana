@@ -12,15 +12,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -2631,7 +2631,8 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 			"title": folderName,
 		}),
 	}
-	f, err := store.SaveDashboard(cmd)
+	dashboardsStore := database.ProvideDashboardStore(store)
+	f, err := dashboardsStore.SaveDashboard(cmd)
 
 	if err != nil {
 		return "", err

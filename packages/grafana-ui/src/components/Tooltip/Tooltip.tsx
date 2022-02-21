@@ -69,6 +69,7 @@ function getStyles(theme: GrafanaTheme2) {
       transition: opacity 0.3s;
       z-index: ${theme.zIndex.tooltip};
       max-width: 400px;
+      overflow-wrap: break-word;
 
       &[data-popper-interactive='false'] {
         pointer-events: none;

@@ -239,7 +239,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = testHelperUpdateDashboardAcl(t, ss, 1, models.DashboardAcl{
+		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
 			DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -290,7 +290,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = testHelperUpdateDashboardAcl(t, ss, 1, models.DashboardAcl{
+		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
 			DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 			Permission: models.PERMISSION_EDIT,
 		})
