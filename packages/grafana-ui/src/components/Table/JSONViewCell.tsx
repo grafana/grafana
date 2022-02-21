@@ -1,11 +1,12 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import { TableCellProps } from './types';
+import { TableCellProps, TableFieldOptions } from './types';
+import { CellActions } from './CellActions';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
-  const { cell, tableStyles, cellProps } = props;
-
+  const { cell, tableStyles, cellProps, field } = props;
+  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const txt = css`
     cursor: pointer;
     font-family: monospace;
@@ -23,8 +24,9 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   }
 
   return (
-    <div {...cellProps} className={tableStyles.cellContainer}>
+    <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
       <div className={cx(tableStyles.cellText, txt)}>{displayValue}</div>
+      {inspectEnabled && <CellActions {...props} previewMode="code" />}
     </div>
   );
 }

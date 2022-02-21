@@ -76,10 +76,19 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           defaultValue: defaultPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
-          path: 'preview',
-          name: 'Cell value preview',
-          description: 'Enables/disables cell value preview in a modal window',
+          path: 'inspect',
+          name: 'Cell value inspect',
+          description: 'Enable cell value inspection in a modal window',
           defaultValue: false,
+          showIf: (cfg) => {
+            return (
+              cfg.displayMode === TableCellDisplayMode.Auto ||
+              cfg.displayMode === TableCellDisplayMode.JSONView ||
+              cfg.displayMode === TableCellDisplayMode.ColorText ||
+              cfg.displayMode === TableCellDisplayMode.ColorBackground ||
+              cfg.displayMode === TableCellDisplayMode.ColorBackgroundSolid
+            );
+          },
         })
         .addBooleanSwitch({
           path: 'filterable',

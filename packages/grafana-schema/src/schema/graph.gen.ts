@@ -283,7 +283,7 @@ export enum BarGaugeDisplayMode {
 export interface TableFieldOptions {
   align: string;
   displayMode: TableCellDisplayMode;
-  preview: boolean;
+  inspect: boolean;
   hidden?: boolean;
   minWidth?: number;
   width?: number;
@@ -293,7 +293,7 @@ export interface TableFieldOptions {
 export const defaultTableFieldOptions: TableFieldOptions = {
   align: 'auto',
   displayMode: TableCellDisplayMode.Auto,
-  preview: false,
+  inspect: false,
 };
 
 export interface VizTooltipOptions {
