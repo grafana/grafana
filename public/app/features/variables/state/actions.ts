@@ -28,7 +28,7 @@ import {
   VariableWithOptions,
 } from '../types';
 import { AppNotification, StoreState, ThunkResult } from '../../../types';
-import { getVariable, getVariables } from './selectors';
+import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { notifyApp } from 'app/core/actions';
@@ -41,7 +41,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
+import { KeyedVariableIdentifier } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
@@ -71,6 +71,9 @@ import {
   getCurrentText,
   getVariableRefresh,
   hasOngoingTransaction,
+  toKeyedVariableIdentifier,
+  toStateKey,
+  toVariablePayload,
 } from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -80,6 +83,7 @@ import { locationService } from '@grafana/runtime';
 import { appEvents } from '../../../core/core';
 import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { toKeyedAction } from './keyedVariablesReducer';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -111,24 +115,27 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 //              thunk => variableUpdated
 //                adapter => updateOptions for dependent nodes
 
-export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void> => {
+export const initDashboardTemplating = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     let orderIndex = 0;
+    const list = dashboard.templating.list;
     for (let index = 0; index < list.length; index++) {
       const model = fixSelectedInconsistency(list[index]);
+      model.rootStateKey = key;
       if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
 
-      dispatch(addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })));
+      dispatch(
+        toKeyedAction(key, addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })))
+      );
     }
 
     getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
-    const variables = getVariables(getState());
-    for (let index = 0; index < variables.length; index++) {
-      const variable = variables[index];
-      dispatch(variableStateNotStarted(toVariablePayload(variable)));
+    const variables = getVariablesByKey(key, getState());
+    for (const variable of variables) {
+      dispatch(toKeyedAction(key, variableStateNotStarted(toVariablePayload(variable))));
     }
   };
 };
@@ -159,7 +166,7 @@ export function fixSelectedInconsistency(model: VariableModel): VariableModel | 
   return model;
 }
 
-export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
+export const addSystemTemplateVariables = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch) => {
     const dashboardModel: DashboardVariableModel = {
       ...initialVariableModelState,
@@ -179,12 +186,15 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
     };
 
     dispatch(
-      addVariable(
-        toVariablePayload(dashboardModel, {
-          global: dashboardModel.global,
-          index: dashboardModel.index,
-          model: dashboardModel,
-        })
+      toKeyedAction(
+        key,
+        addVariable(
+          toVariablePayload(dashboardModel, {
+            global: dashboardModel.global,
+            index: dashboardModel.index,
+            model: dashboardModel,
+          })
+        )
       )
     );
 
@@ -206,7 +216,10 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
     };
 
     dispatch(
-      addVariable(toVariablePayload(orgModel, { global: orgModel.global, index: orgModel.index, model: orgModel }))
+      toKeyedAction(
+        key,
+        addVariable(toVariablePayload(orgModel, { global: orgModel.global, index: orgModel.index, model: orgModel }))
+      )
     );
 
     const userModel: UserVariableModel = {
@@ -228,25 +241,39 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
     };
 
     dispatch(
-      addVariable(toVariablePayload(userModel, { global: userModel.global, index: userModel.index, model: userModel }))
+      toKeyedAction(
+        key,
+        addVariable(
+          toVariablePayload(userModel, { global: userModel.global, index: userModel.index, model: userModel })
+        )
+      )
     );
   };
 };
 
-export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: boolean): ThunkResult<void> => {
+export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variable = getVariable<VariableWithMultiSupport>(identifier.id, getState());
+    const { rootStateKey: key } = identifier;
+    const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
     const current = alignCurrentWithMulti(variable.current, multi);
 
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })));
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'current', propValue: current })));
+    dispatch(
+      toKeyedAction(key, changeVariableProp(toVariablePayload(identifier, { propName: 'multi', propValue: multi })))
+    );
+    dispatch(
+      toKeyedAction(key, changeVariableProp(toVariablePayload(identifier, { propName: 'current', propValue: current })))
+    );
   };
 };
 
 export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
+  if (!variable.rootStateKey) {
+    throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
+  }
+
   const dependencies: VariableModel[] = [];
 
-  for (const otherVariable of getVariables(state)) {
+  for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
     if (variable === otherVariable) {
       continue;
     }
@@ -258,13 +285,17 @@ export const processVariableDependencies = async (variable: VariableModel, state
     }
   }
 
-  if (!isWaitingForDependencies(dependencies, state)) {
+  if (!isWaitingForDependencies(variable.rootStateKey, dependencies, state)) {
     return;
   }
 
   await new Promise<void>((resolve) => {
     const unsubscribe = store.subscribe(() => {
-      if (!isWaitingForDependencies(dependencies, store.getState())) {
+      if (!variable.rootStateKey) {
+        throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
+      }
+
+      if (!isWaitingForDependencies(variable.rootStateKey, dependencies, store.getState())) {
         unsubscribe();
         resolve();
       }
@@ -272,12 +303,12 @@ export const processVariableDependencies = async (variable: VariableModel, state
   });
 };
 
-const isWaitingForDependencies = (dependencies: VariableModel[], state: StoreState): boolean => {
+const isWaitingForDependencies = (key: string, dependencies: VariableModel[], state: StoreState): boolean => {
   if (dependencies.length === 0) {
     return false;
   }
 
-  const variables = getVariables(state);
+  const variables = getVariablesByKey(key, state);
   const notCompletedDependencies = dependencies.filter((d) =>
     variables.some((v) => v.id === d.id && (v.state === LoadingState.NotStarted || v.state === LoadingState.Loading))
   );
@@ -286,11 +317,11 @@ const isWaitingForDependencies = (dependencies: VariableModel[], state: StoreSta
 };
 
 export const processVariable = (
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   queryParams: UrlQueryMap
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const variable = getVariable(identifier.id, getState());
+    const variable = getVariable(identifier, getState());
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams['var-' + variable.name];
@@ -306,7 +337,7 @@ export const processVariable = (
         refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
       ) {
-        await dispatch(updateOptions(toVariableIdentifier(refreshableVariable)));
+        await dispatch(updateOptions(toKeyedVariableIdentifier(refreshableVariable)));
         return;
       }
     }
@@ -316,11 +347,12 @@ export const processVariable = (
   };
 };
 
-export const processVariables = (): ThunkResult<Promise<void>> => {
+export const processVariables = (key: string): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const queryParams = locationService.getSearchObject();
-    const promises = getVariables(getState()).map(
-      async (variable: VariableModel) => await dispatch(processVariable(toVariableIdentifier(variable), queryParams))
+    const promises = getVariablesByKey(key, getState()).map(
+      async (variable: VariableModel) =>
+        await dispatch(processVariable(toKeyedVariableIdentifier(variable), queryParams))
     );
 
     await Promise.all(promises);
@@ -328,19 +360,19 @@ export const processVariables = (): ThunkResult<Promise<void>> => {
 };
 
 export const setOptionFromUrl = (
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   urlValue: UrlQueryValue
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const stringUrlValue = ensureStringValues(urlValue);
-    const variable = getVariable(identifier.id, getState());
+    const variable = getVariable(identifier, getState());
     if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
-      await dispatch(updateOptions(toVariableIdentifier(variable)));
+      await dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(variable.id, getState());
+    const variableFromState = getVariable<VariableWithOptions>(toKeyedVariableIdentifier(variable), getState());
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -418,11 +450,11 @@ export const selectOptionsForCurrentValue = (variable: VariableWithOptions): Var
 };
 
 export const validateVariableSelectionState = (
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier.id, getState());
+    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
     const current = variableInState.current || ({} as unknown as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -474,12 +506,13 @@ export const validateVariableSelectionState = (
 };
 
 export const setOptionAsCurrent = (
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
-    dispatch(setCurrentVariableValue(toVariablePayload(identifier, { option: current })));
+    const { rootStateKey: key } = identifier;
+    dispatch(toKeyedAction(key, setCurrentVariableValue(toVariablePayload(identifier, { option: current }))));
     return await dispatch(variableUpdated(identifier, emitChanges));
   };
 };
@@ -507,25 +540,26 @@ const createGraph = (variables: VariableModel[]) => {
 };
 
 export const variableUpdated = (
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   emitChangeEvents: boolean,
   events: typeof appEvents = appEvents
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const state = getState();
-    const variableInState = getVariable(identifier.id, state);
+    const { rootStateKey } = identifier;
+    const variableInState = getVariable(identifier, state);
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
-    if (state.templating.transaction.status === TransactionStatus.Fetching) {
+    if (getVariablesState(rootStateKey, state).transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
-        await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
+        await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
         dispatch(completeVariableLoading(identifier));
       }
       return Promise.resolve();
     }
 
-    const variables = getVariables(state);
+    const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
     const event: VariablesChangedEvent = isAdHoc(variableInState)
@@ -541,14 +575,14 @@ export const variableUpdated = (
           return Promise.resolve();
         }
 
-        return dispatch(updateOptions(toVariableIdentifier(variable)));
+        return dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
       });
     }
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         events.publish(new VariablesChanged(event));
-        locationService.partial(getQueryWithVariables(getState));
+        locationService.partial(getQueryWithVariables(rootStateKey, getState));
       }
     });
   };
@@ -561,12 +595,13 @@ export interface OnTimeRangeUpdatedDependencies {
 
 export const onTimeRangeUpdated =
   (
+    key: string,
     timeRange: TimeRange,
     dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv(), events: appEvents }
   ): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     dependencies.templateSrv.updateTimeRange(timeRange);
-    const variablesThatNeedRefresh = getVariables(getState()).filter((variable) => {
+    const variablesThatNeedRefresh = getVariablesByKey(key, getState()).filter((variable) => {
       if (variable.hasOwnProperty('refresh') && variable.hasOwnProperty('options')) {
         const variableWithRefresh = variable as unknown as QueryVariableModel;
         return variableWithRefresh.refresh === VariableRefresh.onTimeRangeChanged;
@@ -577,7 +612,7 @@ export const onTimeRangeUpdated =
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
-      dispatch(timeRangeUpdated(toVariableIdentifier(variable)))
+      dispatch(timeRangeUpdated(toKeyedVariableIdentifier(variable)))
     );
 
     try {
@@ -590,14 +625,14 @@ export const onTimeRangeUpdated =
   };
 
 const timeRangeUpdated =
-  (identifier: VariableIdentifier): ThunkResult<Promise<void>> =>
+  (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier.id);
+    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
     const previousOptions = variableInState.options.slice();
 
-    await dispatch(updateOptions(toVariableIdentifier(variableInState), true));
+    await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), true));
 
-    const updatedVariable = getVariable<VariableWithOptions>(identifier.id, getState());
+    const updatedVariable = getVariable<VariableWithOptions>(identifier, getState());
     const updatedOptions = updatedVariable.options;
 
     if (JSON.stringify(previousOptions) !== JSON.stringify(updatedOptions)) {
@@ -607,11 +642,11 @@ const timeRangeUpdated =
   };
 
 export const templateVarsChangedInUrl =
-  (vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
+  (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
     const dashboard = getState().dashboard.getModel();
-    for (const variable of getVariables(getState())) {
+    for (const variable of getVariablesByKey(key, getState())) {
       const key = `var-${variable.name}`;
       if (!vars.hasOwnProperty(key)) {
         // key not found quick exit
@@ -657,7 +692,7 @@ export function isVariableUrlValueDifferentFromCurrent(variable: VariableModel, 
   return !isEqual(variableValue, stringUrlValue);
 }
 
-const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
+const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQueryMap => {
   const queryParams = locationService.getSearchObject();
 
   const queryParamsNew = Object.keys(queryParams)
@@ -667,7 +702,7 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
       return obj;
     }, {} as UrlQueryMap);
 
-  for (const variable of getVariables(getState())) {
+  for (const variable of getVariablesByKey(key, getState())) {
     if (variable.skipUrlSync) {
       continue;
     }
@@ -680,27 +715,32 @@ const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
 };
 
 export const initVariablesTransaction =
-  (dashboardUid: string, dashboard: DashboardModel): ThunkResult<void> =>
+  (urlUid: string, dashboard: DashboardModel): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     try {
-      const transactionState = getState().templating.transaction;
-      if (transactionState.status === TransactionStatus.Fetching) {
-        // previous dashboard is still fetching variables, cancel all requests
-        dispatch(cancelVariables());
+      const uid = toStateKey(urlUid);
+      const state = getState();
+      const lastKey = getIfExistsLastKey(state);
+      if (lastKey) {
+        const transactionState = getVariablesState(lastKey, state).transaction;
+        if (transactionState.status === TransactionStatus.Fetching) {
+          // previous dashboard is still fetching variables, cancel all requests
+          dispatch(cancelVariables(lastKey));
+        }
       }
 
       // Start init transaction
-      dispatch(variablesInitTransaction({ uid: dashboardUid }));
+      dispatch(toKeyedAction(uid, variablesInitTransaction({ uid })));
       // Add system variables like __dashboard and __user
-      dispatch(addSystemTemplateVariables(dashboard));
+      dispatch(addSystemTemplateVariables(uid, dashboard));
       // Load all variables into redux store
-      dispatch(initDashboardTemplating(dashboard.templating.list));
+      dispatch(initDashboardTemplating(uid, dashboard));
       // Migrate data source name to ref
-      dispatch(migrateVariablesDatasourceNameToRef());
+      dispatch(migrateVariablesDatasourceNameToRef(uid));
       // Process all variable updates
-      await dispatch(processVariables());
-      // Mark update as complete
-      dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
+      await dispatch(processVariables(uid));
+      // Set transaction as complete
+      dispatch(toKeyedAction(uid, variablesCompleteTransaction({ uid })));
     } catch (err) {
       dispatch(notifyApp(createVariableErrorNotification('Templating init failed', err)));
       console.error(err);
@@ -708,10 +748,11 @@ export const initVariablesTransaction =
   };
 
 export function migrateVariablesDatasourceNameToRef(
-  getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
+  key: string,
+  getDatasourceSrvFunc = getDatasourceSrv
 ): ThunkResult<void> {
-  return function (dispatch, getState) {
-    const variables = getVariables(getState());
+  return (dispatch, getState) => {
+    const variables = getVariablesByKey(key, getState());
     for (const variable of variables) {
       if (!isAdHoc(variable) && !isQuery(variable)) {
         continue;
@@ -726,43 +767,51 @@ export function migrateVariablesDatasourceNameToRef(
       // the call to getInstanceSettings needs to be done after initDashboardTemplating because we might have
       // datasource variables that need to be resolved
       const ds = getDatasourceSrvFunc().getInstanceSettings(nameOrRef);
-      const dsRef = !ds ? { uid: nameOrRef } : getDataSourceRef(ds);
-      dispatch(changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: dsRef })));
+      const dsRef = ds ? getDataSourceRef(ds) : { uid: nameOrRef };
+      dispatch(
+        toKeyedAction(
+          key,
+          changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: dsRef }))
+        )
+      );
     }
   };
 }
 
-export const cleanUpVariables = (): ThunkResult<void> => (dispatch) => {
-  dispatch(cleanVariables());
-  dispatch(cleanEditorState());
-  dispatch(cleanPickerState());
-  dispatch(variablesClearTransaction());
-};
+export const cleanUpVariables =
+  (key: string): ThunkResult<void> =>
+  (dispatch) => {
+    dispatch(toKeyedAction(key, cleanVariables()));
+    dispatch(toKeyedAction(key, cleanEditorState()));
+    dispatch(toKeyedAction(key, cleanPickerState()));
+    dispatch(toKeyedAction(key, variablesClearTransaction()));
+  };
 
 type CancelVariablesDependencies = { getBackendSrv: typeof getBackendSrv };
 export const cancelVariables =
-  (dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }): ThunkResult<void> =>
+  (key: string, dependencies: CancelVariablesDependencies = { getBackendSrv: getBackendSrv }): ThunkResult<void> =>
   (dispatch) => {
     dependencies.getBackendSrv().cancelAllInFlightRequests();
-    dispatch(cleanUpVariables());
+    dispatch(cleanUpVariables(key));
   };
 
 export const updateOptions =
-  (identifier: VariableIdentifier, rethrow = false): ThunkResult<Promise<void>> =>
+  (identifier: KeyedVariableIdentifier, rethrow = false): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
+    const { rootStateKey } = identifier;
     try {
-      if (!hasOngoingTransaction(getState())) {
+      if (!hasOngoingTransaction(rootStateKey, getState())) {
         // we might have cancelled a batch so then variable state is removed
         return;
       }
 
-      const variableInState = getVariable(identifier.id, getState());
-      dispatch(variableStateFetching(toVariablePayload(variableInState)));
-      await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
+      const variableInState = getVariable(identifier, getState());
+      dispatch(toKeyedAction(rootStateKey, variableStateFetching(toVariablePayload(variableInState))));
+      await dispatch(upgradeLegacyQueries(toKeyedVariableIdentifier(variableInState)));
       await variableAdapters.get(variableInState.type).updateOptions(variableInState);
       dispatch(completeVariableLoading(identifier));
     } catch (error) {
-      dispatch(variableStateFailed(toVariablePayload(identifier, { error })));
+      dispatch(toKeyedAction(rootStateKey, variableStateFailed(toVariablePayload(identifier, { error }))));
 
       if (!rethrow) {
         console.error(error);
@@ -778,7 +827,7 @@ export const updateOptions =
 export const createVariableErrorNotification = (
   message: string,
   error: any,
-  identifier?: VariableIdentifier
+  identifier?: KeyedVariableIdentifier
 ): AppNotification =>
   createErrorNotification(
     `${identifier ? `Templating [${identifier.id}]` : 'Templating'}`,
@@ -786,31 +835,33 @@ export const createVariableErrorNotification = (
   );
 
 export const completeVariableLoading =
-  (identifier: VariableIdentifier): ThunkResult<void> =>
+  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
   (dispatch, getState) => {
-    if (!hasOngoingTransaction(getState())) {
+    const { rootStateKey } = identifier;
+    if (!hasOngoingTransaction(rootStateKey, getState())) {
       // we might have cancelled a batch so then variable state is removed
       return;
     }
 
-    const variableInState = getVariable(identifier.id, getState());
+    const variableInState = getVariable(identifier, getState());
 
     if (variableInState.state !== LoadingState.Done) {
-      dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+      dispatch(toKeyedAction(identifier.rootStateKey, variableStateCompleted(toVariablePayload(variableInState))));
     }
   };
 
 export function upgradeLegacyQueries(
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
 ): ThunkResult<void> {
   return async function (dispatch, getState) {
-    if (!hasOngoingTransaction(getState())) {
+    const { id, rootStateKey } = identifier;
+    if (!hasOngoingTransaction(rootStateKey, getState())) {
       // we might have cancelled a batch so then variable state is removed
       return;
     }
 
-    const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+    const variable = getVariable<QueryVariableModel>(identifier, getState());
 
     if (!isQuery(variable)) {
       return;
@@ -832,11 +883,16 @@ export function upgradeLegacyQueries(
       }
 
       const query = {
-        refId: `${datasource.name}-${identifier.id}-Variable-Query`,
+        refId: `${datasource.name}-${id}-Variable-Query`,
         query: variable.query,
       };
 
-      dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+      dispatch(
+        toKeyedAction(
+          rootStateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query }))
+        )
+      );
     } catch (err) {
       dispatch(notifyApp(createVariableErrorNotification('Failed to upgrade legacy queries', err)));
       console.error(err);

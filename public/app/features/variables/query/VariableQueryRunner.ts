@@ -11,8 +11,8 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { VariableIdentifier } from '../state/types';
-import { getVariable } from '../state/selectors';
+import { KeyedVariableIdentifier } from '../state/types';
+import { getLastKey, getVariable } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
@@ -24,14 +24,14 @@ import { runRequest } from '../../query/state/runRequest';
 import { toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
 
 interface UpdateOptionsArgs {
-  identifier: VariableIdentifier;
+  identifier: KeyedVariableIdentifier;
   datasource: DataSourceApi;
   searchFilter?: string;
 }
 
 export interface UpdateOptionsResults {
   state: LoadingState;
-  identifier: VariableIdentifier;
+  identifier: KeyedVariableIdentifier;
   error?: any;
   cancelled?: boolean;
 }
@@ -49,7 +49,7 @@ interface VariableQueryRunnerArgs {
 export class VariableQueryRunner {
   private readonly updateOptionsRequests: Subject<UpdateOptionsArgs>;
   private readonly updateOptionsResults: Subject<UpdateOptionsResults>;
-  private readonly cancelRequests: Subject<{ identifier: VariableIdentifier }>;
+  private readonly cancelRequests: Subject<{ identifier: KeyedVariableIdentifier }>;
   private readonly subscription: Unsubscribable;
 
   constructor(
@@ -65,7 +65,7 @@ export class VariableQueryRunner {
   ) {
     this.updateOptionsRequests = new Subject<UpdateOptionsArgs>();
     this.updateOptionsResults = new Subject<UpdateOptionsResults>();
-    this.cancelRequests = new Subject<{ identifier: VariableIdentifier }>();
+    this.cancelRequests = new Subject<{ identifier: KeyedVariableIdentifier }>();
     this.onNewRequest = this.onNewRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
   }
@@ -74,11 +74,11 @@ export class VariableQueryRunner {
     this.updateOptionsRequests.next(args);
   }
 
-  getResponse(identifier: VariableIdentifier): Observable<UpdateOptionsResults> {
+  getResponse(identifier: KeyedVariableIdentifier): Observable<UpdateOptionsResults> {
     return this.updateOptionsResults.asObservable().pipe(filter((result) => result.identifier === identifier));
   }
 
-  cancelRequest(identifier: VariableIdentifier): void {
+  cancelRequest(identifier: KeyedVariableIdentifier): void {
     this.cancelRequests.next({ identifier });
   }
 
@@ -99,11 +99,11 @@ export class VariableQueryRunner {
         getState,
       } = this.dependencies;
 
-      const beforeUid = getState().templating.transaction.uid;
+      const beforeKey = getLastKey(getState());
 
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
-      const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+      const variable = getVariable<QueryVariableModel>(identifier, getState());
       const timeSrv = getTimeSrv();
       const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
       const runner = queryRunners.getRunnerForDatasource(datasource);
@@ -115,9 +115,9 @@ export class VariableQueryRunner {
         .pipe(
           filter(() => {
             // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
-            const afterUid = getState().templating.transaction.uid;
+            const afterKey = getLastKey(getState());
 
-            return beforeUid === afterUid;
+            return beforeKey === afterKey;
           }),
           filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error), // we only care about done or error for now
           take(1), // take the first result, using first caused a bug where it in some situations throw an uncaught error because of no results had been received yet
