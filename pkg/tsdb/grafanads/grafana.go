@@ -188,7 +188,6 @@ func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
 	path := q.Path
 	if path == "" {
 		rootPath := filestorage.Path(filestorage.Delimiter, filestorage.StorageNameGrafanaDS)
-		fmt.Println("listing " + rootPath)
 		folders, err := s.fs.ListFolders(context.Background(), rootPath, nil)
 		if err != nil {
 			s.log.Error("failed when listing folders", "path", rootPath, "err", err)
@@ -211,7 +210,7 @@ func (s *Service) doListQuery(query backend.DataQuery) backend.DataResponse {
 		})
 		response.Frames = data.Frames{frame}
 	} else {
-		frame, err := s.getDirectoryFrame(path, false)
+		frame, err := s.getDirectoryFrame(path, true)
 		if err != nil {
 			response.Error = err
 			return response
