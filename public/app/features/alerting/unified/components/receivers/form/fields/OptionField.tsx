@@ -179,8 +179,5 @@ const determineReadOnly = (option: NotificationChannelOption, getValues: any) =>
     return false;
   }
 
-  const values = getValues(`items[0].${option.dependsOn}`);
-  console.log(values);
-  console.log(!!values);
-  return values;
+  return getValues(`items[0].${option.dependsOn}`);
 };
