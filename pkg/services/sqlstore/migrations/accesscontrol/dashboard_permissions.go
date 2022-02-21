@@ -189,7 +189,14 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 				Created: now,
 			})
 		}
-		if _, err := m.sess.InsertMulti(&permissions); err != nil {
+
+		err := batch(len(permissions), batchSize, func(start, end int) error {
+			if _, err := m.sess.InsertMulti(permissions[start:end]); err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
 			return err
 		}
 	}
