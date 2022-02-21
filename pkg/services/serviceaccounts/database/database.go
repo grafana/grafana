@@ -186,7 +186,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		UpdatedAt: query.Result[0].Updated,
 		CreatedAt: query.Result[0].Created,
 	}
-	return saProfile, err
+	return saProfile, nil
 }
 
 func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
