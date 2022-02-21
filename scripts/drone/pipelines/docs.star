@@ -1,6 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
     'initialize_step',
+    'download_grabpl_step',
     'lint_frontend_step',
     'codespell_step',
     'shellcheck_step',
@@ -25,7 +26,7 @@ load(
 ver_mode = 'pr'
 
 def docs_pipelines(edition):
-    steps = initialize_step(edition, platform='linux', ver_mode=ver_mode)
+    steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
     steps.extend([
         lint_frontend_step(),
         test_frontend_step(),
@@ -40,11 +41,9 @@ def docs_pipelines(edition):
     ])
 
     trigger = {
-        'event': {
-            'include': [
-                'pull_request',
-            ]
-        },
+        'event':  [
+            'pull_request',
+        ],
         'paths': {
             'include': [
                 'docs/**',
