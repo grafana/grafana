@@ -17,37 +17,6 @@ interface Props {
   folder: FolderState;
 }
 
-enum AlertFolderViewFilters {
-  nameFilter = 'nameFilter',
-  labelFilter = 'labelFilter',
-}
-
-function useAlertsFolderViewFilters() {
-  const [searchParams, setSearchParams] = useURLSearchParams();
-
-  const [nameFilter, setNameFilter] = useState(searchParams.get(AlertFolderViewFilters.nameFilter) ?? '');
-  const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewFilters.nameFilter) ?? '');
-
-  const [, cancelUrlUpdate] = useDebounce(
-    () =>
-      setSearchParams({
-        [AlertFolderViewFilters.nameFilter]: nameFilter,
-        [AlertFolderViewFilters.labelFilter]: labelFilter,
-      }),
-    400,
-    [nameFilter, labelFilter]
-  );
-
-  useEffect(
-    () => () => {
-      cancelUrlUpdate();
-    },
-    [cancelUrlUpdate]
-  );
-
-  return { nameFilter, labelFilter, setNameFilter, setLabelFilter };
-}
-
 export const AlertsFolderView = ({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -67,6 +36,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
 
+  const showNoResultsText = alertRules.length === 0 || filteredRules.length === 0;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, 5);
 
   return (
@@ -102,6 +72,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
           </Card>
         ))}
       </div>
+      {showNoResultsText && <div className={styles.noResults}>No alert rules found</div>}
       <div className={styles.pagination}>
         <Pagination
           currentPage={page}
@@ -114,17 +85,58 @@ export const AlertsFolderView = ({ folder }: Props) => {
   );
 };
 
+enum AlertFolderViewFilters {
+  nameFilter = 'nameFilter',
+  labelFilter = 'labelFilter',
+}
+
+function useAlertsFolderViewFilters() {
+  const [searchParams, setSearchParams] = useURLSearchParams();
+
+  const [nameFilter, setNameFilter] = useState(searchParams.get(AlertFolderViewFilters.nameFilter) ?? '');
+  const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewFilters.labelFilter) ?? '');
+
+  const [, cancelUrlUpdate] = useDebounce(
+    () =>
+      setSearchParams(
+        {
+          [AlertFolderViewFilters.nameFilter]: getNotEmptyStringOrUndefined(nameFilter),
+          [AlertFolderViewFilters.labelFilter]: getNotEmptyStringOrUndefined(labelFilter),
+        },
+        true
+      ),
+    400,
+    [nameFilter, labelFilter]
+  );
+
+  useEffect(
+    () => () => {
+      cancelUrlUpdate();
+    },
+    [cancelUrlUpdate]
+  );
+
+  return { nameFilter, labelFilter, setNameFilter, setLabelFilter };
+}
+
+function getNotEmptyStringOrUndefined(value: string | undefined | null) {
+  return value || undefined;
+}
+
 function usePagination<T>(items: T[], initialPage: number, itemsPerPage: number) {
   const [page, setPage] = useState(initialPage);
-
-  const onPageChange = (newPage: number) => {
-    setPage(newPage);
-  };
 
   const numberOfPages = Math.ceil(items.length / itemsPerPage);
 
   const firstItemOnPageIndex = itemsPerPage * (page - 1);
   const pageItems = items.slice(firstItemOnPageIndex, firstItemOnPageIndex + itemsPerPage);
+
+  const onPageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  // Reset the current page when number of changes has been changed
+  useEffect(() => setPage(1), [numberOfPages]);
 
   return { page, onPageChange, numberOfPages, pageItems };
 }
@@ -140,5 +152,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1;
     width: auto;
     min-width: 240px;
+  `,
+  noResults: css`
+    padding: ${theme.spacing(2)};
+    background-color: ${theme.colors.background.secondary};
+    font-style: italic;
   `,
 });
