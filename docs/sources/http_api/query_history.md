@@ -222,7 +222,7 @@ Removes stars from query in query history.
 **Example request:**
 
 ```http
-DELETE /api/query-history HTTP/1.1
+DELETE /api/query-history/star/P8zM2I1nz  HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
