@@ -142,6 +142,10 @@ func GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) e
 }
 
 func GetAuthInfo(query *models.GetAuthInfoQuery) error {
+	if query.UserId == 0 && query.AuthId == "" {
+		return models.ErrUserNotFound
+	}
+
 	userAuth := &models.UserAuth{
 		UserId:     query.UserId,
 		AuthModule: query.AuthModule,

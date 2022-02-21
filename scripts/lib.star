@@ -1,4 +1,4 @@
-grabpl_version = '0.5.58'
+grabpl_version = '0.5.60'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -26,9 +26,11 @@ def pipeline(
         }
     else:
         platform_conf = {
-            'os': 'windows',
-            'arch': 'amd64',
-            'version': '1809',
+            'platform': {
+                'os': 'windows',
+                'arch': 'amd64',
+                'version': '1809',
+            }
         }
 
     pipeline = {
@@ -43,6 +45,7 @@ def pipeline(
         ) + steps,
         'depends_on': depends_on,
     }
+    pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
         # We have a custom clone step for enterprise

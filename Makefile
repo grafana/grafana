@@ -3,6 +3,7 @@
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
 -include local/Makefile
+include .bingo/Variables.mk
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go revive golangci-lint test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
 
@@ -155,6 +156,13 @@ clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
 	rm -rf node_modules
 	rm -rf public/build
+
+# This repository's configuration is protected (https://readme.drone.io/signature/).
+# Use this make target to regenerate the configuration YAML files when
+# you modify starlark files.
+drone: $(DRONE)
+	$(DRONE) starlark --format
+	$(DRONE) lint .drone.yml --trusted
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

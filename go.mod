@@ -109,3 +109,5 @@ require (
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
 replace gopkg.in/macaron.v1 v1.4.0 => ./pkg/macaron
+
+replace github.com/go-macaron/binding => ./pkg/macaron/binding

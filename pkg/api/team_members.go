@@ -15,6 +15,10 @@ import (
 func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
+	if err := teamguardian.CanAdmin(hs.Bus, query.OrgId, query.TeamId, c.SignedInUser); err != nil {
+		return response.Error(403, "Not allowed to list team members", err)
+	}
+
 	if err := bus.Dispatch(&query); err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
