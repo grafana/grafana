@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -417,43 +418,85 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
-func shouldRedactKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
+func RedactedValue(key, value string) string {
+	uppercased := strings.ToUpper(key)
+	// Sensitive information: password, secrets etc
+	for _, pattern := range []string{
+		"PASSWORD",
+		"SECRET",
+		"PROVIDER_CONFIG",
+		"PRIVATE_KEY",
+		"SECRET_KEY",
+		"CERTIFICATE",
+		"ACCOUNT_KEY",
+		"ENCRYPTION_KEY",
+		"VAULT_TOKEN",
+	} {
+		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
+			return redactedPassword
+		}
+	}
+
+	for _, exception := range []string{
+		"RUDDERSTACK",
+		"APPLICATION_INSIGHTS",
+		"SENTRY",
+	} {
+		if strings.Contains(uppercased, exception) {
+			return value
+		}
+	}
+
+	if u, err := RedactedURL(value); err == nil {
+		return u
+	}
+
+	return value
 }
 
-func shouldRedactURLKey(s string) bool {
-	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "DATABASE_URL")
+func RedactedURL(value string) (string, error) {
+	// Value could be a list of URLs
+	chunks := util.SplitString(value)
+
+	for i, chunk := range chunks {
+		var hasTmpPrefix bool
+		const tmpPrefix = "http://"
+
+		if !strings.Contains(chunk, "://") {
+			chunk = tmpPrefix + chunk
+			hasTmpPrefix = true
+		}
+
+		u, err := url.Parse(chunk)
+		if err != nil {
+			return "", err
+		}
+
+		redacted := u.Redacted()
+		if hasTmpPrefix {
+			redacted = strings.Replace(redacted, tmpPrefix, "", 1)
+		}
+
+		chunks[i] = redacted
+	}
+
+	if strings.Contains(value, ",") {
+		return strings.Join(chunks, ","), nil
+	}
+
+	return strings.Join(chunks, " "), nil
 }
 
 func applyEnvVariableOverrides(file *ini.File) error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			envKey := envKey(section.Name(), key.Name())
+			envKey := EnvKey(section.Name(), key.Name())
 			envValue := os.Getenv(envKey)
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
-				if shouldRedactKey(envKey) {
-					envValue = redactedPassword
-				}
-				if shouldRedactURLKey(envKey) {
-					u, err := url.Parse(envValue)
-					if err != nil {
-						return fmt.Errorf("could not parse environment variable. key: %s, value: %s. error: %v", envKey, envValue, err)
-					}
-					ui := u.User
-					if ui != nil {
-						_, exists := ui.Password()
-						if exists {
-							u.User = url.UserPassword(ui.Username(), "-redacted-")
-							envValue = u.String()
-						}
-					}
-				}
-				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
+				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 			}
 		}
 	}
@@ -519,7 +562,7 @@ type AnnotationCleanupSettings struct {
 	MaxCount int64
 }
 
-func envKey(sectionName string, keyName string) string {
+func EnvKey(sectionName string, keyName string) string {
 	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
 	sN = strings.ReplaceAll(sN, "-", "_")
 	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
@@ -535,10 +578,8 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
-				if shouldRedactKey(keyString) {
-					value = redactedPassword
-				}
-				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				appliedCommandLineProperties = append(appliedCommandLineProperties,
+					fmt.Sprintf("%s=%s", keyString, RedactedValue(keyString, value)))
 			}
 		}
 	}
@@ -1037,7 +1078,7 @@ type DynamicSection struct {
 // Key dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (s *DynamicSection) Key(k string) *ini.Key {
-	envKey := envKey(s.section.Name(), k)
+	envKey := EnvKey(s.section.Name(), k)
 	envValue := os.Getenv(envKey)
 	key := s.section.Key(k)
 
@@ -1046,10 +1087,7 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	}
 
 	key.SetValue(envValue)
-	if shouldRedactKey(envKey) {
-		envValue = redactedPassword
-	}
-	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
 }
