@@ -7,8 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob"
 )
 
 func TestLocalFsCdkBlobStorage(t *testing.T) {
@@ -17,13 +18,22 @@ func TestLocalFsCdkBlobStorage(t *testing.T) {
 	var ctx context.Context
 
 	setup := func() {
-		filestorage, _ = ProvideService(setting.NewCfg(), nil, "localfs")
+		bucket, _ := blob.OpenBucket(context.Background(), "file://./test_fs")
+		logger := log.New("testFsStorageLogger")
+		filestorage = wrapper{
+			log: logger,
+			wrapped: &cdkBlobStorage{
+				log:        logger,
+				bucket:     bucket,
+				rootFolder: "",
+			},
+		}
 		ctx = context.Background()
 	}
 
 	t.Run("Should be able to list folders", func(t *testing.T) {
 		setup()
-		folders, err := filestorage.ListFolders(ctx, "/")
+		folders, err := filestorage.ListFolders(ctx, "/", nil)
 		require.NoError(t, err)
 		require.Equal(t, []FileMetadata{
 			{
@@ -36,7 +46,7 @@ func TestLocalFsCdkBlobStorage(t *testing.T) {
 			},
 		}, folders)
 
-		folders, err = filestorage.ListFolders(ctx, "/folderA")
+		folders, err = filestorage.ListFolders(ctx, "/folderA", nil)
 		require.NoError(t, err)
 		require.Equal(t, []FileMetadata{
 			{
@@ -49,7 +59,7 @@ func TestLocalFsCdkBlobStorage(t *testing.T) {
 
 	t.Run("Should be able to list files", func(t *testing.T) {
 		setup()
-		res, err := filestorage.ListFiles(ctx, "/", true, nil)
+		res, err := filestorage.ListFiles(ctx, "/", nil, &ListOptions{Recursive: true})
 		require.NoError(t, err)
 
 		require.Equal(t, []NameFullPath{

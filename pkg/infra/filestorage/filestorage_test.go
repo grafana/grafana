@@ -7,9 +7,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob"
 )
 
 type NameFullPath struct {
@@ -35,10 +36,29 @@ func TestSqlStorage(t *testing.T) {
 	var ctx context.Context
 
 	setup := func() {
-		sqlStore = sqlstore.InitTestDB(t)
+		mode := "mem"
+		testLogger := log.New("testStorageLogger")
+		if mode == "db" {
+			sqlStore = sqlstore.InitTestDB(t)
+			filestorage = wrapper{
+				log: testLogger,
+				wrapped: dbFileStorage{
+					db:  sqlStore,
+					log: testLogger,
+				},
+			}
+		} else if mode == "mem" {
+			bucket, _ := blob.OpenBucket(context.Background(), "mem://")
+			filestorage = wrapper{
+				log: testLogger,
+				wrapped: &cdkBlobStorage{
+					log:        testLogger,
+					bucket:     bucket,
+					rootFolder: Delimiter,
+				},
+			}
+		}
 
-		mode := "mem" // "db" or "mem"
-		filestorage, _ = ProvideService(setting.NewCfg(), sqlStore, mode)
 		ctx = context.Background()
 	}
 
@@ -96,7 +116,7 @@ func TestSqlStorage(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		resp, err := filestorage.ListFiles(ctx, "/folder1", true, nil)
+		resp, err := filestorage.ListFiles(ctx, "/folder1", nil, &ListOptions{Recursive: true})
 		require.NoError(t, err)
 
 		require.Equal(t, []NameFullPath{
@@ -110,7 +130,7 @@ func TestSqlStorage(t *testing.T) {
 			},
 		}, extractNameFullPath(resp.Files))
 
-		resp, err = filestorage.ListFiles(ctx, "/folder1", false, nil)
+		resp, err = filestorage.ListFiles(ctx, "/folder1", nil, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, []NameFullPath{
@@ -120,7 +140,47 @@ func TestSqlStorage(t *testing.T) {
 			},
 		}, extractNameFullPath(resp.Files))
 
-		resp, err = filestorage.ListFiles(ctx, "/folder1/folder2", true, nil)
+		resp, err = filestorage.ListFiles(ctx, "/folder1/folder2", nil, nil)
+		require.NoError(t, err)
+
+		require.Equal(t, []NameFullPath{
+			{
+				Name:     "file.jpg",
+				FullPath: "/folder1/folder2/file.jpg",
+			},
+		}, extractNameFullPath(resp.Files))
+	})
+
+	t.Run("Should be able to list files with prefix filtering", func(t *testing.T) {
+		setup()
+		err := filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/folder2/file.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		require.NoError(t, err)
+
+		err = filestorage.Upsert(ctx, &UpsertFileCommand{
+			Path:       "/folder1/file-inner.jpg",
+			Contents:   &[]byte{},
+			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+		})
+		require.NoError(t, err)
+
+		resp, err := filestorage.ListFiles(ctx, "/folder1", nil, &ListOptions{
+			Recursive: true, PathFilters: PathFilters{
+				allowedPrefixes: []string{"/folder2"},
+			},
+		})
+		require.NoError(t, err)
+
+		require.Equal(t, []NameFullPath{}, extractNameFullPath(resp.Files))
+
+		resp, err = filestorage.ListFiles(ctx, "/folder1", nil, &ListOptions{
+			Recursive: true, PathFilters: PathFilters{
+				allowedPrefixes: []string{"/folder1/folde"},
+			},
+		})
 		require.NoError(t, err)
 
 		require.Equal(t, []NameFullPath{
@@ -152,10 +212,10 @@ func TestSqlStorage(t *testing.T) {
 			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 		})
 
-		resp, err := filestorage.ListFiles(ctx, "/", true, &Paging{
+		resp, err := filestorage.ListFiles(ctx, "/", &Paging{
 			After: "/folder1/file-inner.jpg",
 			First: 1,
-		})
+		}, &ListOptions{Recursive: true})
 		require.NoError(t, err)
 
 		require.Equal(t, []NameFullPath{
@@ -186,7 +246,7 @@ func TestSqlStorage(t *testing.T) {
 			Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 		})
 
-		resp, err := filestorage.ListFolders(ctx, "/")
+		resp, err := filestorage.ListFolders(ctx, "/", nil)
 		require.NoError(t, err)
 
 		require.Equal(t, []FileMetadata{
@@ -227,7 +287,7 @@ func TestSqlStorage(t *testing.T) {
 		err := filestorage.DeleteFolder(ctx, "/folder/dashboards/myNewFolder")
 		require.NoError(t, err)
 
-		resp, err := filestorage.ListFolders(ctx, "/")
+		resp, err := filestorage.ListFolders(ctx, "/", nil)
 		require.NoError(t, err)
 
 		require.Equal(t, []FileMetadata{
@@ -262,7 +322,7 @@ func TestSqlStorage(t *testing.T) {
 		})
 		filestorage.DeleteFolder(ctx, "/folder/dashboards/myNewFolder")
 
-		resp, err := filestorage.ListFolders(ctx, "/")
+		resp, err := filestorage.ListFolders(ctx, "/", nil)
 		require.NoError(t, err)
 
 		require.Equal(t, []FileMetadata{
@@ -279,7 +339,7 @@ func TestSqlStorage(t *testing.T) {
 			},
 		}, resp)
 
-		files, err := filestorage.ListFiles(ctx, "/", true, nil)
+		files, err := filestorage.ListFiles(ctx, "/", nil, &ListOptions{Recursive: true})
 		require.NoError(t, err)
 		require.Equal(t, []NameFullPath{
 			{

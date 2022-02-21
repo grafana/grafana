@@ -3,7 +3,15 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
+)
+
+type StorageName string
+
+const (
+	StorageNameGrafanaDS StorageName = "grafanads"
 )
 
 var (
@@ -14,6 +22,18 @@ var (
 	ErrPathEndsWithDelimiter = errors.New("path can not end with delimiter")
 	Delimiter                = "/"
 )
+
+func Path(path string, storageName StorageName) string {
+	if strings.HasPrefix(path, Delimiter) {
+		return fmt.Sprintf("%s%s", string(storageName), path)
+	}
+
+	return fmt.Sprintf("%s%s%s", string(storageName), Delimiter, path)
+}
+
+func belongsToStorage(path string, storageName StorageName) bool {
+	return strings.HasPrefix(path, string(storageName))
+}
 
 type File struct {
 	Contents []byte
@@ -44,15 +64,38 @@ type UpsertFileCommand struct {
 	Properties map[string]string
 }
 
+type PathFilters struct {
+	allowedPrefixes []string
+}
+
+func (f *PathFilters) isAllowed(path string) bool {
+	if f == nil || f.allowedPrefixes == nil {
+		return true
+	}
+
+	for i := range f.allowedPrefixes {
+		if strings.HasPrefix(path, f.allowedPrefixes[i]) {
+			return true
+		}
+	}
+
+	return false
+}
+
+type ListOptions struct {
+	Recursive bool
+	PathFilters
+}
+
 type FileStorage interface {
 	Get(ctx context.Context, path string) (*File, error)
 	Delete(ctx context.Context, path string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 
-	ListFiles(ctx context.Context, path string, recursive bool, cursor *Paging) (*ListFilesResponse, error)
-	ListFolders(ctx context.Context, path string) ([]FileMetadata, error)
+	ListFiles(ctx context.Context, path string, paging *Paging, options *ListOptions) (*ListFilesResponse, error)
+	ListFolders(ctx context.Context, path string, options *ListOptions) ([]FileMetadata, error)
 
-	CreateFolder(ctx context.Context, path string, folderName string) error
+	CreateFolder(ctx context.Context, path string, name string) error
 	DeleteFolder(ctx context.Context, path string) error
 }
 

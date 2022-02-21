@@ -179,27 +179,27 @@ func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key st
 	return err
 }
 
-func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursive bool, paging *Paging) (*ListFilesResponse, error) {
+func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
 	var resp *ListFilesResponse
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var foundFiles = make([]*file, 0)
 
 		sess.Table("file")
-		if recursive {
+		if options.Recursive {
 			sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(folderPath), "%"))
 		} else {
 			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(folderPath))
 		}
 		sess.Where("LOWER(path) NOT LIKE ?", fmt.Sprintf("%s%s%s", "%", Delimiter, directoryMarker))
 
-		sess.OrderBy("path")
-
-		pageSize := 10
-		if paging != nil && paging.First != 0 {
-			pageSize = paging.First
+		for _, prefix := range options.PathFilters.allowedPrefixes {
+			sess.Where("LOWER(path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
 		}
 
+		sess.OrderBy("path")
+
+		pageSize := paging.First
 		sess.Limit(pageSize + 1)
 
 		if paging != nil && paging.After != "" {
@@ -240,14 +240,24 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, recursi
 	return resp, err
 }
 
-func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string) ([]FileMetadata, error) {
+func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string, options *ListOptions) ([]FileMetadata, error) {
 	folders := make([]FileMetadata, 0)
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var foundPaths []string
 
 		sess.Table("file")
 		sess.Distinct("parent_folder_path")
-		sess.Where("parent_folder_path > ?", parentFolderPath)
+
+		if options.Recursive {
+			sess.Where("LOWER(parent_folder_path) > ?", strings.ToLower(parentFolderPath))
+		} else {
+			sess.Where("LOWER(parent_folder_path) = ?", strings.ToLower(parentFolderPath))
+		}
+
+		for _, prefix := range options.PathFilters.allowedPrefixes {
+			sess.Where("LOWER(parent_folder_path) LIKE ?", fmt.Sprintf("%s%s", strings.ToLower(prefix), "%"))
+		}
+
 		sess.OrderBy("parent_folder_path")
 		sess.Cols("parent_folder_path")
 
