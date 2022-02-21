@@ -14,6 +14,7 @@ import {
 import { OperationInfoButton } from './OperationInfoButton';
 import { OperationName } from './OperationName';
 import { getOperationParamEditor } from './OperationParamEditor';
+import { getOperationParamId } from './operationUtils';
 
 export interface Props {
   operation: QueryBuilderOperation;
@@ -66,7 +67,9 @@ export function OperationEditor({
 
     operationElements.push(
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
-        <div className={styles.paramName}>{paramDef.name}</div>
+        <label className={styles.paramName} htmlFor={getOperationParamId(index, paramIndex)}>
+          {paramDef.name}
+        </label>
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
             <Editor
@@ -74,6 +77,7 @@ export function OperationEditor({
               paramDef={paramDef}
               value={operation.params[paramIndex]}
               operation={operation}
+              operationIndex={index}
               onChange={onParamValueChanged}
               onRunQuery={onRunQuery}
               query={query}
@@ -81,6 +85,7 @@ export function OperationEditor({
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
+                data-testid={`operations.${index}.remove-rest-param`}
                 size="sm"
                 fill="text"
                 icon="times"
@@ -100,7 +105,7 @@ export function OperationEditor({
   if (def.params.length > 0) {
     const lastParamDef = def.params[def.params.length - 1];
     if (lastParamDef.restParam) {
-      restParam = renderAddRestParamButton(lastParamDef, onAddRestParam, operation.params.length, styles);
+      restParam = renderAddRestParamButton(lastParamDef, onAddRestParam, index, operation.params.length, styles);
     }
   }
 
@@ -111,7 +116,7 @@ export function OperationEditor({
           className={styles.card}
           ref={provided.innerRef}
           {...provided.draggableProps}
-          data-testid={`operation-wrapper-for-${operation.id}`}
+          data-testid={`operations.${index}.wrapper`}
         >
           <div className={styles.header} {...provided.dragHandleProps}>
             <OperationName
@@ -151,12 +156,20 @@ export function OperationEditor({
 function renderAddRestParamButton(
   paramDef: QueryBuilderOperationParamDef,
   onAddRestParam: () => void,
+  operationIndex: number,
   paramIndex: number,
   styles: OperationEditorStyles
 ) {
   return (
     <div className={styles.restParam} key={`${paramIndex}-2`}>
-      <Button size="sm" icon="plus" title={`Add ${paramDef.name}`} variant="secondary" onClick={onAddRestParam}>
+      <Button
+        size="sm"
+        icon="plus"
+        title={`Add ${paramDef.name}`}
+        variant="secondary"
+        onClick={onAddRestParam}
+        data-testid={`operations.${operationIndex}.add-rest-param`}
+      >
         {paramDef.name}
       </Button>
     </div>

@@ -165,7 +165,7 @@ func TestMigrations(t *testing.T) {
 			acmigrator := migrator.NewMigrator(x, tc.config)
 			acmig.AddTeamMembershipMigrations(acmigrator)
 
-			errRunningMig := acmigrator.Start()
+			errRunningMig := acmigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)
 
 			for _, user := range users {
@@ -221,7 +221,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 
-	err = mg.Start()
+	err = mg.Start(false, 0)
 	require.NoError(t, err)
 
 	return x

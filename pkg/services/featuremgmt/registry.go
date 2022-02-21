@@ -39,6 +39,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "dashboardPreviewsAdmin",
+			Description: "Manage the dashboard previews crawler process from the UI",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "live-config",
 			Description: "Save grafana live configuration in SQL tables",
 			State:       FeatureStateAlpha,
@@ -61,6 +66,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "panelTitleSearch",
+			Description:     "Search for dashboards using panel title",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // only supported in dev mode right now
+		},
+		{
 			Name:         "tempoSearch",
 			Description:  "Enable searching in tempo datasources",
 			State:        FeatureStateBeta,
@@ -81,12 +92,6 @@ var (
 			Name:         "lokiBackendMode",
 			Description:  "Loki datasource works as backend datasource",
 			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "fullRangeLogsVolume",
-			Description:  "Show full range logs volume in explore",
-			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{
@@ -136,6 +141,11 @@ var (
 			Name:        "featureHighlights",
 			Description: "Highlight Enterprise features",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:        "migrationLocking",
+			Description: "Lock database during migrations",
+			State:       FeatureStateBeta,
 		},
 	}
 )

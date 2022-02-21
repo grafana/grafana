@@ -2,7 +2,7 @@ import config from '../../core/config';
 import { extend } from 'lodash';
 import { rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { AccessControlAction, UserPermission } from 'app/types';
-import { featureEnabled } from '@grafana/runtime';
+import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 
 export class User {
   id: number;
@@ -64,6 +64,18 @@ export class ContextSrv {
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
+  }
+
+  async fetchUserPermissions() {
+    try {
+      if (this.accessControlEnabled()) {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+          reloadcache: true,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   /**

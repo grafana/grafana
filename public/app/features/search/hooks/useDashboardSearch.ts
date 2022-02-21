@@ -12,7 +12,7 @@ import { useDebounce } from 'react-use';
 
 export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => void) => {
   const reducer = useReducer(searchReducer, dashboardsSearchState);
-  const { showPreviews, onShowPreviewsChange, previewFeatureEnabled } = useShowDashboardPreviews();
+  const { showPreviews, setShowPreviews, previewFeatureEnabled } = useShowDashboardPreviews();
   const {
     state: { results, loading },
     onToggleSection,
@@ -72,6 +72,6 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
     onToggleSection,
     onKeyDown,
     showPreviews,
-    onShowPreviewsChange,
+    setShowPreviews,
   };
 };
