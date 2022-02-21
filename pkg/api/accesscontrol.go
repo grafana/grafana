@@ -1,8 +1,10 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,49 +31,49 @@ const (
 
 // API related scopes
 var (
-	ScopeProvisionersAll           = accesscontrol.Scope("provisioners", "*")
-	ScopeProvisionersDashboards    = accesscontrol.Scope("provisioners", "dashboards")
-	ScopeProvisionersPlugins       = accesscontrol.Scope("provisioners", "plugins")
-	ScopeProvisionersDatasources   = accesscontrol.Scope("provisioners", "datasources")
-	ScopeProvisionersNotifications = accesscontrol.Scope("provisioners", "notifications")
+	ScopeProvisionersAll           = ac.Scope("provisioners", "*")
+	ScopeProvisionersDashboards    = ac.Scope("provisioners", "dashboards")
+	ScopeProvisionersPlugins       = ac.Scope("provisioners", "plugins")
+	ScopeProvisionersDatasources   = ac.Scope("provisioners", "datasources")
+	ScopeProvisionersNotifications = ac.Scope("provisioners", "notifications")
 
-	ScopeDatasourcesAll = accesscontrol.Scope("datasources", "*")
-	ScopeDatasourceID   = accesscontrol.Scope("datasources", "id", accesscontrol.Parameter(":id"))
-	ScopeDatasourceUID  = accesscontrol.Scope("datasources", "uid", accesscontrol.Parameter(":uid"))
-	ScopeDatasourceName = accesscontrol.Scope("datasources", "name", accesscontrol.Parameter(":name"))
+	ScopeDatasourcesAll = ac.Scope("datasources", "*")
+	ScopeDatasourceID   = ac.Scope("datasources", "id", ac.Parameter(":id"))
+	ScopeDatasourceUID  = ac.Scope("datasources", "uid", ac.Parameter(":uid"))
+	ScopeDatasourceName = ac.Scope("datasources", "name", ac.Parameter(":name"))
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
 // grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
-	provisioningWriterRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	provisioningWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     3,
 			Name:        "fixed:provisioning:writer",
 			DisplayName: "Provisioning writer",
 			Description: "Reload provisioning.",
 			Group:       "Provisioning",
-			Permissions: []accesscontrol.Permission{
+			Permissions: []ac.Permission{
 				{
 					Action: ActionProvisioningReload,
 					Scope:  ScopeProvisionersAll,
 				},
 			},
 		},
-		Grants: []string{accesscontrol.RoleGrafanaAdmin},
+		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	datasourcesExplorerRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	datasourcesExplorerRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     4,
 			Name:        "fixed:datasources:explorer",
 			DisplayName: "Data source explorer",
 			Description: "Enable the Explore feature. Data source permissions still apply; you can only query data sources for which you have query permissions.",
 			Group:       "Data sources",
-			Permissions: []accesscontrol.Permission{
+			Permissions: []ac.Permission{
 				{
-					Action: accesscontrol.ActionDatasourcesExplore,
+					Action: ac.ActionDatasourcesExplore,
 				},
 			},
 		},
@@ -82,14 +84,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(models.ROLE_VIEWER))
 	}
 
-	datasourcesReaderRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	datasourcesReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     3,
 			Name:        "fixed:datasources:reader",
 			DisplayName: "Data source reader",
 			Description: "Read and query all data sources.",
 			Group:       "Data sources",
-			Permissions: []accesscontrol.Permission{
+			Permissions: []ac.Permission{
 				{
 					Action: ActionDatasourcesRead,
 					Scope:  ScopeDatasourcesAll,
@@ -103,14 +105,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	datasourcesWriterRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	datasourcesWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     3,
 			Name:        "fixed:datasources:writer",
 			DisplayName: "Data source writer",
 			Description: "Create, update, delete, read, or query data sources.",
 			Group:       "Data sources",
-			Permissions: accesscontrol.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: ac.ConcatPermissions(datasourcesReaderRole.Role.Permissions, []ac.Permission{
 				{
 					Action: ActionDatasourcesWrite,
 					Scope:  ScopeDatasourcesAll,
@@ -127,14 +129,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	datasourcesIdReaderRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	datasourcesIdReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     4,
 			Name:        "fixed:datasources.id:reader",
 			DisplayName: "Data source ID reader",
 			Description: "Read the ID of a data source based on its name.",
 			Group:       "Infrequently used",
-			Permissions: []accesscontrol.Permission{
+			Permissions: []ac.Permission{
 				{
 					Action: ActionDatasourcesIDRead,
 					Scope:  ScopeDatasourcesAll,
@@ -144,14 +146,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
-	datasourcesCompatibilityReaderRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	datasourcesCompatibilityReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     3,
 			Name:        "fixed:datasources:compatibility:querier",
 			DisplayName: "Data source compatibility querier",
 			Description: "Only used for open source compatibility. Query data sources.",
 			Group:       "Infrequently used",
-			Permissions: []accesscontrol.Permission{
+			Permissions: []ac.Permission{
 				{Action: ActionDatasourcesQuery},
 				{Action: ActionDatasourcesRead},
 			},
@@ -159,29 +161,29 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
-	orgReaderRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	orgReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     5,
 			Name:        "fixed:organization:reader",
 			DisplayName: "Organization reader",
 			Description: "Read an organization, such as its ID, name, address, or quotas.",
 			Group:       "Organizations",
-			Permissions: []accesscontrol.Permission{
+			Permissions: []ac.Permission{
 				{Action: ActionOrgsRead},
 				{Action: ActionOrgsQuotasRead},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER), accesscontrol.RoleGrafanaAdmin},
+		Grants: []string{string(models.ROLE_VIEWER), ac.RoleGrafanaAdmin},
 	}
 
-	orgWriterRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	orgWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     5,
 			Name:        "fixed:organization:writer",
 			DisplayName: "Organization writer",
 			Description: "Read an organization, its quotas, or its preferences. Update organization properties, or its preferences.",
 			Group:       "Organizations",
-			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: ac.ConcatPermissions(orgReaderRole.Role.Permissions, []ac.Permission{
 				{Action: ActionOrgsPreferencesRead},
 				{Action: ActionOrgsWrite},
 				{Action: ActionOrgsPreferencesWrite},
@@ -190,71 +192,71 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	orgMaintainerRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	orgMaintainerRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Version:     5,
 			Name:        "fixed:organization:maintainer",
 			DisplayName: "Organization maintainer",
 			Description: "Create, read, write, or delete an organization. Read or write an organization's quotas. Needs to be assigned globally.",
 			Group:       "Organizations",
-			Permissions: accesscontrol.ConcatPermissions(orgReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: ac.ConcatPermissions(orgReaderRole.Role.Permissions, []ac.Permission{
 				{Action: ActionOrgsCreate},
 				{Action: ActionOrgsWrite},
 				{Action: ActionOrgsDelete},
 				{Action: ActionOrgsQuotasWrite},
 			}),
 		},
-		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
+		Grants: []string{string(ac.RoleGrafanaAdmin)},
 	}
 
 	teamCreatorGrants := []string{string(models.ROLE_ADMIN)}
 	if hs.Cfg.EditorsCanAdmin {
 		teamCreatorGrants = append(teamCreatorGrants, string(models.ROLE_EDITOR))
 	}
-	teamsCreatorRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	teamsCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
 			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
 			Version:     2,
-			Permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionTeamsCreate},
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			Permissions: []ac.Permission{
+				{Action: ac.ActionTeamsCreate},
+				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
 			},
 		},
 		Grants: teamCreatorGrants,
 	}
 
-	teamsWriterRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	teamsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Name:        "fixed:teams:writer",
 			DisplayName: "Team writer",
 			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
 			Group:       "Teams",
 			Version:     2,
-			Permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionTeamsCreate},
-				{Action: accesscontrol.ActionTeamsDelete, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionTeamsWrite, Scope: accesscontrol.ScopeTeamsAll},
+			Permissions: []ac.Permission{
+				{Action: ac.ActionTeamsCreate},
+				{Action: ac.ActionTeamsDelete, Scope: ac.ScopeTeamsAll},
+				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.ScopeTeamsAll},
+				{Action: ac.ActionTeamsPermissionsWrite, Scope: ac.ScopeTeamsAll},
+				{Action: ac.ActionTeamsRead, Scope: ac.ScopeTeamsAll},
+				{Action: ac.ActionTeamsWrite, Scope: ac.ScopeTeamsAll},
 			},
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
-	annotationsReaderRole := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
+	annotationsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
 			Name:        "fixed:annotations:reader",
 			DisplayName: "Annotation reader",
 			Description: "Read annotations and tags",
 			Group:       "Annotations",
 			Version:     1,
-			Permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll},
-				{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll},
+			Permissions: []ac.Permission{
+				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
+				{Action: ac.ActionAnnotationsTagsRead, Scope: ac.ScopeAnnotationsTagsAll},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -271,69 +273,96 @@ func (hs *HTTPServer) declareFixedRoles() error {
 // here is the list of complex evaluators we use in this package
 
 // dataSourcesConfigurationAccessEvaluator is used to protect the "Configure > Data sources" tab access
-var dataSourcesConfigurationAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionDatasourcesRead),
-	accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(ActionDatasourcesCreate),
-		accesscontrol.EvalPermission(ActionDatasourcesDelete),
-		accesscontrol.EvalPermission(ActionDatasourcesWrite),
+var dataSourcesConfigurationAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead),
+	ac.EvalAny(
+		ac.EvalPermission(ActionDatasourcesCreate),
+		ac.EvalPermission(ActionDatasourcesDelete),
+		ac.EvalPermission(ActionDatasourcesWrite),
 	),
 )
 
 // dataSourcesNewAccessEvaluator is used to protect the "Configure > Data sources > New" page access
-var dataSourcesNewAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionDatasourcesRead),
-	accesscontrol.EvalPermission(ActionDatasourcesCreate),
-	accesscontrol.EvalPermission(ActionDatasourcesWrite),
+var dataSourcesNewAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead),
+	ac.EvalPermission(ActionDatasourcesCreate),
+	ac.EvalPermission(ActionDatasourcesWrite),
 )
 
 // dataSourcesEditAccessEvaluator is used to protect the "Configure > Data sources > Edit" page access
-var dataSourcesEditAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionDatasourcesRead),
-	accesscontrol.EvalPermission(ActionDatasourcesWrite),
+var dataSourcesEditAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionDatasourcesRead),
+	ac.EvalPermission(ActionDatasourcesWrite),
 )
 
 // orgPreferencesAccessEvaluator is used to protect the "Configure > Preferences" page access
-var orgPreferencesAccessEvaluator = accesscontrol.EvalAny(
-	accesscontrol.EvalAll(
-		accesscontrol.EvalPermission(ActionOrgsRead),
-		accesscontrol.EvalPermission(ActionOrgsWrite),
+var orgPreferencesAccessEvaluator = ac.EvalAny(
+	ac.EvalAll(
+		ac.EvalPermission(ActionOrgsRead),
+		ac.EvalPermission(ActionOrgsWrite),
 	),
-	accesscontrol.EvalAll(
-		accesscontrol.EvalPermission(ActionOrgsPreferencesRead),
-		accesscontrol.EvalPermission(ActionOrgsPreferencesWrite),
+	ac.EvalAll(
+		ac.EvalPermission(ActionOrgsPreferencesRead),
+		ac.EvalPermission(ActionOrgsPreferencesWrite),
 	),
 )
 
 // orgsAccessEvaluator is used to protect the "Server Admin > Orgs" page access
 // (you need to have read access to update or delete orgs; read is the minimum)
-var orgsAccessEvaluator = accesscontrol.EvalPermission(ActionOrgsRead)
+var orgsAccessEvaluator = ac.EvalPermission(ActionOrgsRead)
 
 // orgsCreateAccessEvaluator is used to protect the "Server Admin > Orgs > New Org" page access
-var orgsCreateAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(ActionOrgsRead),
-	accesscontrol.EvalPermission(ActionOrgsCreate),
+var orgsCreateAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ActionOrgsRead),
+	ac.EvalPermission(ActionOrgsCreate),
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access
 // grants access to a user when they can either create teams or can read and update a team
-var teamsAccessEvaluator = accesscontrol.EvalAny(
-	accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
-	accesscontrol.EvalAll(
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
-		accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
-			accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+var teamsAccessEvaluator = ac.EvalAny(
+	ac.EvalPermission(ac.ActionTeamsCreate),
+	ac.EvalAll(
+		ac.EvalPermission(ac.ActionTeamsRead),
+		ac.EvalAny(
+			ac.EvalPermission(ac.ActionTeamsWrite),
+			ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
 		),
 	),
 )
 
 // teamsEditAccessEvaluator is used to protect the "Configuration > Teams > edit" page access
-var teamsEditAccessEvaluator = accesscontrol.EvalAll(
-	accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead),
-	accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite),
-		accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite),
+var teamsEditAccessEvaluator = ac.EvalAll(
+	ac.EvalPermission(ac.ActionTeamsRead),
+	ac.EvalAny(
+		ac.EvalPermission(ac.ActionTeamsCreate),
+		ac.EvalPermission(ac.ActionTeamsWrite),
+		ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
 	),
 )
+
+// Metadata helpers
+// getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
+func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, resource string, id int64) ac.Metadata {
+	key := fmt.Sprintf("%d", id)
+	ids := map[string]bool{key: true}
+
+	return hs.getMultiAccessControlMetadata(c, resource, ids)[key]
+}
+
+// getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
+func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, resource string, ids map[string]bool) map[string]ac.Metadata {
+	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+		return map[string]ac.Metadata{}
+	}
+
+	if c.SignedInUser.Permissions == nil {
+		return map[string]ac.Metadata{}
+	}
+
+	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	if !ok {
+		return map[string]ac.Metadata{}
+	}
+
+	return ac.GetResourcesMetadata(c.Req.Context(), permissions, resource, ids)
+}

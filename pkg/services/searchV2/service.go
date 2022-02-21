@@ -33,6 +33,7 @@ type dashMeta struct {
 	id        int64
 	is_folder bool
 	folder_id int64
+	slug      string
 	created   time.Time
 	updated   time.Time
 	dash      *extract.DashboardInfo
@@ -97,8 +98,9 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash 
 
 type dashDataQueryResult struct {
 	Id       int64
-	IsFolder bool  `xorm:"is_folder"`
-	FolderID int64 `xorm:"folder_id"`
+	IsFolder bool   `xorm:"is_folder"`
+	FolderID int64  `xorm:"folder_id"`
+	Slug     string `xorm:"slug"`
 	Data     []byte
 	Created  time.Time
 	Updated  time.Time
@@ -117,7 +119,7 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 
 		sess.Table("dashboard").
 			Where("org_id = ?", orgID).
-			Cols("id", "is_folder", "folder_id", "data", "created", "updated")
+			Cols("id", "is_folder", "folder_id", "data", "slug", "created", "updated")
 
 		err := sess.Find(&rows)
 		if err != nil {
@@ -131,6 +133,7 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 				id:        row.Id,
 				is_folder: row.IsFolder,
 				folder_id: row.FolderID,
+				slug:      row.Slug,
 				created:   row.Created,
 				updated:   row.Updated,
 				dash:      dash,
@@ -177,6 +180,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 
 	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	dashURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	dashFolderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	dashDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -194,6 +198,12 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashSchemaVersion.Name = "SchemaVersion"
 	dashCreated.Name = "Created"
 	dashUpdated.Name = "Updated"
+	dashURL.Name = "URL"
+	dashURL.Config = &data.FieldConfig{
+		Links: []data.DataLink{
+			{Title: "link", URL: "${__value.text}"},
+		},
+	}
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{
@@ -240,6 +250,9 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		dashCreated.Append(row.created)
 		dashUpdated.Append(row.updated)
 
+		url := fmt.Sprintf("/d/%s/%s", row.dash.UID, row.slug)
+		dashURL.Append(url)
+
 		// stats
 		schemaVersionCounter.add(strconv.FormatInt(row.dash.SchemaVersion, 10))
 
@@ -267,7 +280,7 @@ func metaToFrame(meta []dashMeta) data.Frames {
 
 	return data.Frames{
 		data.NewFrame("folders", folderID, folderUID, folderName),
-		data.NewFrame("dashboards", dashID, dashUID, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
+		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		panelTypeCounter.toFrame("panel-type-counts"),
 		schemaVersionCounter.toFrame("schema-version-counts"),

@@ -16,6 +16,26 @@ import (
 
 const failedToDeleteMsg = "Failed to delete API key"
 
+type TokenDTO struct {
+	Id                     int64           `json:"id"`
+	Name                   string          `json:"name"`
+	Role                   models.RoleType `json:"role"`
+	Created                *time.Time      `json:"created"`
+	Expiration             *time.Time      `json:"expiration"`
+	SecondsUntilExpiration *float64        `json:"secondsUntilExpiration"`
+	HasExpired             bool            `json:"hasExpired"`
+}
+
+func hasExpired(expiration *int64) bool {
+	if expiration == nil {
+		return false
+	}
+	v := time.Unix(*expiration, 0)
+	return (v).Before(time.Now())
+}
+
+const sevenDaysAhead = 7 * 24 * time.Hour
+
 func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
@@ -23,18 +43,28 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	}
 
 	if saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID); err == nil {
-		result := make([]*models.ApiKeyDTO, len(saTokens))
+		result := make([]*TokenDTO, len(saTokens))
 		for i, t := range saTokens {
 			var expiration *time.Time = nil
+			var secondsUntilExpiration float64 = 0
+
+			isExpired := hasExpired(t.Expires)
 			if t.Expires != nil {
 				v := time.Unix(*t.Expires, 0)
 				expiration = &v
+				if !isExpired && (*expiration).Before(time.Now().Add(sevenDaysAhead)) {
+					secondsUntilExpiration = time.Until(*expiration).Seconds()
+				}
 			}
-			result[i] = &models.ApiKeyDTO{
-				Id:         t.Id,
-				Name:       t.Name,
-				Role:       t.Role,
-				Expiration: expiration,
+
+			result[i] = &TokenDTO{
+				Id:                     t.Id,
+				Name:                   t.Name,
+				Role:                   t.Role,
+				Created:                &t.Created,
+				Expiration:             expiration,
+				SecondsUntilExpiration: &secondsUntilExpiration,
+				HasExpired:             isExpired,
 			}
 		}
 
