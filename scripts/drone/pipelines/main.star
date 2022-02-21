@@ -114,8 +114,8 @@ def get_steps(edition, is_downstream=False):
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
-        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana', ubuntu=False),
-        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', ubuntu=True)
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-dev', ubuntu=False),
+        publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss-dev', ubuntu=True)
     ])
 
     if include_enterprise2:
