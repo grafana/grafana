@@ -127,14 +127,6 @@ func (a *Alert) GetTagsFromSettings() []*Tag {
 	return tags
 }
 
-type SaveAlertsCommand struct {
-	DashboardId int64
-	UserId      int64
-	OrgId       int64
-
-	Alerts []*Alert
-}
-
 type PauseAlertCommand struct {
 	OrgId       int64
 	AlertIds    []int64

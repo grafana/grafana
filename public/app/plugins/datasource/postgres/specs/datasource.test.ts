@@ -7,23 +7,21 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   MutableDataFrame,
-  toUtc,
 } from '@grafana/data';
 
 import { PostgresDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { PostgresOptions, PostgresQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
 jest.mock('@grafana/runtime/src/services', () => ({
-  ...((jest.requireActual('@grafana/runtime/src/services') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime/src/services') as unknown as object),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
@@ -37,27 +35,16 @@ describe('PostgreSQLDatasource', () => {
   const setupTestContext = (data: any) => {
     jest.clearAllMocks();
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
-    const instanceSettings = ({
+    const instanceSettings = {
       jsonData: {
         defaultProject: 'testproject',
       },
-    } as unknown) as DataSourceInstanceSettings<PostgresOptions>;
+    } as unknown as DataSourceInstanceSettings<PostgresOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
-    const raw = {
-      from: toUtc('2018-04-25 10:00'),
-      to: toUtc('2018-04-25 11:00'),
-    };
-    const timeSrvMock = ({
-      timeRange: () => ({
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      }),
-    } as unknown) as TimeSrv;
     const variable = { ...initialCustomVariableModelState };
-    const ds = new PostgresDatasource(instanceSettings, templateSrv, timeSrvMock);
+    const ds = new PostgresDatasource(instanceSettings, templateSrv);
 
-    return { ds, templateSrv, timeSrvMock, variable };
+    return { ds, templateSrv, variable };
   };
 
   // https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing
@@ -262,7 +249,7 @@ describe('PostgreSQLDatasource', () => {
 
   describe('When performing a query with hidden target', () => {
     it('should return empty result and backendSrv.fetch should not be called', async () => {
-      const options = ({
+      const options = {
         range: {
           from: dateTime(1432288354),
           to: dateTime(1432288401),
@@ -277,7 +264,7 @@ describe('PostgreSQLDatasource', () => {
             hide: true,
           },
         ],
-      } as unknown) as DataQueryRequest<PostgresQuery>;
+      } as unknown as DataQueryRequest<PostgresQuery>;
 
       const { ds } = setupTestContext({});
 
@@ -565,7 +552,7 @@ describe('PostgreSQLDatasource', () => {
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
         const { ds, variable } = setupTestContext({});
-        expect(ds.interpolateVariable((1000 as unknown) as string, variable)).toEqual(1000);
+        expect(ds.interpolateVariable(1000 as unknown as string, variable)).toEqual(1000);
       });
     });
 
@@ -666,6 +653,6 @@ const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
   type: 'basic',
   statusText: 'Ok',
   redirected: false,
-  headers: ({} as unknown) as Headers,
+  headers: {} as unknown as Headers,
   ok: true,
 });

@@ -28,5 +28,7 @@ export enum DataTransformerID {
   prepareTimeSeries = 'prepareTimeSeries',
   convertFieldType = 'convertFieldType',
   fieldLookup = 'fieldLookup',
+  heatmap = 'heatmap',
+  spatial = 'spatial',
   extractFields = 'extractFields',
 }

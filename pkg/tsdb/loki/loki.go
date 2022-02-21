@@ -2,8 +2,6 @@ package loki
 
 import (
 	"context"
-	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -16,43 +14,25 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/loki/pkg/logcli/client"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/loki/pkg/loghttp"
-	"github.com/grafana/loki/pkg/logproto"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
-const pluginID = "loki"
-
 type Service struct {
-	im   instancemgmt.InstanceManager
-	plog log.Logger
+	im     instancemgmt.InstanceManager
+	plog   log.Logger
+	tracer tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-	s := &Service{
-		im:   im,
-		plog: log.New("tsdb.loki"),
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+	return &Service{
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		plog:   log.New("tsdb.loki"),
+		tracer: tracer,
 	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		s.plog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
-
-	return s, nil
 }
 
 var (
@@ -60,12 +40,8 @@ var (
 )
 
 type datasourceInfo struct {
-	HTTPClient        *http.Client
-	URL               string
-	TLSClientConfig   *tls.Config
-	BasicAuthUser     string
-	BasicAuthPassword string
-	TimeInterval      string `json:"timeInterval"`
+	HTTPClient *http.Client
+	URL        string
 }
 
 type QueryModel struct {
@@ -89,24 +65,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		tlsClientConfig, err := httpClientProvider.GetTLSConfig(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		jsonData := datasourceInfo{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
 		model := &datasourceInfo{
-			HTTPClient:        client,
-			URL:               settings.URL,
-			TLSClientConfig:   tlsClientConfig,
-			TimeInterval:      jsonData.TimeInterval,
-			BasicAuthUser:     settings.BasicAuthUser,
-			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
+			HTTPClient: client,
+			URL:        settings.URL,
 		}
 		return model, nil
 	}
@@ -114,24 +75,13 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queryRes := backend.DataResponse{}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return result, err
 	}
 
-	client := &client.DefaultClient{
-		Address:  dsInfo.URL,
-		Username: dsInfo.BasicAuthUser,
-		Password: dsInfo.BasicAuthPassword,
-		TLSConfig: config.TLSConfig{
-			InsecureSkipVerify: dsInfo.TLSClientConfig.InsecureSkipVerify,
-		},
-		Tripperware: func(t http.RoundTripper) http.RoundTripper {
-			return dsInfo.HTTPClient.Transport
-		},
-	}
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
 
 	queries, err := parseQuery(req)
 	if err != nil {
@@ -140,29 +90,22 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	for _, query := range queries {
 		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		span, _ := opentracing.StartSpanFromContext(ctx, "alerting.loki")
-		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", query.Start.UnixNano())
-		span.SetTag("stop_unixnano", query.End.UnixNano())
-		defer span.Finish()
+		_, span := s.tracer.Start(ctx, "alerting.loki")
+		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+		defer span.End()
 
-		// `limit` only applies to log-producing queries, and we
-		// currently only support metric queries, so this can be set to any value.
-		limit := 1
+		frames, err := runQuery(ctx, api, query)
 
-		// we do not use `interval`, so we set it to zero
-		interval := time.Duration(0)
+		queryRes := backend.DataResponse{}
 
-		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
 		if err != nil {
-			return result, err
+			queryRes.Error = err
+		} else {
+			queryRes.Frames = frames
 		}
 
-		frames, err := parseResponse(value, query)
-		if err != nil {
-			return result, err
-		}
-		queryRes.Frames = frames
 		result.Responses[query.RefID] = queryRes
 	}
 	return result, nil
@@ -207,16 +150,33 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 		}
 
 		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			timeVector = append(timeVector, k.Timestamp.Time().UTC())
 			values = append(values, float64(k.Value))
 		}
 
-		frames = append(frames, data.NewFrame(name,
-			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+		timeField := data.NewField("time", nil, timeVector)
+		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
+		valueField := data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+
+		frame := data.NewFrame(name, timeField, valueField)
+		frame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String(),
+		})
+
+		frames = append(frames, frame)
 	}
 
 	return frames, nil
+}
+
+// we extracted this part of the functionality to make it easy to unit-test it
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
+	value, err := api.QueryRange(ctx, *query)
+	if err != nil {
+		return data.Frames{}, err
+	}
+
+	return parseResponse(value, query)
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {

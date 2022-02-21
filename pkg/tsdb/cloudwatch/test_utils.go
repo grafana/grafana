@@ -79,6 +79,31 @@ func (c FakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn fu
 	return nil
 }
 
+type FakeCWAnnotationsClient struct {
+	cloudwatchiface.CloudWatchAPI
+	calls annontationsQueryCalls
+
+	describeAlarmsForMetricOutput *cloudwatch.DescribeAlarmsForMetricOutput
+	describeAlarmsOutput          *cloudwatch.DescribeAlarmsOutput
+}
+
+type annontationsQueryCalls struct {
+	describeAlarmsForMetric []*cloudwatch.DescribeAlarmsForMetricInput
+	describeAlarms          []*cloudwatch.DescribeAlarmsInput
+}
+
+func (c *FakeCWAnnotationsClient) DescribeAlarmsForMetric(params *cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
+	c.calls.describeAlarmsForMetric = append(c.calls.describeAlarmsForMetric, params)
+
+	return c.describeAlarmsForMetricOutput, nil
+}
+
+func (c *FakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
+	c.calls.describeAlarms = append(c.calls.describeAlarms, params)
+
+	return c.describeAlarmsOutput, nil
+}
+
 type fakeEC2Client struct {
 	ec2iface.EC2API
 
@@ -162,7 +187,7 @@ func newTestConfig() *setting.Cfg {
 type fakeSessionCache struct {
 }
 
-func (s fakeSessionCache) GetSession(region string, settings awsds.AWSDatasourceSettings) (*session.Session, error) {
+func (s fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, error) {
 	return &session.Session{
 		Config: &aws.Config{},
 	}, nil

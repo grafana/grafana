@@ -96,6 +96,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "SAML"
 	case "ldap", "":
 		return "LDAP"
+	case "jwt":
+		return "JWT"
 	default:
 		return "OAuth"
 	}

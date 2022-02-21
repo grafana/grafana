@@ -32,7 +32,7 @@ describe('SearchResults', () => {
 
   it('should render section items for expanded section', () => {
     setup();
-    expect(screen.getByTestId(selectors.components.Search.collapseFolder('0'))).toBeInTheDocument();
+    expect(screen.getAllByText('General', { exact: false })[0]).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Search.itemsV2)).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Search.dashboardItem('Test 1'))).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Search.dashboardItem('Test 2'))).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('SearchResults', () => {
 
   it('should render search card items for expanded section when showPreviews is enabled', () => {
     setup({ showPreviews: true });
-    expect(screen.getByTestId(selectors.components.Search.collapseFolder('0'))).toBeInTheDocument();
+    expect(screen.getAllByText('General', { exact: false })[0]).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Search.cards)).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Search.dashboardCard('Test 1'))).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Search.dashboardCard('Test 2'))).toBeInTheDocument();
@@ -70,8 +70,7 @@ describe('SearchResults', () => {
     const mockOnToggleSection = jest.fn();
     setup({ onToggleSection: mockOnToggleSection });
 
-    fireEvent.click(screen.getByTestId(selectors.components.Search.collapseFolder('0')));
-    expect(mockOnToggleSection).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getAllByText('General', { exact: false })[0]);
     expect(mockOnToggleSection).toHaveBeenCalledWith(generalFolder);
   });
 

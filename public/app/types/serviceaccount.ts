@@ -1,6 +1,7 @@
-import { OrgRole, Unit } from '.';
+import { WithAccessControlMetadata } from '@grafana/data';
+import { ApiKey, OrgRole, Role } from '.';
 
-export interface OrgServiceAccount {
+export interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;
   avatarUrl: string;
   email: string;
@@ -23,27 +24,28 @@ export interface ServiceAccount {
   orgId?: number;
 }
 
-export interface ServiceAccountDTO {
+export interface ServiceAccountDTO extends WithAccessControlMetadata {
   id: number;
-  login: string;
-  email: string;
+  orgId: number;
+  tokens: number;
   name: string;
-  isGrafanaAdmin: boolean;
-  isDisabled: boolean;
-  isAdmin?: boolean;
-  updatedAt?: string;
-  authLabels?: string[];
+  login: string;
   avatarUrl?: string;
-  orgId?: number;
-  licensedRole?: string;
-  permissions?: string[];
-  teams?: Unit[];
-  orgs?: Unit[];
+  role: OrgRole;
+}
+
+export interface ServiceAccountProfileState {
+  serviceAccount: ServiceAccountDTO;
+  isLoading: boolean;
+  tokens: ApiKey[];
 }
 
 export interface ServiceAccountsState {
-  serviceAccounts: OrgServiceAccount[];
+  serviceAccounts: ServiceAccountDTO[];
   searchQuery: string;
   searchPage: number;
   isLoading: boolean;
+  roleOptions: Role[];
+  serviceAccountToRemove: ServiceAccountDTO | null;
+  builtInRoles: Record<string, Role[]>;
 }

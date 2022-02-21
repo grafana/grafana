@@ -55,7 +55,8 @@ func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respons
 	}
 
 	resp := apimodels.GettableNGalertConfig{
-		Alertmanagers: cfg.Alertmanagers,
+		Alertmanagers:       cfg.Alertmanagers,
+		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
 	}
 	return response.JSON(http.StatusOK, resp)
 }
@@ -65,8 +66,18 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return accessForbiddenResp()
 	}
 
+	sendAlertsTo, err := ngmodels.StringToAlertmanagersChoice(string(body.AlertmanagersChoice))
+	if err != nil {
+		return response.Error(400, "Invalid alertmanager choice specified", nil)
+	}
+
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(body.Alertmanagers) == 0 {
+		return response.Error(400, "At least one Alertmanager must be provided to choose this option", nil)
+	}
+
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers: body.Alertmanagers,
+		SendAlertsTo:  sendAlertsTo,
 		OrgID:         c.OrgId,
 	}
 

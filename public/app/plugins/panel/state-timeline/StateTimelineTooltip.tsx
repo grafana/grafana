@@ -1,15 +1,7 @@
 import React from 'react';
-import {
-  DataFrame,
-  FALLBACK_COLOR,
-  formattedValueToString,
-  getDisplayProcessor,
-  getFieldDisplayName,
-  getValueFormat,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, FALLBACK_COLOR, getDisplayProcessor, getFieldDisplayName, TimeZone } from '@grafana/data';
 import { SeriesTableRow, useTheme2 } from '@grafana/ui';
-import { findNextStateIndex } from './utils';
+import { findNextStateIndex, fmtDuration } from './utils';
 
 interface StateTimelineTooltipProps {
   data: DataFrame[];
@@ -57,7 +49,7 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   let durationFragment = null;
 
   if (nextStateTs) {
-    const duration = nextStateTs && formattedValueToString(getValueFormat('dtdurationms')(nextStateTs - stateTs, 0));
+    const duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
     durationFragment = (
       <>
         <br />

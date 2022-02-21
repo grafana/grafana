@@ -85,7 +85,7 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	}
 }
 
-func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
@@ -115,11 +115,13 @@ func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWri
 	}
 }
 
-// registerRoutes provides route definitions shared with the frontend.
+// newResourceMux provides route definitions shared with the frontend.
 // Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
-func (s *Service) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/azuremonitor/", s.resourceHandler(azureMonitor))
-	mux.HandleFunc("/appinsights/", s.resourceHandler(appInsights))
-	mux.HandleFunc("/loganalytics/", s.resourceHandler(azureLogAnalytics))
-	mux.HandleFunc("/resourcegraph/", s.resourceHandler(azureResourceGraph))
+func (s *Service) newResourceMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))
+	mux.HandleFunc("/appinsights/", s.handleResourceReq(appInsights))
+	mux.HandleFunc("/loganalytics/", s.handleResourceReq(azureLogAnalytics))
+	mux.HandleFunc("/resourcegraph/", s.handleResourceReq(azureResourceGraph))
+	return mux
 }

@@ -14,13 +14,14 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	Evaluate            []interface{}
-	GetUserPermissions  []interface{}
-	GetUserRoles        []interface{}
-	IsDisabled          []interface{}
-	DeclareFixedRoles   []interface{}
-	GetUserBuiltInRoles []interface{}
-	RegisterFixedRoles  []interface{}
+	Evaluate                       []interface{}
+	GetUserPermissions             []interface{}
+	GetUserRoles                   []interface{}
+	IsDisabled                     []interface{}
+	DeclareFixedRoles              []interface{}
+	GetUserBuiltInRoles            []interface{}
+	RegisterFixedRoles             []interface{}
+	RegisterAttributeScopeResolver []interface{}
 }
 
 type Mock struct {
@@ -37,13 +38,14 @@ type Mock struct {
 	Calls Calls
 
 	// Override functions
-	EvaluateFunc            func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
-	GetUserPermissionsFunc  func(context.Context, *models.SignedInUser) ([]*accesscontrol.Permission, error)
-	GetUserRolesFunc        func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
-	IsDisabledFunc          func() bool
-	DeclareFixedRolesFunc   func(...accesscontrol.RoleRegistration) error
-	GetUserBuiltInRolesFunc func(user *models.SignedInUser) []string
-	RegisterFixedRolesFunc  func() error
+	EvaluateFunc                       func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
+	GetUserPermissionsFunc             func(context.Context, *models.SignedInUser, accesscontrol.Options) ([]*accesscontrol.Permission, error)
+	GetUserRolesFunc                   func(context.Context, *models.SignedInUser) ([]*accesscontrol.RoleDTO, error)
+	IsDisabledFunc                     func() bool
+	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
+	GetUserBuiltInRolesFunc            func(user *models.SignedInUser) []string
+	RegisterFixedRolesFunc             func() error
+	RegisterAttributeScopeResolverFunc func(string, accesscontrol.AttributeScopeResolveFunc)
 }
 
 // Ensure the mock stays in line with the interface
@@ -84,7 +86,7 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 		return m.EvaluateFunc(ctx, user, evaluator)
 	}
 	// Otherwise perform an actual evaluation of the permissions
-	permissions, err := m.GetUserPermissions(ctx, user)
+	permissions, err := m.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: false})
 	if err != nil {
 		return false, err
 	}
@@ -93,11 +95,12 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 
 // GetUserPermissions returns user permissions.
 // This mock return m.permissions unless an override is provided.
-func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user})
+func (m *Mock) GetUserPermissions(ctx context.Context, user *models.SignedInUser,
+	opts accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user, opts})
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {
-		return m.GetUserPermissionsFunc(ctx, user)
+		return m.GetUserPermissionsFunc(ctx, user, opts)
 	}
 	// Otherwise return the Permissions list
 	return m.permissions, nil
@@ -161,4 +164,14 @@ func (m *Mock) RegisterFixedRoles() error {
 		return m.RegisterFixedRolesFunc()
 	}
 	return nil
+}
+
+// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+// specific scope prefix (ex: datasources:name:)
+func (m *Mock) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
+	m.Calls.RegisterAttributeScopeResolver = append(m.Calls.RegisterAttributeScopeResolver, []struct{}{})
+	// Use override if provided
+	if m.RegisterAttributeScopeResolverFunc != nil {
+		m.RegisterAttributeScopeResolverFunc(scopePrefix, resolver)
+	}
 }

@@ -15,15 +15,16 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { AngularRoot } from './angular/AngularRoot';
 import { I18nProvider } from './core/localisation';
+import { AngularRoot } from './angular/AngularRoot';
+import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 
 interface AppWrapperProps {
   app: GrafanaApp;
 }
 
 interface AppWrapperState {
-  ngInjector: any;
+  ready?: boolean;
 }
 
 /** Used by enterprise */
@@ -37,28 +38,16 @@ export function addBodyRenderHook(fn: ComponentType) {
 export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
-export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
-  container = React.createRef<HTMLDivElement>();
 
+export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
   constructor(props: AppWrapperProps) {
     super(props);
-
-    this.state = {
-      ngInjector: null,
-    };
+    this.state = {};
   }
 
-  componentDidMount() {
-    if (this.container) {
-      this.bootstrapNgApp();
-    } else {
-      throw new Error('Failed to boot angular app, no container to attach to');
-    }
-  }
-
-  bootstrapNgApp() {
-    const injector = this.props.app.angularApp.bootstrap();
-    this.setState({ ngInjector: injector });
+  async componentDidMount() {
+    await loadAndInitAngularIfEnabled();
+    this.setState({ ready: true });
     $('.preloader').remove();
   }
 
@@ -90,6 +79,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   render() {
+    const { ready } = this.state;
+
     navigationLogger('AppWrapper', false, 'rendering');
 
     const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
@@ -110,10 +101,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                           <Banner key={index.toString()} />
                         ))}
 
-                        <AngularRoot ref={this.container} />
+                        <AngularRoot />
                         <AppNotificationList />
                         <SearchWrapper />
-                        {this.state.ngInjector && this.renderRoutes()}
+                        {ready && this.renderRoutes()}
                         {bodyRenderHooks.map((Hook, index) => (
                           <Hook key={index.toString()} />
                         ))}

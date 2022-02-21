@@ -83,7 +83,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 
 // patchHandler handles PATCH /api/library-elements/:uid
 func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Response {
-	cmd := patchLibraryElementCommand{}
+	cmd := PatchLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

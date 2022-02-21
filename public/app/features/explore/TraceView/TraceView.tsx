@@ -1,4 +1,15 @@
-import { DataFrame, DataFrameView, SplitOpen, TraceSpanRow } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameView,
+  DataLink,
+  DataSourceApi,
+  Field,
+  LinkModel,
+  mapInternalLinkToExplore,
+  SplitOpen,
+  TraceSpanRow,
+} from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import {
   Trace,
   TracePageHeader,
@@ -7,7 +18,6 @@ import {
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
-  UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -15,9 +25,9 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
-import { UIElements } from './uiElements';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -65,11 +75,17 @@ export function TraceView(props: Props) {
   const [slim, setSlim] = useState(false);
 
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
-  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
-    ?.tracesToLogs;
-  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
+  const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
+
+  const datasource = useSelector(
+    (state: StoreState) => state.explore[props.exploreId]?.datasourceInstance ?? undefined
+  );
+
+  const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
+    refId: frame?.refId,
+    exploreId: props.exploreId,
+    datasource,
+  });
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
@@ -83,21 +99,24 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
+  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
+    ?.tracesToLogs;
   const createSpanLink = useMemo(
     () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
     [props.splitOpenFn, traceToLogsOptions, frame]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
+  const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
 
   if (!props.dataFrames?.length || !traceProp) {
     return null;
   }
 
   return (
-    <UIElementsContext.Provider value={UIElements}>
+    <>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={noop}
+        clearSearch={clearSearch}
         focusUiFindMatches={noop}
         hideMap={false}
         hideSummary={false}
@@ -105,17 +124,14 @@ export function TraceView(props: Props) {
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
         prevResult={noop}
-        resultCount={0}
+        resultCount={spanFindMatches?.size ?? 0}
         slimView={slim}
-        textFilter={null}
         trace={traceProp}
-        traceGraphView={false}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
         searchValue={search}
         onSearchValueChange={setSearch}
-        hideSearchButtons={true}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
@@ -151,8 +167,10 @@ export function TraceView(props: Props) {
         uiFind={search}
         createSpanLink={createSpanLink}
         scrollElement={props.scrollElement}
+        focusedSpanId={focusedSpanId}
+        createFocusSpanLink={createFocusSpanLink}
       />
-    </UIElementsContext.Provider>
+    </>
   );
 }
 
@@ -197,4 +215,60 @@ function transformTraceDataFrame(frame: DataFrame): TraceResponse {
       };
     }),
   };
+}
+
+/**
+ * Handles focusing a span. Returns the span id to focus to based on what is in current explore state and also a
+ * function to change the focused span id.
+ * @param options
+ */
+function useFocusSpanLink(options: {
+  exploreId: ExploreId;
+  refId?: string;
+  datasource?: DataSourceApi;
+}): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
+  const panelState = useSelector((state: StoreState) => state.explore[options.exploreId]?.panelsState.trace);
+  const focusedSpanId = panelState?.spanId;
+
+  const dispatch = useDispatch();
+  const setFocusedSpanId = (spanId?: string) =>
+    dispatch(
+      changePanelState(options.exploreId, 'trace', {
+        ...panelState,
+        spanId,
+      })
+    );
+
+  const query = useSelector((state: StoreState) =>
+    state.explore[options.exploreId]?.queries.find((query) => query.refId === options.refId)
+  );
+
+  const createFocusSpanLink = (traceId: string, spanId: string) => {
+    const link: DataLink = {
+      title: 'Deep link to this span',
+      url: '',
+      internal: {
+        datasourceUid: options.datasource?.uid!,
+        datasourceName: options.datasource?.name!,
+        query: query,
+        panelsState: {
+          trace: {
+            spanId,
+          },
+        },
+      },
+    };
+
+    return mapInternalLinkToExplore({
+      link,
+      internalLink: link.internal!,
+      scopedVars: {},
+      range: {} as any,
+      field: {} as Field,
+      onClickFn: () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId),
+      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+    });
+  };
+
+  return [focusedSpanId, createFocusSpanLink];
 }

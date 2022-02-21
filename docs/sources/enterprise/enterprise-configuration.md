@@ -271,7 +271,7 @@ List of comma- or space-separated organizations. Each user must be a member of a
 
 ### org_mapping
 
-List of comma- or space-separated Organization:OrgId mappings.
+List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`.
 
 ### role_values_editor
 
@@ -501,9 +501,3 @@ The org id of the datasource where the query data will be written.
 
 If all `default_remote_write_*` properties are set, this information will be populated at startup. If a remote write target has
 already been configured, nothing will happen.
-
-## [feature_highlights]
-
-### enabled
-
-Whether the feature highlights feature is enabled

@@ -7,9 +7,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -27,11 +27,12 @@ type ThreemaNotifier struct {
 	RecipientID string
 	APISecret   string
 	log         log.Logger
+	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
 
 // NewThreemaNotifier is the constructor for the Threema notifier
-func NewThreemaNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
+func NewThreemaNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*ThreemaNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
@@ -74,6 +75,7 @@ func NewThreemaNotifier(model *NotificationChannelConfig, t *template.Template, 
 		RecipientID: recipientID,
 		APISecret:   apiSecret,
 		log:         log.New("alerting.notifier.threema"),
+		ns:          ns,
 		tmpl:        t,
 	}, nil
 }
@@ -119,7 +121,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
 	}
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
 		return false, err
 	}

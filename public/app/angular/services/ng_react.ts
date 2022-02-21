@@ -19,7 +19,7 @@ import angular, { auto } from 'angular';
 function getReactComponent(name: string | Function, $injector: auto.IInjectorService): ComponentType {
   // if name is a function assume it is component and return it
   if (angular.isFunction(name)) {
-    return (name as unknown) as ComponentType;
+    return name as unknown as ComponentType;
   }
 
   // a React component name must be specified
@@ -46,7 +46,7 @@ function getReactComponent(name: string | Function, $injector: auto.IInjectorSer
     throw Error('Cannot find react component ' + name);
   }
 
-  return (reactComponent as unknown) as ComponentType;
+  return reactComponent as unknown as ComponentType;
 }
 
 // wraps a function with scope.$apply, if already applied just return
@@ -168,9 +168,9 @@ function getPropExpression(prop: any) {
  * @param attrs All attributes of the component.
  * @param propName Name of the prop that react component expects.
  */
-function findAttribute(attrs: string, propName: string): string {
-  const index = Object.keys(attrs).find((attr) => {
-    return attr.toLowerCase() === propName.toLowerCase() || attr.toLowerCase() === kebabCase(propName);
+function findAttribute(attrs: object, propName: string): string {
+  const index = Object.keys(attrs).find((attr: any) => {
+    return attr.toLowerCase() === propName.toLowerCase() || kebabCase(attr) === kebabCase(propName);
   });
   // @ts-ignore
   return attrs[index];

@@ -9,7 +9,7 @@ weight = 400
 
 # Graph and color schemes
 
-Under [Standard options]({{< relref "../../panels/standard-options.md" >}}) you find the [Color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) option. This option controls series are assigned their color.
+To set the graph and color schemes, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series.md" >}}).
 
 ## Classic palette
 

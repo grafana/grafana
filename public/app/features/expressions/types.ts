@@ -21,6 +21,31 @@ export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.mean, label: 'Mean', description: 'Get the average value' },
   { value: ReducerID.sum, label: 'Sum', description: 'Get the sum of all values' },
   { value: ReducerID.count, label: 'Count', description: 'Get the number of values' },
+  { value: ReducerID.last, label: 'Last', description: 'Get the last value' },
+];
+
+export enum ReducerMode {
+  Strict = '', // backend API wants an empty string to support "strict" mode
+  ReplaceNonNumbers = 'replaceNN',
+  DropNonNumbers = 'dropNN',
+}
+
+export const reducerMode: Array<SelectableValue<ReducerMode>> = [
+  {
+    value: ReducerMode.Strict,
+    label: 'Strict',
+    description: 'Result can be NaN if series contains non-numeric data',
+  },
+  {
+    value: ReducerMode.DropNonNumbers,
+    label: 'Drop Non-numeric Values',
+    description: 'Drop NaN, +/-Inf and null from input series before reducing',
+  },
+  {
+    value: ReducerMode.ReplaceNonNumbers,
+    label: 'Replace Non-numeric Values',
+    description: 'Replace NaN, +/-Inf and null with a constant value before reducing',
+  },
 ];
 
 export const downsamplingTypes: Array<SelectableValue<string>> = [
@@ -48,7 +73,14 @@ export interface ExpressionQuery extends DataQuery {
   downsampler?: string;
   upsampler?: string;
   conditions?: ClassicCondition[];
+  settings?: ExpressionQuerySettings;
 }
+
+export interface ExpressionQuerySettings {
+  mode?: ReducerMode;
+  replaceWithValue?: number;
+}
+
 export interface ClassicCondition {
   evaluator: {
     params: number[];

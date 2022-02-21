@@ -35,9 +35,10 @@ export function TagsSection({ tags, state }: Props) {
     },
     [state]
   );
-  const debouncedGetTagsAsSegments = useMemo(() => debounce(getTagsAsSegmentsOptions, 200, { leading: true }), [
-    getTagsAsSegmentsOptions,
-  ]);
+  const debouncedGetTagsAsSegments = useMemo(
+    () => debounce(getTagsAsSegmentsOptions, 200, { leading: true }),
+    [getTagsAsSegmentsOptions]
+  );
 
   return (
     <>

@@ -4,16 +4,17 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
+    "@grafana/slate-react", // should be updated when the `slate` package is updated
     "@types/systemjs",
     "@types/d3-force", // we should bump this once we move to esm modules
     "@types/d3-interpolate", // we should bump this once we move to esm modules
     "@types/d3-scale-chromatic", // we should bump this once we move to esm modules
+    "@types/grafana__slate-react", // should be updated when the `slate` package is updated
     "@types/react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "d3",
     "d3-force", // we should bump this once we move to esm modules
     "d3-interpolate", // we should bump this once we move to esm modules
     "d3-scale-chromatic", // we should bump this once we move to esm modules
-    "eslint", // wait until `eslint-plugin-react-hooks>4.2.0` is released
     "execa", // we should bump this once we move to esm modules
     "history", // we should bump this together with react-router-dom
     "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
@@ -21,7 +22,9 @@
     "slate",
     "slate-plain-serializer",
     "systemjs",
+    "copy-webpack-plugin", // try to upgrade with newer yarn release. Not working with 3.1.1
     "ts-loader", // we should remove ts-loader and use babel-loader instead
+    "typescript", // >4.5.x doesn't seem to work on windows with pnp currently. probably similar to https://github.com/yarnpkg/berry/issues/3722
     "ora" // we should bump this once we move to esm modules
   ],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
@@ -29,8 +32,14 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
+      "excludePackagePatterns": ["@storybook"],
       "extends": ["schedule:monthly"],
       "groupName": "Monthly patch updates"
+    },
+    {
+      "matchPackagePatterns": ["@storybook"],
+      "extends": ["schedule:monthly"],
+      "groupName": "Storybook updates"
     }
   ],
   "pin": {

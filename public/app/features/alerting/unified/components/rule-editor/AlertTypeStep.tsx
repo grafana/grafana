@@ -5,10 +5,12 @@ import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { RuleFolderPicker } from './RuleFolderPicker';
+import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
+import { checkForPathSeparator } from './util';
+import { get } from 'lodash';
 
 interface Props {
   editingExistingRule: boolean;
@@ -72,6 +74,16 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           {...register('name', {
             required: { value: true, message: 'Must enter an alert name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
+            validate: {
+              pathSeparator: (value: string) => {
+                // we use the alert rule name as the "groupname" for Grafana managed alerts, so we can't allow path separators
+                if (ruleFormType === RuleFormType.grafana) {
+                  return checkForPathSeparator(value);
+                }
+
+                return true;
+              },
+            },
           })}
           autoFocus={true}
         />
@@ -137,8 +149,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         <Field
           label="Folder"
           className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
+          // Use get to make react-hook-form + TS happy for object fields
+          error={get(errors, 'folder.message')}
+          invalid={!!get(errors, 'folder.message')}
           data-testid="folder-picker"
         >
           <InputControl
@@ -148,6 +161,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             name="folder"
             rules={{
               required: { value: true, message: 'Please select a folder' },
+              validate: {
+                pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+              },
             }}
           />
         </Field>

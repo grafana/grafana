@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -xeo pipefail
 
-. e2e/variables
+. scripts/grafana-server/variables
 
 if ((BASH_VERSINFO[0] < 4)); then
   echo "Bash ver >= 4 is needed to run this script"

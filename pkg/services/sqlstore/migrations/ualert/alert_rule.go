@@ -89,10 +89,6 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	return lbls, annotations
 }
 
-func getMigrationString(da dashAlert) string {
-	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
-}
-
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
 	lbls["alertname"] = da.Name
@@ -266,6 +262,8 @@ func transExecErr(s string) (string, error) {
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
 		return "Error", nil
+	case "ok":
+		return "OK", nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }

@@ -36,7 +36,12 @@ import { notifyApp } from '../../../core/actions';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { localStorageFullAction, richHistoryLimitExceededAction, richHistoryUpdatedAction, stateSave } from './main';
+import {
+  richHistoryStorageFullAction,
+  richHistoryLimitExceededAction,
+  richHistoryUpdatedAction,
+  stateSave,
+} from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
@@ -305,7 +310,7 @@ export function modifyQueries(
   };
 }
 
-function handleHistory(
+async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
   history: Array<HistoryItem<DataQuery>>,
@@ -315,22 +320,25 @@ function handleHistory(
 ) {
   const datasourceId = datasource.meta.id;
   const nextHistory = updateHistory(history, datasourceId, queries);
-  const { richHistory: nextRichHistory, localStorageFull, limitExceeded } = addToRichHistory(
+  const {
+    richHistory: nextRichHistory,
+    richHistoryStorageFull,
+    limitExceeded,
+  } = await addToRichHistory(
     state.richHistory || [],
-    datasourceId,
+    datasource.uid,
     datasource.name,
     queries,
     false,
     '',
-    '',
-    !state.localStorageFull,
+    !state.richHistoryStorageFull,
     !state.richHistoryLimitExceededWarningShown
   );
   dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
   dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
-  if (localStorageFull) {
-    dispatch(localStorageFullAction());
+  if (richHistoryStorageFull) {
+    dispatch(richHistoryStorageFullAction());
   }
   if (limitExceeded) {
     dispatch(richHistoryLimitExceededAction());
@@ -489,7 +497,11 @@ export const runQueries = (
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
-        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
+        const sourceRequest = {
+          ...transaction.request,
+          requestId: transaction.request.requestId + '_log_volume',
+        };
+        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
         dispatch(
           storeLogsVolumeDataProviderAction({
             exploreId,

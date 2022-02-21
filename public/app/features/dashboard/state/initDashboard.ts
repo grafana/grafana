@@ -8,7 +8,6 @@ import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp } from 'app/core/actions';
 import {
-  clearDashboardQueriesToUpdateOnLoad,
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
@@ -18,12 +17,14 @@ import {
 // Types
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
-import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
+import { locationUtil, setWeekStart } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { toStateKey } from 'app/features/variables/utils';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -156,20 +157,16 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     timeSrv.init(dashboard);
 
-    if (storeState.dashboard.modifiedQueries) {
-      const { panelId, queries } = storeState.dashboard.modifiedQueries;
-      dashboard.meta.fromExplore = !!(panelId && queries);
-    }
-
+    const dashboardUid = toStateKey(args.urlUid ?? dashboard.uid);
     // template values service needs to initialize completely before the rest of the dashboard can load
-    await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
+    await dispatch(initVariablesTransaction(dashboardUid, dashboard));
 
     // DashboardQueryRunner needs to run after all variables have been resolved so that any annotation query including a variable
     // will be correctly resolved
     const runner = createDashboardQueryRunner({ dashboard, timeSrv });
     runner.run({ dashboard, range: timeSrv.timeRange() });
 
-    if (getState().templating.transaction.uid !== args.urlUid) {
+    if (getIfExistsLastKey(getState()) !== dashboardUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
       // but the args.urlUid will be the same as before initVariablesTransaction was called so then we can't continue initializing
       // the previous dashboard.
@@ -193,11 +190,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
       console.error(err);
-    }
-
-    if (storeState.dashboard.modifiedQueries) {
-      const { panelId, queries } = storeState.dashboard.modifiedQueries;
-      updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
 
     // send open dashboard event
@@ -247,20 +239,4 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
   }
 
   return data;
-}
-
-function updateQueriesWhenComingFromExplore(
-  dispatch: ThunkDispatch,
-  dashboard: DashboardModel,
-  originPanelId: number,
-  queries: DataQuery[]
-) {
-  const panelArrId = dashboard.panels.findIndex((panel) => panel.id === originPanelId);
-
-  if (panelArrId > -1) {
-    dashboard.panels[panelArrId].targets = queries;
-  }
-
-  // Clear update state now that we're done
-  dispatch(clearDashboardQueriesToUpdateOnLoad());
 }
