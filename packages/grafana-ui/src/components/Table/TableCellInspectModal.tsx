@@ -44,7 +44,7 @@ export function TableCellInspectModal({ value, onDismiss, mode }: TableCellInspe
   }
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={true} title="Preview">
+    <Modal onDismiss={onDismiss} isOpen={true} title="Inspect value">
       {mode === 'code' ? (
         <CodeEditor
           width="100%"
