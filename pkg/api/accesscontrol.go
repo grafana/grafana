@@ -339,7 +339,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
-	foldersReaderWriter := ac.RoleRegistration{
+	foldersWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     1,
 			Name:        "fixed:folders:writer",
@@ -369,7 +369,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		datasourcesCompatibilityReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole, annotationsReaderRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersReaderWriter,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole,
 	)
 }
 
