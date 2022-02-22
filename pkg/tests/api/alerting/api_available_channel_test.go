@@ -832,7 +832,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-            "dependsOn": ""
+        "dependsOn": "secureSettings.url"
       },
       {
         "element": "input",
@@ -849,7 +849,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": true,
-"dependsOn": ""
+		"dependsOn": "secureSettings.url"
       },
       {
         "element": "input",
@@ -981,7 +981,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": true,
-        "dependsOn": ""
+        "dependsOn": "secureSettings.token"
       },
       {
         "element": "input",
