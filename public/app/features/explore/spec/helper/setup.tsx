@@ -32,10 +32,6 @@ export function setupExplore(options?: SetupOptions): {
   store: EnhancedStore;
   unmount: () => void;
 } {
-  // Needed for AutoSizer to work in test
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
-
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
   if (options?.clearLocalStorage !== false) {

@@ -1,7 +1,17 @@
+import React from 'react';
 import { setupExplore, waitForExplore } from './helper/setup';
 import { inputQuery, openQueryHistory, runQuery } from './helper/interactions';
 import { assertQueryHistoryExists } from './helper/assert';
 import { makeLogsQueryResponse } from './helper/query';
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  return {
+    __esModule: true,
+    default(props: any) {
+      return <div>{props.children({ width: 1000 })}</div>;
+    },
+  };
+});
 
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
