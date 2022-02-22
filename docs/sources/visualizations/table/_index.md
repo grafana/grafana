@@ -102,4 +102,4 @@ You can temporarily change how column data is displayed. For example, you can or
 
 ## Page size
 
-To show paging controls, set the page size to a value greater than 0. The page size is the number of rows to display on each page.
+The page size determines the number of rows to display on each page for a table visualization. Specify a number that is greater than 0.
