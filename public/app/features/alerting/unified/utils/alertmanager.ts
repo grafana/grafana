@@ -109,7 +109,7 @@ export function matchersToString(matchers: Matcher[]) {
 
   const combinedMatchers = matcherFields.reduce((acc, current) => {
     const currentMatcherString = `${current.name}${current.operator}"${current.value}"`;
-    return acc ? `${acc},${currentMatcherString}"` : currentMatcherString;
+    return acc ? `${acc},${currentMatcherString}` : currentMatcherString;
   }, '');
 
   return `{${combinedMatchers}}`;
