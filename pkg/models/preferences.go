@@ -26,8 +26,6 @@ type GetPreferencesQuery struct {
 	OrgId  int64
 	UserId int64
 	TeamId int64
-
-	Result *Preferences
 }
 
 type GetPreferencesWithDefaultsQuery struct {
