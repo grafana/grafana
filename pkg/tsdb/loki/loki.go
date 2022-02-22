@@ -225,7 +225,6 @@ func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery) data.Fra
 		}
 
 		timeField := data.NewField("time", nil, timeVector)
-		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
 		valueField := data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 
 		frame := data.NewFrame(name, timeField, valueField)
