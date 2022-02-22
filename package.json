@@ -322,7 +322,7 @@
     "ol": "6.12.0",
     "papaparse": "5.3.1",
     "pluralize": "^8.0.0",
-    "prismjs": "1.26.0",
+    "prismjs": "1.27.0",
     "prop-types": "15.8.1",
     "rc-cascader": "3.2.1",
     "rc-drawer": "4.4.3",
