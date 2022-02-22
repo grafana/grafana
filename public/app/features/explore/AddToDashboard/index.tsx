@@ -60,7 +60,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
       if (redirect) {
         locationService.push(redirectURL);
       } else {
-        dispatch(notifyApp(createSuccessNotification('YAY!')));
+        dispatch(notifyApp(createSuccessNotification(`Panel saved to ${data.dashboardName}`)));
         setIsOpen(false);
       }
       return;
@@ -72,7 +72,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
 
   return (
     <>
-      <ToolbarButton icon="apps" onClick={() => setIsOpen(true)} aria-label="Add to Dashboard">
+      <ToolbarButton icon="apps" onClick={() => setIsOpen(true)} aria-label="Add to dashboard">
         Add to Dashboard
       </ToolbarButton>
 

@@ -25,7 +25,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
     control,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormDTO, { error: string }>({ defaultValues: { queries, visualization } });
+  } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
 
   const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
     const error = await onSave(data, withRedirect);
@@ -35,7 +35,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
         case 'name-exists':
         case 'empty-name':
         case 'name-match':
-          setError('dashboardName', { message: error.message, shouldFocus: true });
+          setError('dashboardName', { message: error.message });
           break;
         default:
         // TODO: Other unknown errors may happen, we should handle them by displaying an error message
@@ -44,17 +44,19 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
   };
 
   return (
-    <Modal
-      // TODO: we can add multiple queries, shall we change the title?
-      title="Add query to dashboard"
-      onDismiss={onClose}
-      isOpen
-    >
+    <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
       <form>
         <input type="hidden" {...register('queries')} />
         <input type="hidden" {...register('visualization')} />
 
-        <Field label="Dashboard name" error={errors.dashboardName?.message} invalid={!!errors.dashboardName}>
+        <p>Create a new dashboard and add a panel with explored queries.</p>
+
+        <Field
+          label="Dashboard name"
+          description="Choose the name of the new dashboard"
+          error={errors.dashboardName?.message}
+          invalid={!!errors.dashboardName}
+        >
           <Input
             id="dahboard_name"
             {...register('dashboardName', {
@@ -68,7 +70,12 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           />
         </Field>
 
-        <Field label="Folder" error={errors.folderId?.message} invalid={!!errors.folderId}>
+        <Field
+          label="Folder"
+          description="Select where the dashboard will be created"
+          error={errors.folderId?.message}
+          invalid={!!errors.folderId}
+        >
           <InputControl
             render={({ field: { ref, onChange, ...field } }) => (
               <FolderPicker onChange={(e) => onChange(e.id)} {...field} enableCreateNew inputId="folder" />
@@ -79,6 +86,8 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             rules={{ required: { value: true, message: 'Select a valid folder to save your dashboard in' } }}
           />
         </Field>
+
+        {/* TODO: display Unknown Error in Alert here  */}
 
         <Modal.ButtonRow>
           <Button type="reset" onClick={onClose} fill="outline" variant="secondary" disabled={isSubmitting}>
@@ -97,7 +106,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
             type="submit"
             onClick={handleSubmit(withRedirect(onSubmit, true))}
             variant="primary"
-            icon="save"
+            icon="plus"
             disabled={isSubmitting}
           >
             Save and go to dashboard
