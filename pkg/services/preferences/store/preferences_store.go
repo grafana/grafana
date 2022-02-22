@@ -1,4 +1,4 @@
-package preferences
+package preferencesstore
 
 import (
 	"context"
@@ -15,6 +15,14 @@ type PreferenceStore struct {
 	Cfg      *setting.Cfg
 }
 
+// TODO : Get and Set store methods
+type Store interface {
+	// TODO adjust the structs or write new ones, maybe return data instead of using query.Result
+	GetPreferences(context.Context, *models.GetPreferencesQuery) error
+	SetPreferences(context.Context, *models.SavePreferencesCommand) error
+}
+
+//  move the logic part to the service and use GetPreferences instead of this one
 func (s *PreferenceStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 	return s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		params := make([]interface{}, 0)
@@ -87,7 +95,7 @@ func (s *PreferenceStore) GetPreferences(ctx context.Context, query *models.GetP
 	})
 }
 
-func (s *PreferenceStore) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+func (s *PreferenceStore) SetPreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
 	return s.SqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)

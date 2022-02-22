@@ -117,7 +117,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.addStatsQueryAndCommandHandlers()
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
-	ss.addPreferencesQueryAndCommandHandlers()
 	ss.addDashboardQueryAndCommandHandlers()
 	ss.addDashboardACLQueryAndCommandHandlers()
 	ss.addQuotaQueryAndCommandHandlers()

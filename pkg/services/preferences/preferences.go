@@ -9,22 +9,32 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Service struct {
-	PreferenceStore pstore.PreferenceStore
+type Service interface {
+	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error
+	GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error
+	SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) error
 }
 
-func ProvideService(cfg *setting.Cfg, sqlstore sqlstore.Store) *Service {
-	return &Service{PreferenceStore: pstore.PreferenceStore{SqlStore: sqlstore, Cfg: cfg}}
+type Store struct {
+	PreferenceStore pstore.Store
 }
 
-func (s *Service) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
-	return s.PreferenceStore.GetPreferencesWithDefaults(ctx, query)
+func ProvideService(cfg *setting.Cfg, sqlstore sqlstore.Store) Service {
+	return &Store{PreferenceStore: &pstore.PreferenceStore{
+		SqlStore: sqlstore, Cfg: cfg},
+	}
 }
 
-func (s *Service) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
+func (s *Store) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
+	queryDef := &models.GetPreferencesQuery{}
+	// TODO: Add GetDefaultPreferences logic
+	return s.PreferenceStore.GetPreferences(ctx, queryDef)
+}
+
+func (s *Store) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
 	return s.PreferenceStore.GetPreferences(ctx, query)
 }
 
-func (s *Service) SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) error {
-	return s.PreferenceStore.SavePreferences(ctx, query)
+func (s *Store) SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) error {
+	return s.PreferenceStore.SetPreferences(ctx, query)
 }
