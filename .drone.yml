@@ -464,6 +464,59 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
+name: main-docs
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.4/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - make gen-go
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - yarn install --immutable
+  image: grafana/build-container:1.4.9
+  name: initialize
+- commands:
+  - yarn packages:build
+  - yarn packages:docsExtract
+  - yarn packages:docsToMarkdown
+  - ./scripts/ci-reference-docs-lint.sh ci
+  depends_on:
+  - initialize
+  image: grafana/build-container:1.4.9
+  name: build-frontend-docs
+- commands:
+  - mkdir -p /hugo/content/docs/grafana
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
+  - cd /hugo && make prod
+  depends_on:
+  - build-frontend-docs
+  image: grafana/docs-base:latest
+  name: build-docs-website
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: main-test
 node:
   type: no-parallel
@@ -802,15 +855,6 @@ steps:
   failure: ignore
   image: grafana/build-container:1.4.9
   name: publish-frontend-metrics
-- commands:
-  - yarn packages:build
-  - yarn packages:docsExtract
-  - yarn packages:docsToMarkdown
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.4.9
-  name: build-frontend-docs
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -4261,6 +4305,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: f209cfff82a4817d7bae67872ce1a34a4a26915451ae35b4f8c9848003b18b91
+hmac: db5cfbb53d8385e4eab31a818388c5c3cc57693e4bcd0764dcf058fc2aa93cbe
 
 ...
