@@ -5,9 +5,9 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  GroupingToMatrixTransformerOptions,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
-import { GroupingToMatrixTransformerOptions } from '@grafana/data/src/transformations/transformers/groupingToMatrix';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<GroupingToMatrixTransformerOptions>> = ({
