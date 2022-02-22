@@ -134,7 +134,7 @@ describe('state functions', () => {
           to: 'now',
         },
       };
-      expect(serializeStateToUrlParam(state, true)).toBe(
+      expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
@@ -186,7 +186,7 @@ describe('state functions', () => {
         },
         panelsState: undefined,
       };
-      const serialized = serializeStateToUrlParam(state, true);
+      const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
@@ -215,7 +215,7 @@ describe('state functions', () => {
           },
         },
       };
-      const serialized = serializeStateToUrlParam(state, true);
+      const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
