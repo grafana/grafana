@@ -252,8 +252,8 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery) data.Frames
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		timeField := data.NewField("Time", nil, timeVector)
-		valueField := data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+		timeField := data.NewField("time", nil, timeVector)
+		valueField := data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 
 		frame := data.NewFrame(name, timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
