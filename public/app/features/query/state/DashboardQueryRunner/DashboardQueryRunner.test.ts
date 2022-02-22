@@ -69,7 +69,7 @@ function expectOnResults(args: {
           expectCallback(value);
           done();
         } catch (err) {
-          done.fail(err);
+          done(err);
         }
       },
     });
