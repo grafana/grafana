@@ -19,6 +19,7 @@ type SQLStoreMock struct {
 	ExpectedDatasource             *models.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
+	ExpectedPluginSettings         []*models.PluginSettingInfoDTO
 	ExpectedDashboard              *models.Dashboard
 	ExpectedDashboards             []*models.Dashboard
 	ExpectedDashboardVersions      []*models.DashboardVersion
@@ -279,11 +280,22 @@ func (m *SQLStoreMock) SavePreferences(ctx context.Context, cmd *models.SavePref
 }
 
 func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSettingInfoDTO, error) {
-	return nil, m.ExpectedError
+	return m.ExpectedPluginSettings, m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	query.Result = m.ExpectedPluginSetting
+	if m.ExpectedPluginSetting != nil {
+		query.Result = m.ExpectedPluginSetting
+	} else {
+		for _, p := range m.ExpectedPluginSettings {
+			if p.PluginId == query.PluginId {
+				query.Result = &models.PluginSetting{
+					PluginId: p.PluginId,
+					OrgId:    p.OrgId,
+				}
+			}
+		}
+	}
 	return m.ExpectedError
 }
 
