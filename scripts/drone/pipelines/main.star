@@ -18,7 +18,6 @@ load(
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
-    'build_frontend_docs_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
     'publish_images_step',
@@ -53,6 +52,11 @@ load(
     'notify_pipeline',
     'failure_template',
     'drone_change_template',
+)
+
+load(
+    'scripts/drone/pipelines/docs.star',
+    'docs_pipelines'
 )
 
 ver_mode = 'main'
@@ -110,7 +114,6 @@ def get_steps(edition, is_downstream=False):
         store_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
         frontend_metrics_step(edition=edition),
-        build_frontend_docs_step(edition=edition),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=False),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=False),
@@ -164,6 +167,17 @@ def main_pipelines(edition):
             ],
         },
     }
+    trigger_docs = {
+        'event':  [
+            'pull_request',
+        ],
+        'paths': {
+            'include': [
+                'docs/**',
+                'packages/**',
+            ],
+        },
+    }
     test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
 
     if edition == 'enterprise':
@@ -171,6 +185,7 @@ def main_pipelines(edition):
         integration_test_steps.append(benchmark_ldap_step())
 
     pipelines = [
+        docs_pipelines(edition, ver_mode, trigger_docs),
         pipeline(
             name='main-test', edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,

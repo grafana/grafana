@@ -23,9 +23,7 @@ load(
     'pipeline',
 )
 
-ver_mode = 'pr'
-
-def docs_pipelines(edition):
+def docs_pipelines(edition, ver_mode, trigger):
     steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
 
     # Insert remaining steps
@@ -34,19 +32,7 @@ def docs_pipelines(edition):
         build_docs_website_step(),
     ])
 
-    trigger = {
-        'event':  [
-            'pull_request',
-        ],
-        'paths': {
-            'include': [
-                'docs/**',
-                'packages/**',
-            ],
-        },
-    }
-    return [
-        pipeline(
-            name='pr-docs', edition=edition, trigger=trigger, services=[], steps=steps,
-        ),
-    ]
+    return pipeline(
+            name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
+        )
+
