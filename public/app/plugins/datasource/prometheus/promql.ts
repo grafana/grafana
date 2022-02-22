@@ -143,6 +143,12 @@ export const FUNCTIONS = [
       'Returns the number of elements in a time series vector as a scalar. This is in contrast to the `count()` aggregation operator, which always returns a vector (an empty one if the input vector is empty) and allows grouping by labels via a `by` clause.',
   },
   {
+    insertText: 'deg',
+    label: 'deg',
+    detail: 'deg(v instant-vector)',
+    documentation: 'Converts radians to degrees for all elements in v',
+  },
+  {
     insertText: 'day_of_month',
     label: 'day_of_month',
     detail: 'day_of_month(v=vector(time()) instant-vector)',
@@ -287,11 +293,23 @@ export const FUNCTIONS = [
       'Returns the month of the year for each of the given times in UTC. Returned values are from 1 to 12, where 1 means January etc.',
   },
   {
+    insertText: 'pi',
+    label: 'pi',
+    detail: 'pi()',
+    documentation: 'Returns pi',
+  },
+  {
     insertText: 'predict_linear',
     label: 'predict_linear',
     detail: 'predict_linear(v range-vector, t scalar)',
     documentation:
       'Predicts the value of time series `t` seconds from now, based on the range vector `v`, using simple linear regression.',
+  },
+  {
+    insertText: 'rad',
+    label: 'rad',
+    detail: 'rad(v instant-vector)',
+    documentation: 'Converts degrees to radians for all elements in v',
   },
   {
     insertText: 'rate',
