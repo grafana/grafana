@@ -36,7 +36,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetUserPreferences(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId, TeamId: 0}
 
-	if err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery); err != nil {
+	if _, err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
@@ -84,15 +84,16 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesQuery{UserId: 0, OrgId: c.OrgId, TeamId: 0}
 
-	if err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery); err != nil {
+	preferences, err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery)
+	if err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
 	dto := dtos.Prefs{
-		Theme:           prefsQuery.Result.Theme,
-		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
-		Timezone:        prefsQuery.Result.Timezone,
-		WeekStart:       prefsQuery.Result.WeekStart,
+		Theme:           preferences.Theme,
+		HomeDashboardID: preferences.HomeDashboardId,
+		Timezone:        preferences.Timezone,
+		WeekStart:       preferences.WeekStart,
 	}
 
 	return response.JSON(200, &dto)

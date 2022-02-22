@@ -553,10 +553,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := hs.PreferencesService.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+	prefs, err := hs.PreferencesService.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery)
+	if err != nil {
 		return nil, err
 	}
-	prefs := prefsQuery.Result
 
 	// Read locale from accept-language
 	acceptLang := c.Req.Header.Get("Accept-Language")

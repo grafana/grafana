@@ -10,21 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PreferenceStore struct {
+type StoreImpl struct {
 	SqlStore sqlstore.Store
 	Cfg      *setting.Cfg
 }
 
 // TODO : Get and Set store methods
 type Store interface {
-	// TODO adjust the structs or write new ones, maybe return data instead of using query.Result
-	GetPreferences(context.Context, *models.GetPreferencesQuery) error
-	SetPreferences(context.Context, *models.SavePreferencesCommand) error
+	// TODO adjust the methods to Get/Set methods move logic to service
+	GetPreferences(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
+	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error)
+	SavePreferences(context.Context, *models.SavePreferencesCommand) error
 }
 
 //  move the logic part to the service and use GetPreferences instead of this one
-func (s *PreferenceStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
-	return s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+func (s *StoreImpl) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error) {
+	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		params := make([]interface{}, 0)
 		filter := ""
 
@@ -74,10 +75,11 @@ func (s *PreferenceStore) GetPreferencesWithDefaults(ctx context.Context, query 
 		query.Result = res
 		return nil
 	})
+	return query.Result, err
 }
 
-func (s *PreferenceStore) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
-	return s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+func (s *StoreImpl) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
+	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
 
@@ -90,12 +92,12 @@ func (s *PreferenceStore) GetPreferences(ctx context.Context, query *models.GetP
 		} else {
 			query.Result = new(models.Preferences)
 		}
-
 		return nil
 	})
+	return query.Result, err
 }
 
-func (s *PreferenceStore) SetPreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+func (s *StoreImpl) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
 	return s.SqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)

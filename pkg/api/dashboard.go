@@ -386,17 +386,18 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	homePage := hs.Cfg.HomePage
 
-	if err := hs.PreferencesService.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+	preferences, err := hs.PreferencesService.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery)
+	if err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
-	if prefsQuery.Result.HomeDashboardId == 0 && len(homePage) > 0 {
+	if preferences.HomeDashboardId == 0 && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
 		return response.JSON(200, &homePageRedirect)
 	}
 
-	if prefsQuery.Result.HomeDashboardId != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
+	if preferences.HomeDashboardId != 0 {
+		slugQuery := models.GetDashboardRefByIdQuery{Id: preferences.HomeDashboardId}
 		err := hs.SQLStore.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
