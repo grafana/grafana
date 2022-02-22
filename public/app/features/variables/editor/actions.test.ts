@@ -8,6 +8,7 @@ import { addVariable } from '../state/sharedReducer';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { getNextAvailableId, switchToListMode, switchToNewMode } from './actions';
 import { setIdInEditor } from './reducer';
+import { initialState } from '../../dashboard/state/reducers';
 
 describe('getNextAvailableId', () => {
   describe('when called with a custom type and there is already 2 variables', () => {
@@ -51,13 +52,12 @@ describe('switchToListMode', () => {
     jest.spyOn(selectors, 'getEditorVariables').mockReturnValue([]);
     jest.spyOn(inspectUtils, 'createUsagesNetwork').mockReturnValue({ usages: [], unUsed: [] });
     jest.spyOn(inspectUtils, 'transformUsagesToNetwork').mockReturnValue([]);
-    const mockId = 'constant0';
-    const mockGetState = jest.fn().mockReturnValue({ templating: initialKeyedVariablesState });
+    const mockGetState = jest.fn().mockReturnValue({ templating: initialKeyedVariablesState, dashboard: initialState });
     const mockDispatch = jest.fn();
 
     switchToListMode(null)(mockDispatch, mockGetState, undefined);
     expect(mockDispatch).toHaveBeenCalledTimes(2);
     expect(mockDispatch.mock.calls[0][0]).toEqual(toKeyedAction('null', expect.any(Object)));
-    expect(mockDispatch.mock.calls[1][0]).toEqual(toKeyedAction('null', setIdInEditor({ id: mockId })));
+    expect(mockDispatch.mock.calls[1][0]).toEqual(toKeyedAction('null', expect.any(Object)));
   });
 });
