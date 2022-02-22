@@ -17,11 +17,22 @@ var (
 	ScopeDatasourcesAll = ac.GetResourceAllScope(ScopeDatasource)
 	ScopeDatasourceID   = ac.Scope(ScopeDatasource, "id", ac.Parameter(":Recipient"))
 
-	// Alerting actions
+	// Alerting rules actions
 	ActionAlertingRuleCreate = "alert.rule:create"
 	ActionAlertingRuleRead   = "alert.rule:read"
 	ActionAlertingRuleUpdate = "alert.rule:update"
 	ActionAlertingRuleDelete = "alert.rule:delete"
+
+	// Alerting instances (+silences) actions
+	ActionAlertingInstanceCreate = "alert.instance:create"
+	ActionAlertingInstanceUpdate = "alert.instance:update"
+	ActionAlertingInstanceRead   = "alert.instance:read"
+
+	// Alerting Notification policies actions
+	ActionAlertingNotificationsCreate = "alert.notifications:create"
+	ActionAlertingNotificationsRead   = "alert.notifications:read"
+	ActionAlertingNotificationsUpdate = "alert.notifications:update"
+	ActionAlertingNotificationsDelete = "alert.notifications:delete"
 )
 
 var (
@@ -43,6 +54,12 @@ var (
 				{
 					Action: ActionAlertingRuleRead,
 					Scope:  ScopeDatasourcesAll,
+				},
+				{
+					Action: ActionAlertingInstanceRead, // scope is the current organization
+				},
+				{
+					Action: ActionAlertingNotificationsRead, // scope is the current organization
 				},
 			},
 		},
@@ -80,6 +97,21 @@ var (
 				{
 					Action: ActionAlertingRuleDelete,
 					Scope:  ScopeDatasourcesAll,
+				},
+				{
+					Action: ActionAlertingInstanceCreate, // scope is the current organization
+				},
+				{
+					Action: ActionAlertingInstanceUpdate, // scope is the current organization
+				},
+				{
+					Action: ActionAlertingNotificationsCreate, // scope is the current organization
+				},
+				{
+					Action: ActionAlertingNotificationsUpdate, // scope is the current organization
+				},
+				{
+					Action: ActionAlertingNotificationsDelete, // scope is the current organization
 				},
 			}),
 		},
