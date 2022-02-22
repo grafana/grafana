@@ -829,7 +829,7 @@ var expAvailableChannelJsonOutput = `
           "field": "",
           "is": ""
         },
-        "required": false,
+        "required": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "secureSettings.url"
@@ -846,7 +846,7 @@ var expAvailableChannelJsonOutput = `
           "field": "",
           "is": ""
         },
-        "required": false,
+        "required": true,
         "validationRule": "",
         "secure": true,
 		"dependsOn": "secureSettings.url"
@@ -978,7 +978,7 @@ var expAvailableChannelJsonOutput = `
           "field": "",
           "is": ""
         },
-        "required": false,
+        "required": true,
         "validationRule": "",
         "secure": true,
         "dependsOn": "secureSettings.token"
