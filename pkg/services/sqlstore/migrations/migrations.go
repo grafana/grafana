@@ -79,6 +79,13 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddDashboardPermissionsMigrator(mg)
 		}
 	}
+
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardComments) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationComments) {
+			addCommentGroupMigrations(mg)
+			addCommentMigrations(mg)
+		}
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
