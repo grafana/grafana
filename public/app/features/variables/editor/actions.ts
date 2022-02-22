@@ -117,16 +117,17 @@ export const switchToEditMode =
   };
 
 export const switchToListMode =
-  (key: string): ThunkResult<void> =>
+  (key: string | null | undefined ): ThunkResult<void> =>
   (dispatch, getState) => {
-    dispatch(toKeyedAction(key, clearIdInEditor()));
+    const rootStateKey = toStateKey(key);
+    dispatch(toKeyedAction(rootStateKey, clearIdInEditor()));
     const state = getState();
-    const variables = getEditorVariables(key, state);
+    const variables = getEditorVariables(rootStateKey, state);
     const dashboard = state.dashboard.getModel();
     const { usages } = createUsagesNetwork(variables, dashboard);
     const usagesNetwork = transformUsagesToNetwork(usages);
 
-    dispatch(toKeyedAction(key, initInspect({ usages, usagesNetwork })));
+    dispatch(toKeyedAction(rootStateKey, initInspect({ usages, usagesNetwork })));
   };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
