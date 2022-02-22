@@ -8,35 +8,35 @@ CERT_SA    := $(CERT_DIR)/service-account.pem $(CERT_DIR)/service-account-key.pe
 CERT_KUBE  := $(CERT_DIR)/kubernetes.pem $(CERT_DIR)/kubernetes-key.pem
 CERT_ADMIN := $(CERT_DIR)/admin.pem $(CERT_DIR)/admin-key.pem
 
-all: certs config
+all: clean install-tools certs config
 
 certs: $(CERT_CA) $(CERT_SA) $(CERT_KUBE) $(CERT_ADMIN)
 
 $(CERT_CA):
-	@cfssl gencert \
-		-initca $(CFG_DIR)/ca-csr.json | cfssljson -bare $(CERT_DIR)/ca
+	@$(CFSSL) gencert \
+		-initca $(CFG_DIR)/ca-csr.json | $(CFSSLJSON) -bare $(CERT_DIR)/ca
 
 $(CERT_SA):
-	@cfssl gencert -profile=kubernetes \
+	@$(CFSSL) gencert -profile=kubernetes \
 		-ca=$(CERT_DIR)/ca.pem \
 		-ca-key=$(CERT_DIR)/ca-key.pem \
 		-config=$(CFG_DIR)/ca-config.json \
-		$(CFG_DIR)/service-account-csr.json | cfssljson -bare $(CERT_DIR)/service-account
+		$(CFG_DIR)/service-account-csr.json | $(CFSSLJSON) -bare $(CERT_DIR)/service-account
 
 $(CERT_KUBE):
-	@cfssl gencert -profile=kubernetes \
+	@$(CFSSL) gencert -profile=kubernetes \
 		-ca=$(CERT_DIR)/ca.pem \
 		-ca-key=$(CERT_DIR)/ca-key.pem \
 		-config=$(CFG_DIR)/ca-config.json \
 		-hostname=$(KUBE_IPS),$(KUBE_HOSTNAMES) \
-		$(CFG_DIR)/kubernetes-csr.json | cfssljson -bare $(CERT_DIR)/kubernetes
+		$(CFG_DIR)/kubernetes-csr.json | $(CFSSLJSON) -bare $(CERT_DIR)/kubernetes
 
 $(CERT_ADMIN):
-	@cfssl gencert -profile=kubernetes \
+	@$(CFSSL) gencert -profile=kubernetes \
 		-ca=$(CERT_DIR)/ca.pem \
 		-ca-key=$(CERT_DIR)/ca-key.pem \
 		-config=$(CFG_DIR)/ca-config.json \
-		$(CFG_DIR)/admin-csr.json | cfssljson -bare $(CERT_DIR)/admin
+		$(CFG_DIR)/admin-csr.json | $(CFSSLJSON) -bare $(CERT_DIR)/admin
 
 KUBE_CONFIG  := admin.kubeconfig
 KUBE_CLUSTER := intentapi
@@ -65,9 +65,17 @@ $(KUBE_CONFIG):
 
 	@kubectl config use-context default --kubeconfig=$(KUBE_CONFIG)
 
-.PHONY: install-cfssl
-install-cfssl:
-	go get github.com/cloudflare/cfssl/cmd/cfssl
+CFSSL         := ${GOPATH}/bin/cfssl
+CFSSLJSON     := ${GOPATH}/bin/cfssljson
+CFSSL_VERSION := 1.6.1
+
+install-tools: $(CFSSL) $(CFSSLJSON)
+
+$(CFSSL):
+	@go install github.com/cloudflare/cfssl/cmd/cfssl@v$(CFSSL_VERSION)
+
+$(CFSSLJSON):
+	@go install github.com/cloudflare/cfssl/cmd/cfssljson@v$(CFSSL_VERSION)
 
 .PHONY: clean
 clean:
