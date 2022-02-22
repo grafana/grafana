@@ -37,6 +37,9 @@ func TestDuplicatesValidator(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 		r, err := NewDashboardFileReader(cfg, logger, nil)
 		require.NoError(t, err)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(6)
+		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(4)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
@@ -148,7 +151,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	t.Run("Duplicates validator should restrict write access only for readers with duplicates", func(t *testing.T) {
 		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything).Return([]*models.DashboardProvisioning{}, nil).Times(3)
-		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(6)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
 
 		cfg1 := &config{
 			Name: "first", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",

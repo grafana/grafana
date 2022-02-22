@@ -382,11 +382,14 @@ func TestDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
+		// fakeService.On("GetProvisionedDashboardData", configName).Return(nil, nil).Once()
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
+		// fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{Id: 2}, nil).Times(2)
 
 		r, err := NewDashboardFileReader(cfg, logger, nil)
 		require.NoError(t, err)
 
-		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
+		_, err = r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
 		require.NoError(t, err)
 	})
 

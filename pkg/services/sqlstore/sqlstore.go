@@ -130,7 +130,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.addPlaylistQueryAndCommandHandlers()
 	ss.addLoginAttemptQueryAndCommandHandlers()
 	ss.addTeamQueryAndCommandHandlers()
-	ss.addDashboardProvisioningQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
 
 	bus.AddHandler("sql", ss.GetDBHealthQuery)

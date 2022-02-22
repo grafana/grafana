@@ -32,7 +32,6 @@ type FileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	store                        dboards.Store
 	FoldersFromFilesStructure    bool
 
 	mux                     sync.RWMutex
@@ -62,8 +61,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		store:                        store,
-		dashboardProvisioningService: dashboards.NewProvisioningService(store),
+		dashboardProvisioningService: service,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
 	}, nil

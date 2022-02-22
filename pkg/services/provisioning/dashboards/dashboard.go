@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -32,11 +31,11 @@ type Provisioner struct {
 	fileReaders        []*FileReader
 	configs            []*config
 	duplicateValidator duplicateValidator
-	store              dashboards.Store
+	provisioner        dashboards.DashboardProvisioningService
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, service dashboards.DashboardProvisioningService, orgStore utils.OrgStore) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, orgStore utils.OrgStore) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger, orgStore: orgStore}
 	configs, err := cfgReader.readConfig(ctx)
@@ -44,7 +43,7 @@ func New(ctx context.Context, configDirectory string, service dashboards.Dashboa
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, service)
+	fileReaders, err := getFileReaders(configs, logger, provisioner)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -54,7 +53,7 @@ func New(ctx context.Context, configDirectory string, service dashboards.Dashboa
 		fileReaders:        fileReaders,
 		configs:            configs,
 		duplicateValidator: newDuplicateValidator(logger, fileReaders),
-		store:              store,
+		provisioner:        provisioner,
 	}
 
 	return d, nil
@@ -87,7 +86,7 @@ func (provider *Provisioner) CleanUpOrphanedDashboards(ctx context.Context) {
 		currentReaders[index] = reader.Cfg.Name
 	}
 
-	if err := provider.store.DeleteOrphanedProvisionedDashboards(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+	if err := provider.provisioner.DeleteOrphanedProvisionedDashboards(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
 		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
 	}
 }
