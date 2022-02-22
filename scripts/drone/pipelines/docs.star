@@ -23,13 +23,9 @@ load(
     'pipeline',
 )
 
-ver_mode = 'pr'
 
-def docs_pipelines(edition):
+def docs_pipelines(edition, ver_mode, trigger):
     steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-    steps.extend([
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-    ])
 
     # Insert remaining steps
     steps.extend([
@@ -37,8 +33,14 @@ def docs_pipelines(edition):
         build_docs_website_step(),
     ])
 
-    trigger = {
-        'event':  [
+    return pipeline(
+        name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
+    )
+
+
+def trigger_docs():
+    return {
+        'event': [
             'pull_request',
         ],
         'paths': {
@@ -48,8 +50,3 @@ def docs_pipelines(edition):
             ],
         },
     }
-    return [
-        pipeline(
-            name='pr-docs', edition=edition, trigger=trigger, services=[], steps=steps,
-        ),
-    ]
