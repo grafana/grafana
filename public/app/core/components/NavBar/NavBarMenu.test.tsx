@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavModelItem } from '@grafana/data';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'test/redux-rtl';
 import userEvent from '@testing-library/user-event';
 import { NavBarMenu } from './NavBarMenu';
 
