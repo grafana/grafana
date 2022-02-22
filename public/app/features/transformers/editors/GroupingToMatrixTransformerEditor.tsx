@@ -6,9 +6,9 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { GroupingToMatrixTransformerOptions } from '@grafana/data/src/transformations/transformers/groupingToMatrix';
-import { useAllFieldNamesFromDataFrames } from './utils';
+import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<GroupingToMatrixTransformerOptions>> = ({
   input,
@@ -48,30 +48,35 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
   );
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label width-8">Column</div>
-        <Select
-          menuShouldPortal
-          options={fieldNames}
-          value={options.columnField}
-          onChange={onSelectColumn}
-          isClearable
-        />
-      </div>
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label width-8">Row</div>
-        <Select menuShouldPortal options={fieldNames} value={options.rowField} onChange={onSelectRow} isClearable />
-      </div>
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label width-8">Cell Value</div>
-        <Select menuShouldPortal options={fieldNames} value={options.valueField} onChange={onSelectValue} isClearable />
-      </div>
-    </div>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Column" labelWidth={8}>
+          <Select
+            menuShouldPortal
+            options={fieldNames}
+            value={options.columnField}
+            onChange={onSelectColumn}
+            isClearable
+          />
+        </InlineField>
+        <InlineField label="Row" labelWidth={8}>
+          <Select menuShouldPortal options={fieldNames} value={options.rowField} onChange={onSelectRow} isClearable />
+        </InlineField>
+        <InlineField label="Cell Value" labelWidth={8}>
+          <Select
+            menuShouldPortal
+            options={fieldNames}
+            value={options.valueField}
+            onChange={onSelectValue}
+            isClearable
+          />
+        </InlineField>
+      </InlineFieldRow>
+    </>
   );
 };
 
-export const groupingToMatrixTransformerRegistryItem: TransformerRegistryItem<GroupingToMatrixTransformerOptions> = {
+export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<GroupingToMatrixTransformerOptions> = {
   id: DataTransformerID.groupingToMatrix,
   editor: GroupingToMatrixTransformerEditor,
   transformation: standardTransformers.groupingToMatrixTransformer,
