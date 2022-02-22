@@ -37,7 +37,7 @@ export const getStyles = (theme: GrafanaTheme) => {
   // Amount of time we want to pass before we start showing loading spinner
   const slowStartThreshold = '0.5s';
 
-  const delay = keyframes`
+  const invisibleToVisible = keyframes`
     0% { opacity: 0%; }
     100% { opacity: 100%; }
   `;
@@ -49,7 +49,7 @@ export const getStyles = (theme: GrafanaTheme) => {
       opacity: 0%;
       align-items: center;
       justify-content: center;
-      animation: ${delay} 0s step-end ${slowStartThreshold} 1 normal forwards;
+      animation: ${invisibleToVisible} 0s step-end ${slowStartThreshold} 1 normal forwards;
     `,
     dashboardLoadingText: css`
       font-size: ${theme.typography.size.lg};
