@@ -18,6 +18,81 @@ export const RATE_RANGES: CompletionItem[] = [
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
 export const LOGICAL_OPERATORS = ['or', 'and', 'unless'];
 
+const TRIGONOMETRIC_FUNCTIONS: CompletionItem[] = [
+  {
+    label: 'acos',
+    insertText: 'acos',
+    detail: 'acos(v instant-vector)',
+    documentation: 'calculates the arccosine of all elements in v',
+  },
+  {
+    label: 'acosh',
+    insertText: 'acosh',
+    detail: 'acosh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic cosine of all elements in v',
+  },
+  {
+    label: 'asin',
+    insertText: 'asin',
+    detail: 'asin(v instant-vector)',
+    documentation: 'calculates the arcsine of all elements in v',
+  },
+  {
+    label: 'asinh',
+    insertText: 'asinh',
+    detail: 'asinh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic sine of all elements in v',
+  },
+  {
+    label: 'atan',
+    insertText: 'atan',
+    detail: 'atan(v instant-vector)',
+    documentation: 'calculates the arctangent of all elements in v',
+  },
+  {
+    label: 'atanh',
+    insertText: 'atanh',
+    detail: 'atanh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic tangent of all elements in v',
+  },
+  {
+    label: 'cos',
+    insertText: 'cos',
+    detail: 'cos(v instant-vector)',
+    documentation: 'calculates the cosine of all elements in v',
+  },
+  {
+    label: 'cosh',
+    insertText: 'cosh',
+    detail: 'cosh(v instant-vector)',
+    documentation: 'calculates the hyperbolic cosine of all elements in v',
+  },
+  {
+    label: 'sin',
+    insertText: 'sin',
+    detail: 'sin(v instant-vector)',
+    documentation: 'calculates the sine of all elements in v',
+  },
+  {
+    label: 'sinh',
+    insertText: 'sinh',
+    detail: 'sinh(v instant-vector)',
+    documentation: 'calculates the hyperbolic sine of all elements in v',
+  },
+  {
+    label: 'tan',
+    insertText: 'tan',
+    detail: 'tan(v instant-vector)',
+    documentation: 'calculates the tangent of all elements in v',
+  },
+  {
+    label: 'tanh',
+    insertText: 'tanh',
+    detail: 'tanh(v instant-vector)',
+    documentation: 'calculates the hyperbolic tangent of all elements in v',
+  },
+];
+
 const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
     label: 'sum',
@@ -83,6 +158,7 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
 
 export const FUNCTIONS = [
   ...AGGREGATION_OPERATORS,
+  ...TRIGONOMETRIC_FUNCTIONS,
   {
     insertText: 'abs',
     label: 'abs',
