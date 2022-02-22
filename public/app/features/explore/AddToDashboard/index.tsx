@@ -72,7 +72,12 @@ export const AddToDashboard = ({ exploreId }: Props) => {
 
   return (
     <>
-      <ToolbarButton icon="apps" onClick={() => setIsOpen(true)} aria-label="Add to dashboard">
+      <ToolbarButton
+        icon="apps"
+        onClick={() => setIsOpen(true)}
+        aria-label="Add to dashboard"
+        disabled={queries.length === 0}
+      >
         Add to Dashboard
       </ToolbarButton>
 
