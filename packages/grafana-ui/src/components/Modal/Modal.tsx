@@ -80,7 +80,7 @@ export function Modal(props: PropsWithChildren<Props>) {
             {
               // FIXME: custom title components won't get an accessible title.
               // Do we really want to support them or shall we just limit this ModalTabsHeader?
-              typeof title !== 'string' && { title }
+              typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
               <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
