@@ -27,10 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourceservices"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
@@ -202,7 +202,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(teamguardian.TeamGuardian), new(*teamguardianManager.Service)),
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	resourceservices.ProvideResourceServices,
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideFolderService,
 	dashboardstore.ProvideDashboardStore,
@@ -213,6 +212,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboards.ProvideService,
+	comments.ProvideService,
 )
 
 var wireSet = wire.NewSet(

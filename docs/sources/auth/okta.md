@@ -38,6 +38,7 @@ Before you can sign a user in, you need to create an Okta application from the O
 ```ini
 [auth.okta]
 name = Okta
+icon = okta
 enabled = true
 allow_sign_up = true
 client_id = some_id
