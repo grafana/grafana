@@ -38,6 +38,6 @@ describe('switchToNewMode', () => {
     expect(mockDispatch.mock.calls[0][0]).toEqual(
       toKeyedAction('null', addVariable({ data: { global: false, index: 0, model }, type: "constant", id: "constant0"}))
     );
-    expect(mockDispatch.mock.calls[1]).toEqual(toKeyedAction('null', null));
+    expect(mockDispatch.mock.calls[1][0]).toEqual(toKeyedAction('null', null));
   });
 });
