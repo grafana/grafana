@@ -1,9 +1,10 @@
 import { variableAdapters } from '../adapters';
+import { initialConstantVariableModelState } from '../constant/reducer';
 import { constantBuilder, customBuilder } from '../shared/testing/builders';
 import { initialKeyedVariablesState, toKeyedAction } from '../state/keyedVariablesReducer';
 import * as selectors from '../state/selectors';
 import { addVariable } from '../state/sharedReducer';
-import { initialConstantVariableModelState } from './../../../../../e2e/tmp/public/app/features/variables/constant/reducer';
+import { VariableModel } from '../types';
 import { createQueryVariableAdapter } from './../query/adapter';
 import { getNextAvailableId, switchToNewMode } from './actions';
 
@@ -30,12 +31,12 @@ describe('switchToNewMode', () => {
     jest.spyOn(selectors, 'getNewVariableIndex').mockReturnValue(0);
     const mockGetState = jest.fn().mockReturnValue({ templating: initialKeyedVariablesState });
     const mockDispatch = jest.fn();
-    const model = { ...initialConstantVariableModelState };
+    const model = { ...initialConstantVariableModelState } ;
 
     switchToNewMode(null, 'constant')(mockDispatch, mockGetState, undefined);
     expect(mockDispatch).toHaveBeenCalledTimes(2);
-    expect(mockDispatch.mock.calls[0]).toEqual(
-      toKeyedAction('null', addVariable({ data: { global: false, index: 0, model } }))
+    expect(mockDispatch.mock.calls[0][0]).toEqual(
+      toKeyedAction('null', addVariable({ data: { global: false, index: 0, model }, type: "constant", id: "constant0"}))
     );
     expect(mockDispatch.mock.calls[1]).toEqual(toKeyedAction('null', null));
   });
