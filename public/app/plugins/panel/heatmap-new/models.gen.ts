@@ -4,7 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { HideableFieldConfig, LegendDisplayMode, OptionsWithLegend, VisibilityMode } from '@grafana/schema';
-import { HeatmapCalculationOptions } from 'app/core/components/TransformersUI/calculateHeatmap/models.gen';
+import { HeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 export const modelVersion = Object.freeze([1, 0]);
 

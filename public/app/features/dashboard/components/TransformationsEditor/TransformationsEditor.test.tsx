@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TransformationsEditor } from './TransformationsEditor';
 import { PanelModel } from '../../state';
-import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { selectors } from '@grafana/e2e-selectors';
 
 const setup = (transformations: DataTransformerConfig[] = []) => {

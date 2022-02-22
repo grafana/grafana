@@ -119,12 +119,12 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
 
   if (dashboard) {
     dashboard.destroy();
+    dispatch(cancelVariables(dashboard.uid));
   }
 
   getTimeSrv().stopAutoRefresh();
 
   dispatch(cleanUpDashboard());
-  dispatch(cancelVariables());
 };
 
 export const updateTimeZoneDashboard =

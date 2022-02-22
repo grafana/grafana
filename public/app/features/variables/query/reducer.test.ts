@@ -1,3 +1,6 @@
+import { cloneDeep } from 'lodash';
+import { MetricFindValue } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
   metricNamesToVariableValues,
@@ -6,11 +9,10 @@ import {
   updateVariableOptions,
 } from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
-import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload, VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
-import { MetricFindValue } from '@grafana/data';
+import { toVariablePayload } from '../utils';
 
 describe('queryVariableReducer', () => {
   const adapter = createQueryVariableAdapter();
