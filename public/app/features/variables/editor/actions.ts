@@ -117,7 +117,7 @@ export const switchToEditMode =
   };
 
 export const switchToListMode =
-  (key: string | null | undefined ): ThunkResult<void> =>
+  (key: string | null | undefined): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
     dispatch(toKeyedAction(rootStateKey, clearIdInEditor()));
