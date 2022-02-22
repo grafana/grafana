@@ -433,18 +433,12 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
-  depends_on:
-  - initialize
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.4.9
-  name: build-frontend
-- commands:
+  - yarn packages:build
+  - yarn packages:docsExtract
+  - yarn packages:docsToMarkdown
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - initialize
   image: grafana/build-container:1.4.9
   name: build-frontend-docs
 - commands:
@@ -599,7 +593,7 @@ steps:
   name: trigger-enterprise-downstream
   settings:
     params:
-    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
     - SOURCE_COMMIT=${DRONE_COMMIT}
     repositories:
     - grafana/grafana-enterprise@main
@@ -809,9 +803,12 @@ steps:
   image: grafana/build-container:1.4.9
   name: publish-frontend-metrics
 - commands:
+  - yarn packages:build
+  - yarn packages:docsExtract
+  - yarn packages:docsToMarkdown
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - initialize
   image: grafana/build-container:1.4.9
   name: build-frontend-docs
 - commands:
@@ -4264,6 +4261,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b02f6b686b120ff88a1f412a9cab4b3d295783f3e8cabde336b446083fe6433c
+hmac: f209cfff82a4817d7bae67872ce1a34a4a26915451ae35b4f8c9848003b18b91
 
 ...

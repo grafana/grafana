@@ -189,7 +189,7 @@ def enterprise_downstream_step(edition):
                 'grafana/grafana-enterprise@main',
             ],
             'params': [
-                'SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
+                'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
             ],
         },
@@ -427,9 +427,12 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'build-frontend'
+            'initialize'
         ],
         'commands': [
+            'yarn packages:build',
+            'yarn packages:docsExtract',
+            'yarn packages:docsToMarkdown',
             './scripts/ci-reference-docs-lint.sh ci',
         ]
     }
