@@ -4,7 +4,7 @@ import { locationService } from '@grafana/runtime';
 import { serializeStateToUrlParam } from '@grafana/data';
 import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
-import { setupExplore } from './spec/helper/exploreSetup';
+import { setupExplore, waitForExplore } from './spec/helper/setup';
 import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
 import { changeDatasource } from './spec/helper/interactions';
 
@@ -40,9 +40,7 @@ describe('Wrapper', () => {
 
   it('inits url and renders editor but does not call query on empty url', async () => {
     const { datasources } = setupExplore();
-
-    // Wait for rendering the editor
-    await screen.findByText(/Editor/i);
+    await waitForExplore();
 
     // At this point url should be initialised to some defaults
     expect(locationService.getSearchObject()).toEqual({
@@ -137,8 +135,7 @@ describe('Wrapper', () => {
     const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
     const { datasources } = setupExplore({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
-    // Wait for rendering the editor
-    await screen.findByText(/Editor/i);
+    await waitForExplore();
     await changeDatasource('elastic');
 
     await screen.findByText('elastic Editor input:');
@@ -294,7 +291,7 @@ describe('Wrapper', () => {
     await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
   });
 
-  it('removes `from` and `to` parameters from url when first mounted', () => {
+  it('removes `from` and `to` parameters from url when first mounted', async () => {
     setupExplore({ searchParams: 'from=1&to=2&orgId=1' });
 
     expect(locationService.getSearchObject()).toEqual(expect.not.objectContaining({ from: '1', to: '2' }));

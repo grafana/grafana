@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { EnhancedStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
@@ -33,6 +33,10 @@ export function setupExplore(options?: SetupOptions): {
   store: EnhancedStore;
   unmount: () => void;
 } {
+  // Needed for AutoSizer to work in test
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
+
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
   if (options?.clearLocalStorage !== false) {
@@ -143,3 +147,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
     } as any,
   };
 }
+
+export const waitForExplore = async () => {
+  await screen.findByText(/Editor/i);
+};
