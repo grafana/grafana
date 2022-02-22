@@ -4,7 +4,7 @@ import { locationService } from '@grafana/runtime';
 import { serializeStateToUrlParam } from '@grafana/data';
 import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
-import { setupExplore, waitForExplore } from './spec/helper/setup';
+import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
 import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
 import { changeDatasource } from './spec/helper/interactions';
 
@@ -32,6 +32,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 
 describe('Wrapper', () => {
+  afterEach(() => {
+    tearDown();
+  });
+
   it('shows warning if there are no data sources', async () => {
     setupExplore({ datasources: [] });
     // Will throw if isn't found

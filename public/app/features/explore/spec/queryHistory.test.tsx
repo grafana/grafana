@@ -1,5 +1,5 @@
 import React from 'react';
-import { setupExplore, waitForExplore } from './helper/setup';
+import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 import { inputQuery, openQueryHistory, runQuery } from './helper/interactions';
 import { assertQueryHistoryExists } from './helper/assert';
 import { makeLogsQueryResponse } from './helper/query';
@@ -16,6 +16,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
+
+  afterEach(() => {
+    tearDown();
+  });
 
   it('adds new query history items after the query is run.', async () => {
     // when Explore is opened

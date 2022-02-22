@@ -146,3 +146,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
 export const waitForExplore = async () => {
   await screen.findByText(/Editor/i);
 };
+
+export const tearDown = () => {
+  window.localStorage.clear();
+};
