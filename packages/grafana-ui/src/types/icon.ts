@@ -51,6 +51,7 @@ export const getAvailableIcons = () =>
     'cog',
     'columns',
     'comment-alt',
+    'comment-alt-message',
     'comment-alt-share',
     'comments-alt',
     'compass',
