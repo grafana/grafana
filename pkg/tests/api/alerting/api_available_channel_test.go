@@ -73,7 +73,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-		"dependsOn": "",
+        "dependsOn": ""
       },
       {
         "element": "select",
@@ -99,7 +99,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": "",
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -116,7 +116,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": "",
+        "dependsOn": ""
       }
     ]
   },
@@ -142,7 +142,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -159,7 +159,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-		"dependsOn": "",
+        "dependsOn": ""
       }
     ]
   },
@@ -185,7 +185,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -202,7 +202,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -219,7 +219,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -245,7 +245,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "select",
@@ -279,7 +279,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -296,7 +296,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -313,7 +313,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -330,7 +330,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -347,7 +347,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -373,7 +373,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "select",
@@ -399,7 +399,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -425,7 +425,7 @@ var expAvailableChannelJsonOutput = `
             "required": true,
             "validationRule": "",
             "secure": true,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "input",
@@ -442,7 +442,7 @@ var expAvailableChannelJsonOutput = `
             "required": true,
             "validationRule": "",
             "secure": true,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "input",
@@ -459,7 +459,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "select",
@@ -497,7 +497,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "select",
@@ -535,7 +535,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "input",
@@ -552,7 +552,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "input",
@@ -569,7 +569,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "select",
@@ -679,7 +679,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "select",
@@ -789,7 +789,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         },
         {
             "element": "textarea",
@@ -806,7 +806,7 @@ var expAvailableChannelJsonOutput = `
             "required": false,
             "validationRule": "",
             "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
         }
     ]
   },
@@ -832,7 +832,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+            "dependsOn": ""
       },
       {
         "element": "input",
@@ -866,7 +866,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -883,7 +883,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -900,7 +900,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -917,7 +917,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -934,7 +934,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "select",
@@ -964,7 +964,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -981,7 +981,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": true,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -998,7 +998,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -1015,7 +1015,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1041,7 +1041,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1058,7 +1058,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1075,7 +1075,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1092,7 +1092,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1109,7 +1109,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1126,7 +1126,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -1143,7 +1143,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1169,7 +1169,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -1186,7 +1186,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1212,7 +1212,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1229,7 +1229,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -1246,7 +1246,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1272,7 +1272,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "select",
@@ -1298,7 +1298,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1315,7 +1315,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1332,7 +1332,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": true,
-"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1349,7 +1349,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1391,10 +1391,10 @@ var expAvailableChannelJsonOutput = `
         },
         "required": false,
         "validationRule": "",
-		"secure": false,
-		"dependsOn": ""
+        "secure": false,
+        "dependsOn": ""
       }
-	]
+  ]
   },
   {
     "type": "prometheus-alertmanager",
@@ -1418,7 +1418,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1435,7 +1435,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1529,7 +1529,7 @@ var expAvailableChannelJsonOutput = `
       "required": false,
       "validationRule": "",
       "secure": false,
-      "dependsOn: ""
+      "dependsOn": ""
     }
 	]
   },
@@ -1555,7 +1555,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "textarea",
@@ -1572,7 +1572,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1598,7 +1598,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true,
-		"depends": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1624,7 +1624,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "\\*[0-9A-Z]{7}",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1640,8 +1640,8 @@ var expAvailableChannelJsonOutput = `
         },
         "required": true,
         "validationRule": "[0-9A-Z]{8}",
-        "secure": false
-		"dependsOn": ""
+        "secure": false,
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1658,7 +1658,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true,
-		"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   },
@@ -1684,7 +1684,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "input",
@@ -1701,7 +1701,7 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "checkbox",
@@ -1718,7 +1718,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "checkbox",
@@ -1735,7 +1735,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       },
       {
         "element": "select",
@@ -1765,7 +1765,7 @@ var expAvailableChannelJsonOutput = `
         "required": false,
         "validationRule": "",
         "secure": false,
-		"dependsOn": ""
+        "dependsOn": ""
       }
     ]
   }
