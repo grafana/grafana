@@ -1,8 +1,5 @@
-import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Input, useStyles2 } from '@grafana/ui';
+import { Input, measureText } from '@grafana/ui';
 import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
-import { getFocusStyle, sharedInputStyle } from '@grafana/ui/src/components/Forms/commonStyles';
 import React, { useEffect } from 'react';
 export interface Props extends InputProps {
   /** Sets the min-width to a multiple of 8px. Default value is 10*/
@@ -18,30 +15,9 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   const [value, setValue] = React.useState(defaultValue);
   const [inputWidth, setInputWidth] = React.useState(minWidth);
 
-  const styles = useStyles2(getStyles);
-  const sizerRef = React.useRef<HTMLInputElement>(null);
-
   useEffect(() => {
-    const extraSpace = 4;
-    const calculateWidth = (number: number) => number / 8 + extraSpace;
-    let newInputWidth = sizerRef.current ? calculateWidth(sizerRef.current.scrollWidth) : 0;
-
-    if (!value) {
-      newInputWidth = minWidth;
-    } else {
-      if (newInputWidth < minWidth) {
-        newInputWidth = minWidth;
-      }
-
-      if (maxWidth && newInputWidth > maxWidth) {
-        newInputWidth = maxWidth;
-      }
-    }
-
-    if (newInputWidth !== inputWidth) {
-      setInputWidth(newInputWidth);
-    }
-  }, [sizerRef.current?.scrollWidth, inputWidth, value, maxWidth, minWidth]);
+    setInputWidth(getWidthFor(value.toString(), minWidth, maxWidth));
+  }, [value, maxWidth, minWidth]);
 
   return (
     <>
@@ -70,33 +46,27 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
           }
         }}
       />
-      <div ref={sizerRef} className={styles.sizer}>
-        {value}
-      </div>
     </>
   );
 });
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    input: cx(
-      getFocusStyle(theme.v1),
-      sharedInputStyle(theme),
-      css`
-        min-height: 30px;
-        box-sizing: content-box;
-      `
-    ),
-    sizer: css`
-      position: absolute;
-      top: 0;
-      left: 0;
-      visibility: hidden;
-      height: 0;
-      overflow: scroll;
-      whitespace: pre;
-    `,
-  };
-};
+function getWidthFor(value: string, minWidth: number, maxWidth: number | undefined): number {
+  if (!value) {
+    return minWidth;
+  }
+
+  const extraSpace = 3;
+  const realWidth = measureText(value.toString(), 14).width / 8 + extraSpace;
+
+  if (minWidth && realWidth < minWidth) {
+    return minWidth;
+  }
+
+  if (maxWidth && realWidth > maxWidth) {
+    return realWidth;
+  }
+
+  return realWidth;
+}
 
 AutoSizeInput.displayName = 'AutoSizeInput';
