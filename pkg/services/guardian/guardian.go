@@ -47,6 +47,7 @@ type dashboardGuardianImpl struct {
 }
 
 // New factory for creating a new dashboard guardian instance
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
 var New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 	return &dashboardGuardianImpl{
 		user:   user,
