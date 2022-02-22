@@ -197,7 +197,7 @@ func (d *DashboardStore) UnprovisionDashboard(ctx context.Context, id int64) err
 }
 
 func (d *DashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
-	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var result []*models.DashboardProvisioning
 
 		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
