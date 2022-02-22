@@ -89,7 +89,8 @@ const ServiceAccountPageUnconnected = ({
         {serviceAccount && (
           <>
             <ServiceAccountProfile
-              serviceaccount={serviceAccount}
+              serviceAccount={serviceAccount}
+              timeZone={timezone}
               onServiceAccountDelete={() => {
                 console.log(`not implemented`);
               }}
