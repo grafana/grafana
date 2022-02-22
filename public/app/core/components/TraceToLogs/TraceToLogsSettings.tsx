@@ -67,7 +67,11 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           >
             <KeyValueInput
               keyPlaceholder="Tag"
-              values={options.jsonData.tracesToLogs?.mappedTags ?? []}
+              values={
+                options.jsonData.tracesToLogs?.mappedTags ??
+                options.jsonData.tracesToLogs?.tags?.map((tag) => ({ key: tag })) ??
+                []
+              }
               onChange={(v) =>
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                   ...options.jsonData.tracesToLogs,
@@ -89,7 +93,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               width={40}
               onChange={(tags) =>
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
-                  datasourceUid: options.jsonData.tracesToLogs?.datasourceUid,
+                  ...options.jsonData.tracesToLogs,
                   tags: tags,
                 })
               }
