@@ -23,6 +23,7 @@ load(
     'pipeline',
 )
 
+
 def docs_pipelines(edition, ver_mode, trigger):
     steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
 
@@ -33,32 +34,19 @@ def docs_pipelines(edition, ver_mode, trigger):
     ])
 
     return pipeline(
-            name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
-        )
+        name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
+    )
 
-def trigger_docs(ver_mode):
-    if ver_mode == 'pr':
-        return {
-            'event':  [
-                'pull_request',
+
+def trigger_docs():
+    return {
+        'event': [
+            'pull_request',
+        ],
+        'paths': {
+            'include': [
+                'docs/**',
+                'packages/**',
             ],
-            'paths': {
-                'include': [
-                    'docs/**',
-                    'packages/**',
-                ],
-            },
-        }
-    else:
-        return {
-            'event': ['push',],
-            'branch': 'main',
-            'paths': {
-                'include': [
-                    'docs/**',
-                    'packages/**',
-                ],
-            },
-        }
-
-
+        },
+    }

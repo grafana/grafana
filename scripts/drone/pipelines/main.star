@@ -57,7 +57,6 @@ load(
 load(
     'scripts/drone/pipelines/docs.star',
     'docs_pipelines',
-    'trigger_docs',
 )
 
 ver_mode = 'main'
@@ -175,7 +174,7 @@ def main_pipelines(edition):
         integration_test_steps.append(benchmark_ldap_step())
 
     pipelines = [
-        docs_pipelines(edition, ver_mode, trigger_docs(ver_mode)),
+        docs_pipelines(edition, ver_mode, trigger),
         pipeline(
             name='main-test', edition=edition, trigger=trigger, services=[],
             steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,

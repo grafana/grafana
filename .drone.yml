@@ -509,10 +509,6 @@ trigger:
   branch: main
   event:
   - push
-  paths:
-    include:
-    - docs/**
-    - packages/**
 type: docker
 volumes:
 - host:
@@ -4309,6 +4305,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6237b53d8ac119f040544ecf0e0d0e0dbd803e5ac0a76eb6c102d73db05063d4
+hmac: db5cfbb53d8385e4eab31a818388c5c3cc57693e4bcd0764dcf058fc2aa93cbe
 
 ...
