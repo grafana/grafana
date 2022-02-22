@@ -58,17 +58,15 @@ export function RichHistoryContainer(props: Props) {
         setHeight(Number(ref.style.height.slice(0, -2)));
       }}
     >
-      <div data-testid="richHistory">
-        <RichHistory
-          richHistory={richHistory}
-          firstTab={firstTab}
-          activeDatasourceInstance={activeDatasourceInstance}
-          exploreId={exploreId}
-          deleteRichHistory={deleteRichHistory}
-          onClose={onClose}
-          height={height}
-        />
-      </div>
+      <RichHistory
+        richHistory={richHistory}
+        firstTab={firstTab}
+        activeDatasourceInstance={activeDatasourceInstance}
+        exploreId={exploreId}
+        deleteRichHistory={deleteRichHistory}
+        onClose={onClose}
+        height={height}
+      />
     </ExploreDrawer>
   );
 }

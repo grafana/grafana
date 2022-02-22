@@ -23,6 +23,6 @@ export const openQueryHistory = async () => {
   const button = screen.getByRole('button', { name: 'Rich history button' });
   userEvent.click(button);
   await waitFor(() => {
-    expect(screen.getByTestId('richHistory')).toBeInTheDocument();
+    expect(screen.getByText('The history is local to your browser and is not shared with others.')).toBeInTheDocument();
   });
 };
