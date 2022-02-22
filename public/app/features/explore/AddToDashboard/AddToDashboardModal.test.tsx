@@ -56,9 +56,6 @@ describe('Add to Dashboard Modal', () => {
       // The error message should appear
       await screen.findByRole('alert');
 
-      // The modal should not get closed
-      expect(screen.queryByText('Add panel to dashboard')).toBeInTheDocument();
-
       // Create dashboard API is not invoked
       expect(saveMock).not.toHaveBeenCalled();
     });
