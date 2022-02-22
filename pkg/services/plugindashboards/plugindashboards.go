@@ -2,7 +2,6 @@ package plugindashboards
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -123,33 +122,33 @@ func (s *Service) syncPluginDashboards(ctx context.Context, plugin plugins.Plugi
 	}
 }
 
-func (s *Service) handlePluginStateChanged(ctx context.Context, event *models.PluginStateChangedEvent) error {
-	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+// func (s *Service) handlePluginStateChanged(ctx context.Context, event *models.PluginStateChangedEvent) error {
+// 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
-	if event.Enabled {
-		p, exists := s.pluginStore.Plugin(ctx, event.PluginId)
-		if !exists {
-			return fmt.Errorf("plugin %s not found. Could not sync plugin dashboards", event.PluginId)
-		}
+// 	if event.Enabled {
+// 		p, exists := s.pluginStore.Plugin(ctx, event.PluginId)
+// 		if !exists {
+// 			return fmt.Errorf("plugin %s not found. Could not sync plugin dashboards", event.PluginId)
+// 		}
 
-		s.syncPluginDashboards(ctx, p, event.OrgId)
-	} else {
-		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := s.pluginSettingsStore.GetDashboardsByPluginId(ctx, &query); err != nil {
-			return err
-		}
+// 		s.syncPluginDashboards(ctx, p, event.OrgId)
+// 	} else {
+// 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
+// 		if err := s.pluginSettingsStore.GetDashboardsByPluginId(ctx, &query); err != nil {
+// 			return err
+// 		}
 
-		for _, dash := range query.Result {
-			s.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			deleteCmd := models.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
-			if err := s.pluginSettingsStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
-				return err
-			}
-		}
-	}
+// 		for _, dash := range query.Result {
+// 			s.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
+// 			deleteCmd := models.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
+// 			if err := s.pluginSettingsStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
+// 				return err
+// 			}
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (s *Service) autoUpdateAppDashboard(ctx context.Context, pluginDashInfo *plugins.PluginDashboardInfoDTO, orgID int64) error {
 	dash, err := s.pluginDashboardManager.LoadPluginDashboard(ctx, pluginDashInfo.PluginId, pluginDashInfo.Path)
