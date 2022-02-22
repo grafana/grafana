@@ -5,6 +5,7 @@ import {
   defaultAddOperationHandler,
   functionRendererLeft,
   getPromAndLokiOperationDisplayName,
+  getRangeVectorParamDef,
 } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromVisualQueryOperationCategory, PromOperationId } from './types';
@@ -175,20 +176,12 @@ function createAggregationOverTime(name: string): QueryBuilderOperationDef {
   return {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
-    params: [getAggregationOverTimeRangeVector()],
-    defaultParams: ['auto'],
+    params: [getRangeVectorParamDef()],
+    defaultParams: ['$__interval'],
     alternativesKey: 'overtime function',
     category: PromVisualQueryOperationCategory.RangeFunctions,
     renderer: operationWithRangeVectorRenderer,
     addOperationHandler: addOperationWithRangeVector,
-  };
-}
-
-function getAggregationOverTimeRangeVector(): QueryBuilderOperationParamDef {
-  return {
-    name: 'Range vector',
-    type: 'string',
-    options: ['auto', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
   };
 }
 
@@ -197,11 +190,6 @@ function operationWithRangeVectorRenderer(
   def: QueryBuilderOperationDef,
   innerExpr: string
 ) {
-  let rangeVector = (model.params ?? [])[0] ?? 'auto';
-
-  if (rangeVector === 'auto') {
-    rangeVector = '$__interval';
-  }
-
+  let rangeVector = (model.params ?? [])[0] ?? '$__interval';
   return `${def.id}(${innerExpr}[${rangeVector}])`;
 }

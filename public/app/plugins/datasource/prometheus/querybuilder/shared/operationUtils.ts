@@ -1,5 +1,10 @@
 import { capitalize } from 'lodash';
-import { QueryBuilderOperation, QueryBuilderOperationDef, QueryWithOperations } from './types';
+import {
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  QueryBuilderOperationParamDef,
+  QueryWithOperations,
+} from './types';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
@@ -113,4 +118,24 @@ export function getPromAndLokiOperationDisplayName(funcName: string) {
 
 export function getOperationParamId(operationIndex: number, paramIndex: number) {
   return `operations.${operationIndex}.param.${paramIndex}`;
+}
+
+export function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
+  return {
+    name: 'Range',
+    type: 'string',
+    options: [
+      { label: '$__rate_interval', value: '$__rate_interval', tooltip: 'Always above 4x scrape interval' },
+      {
+        label: '$__interval',
+        value: '$__interval',
+        tooltip: 'Dynamic interval based on max data points, scrape and min interval',
+      },
+      { label: '1m', value: '1m' },
+      { label: '5m', value: '5m' },
+      { label: '10m', value: '10m' },
+      { label: '1h', value: '1h' },
+      { label: '24h', value: '24h' },
+    ],
+  };
 }

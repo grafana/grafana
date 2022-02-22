@@ -4,13 +4,13 @@ import {
   functionRendererLeft,
   functionRendererRight,
   getPromAndLokiOperationDisplayName,
+  getRangeVectorParamDef,
   rangeRendererLeftWithParams,
   rangeRendererRightWithParams,
 } from './shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
   QueryWithOperations,
   VisualQueryModeller,
 } from './shared/types';
@@ -293,7 +293,7 @@ export function createRangeFunction(name: string): QueryBuilderOperationDef {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
     params: [getRangeVectorParamDef()],
-    defaultParams: ['auto'],
+    defaultParams: ['$__rate_interval'],
     alternativesKey: 'range function',
     category: PromVisualQueryOperationCategory.RangeFunctions,
     renderer: operationWithRangeVectorRenderer,
@@ -306,11 +306,7 @@ export function operationWithRangeVectorRenderer(
   def: QueryBuilderOperationDef,
   innerExpr: string
 ) {
-  let rangeVector = (model.params ?? [])[0] ?? 'auto';
-
-  if (rangeVector === 'auto') {
-    rangeVector = '$__rate_interval';
-  }
+  let rangeVector = (model.params ?? [])[0] ?? '$__rate_interval';
 
   return `${def.id}(${innerExpr}[${rangeVector}])`;
 }
@@ -318,14 +314,6 @@ export function operationWithRangeVectorRenderer(
 function getSimpleBinaryRenderer(operator: string) {
   return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     return `${innerExpr} ${operator} ${model.params[0]}`;
-  };
-}
-
-function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
-  return {
-    name: 'Range vector',
-    type: 'string',
-    options: ['auto', '$__rate_interval', '$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
   };
 }
 
