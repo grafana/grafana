@@ -3,13 +3,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Card, FilterInput, Icon, Pagination, TagList, useStyles2 } from '@grafana/ui';
 import { FolderState } from 'app/types';
+import { isEqual, uniqWith } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useDebounce } from 'react-use';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
+import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { fetchAllPromAndRulerRulesAction, fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
+import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
+import { labelsMatchMatchers, matchersToString, parseMatcher, parseMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
@@ -42,6 +44,13 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const showNoResultsText = alertRules.length === 0 || filteredRules.length === 0;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, ITEMS_PER_PAGE);
 
+  const onTagClick = (tagName: string) => {
+    const tagMatcherField = parseMatcher(tagName);
+    const uniqueMatchers = uniqWith([...matchers, tagMatcherField], isEqual);
+    const matchersString = matchersToString(uniqueMatchers);
+    setLabelFilter(matchersString);
+  };
+
   return (
     <Stack direction="column" gap={1}>
       <Stack direction="row">
@@ -71,6 +80,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
             <Card.Heading>{currentRule.name}</Card.Heading>
             <Card.Tags>
               <TagList
+                onClick={onTagClick}
                 tags={Object.keys(currentRule.labels).map((labelKey) => `${labelKey}=${currentRule.labels[labelKey]}`)}
               />
             </Card.Tags>
@@ -110,8 +120,8 @@ function useAlertsFolderViewFilters() {
     () =>
       setSearchParams(
         {
-          [AlertFolderViewFilters.nameFilter]: getNotEmptyStringOrUndefined(nameFilter),
-          [AlertFolderViewFilters.labelFilter]: getNotEmptyStringOrUndefined(labelFilter),
+          [AlertFolderViewFilters.nameFilter]: getNonEmptyStringOrUndefined(nameFilter),
+          [AlertFolderViewFilters.labelFilter]: getNonEmptyStringOrUndefined(labelFilter),
         },
         true
       ),
@@ -129,26 +139,8 @@ function useAlertsFolderViewFilters() {
   return { nameFilter, labelFilter, setNameFilter, setLabelFilter };
 }
 
-function getNotEmptyStringOrUndefined(value: string | undefined | null) {
+function getNonEmptyStringOrUndefined(value: string | undefined | null) {
   return value || undefined;
-}
-
-function usePagination<T>(items: T[], initialPage: number, itemsPerPage: number) {
-  const [page, setPage] = useState(initialPage);
-
-  const numberOfPages = Math.ceil(items.length / itemsPerPage);
-
-  const firstItemOnPageIndex = itemsPerPage * (page - 1);
-  const pageItems = items.slice(firstItemOnPageIndex, firstItemOnPageIndex + itemsPerPage);
-
-  const onPageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  // Reset the current page when number of changes has been changed
-  useEffect(() => setPage(1), [numberOfPages]);
-
-  return { page, onPageChange, numberOfPages, pageItems };
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
