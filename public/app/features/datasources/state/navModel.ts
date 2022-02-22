@@ -106,7 +106,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...caching,
       url: caching.url + '/upgrade',
-      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-caching-badge' }),
+      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-query-caching-badge' }),
     });
   }
 

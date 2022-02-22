@@ -61,10 +61,12 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
 
   private renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<T>) {
     let result = leftOperand + ` ${binaryQuery.operator} `;
+
     if (binaryQuery.vectorMatches) {
       result += `${binaryQuery.vectorMatches} `;
     }
-    return result + `${this.renderQuery(binaryQuery.query)}`;
+
+    return result + this.renderQuery(binaryQuery.query, true);
   }
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
@@ -84,5 +86,5 @@ export abstract class LokiAndPromQueryModellerBase<T extends QueryWithOperations
     return expr + `}`;
   }
 
-  abstract renderQuery(query: T): string;
+  abstract renderQuery(query: T, nested?: boolean): string;
 }
