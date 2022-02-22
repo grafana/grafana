@@ -36,3 +36,29 @@ def docs_pipelines(edition, ver_mode, trigger):
             name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
         )
 
+def trigger_docs(ver_mode):
+    if ver_mode == 'pr':
+        return {
+            'event':  [
+                'pull_request',
+            ],
+            'paths': {
+                'include': [
+                    'docs/**',
+                    'packages/**',
+                ],
+            },
+        }
+    else:
+        return {
+            'event': ['push',],
+            'branch': 'main',
+            'paths': {
+                'include': [
+                    'docs/**',
+                    'packages/**',
+                ],
+            },
+        }
+
+

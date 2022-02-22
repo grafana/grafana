@@ -47,7 +47,8 @@ load(
 
 load(
     'scripts/drone/pipelines/docs.star',
-    'docs_pipelines'
+    'docs_pipelines',
+    'trigger_docs',
 )
 
 ver_mode = 'pr'
@@ -127,18 +128,6 @@ def pr_pipelines(edition):
         },
     }
 
-    trigger_docs = {
-        'event':  [
-            'pull_request',
-        ],
-        'paths': {
-            'include': [
-                'docs/**',
-                'packages/**',
-            ],
-        },
-    }
-
     return [
         pipeline(
             name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
@@ -150,5 +139,5 @@ def pr_pipelines(edition):
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + integration_test_steps,
             volumes=volumes,
-        ), docs_pipelines(edition, ver_mode, trigger_docs)
+        ), docs_pipelines(edition, ver_mode, trigger_docs(ver_mode))
     ]
