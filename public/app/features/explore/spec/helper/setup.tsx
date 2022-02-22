@@ -14,7 +14,6 @@ import { configureStore } from 'app/store/configureStore';
 import Wrapper from '../../Wrapper';
 import { initialUserState } from '../../../profile/state/reducers';
 
-// TODO: remove data source dependencies
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 

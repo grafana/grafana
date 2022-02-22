@@ -15,7 +15,7 @@ export const inputQuery = (query: string) => {
 };
 
 export const runQuery = () => {
-  const button = screen.getByTestId('data-testid RefreshPicker run button');
+  const button = screen.getByTestId(selectors.components.RefreshPicker.runButtonV2);
   userEvent.click(button);
 };
 
