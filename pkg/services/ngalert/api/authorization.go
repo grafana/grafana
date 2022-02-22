@@ -3,12 +3,16 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -161,4 +165,89 @@ func (api *API) authorize(method, path string) web.Handler {
 	}
 
 	panic(fmt.Sprintf("no authorization handler for method [%s] of endpoint [%s]", method, path))
+}
+
+// GetDatasourceScopesFromAlertRule extracts data source scopes from an alert rule
+func getEvaluatorForAlertRule(rule *ngmodels.AlertRule) ac.Evaluator {
+	scopes := make([]ac.Evaluator, 0, len(rule.Data))
+	for _, query := range rule.Data {
+		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
+			continue
+		}
+		scopes = append(scopes, ac.EvalPermission(datasources.ActionQuery, dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.DatasourceUID)))
+	}
+	return ac.EvalAll(scopes...)
+}
+
+func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator func(evaluator ac.Evaluator) (bool, error)) error {
+	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
+	if len(changes.Delete) > 0 {
+		allowed, err := evaluator(ac.EvalPermission(ac.ActionAlertingRuleDelete, namespaceScope))
+		if err != nil {
+			return fmt.Errorf("failed to perform user authorization: %w", err)
+		}
+		if !allowed {
+			return fmt.Errorf("user cannot delete alert rules that belong to folder %s", namespace.Title)
+		}
+	}
+
+	// check that the user can create alerts in
+	if len(changes.New) > 0 {
+		allowed, err := evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
+		if err != nil {
+			return fmt.Errorf("failed to perform user authorization: %w", err)
+		}
+		if !allowed {
+			return fmt.Errorf("user cannot create alert rules in the folder %s", namespace.Title)
+		}
+	}
+
+	updateChecked := false
+
+	for _, rule := range changes.Update {
+		if rule.Existing.NamespaceUID != rule.New.NamespaceUID {
+			allowed, err := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.Existing.NamespaceUID))))
+			if err != nil {
+				return fmt.Errorf("failed to perform user authorization: %w", err)
+			}
+			if !allowed {
+				return fmt.Errorf("user cannot delete alert rules from folder UID %s", rule.Existing.NamespaceUID)
+			}
+			allowed, err = evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
+			if err != nil {
+				return fmt.Errorf("failed to perform user authorization: %w", err)
+			}
+			if !allowed {
+				return fmt.Errorf("user cannot create alert rules in the folder %s", namespace.Title)
+			}
+		} else if !updateChecked {
+			allowed, err := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope)))
+			if err != nil {
+				return fmt.Errorf("failed to perform user authorization: %w", err)
+			}
+			if !allowed {
+				return fmt.Errorf("user cannot update alert rules that belong to folder %s", namespace.Title)
+			}
+			updateChecked = true
+		}
+
+		// if data were not changed, skip authorization. Effectively, this will let users without read access for
+		// data sources limited set of settings, like interval, for, labels, annotations.
+		if len(rule.Diff.GetDiffsForField("Data")) > 0 {
+			dsAllowed, err := evaluator(getEvaluatorForAlertRule(rule.New))
+			if err != nil {
+				return fmt.Errorf("failed to perform user authorization: %w", err)
+			}
+			if !dsAllowed {
+				action := "create"
+				title := rule.New.Title
+				if rule.Existing != nil {
+					action = "update"
+					title = rule.Existing.Title
+				}
+				return fmt.Errorf("you do not have enough permissions to %s alert rule %s (UID '%s') because you do not have read access to one or many datasources the rule uses", action, title, rule.New.UID)
+			}
+		}
+	}
+	return nil
 }

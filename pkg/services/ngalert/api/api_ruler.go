@@ -278,6 +278,13 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return nil
 		}
 
+		err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) (bool, error) {
+			return srv.ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator) // use request context instead of transaction context to make sure that nothing authz related is locked on db side
+		})
+		if err != nil {
+			return err
+		}
+
 		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
 			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
 			for _, update := range groupChanges.Update {
