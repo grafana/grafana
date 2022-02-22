@@ -137,8 +137,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -146,7 +146,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - initialize
   environment: null
@@ -433,8 +433,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -615,8 +615,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -624,7 +624,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -1225,8 +1225,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
-    --edition oss --no-pull-enterprise ${DRONE_TAG}
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --edition
+    oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1234,7 +1234,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -1815,8 +1815,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps
-    --edition enterprise --no-pull-enterprise ${DRONE_TAG}
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --edition
+    enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
@@ -1824,8 +1824,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
-    --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -2980,8 +2979,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -2989,7 +2988,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -3497,8 +3496,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+    --no-pull-enterprise
   depends_on:
   - initialize
   environment:
@@ -3506,8 +3505,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --no-install-deps --sign
-    --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
   depends_on:
   - initialize
   environment:
@@ -4266,6 +4264,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a1d0cfdd477058ff35921c78422f794279b414b27dcb80e69f59de99d778ac82
+hmac: b02f6b686b120ff88a1f412a9cab4b3d295783f3e8cabde336b446083fe6433c
 
 ...
