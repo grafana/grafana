@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2, VizTooltipContainer } from '@grafana/ui';
 
 type Props = {
   colorPalette: string[];
@@ -11,6 +11,9 @@ type Props = {
 
 export const ColorScale = ({ colorPalette, min, max }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
+  const [hover, setHover] = useState({ isShown: false, value: null });
+  const [cursor, setCursor] = useState({ clientX: 0, clientY: 0 });
+
   useEffect(() => {
     setColors(getGradientStops({ colorArray: colorPalette }));
   }, [colorPalette]);
@@ -18,11 +21,30 @@ export const ColorScale = ({ colorPalette, min, max }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, colors);
 
+  const onScaleMouseMove = (event) => {
+    const divOffset = event.nativeEvent.offsetX;
+    const offsetWidth = event.target.offsetWidth;
+    let normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
+    let scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
+    setHover({ isShown: true, value: scaleValue });
+    setCursor({ clientX: event.clientX, clientY: event.clientY });
+  };
+
+  const onScaleMouseLeave = () => {
+    setHover({ isShown: false, value: null });
+  };
+
   return (
     <div className={styles.scaleWrapper}>
       <div>
-        <div className={styles.scaleGradient} />
-        <div className={styles.scaleValues}>
+        <div className={styles.scaleGradient} onMouseMove={onScaleMouseMove} onMouseLeave={onScaleMouseLeave}>
+          {hover.isShown && (
+            <VizTooltipContainer position={{ x: cursor.clientX, y: cursor.clientY }} offset={{ x: 10, y: 10 }}>
+              {hover.value}
+            </VizTooltipContainer>
+          )}
+        </div>
+        <div>
           <span>{min}</span>
           <span className={styles.maxDisplay}>{max}</span>
         </div>
@@ -68,14 +90,12 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     padding-top: 4px;
     width: 100%;
     max-width: 300px;
+    color: #ccccdc;
+    font-size: 11px;
   `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
     height: 6px;
-  `,
-  scaleValues: css`
-    color: #ccccdc;
-    font-size: 11px;
   `,
   maxDisplay: css`
     float: right;

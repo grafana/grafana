@@ -97,7 +97,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale colorPalette={palette} min={0} max={100} />
+        <ColorScale colorPalette={palette} min={1} max={100} />
       </VizLayout.Legend>
     );
   };

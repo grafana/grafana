@@ -149,7 +149,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           const palette = quantizeScheme(opts.color, config.theme2);
           return (
             <div>
-              <ColorScale colorPalette={palette} />
+              <ColorScale colorPalette={palette} min={1} max={100} />
             </div>
           );
         },
