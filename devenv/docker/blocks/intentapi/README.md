@@ -11,11 +11,11 @@ You can switch to different kubeapi and etcd versions by changing the values in 
 In order to run and use `kube-apiserver` we need to setup PKI keys and certificates. This can be done with `make` - ensure that you do that before you boot up the environment, or re-create the environment after doing that in order for the changes to take effect:
 
 ```sh
-# Install cfsll (https://github.com/cloudflare/cfssl):
-$ go get github.com/cloudflare/cfssl/cmd/cfssl
+# Assuming you're in repo's root:
+$ cd devenv/docker/blocks/intentapi
 
-# Or, with Homebrew:
-$ brew install cfssl
+# Install cfsll (https://github.com/cloudflare/cfssl):
+$ make install-cfssl
 
 # Generate certs and kubeconfig:
 $ make
@@ -23,7 +23,10 @@ $ make
 
 Once the certs are created, you can run the environment as a usual devenv Docker block:
 ```sh
-# Assuming that you're in repo's root:
+# cd to repo's root:
+$ cd ../../../../
+
+# Spin up docker-compose env:
 $ make devenv sources=intentapi
 
 # Test that the environment is working correctly:

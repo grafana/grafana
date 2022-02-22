@@ -65,6 +65,10 @@ $(KUBE_CONFIG):
 
 	@kubectl config use-context default --kubeconfig=$(KUBE_CONFIG)
 
+.PHONY: install-cfssl
+install-cfssl:
+	go get github.com/cloudflare/cfssl/cmd/cfssl
+
 .PHONY: clean
 clean:
 	@rm -f $(CERT_DIR)/*.pem $(CERT_DIR)/*.csr
