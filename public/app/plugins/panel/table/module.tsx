@@ -137,6 +137,11 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         },
         defaultValue: '',
         showIf: (cfg) => cfg.footer?.show,
+      })
+      .addNumberInput({
+        path: 'pageSize',
+        name: 'Page size',
+        description: 'Number of rows to display per page',
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

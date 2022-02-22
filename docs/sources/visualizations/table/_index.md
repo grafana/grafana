@@ -99,3 +99,7 @@ If you have a field value that is an image URL or a base64 encoded image you can
 ## Column filter
 
 You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "./filter-table-columns.md" >}}).
+
+## Page size
+
+To show paging controls, set the page size to a value greater than 0. The page size is the number of rows to display on each page.

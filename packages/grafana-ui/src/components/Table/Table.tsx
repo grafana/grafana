@@ -1,15 +1,14 @@
-import React, { FC, memo, useCallback, useMemo } from 'react';
+import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
+  TableState,
   useAbsoluteLayout,
   useFilters,
-  UseFiltersState,
+  usePagination,
   useResizeColumns,
-  UseResizeColumnsState,
   useSortBy,
-  UseSortByState,
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
@@ -27,6 +26,7 @@ import { TableCell } from './TableCell';
 import { useStyles2 } from '../../themes';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
+import { Pagination } from '../Pagination/Pagination';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -45,13 +45,12 @@ export interface Props {
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
+  pageSize?: number;
 }
-
-interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
 
 function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   return useCallback(
-    (newState: ReactTableInternalState, action: any) => {
+    (newState: TableState, action: any) => {
       switch (action.type) {
         case 'columnDoneResizing':
           if (onColumnResize) {
@@ -95,8 +94,12 @@ function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   );
 }
 
-function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[]): Partial<ReactTableInternalState> {
-  const state: Partial<ReactTableInternalState> = {};
+function getInitialState(
+  initialSortBy: Props['initialSortBy'],
+  columns: Column[],
+  pageSize?: number
+): Partial<TableState> {
+  const state: Partial<TableState> = {};
 
   if (initialSortBy) {
     state.sortBy = [];
@@ -108,6 +111,10 @@ function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[
         }
       }
     }
+  }
+
+  if (pageSize) {
+    state.pageSize = pageSize;
   }
 
   return state;
@@ -126,6 +133,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     initialSortBy,
     footerValues,
     showTypeIcons,
+    pageSize,
   } = props;
 
   const tableStyles = useStyles2(getTableStyles);
@@ -179,26 +187,41 @@ export const Table: FC<Props> = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
-      initialState: getInitialState(initialSortBy, memoizedColumns),
+      initialState: getInitialState(initialSortBy, memoizedColumns, pageSize),
       sortTypes: {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),
-    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
+    [initialSortBy, memoizedColumns, memoizedData, pageSize, resizable, stateReducer]
   );
 
-  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth, footerGroups } = useTable(
-    options,
-    useFilters,
-    useSortBy,
-    useAbsoluteLayout,
-    useResizeColumns
-  );
+  const {
+    getTableProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    totalColumnsWidth,
+    footerGroups,
+    page,
+    state,
+    setPageSize,
+    gotoPage,
+    pageOptions,
+  } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
+
+  useEffect(() => {
+    if (pageSize) {
+      setPageSize(pageSize);
+    }
+  }, [pageSize, setPageSize]);
 
   const RenderRow = React.useCallback(
     ({ index: rowIndex, style }) => {
-      const row = rows[rowIndex];
+      let row = rows[rowIndex];
+      if (pageSize) {
+        row = page[rowIndex];
+      }
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
@@ -215,20 +238,30 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [onCellFilterAdded, prepareRow, rows, tableStyles]
+    [onCellFilterAdded, page, pageSize, prepareRow, rows, tableStyles]
   );
 
-  const listHeight = height - (headerHeight + footerHeight);
+  let listHeight = height - (headerHeight + footerHeight);
+  if (pageSize) {
+    listHeight -= tableStyles.cellHeight;
+  }
+  const itemCount = pageSize ? page.length : data.length;
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
-        <div style={{ width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%' }}>
+        <div
+          style={{
+            width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
-          {rows.length > 0 ? (
+          {itemCount > 0 ? (
             <FixedSizeList
               height={listHeight}
-              itemCount={rows.length}
+              itemCount={itemCount}
               itemSize={tableStyles.rowHeight}
               width={'100%'}
               style={{ overflow: 'hidden auto' }}
@@ -240,9 +273,19 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
+          {pageSize && (
+            <div style={{ alignSelf: 'center', paddingTop: 4 }}>
+              <Pagination
+                currentPage={state.pageIndex + 1}
+                numberOfPages={pageOptions.length}
+                onNavigate={(toPage) => gotoPage(toPage - 1)}
+              />
+            </div>
+          )}
           {footerValues && (
             <FooterRow
               height={footerHeight}
+              isPaginationVisible={!!pageSize}
               footerValues={footerValues}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}

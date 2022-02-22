@@ -18,6 +18,7 @@ export interface PanelOptions {
   showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
   footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
+  pageSize?: number;
 }
 
 export interface TableFooterCalc {

@@ -133,6 +133,9 @@ Object {
       },
     ],
   },
+  "options": Object {
+    "pageSize": undefined,
+  },
   "transformations": Array [],
 }
 `;
@@ -144,6 +147,9 @@ Object {
       "custom": Object {},
     },
     "overrides": Array [],
+  },
+  "options": Object {
+    "pageSize": undefined,
   },
   "transformations": Array [
     Object {
@@ -164,6 +170,9 @@ Object {
     },
     "overrides": Array [],
   },
+  "options": Object {
+    "pageSize": undefined,
+  },
   "transformations": Array [
     Object {
       "id": "seriesToRows",
@@ -182,6 +191,9 @@ Object {
       "custom": Object {},
     },
     "overrides": Array [],
+  },
+  "options": Object {
+    "pageSize": undefined,
   },
   "transformations": Array [
     Object {
@@ -206,6 +218,9 @@ Object {
       "custom": Object {},
     },
     "overrides": Array [],
+  },
+  "options": Object {
+    "pageSize": undefined,
   },
   "transformations": Array [
     Object {

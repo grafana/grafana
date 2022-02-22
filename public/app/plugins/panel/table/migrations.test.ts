@@ -129,4 +129,16 @@ describe('Table Migrations', () => {
     tablePanelChangedHandler(panel, 'table-old', oldStyles);
     expect(panel).toMatchSnapshot();
   });
+
+  it('should migrate pageSize', () => {
+    const oldOptions = {
+      angular: {
+        pageSize: 10,
+        styles: [],
+      },
+    };
+    const panel = {} as PanelModel;
+    tablePanelChangedHandler(panel, 'table-old', oldOptions);
+    expect(panel.options.pageSize).toBe(10);
+  });
 });
