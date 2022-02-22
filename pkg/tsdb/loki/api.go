@@ -43,7 +43,7 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 	}
 
 	switch query.QueryType {
-	case "range":
+	case QueryTypeRange:
 		{
 			qs.Set("start", strconv.FormatInt(query.Start.UnixNano(), 10))
 			qs.Set("end", strconv.FormatInt(query.End.UnixNano(), 10))
@@ -54,7 +54,7 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 			qs.Set("step", query.Step.String())
 			lokiUrl.Path = "/loki/api/v1/query_range"
 		}
-	case "instant":
+	case QueryTypeInstant:
 		{
 			qs.Set("time", strconv.FormatInt(query.End.UnixNano(), 10))
 			lokiUrl.Path = "/loki/api/v1/query"

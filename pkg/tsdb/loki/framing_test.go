@@ -22,9 +22,9 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
-	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: "range"}
-	vectorQuery := lokiQuery{Expr: "query1", QueryType: "instant"}
-	streamsQuery := lokiQuery{Expr: "query1", QueryType: "instant"}
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange}
 
 	tt := []struct {
 		name     string
@@ -113,7 +113,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: "range"})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)

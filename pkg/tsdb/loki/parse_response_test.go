@@ -11,35 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFormatLegend(t *testing.T) {
-	t.Run("converting metric name", func(t *testing.T) {
-		metric := map[string]string{
-			"app":    "backend",
-			"device": "mobile",
-		}
-
-		query := &lokiQuery{
-			LegendFormat: "legend {{app}} {{ device }} {{broken}}",
-		}
-
-		require.Equal(t, "legend backend mobile ", formatLegend(metric, query))
-	})
-
-	t.Run("build full series name", func(t *testing.T) {
-		metric := map[string]string{
-			"__name__": "http_request_total",
-			"app":      "backend",
-			"device":   "mobile",
-		}
-
-		query := &lokiQuery{
-			LegendFormat: "",
-		}
-
-		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
-	})
-}
-
 func TestParseResponse(t *testing.T) {
 	t.Run("value is not of supported type", func(t *testing.T) {
 		value := loghttp.QueryResponse{
@@ -73,6 +44,7 @@ func TestParseResponse(t *testing.T) {
 
 		query := &lokiQuery{
 			Expr:         "up(ALERTS)",
+			QueryType:    QueryTypeRange,
 			LegendFormat: "legend {{app}}",
 			Step:         time.Second * 42,
 		}
@@ -116,7 +88,8 @@ func TestParseResponse(t *testing.T) {
 		}
 
 		query := &lokiQuery{
-			Step: time.Second * 42,
+			Step:      time.Second * 42,
+			QueryType: QueryTypeRange,
 		}
 
 		frames, err := parseResponse(&value, query)
