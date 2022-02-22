@@ -1,8 +1,11 @@
 import React from 'react';
+import { css } from '@emotion/css';
 import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, textUtil } from '@grafana/data';
+
 import alertDef from 'app/features/alerting/state/alertDef';
-import { css } from '@emotion/css';
+import { CommentManager } from 'app/features/comments/CommentManager';
+import config from 'app/core/config';
 
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
@@ -12,13 +15,13 @@ interface AnnotationTooltipProps {
   onDelete: () => void;
 }
 
-export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
+export const AnnotationTooltip = ({
   annotation,
   timeFormatter,
   editable,
   onEdit,
   onDelete,
-}) => {
+}: AnnotationTooltipProps) => {
   const styles = useStyles2(getStyles);
   const time = timeFormatter(annotation.time);
   const timeEnd = timeFormatter(annotation.timeEnd);
@@ -57,8 +60,10 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
     );
   }
 
+  const areAnnotationCommentsEnabled = config.featureToggles.annotationComments;
+
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={areAnnotationCommentsEnabled ? { minWidth: '300px' } : {}}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'} spacing={'md'}>
           <div className={styles.meta}>
@@ -82,6 +87,11 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
             ))}
           </HorizontalGroup>
         </>
+        {areAnnotationCommentsEnabled && (
+          <div className={styles.commentWrapper}>
+            <CommentManager objectType={'annotation'} objectId={annotation.id.toString()} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -93,6 +103,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       max-width: 400px;
+    `,
+    commentWrapper: css`
+      margin-top: 10px;
+      border-top: 2px solid #2d2b34;
+      height: 30vh;
+      overflow-y: scroll;
+      padding: 0 3px;
     `,
     header: css`
       padding: ${theme.spacing(0.5, 1)};
