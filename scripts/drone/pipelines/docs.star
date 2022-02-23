@@ -26,9 +26,6 @@ load(
 
 def docs_pipelines(edition, ver_mode, trigger):
     steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-    steps.extend([
-        build_frontend_step(edition=edition, ver_mode=ver_mode),
-    ])
 
     # Insert remaining steps
     steps.extend([
