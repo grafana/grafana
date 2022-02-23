@@ -21,6 +21,7 @@ export interface Props extends Themeable2 {
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
   timeZone: TimeZone;
+  isLive: boolean;
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   previewLimit?: number;
@@ -89,6 +90,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       logRows,
       deduplicatedRows,
       timeZone,
+      isLive,
       onClickFilterLabel,
       onClickFilterOutLabel,
       theme,
@@ -134,6 +136,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
+                isLive={isLive}
                 showDetectedFields={showDetectedFields}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}
@@ -161,6 +164,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
+                isLive={isLive}
                 showDetectedFields={showDetectedFields}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}

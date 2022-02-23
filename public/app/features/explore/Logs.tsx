@@ -401,6 +401,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               showContextToggle={showContextToggle}
               showLabels={showLabels}
               showTime={showTime}
+              isLive={false}
               enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}

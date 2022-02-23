@@ -113,6 +113,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
                   logRows={logRows}
                   timeZone={timeZone}
                   stopLive={controls.stop}
+                  isLive={isLive}
                   isPaused={this.props.isPaused}
                   onPause={controls.pause}
                   onResume={controls.resume}

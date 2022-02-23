@@ -32,6 +32,7 @@ export interface Props extends Themeable2 {
   logRows?: LogRowModel[];
   timeZone: TimeZone;
   stopLive: () => void;
+  isLive: boolean;
   onPause: () => void;
   onResume: () => void;
   isPaused: boolean;
@@ -200,6 +201,7 @@ class LiveLogs extends PureComponent<Props, State> {
       onPause,
       onResume,
       isPaused,
+      isLive,
       getFieldLinks,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -261,6 +263,7 @@ class LiveLogs extends PureComponent<Props, State> {
               showContextToggle={showContextToggle}
               showLabels={showLabels}
               showTime={showTime}
+              isLive={isLive}
               enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}

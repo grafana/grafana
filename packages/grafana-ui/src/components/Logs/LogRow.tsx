@@ -31,12 +31,14 @@ import { LogDetails } from './LogDetails';
 import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
 import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
+import tinycolor from 'tinycolor2';
 
 interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
   showTime: boolean;
+  isLive: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
   timeZone: TimeZone;
@@ -77,6 +79,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     errorLogRow: css`
       label: erroredLogRow;
       color: ${theme.colors.text.secondary};
+    `,
+    logsRowFade: css`
+      label: logs-row-fresh;
+      color: ${theme.colors.text};
+      background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
+      animation: fade 1s ease-out 1s 1 normal forwards;
+      @keyframes fade {
+        from {
+          background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
+        }
+        to {
+          background-color: transparent;
+        }
+      }
     `,
   };
 };
@@ -136,6 +152,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showContextToggle,
       showLabels,
       showTime,
+      isLive,
       showDetectedFields,
       wrapLogMessage,
       prettifyLogMessage,
@@ -148,9 +165,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const { errorMessage, hasError } = checkLogsError(row);
-    const logRowBackground = cx(style.logsRow, {
-      [styles.errorLogRow]: hasError,
-    });
+    var cxStyles = [
+      style.logsRow,
+      {
+        [styles.errorLogRow]: hasError,
+      },
+    ];
+    if (isLive) {
+      cxStyles.push(styles.logsRowFade);
+    }
+    const logRowBackground = cx(cxStyles);
 
     const processedRow =
       row.hasUnescapedContent && forceEscape
