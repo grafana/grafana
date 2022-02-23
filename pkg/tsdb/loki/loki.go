@@ -2,8 +2,6 @@ package loki
 
 import (
 	"context"
-	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -17,12 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
-	"github.com/grafana/loki/pkg/logproto"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
@@ -45,12 +40,8 @@ var (
 )
 
 type datasourceInfo struct {
-	HTTPClient        *http.Client
-	URL               string
-	TLSClientConfig   *tls.Config
-	BasicAuthUser     string
-	BasicAuthPassword string
-	TimeInterval      string `json:"timeInterval"`
+	HTTPClient *http.Client
+	URL        string
 }
 
 type QueryModel struct {
@@ -74,24 +65,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		tlsClientConfig, err := httpClientProvider.GetTLSConfig(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		jsonData := datasourceInfo{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
 		model := &datasourceInfo{
-			HTTPClient:        client,
-			URL:               settings.URL,
-			TLSClientConfig:   tlsClientConfig,
-			TimeInterval:      jsonData.TimeInterval,
-			BasicAuthUser:     settings.BasicAuthUser,
-			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
+			HTTPClient: client,
+			URL:        settings.URL,
 		}
 		return model, nil
 	}
@@ -105,17 +81,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return result, err
 	}
 
-	client := &client.DefaultClient{
-		Address:  dsInfo.URL,
-		Username: dsInfo.BasicAuthUser,
-		Password: dsInfo.BasicAuthPassword,
-		TLSConfig: config.TLSConfig{
-			InsecureSkipVerify: dsInfo.TLSClientConfig.InsecureSkipVerify,
-		},
-		Tripperware: func(t http.RoundTripper) http.RoundTripper {
-			return dsInfo.HTTPClient.Transport
-		},
-	}
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
 
 	queries, err := parseQuery(req)
 	if err != nil {
@@ -130,7 +96,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
 		defer span.End()
 
-		frames, err := runQuery(client, query)
+		frames, err := runQuery(ctx, api, query)
 
 		queryRes := backend.DataResponse{}
 
@@ -204,15 +170,8 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(client *client.DefaultClient, query *lokiQuery) (data.Frames, error) {
-	// `limit` only applies to log-producing queries, and we
-	// currently only support metric queries, so this can be set to any value.
-	limit := 1
-
-	// we do not use `interval`, so we set it to zero
-	interval := time.Duration(0)
-
-	value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
+	value, err := api.QueryRange(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}

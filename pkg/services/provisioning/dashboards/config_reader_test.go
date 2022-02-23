@@ -25,10 +25,10 @@ var (
 func TestDashboardsAsConfig(t *testing.T) {
 	t.Run("Dashboards as configuration", func(t *testing.T) {
 		logger := log.New("test-logger")
-		sqlstore.InitTestDB(t)
+		store := sqlstore.InitTestDB(t)
 
 		t.Run("Should fail if orgs don't exist in the database", func(t *testing.T) {
-			cfgProvider := configReader{path: appliedDefaults, log: logger}
+			cfgProvider := configReader{path: appliedDefaults, log: logger, orgStore: store}
 			_, err := cfgProvider.readConfig(context.Background())
 			require.Error(t, err)
 			assert.True(t, errors.Is(err, models.ErrOrgNotFound))
@@ -41,7 +41,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		}
 
 		t.Run("default values should be applied", func(t *testing.T) {
-			cfgProvider := configReader{path: appliedDefaults, log: logger}
+			cfgProvider := configReader{path: appliedDefaults, log: logger, orgStore: store}
 			cfg, err := cfgProvider.readConfig(context.Background())
 			require.NoError(t, err)
 
@@ -52,7 +52,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		t.Run("Can read config file version 1 format", func(t *testing.T) {
 			_ = os.Setenv("TEST_VAR", "general")
-			cfgProvider := configReader{path: simpleDashboardConfig, log: logger}
+			cfgProvider := configReader{path: simpleDashboardConfig, log: logger, orgStore: store}
 			cfg, err := cfgProvider.readConfig(context.Background())
 			_ = os.Unsetenv("TEST_VAR")
 			require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 
 		t.Run("Can read config file in version 0 format", func(t *testing.T) {
-			cfgProvider := configReader{path: oldVersion, log: logger}
+			cfgProvider := configReader{path: oldVersion, log: logger, orgStore: store}
 			cfg, err := cfgProvider.readConfig(context.Background())
 			require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 
 		t.Run("Should skip invalid path", func(t *testing.T) {
-			cfgProvider := configReader{path: "/invalid-directory", log: logger}
+			cfgProvider := configReader{path: "/invalid-directory", log: logger, orgStore: store}
 			cfg, err := cfgProvider.readConfig(context.Background())
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -79,7 +79,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 
 		t.Run("Should skip broken config files", func(t *testing.T) {
-			cfgProvider := configReader{path: brokenConfigs, log: logger}
+			cfgProvider := configReader{path: brokenConfigs, log: logger, orgStore: store}
 			cfg, err := cfgProvider.readConfig(context.Background())
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)

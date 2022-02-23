@@ -22,6 +22,7 @@ export interface NavModelItem {
   highlightText?: string;
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
+  hideFromNavbar?: boolean;
 }
 
 export enum NavSection {
