@@ -26,7 +26,7 @@ func (hs *HTTPServer) SetPreferencesJsonData(c *models.ReqContext) response.Resp
 	cmd.OrgId = c.OrgId
 
 	if err := hs.SQLStore.SavePreferences(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to set json data preferences", err)
+		return response.Error(http.StatusInternalServerError, "Failed to set json data preferences", err)
 	}
 
 	return response.Success("Json data preferences set")
