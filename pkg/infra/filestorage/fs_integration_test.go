@@ -373,10 +373,6 @@ func TestFsStorage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%s: %s", "Local FS", tt.name), func(t *testing.T) {
-			if tt.name == "listing files with pagination" {
-				// bug in cdk fileblob
-				return
-			}
 			setupLocalFs()
 			defer cleanUp()
 			for i, step := range tt.steps {

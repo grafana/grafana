@@ -264,6 +264,7 @@ func (c cdkBlobStorage) convertListOptions(options *ListOptions) *ListOptions {
 }
 
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
+	paging.After = c.fixInputPrefix(paging.After)
 	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, c.convertListOptions(options))
 }
 
@@ -357,6 +358,7 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string) err
 
 	err = c.bucket.Delete(ctx, directoryMarkerPath)
 	return err
+
 }
 
 func (c cdkBlobStorage) close() error {
