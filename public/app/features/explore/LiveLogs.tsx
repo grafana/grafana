@@ -1,12 +1,10 @@
-import React, { createRef, PureComponent } from 'react';
-import { css, cx } from '@emotion/css';
-import tinycolor from 'tinycolor2';
+import React, { PureComponent } from 'react';
+import { css } from '@emotion/css';
 
-import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2, LogRows } from '@grafana/ui';
+import { Icon, Button, Themeable2, withTheme2, LogRows } from '@grafana/ui';
 import {
   LogRowModel,
   TimeZone,
-  dateTimeFormat,
   GrafanaTheme2,
   Field,
   LinkModel,
@@ -17,8 +15,6 @@ import {
 
 import { ElapsedTime } from './ElapsedTime';
 import store from 'app/core/store';
-import memoizeOne from 'memoize-one';
-import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
 const SETTINGS_KEYS = {
