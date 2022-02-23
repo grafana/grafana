@@ -3,15 +3,19 @@ import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme,
+  KeyValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, TagsInput, useStyles, InlineSwitch } from '@grafana/ui';
 import React from 'react';
+import KeyValueInput from './KeyValueInput';
 
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
+  mappedTags?: Array<KeyValue<string>>;
+  mapTagNamesEnabled?: boolean;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
@@ -54,19 +58,64 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
+      {options.jsonData.tracesToLogs?.mapTagNamesEnabled ? (
+        <InlineFieldRow>
+          <InlineField
+            tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+            label="Tags"
+            labelWidth={26}
+          >
+            <KeyValueInput
+              keyPlaceholder="Tag"
+              values={
+                options.jsonData.tracesToLogs?.mappedTags ??
+                options.jsonData.tracesToLogs?.tags?.map((tag) => ({ key: tag })) ??
+                []
+              }
+              onChange={(v) =>
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                  ...options.jsonData.tracesToLogs,
+                  mappedTags: v,
+                })
+              }
+            />
+          </InlineField>
+        </InlineFieldRow>
+      ) : (
+        <InlineFieldRow>
+          <InlineField
+            tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+            label="Tags"
+            labelWidth={26}
+          >
+            <TagsInput
+              tags={options.jsonData.tracesToLogs?.tags}
+              width={40}
+              onChange={(tags) =>
+                updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                  ...options.jsonData.tracesToLogs,
+                  tags: tags,
+                })
+              }
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
-          label="Tags"
+          label="Map tag names"
           labelWidth={26}
+          grow
+          tooltip="Map trace tag names to log label names. Ex: k8s.pod.name -> pod"
         >
-          <TagsInput
-            tags={options.jsonData.tracesToLogs?.tags}
-            width={40}
-            onChange={(tags) =>
+          <InlineSwitch
+            id="mapTagNames"
+            value={options.jsonData.tracesToLogs?.mapTagNamesEnabled ?? false}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
-                datasourceUid: options.jsonData.tracesToLogs?.datasourceUid,
-                tags: tags,
+                ...options.jsonData.tracesToLogs,
+                mapTagNamesEnabled: event.currentTarget.checked,
               })
             }
           />
@@ -156,6 +205,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
+
       <InlineFieldRow>
         <InlineField label="Loki Search" labelWidth={26} grow tooltip="Use this logs data source to search for traces.">
           <InlineSwitch

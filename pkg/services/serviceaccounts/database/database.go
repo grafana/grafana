@@ -128,9 +128,9 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var sess *xorm.Session
 
-		sess = dbSession.Limit(100, 0).
+		sess = dbSession.
 			Join("inner", "user", "user.id = api_key.service_account_id").
-			Where("user.org_id=? AND user.id=? AND ( expires IS NULL or expires >= ?)", orgID, serviceAccountID, time.Now().Unix()).
+			Where("user.org_id=? AND user.id=?", orgID, serviceAccountID).
 			Asc("name")
 
 		return sess.Find(&result)
@@ -177,12 +177,16 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	if len(query.Result) != 1 {
 		return nil, serviceaccounts.ErrServiceAccountNotFound
 	}
+
 	saProfile := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:    query.Result[0].UserId,
-		Name:  query.Result[0].Name,
-		Login: query.Result[0].Login,
+		Id:        query.Result[0].UserId,
+		Name:      query.Result[0].Name,
+		Login:     query.Result[0].Login,
+		OrgId:     query.Result[0].OrgId,
+		UpdatedAt: query.Result[0].Updated,
+		CreatedAt: query.Result[0].Created,
 	}
-	return saProfile, err
+	return saProfile, nil
 }
 
 func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,

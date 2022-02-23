@@ -113,17 +113,18 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args userCr
 
 	// create user
 	user = models.User{
-		Email:         args.Email,
-		Name:          args.Name,
-		Login:         args.Login,
-		Company:       args.Company,
-		IsAdmin:       args.IsAdmin,
-		IsDisabled:    args.IsDisabled,
-		OrgId:         orgID,
-		EmailVerified: args.EmailVerified,
-		Created:       time.Now(),
-		Updated:       time.Now(),
-		LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+		Email:            args.Email,
+		Name:             args.Name,
+		Login:            args.Login,
+		Company:          args.Company,
+		IsAdmin:          args.IsAdmin,
+		IsDisabled:       args.IsDisabled,
+		OrgId:            orgID,
+		EmailVerified:    args.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: false,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -617,6 +618,10 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 	return err
 }
 
+func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	return SearchUsers(ctx, query)
+}
+
 func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 	query.Result = models.SearchUserQueryResult{
 		Users: make([]*models.UserSearchHitDTO, 0),
@@ -630,7 +635,8 @@ func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 
 	// TODO: add to chore, for cleaning up after we have created
 	// service accounts table in the modelling
-	whereConditions = append(whereConditions, "u.is_service_account = false")
+	whereConditions = append(whereConditions, "u.is_service_account = ?")
+	whereParams = append(whereParams, dialect.BooleanStr(false))
 
 	// Join with only most recent auth module
 	joinCondition := `(
