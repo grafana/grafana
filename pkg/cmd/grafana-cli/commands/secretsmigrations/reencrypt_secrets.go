@@ -62,8 +62,6 @@ func (s simpleSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.S
 	} else {
 		logger.Info(fmt.Sprintf("Column %s from %s has been re-encrypted successfully", s.columnName, s.tableName))
 	}
-
-	return
 }
 
 func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
@@ -121,8 +119,6 @@ func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Sess
 	} else {
 		logger.Info(fmt.Sprintf("Column %s from %s has been re-encrypted successfully", s.columnName, s.tableName))
 	}
-
-	return
 }
 
 func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
@@ -174,8 +170,6 @@ func (s jsonSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Ses
 	} else {
 		logger.Info(fmt.Sprintf("Secure json data secrets from %s have been re-encrypted successfully", s.tableName))
 	}
-
-	return
 }
 
 func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Session) {
@@ -250,8 +244,6 @@ func (s alertingSecret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm
 	} else {
 		logger.Info("Alerting configuration secrets have been re-encrypted successfully")
 	}
-
-	return
 }
 
 func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
