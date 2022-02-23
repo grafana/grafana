@@ -5,10 +5,12 @@ import config from 'app/core/config';
 const defaultPins = ['home', 'dashboards', 'explore', 'alerting'].join(',');
 const storedPins = (window.localStorage.getItem('pinnedNavItems') ?? defaultPins).split(',');
 
-export const initialState: NavModelItem[] = (config.bootData.navTree as NavModelItem[]).map((n: NavModelItem) => ({
-  ...n,
-  hideFromNavbar: n.id === undefined || !storedPins.includes(n.id),
-}));
+export const initialState: NavModelItem[] = ((config.bootData?.navTree ?? []) as NavModelItem[]).map(
+  (n: NavModelItem) => ({
+    ...n,
+    hideFromNavbar: n.id === undefined || !storedPins.includes(n.id),
+  })
+);
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
