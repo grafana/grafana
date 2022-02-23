@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2 } from '@grafana/ui';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { FolderState } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { isEqual, orderBy, uniqWith } from 'lodash';
@@ -16,7 +17,6 @@ import { labelsMatchMatchers, matchersToString, parseMatcher, parseMatchers } fr
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
-const ITEMS_PER_PAGE = 6;
 interface Props {
   folder: FolderState;
 }
@@ -60,7 +60,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? 'alpha-asc');
 
   const showNoResultsText = alertRules.length === 0 || filteredRules.length === 0;
-  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, ITEMS_PER_PAGE);
+  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
   return (
     <div className={styles.container}>
