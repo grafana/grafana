@@ -13,14 +13,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 
 	cwapi "github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,36 +88,6 @@ func getCWMetrics(t *testing.T, datasourceId int, addr string) []byte {
 	require.Equal(t, 200, resp.StatusCode)
 
 	return buf.Bytes()
-}
-
-func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) backend.QueryDataResponse {
-	t.Helper()
-
-	buf := bytes.Buffer{}
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(&req)
-	require.NoError(t, err)
-	u := fmt.Sprintf("http://%s/api/ds/query", addr)
-	t.Logf("Making POST request to %s", u)
-	// nolint:gosec
-	resp, err := http.Post(u, "application/json", &buf)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	t.Cleanup(func() {
-		err := resp.Body.Close()
-		assert.NoError(t, err)
-	})
-
-	buf = bytes.Buffer{}
-	_, err = io.Copy(&buf, resp.Body)
-	require.NoError(t, err)
-	require.Equal(t, 200, resp.StatusCode)
-
-	var tr backend.QueryDataResponse
-	err = json.Unmarshal(buf.Bytes(), &tr)
-	require.NoError(t, err)
-
-	return tr
 }
 
 func setUpDatabase(t *testing.T, store *sqlstore.SQLStore, uid string) {
