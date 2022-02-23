@@ -6,6 +6,7 @@
 
 load('scripts/drone/pipelines/pr.star', 'pr_pipelines')
 load('scripts/drone/pipelines/main.star', 'main_pipelines')
+load('scripts/drone/pipelines/docs.star', 'docs_pipelines')
 load('scripts/drone/pipelines/release.star', 'release_pipelines', 'publish_image_pipelines', 'publish_artifacts_pipelines', 'publish_npm_pipelines', 'publish_packages_pipeline')
 load('scripts/drone/version.star', 'version_branch_pipelines')
 load('scripts/drone/pipelines/cron.star', 'cronjobs')

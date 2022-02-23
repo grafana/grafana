@@ -31,6 +31,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Map tag names -** When enabled, allows configuring how Tempo tag names map to Loki label names. For example, map `service.name` to `service`.
 - **Span start time shift -** A shift in the start time for the Loki query based on the start time for the span. To extend the time to the past, use a negative value. You can use time units, for example, 5s, 1m, 3h. The default is 0.
 - **Span end time shift -** Shift in the end time for the Loki query based on the span end time. Time units can be used here, for example, 5s, 1m, 3h. The default is 0.
 - **Filter by Trace ID -** Toggle to append the trace ID to the Loki query.
@@ -167,6 +168,8 @@ datasources:
       tracesToLogs:
         datasourceUid: 'loki'
         tags: ['job', 'instance', 'pod', 'namespace']
+        mappedTags: [{ key: 'service.name', value: 'service' }]
+        mapTagNamesEnabled: false
         spanStartTimeShift: '1h'
         spanEndTimeShift: '1h'
         filterByTraceID: false
