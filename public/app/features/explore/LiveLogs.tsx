@@ -44,32 +44,6 @@ export interface Props extends Themeable2 {
 }
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => ({
-  logsRowsLive: css`
-    label: logs-rows-live;
-    font-family: ${theme.typography.fontFamilyMonospace};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    display: flex;
-    flex-flow: column nowrap;
-    height: 60vh;
-    overflow-y: scroll;
-    :first-child {
-      margin-top: auto !important;
-    }
-  `,
-  logsRowFade: css`
-    label: logs-row-fresh;
-    color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
-    animation: fade 1s ease-out 1s 1 normal forwards;
-    @keyframes fade {
-      from {
-        background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
-      }
-      to {
-        background-color: transparent;
-      }
-    }
-  `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.h6.fontSize};
     padding-top: ${theme.spacing(1)};
@@ -78,9 +52,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => ({
   `,
   button: css`
     margin-right: ${theme.spacing(1)};
-  `,
-  fullWidth: css`
-    width: 100%;
   `,
   logsSection: css`
     display: flex;
@@ -220,38 +191,9 @@ class LiveLogs extends PureComponent<Props, State> {
     } = this.state;
 
     const styles = getStyles(theme, wrapLogMessage);
-    // const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
-
-    // console.log('logRows', this.rowsToRender());
 
     return (
       <>
-        {/* <table className={styles.fullWidth}>
-          <tbody
-            onScroll={isPaused ? undefined : this.onScroll}
-            className={cx(['logs-rows', styles.logsRowsLive])}
-            ref={this.scrollContainerRef}
-          >
-            {this.rowsToRender().map((row: LogRowModel) => {
-              return (
-                <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
-                  <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
-                  <td className={cx(logsRowMessage)}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
-                </tr>
-              );
-            })}
-            <tr
-              ref={(element) => {
-                this.liveEndDiv = element;
-                // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
-                // default.
-                if (this.liveEndDiv && !isPaused) {
-                  this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
-                }
-              }}
-            />
-          </tbody>
-        </table> */}
         <div className={styles.logsSection}>
           <div onScroll={isPaused ? undefined : this.onScroll} className={styles.logRows} ref={this.scrollContainerRef}>
             <LogRows
@@ -278,8 +220,7 @@ class LiveLogs extends PureComponent<Props, State> {
             <div
               ref={(element) => {
                 this.liveEndDiv = element;
-                // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
-                // default.
+                // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by default.
                 if (this.liveEndDiv && !isPaused) {
                   this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
                 }
