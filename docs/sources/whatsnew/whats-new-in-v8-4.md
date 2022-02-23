@@ -24,9 +24,9 @@ You can now share links to your playlists the same way as with dashboards, to ea
 
 {{< figure src="/static/img/docs/dashboards/share-playlists-8-4.png" max-width="1200px" caption="Share playlist" >}}
 
-### $**interval and $**interval_ms in panel title
+### `$__interval` and `$__interval_ms` in panel title
 
-We’ve expanded the functionality of this existing and popular feature. You can now use $**interval and $**interval_ms in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
+We’ve expanded the functionality of this existing and popular feature. You can now use `$__interval` and `$__interval_ms` in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
 
 {{< figure src="/static/img/docs/panels/interval-8-4.png" max-width="1200px" caption="Time intervals" >}}
 
@@ -99,7 +99,7 @@ Geomap now supports tooltips with data-links across multiple layers.
 
 The HTTP API details are now [specified](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/papagian/api-spec/public/api-merged.json) using OpenAPI v2.
 
-The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) editor via the /swagger-ui endpoint that enables users to make requests to the HTTP API via the browser. This is disabled by default and it’s enabled when the swagger-ui feature toggle is set.
+The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) editor via the /swagger-ui endpoint that enables users to make requests to the HTTP API via the browser. This is disabled by default and it’s enabled when the `swaggerUi` feature toggle is set.
 
 # Grafana Enterprise
 

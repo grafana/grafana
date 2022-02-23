@@ -326,6 +326,7 @@ async function handleHistory(
     limitExceeded,
   } = await addToRichHistory(
     state.richHistory || [],
+    datasource.uid,
     datasource.name,
     queries,
     false,
@@ -496,7 +497,11 @@ export const runQueries = (
         );
         dispatch(cleanLogsVolumeAction({ exploreId }));
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
-        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(transaction.request);
+        const sourceRequest = {
+          ...transaction.request,
+          requestId: transaction.request.requestId + '_log_volume',
+        };
+        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
         dispatch(
           storeLogsVolumeDataProviderAction({
             exploreId,

@@ -9,4 +9,4 @@ below your username.
 Log in now:
 {{.AppUrl}}
 
-Sent by Grafana v{{.BuildVersion}} (c) 2021 Grafana Labs
+Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs

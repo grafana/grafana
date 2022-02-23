@@ -4,8 +4,9 @@ import { CoreApp, SelectableValue } from '@grafana/data';
 import { Input, RadioButtonGroup, Select, Switch } from '@grafana/ui';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 import { PromQuery } from '../../types';
-import { FORMAT_OPTIONS } from '../../components/PromQueryEditor';
+import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
+import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
 export interface Props {
   query: PromQuery;
@@ -15,15 +16,8 @@ export interface Props {
 }
 
 export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange, onRunQuery }) => {
-  const formatOption = FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0];
-
   const onChangeFormat = (value: SelectableValue<string>) => {
     onChange({ ...query, format: value.value });
-    onRunQuery();
-  };
-
-  const onLegendFormatChanged = (evt: React.FocusEvent<HTMLInputElement>) => {
-    onChange({ ...query, legendFormat: evt.currentTarget.value });
     onRunQuery();
   };
 
@@ -32,7 +26,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const queryTypeOptions = getQueryTypeOptions(false);
+  const queryTypeOptions = getQueryTypeOptions(app === CoreApp.Explore);
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -41,18 +35,19 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const showExemplarSwitch = app !== CoreApp.UnifiedAlerting && !query.instant;
+  const onIntervalFactorChange = (value: SelectableValue<number>) => {
+    onChange({ ...query, intervalFactor: value.value });
+    onRunQuery();
+  };
+
+  const formatOption = FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0];
+  const queryTypeValue = getQueryTypeValue(query);
+  const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryTypeValue)!.label;
 
   return (
     <EditorRow>
-      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption)}>
-        <EditorField
-          label="Legend"
-          tooltip="Controls the name of the time series, using name or pattern. For example
-        {{hostname}} will be replaced with label value for the label hostname."
-        >
-          <Input placeholder="auto" defaultValue={query.legendFormat} onBlur={onLegendFormatChanged} />
-        </EditorField>
+      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel)}>
+        <PromQueryLegendEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />
         <EditorField
           label="Min step"
           tooltip={
@@ -71,20 +66,32 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
             defaultValue={query.interval}
           />
         </EditorField>
-
         <EditorField label="Format">
           <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
         </EditorField>
         <EditorField label="Type">
           <RadioButtonGroup
+            id="options.query.type"
             options={queryTypeOptions}
-            value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+            value={queryTypeValue}
             onChange={onQueryTypeChange}
           />
         </EditorField>
-        {showExemplarSwitch && (
+        {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
             <Switch value={query.exemplar} onChange={onExemplarChange} />
+          </EditorField>
+        )}
+        {query.intervalFactor && query.intervalFactor > 1 && (
+          <EditorField label="Resolution">
+            <Select
+              aria-label="Select resolution"
+              menuShouldPortal
+              isSearchable={false}
+              options={INTERVAL_FACTOR_OPTIONS}
+              onChange={onIntervalFactorChange}
+              value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+            />
           </EditorField>
         )}
       </QueryOptionGroup>
@@ -92,22 +99,29 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   );
 });
 
-function getCollapsedInfo(query: PromQuery, formatOption: SelectableValue<string>): string[] {
-  const items: string[] = [];
-
-  if (query.legendFormat) {
-    items.push(`Legend: ${query.legendFormat}`);
+function shouldShowExemplarSwitch(query: PromQuery, app?: CoreApp) {
+  if (app === CoreApp.UnifiedAlerting || !query.range) {
+    return false;
   }
 
-  items.push(`Format: ${formatOption.label}`);
+  return true;
+}
+
+function getQueryTypeValue(query: PromQuery) {
+  return query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range';
+}
+
+function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: string): string[] {
+  const items: string[] = [];
+
+  items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
+  items.push(`Format: ${formatOption}`);
 
   if (query.interval) {
     items.push(`Step ${query.interval}`);
   }
 
-  if (query.instant) {
-    items.push(`Instant: true`);
-  }
+  items.push(`Type: ${queryType}`);
 
   if (query.exemplar) {
     items.push(`Exemplars: true`);

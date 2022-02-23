@@ -9,16 +9,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type TeamGuardianMock struct {
@@ -49,14 +50,14 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 }
 
 func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
-	settings := setting.NewCfg()
+	hs := setupSimpleHTTPServer(nil)
+	settings := hs.Cfg
 	sqlStore := sqlstore.InitTestDB(t)
-	hs := &HTTPServer{
-		Cfg:          settings,
-		License:      &licensing.OSSLicensingService{},
-		SQLStore:     sqlStore,
-		teamGuardian: &TeamGuardianMock{},
-	}
+	sqlStore.Cfg = settings
+
+	hs.SQLStore = sqlStore
+	hs.License = &licensing.OSSLicensingService{}
+	hs.teamGuardian = &TeamGuardianMock{}
 	mock := mockstore.NewSQLStoreMock()
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
@@ -133,6 +134,7 @@ func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) i
 }
 
 var (
+	teamMemberGetRoute    = "/api/teams/%s/members"
 	teamMemberAddRoute    = "/api/teams/%s/members"
 	createTeamMemberCmd   = `{"userId": %d}`
 	teamMemberUpdateRoute = "/api/teams/%s/members/%s"
@@ -189,6 +191,60 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
+func TestGetTeamMembersAPIEndpoint_FGAC(t *testing.T) {
+	sc := setupHTTPServer(t, true, true)
+	sc.hs.License = &licensing.OSSLicensingService{}
+
+	teamMemberCount := 3
+	// setupTeamTestScenario sets up 3 user (id: 2,3,4) in the team (id: 1)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+
+	setInitCtxSignedInViewer(sc.initCtx)
+	t.Run("Access control allows getting a team members with the right permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock,
+			[]*ac.Permission{
+				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "1")},
+				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
+			},
+			testOrgId,
+		)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
+		require.Equal(t, http.StatusOK, response.Code)
+
+		res := []*models.TeamMemberDTO{}
+		err := json.Unmarshal(response.Body.Bytes(), &res)
+		require.NoError(t, err)
+		require.Len(t, res, 3, "expected all team members to have been returned")
+	})
+
+	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	t.Run("Access control filters team members based on user permissions", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock,
+			[]*ac.Permission{
+				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "1")},
+				{Action: ac.ActionOrgUsersRead, Scope: ac.Scope("users", "id", "2")},
+				{Action: ac.ActionOrgUsersRead, Scope: ac.Scope("users", "id", "3")},
+			},
+			testOrgId)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
+		require.Equal(t, http.StatusOK, response.Code)
+
+		res := []*models.TeamMemberDTO{}
+		err := json.Unmarshal(response.Body.Bytes(), &res)
+		require.NoError(t, err)
+		require.Len(t, res, 2, "expected a subset team members to have been returned")
+	})
+
+	setInitCtxSignedInViewer(sc.initCtx)
+	t.Run("Access control prevents getting a team member with incorrect scope", func(t *testing.T) {
+		setAccessControlPermissions(sc.acmock,
+			[]*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "2")}},
+			testOrgId)
+		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
+		require.Equal(t, http.StatusForbidden, response.Code)
+	})
+}
+
 func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
@@ -200,7 +256,7 @@ func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	newUserId := createUser(sc.db, testOrgId, t)
 	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Access control allows adding a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -209,14 +265,14 @@ func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	newUserId = createUser(sc.db, testOrgId, t)
 	input = strings.NewReader(fmt.Sprintf(teamCmd, newUserId))
 	t.Run("Access control prevents from adding a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents adding a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -279,7 +335,7 @@ func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
 	t.Run("Access control allows updating a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -287,14 +343,14 @@ func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
 	t.Run("Access control prevents updating a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents updating a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -352,21 +408,21 @@ func TestDeleteTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows removing a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "2"), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Access control prevents removing a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents removing a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})

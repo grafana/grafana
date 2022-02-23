@@ -206,7 +206,7 @@ func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface
 		return ctxLogger
 	}
 
-	ctxLogger.Swap(withFunc(&ctxLogger.SwapLogger, ctx...))
+	ctxLogger.Swap(withFunc(ctxLogger.GetLogger(), ctx...))
 	return ctxLogger
 }
 
@@ -251,7 +251,16 @@ func getLogLevelFromString(levelName string) level.Option {
 func getFilters(filterStrArray []string) map[string]level.Option {
 	filterMap := make(map[string]level.Option)
 
-	for _, filterStr := range filterStrArray {
+	for i := 0; i < len(filterStrArray); i++ {
+		filterStr := strings.TrimSpace(filterStrArray[i])
+
+		if strings.HasPrefix(filterStr, ";") || strings.HasPrefix(filterStr, "#") {
+			if len(filterStr) == 1 {
+				i++
+			}
+			continue
+		}
+
 		parts := strings.Split(filterStr, ":")
 		if len(parts) > 1 {
 			filterMap[parts[0]] = getLogLevelFromString(parts[1])
