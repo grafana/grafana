@@ -15,6 +15,20 @@ type FakeDashboardStore struct {
 	mock.Mock
 }
 
+// DeleteOrphanedProvisionedDashboards provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.DeleteOrphanedProvisionedDashboardsCommand) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetFolderByTitle provides a mock function with given fields: orgID, title
 func (_m *FakeDashboardStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
 	ret := _m.Called(orgID, title)

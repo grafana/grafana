@@ -143,6 +143,16 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
+			Name:        "dashboardComments",
+			Description: "Enable dashboard-wide comments",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "annotationComments",
+			Description: "Enable annotation comments",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
