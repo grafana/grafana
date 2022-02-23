@@ -1,4 +1,4 @@
-package prefakes
+package preftests
 
 import (
 	"context"

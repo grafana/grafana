@@ -79,22 +79,17 @@ func (s *StoreImpl) GetPreferencesWithDefaults(ctx context.Context, query *model
 }
 
 func (s *StoreImpl) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
+	var prefs models.Preferences
 	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var prefs models.Preferences
-		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
+		_, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
 
 		if err != nil {
 			return err
 		}
 
-		if exists {
-			query.Result = &prefs
-		} else {
-			query.Result = new(models.Preferences)
-		}
 		return nil
 	})
-	return query.Result, err
+	return &prefs, err
 }
 
 func (s *StoreImpl) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
