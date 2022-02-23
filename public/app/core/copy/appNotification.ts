@@ -1,6 +1,8 @@
-import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
+import { useMemo } from 'react';
+import { AppNotification, AppNotificationSeverity, AppNotificationTimeout, useDispatch } from 'app/types';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { v4 as uuidv4 } from 'uuid';
+import { notifyApp } from '../actions';
 
 const defaultSuccessNotification = {
   title: '',
@@ -53,3 +55,28 @@ export const createWarningNotification = (title: string, text = ''): AppNotifica
   text: text,
   id: uuidv4(),
 });
+
+/** Hook for showing toast notifications with varying severity (success, warning error).
+ * @example
+ * const notifyApp = useAppNotification();
+ * notifyApp.success('Success!', 'Some additional text');
+ * notifyApp.warning('Warning!');
+ * notifyApp.error('Error!');
+ */
+export function useAppNotification() {
+  const dispatch = useDispatch();
+  return useMemo(
+    () => ({
+      success: (title: string, text = '') => {
+        dispatch(notifyApp(createSuccessNotification(title, text)));
+      },
+      warning: (title: string, text = '') => {
+        dispatch(notifyApp(createWarningNotification(title, text)));
+      },
+      error: (title: string, text = '') => {
+        dispatch(notifyApp(createErrorNotification(title, text)));
+      },
+    }),
+    [dispatch]
+  );
+}
