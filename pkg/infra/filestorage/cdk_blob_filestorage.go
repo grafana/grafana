@@ -132,6 +132,8 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 		if err == io.EOF {
 			hasMore = false
 			break
+		} else {
+			hasMore = true
 		}
 
 		if err != nil {
@@ -218,6 +220,17 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 	}, nil
 }
 
+func (c cdkBlobStorage) fixInputPrefix(path string) string {
+	if path == Delimiter || path == "" {
+		return c.rootFolder
+	}
+	if strings.HasPrefix(path, Delimiter) {
+		path = fmt.Sprintf("%s%s", c.rootFolder, strings.TrimPrefix(path, Delimiter))
+	}
+
+	return path
+}
+
 func (c cdkBlobStorage) convertFolderPathToPrefix(path string) string {
 	if path == Delimiter || path == "" {
 		return c.rootFolder
@@ -236,8 +249,22 @@ func fixPath(path string) string {
 	return newPath
 }
 
+func (c cdkBlobStorage) convertListOptions(options *ListOptions) *ListOptions {
+	if options == nil || options.allowedPrefixes == nil || len(options.allowedPrefixes) == 0 {
+		return options
+	}
+
+	newPrefixes := make([]string, len(options.allowedPrefixes))
+	for i, prefix := range options.allowedPrefixes {
+		newPrefixes[i] = c.fixInputPrefix(prefix)
+	}
+
+	options.PathFilters.allowedPrefixes = newPrefixes
+	return options
+}
+
 func (c cdkBlobStorage) ListFiles(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListFilesResponse, error) {
-	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, options)
+	return c.listFiles(ctx, c.convertFolderPathToPrefix(folderPath), paging, c.convertListOptions(options))
 }
 
 func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string, options *ListOptions) ([]FileMetadata, error) {
@@ -294,7 +321,7 @@ func (c cdkBlobStorage) listFolders(ctx context.Context, parentFolderPath string
 }
 
 func (c cdkBlobStorage) ListFolders(ctx context.Context, parentFolderPath string, options *ListOptions) ([]FileMetadata, error) {
-	folders, err := c.listFolders(ctx, c.convertFolderPathToPrefix(parentFolderPath), options)
+	folders, err := c.listFolders(ctx, c.convertFolderPathToPrefix(parentFolderPath), c.convertListOptions(options))
 	return folders, err
 }
 
@@ -330,4 +357,8 @@ func (c cdkBlobStorage) DeleteFolder(ctx context.Context, folderPath string) err
 
 	err = c.bucket.Delete(ctx, directoryMarkerPath)
 	return err
+}
+
+func (c cdkBlobStorage) close() error {
+	return c.bucket.Close()
 }

@@ -367,3 +367,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) erro
 
 	return err
 }
+
+func (s dbFileStorage) close() error {
+	return nil
+}

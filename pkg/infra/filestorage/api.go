@@ -101,6 +101,8 @@ type FileStorage interface {
 
 	CreateFolder(ctx context.Context, path string, name string) error
 	DeleteFolder(ctx context.Context, path string) error
+
+	close() error
 }
 
 // Get(ctx, "/myGit/dashboards/xyz123")

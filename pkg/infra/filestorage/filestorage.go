@@ -141,3 +141,7 @@ func (b service) CreateFolder(ctx context.Context, path string, folderName strin
 func (b service) DeleteFolder(ctx context.Context, path string) error {
 	return errors.New("not available")
 }
+
+func (c service) close() error {
+	return c.grafanaDsStorage.close()
+}

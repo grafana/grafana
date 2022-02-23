@@ -208,3 +208,7 @@ func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
 
 	return b.wrapped.DeleteFolder(ctx, path)
 }
+
+func (c wrapper) close() error {
+	return c.wrapped.close()
+}
