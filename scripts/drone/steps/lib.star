@@ -47,10 +47,10 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
     else:
         if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
+            build_no = '${DRONE_COMMIT}'
         else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
-        args = '--build-id {}'.format(build_no)
+            build_no = '$${DRONE_COMMIT}'
+        args = '--source-commit {}'.format(build_no)
 
     identify_runner = identify_runner_step(platform)
 

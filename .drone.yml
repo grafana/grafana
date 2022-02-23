@@ -21,7 +21,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -124,7 +124,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -428,7 +428,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -484,7 +484,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -537,7 +537,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -638,7 +638,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -3007,7 +3007,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -3266,7 +3266,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -3380,7 +3380,7 @@ steps:
   name: identify-runner
 - commands:
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   image: grafana/build-container:1.4.9
   name: initialize
@@ -3521,7 +3521,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   depends_on:
   - clone-enterprise
@@ -3853,7 +3853,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   depends_on:
   - clone-enterprise
@@ -4016,7 +4016,7 @@ steps:
   - mkdir bin
   - mv /tmp/grabpl bin/
   - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl gen-version --source-commit ${DRONE_COMMIT}
   - yarn install --immutable
   depends_on:
   - clone-enterprise
@@ -4305,6 +4305,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: e8ca4f1391cc1d3c7ed75dfbd1848825fdd6e7ee27e72c167bc22402a169e5f2
+hmac: 10bbdd397993ba7d946737e7a51887abca4944a538c03547b53b97c75fc3603b
 
 ...
