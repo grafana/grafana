@@ -127,6 +127,15 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: headerFilter;
       cursor: pointer;
     `,
+    paginationWrapper: css`
+      align-self: center;
+      padding-top: ${theme.spacing(0.5)};
+    `,
+    tableContentWrapper: (totalColumnsWidth: number) => css`
+      width: ${totalColumnsWidth ?? '100%'};
+      display: flex;
+      flex-direction: column;
+    `,
     row: css`
       label: row;
       border-bottom: 1px solid ${borderColor};

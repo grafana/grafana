@@ -251,13 +251,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
-        <div
-          style={{
-            width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
+        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
             <FixedSizeList
@@ -284,7 +278,7 @@ export const Table: FC<Props> = memo((props: Props) => {
             />
           )}
           {pageSize && (
-            <div style={{ alignSelf: 'center', paddingTop: 4 }}>
+            <div className={tableStyles.paginationWrapper}>
               <Pagination
                 currentPage={state.pageIndex + 1}
                 numberOfPages={pageOptions.length}
