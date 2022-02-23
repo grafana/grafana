@@ -167,25 +167,6 @@ class LiveLogs extends PureComponent<Props, State> {
       rowsToRender = rowsToRender.slice(-100);
     }
 
-    // var jRows = rowsToRender.map((row: any) => {
-    //   var jLabels = row.dataFrame.fields.filter((field: any) => field.name === 'labels');
-    //   console.log(jLabels);
-    //   if (jLabels.length > 0) {
-    //     row.labels = jLabels[0];
-    //   }
-    // });
-    // console.log(jRows);
-
-    // const joey = rowsToRender.map((rowToRender) => {
-    //   // Object.keys(rowToRender.dataFrame.fields[3].values.get(0))
-    //   return {
-    //     ...rowToRender,
-    //     labels: {
-    //       test: 'testValue',
-    //     },
-    //   };
-    // });
-
     return rowsToRender;
   };
 
@@ -291,6 +272,16 @@ class LiveLogs extends PureComponent<Props, State> {
               onClickShowDetectedField={this.showDetectedField}
               onClickHideDetectedField={this.hideDetectedField}
             />
+            <div
+              ref={(element) => {
+                this.liveEndDiv = element;
+                // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
+                // default.
+                if (this.liveEndDiv && !isPaused) {
+                  this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
+                }
+              }}
+            ></div>
           </div>
         </div>
         <div className={styles.logsRowsIndicator}>

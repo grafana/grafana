@@ -9,7 +9,6 @@ import {
   DataFrame,
   ArrayVector,
   MutableDataFrame,
-  findUniqueLabels,
   DataFrameView,
   DataLink,
   Field,
