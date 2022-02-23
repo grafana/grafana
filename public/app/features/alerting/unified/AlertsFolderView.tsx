@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Card, FilterInput, Icon, Pagination, TagList, useStyles2 } from '@grafana/ui';
-import { SortPicker } from 'app/core/components/Select/SortPicker';
+import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2 } from '@grafana/ui';
 import { FolderState } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { isEqual, orderBy, uniqWith } from 'lodash';
@@ -22,12 +21,21 @@ interface Props {
   folder: FolderState;
 }
 
-type SortOrder = 'alpha-asc' | 'alpha-desc';
+enum SortOrder {
+  Ascending = 'alpha-asc',
+  Descending = 'alpha-desc',
+}
+
+type SortOrderType = `${SortOrder}`;
+
+const sortOptions: Array<SelectableValue<SortOrderType>> = [
+  { label: 'Alphabetically [A-Z]', value: SortOrder.Ascending },
+  { label: 'Alphabetically [Z-A]', value: SortOrder.Descending },
+];
 
 export const AlertsFolderView = ({ folder }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const [sortOrder, setSortOrder] = useState<SortOrder>('alpha-asc');
 
   const onTagClick = (tagName: string) => {
     const matchers = parseMatchers(labelFilter);
@@ -43,12 +51,13 @@ export const AlertsFolderView = ({ folder }: Props) => {
   }, [dispatch]);
 
   const combinedNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const { nameFilter, labelFilter, setNameFilter, setLabelFilter } = useAlertsFolderViewFilters();
+  const { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder } =
+    useAlertsFolderViewParams();
 
   const matchingNamespace = combinedNamespaces.find((namespace) => namespace.name === folder.title);
   const alertRules = matchingNamespace?.groups[0]?.rules ?? [];
 
-  const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder);
+  const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? 'alpha-asc');
 
   const showNoResultsText = alertRules.length === 0 || filteredRules.length === 0;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, ITEMS_PER_PAGE);
@@ -63,10 +72,14 @@ export const AlertsFolderView = ({ folder }: Props) => {
           data-testid="name-filter"
         />
         <Stack direction="row">
-          <SortPicker
+          <Select<SortOrderType>
             value={sortOrder}
-            onChange={({ value }) => setSortOrder(value)}
-            filter={['alpha-asc', 'alpha-desc']}
+            onChange={({ value }) => value && setSortOrder(value)}
+            options={sortOptions}
+            width={25}
+            aria-label="Sort"
+            placeholder={`Sort (Default A-Z)`}
+            prefix={<Icon name={sortOrder === 'alpha-asc' ? 'sort-amount-up' : 'sort-amount-down'} />}
           />
           <FilterInput
             value={labelFilter}
@@ -116,28 +129,39 @@ export const AlertsFolderView = ({ folder }: Props) => {
   );
 };
 
-enum AlertFolderViewFilters {
+enum AlertFolderViewParams {
   nameFilter = 'nameFilter',
   labelFilter = 'labelFilter',
+  sortOrder = 'sort',
 }
 
-function useAlertsFolderViewFilters() {
+function useAlertsFolderViewParams() {
   const [searchParams, setSearchParams] = useURLSearchParams();
 
-  const [nameFilter, setNameFilter] = useState(searchParams.get(AlertFolderViewFilters.nameFilter) ?? '');
-  const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewFilters.labelFilter) ?? '');
+  const [nameFilter, setNameFilter] = useState(searchParams.get(AlertFolderViewParams.nameFilter) ?? '');
+  const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewParams.labelFilter) ?? '');
+
+  const sortParam = searchParams.get(AlertFolderViewParams.sortOrder);
+  const [sortOrder, setSortOrder] = useState<SortOrderType | undefined>(
+    sortParam === SortOrder.Ascending
+      ? SortOrder.Ascending
+      : sortParam === SortOrder.Descending
+      ? SortOrder.Descending
+      : undefined
+  );
 
   const [, cancelUrlUpdate] = useDebounce(
     () =>
       setSearchParams(
         {
-          [AlertFolderViewFilters.nameFilter]: getNonEmptyStringOrUndefined(nameFilter),
-          [AlertFolderViewFilters.labelFilter]: getNonEmptyStringOrUndefined(labelFilter),
+          [AlertFolderViewParams.nameFilter]: getNonEmptyStringOrUndefined(nameFilter),
+          [AlertFolderViewParams.labelFilter]: getNonEmptyStringOrUndefined(labelFilter),
+          [AlertFolderViewParams.sortOrder]: getNonEmptyStringOrUndefined(sortOrder),
         },
         true
       ),
     400,
-    [nameFilter, labelFilter]
+    [nameFilter, labelFilter, sortOrder]
   );
 
   useEffect(
@@ -147,14 +171,14 @@ function useAlertsFolderViewFilters() {
     [cancelUrlUpdate]
   );
 
-  return { nameFilter, labelFilter, setNameFilter, setLabelFilter };
+  return { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder };
 }
 
 function filterAndSortRules(
   originalRules: CombinedRule[],
   nameFilter: string,
   labelFilter: string,
-  sortOrder: SortOrder
+  sortOrder: SortOrderType
 ) {
   const matchers = parseMatchers(labelFilter);
   let rules = originalRules.filter(
