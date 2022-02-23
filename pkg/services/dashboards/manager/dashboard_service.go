@@ -135,6 +135,10 @@ func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int6
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
+func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
+}
+
 var validateAlerts = func(ctx context.Context, dash *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dash, dash.OrgId, user)
 	return extractor.ValidateAlerts(ctx)
