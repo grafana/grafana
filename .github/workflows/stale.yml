@@ -12,7 +12,7 @@ jobs:
           repo-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
           # Number of days of inactivity before a stale Issue or Pull Request is closed.
           # Set to -1 to disable. If disabled, issues still need to be closed manually, but will remain marked as stale.
-          days-before-close: 30
+          days-before-close: 14
           # Number of days of inactivity before an Issue or Pull Request becomes stale
           days-before-stale: 30
           # We don't want any Issues to be marked as stale for now.
@@ -23,10 +23,10 @@ jobs:
           stale-pr-label: stale
           stale-pr-message: >
             This pull request has been automatically marked as stale because it has not had
-            activity in the last 30 days. It will be closed in 30 days if no further activity occurs. Please
+            activity in the last 30 days. It will be closed in 2 weeks if no further activity occurs. Please
             feel free to give a status update now, ping for review, or re-open when it's ready.
             Thank you for your contributions!
           close-pr-message: >
             This pull request has been automatically closed because it has not had
-            activity in the last 30 days. Please feel free to give a status update now, ping for review, or re-open when it's ready.
+            activity in the last 2 weeks. Please feel free to give a status update now, ping for review, or re-open when it's ready.
             Thank you for your contributions!
