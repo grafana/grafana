@@ -106,6 +106,7 @@ The current team members are:
 - Zoltán Bedi ([Grafana Labs](https://grafana.com/))
 
 The previous team members are:
+
 - Hugo Häggmark ([School of applied technology](https://salt.study))
 
 ### Maintainers
