@@ -7,6 +7,7 @@ import { PromQuery } from '../../types';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
+import { AutoSizeInput } from '../shared/AutoSizeInput';
 
 export interface Props {
   query: PromQuery;
@@ -21,7 +22,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const onChangeStep = (evt: React.FocusEvent<HTMLInputElement>) => {
+  const onChangeStep = (evt: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, interval: evt.currentTarget.value });
     onRunQuery();
   };
@@ -57,12 +58,12 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
             </>
           }
         >
-          <Input
+          <AutoSizeInput
             type="text"
             aria-label="Set lower limit for the step parameter"
             placeholder={'auto'}
-            width={10}
-            onBlur={onChangeStep}
+            minWidth={10}
+            onCommitChange={onChangeStep}
             defaultValue={query.interval}
           />
         </EditorField>

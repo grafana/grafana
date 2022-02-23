@@ -4,6 +4,7 @@ import { EditorRows, FlexItem } from '@grafana/experimental';
 import { IconButton, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
+import { AutoSizeInput } from '../shared/AutoSizeInput';
 import { PromVisualQueryBinary } from '../types';
 import { PromQueryBuilder } from './PromQueryBuilder';
 
@@ -36,10 +37,10 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
         />
         <div className={styles.name}>Vector matches</div>
 
-        <Input
-          width={20}
+        <AutoSizeInput
+          minWidth={20}
           defaultValue={nestedQuery.vectorMatches}
-          onBlur={(evt) => {
+          onCommitChange={(evt) => {
             onChange(index, {
               ...nestedQuery,
               vectorMatches: evt.currentTarget.value,
