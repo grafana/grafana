@@ -14,16 +14,17 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
-import { stylesFactory, Tooltip } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TraceSpanReference } from '../types/trace';
 import ReferenceLink from '../url/ReferenceLink';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = stylesFactory(() => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     MultiParent: css`
       padding: 0 5px;
-      color: #000;
+      color: ${theme.colors.action};
       & ~ & {
         margin-left: 5px;
       }
@@ -39,7 +40,7 @@ export const getStyles = stylesFactory(() => {
       max-width: none;
     `,
   };
-});
+};
 
 type TReferencesButtonProps = {
   references: TraceSpanReference[];
@@ -48,19 +49,19 @@ type TReferencesButtonProps = {
   focusSpan: (spanID: string) => void;
 };
 
-export default class ReferencesButton extends React.PureComponent<TReferencesButtonProps> {
-  render() {
-    const { references, children, tooltipText, focusSpan } = this.props;
-    const styles = getStyles();
+const ReferencesButton = (props: TReferencesButtonProps) => {
+  const { references, children, tooltipText, focusSpan } = props;
+  const styles = useStyles2(getStyles);
 
-    // TODO: handle multiple items with some dropdown
-    const ref = references[0];
-    return (
-      <Tooltip content={tooltipText}>
-        <ReferenceLink reference={ref} focusSpan={focusSpan} className={styles.MultiParent}>
-          {children}
-        </ReferenceLink>
-      </Tooltip>
-    );
-  }
-}
+  // TODO: handle multiple items with some dropdown
+  const ref = references[0];
+  return (
+    <Tooltip content={tooltipText}>
+      <ReferenceLink reference={ref} focusSpan={focusSpan} className={styles.MultiParent}>
+        {children}
+      </ReferenceLink>
+    </Tooltip>
+  );
+};
+
+export default ReferencesButton;

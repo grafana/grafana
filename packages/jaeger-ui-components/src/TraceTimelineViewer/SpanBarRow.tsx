@@ -16,7 +16,6 @@ import * as React from 'react';
 
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
-import IoNetwork from 'react-icons/lib/io/network';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
 import { css, keyframes } from '@emotion/css';
 import cx from 'classnames';
@@ -77,10 +76,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     endpointName: css`
       label: endpointName;
       color: ${autoColor(theme, '#808080')};
-    `,
-    linkIcon: css`
-      float: left;
-      margin-left: 0.25rem;
     `,
     view: css`
       label: view;
@@ -389,16 +384,14 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       hasChildren: isParent,
       operationName,
       process: { serviceName },
-      references,
     } = span;
     const label = formatDuration(duration);
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
     const styles = getStyles(theme);
-    const hasReference = references.find((ref) => ref.refType === 'FOLLOWS_FROM');
 
-    const labelDetail = hasReference ? 'This span has a reference' : `${serviceName}::${operationName}`;
+    const labelDetail = `${serviceName}::${operationName}`;
     let longLabel;
     let hintClassName;
     if (viewStart > 1 - viewEnd) {
@@ -463,11 +456,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     className={styles.errorIcon}
                   />
                 )}
-                {hasReference && (
-                  <span className={styles.linkIcon}>
-                    <Icon name="link" />
-                  </span>
-                )}
                 {serviceName}{' '}
                 {rpc && (
                   <span>
@@ -522,7 +510,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 tooltipText="Contains multiple references"
                 focusSpan={focusSpan}
               >
-                <IoNetwork />
+                <Icon name="link" />
               </ReferencesButton>
             )}
             {span.subsidiarilyReferencedBy && span.subsidiarilyReferencedBy.length > 0 && (
