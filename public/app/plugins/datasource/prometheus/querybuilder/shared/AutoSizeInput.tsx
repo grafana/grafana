@@ -44,6 +44,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
           onKeyDown(event);
         }
       }}
+      data-testid={'autosize-input'}
     />
   );
 });

@@ -43,7 +43,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
-    <div className={cx(styles.wrapper, className)}>
+    <div className={cx(styles.wrapper, className)} data-testid={'input-wrapper'}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
