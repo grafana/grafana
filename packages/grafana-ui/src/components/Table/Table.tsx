@@ -212,6 +212,7 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   useEffect(() => {
     if (pageSize) {
+      console.log('set page size', pageSize);
       setPageSize(pageSize);
     }
   }, [pageSize, setPageSize]);
@@ -273,15 +274,6 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          {pageSize && (
-            <div style={{ alignSelf: 'center', paddingTop: 4 }}>
-              <Pagination
-                currentPage={state.pageIndex + 1}
-                numberOfPages={pageOptions.length}
-                onNavigate={(toPage) => gotoPage(toPage - 1)}
-              />
-            </div>
-          )}
           {footerValues && (
             <FooterRow
               height={footerHeight}
@@ -290,6 +282,15 @@ export const Table: FC<Props> = memo((props: Props) => {
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
             />
+          )}
+          {pageSize && (
+            <div style={{ alignSelf: 'center', paddingTop: 4 }}>
+              <Pagination
+                currentPage={state.pageIndex + 1}
+                numberOfPages={pageOptions.length}
+                onNavigate={(toPage) => gotoPage(toPage - 1)}
+              />
+            </div>
           )}
         </div>
       </CustomScrollbar>
