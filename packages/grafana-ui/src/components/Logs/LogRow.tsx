@@ -81,7 +81,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
     `,
     logsRowFade: css`
-      label: logs-row-fresh;
       color: ${theme.colors.text};
       background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
       animation: fade 1s ease-out 1s 1 normal forwards;
@@ -171,6 +170,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         [styles.errorLogRow]: hasError,
       },
     ];
+    const logDetailsBackground = cx(cxStyles);
+
     if (isLive) {
       cxStyles.push(styles.logsRowFade);
     }
@@ -241,7 +242,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         </tr>
         {this.state.showDetails && (
           <LogDetails
-            className={logRowBackground}
+            className={logDetailsBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
