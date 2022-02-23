@@ -222,3 +222,47 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 
 	return response.JSON(http.StatusOK, resp)
 }
+
+// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
+// GET /api/org/users/search
+func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	query := &models.SearchOrgUsersQuery{
+		OrgID:            c.OrgId,
+		Query:            c.Query("query"),
+		Page:             page,
+		Limit:            perPage,
+		User:             c.SignedInUser,
+		IsServiceAccount: true,
+	}
+
+	if err := api.store.SearchOrgServiceAccounts(ctx, query); err != nil {
+		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
+	for _, user := range query.Result.OrgUsers {
+		if dtos.IsHiddenUser(user.Login, c.SignedInUser, api.cfg) {
+			continue
+		}
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+
+		filteredUsers = append(filteredUsers, user)
+	}
+
+	query.Result.OrgUsers = filteredUsers
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return response.JSON(200, query.Result)
+}

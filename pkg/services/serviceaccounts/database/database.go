@@ -243,6 +243,13 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	}, err
 }
 
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) error {
+	if !query.IsServiceAccount {
+		return fmt.Errorf("invalid query for service accounts")
+	}
+	return s.sqlStore.SearchOrgUsers(ctx, query)
+}
+
 func contains(s []int64, e int64) bool {
 	for _, a := range s {
 		if a == e {

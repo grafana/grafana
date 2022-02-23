@@ -1,15 +1,18 @@
-import { ServiceAccountDTO, ThunkResult } from '../../../types';
+import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   acOptionsLoaded,
   builtInRolesLoaded,
+  filterChanged,
   serviceAccountLoaded,
+  serviceAccountsFetchEnd,
   serviceAccountsLoaded,
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
 } from './reducers';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { debounce } from 'lodash';
 
 const BASE_URL = `/api/serviceaccounts`;
 
@@ -99,5 +102,41 @@ export function removeServiceAccount(serviceAccountId: number): ThunkResult<void
   return async (dispatch) => {
     await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
     dispatch(loadServiceAccounts());
+  };
+}
+
+// search / filtering of serviceAccounts
+const getFilters = (filters: ServiceAccountFilter[]) => {
+  return filters
+    .map((filter) => {
+      if (Array.isArray(filter.value)) {
+        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
+      }
+      return `${filter.name}=${filter.value}`;
+    })
+    .join('&');
+};
+
+export function fetchServiceAccounts(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    try {
+      const { perPage, page, query, filters } = getState().serviceAccounts;
+      const result = await getBackendSrv().get(
+        `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`
+      );
+      dispatch(serviceAccountsLoaded(result));
+    } catch (error) {
+      serviceAccountsFetchEnd();
+      console.error(error);
+    }
+  };
+}
+
+const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500);
+export function changeFilter(filter: ServiceAccountFilter): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(loadServiceAccounts());
+    dispatch(filterChanged(filter));
+    fetchServiceAccountsWithDebounce(dispatch);
   };
 }

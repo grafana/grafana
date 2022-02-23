@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Button, ConfirmModal, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
@@ -32,6 +32,7 @@ function mapStateToProps(state: StoreState) {
     roleOptions: state.serviceAccounts.roleOptions,
     builtInRoles: state.serviceAccounts.builtInRoles,
     toRemove: state.serviceAccounts.serviceAccountToRemove,
+    filters: state.serviceAccounts.filters,
   };
 }
 
@@ -41,6 +42,7 @@ const mapDispatchToProps = {
   updateServiceAccount,
   removeServiceAccount,
   setServiceAccountToRemove,
+  changeFilter,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -83,6 +85,15 @@ const ServiceAccountsListPage = ({
               New service account
             </LinkButton>
           )}
+          <RadioButtonGroup
+            options={[
+              { label: 'All service accounts', value: false },
+              { label: 'Expired', value: true },
+            ]}
+            onChange={(value) => changeFilter({ name: 'Expired', value })}
+            value={filters.find((f) => f.name === 'Expired')?.value}
+            className={styles.filter}
+          />
         </div>
         {isLoading ? (
           <PageLoader />
