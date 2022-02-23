@@ -133,7 +133,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 		metrics.MApiDashboardSnapshotCreate.Inc()
 	}
 
-	if err := hs.SQLStore.CreateDashboardSnapshot(c.Req.Context(), &cmd); err != nil {
+	if err := hs.DashboardsnapshotsService.CreateDashboardSnapshot(c.Req.Context(), &cmd); err != nil {
 		c.JsonApiErr(500, "Failed to create snapshot", err)
 		return nil
 	}
@@ -157,7 +157,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Respon
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
-	err := hs.SQLStore.GetDashboardSnapshot(query)
+	err := hs.DashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -224,8 +224,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 	}
 
 	query := &models.GetDashboardSnapshotQuery{DeleteKey: key}
-
-	err := hs.SQLStore.GetDashboardSnapshot(query)
+	err := hs.DashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -239,7 +238,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 
 	cmd := &models.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
-	if err := hs.SQLStore.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
+	if err := hs.DashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
 		return response.Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
@@ -258,7 +257,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	query := &models.GetDashboardSnapshotQuery{Key: key}
 
-	err := hs.SQLStore.GetDashboardSnapshot(query)
+	err := hs.DashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -287,7 +286,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	cmd := &models.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
-	if err := hs.SQLStore.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
+	if err := hs.DashboardsnapshotsService.DeleteDashboardSnapshot(c.Req.Context(), cmd); err != nil {
 		return response.Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
@@ -313,7 +312,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 		SignedInUser: c.SignedInUser,
 	}
 
-	err := hs.SQLStore.SearchDashboardSnapshots(&searchQuery)
+	err := hs.DashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}

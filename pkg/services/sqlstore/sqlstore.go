@@ -56,7 +56,7 @@ type SQLStore struct {
 	tracer                      tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator, tracer tracing.Tracer, features *featuremgmt.FeatureManager) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -66,7 +66,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 		return nil, err
 	}
 
-	if err := s.Migrate(features.IsEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
+	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
 
@@ -130,7 +130,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.addPlaylistQueryAndCommandHandlers()
 	ss.addLoginAttemptQueryAndCommandHandlers()
 	ss.addTeamQueryAndCommandHandlers()
-	ss.addDashboardProvisioningQueryAndCommandHandlers()
 	ss.addOrgQueryAndCommandHandlers()
 
 	bus.AddHandler("sql", ss.GetDBHealthQuery)
@@ -465,6 +464,7 @@ type InitTestDBOpt struct {
 
 var featuresEnabledDuringTests = []string{
 	featuremgmt.FlagDashboardPreviews,
+	featuremgmt.FlagDashboardComments,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.

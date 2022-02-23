@@ -37,7 +37,12 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type ResourcePermissionsService interface {
+type PermissionsServices interface {
+	GetTeamService() PermissionsService
+	GetDataSourceService() PermissionsService
+}
+
+type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
@@ -146,7 +151,7 @@ func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map
 }
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) map[string]Metadata {
+func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, resource string, ids map[string]bool) map[string]Metadata {
 	allScope := GetResourceAllScope(resource)
 	allIDScope := GetResourceAllIDScope(resource)
 
@@ -157,16 +162,18 @@ func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resour
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
-	for _, p := range permissions {
-		if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope {
-			// Add global action to all resources
-			for id := range resourceIDs {
-				result = addActionToMetadata(result, p.Action, id)
-			}
-		} else {
-			if len(p.Scope) > idIndex && strings.HasPrefix(p.Scope, idPrefix) && resourceIDs[p.Scope[idIndex:]] {
-				// Add action to a specific resource
-				result = addActionToMetadata(result, p.Action, p.Scope[idIndex:])
+	for action, scopes := range permissions {
+		for _, scope := range scopes {
+			if scope == "*" || scope == allScope || scope == allIDScope {
+				// Add global action to all resources
+				for id := range ids {
+					result = addActionToMetadata(result, action, id)
+				}
+			} else {
+				if len(scope) > idIndex && strings.HasPrefix(scope, idPrefix) && ids[scope[idIndex:]] {
+					// Add action to a specific resource
+					result = addActionToMetadata(result, action, scope[idIndex:])
+				}
 			}
 		}
 	}

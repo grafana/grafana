@@ -153,3 +153,14 @@ export interface PromLabelQueryResponse {
   };
   cancelled?: boolean;
 }
+
+/**
+ * Auto = query.legendFormat == '__auto'
+ * Verbose = query.legendFormat == null/undefined/''
+ * Custom query.legendFormat.length > 0 && query.legendFormat !== '__auto'
+ */
+export enum LegendFormatMode {
+  Auto = '__auto',
+  Verbose = '__verbose',
+  Custom = '__custom',
+}

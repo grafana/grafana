@@ -12,7 +12,7 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiQuery } from '../../loki/types';

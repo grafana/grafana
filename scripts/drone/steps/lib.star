@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.0'
+grabpl_version = 'v2.9.4'
 build_image = 'grafana/build-container:1.4.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -189,7 +189,7 @@ def enterprise_downstream_step(edition):
                 'grafana/grafana-enterprise@main',
             ],
             'params': [
-                'SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
+                'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
             ],
         },
@@ -400,12 +400,12 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
+            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
             '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
         ]
     else:
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) + \
+            './bin/grabpl build-frontend --jobs 8 --edition {} '.format(edition) + \
             '--build-id {} --no-pull-enterprise'.format(build_no),
         ]
 
@@ -427,9 +427,12 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'build-frontend'
+            'initialize'
         ],
         'commands': [
+            'yarn packages:build',
+            'yarn packages:docsExtract',
+            'yarn packages:docsToMarkdown',
             './scripts/ci-reference-docs-lint.sh ci',
         ]
     }
@@ -453,7 +456,7 @@ def build_plugins_step(edition, sign=False):
         'environment': env,
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps{}'.format(edition, sign_args),
+            './bin/grabpl build-plugins --jobs 8 --edition {}{}'.format(edition, sign_args),
         ],
     }
 
