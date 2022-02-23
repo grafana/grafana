@@ -33,7 +33,6 @@ export class LiveStreams {
     data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
     data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
     data.addField({ name: 'line', type: FieldType.string }).labels = parseLabels(target.query);
-    data.addField({ name: 'labels', type: FieldType.other }); // The labels for each line
     data.addField({ name: 'id', type: FieldType.string });
     data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
     data.refId = target.refId;
@@ -71,5 +70,15 @@ export class LiveStreams {
     this.streams[target.url] = stream;
 
     return stream;
+  }
+
+  // Example: `parseLabels('{job="foo", instance="bar"}) // {job: "foo", instance: "bar"}`
+  convertToLabel(obj: any) {
+    var res = '{';
+    for (var k in obj) {
+      res += k + '=' + '"' + obj[k] + '"';
+    }
+    res += '}';
+    return res;
   }
 }

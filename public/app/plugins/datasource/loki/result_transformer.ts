@@ -118,29 +118,17 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     return;
   }
 
-  let baseLabels: Labels = {};
-  for (const f of data.fields) {
-    if (f.type === FieldType.string) {
-      if (f.labels) {
-        baseLabels = f.labels;
-      }
-      break;
-    }
-  }
-
   const tsField = data.fields[0];
   const tsNsField = data.fields[1];
   const lineField = data.fields[2];
-  const labelsField = data.fields[3];
-  const idField = data.fields[4];
+  const idField = data.fields[3];
 
   // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
   // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
   const usedUids: { string?: number } = {};
 
   for (const stream of streams) {
-    // Find unique labels
-    const unique = findUniqueLabels(stream.stream, baseLabels);
+    lineField.labels = stream.stream;
     const allLabelsString = Object.entries(stream.stream)
       .map(([key, val]) => `${key}="${val}"`)
       .sort()
@@ -151,7 +139,6 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
       tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
       tsNsField.values.add(ts);
       lineField.values.add(line);
-      labelsField.values.add(unique);
       idField.values.add(createUid(ts, allLabelsString, line, usedUids, data.refId));
     }
   }

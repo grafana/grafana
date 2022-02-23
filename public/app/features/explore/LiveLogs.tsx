@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
@@ -20,6 +20,27 @@ import store from 'app/core/store';
 import memoizeOne from 'memoize-one';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+
+const SETTINGS_KEYS = {
+  showLabels: 'grafana.explore.logs.showLabels',
+  showTime: 'grafana.explore.logs.showTime',
+  wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
+  prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
+};
+
+export interface Props extends Themeable2 {
+  logRows?: LogRowModel[];
+  timeZone: TimeZone;
+  stopLive: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  isPaused: boolean;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
+  showContextToggle?: (row?: LogRowModel) => boolean;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+}
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => ({
   logsRowsLive: css`
@@ -67,31 +88,11 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => ({
   `,
   logRows: css`
     overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
-    overflow-y: visible;
+    overflow-y: scroll;
     width: 100%;
+    height: 60vh;
   `,
 });
-
-const SETTINGS_KEYS = {
-  showLabels: 'grafana.explore.logs.showLabels',
-  showTime: 'grafana.explore.logs.showTime',
-  wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
-  prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
-};
-
-export interface Props extends Themeable2 {
-  logRows?: LogRowModel[];
-  timeZone: TimeZone;
-  stopLive: () => void;
-  onPause: () => void;
-  onResume: () => void;
-  isPaused: boolean;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
-  showContextToggle?: (row?: LogRowModel) => boolean;
-  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
-}
 
 interface State {
   logRowsToRender?: LogRowModel[];
@@ -110,20 +111,6 @@ interface State {
 class LiveLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
-  // topLogsRef = createRef<HTMLDivElement>();
-
-  state: State = {
-    showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
-    showTime: store.getBool(SETTINGS_KEYS.showTime, true),
-    wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
-    prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
-    dedupStrategy: LogsDedupStrategy.none,
-    hiddenLogLevels: [],
-    logsSortOrder: null,
-    isFlipping: false,
-    showDetectedFields: [],
-    forceEscape: false,
-  };
 
   private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
@@ -179,6 +166,26 @@ class LiveLogs extends PureComponent<Props, State> {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
       rowsToRender = rowsToRender.slice(-100);
     }
+
+    // var jRows = rowsToRender.map((row: any) => {
+    //   var jLabels = row.dataFrame.fields.filter((field: any) => field.name === 'labels');
+    //   console.log(jLabels);
+    //   if (jLabels.length > 0) {
+    //     row.labels = jLabels[0];
+    //   }
+    // });
+    // console.log(jRows);
+
+    // const joey = rowsToRender.map((rowToRender) => {
+    //   // Object.keys(rowToRender.dataFrame.fields[3].values.get(0))
+    //   return {
+    //     ...rowToRender,
+    //     labels: {
+    //       test: 'testValue',
+    //     },
+    //   };
+    // });
+
     return rowsToRender;
   };
 
@@ -205,16 +212,6 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   };
 
-  dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
-    const dedupedRows = dedupLogRows(logRows, dedupStrategy);
-    const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
-    return { dedupedRows, dedupCount };
-  });
-
-  filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
-    return filterLogLevels(logRows, new Set(hiddenLogLevels));
-  });
-
   render() {
     const {
       theme,
@@ -233,22 +230,20 @@ class LiveLogs extends PureComponent<Props, State> {
       showTime,
       wrapLogMessage,
       prettifyLogMessage,
-      dedupStrategy,
-      hiddenLogLevels,
       logsSortOrder,
       isFlipping,
       showDetectedFields,
       forceEscape,
     } = this.state;
 
-    const styles = getStyles(theme, true); // TODO: JOEY
-    const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
-    const filteredLogs = this.filterRows(this.rowsToRender(), hiddenLogLevels);
-    const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
+    const styles = getStyles(theme, wrapLogMessage);
+    // const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
+
+    // console.log('logRows', this.rowsToRender());
 
     return (
-      <div>
-        <table className={styles.fullWidth}>
+      <>
+        {/* <table className={styles.fullWidth}>
           <tbody
             onScroll={isPaused ? undefined : this.onScroll}
             className={cx(['logs-rows', styles.logsRowsLive])}
@@ -273,13 +268,12 @@ class LiveLogs extends PureComponent<Props, State> {
               }}
             />
           </tbody>
-        </table>
+        </table> */}
         <div className={styles.logsSection}>
-          <div className={styles.logRows}>
+          <div onScroll={isPaused ? undefined : this.onScroll} className={styles.logRows} ref={this.scrollContainerRef}>
             <LogRows
               logRows={this.rowsToRender()}
-              deduplicatedRows={dedupedRows}
-              dedupStrategy={dedupStrategy}
+              dedupStrategy={LogsDedupStrategy.none}
               getRowContext={this.props.getRowContext}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -315,7 +309,7 @@ class LiveLogs extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </div>
+      </>
     );
   }
 }

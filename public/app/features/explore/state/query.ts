@@ -392,6 +392,7 @@ export const runQueries = (
 
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
+      console.log('cached');
       newQuerySub = of(cachedValue)
         .pipe(
           mergeMap((data: PanelData) =>
@@ -440,6 +441,7 @@ export const runQueries = (
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
+      console.log('new');
       newQuerySub = runRequest(datasourceInstance, transaction.request)
         .pipe(
           // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
