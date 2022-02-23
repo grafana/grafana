@@ -280,11 +280,6 @@ export function deleteRulesGroupAction(
       (async () => {
         const sourceName = getRulesSourceName(namespace.rulesSource);
 
-        const freshGroup = fetchRulerRulesGroup(sourceName, namespace.name, ruleGroup.name);
-        if (!freshGroup) {
-          throw new Error('Rule group not found.');
-        }
-
         await deleteRulerRulesGroup(sourceName, namespace.name, ruleGroup.name);
         dispatch(fetchRulerRulesAction({ rulesSourceName: sourceName }));
         dispatch(fetchPromRulesAction({ rulesSourceName: sourceName }));
