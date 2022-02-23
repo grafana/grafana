@@ -5,7 +5,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate, SubmitHandler } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
@@ -94,7 +94,7 @@ export function ReceiverForm<R extends ChannelValues>({
           Because there is no default policy configured yet, this contact point will automatically be set as default.
         </Alert>
       )}
-      <form onSubmit={handleSubmit(submitCallback as SubmitHandler<ReceiverFormValues<R>>, onInvalid)}>
+      <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
         <h4 className={styles.heading}>
           {readOnly ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
         </h4>
@@ -121,13 +121,13 @@ export function ReceiverForm<R extends ChannelValues>({
               defaultValues={field}
               key={field.__id}
               onDuplicate={() => {
-                const currentValues = getValues().items[index] as R;
+                const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
               onTest={
                 onTestChannel
                   ? () => {
-                      const currentValues = getValues().items[index] as R;
+                      const currentValues: R = getValues().items[index];
                       onTestChannel(currentValues);
                     }
                   : undefined
