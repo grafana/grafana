@@ -166,11 +166,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 			if len(point.Value.DistributionValue.BucketCounts) == 0 {
 				continue
 			}
-			maxKey := 0
 			for i := 0; i < len(point.Value.DistributionValue.BucketCounts); i++ {
 				value, err := strconv.ParseFloat(point.Value.DistributionValue.BucketCounts[i], 64)
 				if err != nil {
-					continue
+					return err
 				}
 				if _, ok := buckets[i]; !ok {
 					// set lower bounds
@@ -193,39 +192,20 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 							valueField,
 						},
 						RefID: timeSeriesFilter.RefID,
-					}
-
-					if maxKey < i {
-						maxKey = i
+						Meta: &data.FrameMeta{
+							ExecutedQueryString: executedQueryString,
+						},
 					}
 				}
 				buckets[i].AppendRow(point.Interval.EndTime, value)
 			}
-			for i := 0; i < maxKey; i++ {
-				if _, ok := buckets[i]; !ok {
-					bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-					additionalLabels := data.Labels{"bucket": bucketBound}
-					timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
-					valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
-					frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels,
-						additionalLabels, timeSeriesFilter)
-					valueField.Name = frameName
-					valueField.Labels = seriesLabels
-					setDisplayNameAsFieldName(valueField)
-
-					buckets[i] = &data.Frame{
-						Name:  frameName,
-						RefID: timeSeriesFilter.RefID,
-						Fields: []*data.Field{
-							timeField,
-							valueField,
-						},
-					}
-				}
-			}
 		}
 		for i := 0; i < len(buckets); i++ {
+			buckets[i].Meta.Custom = customFrameMeta
 			frames = append(frames, buckets[i])
+		}
+		if len(buckets) == 0 {
+			frames = append(frames, frame)
 		}
 	}
 	if len(response.TimeSeries) > 0 {
