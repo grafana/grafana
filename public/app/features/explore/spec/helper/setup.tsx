@@ -23,7 +23,7 @@ type SetupOptions = {
   // default true
   clearLocalStorage?: boolean;
   datasources?: DatasourceSetup[];
-  query?: any;
+  urlParams?: { left: string; right?: string };
   searchParams?: string;
 };
 
@@ -81,8 +81,8 @@ export function setupExplore(options?: SetupOptions): {
 
   locationService.push({ pathname: '/explore', search: options?.searchParams });
 
-  if (options?.query) {
-    locationService.partial(options.query);
+  if (options?.urlParams) {
+    locationService.partial(options.urlParams);
   }
 
   const route = { component: Wrapper };

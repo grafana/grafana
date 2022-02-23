@@ -59,14 +59,14 @@ describe('Wrapper', () => {
   });
 
   it('runs query when url contains query and renders results', async () => {
-    const query = {
+    const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
         queries: [{ refId: 'A', expr: '{ label="value"}' }],
         range: { from: 'now-1h', to: 'now' },
       }),
     };
-    const { datasources, store } = setupExplore({ query });
+    const { datasources, store } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
@@ -81,7 +81,7 @@ describe('Wrapper', () => {
     // We did not change the url
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      ...query,
+      ...urlParams,
     });
 
     expect(store.getState().explore.richHistory[0]).toMatchObject({
@@ -97,8 +97,8 @@ describe('Wrapper', () => {
   });
 
   it('handles url change and runs the new query', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources } = setupExplore({ query });
+    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
     await screen.findByText(/custom log line/i);
@@ -116,8 +116,8 @@ describe('Wrapper', () => {
   });
 
   it('handles url change and runs the new query with different datasource', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources } = setupExplore({ query });
+    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
     await screen.findByText(/custom log line/i);
@@ -136,8 +136,8 @@ describe('Wrapper', () => {
   });
 
   it('handles changing the datasource manually', async () => {
-    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
-    const { datasources } = setupExplore({ query });
+    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await changeDatasource('elastic');
@@ -166,7 +166,7 @@ describe('Wrapper', () => {
   });
 
   it('inits with two panes if specified in url', async () => {
-    const query = {
+    const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
         queries: [{ refId: 'A', expr: '{ label="value"}' }],
@@ -179,7 +179,7 @@ describe('Wrapper', () => {
       }),
     };
 
-    const { datasources } = setupExplore({ query });
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -200,7 +200,7 @@ describe('Wrapper', () => {
     // We did not change the url
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
-      ...query,
+      ...urlParams,
     });
 
     // We called the data source query method once
@@ -216,11 +216,11 @@ describe('Wrapper', () => {
   });
 
   it('can close a pane from a split', async () => {
-    const query = {
+    const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
       right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     };
-    setupExplore({ query });
+    setupExplore({ urlParams });
     const closeButtons = await screen.findAllByTitle(/Close split pane/i);
     userEvent.click(closeButtons[1]);
 
@@ -231,10 +231,10 @@ describe('Wrapper', () => {
   });
 
   it('handles url change to split view', async () => {
-    const query = {
+    const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
     };
-    const { datasources } = setupExplore({ query });
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
 
@@ -249,10 +249,10 @@ describe('Wrapper', () => {
   });
 
   it('handles opening split with split open func', async () => {
-    const query = {
+    const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
     };
-    const { datasources, store } = setupExplore({ query });
+    const { datasources, store } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
 
@@ -268,10 +268,10 @@ describe('Wrapper', () => {
   });
 
   it('changes the document title of the explore page to include the datasource in use', async () => {
-    const query = {
+    const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
     };
-    const { datasources } = setupExplore({ query });
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     // This is mainly to wait for render so that the left pane state is initialized as that is needed for the title
     // to include the datasource
@@ -280,10 +280,10 @@ describe('Wrapper', () => {
     await waitFor(() => expect(document.title).toEqual('Explore - loki - Grafana'));
   });
   it('changes the document title to include the two datasources in use in split view mode', async () => {
-    const query = {
+    const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
     };
-    const { datasources, store } = setupExplore({ query });
+    const { datasources, store } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
 
