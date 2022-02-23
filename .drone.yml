@@ -433,18 +433,12 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
-  depends_on:
-  - initialize
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.4.9
-  name: build-frontend
-- commands:
+  - yarn packages:build
+  - yarn packages:docsExtract
+  - yarn packages:docsToMarkdown
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - initialize
   image: grafana/build-container:1.4.9
   name: build-frontend-docs
 - commands:
@@ -495,18 +489,12 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id
-    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
-  depends_on:
-  - initialize
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.4.9
-  name: build-frontend
-- commands:
+  - yarn packages:build
+  - yarn packages:docsExtract
+  - yarn packages:docsToMarkdown
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
-  - build-frontend
+  - initialize
   image: grafana/build-container:1.4.9
   name: build-frontend-docs
 - commands:
@@ -658,7 +646,7 @@ steps:
   name: trigger-enterprise-downstream
   settings:
     params:
-    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
     - SOURCE_COMMIT=${DRONE_COMMIT}
     repositories:
     - grafana/grafana-enterprise@main
@@ -4319,6 +4307,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 011d56e150c01783fc938e3ec48927c907aff264705b045eba83a1c0ada4188e
+hmac: 00db25c63a60b8ec746ba04cfb45084e8e8b2405ecfeae67422d7cb3eaba8527
 
 ...
