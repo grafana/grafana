@@ -24,16 +24,15 @@ func TestFormatName(t *testing.T) {
 
 	t.Run("build full series name", func(t *testing.T) {
 		metric := map[string]string{
-			"__name__": "http_request_total",
-			"app":      "backend",
-			"device":   "mobile",
+			"app":    "backend",
+			"device": "mobile",
 		}
 
 		query := &lokiQuery{
 			LegendFormat: "",
 		}
 
-		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatName(metric, query))
+		require.Equal(t, `{app="backend", device="mobile"}`, formatName(metric, query))
 	})
 }
 

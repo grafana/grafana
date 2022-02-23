@@ -59,19 +59,15 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 }
 
 func formatNamePrometheusStyle(labels map[string]string) string {
-	metricName := labels["__name__"]
-
 	var parts []string
 
 	for k, v := range labels {
-		if k != "__name__" {
-			parts = append(parts, fmt.Sprintf("%s=%q", k, v))
-		}
+		parts = append(parts, fmt.Sprintf("%s=%q", k, v))
 	}
 
 	sort.Strings(parts)
 
-	return fmt.Sprintf("%s{%s}", metricName, strings.Join(parts, ", "))
+	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
 
 //If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
