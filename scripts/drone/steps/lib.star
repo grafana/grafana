@@ -370,12 +370,12 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         ]
     else:
         if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
+            build_no = '${DRONE_COMMIT}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
         env = {}
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --source-commit {}{} --no-pull-enterprise'.format(
                 edition, build_no, variants_str,
             ),
         ]
@@ -393,7 +393,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
 
 def build_frontend_step(edition, ver_mode, is_downstream=False):
     if not is_downstream:
-        build_no = '${DRONE_BUILD_NUMBER}'
+        build_no = '${DRONE_COMMIT}'
     else:
         build_no = '$${SOURCE_BUILD_NUMBER}'
 
@@ -406,7 +406,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     else:
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --edition {} '.format(edition) + \
-            '--build-id {} --no-pull-enterprise'.format(build_no),
+            '--source-commit {} --no-pull-enterprise'.format(build_no),
         ]
 
     return {
@@ -643,12 +643,12 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         ]
     else:
         if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
+            build_no = '${DRONE_COMMIT}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
+            '--source-commit {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
         ]
 
     return {
@@ -955,10 +955,10 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
         )
     elif ver_mode == 'main':
         if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
+            build_no = '${DRONE_COMMIT}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json --source-commit {}'.format(
             edition, build_no,
         )
     else:
@@ -1019,10 +1019,10 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             bucket = 'grafana-downloads'
             bucket_part = ' --packages-bucket {}'.format(bucket)
             if not is_downstream:
-                build_no = 'DRONE_BUILD_NUMBER'
+                build_no = 'DRONE_COMMIT'
             else:
                 build_no = 'SOURCE_BUILD_NUMBER'
-            ver_part = '--build-id $$env:{}'.format(build_no)
+            ver_part = '--source-commit $$env:{}'.format(build_no)
         installer_commands = [
             '$$gcpKey = $$env:GCP_KEY',
             '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',

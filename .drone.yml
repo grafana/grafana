@@ -129,7 +129,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --source-commit ${DRONE_COMMIT}
     --variants linux-x64,linux-x64-musl,osx64,win64,armv6 --no-pull-enterprise
   depends_on:
   - initialize
@@ -137,7 +137,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -181,7 +181,7 @@ steps:
   name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
+    --source-commit ${DRONE_COMMIT} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64,armv6
   depends_on:
   - build-plugins
   - build-backend
@@ -654,7 +654,7 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -662,7 +662,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -707,7 +707,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl package --jobs 8 --edition oss --source-commit ${DRONE_COMMIT} --no-pull-enterprise
     --sign
   depends_on:
   - build-plugins
@@ -1087,9 +1087,9 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe gen-version --build-id $$env:DRONE_BUILD_NUMBER
+  - .\grabpl.exe gen-version --source-commit $$env:DRONE_COMMIT
   - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads
-    --build-id $$env:DRONE_BUILD_NUMBER
+    --source-commit $$env:DRONE_COMMIT
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/main/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
@@ -1171,8 +1171,8 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
-    ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --source-commit
+    ${DRONE_COMMIT}
   depends_on:
   - grabpl
   environment:
@@ -3012,7 +3012,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -3020,7 +3020,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend --jobs 8 --edition oss --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -3065,7 +3065,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl package --jobs 8 --edition oss --source-commit ${DRONE_COMMIT} --no-pull-enterprise
     --sign
   depends_on:
   - build-plugins
@@ -3529,7 +3529,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: initialize
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -3537,7 +3537,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise
   depends_on:
   - initialize
@@ -3582,7 +3582,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: ensure-cuetsified
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --source-commit ${DRONE_COMMIT}
     --variants linux-x64 --no-pull-enterprise
   depends_on:
   - initialize
@@ -3590,7 +3590,7 @@ steps:
   image: grafana/build-container:1.4.9
   name: build-backend-enterprise2
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl package --jobs 8 --edition enterprise --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise --sign
   depends_on:
   - build-plugins
@@ -3754,7 +3754,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
-  - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl package --jobs 8 --edition enterprise2 --source-commit ${DRONE_COMMIT}
     --no-pull-enterprise --variants linux-x64 --sign
   depends_on:
   - build-plugins
@@ -4305,6 +4305,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 10bbdd397993ba7d946737e7a51887abca4944a538c03547b53b97c75fc3603b
+hmac: 386b39cfb751bdf3a5bb0c278cedf43c81a14ad944b39e09c89706479dc2769a
 
 ...
