@@ -276,19 +276,6 @@ func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTr
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPreferencesJsonDataWithDefaults(ctx context.Context, query *models.GetPreferencesJsonDataWithDefaultsQuery) error {
-	query.Result = &models.Preferences{}
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPreferencesJsonData(ctx context.Context, query *models.GetPreferencesJsonDataQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SavePreferencesJsonData(ctx context.Context, cmd *models.SavePreferencesJsonDataCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 	query.Result = &models.Preferences{}
 	return m.ExpectedError

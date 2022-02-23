@@ -392,13 +392,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 func (hs *HTTPServer) setNavPreferences(c *models.ReqContext, navTree []*dtos.NavLink) ([]*dtos.NavLink, error) {
 	// query preferences table for any navbar preferences
-	prefsQuery := models.GetPreferencesJsonDataWithDefaultsQuery{User: c.SignedInUser}
-	if err := hs.SQLStore.GetPreferencesJsonDataWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
 	jsonDataPref := prefsQuery.Result.JsonData
 
-	if jsonDataPref != nil {
+	if len(jsonDataPref.Navbar) > 0 {
 		for _, navItem := range navTree {
 			// Set any that exist in the navbar preferences to hide=false
 			for _, pref := range jsonDataPref.Navbar {

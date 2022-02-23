@@ -59,21 +59,6 @@ type GetPreferencesQuery struct {
 	Result *Preferences
 }
 
-type GetPreferencesJsonDataQuery struct {
-	Id     int64
-	OrgId  int64
-	UserId int64
-	TeamId int64
-
-	Result *Preferences
-}
-
-type GetPreferencesJsonDataWithDefaultsQuery struct {
-	User *SignedInUser
-
-	Result *Preferences
-}
-
 type GetPreferencesWithDefaultsQuery struct {
 	User *SignedInUser
 
@@ -87,16 +72,9 @@ type SavePreferencesCommand struct {
 	OrgId  int64
 	TeamId int64
 
-	HomeDashboardId int64  `json:"homeDashboardId"`
-	Timezone        string `json:"timezone"`
-	WeekStart       string `json:"weekStart"`
-	Theme           string `json:"theme"`
-}
-
-type SavePreferencesJsonDataCommand struct {
-	UserId int64
-	OrgId  int64
-	TeamId int64
-
-	JsonData *PreferencesJsonData `json:"jsonData"`
+	HomeDashboardId int64                `json:"homeDashboardId"`
+	Timezone        string               `json:"timezone"`
+	WeekStart       string               `json:"weekStart"`
+	Theme           string               `json:"theme"`
+	JsonData        *PreferencesJsonData `json:"jsonData"`
 }
