@@ -1,6 +1,7 @@
 import {
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
+  getRichHistory,
   updateCommentInRichHistory,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
@@ -48,6 +49,13 @@ export const deleteRichHistory = (): ThunkResult<void> => {
   return async (dispatch) => {
     await deleteAllFromRichHistory();
     dispatch(richHistoryUpdatedAction({ richHistory: [] }));
+  };
+};
+
+export const loadRichHistory = (): ThunkResult<void> => {
+  return async (dispatch) => {
+    const richHistory = await getRichHistory();
+    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 };
 

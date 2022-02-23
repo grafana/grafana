@@ -36,8 +36,7 @@ import {
 import { ThunkResult } from 'app/types';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction, stateSave } from './main';
+import { stateSave } from './main';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 
 //
@@ -181,9 +180,6 @@ export function initializeExplore(
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
-
-    const richHistory = await getRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
