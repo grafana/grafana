@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { Button, HorizontalGroup, Spinner, useStyles, VerticalGroup } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 import { GrafanaTheme } from '@grafana/data';
@@ -34,12 +34,22 @@ export const DashboardLoading = ({ initPhase }: Props) => {
 };
 
 export const getStyles = (theme: GrafanaTheme) => {
+  // Amount of time we want to pass before we start showing loading spinner
+  const slowStartThreshold = '0.5s';
+
+  const invisibleToVisible = keyframes`
+    0% { opacity: 0%; }
+    100% { opacity: 100%; }
+  `;
+
   return {
     dashboardLoading: css`
       height: 60vh;
       display: flex;
+      opacity: 0%;
       align-items: center;
       justify-content: center;
+      animation: ${invisibleToVisible} 0s step-end ${slowStartThreshold} 1 normal forwards;
     `,
     dashboardLoadingText: css`
       font-size: ${theme.typography.size.lg};

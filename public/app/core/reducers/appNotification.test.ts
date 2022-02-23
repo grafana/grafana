@@ -1,14 +1,14 @@
 import { appNotificationsReducer, clearAppNotification, notifyApp } from './appNotification';
-import { AppNotificationSeverity, AppNotificationTimeout } from 'app/types/';
+import { AppNotificationSeverity, AppNotificationsState, AppNotificationTimeout } from 'app/types/';
 
 describe('clear alert', () => {
   it('should filter alert', () => {
     const id1 = '1767d3d9-4b99-40eb-ab46-de734a66f21d';
     const id2 = '4767b3de-12dd-40e7-b58c-f778bd59d675';
 
-    const initialState = {
-      appNotifications: [
-        {
+    const initialState: AppNotificationsState = {
+      byId: {
+        [id1]: {
           id: id1,
           severity: AppNotificationSeverity.Success,
           icon: 'success',
@@ -16,7 +16,7 @@ describe('clear alert', () => {
           text: 'test alert',
           timeout: AppNotificationTimeout.Success,
         },
-        {
+        [id2]: {
           id: id2,
           severity: AppNotificationSeverity.Warning,
           icon: 'warning',
@@ -24,14 +24,14 @@ describe('clear alert', () => {
           text: 'test alert fail 2',
           timeout: AppNotificationTimeout.Warning,
         },
-      ],
+      },
     };
 
     const result = appNotificationsReducer(initialState, clearAppNotification(id2));
 
-    const expectedResult = {
-      appNotifications: [
-        {
+    const expectedResult: AppNotificationsState = {
+      byId: {
+        [id1]: {
           id: id1,
           severity: AppNotificationSeverity.Success,
           icon: 'success',
@@ -39,7 +39,7 @@ describe('clear alert', () => {
           text: 'test alert',
           timeout: AppNotificationTimeout.Success,
         },
-      ],
+      },
     };
 
     expect(result).toEqual(expectedResult);
@@ -52,9 +52,9 @@ describe('notify', () => {
     const id2 = '4477fcd9-246c-45a5-8818-e22a16683dae';
     const id3 = '55be87a8-bbab-45c7-b481-1f9d46f0d2ee';
 
-    const initialState = {
-      appNotifications: [
-        {
+    const initialState: AppNotificationsState = {
+      byId: {
+        [id1]: {
           id: id1,
           severity: AppNotificationSeverity.Success,
           icon: 'success',
@@ -62,7 +62,7 @@ describe('notify', () => {
           text: 'test alert',
           timeout: AppNotificationTimeout.Success,
         },
-        {
+        [id2]: {
           id: id2,
           severity: AppNotificationSeverity.Warning,
           icon: 'warning',
@@ -70,7 +70,7 @@ describe('notify', () => {
           text: 'test alert fail 2',
           timeout: AppNotificationTimeout.Warning,
         },
-      ],
+      },
     };
 
     const result = appNotificationsReducer(
@@ -85,9 +85,9 @@ describe('notify', () => {
       })
     );
 
-    const expectedResult = {
-      appNotifications: [
-        {
+    const expectedResult: AppNotificationsState = {
+      byId: {
+        [id1]: {
           id: id1,
           severity: AppNotificationSeverity.Success,
           icon: 'success',
@@ -95,7 +95,7 @@ describe('notify', () => {
           text: 'test alert',
           timeout: AppNotificationTimeout.Success,
         },
-        {
+        [id2]: {
           id: id2,
           severity: AppNotificationSeverity.Warning,
           icon: 'warning',
@@ -103,7 +103,7 @@ describe('notify', () => {
           text: 'test alert fail 2',
           timeout: AppNotificationTimeout.Warning,
         },
-        {
+        [id3]: {
           id: id3,
           severity: AppNotificationSeverity.Info,
           icon: 'info',
@@ -111,16 +111,16 @@ describe('notify', () => {
           text: 'test alert info 3',
           timeout: AppNotificationTimeout.Success,
         },
-      ],
+      },
     };
 
     expect(result).toEqual(expectedResult);
   });
 
   it('Dedupe identical alerts', () => {
-    const initialState = {
-      appNotifications: [
-        {
+    const initialState: AppNotificationsState = {
+      byId: {
+        id1: {
           id: 'id1',
           severity: AppNotificationSeverity.Success,
           icon: 'success',
@@ -128,7 +128,7 @@ describe('notify', () => {
           text: 'test alert',
           timeout: AppNotificationTimeout.Success,
         },
-      ],
+      },
     };
 
     const result = appNotificationsReducer(
@@ -143,9 +143,9 @@ describe('notify', () => {
       })
     );
 
-    const expectedResult = {
-      appNotifications: [
-        {
+    const expectedResult: AppNotificationsState = {
+      byId: {
+        id1: {
           id: 'id1',
           severity: AppNotificationSeverity.Success,
           icon: 'success',
@@ -153,7 +153,7 @@ describe('notify', () => {
           text: 'test alert',
           timeout: AppNotificationTimeout.Success,
         },
-      ],
+      },
     };
 
     expect(result).toEqual(expectedResult);
