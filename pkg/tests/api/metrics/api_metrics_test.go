@@ -13,9 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -23,7 +21,6 @@ import (
 
 	cwapi "github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -70,54 +67,6 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		err := json.Unmarshal(result, &actual)
 		require.NoError(t, err)
 		assert.Equal(t, expect, actual)
-	})
-}
-
-func TestQueryCloudWatchLogs(t *testing.T) {
-	grafDir, cfgPath := testinfra.CreateGrafDir(t)
-	addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
-	setUpDatabase(t, store, "logs")
-
-	origNewCWLogsClient := cloudwatch.NewCWLogsClient
-	t.Cleanup(func() {
-		cloudwatch.NewCWLogsClient = origNewCWLogsClient
-	})
-
-	var client cloudwatch.FakeCWLogsClient
-	cloudwatch.NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-		return client
-	}
-
-	t.Run("Describe log groups", func(t *testing.T) {
-		client = cloudwatch.FakeCWLogsClient{}
-
-		req := dtos.MetricRequest{
-			Queries: []*simplejson.Json{
-				simplejson.NewFromAny(map[string]interface{}{
-					"type":         "logAction",
-					"subtype":      "DescribeLogGroups",
-					"region":       "us-east-1",
-					"datasourceId": 1,
-				}),
-			},
-		}
-		tr := makeCWRequest(t, req, addr)
-
-		dataFrames := data.Frames{
-			&data.Frame{
-				Name:  "logGroups",
-				RefID: "A",
-				Fields: []*data.Field{
-					data.NewField("logGroupName", nil, []*string{}),
-				},
-			},
-		}
-
-		expect := backend.NewQueryDataResponse()
-		expect.Responses["A"] = backend.DataResponse{
-			Frames: dataFrames,
-		}
-		assert.Equal(t, *expect, tr)
 	})
 }
 
