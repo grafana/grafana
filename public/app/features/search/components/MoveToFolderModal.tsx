@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import { Button, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
-import { AppEvents, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { FolderInfo } from 'app/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import appEvents from 'app/core/app_events';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { DashboardSection, OnMoveItems } from '../types';
 import { getCheckedDashboards } from '../utils';
 import { moveDashboards } from 'app/features/manage-dashboards/state/actions';
@@ -21,6 +21,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
   const theme = useTheme();
   const styles = getStyles(theme);
   const selectedDashboards = getCheckedDashboards(results);
+  const notifyApp = useAppNotification();
 
   const moveTo = () => {
     if (folder && selectedDashboards.length) {
@@ -31,11 +32,11 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
           const ending = result.successCount === 1 ? '' : 's';
           const header = `Dashboard${ending} Moved`;
           const msg = `${result.successCount} dashboard${ending} moved to ${folderTitle}`;
-          appEvents.emit(AppEvents.alertSuccess, [header, msg]);
+          notifyApp.success(header, msg);
         }
 
         if (result.totalCount === result.alreadyInFolderCount) {
-          appEvents.emit(AppEvents.alertError, ['Error', `Dashboard already belongs to folder ${folderTitle}`]);
+          notifyApp.error('Error', `Dashboard already belongs to folder ${folderTitle}`);
         } else {
           onMoveItems(selectedDashboards, folder);
         }

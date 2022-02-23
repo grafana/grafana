@@ -64,7 +64,6 @@ export interface Invitee {
 
 export interface UsersState {
   users: OrgUser[];
-  invitees: Invitee[];
   searchQuery: string;
   searchPage: number;
   canInvite: boolean;

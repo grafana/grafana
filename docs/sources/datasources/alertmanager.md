@@ -26,7 +26,7 @@ apiVersion: 1
 datasources:
   - name: Alertmanager
     type: alertmanager
-    url: http://localhost:9090
+    url: http://localhost:9093
     access: proxy
     jsonData:
       implementation: 'prometheus' # alternatively 'cortex'

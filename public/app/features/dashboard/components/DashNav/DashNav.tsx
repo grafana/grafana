@@ -15,9 +15,11 @@ import { DashboardModel } from '../../state';
 import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import config from 'app/core/config';
 
 const mapDispatchToProps = {
   updateTimeZoneForSession,
@@ -140,6 +142,26 @@ class DashNav extends PureComponent<Props> {
               iconSize="lg"
               onClick={() => {
                 showModal(ShareModal, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
+    if (dashboard.uid && config.featureToggles.dashboardComments) {
+      buttons.push(
+        <ModalsController key="button-dashboard-comments">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip="Show dashboard comments"
+              icon="comment-alt-message"
+              iconSize="lg"
+              onClick={() => {
+                showModal(DashboardCommentsModal, {
                   dashboard,
                   onDismiss: hideModal,
                 });

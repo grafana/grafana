@@ -1,5 +1,16 @@
+import { VariableType } from '@grafana/data';
+import { cloneDeep } from 'lodash';
 import { ThunkResult } from '../../../types';
+import { variableAdapters } from '../adapters';
+import { initInspect } from '../inspect/reducer';
+import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
+import { updateOptions } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
+import { addVariable, removeVariable } from '../state/sharedReducer';
+import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
+import { VariableModel } from '../types';
+import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../utils';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -8,17 +19,6 @@ import {
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
-import { variableAdapters } from '../adapters';
-import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
-import { cloneDeep } from 'lodash';
-import { VariableType } from '@grafana/data';
-import { addVariable, removeVariable } from '../state/sharedReducer';
-import { updateOptions } from '../state/actions';
-import { VariableModel } from '../types';
-import { initInspect } from '../inspect/reducer';
-import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
@@ -92,18 +92,21 @@ export const completeChangeVariableName =
   };
 
 export const switchToNewMode =
-  (key: string, type: VariableType = 'query'): ThunkResult<void> =>
+  (key: string | null | undefined, type: VariableType = 'query'): ThunkResult<void> =>
   (dispatch, getState) => {
-    const id = getNextAvailableId(type, getVariablesByKey(key, getState()));
+    const rootStateKey = toStateKey(key);
+    const id = getNextAvailableId(type, getVariablesByKey(rootStateKey, getState()));
     const identifier: VariableIdentifier = { type, id };
     const global = false;
-    const index = getNewVariableIndex(key, getState());
+    const index = getNewVariableIndex(rootStateKey, getState());
     const model: VariableModel = cloneDeep(variableAdapters.get(type).initialState);
     model.id = id;
     model.name = id;
-    model.rootStateKey = key;
-    dispatch(toKeyedAction(key, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index }))));
-    dispatch(toKeyedAction(key, setIdInEditor({ id: identifier.id })));
+    model.rootStateKey = rootStateKey;
+    dispatch(
+      toKeyedAction(rootStateKey, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })))
+    );
+    dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
   };
 
 export const switchToEditMode =
@@ -114,16 +117,17 @@ export const switchToEditMode =
   };
 
 export const switchToListMode =
-  (key: string): ThunkResult<void> =>
+  (key: string | null | undefined): ThunkResult<void> =>
   (dispatch, getState) => {
-    dispatch(toKeyedAction(key, clearIdInEditor()));
+    const rootStateKey = toStateKey(key);
+    dispatch(toKeyedAction(rootStateKey, clearIdInEditor()));
     const state = getState();
-    const variables = getEditorVariables(key, state);
+    const variables = getEditorVariables(rootStateKey, state);
     const dashboard = state.dashboard.getModel();
     const { usages } = createUsagesNetwork(variables, dashboard);
     const usagesNetwork = transformUsagesToNetwork(usages);
 
-    dispatch(toKeyedAction(key, initInspect({ usages, usagesNetwork })));
+    dispatch(toKeyedAction(rootStateKey, initInspect({ usages, usagesNetwork })));
   };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {

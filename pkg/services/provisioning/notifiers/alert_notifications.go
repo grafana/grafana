@@ -1,7 +1,6 @@
 package notifiers
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -9,9 +8,18 @@ import (
 	"golang.org/x/net/context"
 )
 
+type Store interface {
+	GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error
+	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
+	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
+	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
+	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
+	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
+}
+
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
-	dc := newNotificationProvisioner(encryptionService, notificationService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, configDirectory string, store Store, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(store, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -19,15 +27,18 @@ func Provision(ctx context.Context, configDirectory string, encryptionService en
 type NotificationProvisioner struct {
 	log         log.Logger
 	cfgProvider *configReader
+	store       Store
 }
 
-func newNotificationProvisioner(encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(store Store, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
-		log: log,
+		log:   log,
+		store: store,
 		cfgProvider: &configReader{
 			encryptionService:   encryptionService,
 			notificationService: notifiationService,
 			log:                 log,
+			orgStore:            store,
 		},
 	}
 }
@@ -50,7 +61,7 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(ctx, getOrg); err != nil {
+			if err := dc.store.GetOrgByNameHandler(ctx, getOrg); err != nil {
 				return err
 			}
 			notification.OrgID = getOrg.Result.Id
@@ -60,13 +71,13 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
 
-		if err := bus.Dispatch(ctx, getNotification); err != nil {
+		if err := dc.store.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
 			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := bus.Dispatch(ctx, cmd); err != nil {
+			if err := dc.store.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -79,7 +90,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 	for _, notification := range notificationToMerge {
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(ctx, getOrg); err != nil {
+			if err := dc.store.GetOrgByNameHandler(ctx, getOrg); err != nil {
 				return err
 			}
 			notification.OrgID = getOrg.Result.Id
@@ -88,7 +99,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 		}
 
 		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
-		err := bus.Dispatch(ctx, cmd)
+		err := dc.store.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
 		}
@@ -108,7 +119,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(ctx, insertCmd); err != nil {
+			if err := dc.store.CreateAlertNotificationCommand(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
@@ -126,7 +137,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(ctx, updateCmd); err != nil {
+			if err := dc.store.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
 				return err
 			}
 		}

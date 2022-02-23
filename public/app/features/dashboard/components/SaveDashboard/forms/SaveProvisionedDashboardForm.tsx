@@ -3,11 +3,12 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { Button, ClipboardButton, Modal, stylesFactory, TextArea, useTheme } from '@grafana/ui';
 import { SaveDashboardFormProps } from '../types';
-import { AppEvents, GrafanaTheme } from '@grafana/data';
-import appEvents from '../../../../../core/app_events';
+import { GrafanaTheme } from '@grafana/data';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const theme = useTheme();
+  const notifyApp = useAppNotification();
   const [dashboardJSON, setDashboardJson] = useState(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
@@ -22,8 +23,8 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
   }, [dashboard.title, dashboardJSON]);
 
   const onCopyToClipboardSuccess = useCallback(() => {
-    appEvents.emit(AppEvents.alertSuccess, ['Dashboard JSON copied to clipboard']);
-  }, []);
+    notifyApp.success('Dashboard JSON copied to clipboard');
+  }, [notifyApp]);
 
   const styles = getStyles(theme);
   return (
