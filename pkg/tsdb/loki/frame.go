@@ -17,7 +17,7 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 
 	isMetricFrame := nonTimeFields[0].Type() != data.FieldTypeString
 
-	isMetricRanged := isMetricFrame && query.QueryType == QueryTypeRange
+	isMetricRange := isMetricFrame && query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
 	frame.Name = name
@@ -26,7 +26,7 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 		frame.Meta = &data.FrameMeta{}
 	}
 
-	if isMetricRanged {
+	if isMetricRange {
 		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
 	} else {
 		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
@@ -39,7 +39,7 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 	for _, field := range timeFields {
 		field.Name = "time"
 
-		if isMetricRanged {
+		if isMetricRange {
 			if field.Config == nil {
 				field.Config = &data.FieldConfig{}
 			}
