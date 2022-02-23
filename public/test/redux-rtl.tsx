@@ -31,5 +31,4 @@ function render(
   return rtlRender(ui, { wrapper: Wrapper, ...renderOptions });
 }
 
-export * from '@testing-library/react';
 export { render };
