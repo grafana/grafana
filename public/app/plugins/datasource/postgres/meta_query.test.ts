@@ -1,10 +1,11 @@
 import { describe, expect } from 'test/lib/common';
 import { PostgresMetaQuery } from './meta_query';
+import QueryModel from './postgres_query_model';
 
 describe('Postgres MetaQuery', () => {
   describe('buildSchemaConstraint()', () => {
     describe('when executing buildSchemaConstraint()', () => {
-      const postgresMetaQuery = new PostgresMetaQuery(null, null);
+      const postgresMetaQuery = new PostgresMetaQuery({ table: '', timeColumn: '' }, new QueryModel({}));
       it('should return a schema restraint', () => {
         expect(postgresMetaQuery.buildSchemaConstraint()).toEqual(
           `
