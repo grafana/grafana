@@ -28,7 +28,7 @@ export const PromQueryLegendEditor = React.memo<Props>(({ query, onChange, onRun
   const mode = getLegendMode(query.legendFormat);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const onLegendFormatChanged = (evt: React.FocusEvent<HTMLInputElement> | React.FormEvent<HTMLInputElement>) => {
+  const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
     let legendFormat = evt.currentTarget.value;
     if (legendFormat.length === 0) {
       legendFormat = LegendFormatMode.Auto;
