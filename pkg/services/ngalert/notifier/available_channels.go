@@ -459,11 +459,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "url",
 					Secure:       true,
 				},
-				{
+				{ // New in 8.4.
 					Label:        "Endpoint URL",
 					Element:      alerting.ElementTypeInput,
 					InputType:    alerting.InputTypeText,
-					Description:  "Optionally provide a custom Slack message API endpoint, default is https://slack.com/api/chat.postMessage",
+					Description:  "Optionally provide a custom Slack message API endpoint for non-webhook requests, default is https://slack.com/api/chat.postMessage",
 					Placeholder:  "Slack endpoint url",
 					PropertyName: "endpointUrl",
 				},
