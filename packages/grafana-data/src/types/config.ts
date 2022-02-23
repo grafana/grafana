@@ -106,8 +106,6 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   locale: string;
-  helpFlags1: number;
-  hasEditPermissionInFolders: boolean;
   permissions?: Record<string, boolean>;
 }
 

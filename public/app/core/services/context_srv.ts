@@ -1,10 +1,11 @@
 import config from '../../core/config';
 import { extend } from 'lodash';
-import { CurrentUserDTO, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import { OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
+import { CurrentUserInternal } from 'app/types/config';
 
-export class User implements CurrentUserDTO {
+export class User implements CurrentUserInternal {
   isSignedIn: boolean;
   id: number;
   login: string;
