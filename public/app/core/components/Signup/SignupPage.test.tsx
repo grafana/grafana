@@ -1,6 +1,7 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/redux-rtl';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { SignupPage } from './SignupPage';

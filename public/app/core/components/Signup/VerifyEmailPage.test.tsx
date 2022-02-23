@@ -1,5 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { render } from 'test/redux-rtl';
 import userEvent from '@testing-library/user-event';
 
 import { VerifyEmailPage } from './VerifyEmailPage';
