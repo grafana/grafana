@@ -66,7 +66,7 @@ func (s simpleSecret) rollback(
 		logger.Info(fmt.Sprintf("Column %s from %s has been rolled back successfully", s.columnName, s.tableName))
 	}
 
-	return
+	return anyFailure
 }
 
 func (s b64Secret) rollback(
@@ -126,7 +126,7 @@ func (s b64Secret) rollback(
 		logger.Info(fmt.Sprintf("Column %s from %s has been rolled back successfully", s.columnName, s.tableName))
 	}
 
-	return
+	return anyFailure
 }
 
 func (s jsonSecret) rollback(
@@ -180,7 +180,7 @@ func (s jsonSecret) rollback(
 		logger.Info(fmt.Sprintf("Secure json data secrets from %s have been rolled back successfully", s.tableName))
 	}
 
-	return
+	return anyFailure
 }
 
 func (s alertingSecret) rollback(
@@ -259,7 +259,7 @@ func (s alertingSecret) rollback(
 		logger.Info("Alerting configuration secrets have been rolled back successfully")
 	}
 
-	return
+	return anyFailure
 }
 
 func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
