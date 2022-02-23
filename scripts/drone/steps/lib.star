@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.2'
-build_image = 'grafana/build-container:1.4.9'
+grabpl_version = 'v2.9.5'
+build_image = 'grafana/build-container:1.5.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
@@ -64,12 +64,20 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
+            environment = {
+                  'GITHUB_TOKEN': from_secret(github_token),
+            }
+            token = "--github-token $${GITHUB_TOKEN}"
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
+            environment = {}
+            token = ""
         else:
+            environment = {}
             if is_downstream:
                 source_commit = ' $${SOURCE_COMMIT}'
             committish = '${DRONE_COMMIT}'
+            token = ""
         steps = [
             identify_runner,
             clone_enterprise(committish),
@@ -79,14 +87,12 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False, install_de
                 'depends_on': [
                     'clone-enterprise',
                 ],
-                'environment': {
-                  'GITHUB_TOKEN': from_secret(github_token),
-                },
+                'environment': environment,
                 'commands': [
                                 'mv bin/grabpl /tmp/',
                                 'rmdir bin',
                                 'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise --github-token $${{GITHUB_TOKEN}} /tmp/grafana-enterprise{}'.format(source_commit),
+                                '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
                                 'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                                 'mkdir bin',
                                 'mv /tmp/grabpl bin/'
@@ -183,7 +189,7 @@ def enterprise_downstream_step(edition):
                 'grafana/grafana-enterprise@main',
             ],
             'params': [
-                'SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
+                'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
             ],
         },
@@ -421,9 +427,12 @@ def build_frontend_docs_step(edition):
         'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
-            'build-frontend'
+            'initialize'
         ],
         'commands': [
+            'yarn packages:build',
+            'yarn packages:docsExtract',
+            'yarn packages:docsToMarkdown',
             './scripts/ci-reference-docs-lint.sh ci',
         ]
     }
