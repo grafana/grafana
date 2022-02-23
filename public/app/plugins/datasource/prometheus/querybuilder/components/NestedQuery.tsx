@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
-import { IconButton, Input, Select, useStyles2 } from '@grafana/ui';
+import { IconButton, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { PrometheusDatasource } from '../../datasource';
 import { AutoSizeInput } from '../shared/AutoSizeInput';
