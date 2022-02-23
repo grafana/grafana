@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AppNotification, AppNotificationsState } from 'app/types/';
 
 export const initialState: AppNotificationsState = {
-  appNotifications: [] as AppNotification[],
+  byId: {},
 };
 
 /**
@@ -15,30 +15,31 @@ const appNotificationsSlice = createSlice({
   name: 'appNotifications',
   initialState,
   reducers: {
-    notifyApp: (state, action: PayloadAction<AppNotification>) => {
-      const newAlert = action.payload;
-
-      for (const existingAlert of state.appNotifications) {
-        if (
-          newAlert.icon === existingAlert.icon &&
-          newAlert.severity === existingAlert.severity &&
-          newAlert.text === existingAlert.text &&
-          newAlert.title === existingAlert.title &&
-          newAlert.component === existingAlert.component
-        ) {
-          return;
-        }
+    notifyApp: (state, { payload: newAlert }: PayloadAction<AppNotification>) => {
+      if (Object.values(state.byId).some((alert) => isSimilar(newAlert, alert))) {
+        return;
       }
 
-      state.appNotifications.push(newAlert);
+      state.byId[newAlert.id] = newAlert;
     },
-    clearAppNotification: (state, action: PayloadAction<string>): AppNotificationsState => ({
-      ...state,
-      appNotifications: state.appNotifications.filter((appNotification) => appNotification.id !== action.payload),
-    }),
+    clearAppNotification: (state, { payload: alertId }: PayloadAction<string>) => {
+      delete state.byId[alertId];
+    },
   },
 });
 
 export const { notifyApp, clearAppNotification } = appNotificationsSlice.actions;
 
 export const appNotificationsReducer = appNotificationsSlice.reducer;
+
+export const selectAll = (state: AppNotificationsState) => Object.values(state.byId);
+
+function isSimilar(a: AppNotification, b: AppNotification): boolean {
+  return (
+    a.icon === b.icon &&
+    a.severity === b.severity &&
+    a.text === b.text &&
+    a.title === b.title &&
+    a.component === b.component
+  );
+}

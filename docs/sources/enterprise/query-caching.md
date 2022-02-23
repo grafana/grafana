@@ -80,11 +80,8 @@ If you experience performance issues or repeated queries become slower to execut
 **To clear the cache**:
 
 1. Sign in to Grafana and click **Settings > Data Sources**.
-
 1. Select a data source.
-
 1. Click the **Cache** tab.
-
 1. Click **Clear cache**.
 
 ## Sending a request without cache
