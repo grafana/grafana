@@ -74,292 +74,330 @@ func TestFsStorage(t *testing.T) {
 		filestorage = NewCdkBlobStorage(testLogger, bucket, "", nil)
 	}
 
-	tests := []struct {
+	createTests := func() []struct {
 		name  string
 		steps []interface{}
-	}{
-		{
-			name: "inserting a file",
-			steps: []interface{}{
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:       "/folder1/file.png",
-						Contents:   &pngImage,
-						Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+	} {
+		return []struct {
+			name  string
+			steps []interface{}
+		}{
+			{
+				name: "inserting a file",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/file.png",
+							Contents:   &pngImage,
+							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+						},
 					},
-				},
-				queryGet{
-					input: queryGetInput{
-						path: "/folder1/file.png",
-					},
-					checks: checks(
-						fName("file.png"),
-						fMimeType("image/png"),
-						fProperties(map[string]string{"prop1": "val1", "prop2": "val"}),
-						fSize(pngImageSize),
-						fContents(pngImage),
-					),
-				},
-			},
-		},
-		{
-			name: "getting a non-existent file",
-			steps: []interface{}{
-				queryGet{
-					input: queryGetInput{
-						path: "/folder1/file12412.png",
+					queryGet{
+						input: queryGetInput{
+							path: "/folder1/file.png",
+						},
+						checks: checks(
+							fName("file.png"),
+							fMimeType("image/png"),
+							fProperties(map[string]string{"prop1": "val1", "prop2": "val"}),
+							fSize(pngImageSize),
+							fContents(pngImage),
+						),
 					},
 				},
 			},
-		},
-		{
-			name: "listing files",
-			steps: []interface{}{
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:       "/folder1/folder2/file.jpg",
-						Contents:   &[]byte{},
-						Properties: map[string]string{"prop1": "val1", "prop2": "val"},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:       "/folder1/file-inner.jpg",
-						Contents:   &[]byte{},
-						Properties: map[string]string{"prop1": "val1", "prop2": "val"},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/file-inner2.jpg",
-						Contents: &[]byte{},
-					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true}},
-					list:  checks(listSize(3), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
-					files: [][]interface{}{
-						checks(fPath("/folder1/file-inner.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
-						checks(fPath("/folder1/file-inner2.jpg"), fProperties(map[string]string{})),
-						checks(fPath("/folder1/folder2/file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+			{
+				name: "getting a non-existent file",
+				steps: []interface{}{
+					queryGet{
+						input: queryGetInput{
+							path: "/folder1/file12412.png",
+						},
 					},
 				},
 			},
-		},
-		{
-			name: "listing files with prefix filter",
-			steps: []interface{}{
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/folder2/file.jpg",
-						Contents: &[]byte{},
+			{
+				name: "listing files",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/folder2/file.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+						},
 					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/file-inner.jpg",
-						Contents: &[]byte{},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/folder1/file-inner.jpg",
+							Contents:   &[]byte{},
+							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
+						},
 					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder2"}}}},
-					list:  checks(listSize(0), listHasMore(false), listLastPath("")),
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
-					list:  checks(listSize(1), listHasMore(false)),
-					files: [][]interface{}{
-						checks(fPath("/folder1/folder2/file.jpg")),
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/file-inner2.jpg",
+							Contents: &[]byte{},
+						},
 					},
-				},
-			},
-		},
-		{
-			name: "listing files with pagination",
-			steps: []interface{}{
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/a",
-						Contents: &[]byte{},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/b",
-						Contents: &[]byte{},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder2/c",
-						Contents: &[]byte{},
-					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: ""}},
-					list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/a")),
-					files: [][]interface{}{
-						checks(fPath("/folder1/a")),
-					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/a"}},
-					list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/b")),
-					files: [][]interface{}{
-						checks(fPath("/folder1/b")),
-					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/b"}},
-					list:  checks(listSize(1), listHasMore(false), listLastPath("/folder2/c")),
-					files: [][]interface{}{
-						checks(fPath("/folder2/c")),
-					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: ""}},
-					list:  checks(listSize(3), listHasMore(false), listLastPath("/folder2/c")),
-					files: [][]interface{}{
-						checks(fPath("/folder1/a")),
-						checks(fPath("/folder1/b")),
-						checks(fPath("/folder2/c")),
-					},
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2"}},
-					list:  checks(listSize(1), listHasMore(false)),
-				},
-				queryListFiles{
-					input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2/c"}},
-					list:  checks(listSize(0), listHasMore(false)),
-				},
-			},
-		},
-		{
-			name: "listing folders",
-			steps: []interface{}{
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/folder2/file.jpg",
-						Contents: &[]byte{},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/file-inner.jpg",
-						Contents: &[]byte{},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folderX/folderZ/file.txt",
-						Contents: &[]byte{},
-					},
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folderA/folderB/file.txt",
-						Contents: &[]byte{},
-					},
-				},
-				queryListFolders{
-					input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-					checks: [][]interface{}{
-						checks(fPath("/folder1")),
-						checks(fPath("/folder1/folder2")),
-						checks(fPath("/folderA")),
-						checks(fPath("/folderA/folderB")),
-						checks(fPath("/folderX")),
-						checks(fPath("/folderX/folderZ")),
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true}},
+						list:  checks(listSize(3), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/file-inner.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+							checks(fPath("/folder1/file-inner2.jpg"), fProperties(map[string]string{})),
+							checks(fPath("/folder1/folder2/file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						},
 					},
 				},
 			},
-		},
-		{
-			name: "creating and deleting folders",
-			steps: []interface{}{
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder1/folder2/file.jpg",
-						Contents: &[]byte{},
+			{
+				name: "listing files with prefix filter",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/folder2/file.jpg",
+							Contents: &[]byte{},
+						},
 					},
-				},
-				cmdCreateFolder{
-					path: "/folder/dashboards",
-					name: "myNewFolder",
-				},
-				cmdCreateFolder{
-					path: "/folder/icons",
-					name: "emojis",
-				},
-				queryListFolders{
-					input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-					checks: [][]interface{}{
-						checks(fPath("/folder")),
-						checks(fPath("/folder/dashboards")),
-						checks(fPath("/folder/dashboards/myNewFolder")),
-						checks(fPath("/folder/icons")),
-						checks(fPath("/folder/icons/emojis")),
-						checks(fPath("/folder1")),
-						checks(fPath("/folder1/folder2")),
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/file-inner.jpg",
+							Contents: &[]byte{},
+						},
 					},
-				},
-				cmdDeleteFolder{
-					path: "/folder/dashboards/myNewFolder",
-				},
-				queryListFolders{
-					input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-					checks: [][]interface{}{
-						checks(fPath("/folder")),
-						checks(fPath("/folder/icons")),
-						checks(fPath("/folder/icons/emojis")),
-						checks(fPath("/folder1")),
-						checks(fPath("/folder1/folder2")),
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder2"}}}},
+						list:  checks(listSize(0), listHasMore(false), listLastPath("")),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true, PathFilters: PathFilters{allowedPrefixes: []string{"/folder1/folder"}}}},
+						list:  checks(listSize(1), listHasMore(false)),
+						files: [][]interface{}{
+							checks(fPath("/folder1/folder2/file.jpg")),
+						},
 					},
 				},
 			},
-		},
-		{
-			name: "should not be able to delete folders with files",
-			steps: []interface{}{
-				cmdCreateFolder{
-					path: "/folder/dashboards",
-					name: "myNewFolder",
-				},
-				cmdUpsert{
-					cmd: UpsertFileCommand{
-						Path:     "/folder/dashboards/myNewFolder/file.jpg",
-						Contents: &[]byte{},
+			{
+				name: "listing files with pagination",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/a",
+							Contents: &[]byte{},
+						},
 					},
-				},
-				cmdDeleteFolder{
-					path: "/folder/dashboards/myNewFolder",
-					error: &cmdErrorOutput{
-						message: "folder %s is not empty - cant remove it",
-						args:    []interface{}{"/folder/dashboards/myNewFolder"},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/b",
+							Contents: &[]byte{},
+						},
 					},
-				},
-				queryListFolders{
-					input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
-					checks: [][]interface{}{
-						checks(fPath("/folder")),
-						checks(fPath("/folder/dashboards")),
-						checks(fPath("/folder/dashboards/myNewFolder")),
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder2/c",
+							Contents: &[]byte{},
+						},
 					},
-				},
-				queryGet{
-					input: queryGetInput{
-						path: "/folder/dashboards/myNewFolder/file.jpg",
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: ""}},
+						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/a")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/a")),
+						},
 					},
-					checks: checks(
-						fName("file.jpg"),
-					),
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/a"}},
+						list:  checks(listSize(1), listHasMore(true), listLastPath("/folder1/b")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/b")),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 1, After: "/folder1/b"}},
+						list:  checks(listSize(1), listHasMore(false), listLastPath("/folder2/c")),
+						files: [][]interface{}{
+							checks(fPath("/folder2/c")),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: ""}},
+						list:  checks(listSize(3), listHasMore(false), listLastPath("/folder2/c")),
+						files: [][]interface{}{
+							checks(fPath("/folder1/a")),
+							checks(fPath("/folder1/b")),
+							checks(fPath("/folder2/c")),
+						},
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2"}},
+						list:  checks(listSize(1), listHasMore(false)),
+					},
+					queryListFiles{
+						input: queryListFilesInput{path: "/", options: &ListOptions{Recursive: true}, paging: &Paging{First: 5, After: "/folder2/c"}},
+						list:  checks(listSize(0), listHasMore(false)),
+					},
 				},
 			},
-		},
+			{
+				name: "listing folders",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/folder2/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/file-inner.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folderX/folderZ/file.txt",
+							Contents: &[]byte{},
+						},
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folderA/folderB/file.txt",
+							Contents: &[]byte{},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder1")),
+							checks(fPath("/folder1/folder2")),
+							checks(fPath("/folderA")),
+							checks(fPath("/folderA/folderB")),
+							checks(fPath("/folderX")),
+							checks(fPath("/folderX/folderZ")),
+						},
+					},
+				},
+			},
+			{
+				name: "creating and deleting folders",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder1/folder2/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdCreateFolder{
+						path: "/folder/dashboards",
+						name: "myNewFolder",
+					},
+					cmdCreateFolder{
+						path: "/folder/icons",
+						name: "emojis",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder")),
+							checks(fPath("/folder/dashboards")),
+							checks(fPath("/folder/dashboards/myNewFolder")),
+							checks(fPath("/folder/icons")),
+							checks(fPath("/folder/icons/emojis")),
+							checks(fPath("/folder1")),
+							checks(fPath("/folder1/folder2")),
+						},
+					},
+					cmdDeleteFolder{
+						path: "/folder/dashboards/myNewFolder",
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder")),
+							checks(fPath("/folder/icons")),
+							checks(fPath("/folder/icons/emojis")),
+							checks(fPath("/folder1")),
+							checks(fPath("/folder1/folder2")),
+						},
+					},
+				},
+			},
+			{
+				name: "should not be able to delete folders with files",
+				steps: []interface{}{
+					cmdCreateFolder{
+						path: "/folder/dashboards",
+						name: "myNewFolder",
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/folder/dashboards/myNewFolder/file.jpg",
+							Contents: &[]byte{},
+						},
+					},
+					cmdDeleteFolder{
+						path: "/folder/dashboards/myNewFolder",
+						error: &cmdErrorOutput{
+							message: "folder %s is not empty - cant remove it",
+							args:    []interface{}{"/folder/dashboards/myNewFolder"},
+						},
+					},
+					queryListFolders{
+						input: queryListFoldersInput{path: "/", options: &ListOptions{Recursive: true}},
+						checks: [][]interface{}{
+							checks(fPath("/folder")),
+							checks(fPath("/folder/dashboards")),
+							checks(fPath("/folder/dashboards/myNewFolder")),
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/folder/dashboards/myNewFolder/file.jpg",
+						},
+						checks: checks(
+							fName("file.jpg"),
+						),
+					},
+				},
+			},
+			{
+				name: "should be able to modify file metadata",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/FILE.png",
+							Contents: &pngImage,
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fMimeType("image/png"),
+							fProperties(map[string]string{}),
+							fSize(pngImageSize),
+							fContents(pngImage),
+						),
+					},
+				},
+			},
+		}
 	}
 
-	for _, tt := range tests {
+	for _, tt := range createTests() {
+		t.Run(fmt.Sprintf("%s: %s", "Local FS", tt.name), func(t *testing.T) {
+			setupLocalFs()
+			defer cleanUp()
+			for i, step := range tt.steps {
+				executeTestStep(t, ctx, step, i, filestorage)
+			}
+		})
+	}
+
+	for _, tt := range createTests() {
 		t.Run(fmt.Sprintf("%s: %s", "IN MEM FS", tt.name), func(t *testing.T) {
 			setupInMemFS()
 			defer cleanUp()
@@ -369,19 +407,9 @@ func TestFsStorage(t *testing.T) {
 		})
 	}
 
-	for _, tt := range tests {
+	for _, tt := range createTests() {
 		t.Run(fmt.Sprintf("%s: %s", "SQL FS", tt.name), func(t *testing.T) {
 			setupSqlFS()
-			defer cleanUp()
-			for i, step := range tt.steps {
-				executeTestStep(t, ctx, step, i, filestorage)
-			}
-		})
-	}
-
-	for _, tt := range tests {
-		t.Run(fmt.Sprintf("%s: %s", "Local FS", tt.name), func(t *testing.T) {
-			setupLocalFs()
 			defer cleanUp()
 			for i, step := range tt.steps {
 				executeTestStep(t, ctx, step, i, filestorage)

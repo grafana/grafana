@@ -78,7 +78,7 @@ func (f *PathFilters) isAllowed(path string) bool {
 	}
 
 	for i := range f.allowedPrefixes {
-		if strings.HasPrefix(path, f.allowedPrefixes[i]) {
+		if strings.HasPrefix(path, strings.ToLower(f.allowedPrefixes[i])) {
 			return true
 		}
 	}

@@ -85,8 +85,8 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 		result = &File{
 			Contents: table.Contents,
 			FileMetadata: FileMetadata{
-				Name:       getName(filePath),
-				FullPath:   filePath,
+				Name:       getName(table.Path),
+				FullPath:   table.Path,
 				Created:    table.Created,
 				Properties: metaProperties,
 				Modified:   table.Updated,

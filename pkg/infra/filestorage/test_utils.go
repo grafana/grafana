@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -266,7 +267,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 
 		if q.checks != nil && len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
-			require.Equal(t, inputPath, file.FullPath, "%s %s", queryName, inputPath)
+			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
 			runChecks(t, queryName, inputPath, *file, q.checks)
 		} else {
 			require.Nil(t, file, "%s %s", queryName, inputPath)
