@@ -124,7 +124,6 @@ type SearchOrgUsersQuery struct {
 	Limit            int
 	IsServiceAccount bool
 
-	Filters []Filter
 
 	User   *SignedInUser
 	Result SearchOrgUsersQueryResult
