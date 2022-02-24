@@ -232,7 +232,6 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-
 // SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
 func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
@@ -246,7 +245,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if page < 1 {
 		page = 1
 	}
-
 
 	query := &models.SearchOrgUsersQuery{
 		OrgID:            c.OrgId,
