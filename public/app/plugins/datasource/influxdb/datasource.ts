@@ -402,8 +402,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+    let expandedQuery = { ...query };
     if (query.groupBy) {
-      query.groupBy = query.groupBy.map((groupBy) => {
+      expandedQuery.groupBy = query.groupBy.map((groupBy) => {
         return {
           ...groupBy,
           params: groupBy.params?.map((param) => {
@@ -414,7 +415,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (query.select) {
-      query.select = query.select.map((selects) => {
+      expandedQuery.select = query.select.map((selects) => {
         return selects.map((select: any) => {
           return {
             ...select,
@@ -427,7 +428,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (query.tags) {
-      query.tags = query.tags.map((tag) => {
+      expandedQuery.tags = query.tags.map((tag) => {
         return {
           ...tag,
           value: this.templateSrv.replace(tag.value, undefined, 'regex'),
@@ -436,7 +437,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     return {
-      ...query,
+      ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
