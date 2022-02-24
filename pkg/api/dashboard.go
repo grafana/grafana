@@ -34,7 +34,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *models.ReqContext, dashID int6
 	}
 
 	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := hs.StarsService.IsStarredByUserCtx(c.Req.Context(), &query); err != nil {
+	if err := hs.dashboardService.DashboardIsStarredByUserCtx(c.Req.Context(), &query); err != nil {
 		return false, err
 	}
 
