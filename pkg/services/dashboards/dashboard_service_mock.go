@@ -42,3 +42,6 @@ func (s *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId 
 func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64) (*models.DashboardProvisioning, error) {
 	return s.ProvisionedDashData, nil
 }
+func (s *FakeDashboardService) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return nil
+}

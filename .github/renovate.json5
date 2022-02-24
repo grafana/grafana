@@ -17,6 +17,7 @@
     "d3-scale-chromatic", // we should bump this once we move to esm modules
     "execa", // we should bump this once we move to esm modules
     "history", // we should bump this together with react-router-dom
+    "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
     "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "react-router-dom", // we should bump this together with history
     "slate",
