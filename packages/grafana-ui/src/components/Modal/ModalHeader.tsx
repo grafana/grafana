@@ -5,6 +5,7 @@ import { useStyles2 } from '../../themes';
 
 interface Props {
   title: string;
+  id?: string;
   /** @deprecated */
   icon?: IconName;
   /** @deprecated */
@@ -12,12 +13,14 @@ interface Props {
 }
 
 /** @internal */
-export const ModalHeader: React.FC<Props> = ({ icon, iconTooltip, title, children }) => {
+export const ModalHeader: React.FC<Props> = ({ icon, iconTooltip, title, children, id }) => {
   const styles = useStyles2(getModalStyles);
 
   return (
     <>
-      <h2 className={styles.modalHeaderTitle}>{title}</h2>
+      <h2 className={styles.modalHeaderTitle} id={id}>
+        {title}
+      </h2>
       {children}
     </>
   );

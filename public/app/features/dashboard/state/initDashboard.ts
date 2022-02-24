@@ -7,13 +7,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
 import { notifyApp } from 'app/core/actions';
-import {
-  dashboardInitCompleted,
-  dashboardInitFailed,
-  dashboardInitFetching,
-  dashboardInitServices,
-  dashboardInitSlow,
-} from './reducers';
+import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 // Types
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
@@ -109,14 +103,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
     // set fetching state
     dispatch(dashboardInitFetching());
-
-    // Detect slow loading / initializing and set state flag
-    // This is in order to not show loading indication for fast loading dashboards as it creates blinking/flashing
-    setTimeout(() => {
-      if (getState().dashboard.getModel() === null) {
-        dispatch(dashboardInitSlow());
-      }
-    }, 500);
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);

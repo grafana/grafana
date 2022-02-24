@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import AppNotificationItem from './AppNotificationItem';
 import { notifyApp, clearAppNotification } from 'app/core/actions';
+import { selectAll } from 'app/core/reducers/appNotification';
 import { StoreState } from 'app/types';
 
 import {
@@ -16,7 +17,7 @@ import { VerticalGroup } from '@grafana/ui';
 export interface OwnProps {}
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => ({
-  appNotifications: state.appNotifications.appNotifications,
+  appNotifications: selectAll(state.appNotifications),
 });
 
 const mapDispatchToProps = {
