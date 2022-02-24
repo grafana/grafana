@@ -68,10 +68,8 @@ interface State {
   showTime: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
-  dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
-  isFlipping: boolean;
   showDetectedFields: string[];
   forceEscape: boolean;
 }
@@ -91,10 +89,8 @@ class LiveLogs extends PureComponent<Props, State> {
       showTime: store.getBool(SETTINGS_KEYS.showTime, true),
       wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
       prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
-      dedupStrategy: LogsDedupStrategy.none,
       hiddenLogLevels: [],
       logsSortOrder: null,
-      isFlipping: false,
       showDetectedFields: [],
       forceEscape: false,
     };
@@ -175,16 +171,8 @@ class LiveLogs extends PureComponent<Props, State> {
       showContextToggle,
     } = this.props;
 
-    const {
-      showLabels,
-      showTime,
-      wrapLogMessage,
-      prettifyLogMessage,
-      logsSortOrder,
-      isFlipping,
-      showDetectedFields,
-      forceEscape,
-    } = this.state;
+    const { showLabels, showTime, wrapLogMessage, prettifyLogMessage, logsSortOrder, showDetectedFields, forceEscape } =
+      this.state;
 
     const styles = getStyles(theme, wrapLogMessage);
 
