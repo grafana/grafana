@@ -74,7 +74,7 @@ export function ServiceAccountProfile({
               />
               <ServiceAccountProfileRow label="ID" value={serviceAccount.login} />
               <ServiceAccountProfileRow label="Roles" value="WIP" />
-              <ServiceAccountProfileRow label="Teams" value="WIP" />
+              <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} />
               <ServiceAccountProfileRow label="Created by" value="WIP" />
               <ServiceAccountProfileRow
                 label="Creation date"
