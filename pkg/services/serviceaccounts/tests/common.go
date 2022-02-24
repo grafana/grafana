@@ -67,14 +67,15 @@ func SetupMockAccesscontrol(t *testing.T,
 var _ serviceaccounts.Store = new(ServiceAccountsStoreMock)
 
 type Calls struct {
-	CreateServiceAccount   []interface{}
-	ListServiceAccounts    []interface{}
-	RetrieveServiceAccount []interface{}
-	DeleteServiceAccount   []interface{}
-	UpgradeServiceAccounts []interface{}
-	ConvertServiceAccounts []interface{}
-	ListTokens             []interface{}
-	UpdateServiceAccount   []interface{}
+	CreateServiceAccount      []interface{}
+	ListServiceAccounts       []interface{}
+	RetrieveServiceAccount    []interface{}
+	DeleteServiceAccount      []interface{}
+	UpgradeServiceAccounts    []interface{}
+	ConvertServiceAccounts    []interface{}
+	ListTokens                []interface{}
+	DeleteServiceAccountToken []interface{}
+	UpdateServiceAccount      []interface{}
 }
 
 type ServiceAccountsStoreMock struct {
@@ -123,4 +124,9 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
 
 	return nil, nil
+}
+
+func (s *ServiceAccountsStoreMock) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
+	s.Calls.DeleteServiceAccountToken = append(s.Calls.DeleteServiceAccountToken, []interface{}{ctx, orgID, serviceAccountID, tokenID})
+	return nil
 }
