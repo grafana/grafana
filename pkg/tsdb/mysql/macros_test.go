@@ -129,7 +129,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 			require.Nil(t, err)
 
-			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", from.Unix(), to.Unix()), sql)
+			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN DATE_ADD(FROM_UNIXTIME(0), INTERVAL %d SECOND) AND FROM_UNIXTIME(%d)", from.Unix(), to.Unix()), sql)
 		})
 
 		t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 			require.Nil(t, err)
 
-			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", from.Unix(), to.Unix()), sql)
+			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN DATE_ADD(FROM_UNIXTIME(0), INTERVAL %d SECOND) AND FROM_UNIXTIME(%d)", from.Unix(), to.Unix()), sql)
 		})
 
 		t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {
