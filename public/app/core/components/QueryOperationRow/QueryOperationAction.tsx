@@ -10,6 +10,7 @@ interface QueryOperationActionProps {
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
   active?: boolean;
+  isHighlighted?: boolean;
 }
 
 export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
@@ -18,6 +19,7 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
   disabled,
   title,
   onClick,
+  isHighlighted,
 }) => {
   const styles = useStyles2(getStyles);
 
@@ -33,6 +35,7 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
         type="button"
         aria-label={selectors.components.QueryEditorRow.actionButton(title)}
       />
+      {isHighlighted && <div className={styles.highlight} />}
     </div>
   );
 };
@@ -57,7 +60,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         border-radius: 2px;
         bottom: -8px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
-      }
+      },
+    `,
+    highlight: css`
+      background-color: ${theme.colors.success.main};
+      border-radius: 50%;
+      width: 6px;
+      height: 6px;
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      z-index: 1;
     `,
   };
 };
