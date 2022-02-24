@@ -6,6 +6,9 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import { css } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
+import { useDispatch } from 'react-redux';
+import { togglePin } from 'app/core/reducers/navBarTree';
+import { getConfig } from 'app/core/config';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -14,6 +17,11 @@ export interface Props {
 }
 
 export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
+  const dispatch = useDispatch();
+  const toggleItemPin = (id: string) => {
+    dispatch(togglePin({ id }));
+  };
+
   const theme = useTheme2();
   const styles = getStyles(theme);
   const ref = useRef(null);
@@ -27,6 +35,7 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
     ref
   );
 
+  const newNavigationEnabled = getConfig().featureToggles.newNavigation;
   return (
     <FocusScope contain restoreFocus autoFocus>
       <div data-testid="navbarmenu" className={styles.container} ref={ref} {...overlayProps} {...dialogProps}>
@@ -37,8 +46,8 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
         <nav className={styles.content}>
           <CustomScrollbar>
             <ul>
-              {navItems.map((link, index) => (
-                <div className={styles.section} key={index}>
+              {navItems.map((link) => (
+                <div className={styles.section} key={link.text}>
                   <NavBarMenuItem
                     isActive={activeItem === link}
                     onClick={() => {
@@ -50,12 +59,15 @@ export function NavBarMenu({ activeItem, navItems, onClose }: Props) {
                     text={link.text}
                     url={link.url}
                     isMobile={true}
+                    pinned={!link.hideFromNavbar}
+                    canPin={newNavigationEnabled && link.id !== 'search'}
+                    onTogglePin={() => link.id && toggleItemPin(link.id)}
                   />
                   {link.children?.map(
-                    (childLink, childIndex) =>
+                    (childLink) =>
                       !childLink.divider && (
                         <NavBarMenuItem
-                          key={childIndex}
+                          key={childLink.text}
                           icon={childLink.icon as IconName}
                           isActive={activeItem === childLink}
                           isDivider={childLink.divider}

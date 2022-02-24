@@ -24,7 +24,8 @@ type Store interface {
 	UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error
 	UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error
 	DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error
-	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
+	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error)
