@@ -876,51 +876,35 @@ export class CloudWatchDatasource
     const metricName = 'EstimatedCharges';
     const dimensions = {};
 
-    let queryTypes = ['logs', 'metrics'];
-    const dataQueryResponses: DataQueryResponse[] = [];
+    let queryTypes: string[] = [];
+    const statuses = [];
     try {
       await this.getDimensionValues(region ?? '', namespace, metricName, 'ServiceName', dimensions);
+      queryTypes.push('metrics');
     } catch (error) {
-      dataQueryResponses.push(toDataQueryResponse(error));
-      queryTypes.filter((str) => {
-        return str !== 'metrics';
-      });
+      console.log('metrics!!', error);
+      statuses.push(error.message); // TODO: return the aws response info (access denied, etc) from the backend
     }
 
     try {
-      await this.makeLogActionRequest('DescribeLogGroups', []);
+      // TODO: find a good logs permission query
+      throw new Error('some error');
+      queryTypes.push('logs');
     } catch (error) {
-      dataQueryResponses.push(toDataQueryResponse(error));
-      queryTypes.filter((str) => {
-        return str !== 'logs';
-      });
+      statuses.push(error.message);
     }
 
     if (queryTypes.length) {
-      let workingTypes = '';
-      for (const type of queryTypes) {
-        workingTypes += ' ' + type;
-      }
       return {
         status: 'success',
-        message: 'Data source is working for ' + workingTypes,
+        message: `Test successful for ${queryTypes.join(' and ')}`,
       };
     }
 
-    const errors: any = {};
-    // this is code from "toTestingStatus"
-    for (const resp of dataQueryResponses) {
-      if (resp.error?.data?.message) {
-        errors.message = resp.error.data.message;
-        errors.details = resp.error?.data?.error ? { message: resp.error.data.error } : undefined;
-      } else if (resp.error?.refId && resp.error?.message) {
-        errors.message = resp.error.message;
-      }
-    }
     return {
       status: 'error',
-      message: errors.message,
-      details: errors.details,
+      message: statuses.join(', '),
+      details: 'Health check failed',
     };
   }
 
