@@ -84,7 +84,7 @@ describe('Wrapper', () => {
       ...urlParams,
     });
 
-    expect(store.getState().explore.richHistory[0]).toMatchObject({
+    expect(store.getState().explore.left.richHistory[0]).toMatchObject({
       datasourceName: 'loki',
       queries: [{ expr: '{ label="value"}', refId: 'A' }],
     });

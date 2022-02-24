@@ -25,7 +25,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const firstTab = store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false)
     ? Tabs.Starred
     : Tabs.RichHistory;
-  const { richHistory } = explore;
+  const { richHistory } = item;
   return {
     richHistory,
     firstTab,
@@ -34,7 +34,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 }
 
 const mapDispatchToProps = {
-  loadRichHistory: loadRichHistory,
+  loadRichHistory,
   deleteRichHistory,
 };
 
@@ -62,8 +62,8 @@ export function RichHistoryContainer(props: Props) {
   } = props;
 
   useEffect(() => {
-    loadRichHistory();
-  }, [loadRichHistory]);
+    loadRichHistory(exploreId);
+  }, [loadRichHistory, exploreId]);
 
   return (
     <ExploreDrawer

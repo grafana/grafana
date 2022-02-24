@@ -36,7 +36,7 @@ import {
 import { ThunkResult } from 'app/types';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { stateSave } from './main';
+import { richHistoryUpdatedAction, stateSave } from './main';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 
 //
@@ -254,6 +254,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
   state = historyReducer(state, action);
+
+  if (richHistoryUpdatedAction.match(action)) {
+    return {
+      ...state,
+      richHistory: action.payload.richHistory,
+    };
+  }
 
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;

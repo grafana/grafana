@@ -39,6 +39,7 @@ const defaultInitialState = {
         value: 0,
       },
       cache: [],
+      richHistory: [],
     },
   },
 };
