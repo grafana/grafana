@@ -263,8 +263,6 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 }
 
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
-	// TODO add create rules authz logic
-
 	var groupChanges *changes = nil
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		var err error
@@ -285,6 +283,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return err
 		}
 
+		srv.log.Debug("updating database with the changes", "group", groupName, "namespace", namespace.Uid, "add", len(groupChanges.New), "update", len(groupChanges.New), "delete", len(groupChanges.Delete))
+
 		if len(groupChanges.Update) > 0 || len(groupChanges.New) > 0 {
 			upsert := make([]store.UpsertRule, 0, len(groupChanges.Update)+len(groupChanges.New))
 			for _, update := range groupChanges.Update {
@@ -300,7 +300,6 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 					New:      *rule,
 				})
 			}
-			// TODO add update/delete authz logic
 			err = srv.store.UpsertAlertRules(tranCtx, upsert)
 			if err != nil {
 				return fmt.Errorf("failed to add or update rules: %w", err)
@@ -335,6 +334,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, errQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
+		} else if errors.Is(err, ErrAuthorization) {
+			return ErrResp(http.StatusUnauthorized, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}

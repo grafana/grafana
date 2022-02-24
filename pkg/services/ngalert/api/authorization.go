@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+var (
+	ErrAuthorization = errors.New("user is not authorized")
 )
 
 //nolint:gocyclo
@@ -179,6 +184,8 @@ func getEvaluatorForAlertRule(rule *ngmodels.AlertRule) ac.Evaluator {
 	return ac.EvalAll(scopes...)
 }
 
+// authorizeRuleChanges analyzes changes in the rule group, determines what actions the user is trying to perform and check whether those actions are authorized.
+// If the user is not authorized to perform the changes the function returns ErrAuthorization with description of what action is not authorized. If evaluator function returns error, the function returns it
 func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator func(evaluator ac.Evaluator) (bool, error)) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
 	if len(changes.Delete) > 0 {
@@ -187,7 +194,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 			return fmt.Errorf("failed to perform user authorization: %w", err)
 		}
 		if !allowed {
-			return fmt.Errorf("user cannot delete alert rules that belong to folder %s", namespace.Title)
+			return fmt.Errorf("%w user cannot delete alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
 		}
 	}
 
@@ -198,7 +205,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 			return fmt.Errorf("failed to perform user authorization: %w", err)
 		}
 		if !allowed {
-			return fmt.Errorf("user cannot create alert rules in the folder %s", namespace.Title)
+			return fmt.Errorf("%w user cannot create alert rules in the folder %s", ErrAuthorization, namespace.Title)
 		}
 	}
 
@@ -211,14 +218,14 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 				return fmt.Errorf("failed to perform user authorization: %w", err)
 			}
 			if !allowed {
-				return fmt.Errorf("user cannot delete alert rules from folder UID %s", rule.Existing.NamespaceUID)
+				return fmt.Errorf("%w to delete alert rules from folder UID %s", ErrAuthorization, rule.Existing.NamespaceUID)
 			}
 			allowed, err = evaluator(ac.EvalPermission(ac.ActionAlertingRuleCreate, namespaceScope))
 			if err != nil {
 				return fmt.Errorf("failed to perform user authorization: %w", err)
 			}
 			if !allowed {
-				return fmt.Errorf("user cannot create alert rules in the folder %s", namespace.Title)
+				return fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, namespace.Title)
 			}
 		} else if !updateChecked {
 			allowed, err := evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope)))
@@ -226,7 +233,7 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 				return fmt.Errorf("failed to perform user authorization: %w", err)
 			}
 			if !allowed {
-				return fmt.Errorf("user cannot update alert rules that belong to folder %s", namespace.Title)
+				return fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, namespace.Title)
 			}
 			updateChecked = true
 		}
@@ -243,9 +250,9 @@ func authorizeRuleChanges(namespace *models.Folder, changes *changes, evaluator 
 				title := rule.New.Title
 				if rule.Existing != nil {
 					action = "update"
-					title = rule.Existing.Title
+					title = fmt.Sprintf("%s (UID: %s)", rule.Existing.Title, rule.Existing.UID)
 				}
-				return fmt.Errorf("you do not have enough permissions to %s alert rule %s (UID '%s') because you do not have read access to one or many datasources the rule uses", action, title, rule.New.UID)
+				return fmt.Errorf("%w to %s alert rule %s because the does not have read permissions for one or many datasources the rule uses", ErrAuthorization, action, title)
 			}
 		}
 	}
