@@ -2,7 +2,6 @@ package preferencesstore
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -18,30 +17,16 @@ type StoreImpl struct {
 // TODO : Get and Set store methods
 type Store interface {
 	// TODO adjust the methods to Get/Set methods move logic to service
-	GetPreferences(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
-	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error)
-	SavePreferences(context.Context, *models.SavePreferencesCommand) error
+	Get(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
+	GetDefaults() *models.Preferences
+	List(ctx context.Context, filter string, params []interface{}) ([]*models.Preferences, error)
+	Set(context.Context, *models.SavePreferencesCommand) error
 }
 
 //  move the logic part to the service and use GetPreferences instead of this one
-func (s *StoreImpl) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error) {
+func (s *StoreImpl) List(ctx context.Context, filter string, params []interface{}) ([]*models.Preferences, error) {
+	prefs := make([]*models.Preferences, 0)
 	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		params := make([]interface{}, 0)
-		filter := ""
-
-		if len(query.User.Teams) > 0 {
-			filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.User.Teams)-1) + ")) OR "
-			params = append(params, query.User.OrgId)
-			for _, v := range query.User.Teams {
-				params = append(params, v)
-			}
-		}
-
-		filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
-		params = append(params, query.User.OrgId)
-		params = append(params, query.User.UserId)
-		params = append(params, query.User.OrgId)
-		prefs := make([]*models.Preferences, 0)
 		err := dbSession.Where(filter, params...).
 			OrderBy("user_id ASC, team_id ASC").
 			Find(&prefs)
@@ -50,35 +35,23 @@ func (s *StoreImpl) GetPreferencesWithDefaults(ctx context.Context, query *model
 			return err
 		}
 
-		res := &models.Preferences{
-			Theme:           s.Cfg.DefaultTheme,
-			Timezone:        s.Cfg.DateFormats.DefaultTimezone,
-			WeekStart:       s.Cfg.DateFormats.DefaultWeekStart,
-			HomeDashboardId: 0,
-		}
-
-		for _, p := range prefs {
-			if p.Theme != "" {
-				res.Theme = p.Theme
-			}
-			if p.Timezone != "" {
-				res.Timezone = p.Timezone
-			}
-			if p.WeekStart != "" {
-				res.WeekStart = p.WeekStart
-			}
-			if p.HomeDashboardId != 0 {
-				res.HomeDashboardId = p.HomeDashboardId
-			}
-		}
-
-		query.Result = res
 		return nil
 	})
-	return query.Result, err
+	return prefs, err
 }
 
-func (s *StoreImpl) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
+func (s *StoreImpl) GetDefaults() *models.Preferences {
+	defaults := &models.Preferences{
+		Theme:           s.Cfg.DefaultTheme,
+		Timezone:        s.Cfg.DateFormats.DefaultTimezone,
+		WeekStart:       s.Cfg.DateFormats.DefaultWeekStart,
+		HomeDashboardId: 0,
+	}
+
+	return defaults
+}
+
+func (s *StoreImpl) Get(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
 	var prefs models.Preferences
 	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
@@ -92,7 +65,7 @@ func (s *StoreImpl) GetPreferences(ctx context.Context, query *models.GetPrefere
 	return &prefs, err
 }
 
-func (s *StoreImpl) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
+func (s *StoreImpl) Set(ctx context.Context, cmd *models.SavePreferencesCommand) error {
 	return s.SqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
