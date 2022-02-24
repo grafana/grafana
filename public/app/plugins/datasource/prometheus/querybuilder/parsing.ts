@@ -72,19 +72,27 @@ export function buildVisualQueryFromString(expr: string): Context {
     labels: [],
     operations: [],
   };
-  const context = {
+  const context: Context = {
     query: visQuery,
     errors: [],
   };
 
-  handleExpression(replacedExpr, node, context);
+  try {
+    handleExpression(replacedExpr, node, context);
+  } catch (err) {
+    // Not ideal to log it here, but otherwise we would lose the stack trace.
+    console.error(err);
+    context.errors.push({
+      text: err.message,
+    });
+  }
   return context;
 }
 
 interface ParsingError {
   text: string;
-  from: number;
-  to: number;
+  from?: number;
+  to?: number;
   parentType?: string;
 }
 
@@ -262,7 +270,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
-  updateFunctionArgs(expr, callArgs!, context, op);
+  updateFunctionArgs(expr, callArgs, context, op);
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -279,7 +287,10 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
  * @param context
  * @param op - We need the operation to add the params to as an additional context.
  */
-function updateFunctionArgs(expr: string, node: SyntaxNode, context: Context, op: QueryBuilderOperation) {
+function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Context, op: QueryBuilderOperation) {
+  if (!node) {
+    return;
+  }
   switch (node.name) {
     // In case we have an expression we don't know what kind so we have to look at the child as it can be anything.
     case 'Expr':
