@@ -1,7 +1,6 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 import { makeTableFrames } from './makeTableFrames';
 
-
 const frame1: DataFrame = {
   name: 'frame1',
   refId: 'A',
