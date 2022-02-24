@@ -197,6 +197,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		OrgId:     query.Result[0].OrgId,
 		UpdatedAt: query.Result[0].Updated,
 		CreatedAt: query.Result[0].Created,
+		Role:      query.Result[0].Role,
 		Teams:     teams,
 	}
 	return saProfile, nil
