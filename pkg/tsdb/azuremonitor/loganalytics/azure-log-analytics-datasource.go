@@ -1,4 +1,4 @@
-package azuremonitor
+package loganalytics
 
 import (
 	"bytes"
@@ -17,6 +17,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
@@ -24,7 +27,7 @@ import (
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
 type AzureLogAnalyticsDatasource struct {
-	proxy serviceProxy
+	Proxy types.ServiceProxy
 }
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
@@ -39,15 +42,15 @@ type AzureLogAnalyticsQuery struct {
 	TimeRange    backend.TimeRange
 }
 
-func (e *AzureLogAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
-	e.proxy.Do(rw, req, cli)
+func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.Proxy.Do(rw, req, cli)
 }
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
@@ -63,7 +66,7 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func getApiURL(queryJSONModel logJSONQuery) string {
+func getApiURL(queryJSONModel types.LogJSONQuery) string {
 	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
 	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
 	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
@@ -86,11 +89,11 @@ func getApiURL(queryJSONModel logJSONQuery) string {
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryJSONModel := logJSONQuery{}
+		queryJSONModel := types.LogJSONQuery{}
 		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
@@ -101,13 +104,13 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 
 		resultFormat := azureLogAnalyticsTarget.ResultFormat
 		if resultFormat == "" {
-			resultFormat = timeSeries
+			resultFormat = types.TimeSeries
 		}
 
 		apiURL := getApiURL(queryJSONModel)
 
 		params := url.Values{}
-		rawQuery, err := KqlInterpolate(query, dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := macros.KqlInterpolate(query, dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +130,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo, client *http.Client,
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
@@ -204,7 +207,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		azlog.Warn("failed to add custom metadata to azure log analytics response", err)
 	}
 
-	if query.ResultFormat == timeSeries {
+	if query.ResultFormat == types.TimeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
@@ -220,7 +223,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	return dataResponse
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
@@ -232,9 +235,14 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
+// AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
+type AzureLogAnalyticsResponse struct {
+	Tables []types.AzureResponseTable `json:"tables"`
+}
+
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
 // error if there is no table by that name.
-func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureResponseTable, error) {
+func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*types.AzureResponseTable, error) {
 	for _, t := range ar.Tables {
 		if t.Name == "PrimaryResult" {
 			return &t, nil

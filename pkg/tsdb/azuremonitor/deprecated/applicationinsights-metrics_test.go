@@ -1,4 +1,4 @@
-package azuremonitor
+package deprecated
 
 import (
 	"encoding/json"
@@ -173,7 +173,7 @@ func TestInsightsMetricsResultToFrame(t *testing.T) {
 func loadInsightsMetricsResponse(t *testing.T, name string) MetricsResult {
 	t.Helper()
 
-	path := filepath.Join("testdata", name)
+	path := filepath.Join("../testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
 	f, err := os.Open(path)

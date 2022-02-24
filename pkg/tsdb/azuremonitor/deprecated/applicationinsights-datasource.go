@@ -1,4 +1,4 @@
-package azuremonitor
+package deprecated
 
 import (
 	"context"
@@ -15,6 +15,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
+	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/net/context/ctxhttp"
@@ -22,7 +25,7 @@ import (
 
 // ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
-	proxy serviceProxy
+	Proxy types.ServiceProxy
 }
 
 // ApplicationInsightsQuery is the model that holds the information
@@ -44,12 +47,12 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
-func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
-	e.proxy.Do(rw, req, cli)
+func (e *ApplicationInsightsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.Proxy.Do(rw, req, cli)
 }
 
-func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client,
+func (e *ApplicationInsightsDatasource) ExecuteTimeSeriesQuery(ctx context.Context,
+	originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
@@ -93,7 +96,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 		// Previous versions of the query model don't specify a time grain, so we
 		// need to fallback to a default value
 		if timeGrain == "auto" || timeGrain == "" {
-			timeGrain, err = setAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
+			timeGrain, err = azTime.SetAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -130,7 +133,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (
 	backend.DataResponse, error) {
 	dataResponse := backend.DataResponse{}
 
@@ -194,7 +197,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	return dataResponse, nil
 }
 
-func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
+func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
 	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -221,7 +224,7 @@ func formatApplicationInsightsLegendKey(alias string, metricName string, labels 
 	}
 	keys = sort.StringSlice(keys)
 
-	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
+	result := types.LegendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
 		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
