@@ -1,7 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.4'
-build_image = 'grafana/build-container:1.4.9'
+grabpl_version = 'v2.9.5'
+build_image = 'grafana/build-container:1.5.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
@@ -695,7 +695,7 @@ def e2e_tests_step(suite, edition, port=3001, tries=None):
         cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests-{}'.format(suite) + enterprise2_suffix(edition),
-        'image': 'cypress/included:9.3.1',
+        'image': 'cypress/included:9.5.0',
         'depends_on': [
             'grafana-server',
         ],
@@ -1134,18 +1134,11 @@ def ensure_cuetsified_step():
             'validate-scuemata',
         ],
         'commands': [
-            '# Make sure the git tree is clean.',
-            '# Stashing changes, since packages that were produced in build-backend step are needed.',
-            'git stash',
-            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root .',
-            '# The above command generates Typescript files (*.gen.ts) from all appropriate .cue files.',
             '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# ...Modulo eslint auto-fixes...:',
-            'yarn run eslint . --ext .gen.ts --fix',
-            '# If any filenames are emitted by the below script, run the generator command `grafana-cli cue gen-ts` locally and commit the result.',
-            './scripts/clean-git-or-error.sh',
-            '# Un-stash changes.',
-            'git stash pop',
+            '# To enforce this, the following command will attempt to generate Typescript from all',
+            '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
+            '# code would have been written to. It exits 1 if any diffs are found.',
+            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
         ],
     }
 
