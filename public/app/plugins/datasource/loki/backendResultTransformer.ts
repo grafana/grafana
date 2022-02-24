@@ -1,10 +1,72 @@
-import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType } from '@grafana/data';
-import { partition } from 'lodash';
+import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
 import { LokiQuery, LokiQueryType } from './types';
 import { makeTableFrames } from './makeTableFrames';
+import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
+}
+
+// returns a new frame, with meta merged with it's original meta
+function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
+  const { meta: oldMeta, ...rest } = frame;
+  // meta maybe be undefined, we need to handle that
+  const newMeta = oldMeta === undefined ? { ...meta } : { ...oldMeta, ...meta };
+  return {
+    ...rest,
+    meta: newMeta,
+  };
+}
+
+function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {
+  return frames.map((frame) => {
+    const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
+    const meta: QueryResultMeta = {
+      preferredVisualisationType: 'logs',
+      searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+    };
+    return setFrameMeta(frame, meta);
+  });
+}
+
+function processMetricInstantFrames(frames: DataFrame[]): DataFrame[] {
+  return frames.length > 0 ? makeTableFrames(frames) : [];
+}
+
+function processMetricRangeFrames(frames: DataFrame[]): DataFrame[] {
+  const meta: QueryResultMeta = { preferredVisualisationType: 'graph' };
+  return frames.map((frame) => setFrameMeta(frame, meta));
+}
+
+// we split the frames into 3 groups, because we will handle
+// each group slightly differently
+function groupFrames(
+  frames: DataFrame[],
+  queryMap: Map<string, LokiQuery>
+): {
+  streamsFrames: DataFrame[];
+  metricInstantFrames: DataFrame[];
+  metricRangeFrames: DataFrame[];
+} {
+  const streamsFrames: DataFrame[] = [];
+  const metricInstantFrames: DataFrame[] = [];
+  const metricRangeFrames: DataFrame[] = [];
+
+  frames.forEach((frame) => {
+    if (!isMetricFrame(frame)) {
+      streamsFrames.push(frame);
+      return;
+    }
+
+    const isInstantFrame = frame.refId != null && queryMap.get(frame.refId)?.queryType === LokiQueryType.Instant;
+    if (isInstantFrame) {
+      metricInstantFrames.push(frame);
+    } else {
+      metricRangeFrames.push(frame);
+    }
+  });
+
+  return { streamsFrames, metricInstantFrames, metricRangeFrames };
 }
 
 export function transformBackendResult(
@@ -23,16 +85,16 @@ export function transformBackendResult(
     return d;
   });
 
-  const instantRefIds = new Set(
-    request.targets.filter((query) => query.queryType === LokiQueryType.Instant).map((query) => query.refId)
-  );
+  const queryMap = new Map(request.targets.map((query) => [query.refId, query]));
 
-  const [instantMetricFrames, normalFrames] = partition(dataFrames, (frame) => {
-    const isInstantFrame = frame.refId != null && instantRefIds.has(frame.refId);
-    return isInstantFrame && isMetricFrame(frame);
-  });
+  const { streamsFrames, metricInstantFrames, metricRangeFrames } = groupFrames(dataFrames, queryMap);
 
-  const tableFrames = instantMetricFrames.length > 0 ? makeTableFrames(instantMetricFrames) : [];
-
-  return { ...rest, data: [...normalFrames, ...tableFrames] };
+  return {
+    ...rest,
+    data: [
+      ...processMetricRangeFrames(metricRangeFrames),
+      ...processMetricInstantFrames(metricInstantFrames),
+      ...processStreamsFrames(streamsFrames, queryMap),
+    ],
+  };
 }

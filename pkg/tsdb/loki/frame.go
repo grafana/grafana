@@ -32,10 +32,6 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
 	}
 
-	if !isMetricFrame {
-		frame.Meta.PreferredVisualization = data.VisTypeLogs
-	}
-
 	for _, field := range timeFields {
 		field.Name = "time"
 
