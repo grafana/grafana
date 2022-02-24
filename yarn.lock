@@ -4091,7 +4091,7 @@ __metadata:
     babel-loader: 8.2.3
     blink-diff: 1.0.13
     chrome-remote-interface: 0.31.2
-    commander: 8.3.0
+    commander: 9.0.0
     cypress: 9.5.0
     cypress-file-upload: 5.0.8
     devtools-protocol: 0.0.967529
@@ -15396,7 +15396,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:*, commander@npm:8.3.0, commander@npm:^8.0.0, commander@npm:^8.1.0, commander@npm:^8.3.0":
+"commander@npm:*, commander@npm:^8.0.0, commander@npm:^8.1.0, commander@npm:^8.3.0":
   version: 8.3.0
   resolution: "commander@npm:8.3.0"
   checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
@@ -15421,6 +15421,13 @@ __metadata:
   version: 2.17.1
   resolution: "commander@npm:2.17.1"
   checksum: 22e7ed5b422079a13a496e5eb8f73f36c15b5809d46f738e168e20f9ad485c12951bdc2cb366a36eb5f4927dae4f17b355b8adb96a5b9093f5fa4c439e8b9419
+  languageName: node
+  linkType: hard
+
+"commander@npm:9.0.0":
+  version: 9.0.0
+  resolution: "commander@npm:9.0.0"
+  checksum: 15066e433d528315ded8261d16bc600d1f3c5671c75021e685ae67e4d62f7551243ff28411b28dc0a6f8b23c2a0f033550ec6f3e66bdf9d11a4fdc2d33dd9802
   languageName: node
   linkType: hard
 
