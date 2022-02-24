@@ -1,15 +1,15 @@
-import React from 'react';
 import { render } from '@testing-library/react';
-import { FolderState } from 'app/types';
-import { AlertsFolderView } from './AlertsFolderView';
-import { byTestId, byText } from 'testing-library-selector';
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import userEvent from '@testing-library/user-event';
 import { configureStore } from 'app/store/configureStore';
+import { FolderState } from 'app/types';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { byTestId } from 'testing-library-selector';
+import { AlertsFolderView } from './AlertsFolderView';
 import { mockCombinedRule } from './mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import userEvent from '@testing-library/user-event';
 
 const ui = {
   filter: {
