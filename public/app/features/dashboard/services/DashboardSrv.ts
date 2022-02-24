@@ -23,6 +23,7 @@ export interface SaveDashboardOptions {
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
   refresh?: string;
 }
+
 export class DashboardSrv {
   dashboard?: DashboardModel;
 
