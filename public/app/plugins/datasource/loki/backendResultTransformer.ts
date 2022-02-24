@@ -11,7 +11,7 @@ function isMetricFrame(frame: DataFrame): boolean {
 function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   const { meta: oldMeta, ...rest } = frame;
   // meta maybe be undefined, we need to handle that
-  const newMeta = oldMeta === undefined ? { ...meta } : { ...oldMeta, ...meta };
+  const newMeta = { ...oldMeta, ...meta };
   return {
     ...rest,
     meta: newMeta,
