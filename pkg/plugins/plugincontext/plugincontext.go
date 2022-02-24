@@ -20,13 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type pluginContextStore interface {
-	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
-}
-
 func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
 	dataSourceCache datasources.CacheService, secretsService secrets.Service,
-	pluginSettingsService *pluginsettings.Service, pluginContextStore pluginContextStore) *Provider {
+	pluginSettingsService *pluginsettings.Service) *Provider {
 	return &Provider{
 		Bus:                   bus,
 		CacheService:          cacheService,
@@ -35,7 +31,6 @@ func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginSt
 		SecretsService:        secretsService,
 		PluginSettingsService: pluginSettingsService,
 		logger:                log.New("plugincontext"),
-		pluginContextStore:    pluginContextStore,
 	}
 }
 
@@ -47,7 +42,6 @@ type Provider struct {
 	SecretsService        secrets.Service
 	PluginSettingsService *pluginsettings.Service
 	logger                log.Logger
-	pluginContextStore    pluginContextStore
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -120,7 +114,7 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
-	if err := p.pluginContextStore.GetPluginSettingById(ctx, &query); err != nil {
+	if err := p.PluginSettingsService.GetPluginSettingById(ctx, &query); err != nil {
 		return nil, err
 	}
 
