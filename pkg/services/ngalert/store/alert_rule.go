@@ -2,9 +2,7 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -50,7 +48,7 @@ type RuleStore interface {
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
-	UpdateRuleGroup(ctx context.Context, cmd UpdateRuleGroupCmd) error
+	InTransaction(ctx context.Context, f func(ctx context.Context) error) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -188,18 +186,6 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
-			if r.Existing == nil && r.New.UID != "" {
-				// check by UID
-				existingAlertRule, err := getAlertRuleByUID(sess, r.New.UID, r.New.OrgID)
-				if err != nil {
-					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-						return fmt.Errorf("failed to get alert rule %s: %w", r.New.UID, err)
-					}
-					return err
-				}
-				r.Existing = existingAlertRule
-			}
-
 			var parentVersion int64
 			switch r.Existing {
 			case nil: // new rule
@@ -208,22 +194,7 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
 				}
 				r.New.UID = uid
-
-				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = int64(st.DefaultInterval.Seconds())
-				}
-
 				r.New.Version = 1
-
-				if r.New.NoDataState == "" {
-					// set default no data state
-					r.New.NoDataState = ngmodels.NoData
-				}
-
-				if r.New.ExecErrState == "" {
-					// set default error state
-					r.New.ExecErrState = ngmodels.AlertingErrState
-				}
 
 				if err := st.validateAlertRule(r.New); err != nil {
 					return err
@@ -232,36 +203,10 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 				if err := (&r.New).PreSave(TimeNow); err != nil {
 					return err
 				}
-
 				newRules = append(newRules, r.New)
 			default:
-				// explicitly set the existing properties if missing
-				// do not rely on xorm
-				if r.New.Title == "" {
-					r.New.Title = r.Existing.Title
-				}
-
-				if r.New.Condition == "" {
-					r.New.Condition = r.Existing.Condition
-				}
-
-				if len(r.New.Data) == 0 {
-					r.New.Data = r.Existing.Data
-				}
-
 				r.New.ID = r.Existing.ID
-				r.New.OrgID = r.Existing.OrgID
-				r.New.NamespaceUID = r.Existing.NamespaceUID
-				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
-
-				if r.New.ExecErrState == "" {
-					r.New.ExecErrState = r.Existing.ExecErrState
-				}
-
-				if r.New.NoDataState == "" {
-					r.New.NoDataState = r.Existing.NoDataState
-				}
 
 				if err := st.validateAlertRule(r.New); err != nil {
 					return err
@@ -273,9 +218,11 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 
 				// no way to update multiple rules at once
 				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
-					return fmt.Errorf("failed to update rule %s: %w", r.New.Title, err)
+					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+						return ngmodels.ErrAlertRuleUniqueConstraintViolation
+					}
+					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
-
 				parentVersion = r.Existing.Version
 			}
 
@@ -301,6 +248,9 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 
 		if len(newRules) > 0 {
 			if _, err := sess.Insert(&newRules); err != nil {
+				if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					return ngmodels.ErrAlertRuleUniqueConstraintViolation
+				}
 				return fmt.Errorf("failed to create new rules: %w", err)
 			}
 		}
@@ -506,100 +456,6 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	return nil
 }
 
-// UpdateRuleGroup creates new rules and updates and/or deletes existing rules
-func (st DBstore) UpdateRuleGroup(ctx context.Context, cmd UpdateRuleGroupCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		ruleGroup := cmd.RuleGroupConfig.Name
-		q := &ngmodels.ListRuleGroupAlertRulesQuery{
-			OrgID:        cmd.OrgID,
-			NamespaceUID: cmd.NamespaceUID,
-			RuleGroup:    ruleGroup,
-		}
-		if err := st.GetRuleGroupAlertRules(ctx, q); err != nil {
-			return err
-		}
-		existingGroupRules := q.Result
-
-		existingGroupRulesUIDs := make(map[string]ngmodels.AlertRule, len(existingGroupRules))
-		for _, r := range existingGroupRules {
-			existingGroupRulesUIDs[r.UID] = *r
-		}
-
-		upsertRules := make([]UpsertRule, 0)
-		for _, r := range cmd.RuleGroupConfig.Rules {
-			if r.GrafanaManagedAlert == nil {
-				continue
-			}
-
-			newAlertRule := ngmodels.AlertRule{
-				OrgID:           cmd.OrgID,
-				Title:           r.GrafanaManagedAlert.Title,
-				Condition:       r.GrafanaManagedAlert.Condition,
-				Data:            r.GrafanaManagedAlert.Data,
-				UID:             r.GrafanaManagedAlert.UID,
-				IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-				NamespaceUID:    cmd.NamespaceUID,
-				RuleGroup:       ruleGroup,
-				NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
-				ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-			}
-
-			if r.ApiRuleNode != nil {
-				newAlertRule.For = time.Duration(r.ApiRuleNode.For)
-				newAlertRule.Annotations = r.ApiRuleNode.Annotations
-				newAlertRule.Labels = r.ApiRuleNode.Labels
-			}
-
-			if s := newAlertRule.Annotations[ngmodels.DashboardUIDAnnotation]; s != "" {
-				newAlertRule.DashboardUID = &s
-			}
-
-			if s := newAlertRule.Annotations[ngmodels.PanelIDAnnotation]; s != "" {
-				panelID, err := strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					return fmt.Errorf("the %s annotation does not contain a valid Panel ID: %w", ngmodels.PanelIDAnnotation, err)
-				}
-				newAlertRule.PanelID = &panelID
-			}
-
-			upsertRule := UpsertRule{
-				New: newAlertRule,
-			}
-
-			if existingGroupRule, ok := existingGroupRulesUIDs[r.GrafanaManagedAlert.UID]; ok {
-				upsertRule.Existing = &existingGroupRule
-				// remove the rule from existingGroupRulesUIDs
-				delete(existingGroupRulesUIDs, r.GrafanaManagedAlert.UID)
-			}
-			upsertRules = append(upsertRules, upsertRule)
-		}
-
-		if err := st.UpsertAlertRules(ctx, upsertRules); err != nil {
-			if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-				return ngmodels.ErrAlertRuleUniqueConstraintViolation
-			}
-			return err
-		}
-
-		// delete instances for rules that will not be removed
-		for _, rule := range existingGroupRules {
-			if _, ok := existingGroupRulesUIDs[rule.UID]; !ok {
-				if err := st.DeleteAlertInstancesByRuleUID(ctx, cmd.OrgID, rule.UID); err != nil {
-					return err
-				}
-			}
-		}
-
-		// delete the remaining rules
-		for ruleUID := range existingGroupRulesUIDs {
-			if err := st.DeleteAlertRuleByUID(ctx, cmd.OrgID, ruleUID); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
 func (st DBstore) GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var ruleGroups [][]string
@@ -645,4 +501,8 @@ WHERE org_id = ?`
 		query.Result = ruleGroups
 		return nil
 	})
+}
+
+func (st *DBstore) InTransaction(ctx context.Context, f func(ctx context.Context) error) error {
+	return st.SQLStore.InTransaction(ctx, f)
 }
