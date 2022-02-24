@@ -12,7 +12,7 @@ import {
   createServiceAccountToken,
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel, OrgRole } from '@grafana/data';
+import { getTimeZone, NavModel } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { CreateTokenModal } from './CreateTokenModal';
 
@@ -67,15 +67,8 @@ const ServiceAccountPageUnconnected = ({
     deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
   };
 
-  const onCreateToken = (name: string) => {
-    createServiceAccountToken(
-      serviceAccount.id,
-      {
-        name,
-        role: OrgRole.Viewer,
-      },
-      setNewToken
-    );
+  const onCreateToken = (token: ApiKey) => {
+    createServiceAccountToken(serviceAccount.id, token, setNewToken);
   };
 
   const onModalClose = () => {
