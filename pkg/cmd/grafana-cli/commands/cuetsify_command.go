@@ -17,6 +17,7 @@ import (
 	"cuelang.org/go/cue/errors"
 	cload "cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/parser"
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/schema/load"
@@ -63,6 +64,7 @@ var skipPaths = []string{
 
 const prefix = "/"
 
+//nolint: gocyclo
 func (cmd Command) generateTypescript(c utils.CommandLine) error {
 	root := c.String("grafana-root")
 	if root == "" {
@@ -237,11 +239,44 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 		return gerrors.New(errors.Details(err, nil))
 	}
 
+	diff := c.Bool("diff")
+	var derr bool
 	for of, b := range outfiles {
-		err := os.WriteFile(filepath.Join(root, of), b, 0644)
-		if err != nil {
-			return err
+		p := filepath.Join(root, of)
+		if diff {
+			if _, err := os.Stat(p); err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					fmt.Printf("%s: no generated code file to compare against\n", p)
+					derr = true
+					continue
+				}
+				return fmt.Errorf("%s: %w", p, err)
+			}
+
+			f, err := os.Open(filepath.Clean(p))
+			if err != nil {
+				return fmt.Errorf("%s: %w", p, err)
+			}
+
+			ob, err := io.ReadAll(f)
+			if err != nil {
+				return err
+			}
+			dstr := cmp.Diff(string(ob), string(b))
+			if dstr != "" {
+				derr = true
+				fmt.Printf("%s would have changed:\n%s\n", p, dstr)
+			}
+		} else {
+			err := os.WriteFile(p, b, 0644)
+			if err != nil {
+				return err
+			}
 		}
+	}
+
+	if derr {
+		return errors.New("some files changed")
 	}
 
 	return nil
@@ -283,7 +318,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 	if !filepath.IsAbs(prefix) {
 		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
 	}
-	err := fs.WalkDir(vfs, ".", (func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(vfs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -296,6 +331,12 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 		if err != nil {
 			return err
 		}
+		defer func(f fs.File) {
+			err := f.Close()
+			if err != nil {
+				return
+			}
+		}(f)
 
 		b, err := io.ReadAll(f)
 		if err != nil {
@@ -304,7 +345,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 
 		overlay[filepath.Join(prefix, path)] = cload.FromBytes(b)
 		return nil
-	}))
+	})
 
 	if err != nil {
 		return err
