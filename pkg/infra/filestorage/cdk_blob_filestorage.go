@@ -48,13 +48,20 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 		return nil, err
 	}
 
+	var props map[string]string
+	if attributes.Metadata != nil {
+		props = attributes.Metadata
+	} else {
+		props = make(map[string]string, 0)
+	}
+
 	return &File{
 		Contents: contents,
 		FileMetadata: FileMetadata{
 			Name:       getName(filePath),
 			FullPath:   filePath,
 			Created:    attributes.CreateTime,
-			Properties: attributes.Metadata,
+			Properties: props,
 			Modified:   attributes.ModTime,
 			Size:       attributes.Size,
 			MimeType:   detectContentType(filePath, attributes.ContentType),
@@ -196,11 +203,18 @@ func (c cdkBlobStorage) listFiles(ctx context.Context, folderPath string, paging
 
 			fullPath := fixPath(path)
 
+			var props map[string]string
+			if attributes.Metadata != nil {
+				props = attributes.Metadata
+			} else {
+				props = make(map[string]string, 0)
+			}
+
 			files = append(files, FileMetadata{
 				Name:       getName(fullPath),
 				FullPath:   fullPath,
 				Created:    attributes.CreateTime,
-				Properties: attributes.Metadata,
+				Properties: props,
 				Modified:   attributes.ModTime,
 				Size:       attributes.Size,
 				MimeType:   detectContentType(fullPath, attributes.ContentType),

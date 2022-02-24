@@ -44,6 +44,24 @@ func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, pathFilters *PathFilter
 	}
 }
 
+func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, lowerCasePaths []string) (map[string]map[string]string, error) {
+	attributesByPath := make(map[string]map[string]string, 0)
+
+	entities := make([]*fileMeta, 0)
+	if err := sess.Table("file_meta").In("path", lowerCasePaths).Find(&entities); err != nil {
+		return nil, err
+	}
+
+	for _, entity := range entities {
+		if _, ok := attributesByPath[entity.Path]; !ok {
+			attributesByPath[entity.Path] = make(map[string]string)
+		}
+		attributesByPath[entity.Path][entity.Key] = entity.Value
+	}
+
+	return attributesByPath, nil
+}
+
 func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) {
 	var result *File
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -54,7 +72,7 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 		}
 
 		var meta = make([]*fileMeta, 0)
-		if err := sess.Table("file_meta").Where("LOWER(path) = ?", strings.ToLower(filePath)).Find(&meta); err != nil {
+		if err := sess.Table("file_meta").Where("path = ?", strings.ToLower(filePath)).Find(&meta); err != nil {
 			return err
 		}
 
@@ -90,14 +108,14 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 			return nil
 		}
 
-		number, err := sess.Table("file").Where("LOWER(path) = ?").Delete(table)
+		number, err := sess.Table("file").Where("LOWER(path) = ?", strings.ToLower(filePath)).Delete(table)
 		if err != nil {
 			return err
 		}
 		s.log.Info("Deleted file", "path", filePath, "affectedRecords", number)
 
 		metaTable := &fileMeta{}
-		number, err = sess.Table("file_meta").Where("LOWER(path) = ?").Delete(metaTable)
+		number, err = sess.Table("file_meta").Where("path = ?", strings.ToLower(filePath)).Delete(metaTable)
 		if err != nil {
 			return err
 		}
@@ -179,7 +197,7 @@ func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCo
 
 func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key string, val string) error {
 	existing := &fileMeta{}
-	exists, err := sess.Table("file_meta").Where("LOWER(path) = ? AND key = ?", strings.ToLower(path), key).Get(existing)
+	exists, err := sess.Table("file_meta").Where("path = ? AND key = ?", strings.ToLower(path), key).Get(existing)
 	if err != nil {
 		return err
 	}
@@ -187,10 +205,10 @@ func upsertProperty(sess *sqlstore.DBSession, now time.Time, path string, key st
 	if exists {
 		existing.Updated = now
 		existing.Value = val
-		_, err = sess.Where("LOWER(path) = ? AND key = ?", strings.ToLower(path), key).Update(existing)
+		_, err = sess.Where("path = ? AND key = ?", strings.ToLower(path), key).Update(existing)
 	} else {
 		_, err = sess.Insert(&fileMeta{
-			Path:    path,
+			Path:    strings.ToLower(path),
 			Key:     key,
 			Value:   val,
 			Updated: now,
@@ -235,13 +253,31 @@ func (s dbFileStorage) ListFiles(ctx context.Context, folderPath string, paging 
 		if foundLength > pageSize {
 			foundLength = pageSize
 		}
+
+		lowerCasePaths := make([]string, 0)
+		for i := 0; i < foundLength; i++ {
+			lowerCasePaths = append(lowerCasePaths, strings.ToLower(foundFiles[i].Path))
+		}
+		propertiesByLowerPath, err := s.getProperties(sess, lowerCasePaths)
+		if err != nil {
+			return err
+		}
+
 		files := make([]FileMetadata, 0)
 		for i := 0; i < foundLength; i++ {
+			var props map[string]string
+			path := foundFiles[i].Path
+			if foundProps, ok := propertiesByLowerPath[strings.ToLower(path)]; ok {
+				props = foundProps
+			} else {
+				props = make(map[string]string, 0)
+			}
+
 			files = append(files, FileMetadata{
-				Name:       getName(foundFiles[i].Path),
-				FullPath:   foundFiles[i].Path,
+				Name:       getName(path),
+				FullPath:   path,
 				Created:    foundFiles[i].Created,
-				Properties: make(map[string]string, 0),
+				Properties: props,
 				Modified:   foundFiles[i].Updated,
 				Size:       foundFiles[i].Size,
 				MimeType:   foundFiles[i].MimeType,

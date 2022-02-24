@@ -7,12 +7,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"gocloud.dev/blob"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"gocloud.dev/blob"
 )
 
 const (
@@ -128,12 +129,19 @@ func TestFsStorage(t *testing.T) {
 						Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 					},
 				},
+				cmdUpsert{
+					cmd: UpsertFileCommand{
+						Path:     "/folder1/file-inner2.jpg",
+						Contents: &[]byte{},
+					},
+				},
 				queryListFiles{
 					input: queryListFilesInput{path: "/folder1", options: &ListOptions{Recursive: true}},
-					list:  checks(listSize(2), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
+					list:  checks(listSize(3), listHasMore(false), listLastPath("/folder1/folder2/file.jpg")),
 					files: [][]interface{}{
-						checks(fPath("/folder1/file-inner.jpg")),
-						checks(fPath("/folder1/folder2/file.jpg")),
+						checks(fPath("/folder1/file-inner.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
+						checks(fPath("/folder1/file-inner2.jpg"), fProperties(map[string]string{})),
+						checks(fPath("/folder1/folder2/file.jpg"), fProperties(map[string]string{"prop1": "val1", "prop2": "val"})),
 					},
 				},
 			},
