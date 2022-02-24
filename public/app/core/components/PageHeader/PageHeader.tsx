@@ -81,7 +81,14 @@ export const PageHeader: FC<Props> = ({ model }) => {
   }
 
   const main = model.main;
-  const children = main.children;
+  const children = main.children?.map((child) => {
+    // Add suffix component for the items that come from backend and are highlighted
+    if (child.highlightText && !child.tabSuffix) {
+      return { ...child, tabSuffix: ProBadge };
+    }
+    return child;
+  });
+
   return (
     <div className={styles.headerCanvas}>
       <div className="page-container">
