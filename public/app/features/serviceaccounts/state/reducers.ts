@@ -45,16 +45,33 @@ export const initialStateList: ServiceAccountsState = {
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'Expired', value: true }],
+  searchPage: 1,
+  searchQuery: '',
 };
+
+interface ServiceAccountsFetched {
+  serviceAccounts: ServiceAccountDTO[];
+  perPage: number;
+  page: number;
+  totalCount: number;
+}
 
 const serviceAccountsSlice = createSlice({
   name: 'serviceaccounts',
   initialState: initialStateList,
   reducers: {
-    serviceAccountsLoaded: (state, action: PayloadAction<ServiceAccountDTO[]>): ServiceAccountsState => {
+    serviceAccountsLoaded: (state, action: PayloadAction<ServiceAccountsFetched>): ServiceAccountsState => {
+      console.log(`state`);
+      console.log(state);
+      console.log(`action`);
+      console.log(action);
       const { totalCount, perPage, ...rest } = action.payload;
       const totalPages = Math.ceil(totalCount / perPage);
 
+      console.log(`action.payload`);
+      console.log(action.payload);
+      console.log(`rest`);
+      console.log(rest);
       return {
         ...state,
         ...rest,

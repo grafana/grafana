@@ -57,4 +57,8 @@ export interface ServiceAccountsState {
   totalPages: number;
   showPaging: boolean;
   filters: ServiceAccountFilter[];
+
+  // search
+  searchPage: number;
+  searchQuery: string;
 }

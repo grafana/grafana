@@ -6,6 +6,7 @@ import { css, cx } from '@emotion/css';
 import Page from 'app/core/components/Page/Page';
 import { StoreState, ServiceAccountDTO, AccessControlAction, Role } from 'app/types';
 import {
+  changeFilter,
   fetchACOptions,
   loadServiceAccounts,
   removeServiceAccount,
@@ -20,7 +21,10 @@ import { contextSrv } from 'app/core/core';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 import pluralize from 'pluralize';
-export type Props = ConnectedProps<typeof connector>;
+
+interface OwnProps {}
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -58,6 +62,8 @@ const ServiceAccountsListPage = ({
   isLoading,
   roleOptions,
   builtInRoles,
+  changeFilter,
+  filters,
   toRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -74,6 +80,8 @@ const ServiceAccountsListPage = ({
 
     updateServiceAccount(updatedServiceAccount);
   };
+  console.log(`serviceAccounts`);
+  console.log(serviceAccounts);
 
   return (
     <Page navModel={navModel}>

@@ -247,11 +247,41 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(ctx context.Context,
 	}, err
 }
 
-func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) error {
+func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
 	if !query.IsServiceAccount {
-		return fmt.Errorf("invalid query for service accounts")
+		return nil, fmt.Errorf("invalid query for service accounts")
 	}
-	return s.sqlStore.SearchOrgUsers(ctx, query)
+	// translate between users and serviceaccountsDTO
+	filters := make([]models.Filter, 0)
+	for filterName := range s.searchUserFilter.GetFilterList() {
+		filter := s.searchUserFilter.GetFilter(filterName, c.QueryStrings(filterName))
+		if filter != nil {
+			filters = append(filters, filter)
+		}
+	}
+
+	err := s.sqlStore.SearchOrgUsers(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*serviceaccounts.ServiceAccountDTO, 0, len(query.Result.OrgUsers))
+	for _, user := range query.Result.OrgUsers {
+		sa := &serviceaccounts.ServiceAccountDTO{
+			Id:    user.UserId,
+			Name:  user.Name,
+			Login: user.Login,
+			Role:  user.Role,
+			OrgId: user.OrgId,
+		}
+		tokens, err := s.ListTokens(ctx, user.OrgId, user.UserId)
+		if err != nil {
+			return nil, err
+		}
+		sa.Tokens = int64(len(tokens))
+
+		result = append(result, sa)
+	}
+	return result, nil
 }
 
 func contains(s []int64, e int64) bool {

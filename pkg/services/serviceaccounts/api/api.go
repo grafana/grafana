@@ -74,6 +74,8 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+
+		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeAll)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.updateServiceAccount))
 		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
@@ -230,6 +232,10 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	return response.JSON(http.StatusOK, resp)
 }
 
+func getFilterList() []string {
+	return []string{"Expired", "All"}
+}
+
 // SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
 func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
@@ -253,23 +259,32 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		IsServiceAccount: true,
 	}
 
-	if err := api.store.SearchOrgServiceAccounts(ctx, query); err != nil {
+	serviceAccounts, err := api.store.SearchOrgServiceAccounts(ctx, query)
+	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
-	for _, user := range query.Result.OrgUsers {
-		if dtos.IsHiddenUser(user.Login, c.SignedInUser, api.cfg) {
+	filteredServiceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0, len(serviceAccounts))
+	for _, sa := range serviceAccounts {
+		if dtos.IsHiddenUser(sa.Login, c.SignedInUser, api.cfg) {
 			continue
 		}
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
-
-		filteredUsers = append(filteredUsers, user)
+		sa.AvatarUrl = dtos.GetGravatarUrl(sa.Login)
+		filteredServiceAccounts = append(filteredServiceAccounts, sa)
 	}
 
-	query.Result.OrgUsers = filteredUsers
-	query.Result.Page = page
-	query.Result.PerPage = perPage
+	type SearchOrgServiceAccountsQueryResult struct {
+		TotalCount      int64                                `json:"totalCount"`
+		ServiceAccounts []*serviceaccounts.ServiceAccountDTO `json:"serviceAccounts"`
+		Page            int                                  `json:"page"`
+		PerPage         int                                  `json:"perPage"`
+	}
+	result := SearchOrgServiceAccountsQueryResult{
+		TotalCount:      query.Result.TotalCount,
+		ServiceAccounts: filteredServiceAccounts,
+		Page:            query.Result.Page,
+		PerPage:         query.Result.PerPage,
+	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(200, result)
 }

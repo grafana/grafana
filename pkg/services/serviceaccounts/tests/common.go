@@ -125,6 +125,6 @@ func (s *ServiceAccountsStoreMock) UpdateServiceAccount(ctx context.Context,
 	return nil, nil
 }
 
-func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) error {
-	return nil
+func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(ctx context.Context, query *models.SearchOrgUsersQuery) ([]*serviceaccounts.ServiceAccountDTO, error) {
+	return nil, nil
 }

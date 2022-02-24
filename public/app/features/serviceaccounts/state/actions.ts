@@ -118,12 +118,15 @@ const getFilters = (filters: ServiceAccountFilter[]) => {
 };
 
 export function fetchServiceAccounts(): ThunkResult<void> {
+  console.log(`fetchserviceaccounts`);
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters } = getState().serviceAccounts;
       const result = await getBackendSrv().get(
         `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`
       );
+      console.log(`result`);
+      console.log(result);
       dispatch(serviceAccountsLoaded(result));
     } catch (error) {
       serviceAccountsFetchEnd();
@@ -133,6 +136,7 @@ export function fetchServiceAccounts(): ThunkResult<void> {
 }
 
 const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500);
+
 export function changeFilter(filter: ServiceAccountFilter): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(loadServiceAccounts());

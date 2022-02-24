@@ -148,7 +148,8 @@ type SearchUsersQuery struct {
 	AuthModule string
 	Filters    []Filter
 
-	IsDisabled *bool
+	IsDisabled       *bool
+	IsServiceAccount bool
 
 	Result SearchUserQueryResult
 }
