@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, DataTransformerInfo, Field, FieldType } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType, Vector } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
@@ -47,8 +47,8 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           return data;
         }
 
-        const columnValues = [...new Set(keyColumnField.values.toArray())];
-        const rowValues = [...new Set(keyRowField.values.toArray())];
+        const columnValues = uniqueValues(keyColumnField.values);
+        const rowValues = uniqueValues(keyRowField.values);
 
         const matrixValues: { [key: string]: { [key: string]: any } } = {};
 
@@ -91,6 +91,16 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
       })
     ),
 };
+
+function uniqueValues(values: Vector): any[] {
+  const unique = new Set();
+
+  for (let index = 0; index < values.length; index++) {
+    unique.add(values.get(index));
+  }
+
+  return Array.from(unique);
+}
 
 function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
   for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
