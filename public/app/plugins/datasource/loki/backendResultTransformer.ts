@@ -55,14 +55,13 @@ function groupFrames(
   frames.forEach((frame) => {
     if (!isMetricFrame(frame)) {
       streamsFrames.push(frame);
-      return;
-    }
-
-    const isInstantFrame = frame.refId != null && queryMap.get(frame.refId)?.queryType === LokiQueryType.Instant;
-    if (isInstantFrame) {
-      metricInstantFrames.push(frame);
     } else {
-      metricRangeFrames.push(frame);
+      const isInstantFrame = frame.refId != null && queryMap.get(frame.refId)?.queryType === LokiQueryType.Instant;
+      if (isInstantFrame) {
+        metricInstantFrames.push(frame);
+      } else {
+        metricRangeFrames.push(frame);
+      }
     }
   });
 
