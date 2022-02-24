@@ -13,7 +13,7 @@ const props = {
       { text: 'Loki', value: 'ds-loki' },
     ],
   },
-  variable: { ...initialDataSourceVariableModelState },
+  variable: { ...initialDataSourceVariableModelState, rootStateKey: 'foo' },
   onPropChange: jest.fn(),
 
   // connected actions
