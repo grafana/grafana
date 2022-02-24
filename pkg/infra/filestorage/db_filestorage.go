@@ -82,8 +82,13 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 			metaProperties[meta[i].Key] = meta[i].Value
 		}
 
+		contents := table.Contents
+		if contents == nil {
+			contents = make([]byte, 0)
+		}
+
 		result = &File{
-			Contents: table.Contents,
+			Contents: contents,
 			FileMetadata: FileMetadata{
 				Name:       getName(table.Path),
 				FullPath:   table.Path,
@@ -169,13 +174,15 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 			}
 		}
 
-		err = upsertProperties(sess, now, cmd)
-		if err != nil {
-			if rollbackErr := sess.Rollback(); rollbackErr != nil {
-				s.log.Error("failed while rolling back upsert", "path", cmd.Path)
+		if len(cmd.Properties) != 0 {
+			if err = upsertProperties(sess, now, cmd); err != nil {
+				if rollbackErr := sess.Rollback(); rollbackErr != nil {
+					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
+				}
+				return err
 			}
-			return err
 		}
+
 		return err
 	})
 
@@ -183,8 +190,10 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 }
 
 func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCommand) error {
-	if len(cmd.Properties) == 0 {
-		return nil
+	fileMeta := &fileMeta{}
+	_, err := sess.Table("file_meta").Where("path = ?", strings.ToLower(cmd.Path)).Delete(fileMeta)
+	if err != nil {
+		return err
 	}
 
 	for key, val := range cmd.Properties {

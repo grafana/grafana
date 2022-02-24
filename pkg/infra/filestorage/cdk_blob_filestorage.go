@@ -126,13 +126,16 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 		contents = *command.Contents
 	}
 
-	metadata = existing.FileMetadata.Properties
 	if command.Properties != nil {
+		metadata = make(map[string]string)
 		for k, v := range command.Properties {
 			metadata[k] = v
 		}
+	} else {
+		metadata = existing.FileMetadata.Properties
 	}
 
+	metadata[originalPathAttributeKey] = existing.FullPath
 	return c.bucket.WriteAll(ctx, strings.ToLower(command.Path), contents, &blob.WriterOptions{
 		Metadata: metadata,
 	})

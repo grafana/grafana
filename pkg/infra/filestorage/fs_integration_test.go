@@ -27,6 +27,7 @@ func TestFsStorage(t *testing.T) {
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
+	emptyFileBytes := make([]byte, 0)
 	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)
 	pngImageSize := int64(len(pngImage))
 
@@ -366,7 +367,67 @@ func TestFsStorage(t *testing.T) {
 				steps: []interface{}{
 					cmdUpsert{
 						cmd: UpsertFileCommand{
-							Path:     "/FILE.png",
+							Path:       "/FILE.png",
+							Contents:   &pngImage,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fMimeType("image/png"),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
+							fSize(pngImageSize),
+							fContents(pngImage),
+						),
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/file.png",
+							Properties: map[string]string{"b": "bv2", "c": "cv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fMimeType("image/png"),
+							fProperties(map[string]string{"b": "bv2", "c": "cv"}),
+							fSize(pngImageSize),
+							fContents(pngImage),
+						),
+					},
+				},
+			},
+			{
+				name: "should be able to modify file contents",
+				steps: []interface{}{
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:       "/FILE.png",
+							Contents:   &emptyFileBytes,
+							Properties: map[string]string{"a": "av", "b": "bv"},
+						},
+					},
+					queryGet{
+						input: queryGetInput{
+							path: "/file.png",
+						},
+						checks: checks(
+							fName("FILE.png"),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
+							fSize(0),
+							fContents(emptyFileBytes),
+						),
+					},
+					cmdUpsert{
+						cmd: UpsertFileCommand{
+							Path:     "/file.png",
 							Contents: &pngImage,
 						},
 					},
@@ -377,7 +438,7 @@ func TestFsStorage(t *testing.T) {
 						checks: checks(
 							fName("FILE.png"),
 							fMimeType("image/png"),
-							fProperties(map[string]string{}),
+							fProperties(map[string]string{"a": "av", "b": "bv"}),
 							fSize(pngImageSize),
 							fContents(pngImage),
 						),
