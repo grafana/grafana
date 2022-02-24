@@ -1,17 +1,21 @@
 import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { AsyncSelect, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
 import { AdvancedOptions } from './AdvancedOptions';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 type Props = {
   datasource: JaegerDatasource;
   query: JaegerQuery;
   onChange: (value: JaegerQuery) => void;
 };
+type Options = { dataSource: JaegerDatasource; url: string; notFoundLabel: string };
 
 export const ALL_OPERATIONS_KEY = 'All';
 const allOperationsOption: SelectableValue<string> = {
@@ -22,14 +26,50 @@ const allOperationsOption: SelectableValue<string> = {
 export function SearchForm({ datasource, query, onChange }: Props) {
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [operationOptions, setOperationOptions] = useState<Array<SelectableValue<string>>>();
+  const [isLoading, setIsLoading] = useState<{
+    services: boolean;
+    operations: boolean;
+  }>({
+    services: false,
+    operations: false,
+  });
+
+  const loadServices = async (
+    { dataSource, url, notFoundLabel }: Options,
+    loaderOfType: string
+  ): Promise<Array<SelectableValue<string>>> => {
+    setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: true }));
+
+    try {
+      const services: string[] | null = await dataSource.metadataRequest(url);
+      if (!services) {
+        setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
+        return [{ label: notFoundLabel, value: notFoundLabel }];
+      }
+
+      const serviceOptions: SelectableValue[] = services.sort().map((service) => ({
+        label: service,
+        value: service,
+      }));
+      setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
+      return serviceOptions;
+    } catch (error) {
+      dispatch(notifyApp(createErrorNotification('Error', error)));
+      setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
+      return [];
+    }
+  };
 
   useEffect(() => {
     const getServices = async () => {
-      const services = await loadServices({
-        dataSource: datasource,
-        url: '/api/services',
-        notFoundLabel: 'No service found',
-      });
+      const services = await loadServices(
+        {
+          dataSource: datasource,
+          url: '/api/services',
+          notFoundLabel: 'No service found',
+        },
+        'services'
+      );
       setServiceOptions(services);
     };
     getServices();
@@ -37,11 +77,14 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
   useEffect(() => {
     const getOperations = async () => {
-      const operations = await loadServices({
-        dataSource: datasource,
-        url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
-        notFoundLabel: 'No operation found',
-      });
+      const operations = await loadServices(
+        {
+          dataSource: datasource,
+          url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
+          notFoundLabel: 'No operation found',
+        },
+        'operations'
+      );
       setOperationOptions([allOperationsOption, ...operations]);
     };
     if (query.service) {
@@ -53,38 +96,83 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
         <InlineField label="Service" labelWidth={14} grow>
-          <Select
+          <AsyncSelect
             inputId="service"
             menuShouldPortal
-            options={serviceOptions}
-            value={serviceOptions?.find((v) => v.value === query.service) || null}
-            onChange={(v) => {
+            cacheOptions={false}
+            loadOptions={() =>
+              loadServices(
+                {
+                  dataSource: datasource,
+                  url: '/api/services',
+                  notFoundLabel: 'No service found',
+                },
+                'services'
+              )
+            }
+            onOpenMenu={() =>
+              loadServices(
+                {
+                  dataSource: datasource,
+                  url: '/api/services',
+                  notFoundLabel: 'No service found',
+                },
+                'services'
+              )
+            }
+            isLoading={isLoading.services}
+            value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
+            onChange={(v) =>
               onChange({
                 ...query,
-                service: v.value!,
-                operation: query.service !== v.value ? undefined : query.operation,
-              });
-            }}
+                service: v?.value!,
+                operation: query.service !== v?.value ? undefined : query.operation,
+              })
+            }
             menuPlacement="bottom"
             isClearable
+            defaultOptions
+            aria-label={'select-service-name'}
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
-          <Select
+          <AsyncSelect
             inputId="operation"
             menuShouldPortal
-            options={operationOptions}
+            loadOptions={() =>
+              loadServices(
+                {
+                  dataSource: datasource,
+                  url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
+                  notFoundLabel: 'No operation found',
+                },
+                'operations'
+              )
+            }
+            onOpenMenu={() =>
+              loadServices(
+                {
+                  dataSource: datasource,
+                  url: `/api/services/${encodeURIComponent(query.service!)}/operations`,
+                  notFoundLabel: 'No operation found',
+                },
+                'operations'
+              )
+            }
+            isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
             onChange={(v) =>
               onChange({
                 ...query,
-                operation: v.value!,
+                operation: v?.value! || undefined,
               })
             }
             menuPlacement="bottom"
             isClearable
+            defaultOptions
+            aria-label={'select-operation-name'}
           />
         </InlineField>
       </InlineFieldRow>
@@ -107,20 +195,3 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     </div>
   );
 }
-
-type Options = { dataSource: JaegerDatasource; url: string; notFoundLabel: string };
-
-const loadServices = async ({ dataSource, url, notFoundLabel }: Options): Promise<Array<SelectableValue<string>>> => {
-  const services: string[] | null = await dataSource.metadataRequest(url);
-
-  if (!services) {
-    return [{ label: notFoundLabel, value: notFoundLabel }];
-  }
-
-  const serviceOptions: SelectableValue[] = services.sort().map((service) => ({
-    label: service,
-    value: service,
-  }));
-
-  return serviceOptions;
-};
