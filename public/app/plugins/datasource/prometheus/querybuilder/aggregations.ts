@@ -26,6 +26,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     createAggregationOverTime(PromOperationId.CountOverTime),
     createAggregationOverTime(PromOperationId.LastOverTime),
     createAggregationOverTime(PromOperationId.PresentOverTime),
+    createAggregationOverTime(PromOperationId.AbsentOverTime),
     createAggregationOverTime(PromOperationId.StddevOverTime),
   ];
 }

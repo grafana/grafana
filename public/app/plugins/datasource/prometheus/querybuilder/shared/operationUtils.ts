@@ -38,12 +38,7 @@ function rangeRendererWithParams(
     throw `Cannot render a function with params of length [${def.params.length}]`;
   }
 
-  // First, make sure the first parameter (that is the range vector) is translated if the user selected 'auto'
-  let rangeVector = (model.params ?? [])[0] ?? 'auto';
-
-  if (rangeVector === 'auto') {
-    rangeVector = '$__rate_interval';
-  }
+  let rangeVector = (model.params ?? [])[0] ?? '5m';
 
   // Next frame the remaining parameters, but get rid of the first one because it's used to move the
   // instant vector into a range vector.
@@ -120,16 +115,15 @@ export function getOperationParamId(operationIndex: number, paramIndex: number) 
   return `operations.${operationIndex}.param.${paramIndex}`;
 }
 
-export function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
-  return {
+export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
+  const param = {
     name: 'Range',
     type: 'string',
     options: [
-      { label: '$__rate_interval', value: '$__rate_interval', tooltip: 'Always above 4x scrape interval' },
       {
         label: '$__interval',
         value: '$__interval',
-        tooltip: 'Dynamic interval based on max data points, scrape and min interval',
+        // tooltip: 'Dynamic interval based on max data points, scrape and min interval',
       },
       { label: '1m', value: '1m' },
       { label: '5m', value: '5m' },
@@ -138,4 +132,14 @@ export function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
       { label: '24h', value: '24h' },
     ],
   };
+
+  if (withRateInterval) {
+    param.options.unshift({
+      label: '$__rate_interval',
+      value: '$__rate_interval',
+      // tooltip: 'Always above 4x scrape interval',
+    });
+  }
+
+  return param;
 }
