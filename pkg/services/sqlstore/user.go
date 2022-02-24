@@ -618,6 +618,10 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 	return err
 }
 
+func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	return SearchUsers(ctx, query)
+}
+
 func SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
 	query.Result = models.SearchUserQueryResult{
 		Users: make([]*models.UserSearchHitDTO, 0),

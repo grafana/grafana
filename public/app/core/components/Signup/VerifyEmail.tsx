@@ -1,15 +1,15 @@
 import React, { FC, useState } from 'react';
 import { Form, Field, Input, Button, Legend, Container, HorizontalGroup, LinkButton } from '@grafana/ui';
-import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
+import { getConfig } from 'app/core/config';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 interface EmailDTO {
   email: string;
 }
 
 export const VerifyEmail: FC = () => {
+  const notifyApp = useAppNotification();
   const [emailSent, setEmailSent] = useState(false);
 
   const onSubmit = (formModel: EmailDTO) => {
@@ -20,7 +20,7 @@ export const VerifyEmail: FC = () => {
       })
       .catch((err) => {
         const msg = err.data?.message || err;
-        appEvents.emit(AppEvents.alertWarning, [msg]);
+        notifyApp.warning(msg);
       });
   };
 

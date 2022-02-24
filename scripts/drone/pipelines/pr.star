@@ -45,6 +45,12 @@ load(
     'drone_change_template',
 )
 
+load(
+    'scripts/drone/pipelines/docs.star',
+    'docs_pipelines',
+    'trigger_docs',
+)
+
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
@@ -133,5 +139,5 @@ def pr_pipelines(edition):
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + integration_test_steps,
             volumes=volumes,
-        ),
+        ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]
