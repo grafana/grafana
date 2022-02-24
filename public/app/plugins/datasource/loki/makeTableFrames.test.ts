@@ -1,7 +1,6 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 import { makeTableFrames } from './makeTableFrames';
 
-const TIMESTAMP = 1645029699311;
 
 const frame1: DataFrame = {
   name: 'frame1',
