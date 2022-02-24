@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { ToolbarButton } from '@grafana/ui';
-import { AddToDashboardModal } from './AddToDashboardModal';
+import { AddToDashboardModal, ErrorResponse } from './AddToDashboardModal';
 
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
@@ -53,7 +53,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
     return { queries, mainVisualization: getMainVisualization(queries, graphFrames, logsFrames, nodeGraphFrames) };
   });
 
-  const handleSave = async (data: SaveToNewDashboardDTO, redirect: boolean) => {
+  const handleSave = async (data: SaveToNewDashboardDTO, redirect: boolean): Promise<void | ErrorResponse> => {
     try {
       const redirectURL = await addToDashboard(data);
 
@@ -65,8 +65,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
       }
       return;
     } catch (e) {
-      // transform an API error into an error handleable by the component
-      return { message: e.data?.message ?? 'Unknown Error', status: e.data?.status ?? 'unknown-error' };
+      return { message: e.data?.message, status: e.data?.status ?? 'unknown-error' };
     }
   };
 

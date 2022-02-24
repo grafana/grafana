@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DataQuery } from '@grafana/data';
-import { Button, Field, Input, InputControl, Modal } from '@grafana/ui';
+import { Alert, Button, Field, Input, InputControl, Modal } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useForm } from 'react-hook-form';
 import { SaveToNewDashboardDTO } from './addToDashboard';
+
+export interface ErrorResponse {
+  status: string;
+  message?: string;
+}
 
 type FormDTO = SaveToNewDashboardDTO;
 
@@ -11,7 +16,7 @@ interface Props {
   onClose: () => void;
   queries: DataQuery[];
   visualization: string;
-  onSave: (data: FormDTO, redirect: boolean) => Promise<void | { message: string; status: string }>;
+  onSave: (data: FormDTO, redirect: boolean) => Promise<void | ErrorResponse>;
 }
 
 function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}, redirect: boolean) {
@@ -19,6 +24,7 @@ function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}
 }
 
 export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }: Props) => {
+  const [submissionError, setSubmissionError] = useState<string>();
   const {
     register,
     handleSubmit,
@@ -28,6 +34,7 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
   } = useForm<FormDTO>({ defaultValues: { queries, visualization } });
 
   const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
+    setSubmissionError(undefined);
     const error = await onSave(data, withRedirect);
 
     if (error) {
@@ -35,10 +42,13 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
         case 'name-exists':
         case 'empty-name':
         case 'name-match':
-          setError('dashboardName', { message: error.message });
+          // error.message should always be defined here
+          setError('dashboardName', { message: error.message ?? 'This field is invalid' });
           break;
         default:
-        // TODO: Other unknown errors may happen, we should handle them by displaying an error message
+          setSubmissionError(
+            error.message ?? 'An unknown error occurred while saving the dashboard. Please try again.'
+          );
       }
     }
   };
@@ -87,7 +97,11 @@ export const AddToDashboardModal = ({ onClose, queries, visualization, onSave }:
           />
         </Field>
 
-        {/* TODO: display Unknown Error in Alert here  */}
+        {submissionError && (
+          <Alert severity="error" title="Unknown error">
+            {submissionError}
+          </Alert>
+        )}
 
         <Modal.ButtonRow>
           <Button type="reset" onClick={onClose} fill="outline" variant="secondary" disabled={isSubmitting}>
