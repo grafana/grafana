@@ -16,12 +16,16 @@ export class GrafanaRoute extends React.Component<Props> {
     keybindingSrv.initGlobals();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
+    // TODO: Wrap this in a conditional that checks the config value "allow_embedding"
+    window.parent.postMessage('iframeNavigate', window.parent.location.origin);
   }
 
   componentDidUpdate(prevProps: Props) {
     this.cleanupDOM();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
+    // TODO: Wrap this in a conditional that checks the config value "allow_embedding"
+    window.parent.postMessage('iframeNavigate', window.parent.location.origin);
   }
 
   componentWillUnmount() {
