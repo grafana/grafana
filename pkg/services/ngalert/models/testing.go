@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -60,24 +61,11 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 		}
 
 		rule := &AlertRule{
-			ID:        rand.Int63(),
-			OrgID:     rand.Int63(),
-			Title:     "TEST-ALERT-" + util.GenerateShortUID(),
-			Condition: "A",
-			Data: []AlertQuery{
-				{
-					DatasourceUID: "-100",
-					Model: json.RawMessage(`{
-			"datasourceUid": "-100",
-			"type":"math",
-			"expression":"2 + 1 < 1"
-		}`),
-					RelativeTimeRange: RelativeTimeRange{
-						From: Duration(5 * time.Hour),
-						To:   Duration(3 * time.Hour),
-					},
-					RefID: "A",
-				}},
+			ID:              rand.Int63(),
+			OrgID:           rand.Int63(),
+			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
+			Condition:       "A",
+			Data:            []AlertQuery{GenerateAlertQuery()},
 			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 			IntervalSeconds: rand.Int63n(60) + 1,
 			Version:         rand.Int63(),
@@ -97,6 +85,25 @@ func AlertRuleGen(mutators ...func(*AlertRule)) func() *AlertRule {
 			mutator(rule)
 		}
 		return rule
+	}
+}
+
+func GenerateAlertQuery() AlertQuery {
+	f := rand.Intn(10) + 5
+	t := rand.Intn(f)
+
+	return AlertQuery{
+		DatasourceUID: util.GenerateShortUID(),
+		Model: json.RawMessage(fmt.Sprintf(`{
+			"%s": "%s",
+			"%s":"%d"
+		}`, util.GenerateShortUID(), util.GenerateShortUID(), util.GenerateShortUID(), rand.Int())),
+		RelativeTimeRange: RelativeTimeRange{
+			From: Duration(time.Duration(f) * time.Minute),
+			To:   Duration(time.Duration(t) * time.Minute),
+		},
+		RefID:     util.GenerateShortUID(),
+		QueryType: util.GenerateShortUID(),
 	}
 }
 
