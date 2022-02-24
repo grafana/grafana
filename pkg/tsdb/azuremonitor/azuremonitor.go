@@ -32,7 +32,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, t
 
 	// Insights Analytics and Application Insights were deprecated in Grafana 8.x and
 	// will be finally removed with Grafana 9
-	if semver.MustParse(setting.BuildVersion).Compare(semver.MustParse("9.0.0-beta1")) < 0 {
+	if setting.BuildVersion != "" && semver.MustParse(setting.BuildVersion).Compare(semver.MustParse("9.0.0-beta1")) < 0 {
 		executors[deprecated.InsightsAnalytics] = &deprecated.InsightsAnalyticsDatasource{Proxy: proxy}
 		executors[deprecated.AppInsights] = &deprecated.ApplicationInsightsDatasource{Proxy: proxy}
 	}

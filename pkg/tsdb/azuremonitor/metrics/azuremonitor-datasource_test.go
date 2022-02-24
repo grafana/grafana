@@ -551,7 +551,7 @@ func TestFindClosestAllowIntervalMS(t *testing.T) {
 func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 	t.Helper()
 
-	path := filepath.Join("testdata", name)
+	path := filepath.Join("../testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
 	jsonBody, err := ioutil.ReadFile(path)
