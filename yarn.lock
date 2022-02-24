@@ -2364,14 +2364,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-react-constant-elements@npm:7.16.7":
-  version: 7.16.7
-  resolution: "@babel/plugin-transform-react-constant-elements@npm:7.16.7"
+"@babel/plugin-transform-react-constant-elements@npm:7.17.6":
+  version: 7.17.6
+  resolution: "@babel/plugin-transform-react-constant-elements@npm:7.17.6"
   dependencies:
     "@babel/helper-plugin-utils": ^7.16.7
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: b2c586deba5ca86ebb4e26d01a26d056e48fd6f64760676a4b6a0be6f81b8afdd91189e976b57ba18ff966971f92f5ce97fd08798c9bf1a687e6e71bf4198b87
+  checksum: 4c111328511c4dcb8d1d7970d7cccff463c0c34dfe3380f5bb80b692fa191b441fa8c6ef4229c5140dc0b8c69cc3f9aeb6dc05455c4367be93e784658ce11cc5
   languageName: node
   linkType: hard
 
@@ -20635,7 +20635,7 @@ __metadata:
     "@babel/plugin-proposal-object-rest-spread": 7.17.3
     "@babel/plugin-proposal-optional-chaining": 7.16.7
     "@babel/plugin-syntax-dynamic-import": 7.8.3
-    "@babel/plugin-transform-react-constant-elements": 7.16.7
+    "@babel/plugin-transform-react-constant-elements": 7.17.6
     "@babel/plugin-transform-runtime": 7.17.0
     "@babel/plugin-transform-typescript": 7.16.8
     "@babel/preset-env": 7.16.11
