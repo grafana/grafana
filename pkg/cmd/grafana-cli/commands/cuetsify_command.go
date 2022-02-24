@@ -64,6 +64,7 @@ var skipPaths = []string{
 
 const prefix = "/"
 
+//nolint: gocyclo
 func (cmd Command) generateTypescript(c utils.CommandLine) error {
 	root := c.String("grafana-root")
 	if root == "" {
@@ -252,12 +253,15 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 				return fmt.Errorf("%s: %w", p, err)
 			}
 
-			f, err := os.Open(p)
+			f, err := os.Open(filepath.Clean(p))
 			if err != nil {
 				return fmt.Errorf("%s: %w", p, err)
 			}
 
 			ob, err := io.ReadAll(f)
+			if err != nil {
+				return err
+			}
 			dstr := cmp.Diff(string(ob), string(b))
 			if dstr != "" {
 				derr = true
@@ -314,7 +318,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 	if !filepath.IsAbs(prefix) {
 		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
 	}
-	err := fs.WalkDir(vfs, ".", (func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(vfs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -324,10 +328,15 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 		}
 
 		f, err := vfs.Open(path)
-		defer f.Close()
 		if err != nil {
 			return err
 		}
+		defer func(f fs.File) {
+			err := f.Close()
+			if err != nil {
+				return
+			}
+		}(f)
 
 		b, err := io.ReadAll(f)
 		if err != nil {
@@ -336,7 +345,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]cload.Source) error 
 
 		overlay[filepath.Join(prefix, path)] = cload.FromBytes(b)
 		return nil
-	}))
+	})
 
 	if err != nil {
 		return err
