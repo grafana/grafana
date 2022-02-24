@@ -69,6 +69,7 @@ export class RefreshPicker extends PureComponent<Props> {
     return (
       <ButtonGroup className="refresh-picker">
         <ToolbarButton
+          aria-label={text}
           tooltip={tooltip}
           onClick={onRefresh}
           variant={variant}
