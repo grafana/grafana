@@ -70,7 +70,10 @@ export class DashboardSrv {
       getBackendSrv().fetch({
         url: '/api/dashboards/db/',
         method: 'POST',
-        data,
+        data: {
+          ...data,
+          dashboard: data.dashboard.getSaveModelClone(),
+        },
         ...requestOptions,
       })
     );
