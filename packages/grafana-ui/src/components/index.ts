@@ -259,6 +259,7 @@ export { ScaleDistribution } from '@grafana/schema';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
 export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';
+export { UPlotChart2 } from './uPlotChart/UPlotChart';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';

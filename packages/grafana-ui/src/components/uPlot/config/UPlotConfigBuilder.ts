@@ -53,7 +53,7 @@ export class UPlotConfigBuilder {
   private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
   private padding?: Padding = undefined;
 
-  prepData: PrepData | undefined = undefined;
+  prepData: PrepDataFn | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -151,10 +151,10 @@ export class UPlotConfigBuilder {
     return this.tooltipInterpolator;
   }
 
-  setPrepData(prepData: PrepData) {
-    this.prepData = (frames) => {
-      this.frames = frames;
-      return prepData(frames);
+  setPrepData(prepData: PrepDataFn) {
+    this.prepData = (opts) => {
+      this.frames = opts.frames;
+      return prepData(opts);
     };
   }
 
@@ -265,13 +265,30 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
   timeZone: TimeZone;
-  getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
+  getTimeRange: () => TimeRange;
 } & T;
 
+export interface PrepDataOpts {
+  frames: DataFrame[];
+}
+
+export type PrepDataFnResult = {
+  frames: DataFrame[]; // original data.series
+  aligned: AlignedData;
+};
+
+export type PrepDataFn = (opts: PrepDataOpts) => PrepDataFnResult;
+
 /** @alpha */
-export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;
+export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => {
+  builder: UPlotConfigBuilder;
+  prepData: PrepDataFn;
+  // TODO: fix typings
+  on: (type: any, handler: any) => void;
+  // on(type: EventType, handler: Handler): void;
+} | null;

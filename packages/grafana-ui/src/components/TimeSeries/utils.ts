@@ -55,14 +55,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakAxis = (opts) => opts,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
-
-  builder.setPrepData((prepData) => preparePlotData(prepData, undefined, legend));
+  function on(type: any, handler: any) {}
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
   if (!xField) {
-    return builder; // empty frame with no options
+    // TODO: handle null return
+    return null;
   }
+
+  builder.setPrepData((prepData) => preparePlotData(prepData.frames, undefined, legend));
 
   let seriesIndex = 0;
 
@@ -455,7 +457,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   builder.setSync();
   builder.setCursor(cursor);
 
-  return builder;
+  return { builder, prepData: builder.prepData!, on };
 };
 
 export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {

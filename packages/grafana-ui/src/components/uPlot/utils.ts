@@ -1,9 +1,11 @@
-import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
+import { DataFrame, ensureTimeField, Field, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { GraphFieldConfig, GraphTransform, StackingMode, VizLegendOptions } from '@grafana/schema';
 import { orderBy } from 'lodash';
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
+import { preparePlotFrame } from '../GraphNG/utils';
+import { PrepDataFnResult } from './config/UPlotConfigBuilder';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 export const INTERNAL_NEGATIVE_Y_PREFIX = '__internalNegY';
@@ -45,8 +47,22 @@ export function preparePlotData(
   frames: DataFrame[],
   onStackMeta?: (meta: StackMeta) => void,
   legend?: VizLegendOptions
-): AlignedData {
-  const frame = frames[0];
+): PrepDataFnResult {
+  console.log('preparePlotData');
+  const alignedFrame = preparePlotFrame(frames, {
+    x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+    y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+  });
+
+  if (!alignedFrame) {
+    return {
+      frames,
+      aligned: [] as unknown as AlignedData,
+    };
+  }
+
+  // const frame = frames[0];
+  const frame = alignedFrame;
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;
@@ -125,7 +141,10 @@ export function preparePlotData(
       });
   }
 
-  return result as AlignedData;
+  return {
+    frames,
+    aligned: result as AlignedData,
+  };
 }
 
 export function collectStackingGroups(f: Field, groups: Map<string, number[]>, seriesIdx: number) {
