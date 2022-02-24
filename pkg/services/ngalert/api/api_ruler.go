@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/prometheus/common/model"
 
@@ -29,7 +31,12 @@ type RulerSrv struct {
 	QuotaService    *quota.QuotaService
 	scheduleService schedule.ScheduleService
 	log             log.Logger
+	cfg             *setting.UnifiedAlertingSettings
 }
+
+var (
+	errQuotaReached = errors.New("quota has been exceeded")
+)
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespaceTitle := web.Params(c.Req)[":Namespace"]
@@ -243,62 +250,77 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return toNamespaceErrorResponse(err)
 	}
 
-	//TODO: Should this belong in alerting-api?
-	if ruleGroupConfig.Name == "" {
-		return ErrResp(http.StatusBadRequest, errors.New("rule group name is not valid"), "")
+	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgId, namespace, conditionValidator(c, srv.DatasourceCache), srv.cfg)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	alertRuleUIDs := make(map[string]struct{})
-	for _, r := range ruleGroupConfig.Rules {
-		cond := ngmodels.Condition{
-			Condition: r.GrafanaManagedAlert.Condition,
-			OrgID:     c.SignedInUser.OrgId,
-			Data:      r.GrafanaManagedAlert.Data,
-		}
-		if err := validateCondition(c.Req.Context(), cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
-		}
-		if r.GrafanaManagedAlert.UID != "" {
-			_, ok := alertRuleUIDs[r.GrafanaManagedAlert.UID]
-			if ok {
-				return ErrResp(http.StatusBadRequest, fmt.Errorf("conflicting UID %q found", r.GrafanaManagedAlert.UID), "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
-			}
-			alertRuleUIDs[r.GrafanaManagedAlert.UID] = struct{}{}
-		}
-	}
+	return srv.updateAlertRulesInGroup(c, namespace, ruleGroupConfig.Name, rules)
+}
 
-	numOfNewRules := len(ruleGroupConfig.Rules) - len(alertRuleUIDs)
-	if numOfNewRules > 0 {
-		// quotas are checked in advanced
-		// that is acceptable under the assumption that there will be only one alert rule under the rule group
-		// alternatively we should check the quotas after the rule group update
-		// and rollback the transaction in case of violation
-		limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
+func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
+	// TODO add create rules authz logic
+
+	var changes *RuleChanges = nil
+	err := srv.store.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
+		var err error
+		changes, err = calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
 		if err != nil {
-			return ErrResp(http.StatusInternalServerError, err, "failed to get quota")
+			return err
 		}
-		if limitReached {
-			return ErrResp(http.StatusForbidden, errors.New("quota reached"), "")
-		}
-	}
 
-	if err := srv.store.UpdateRuleGroup(c.Req.Context(), store.UpdateRuleGroupCmd{
-		OrgID:           c.SignedInUser.OrgId,
-		NamespaceUID:    namespace.Uid,
-		RuleGroupConfig: ruleGroupConfig,
-	}); err != nil {
+		// TODO add update/delete authz logic
+		err = srv.store.UpsertAlertRules(tranCtx, changes.Upsert)
+		if err != nil {
+			return fmt.Errorf("failed to add or update rules: %w", err)
+		}
+
+		for _, rule := range changes.Delete {
+			if err = srv.store.DeleteAlertRuleByUID(tranCtx, c.SignedInUser.OrgId, rule.UID); err != nil {
+				return fmt.Errorf("failed to delete rule %d with UID %s: %w", rule.ID, rule.UID, err)
+			}
+		}
+
+		if changes.newRules > 0 {
+			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
+				OrgId:  c.OrgId,
+				UserId: c.UserId,
+			}) // alert rule is table name
+			if err != nil {
+				return fmt.Errorf("failed to get alert rules quota: %w", err)
+			}
+			if limitReached {
+				return errQuotaReached
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
+		} else if errors.Is(err, errQuotaReached) {
+			return ErrResp(http.StatusForbidden, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for uid := range alertRuleUIDs {
-		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+	// TODO uncomment when rules that are not changed will be filter out from the upsert list.
+	// for _, rule := range changes.Upsert {
+	// 	if rule.Existing != nil {
+	// 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+	// 			OrgID: c.SignedInUser.OrgId,
+	// 			UID:   rule.Existing.UID,
+	// 		})
+	// 	}
+	// }
+
+	for _, rule := range changes.Delete {
+		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
-			UID:   uid,
+			UID:   rule.UID,
 		})
 	}
 
@@ -340,4 +362,82 @@ func toNamespaceErrorResponse(err error) response.Response {
 		return ErrResp(http.StatusBadRequest, err, err.Error())
 	}
 	return apierrors.ToFolderErrorResponse(err)
+}
+
+type RuleChanges struct {
+	newRules int
+	Upsert   []store.UpsertRule
+	Delete   []*ngmodels.AlertRule
+}
+
+// calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
+// returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
+func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*RuleChanges, error) {
+	q := &ngmodels.ListRuleGroupAlertRulesQuery{
+		OrgID:        orgId,
+		NamespaceUID: namespace.Uid,
+		RuleGroup:    ruleGroupName,
+	}
+	if err := ruleStore.GetRuleGroupAlertRules(ctx, q); err != nil {
+		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)
+	}
+	existingGroupRules := q.Result
+
+	existingGroupRulesUIDs := make(map[string]*ngmodels.AlertRule, len(existingGroupRules))
+	for _, r := range existingGroupRules {
+		existingGroupRulesUIDs[r.UID] = r
+	}
+
+	upsert := make([]store.UpsertRule, 0, len(submittedRules))
+	toDelete := make([]*ngmodels.AlertRule, 0, len(submittedRules))
+	newRules := 0
+	for _, r := range submittedRules {
+		var existing *ngmodels.AlertRule = nil
+
+		if r.UID != "" {
+			if existingGroupRule, ok := existingGroupRulesUIDs[r.UID]; ok {
+				existing = existingGroupRule
+				// remove the rule from existingGroupRulesUIDs
+				delete(existingGroupRulesUIDs, r.UID)
+			} else {
+				// Rule can be from other group or namespace
+				q := &ngmodels.GetAlertRuleByUIDQuery{OrgID: orgId, UID: r.UID}
+				if err := ruleStore.GetAlertRuleByUID(ctx, q); err != nil || q.Result == nil {
+					// if rule has UID then it is considered an update. Therefore, fail if there is no rule to update
+					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) || q.Result == nil && err == nil {
+						return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
+					}
+					return nil, fmt.Errorf("failed to query database for an alert rule with UID %s: %w", r.UID, err)
+				}
+				existing = q.Result
+			}
+		}
+
+		if existing == nil {
+			upsert = append(upsert, store.UpsertRule{
+				Existing: nil,
+				New:      *r,
+			})
+			newRules++
+			continue
+		}
+
+		ngmodels.PatchPartialAlertRule(existing, r)
+		// TODO diff between patched and existing, as well as between submitted
+		upsert = append(upsert, store.UpsertRule{
+			Existing: existing,
+			New:      *r,
+		})
+		continue
+	}
+
+	for _, rule := range existingGroupRulesUIDs {
+		toDelete = append(toDelete, rule)
+	}
+
+	return &RuleChanges{
+		Upsert:   upsert,
+		Delete:   toDelete,
+		newRules: newRules,
+	}, nil
 }
