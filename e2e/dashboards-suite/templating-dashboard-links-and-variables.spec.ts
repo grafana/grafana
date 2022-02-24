@@ -5,7 +5,7 @@ e2e.scenario({
   itName: 'Tests dashboard links and variables in links',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: true, // Skipped because it was causing many failures in main.
+  skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
     e2e()
@@ -21,7 +21,9 @@ e2e.scenario({
       })
       .as('tagsDemoSearch');
 
-    // waiting for links to render, couldn't find a better way using routes for instance
+    // waiting for network requests first
+    e2e().wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
+    // and then waiting for links to render
     e2e().wait(1000);
 
     const verifyLinks = (variableValue: string) => {
@@ -36,11 +38,7 @@ e2e.scenario({
         });
     };
 
-    e2e.components.DashboardLinks.dropDown()
-      .should('be.visible')
-      .click()
-      .wait('@tagsTemplatingSearch')
-      .wait('@tagsDemoSearch');
+    e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
 
     // verify all links, should have All value
     verifyLinks('All');
