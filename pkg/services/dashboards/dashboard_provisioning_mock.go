@@ -14,6 +14,20 @@ type FakeDashboardProvisioning struct {
 	mock.Mock
 }
 
+// DeleteOrphanedProvisionedDashboards provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardProvisioning) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.DeleteOrphanedProvisionedDashboardsCommand) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteProvisionedDashboard provides a mock function with given fields: ctx, dashboardID, orgID
 func (_m *FakeDashboardProvisioning) DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error {
 	ret := _m.Called(ctx, dashboardID, orgID)

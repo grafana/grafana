@@ -16,6 +16,7 @@ export function RunButton(props: Props) {
   const { isSmall, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
   let text: string | undefined = loading ? 'Cancel' : 'Run query';
+  let tooltip = '';
   let width = '108px';
 
   if (isLive) {
@@ -23,6 +24,7 @@ export function RunButton(props: Props) {
   }
 
   if (isSmall) {
+    tooltip = text;
     text = undefined;
     width = '35px';
   }
@@ -33,6 +35,7 @@ export function RunButton(props: Props) {
       value={refreshInterval}
       isLoading={loading}
       text={text}
+      tooltip={tooltip}
       intervals={intervals}
       isLive={isLive}
       onRefresh={() => onRun(loading)}

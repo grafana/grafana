@@ -77,7 +77,7 @@ Status codes:
 - **400** - Errors (invalid JSON, missing or invalid fields)
 - **500** – Unable to add query to the database
 
-### Delete query from Query history by UID
+## Delete query from Query history by UID
 
 `DELETE /api/query-history/:uid`
 
@@ -107,10 +107,9 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
-- **404** - Query in query history not found
 - **500** – Unable to delete query from the database
 
-### Update comment of query in Query history by UID
+## Update comment of query in Query history by UID
 
 `PATCH /api/query-history/:uid`
 
@@ -165,3 +164,99 @@ Status codes:
 - **200** – OK
 - **400** - Errors (invalid JSON, missing or invalid fields)
 - **500** – Unable to update comment of query in the database
+
+## Star query in Query history
+
+`POST /api/query-history/star/:uid`
+
+Stars query in query history.
+
+**Example request:**
+
+```http
+POST /api/query-history/star/P8zM2I1nz HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "result": {
+    "uid": "P8zM2I1nz",
+    "datasourceUid": "PE1C5CBDA0504A6A3",
+    "createdBy": 1,
+    "createdAt": 1643630762,
+    "starred": false,
+    "comment": "Debugging query",
+    "queries": [
+      {
+        "refId": "A",
+        "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0",
+        "scenarioId": "csv_content",
+        "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+        }
+      }
+    ]
+  }
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **500** – Unable to star query in the database
+
+## Unstar query in Query history
+
+`DELETE /api/query-history/star/:uid`
+
+Removes stars from query in query history.
+
+**Example request:**
+
+```http
+DELETE /api/query-history/star/P8zM2I1nz  HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "result": {
+    "uid": "P8zM2I1nz",
+    "datasourceUid": "PE1C5CBDA0504A6A3",
+    "createdBy": 1,
+    "createdAt": 1643630762,
+    "starred": false,
+    "comment": "Debugging query",
+    "queries": [
+      {
+        "refId": "A",
+        "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0",
+        "scenarioId": "csv_content",
+        "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+        }
+      }
+    ]
+  }
+}
+```
+
+Status codes:
+
+- **200** – OK
+- **500** – Unable to unstar query in the database
