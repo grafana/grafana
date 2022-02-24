@@ -6,6 +6,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
 import { BackendSrvRequest } from '@grafana/runtime';
+import { lastValueFrom } from 'rxjs';
 
 export interface SaveDashboardOptions {
   /** The complete dashboard model. If `dashboard.id` is not set a new dashboard will be created. */
@@ -65,12 +66,14 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return getBackendSrv().request({
-      url: '/api/dashboards/db/',
-      method: 'POST',
-      data,
-      ...requestOptions,
-    });
+    return lastValueFrom(
+      getBackendSrv().fetch({
+        url: '/api/dashboards/db/',
+        method: 'POST',
+        data,
+        ...requestOptions,
+      })
+    );
   }
 
   starDashboard(dashboardId: string, isStarred: any) {
