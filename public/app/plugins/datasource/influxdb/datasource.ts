@@ -558,12 +558,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return lastValueFrom(super.query({ targets: [target] } as DataQueryRequest))
         .then((res: DataQueryResponse) => {
           if (!res || !res.data || res.state !== LoadingState.Done) {
-            return { status: 'error', message: 'Error reading InfluxDB' };
+            return {
+              status: 'error',
+              message: 'Error reading InfluxDB. Please make sure you have sufficient permissions.',
+            };
           }
           if (res.data?.length) {
-            return { status: 'success', message: 'Data source is working' };
+            return { status: 'success', message: 'Data source is working.' };
           }
-          return { status: 'error', message: 'Data source is not working' };
+          return {
+            status: 'error',
+            message:
+              'Successfully connected to InfluxDB but was unable to retrieve any data. Usually, this happens because of insufficient permissions or when there is no data to retrieve.',
+          };
         })
         .catch((err: any) => {
           return { status: 'error', message: err.message };
