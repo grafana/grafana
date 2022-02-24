@@ -34,6 +34,8 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 				Asc("name")
 		}
 
+		sess = sess.Where("service_account_id IS NULL")
+
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)
 	})
