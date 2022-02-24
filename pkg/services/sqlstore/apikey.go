@@ -63,7 +63,7 @@ func (ss *SQLStore) DeleteApiKey(ctx context.Context, cmd *models.DeleteApiKeyCo
 }
 
 func deleteAPIKey(sess *DBSession, id, orgID int64) error {
-	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id is null"
+	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
 	result, err := sess.Exec(rawSQL, id, orgID)
 	if err != nil {
 		return err
