@@ -8,7 +8,6 @@ import { PanelPlugin } from '@grafana/data';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
-  isInitSlow: false,
   getModel: () => null,
   permissions: [],
   initError: null,
@@ -27,13 +26,9 @@ const dashboardSlice = createSlice({
     dashboardInitServices: (state) => {
       state.initPhase = DashboardInitPhase.Services;
     },
-    dashboardInitSlow: (state) => {
-      state.isInitSlow = true;
-    },
     dashboardInitCompleted: (state, action: PayloadAction<DashboardModel>) => {
       state.getModel = () => action.payload;
       state.initPhase = DashboardInitPhase.Completed;
-      state.isInitSlow = false;
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
       state.initPhase = DashboardInitPhase.Failed;
@@ -44,7 +39,6 @@ const dashboardSlice = createSlice({
     },
     cleanUpDashboard: (state) => {
       state.initPhase = DashboardInitPhase.NotStarted;
-      state.isInitSlow = false;
       state.initError = null;
       state.getModel = () => null;
     },
@@ -73,7 +67,6 @@ export const {
   loadDashboardPermissions,
   dashboardInitFetching,
   dashboardInitFailed,
-  dashboardInitSlow,
   dashboardInitCompleted,
   dashboardInitServices,
   cleanUpDashboard,

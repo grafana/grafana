@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, AppEvents } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
 import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate, SubmitHandler } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { appEvents } from 'app/core/core';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
@@ -38,6 +38,7 @@ export function ReceiverForm<R extends ChannelValues>({
   takenReceiverNames,
   commonSettingsComponent,
 }: Props<R>): JSX.Element {
+  const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
   const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
   const defaultValues = initialValues || {
@@ -84,7 +85,7 @@ export function ReceiverForm<R extends ChannelValues>({
   };
 
   const onInvalid = () => {
-    appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
   return (
@@ -94,7 +95,7 @@ export function ReceiverForm<R extends ChannelValues>({
           Because there is no default policy configured yet, this contact point will automatically be set as default.
         </Alert>
       )}
-      <form onSubmit={handleSubmit(submitCallback as SubmitHandler<ReceiverFormValues<R>>, onInvalid)}>
+      <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
         <h4 className={styles.heading}>
           {readOnly ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
         </h4>
@@ -121,13 +122,13 @@ export function ReceiverForm<R extends ChannelValues>({
               defaultValues={field}
               key={field.__id}
               onDuplicate={() => {
-                const currentValues = getValues().items[index] as R;
+                const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
               }}
               onTest={
                 onTestChannel
                   ? () => {
-                      const currentValues = getValues().items[index] as R;
+                      const currentValues: R = getValues().items[index];
                       onTestChannel(currentValues);
                     }
                   : undefined

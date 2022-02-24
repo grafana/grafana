@@ -4109,7 +4109,7 @@ __metadata:
     tslib: 2.3.1
     typescript: 4.4.4
     uuid: 8.3.2
-    webpack: 5.68.0
+    webpack: 5.69.1
     yaml: ^1.8.3
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -4449,7 +4449,7 @@ __metadata:
     react-dom: 17.0.2
     react-dropzone: 11.5.1
     react-highlight-words: 0.17.0
-    react-hook-form: 7.27.0
+    react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-popper: 2.2.5
     react-popper-tooltip: ^4.3.1
@@ -4478,7 +4478,7 @@ __metadata:
     typescript: 4.4.4
     uplot: 1.6.19
     uuid: 8.3.2
-    webpack: 5.68.0
+    webpack: 5.69.1
     webpack-filter-warnings-plugin: 1.2.1
   languageName: unknown
   linkType: soft
@@ -10100,6 +10100,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/eslint-scope@npm:^3.7.3":
+  version: 3.7.3
+  resolution: "@types/eslint-scope@npm:3.7.3"
+  dependencies:
+    "@types/eslint": "*"
+    "@types/estree": "*"
+  checksum: 6772b05e1b92003d1f295e81bc847a61f4fbe8ddab77ffa49e84ed3f9552513bdde677eb53ef167753901282857dd1d604d9f82eddb34a233495932b2dc3dc17
+  languageName: node
+  linkType: hard
+
 "@types/eslint@npm:*, @types/eslint@npm:^7.28.2":
   version: 7.28.2
   resolution: "@types/eslint@npm:7.28.2"
@@ -10141,6 +10151,13 @@ __metadata:
   version: 0.0.39
   resolution: "@types/estree@npm:0.0.39"
   checksum: 412fb5b9868f2c418126451821833414189b75cc6bf84361156feed733e3d92ec220b9d74a89e52722e03d5e241b2932732711b7497374a404fad49087adc248
+  languageName: node
+  linkType: hard
+
+"@types/estree@npm:^0.0.51":
+  version: 0.0.51
+  resolution: "@types/estree@npm:0.0.51"
+  checksum: e56a3bcf759fd9185e992e7fdb3c6a5f81e8ff120e871641607581fb3728d16c811702a7d40fa5f869b7f7b4437ab6a87eb8d98ffafeee51e85bbe955932a189
   languageName: node
   linkType: hard
 
@@ -20820,7 +20837,7 @@ __metadata:
     lint-staged: 12.3.3
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.3.1
+    lru-cache: 7.4.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.5.3
     moment: 2.29.1
@@ -20857,7 +20874,7 @@ __metadata:
     react-draggable: 4.4.4
     react-grid-layout: 1.3.3
     react-highlight-words: 0.17.0
-    react-hook-form: 7.27.0
+    react-hook-form: 7.5.3
     react-inlinesvg: 2.3.0
     react-loadable: 5.5.0
     react-moveable: 0.30.3
@@ -20912,7 +20929,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.0
-    webpack: 5.68.0
+    webpack: 5.69.1
     webpack-bundle-analyzer: 4.5.0
     webpack-cli: 4.9.2
     webpack-dev-server: 4.7.4
@@ -25465,10 +25482,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.3.1":
-  version: 7.3.1
-  resolution: "lru-cache@npm:7.3.1"
-  checksum: 34bb50c015ffc29fd83545e912f28cea6e03fbf41c497fa220c4f131b990f9ddf95babac98745b416cbc6c0d835254d61668d09b8a4ecb476934546afc9e51bd
+"lru-cache@npm:7.4.0":
+  version: 7.4.0
+  resolution: "lru-cache@npm:7.4.0"
+  checksum: f966d8b6832ae4b6d454b96b5814a81fdd7312d393208c8ff1456981bafa7c6d5e28f8814813ec196ffac4e33a57c22c7daa24e79192f4c7f0b16acb1b9e7ed1
   languageName: node
   linkType: hard
 
@@ -30871,15 +30888,6 @@ __metadata:
   peerDependencies:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0
   checksum: 41b3d0e4516cbc12fd4e0b620b72d309eaa3e207f1089a377d76040f99edb717b99a34e0bef5f83d7d28d408542f3138ca3a5c06e08359e4f13f241432327485
-  languageName: node
-  linkType: hard
-
-"react-hook-form@npm:7.27.0":
-  version: 7.27.0
-  resolution: "react-hook-form@npm:7.27.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17
-  checksum: 643c643e6d52b2427e73853abe0255e39f4c323c87862b1651e7153adaf1f3db27b843dda9ea32306db102d1e9e1e00e49c2ded13705ede0706235b53ef69e24
   languageName: node
   linkType: hard
 
@@ -36989,12 +36997,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.68.0":
-  version: 5.68.0
-  resolution: "webpack@npm:5.68.0"
+"webpack@npm:5.69.1":
+  version: 5.69.1
+  resolution: "webpack@npm:5.69.1"
   dependencies:
-    "@types/eslint-scope": ^3.7.0
-    "@types/estree": ^0.0.50
+    "@types/eslint-scope": ^3.7.3
+    "@types/estree": ^0.0.51
     "@webassemblyjs/ast": 1.11.1
     "@webassemblyjs/wasm-edit": 1.11.1
     "@webassemblyjs/wasm-parser": 1.11.1
@@ -37022,7 +37030,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: ac6efd861a0bfb35d8a467fba0d87f905ef6e1a9a9f7e3db42ea459cf191268094cedd025d3eb36a1464e2208a0c193f3f4a92531ba58850246f3c6b8f210b03
+  checksum: 490a6e9e4cd9d0ed3b6c7ca08015da2628919fda8fcf9c36f0f6c0e3ad71eaaaf4b0d12753109f22a4faf79fe9a9063552d9708e0ee2352cf8568433b8e296a7
   languageName: node
   linkType: hard
 
