@@ -122,7 +122,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	ss.addDashboardACLQueryAndCommandHandlers()
 	ss.addQuotaQueryAndCommandHandlers()
 	ss.addOrgUsersQueryAndCommandHandlers()
-	ss.addStarQueryAndCommandHandlers()
 	ss.addAlertQueryAndCommandHandlers()
 	ss.addTempUserQueryAndCommandHandlers()
 	ss.addDashboardVersionQueryAndCommandHandlers()

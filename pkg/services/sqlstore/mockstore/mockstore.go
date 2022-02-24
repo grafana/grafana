@@ -308,23 +308,6 @@ func (m *SQLStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *mode
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
-	query.Result = false
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) StarDashboard(ctx context.Context, cmd *models.StarDashboardCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UnstarDashboard(ctx context.Context, cmd *models.UnstarDashboardCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserStars(ctx context.Context, query *models.GetUserStarsQuery) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error {
 	return m.ExpectedError
 }

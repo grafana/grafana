@@ -20,7 +20,7 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := hs.SQLStore.StarDashboard(c.Req.Context(), &cmd); err != nil {
+	if err := hs.StarsService.StarDashboard(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to star dashboard", err)
 	}
 
@@ -38,7 +38,7 @@ func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := hs.SQLStore.UnstarDashboard(c.Req.Context(), &cmd); err != nil {
+	if err := hs.StarsService.UnstarDashboard(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to unstar dashboard", err)
 	}
 
