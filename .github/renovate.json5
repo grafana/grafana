@@ -11,6 +11,7 @@
     "@types/d3-scale-chromatic", // we should bump this once we move to esm modules
     "@types/grafana__slate-react", // should be updated when the `slate` package is updated
     "@types/react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
+    "commander", // we are planning to remove this, so no need to update it
     "d3",
     "d3-force", // we should bump this once we move to esm modules
     "d3-interpolate", // we should bump this once we move to esm modules
