@@ -3,7 +3,7 @@ title = "Manage user preferences"
 weight = 400
 description = "Learn how to update your user preferences and switch organizations"
 keywords = ["password", "change", "organization", "change"]
-aliases = ["/docs/grafana/latest/administration/change-your-password/", "docs/sources/manage-user-preferences/_index.md"]
+aliases = ["/docs/grafana/latest/administration/change-your-password/", "docs/sources/administration/manage-user-preferences/_index.md"]
 +++
 
 # Manage user preferences
@@ -16,7 +16,7 @@ You can also view important information about your account, such as the organiza
 
 You can change your Grafana password at any time.
 
-> **Note**: If your Grafana instance uses an [external authentication provider]({{< relref "../auth/_index.md">}}), then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+> **Note**: If your Grafana instance uses an [external authentication provider]({{< relref "../../auth/_index.md">}}), then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
 
 **To change your password**:
 
@@ -42,19 +42,19 @@ Your profile includes your name, user name, and email address, which you can upd
 
 ## Edit your preferences
 
-You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a team, for an organization, or Grafana-wide using configuration settings. Your user preferences take precedence over team, organization, and Grafana default preferences. For more information, see [Grafana preferences]({{< relref "../administration/preferences/_index.md">}}).
+You can choose the way you would like data to appear in Grafana, including the UI theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a team, for an organization, or Grafana-wide using configuration settings. Your user preferences take precedence over team, organization, and Grafana default preferences. For more information, see [Grafana preferences]({{< relref "../../administration/preferences/_index.md">}}).
 
-- **UI theme** determines whether Grafana appears in light mode or dark mode. This is set to dark mode by default.
-- **Home dashboard** refers to the first dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.
-- **Timezone** is used by dashboards when you set time ranges, so that you view data in your own time instead of UTC.
-- **Week start** is the first day of the week you prefer to use in certain dashboard time ranges, like the time range `This week`.
+- **UI theme** determines whether Grafana appears in light mode or dark mode. By default, UI theme is set to dark mode.
+- **Home dashboard** refers to the dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.
+- **Timezone** is used by dashboards when you set time ranges, so that you view data in your timezone instead of UTC.
+- **Week start** is the first day of the week you want to use in dashboard time ranges, for example, `This week`.
 
 **To edit your preferences**:
-1. Sign in to Grafana.
-2. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
-3. Update any of the values in the **Preferences** section.
-4. Click **Save** at the bottom of the Preferences section.
 
+1. Sign in to Grafana.
+1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
+1. Update any of the values in the **Preferences** section.
+1. Click **Save** at the bottom of the Preferences section.
 
 ## Switch organizations
 
@@ -76,7 +76,7 @@ Every user is a member of at least one organization. You can have different role
 1. Hover your cursor over the user icon in the lower-left corner of the page and click **Preferences**.
 1. Scroll down to the **Organizations** section and review the following information:
    - **Name**: The name of the organizations of which you are a member.
-   - **Role**: The role to which you are assigned in the organization. For more information about roles and permissions, refer to [Organization users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md#organization-users-and-permissions" >}}).
+   - **Role**: The role to which you are assigned in the organization. For more information about roles and permissions, refer to [Organization users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#organization-users-and-permissions" >}}).
    - **Current**: Grafana indicates the organization that you are currently signed into as _Current_. If you are a member of multiple organizations, you can click **Select** to switch to that organization.
 
 ## View your Grafana sessions
