@@ -30,6 +30,7 @@ import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/t
 import AccordianReferences from './AccordianReferences';
 import { autoColor } from '../../Theme';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
+import { Divider } from 'src/common/Divider';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -42,21 +43,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     listWrapper: css`
       overflow: hidden;
-    `,
-    divider: css`
-      label: divider;
-      background: ${autoColor(theme, '#ddd')};
-    `,
-    dividerVertical: css`
-      label: dividerVertical;
-      display: block;
-      height: 1px;
-      width: 100%;
-      margin: 24px 0;
-      clear: both;
-      vertical-align: middle;
-      position: relative;
-      top: -0.06em;
     `,
     debugInfo: css`
       label: debugInfo;
