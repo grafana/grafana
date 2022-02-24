@@ -101,7 +101,7 @@ func (ss *SQLStore) AddAPIKey(ctx context.Context, cmd *models.AddApiKeyCommand)
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: cmd.ServiceAccountId,
+			ServiceAccountId: nil,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {

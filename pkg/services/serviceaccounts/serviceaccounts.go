@@ -22,4 +22,5 @@ type Store interface {
 	ConvertToServiceAccounts(ctx context.Context, keys []int64) error
 	ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
+	AddServiceAccountToken(ctx context.Context, cmd *models.AddApiKeyCommand) error
 }

@@ -120,7 +120,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.apiKeyStore.AddAPIKey(c.Req.Context(), &cmd); err != nil {
+	if err := api.store.AddServiceAccountToken(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
