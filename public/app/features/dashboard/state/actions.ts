@@ -2,7 +2,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
-import { loadPluginDashboards } from '../../plugins/state/actions';
+import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
@@ -119,20 +119,24 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
 
   if (dashboard) {
     dashboard.destroy();
+    dispatch(cancelVariables(dashboard.uid));
   }
 
   getTimeSrv().stopAutoRefresh();
 
   dispatch(cleanUpDashboard());
-  dispatch(cancelVariables());
 };
 
-export const updateTimeZoneDashboard = (timeZone: TimeZone): ThunkResult<void> => (dispatch) => {
-  dispatch(updateTimeZoneForSession(timeZone));
-  getTimeSrv().refreshDashboard();
-};
+export const updateTimeZoneDashboard =
+  (timeZone: TimeZone): ThunkResult<void> =>
+  (dispatch) => {
+    dispatch(updateTimeZoneForSession(timeZone));
+    getTimeSrv().refreshTimeModel();
+  };
 
-export const updateWeekStartDashboard = (weekStart: string): ThunkResult<void> => (dispatch) => {
-  dispatch(updateWeekStartForSession(weekStart));
-  getTimeSrv().refreshDashboard();
-};
+export const updateWeekStartDashboard =
+  (weekStart: string): ThunkResult<void> =>
+  (dispatch) => {
+    dispatch(updateWeekStartForSession(weekStart));
+    getTimeSrv().refreshTimeModel();
+  };

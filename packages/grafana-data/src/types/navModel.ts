@@ -1,3 +1,5 @@
+import { ComponentType } from 'react';
+
 export interface NavModelItem {
   text: string;
   url?: string;
@@ -13,8 +15,25 @@ export interface NavModelItem {
   breadcrumbs?: NavModelBreadcrumb[];
   target?: string;
   parentItem?: NavModelItem;
+  section?: NavSection;
   showOrgSwitcher?: boolean;
   onClick?: () => void;
+  menuItemType?: NavMenuItemType;
+  highlightText?: string;
+  highlightId?: string;
+  tabSuffix?: ComponentType<{ className?: string }>;
+  hideFromNavbar?: boolean;
+}
+
+export enum NavSection {
+  Core = 'core',
+  Plugin = 'plugin',
+  Config = 'config',
+}
+
+export enum NavMenuItemType {
+  Section = 'section',
+  Item = 'item',
 }
 
 /**

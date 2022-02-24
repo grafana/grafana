@@ -1,9 +1,7 @@
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
-import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import angular from 'angular';
 import jquery from 'jquery';
 
 // Experimental module exports
@@ -21,11 +19,10 @@ import * as redux from 'redux';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import { coreModule, appEvents, contextSrv } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -34,6 +31,7 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
+import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
@@ -50,13 +48,7 @@ import * as rxjsOperators from 'rxjs/operators';
 // routing
 import * as reactRouter from 'react-router-dom';
 
-// add cache busting
-const bust = `?_cache=${Date.now()}`;
-function locate(load: { address: string }) {
-  return load.address + bust;
-}
-
-grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
+grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
@@ -79,7 +71,7 @@ grafanaRuntime.SystemJS.config({
   },
 });
 
-function exposeToPlugin(name: string, component: any) {
+export function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
@@ -91,7 +83,6 @@ exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
-exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs', rxjs);
 exposeToPlugin('rxjs/operators', rxjsOperators);
@@ -124,24 +115,16 @@ exposeToPlugin('app/core/services/backend_srv', {
   getBackendSrv,
 });
 
-exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
 exposeToPlugin('app/core/utils/ticks', ticks);
-exposeToPlugin('app/core/utils/promiseToDigest', {
-  promiseToDigest: promiseToDigest,
-  __esModule: true,
-});
-
 exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core_module', coreModule);
 exposeToPlugin('app/core/core', {
-  coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
   __esModule: true,
@@ -174,21 +157,25 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export async function importPluginModule(path: string): Promise<any> {
+export async function importPluginModule(path: string, version?: string): Promise<any> {
+  if (version) {
+    registerPluginInCache({ path, version });
+  }
+
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     // for handling dynamic imports
     if (typeof builtIn === 'function') {
       return await builtIn();
     } else {
-      return Promise.resolve(builtIn);
+      return builtIn;
     }
   }
   return grafanaRuntime.SystemJS.import(path);
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module).then((pluginExports) => {
+  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
@@ -211,7 +198,7 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
 }
 
 export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {
-  return importPluginModule(meta.module).then((pluginExports) => {
+  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;

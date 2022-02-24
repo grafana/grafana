@@ -21,7 +21,10 @@ func ResponseLimitMiddleware(limit int64) sdkhttpclient.Middleware {
 				return nil, err
 			}
 
-			res.Body = httpclient.MaxBytesReader(res.Body, limit)
+			if res != nil && res.StatusCode != http.StatusSwitchingProtocols {
+				res.Body = httpclient.MaxBytesReader(res.Body, limit)
+			}
+
 			return res, nil
 		})
 	})

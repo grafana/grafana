@@ -4,7 +4,7 @@ import { stylesFactory, useTheme2 } from '../../themes';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
-import { getChildId } from '../../utils/children';
+import { getChildId } from '../../utils/reactUtils';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
@@ -22,7 +22,7 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Indicates if field is required */
   required?: boolean;
   /** Error message to display */
-  error?: string | null;
+  error?: React.ReactNode;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */

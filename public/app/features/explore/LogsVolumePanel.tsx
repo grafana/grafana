@@ -1,7 +1,7 @@
-import { AbsoluteTimeRange, DataQueryResponse, GrafanaTheme2, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
-import { Alert, Button, Collapse, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQueryError, DataQueryResponse, LoadingState, SplitOpen, TimeZone } from '@grafana/data';
+import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './ExploreGraph';
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 
 type Props = {
@@ -13,6 +13,35 @@ type Props = {
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
 };
+
+const SHORT_ERROR_MESSAGE_LIMIT = 100;
+
+function ErrorAlert(props: { error: DataQueryError }) {
+  const [isOpen, setIsOpen] = useState(false);
+  // generic get-error-message-logic, taken from
+  // /public/app/features/explore/ErrorContainer.tsx
+  const message = props.error.message || props.error.data?.message || '';
+
+  const showButton = !isOpen && message.length > SHORT_ERROR_MESSAGE_LIMIT;
+
+  return (
+    <Alert title="Failed to load log volume for this query" severity="warning">
+      {showButton ? (
+        <Button
+          variant="secondary"
+          size="xs"
+          onClick={() => {
+            setIsOpen(true);
+          }}
+        >
+          Show details
+        </Button>
+      ) : (
+        message
+      )}
+    </Alert>
+  );
+}
 
 export function LogsVolumePanel(props: Props) {
   const { width, logsVolumeData, absoluteRange, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume } = props;
@@ -26,17 +55,14 @@ export function LogsVolumePanel(props: Props) {
   if (!logsVolumeData) {
     return null;
   } else if (logsVolumeData?.error) {
-    return (
-      <Alert title="Failed to load volume logs for this query">
-        {logsVolumeData.error.data?.message || logsVolumeData.error.statusText || logsVolumeData.error.message}
-      </Alert>
-    );
+    return <ErrorAlert error={logsVolumeData?.error} />;
   } else if (logsVolumeData?.state === LoadingState.Loading) {
-    LogsVolumePanelContent = <span>Logs volume is loading...</span>;
+    LogsVolumePanelContent = <span>Log volume is loading...</span>;
   } else if (logsVolumeData?.data) {
     if (logsVolumeData.data.length > 0) {
       LogsVolumePanelContent = (
         <ExploreGraph
+          graphStyle="lines"
           loadingState={LoadingState.Done}
           data={logsVolumeData.data}
           height={height}
@@ -58,15 +84,14 @@ export function LogsVolumePanel(props: Props) {
 
   if (zoomRatio !== undefined && zoomRatio < 1) {
     zoomLevelInfo = (
-      <>
-        <span className={styles.zoomInfo}>Reload to show higher resolution</span>
-        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} />
-      </>
+      <InlineField label="Reload log volume" transparent>
+        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+      </InlineField>
     );
   }
 
   return (
-    <Collapse label="Logs volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
+    <Collapse label="Log volume" isOpen={true} loading={logsVolumeData?.state === LoadingState.Loading}>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
@@ -75,7 +100,7 @@ export function LogsVolumePanel(props: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = () => {
   return {
     zoomInfoContainer: css`
       display: flex;
@@ -83,10 +108,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       right: 5px;
       top: 5px;
-    `,
-    zoomInfo: css`
-      padding: 8px;
-      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     contentContainer: css`
       display: flex;

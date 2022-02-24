@@ -5,8 +5,9 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
+import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
 import { initPanelState } from '../../panel/state/actions';
-import { cleanUpPanelState } from '../../panel/state/reducers';
+import { LazyLoader } from './LazyLoader';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -14,14 +15,10 @@ export interface OwnProps {
   dashboard: DashboardModel;
   isEditing: boolean;
   isViewing: boolean;
-  isInView: boolean;
   width: number;
   height: number;
   skipStateCleanUp?: boolean;
-}
-
-export interface State {
-  isLazy: boolean;
+  lazy?: boolean;
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
@@ -39,24 +36,22 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 const mapDispatchToProps = {
   initPanelState,
   cleanUpPanelState,
+  setPanelInstanceState,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class DashboardPanelUnconnected extends PureComponent<Props, State> {
+export class DashboardPanelUnconnected extends PureComponent<Props> {
+  static defaultProps: Partial<Props> = {
+    lazy: true,
+  };
+
   specialPanels: { [key: string]: Function } = {};
 
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      isLazy: !props.isInView,
-    };
-  }
-
   componentDidMount() {
+    this.props.panel.isInView = !this.props.lazy;
     if (!this.props.plugin) {
       this.props.initPanelState(this.props.panel);
     }
@@ -69,17 +64,19 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate() {
-    if (this.state.isLazy && this.props.isInView) {
-      this.setState({ isLazy: false });
-    }
-  }
+  onInstanceStateChange = (value: any) => {
+    this.props.setPanelInstanceState({ key: this.props.stateKey, value });
+  };
+
+  onVisibilityChange = (v: boolean) => {
+    this.props.panel.isInView = v;
+  };
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, lazy } = this.props;
 
-    if (plugin.angularPanelCtrl) {
-      return (
+    const renderPanelChrome = (isInView: boolean) =>
+      plugin.angularPanelCtrl ? (
         <PanelChromeAngular
           plugin={plugin}
           panel={panel}
@@ -90,34 +87,34 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
           width={width}
           height={height}
         />
+      ) : (
+        <PanelChrome
+          plugin={plugin}
+          panel={panel}
+          dashboard={dashboard}
+          isViewing={isViewing}
+          isEditing={isEditing}
+          isInView={isInView}
+          width={width}
+          height={height}
+          onInstanceStateChange={this.onInstanceStateChange}
+        />
       );
-    }
 
-    return (
-      <PanelChrome
-        plugin={plugin}
-        panel={panel}
-        dashboard={dashboard}
-        isViewing={isViewing}
-        isEditing={isEditing}
-        isInView={isInView}
-        width={width}
-        height={height}
-      />
+    return lazy ? (
+      <LazyLoader width={width} height={height} onChange={this.onVisibilityChange}>
+        {({ isInView }) => renderPanelChrome(isInView)}
+      </LazyLoader>
+    ) : (
+      renderPanelChrome(true)
     );
   }
 
   render() {
     const { plugin } = this.props;
-    const { isLazy } = this.state;
 
     // If we have not loaded plugin exports yet, wait
     if (!plugin) {
-      return null;
-    }
-
-    // If we are lazy state don't render anything
-    if (isLazy) {
       return null;
     }
 

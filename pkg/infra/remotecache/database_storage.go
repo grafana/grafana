@@ -52,9 +52,9 @@ func (dc *databaseCache) internalRunGC() {
 	}
 }
 
-func (dc *databaseCache) Get(key string) (interface{}, error) {
+func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, error) {
 	cacheHit := CacheData{}
-	session := dc.SQLStore.NewSession(context.Background())
+	session := dc.SQLStore.NewSession(ctx)
 	defer session.Close()
 
 	exist, err := session.Where("cache_key= ?", key).Get(&cacheHit)
@@ -70,7 +70,7 @@ func (dc *databaseCache) Get(key string) (interface{}, error) {
 	if cacheHit.Expires > 0 {
 		existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
 		if existedButExpired {
-			err = dc.Delete(key) // ignore this error since we will return `ErrCacheItemNotFound` anyway
+			err = dc.Delete(ctx, key) // ignore this error since we will return `ErrCacheItemNotFound` anyway
 			if err != nil {
 				dc.log.Debug("Deletion of expired key failed: %v", err)
 			}
@@ -86,7 +86,7 @@ func (dc *databaseCache) Get(key string) (interface{}, error) {
 	return item.Val, nil
 }
 
-func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration) error {
+func (dc *databaseCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
 	item := &cachedItem{Val: value}
 	data, err := encodeGob(item)
 	if err != nil {
@@ -123,8 +123,8 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 	return err
 }
 
-func (dc *databaseCache) Delete(key string) error {
-	return dc.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+func (dc *databaseCache) Delete(ctx context.Context, key string) error {
+	return dc.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		sql := "DELETE FROM cache_data WHERE cache_key=?"
 		_, err := session.Exec(sql, key)
 

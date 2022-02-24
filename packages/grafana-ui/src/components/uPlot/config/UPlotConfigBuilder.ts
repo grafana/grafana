@@ -4,6 +4,7 @@ import {
   DataFrame,
   DefaultTimeZone,
   EventBus,
+  Field,
   getTimeZoneInfo,
   GrafanaTheme2,
   TimeRange,
@@ -39,7 +40,6 @@ export class UPlotConfigBuilder {
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private cursor: Cursor | undefined;
-  private isStacking = false;
   private select: uPlot.Select | undefined;
   private hasLeftAxis = false;
   private hooks: Hooks.Arrays = {};
@@ -121,10 +121,6 @@ export class UPlotConfigBuilder {
     this.select = select;
   }
 
-  setStacking(enabled = true) {
-    this.isStacking = enabled;
-  }
-
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -179,7 +175,7 @@ export class UPlotConfigBuilder {
       mode: this.mode,
       series: [
         this.mode === 2
-          ? ((null as unknown) as Series)
+          ? (null as unknown as Series)
           : {
               value: () => '',
             },
@@ -195,18 +191,20 @@ export class UPlotConfigBuilder {
 
     config.select = this.select;
 
-    const pointColorFn = (alphaHex = '') => (u: uPlot, seriesIdx: number) => {
-      /*@ts-ignore*/
-      let s = u.series[seriesIdx].points._stroke;
+    const pointColorFn =
+      (alphaHex = '') =>
+      (u: uPlot, seriesIdx: number) => {
+        /*@ts-ignore*/
+        let s = u.series[seriesIdx].points._stroke;
 
-      // interpolate for gradients/thresholds
-      if (typeof s !== 'string') {
-        let field = this.frames![0].fields[seriesIdx];
-        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
-      }
+        // interpolate for gradients/thresholds
+        if (typeof s !== 'string') {
+          let field = this.frames![0].fields[seriesIdx];
+          s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+        }
 
-      return s + alphaHex;
-    };
+        return s + alphaHex;
+      };
 
     config.cursor = merge(
       {},
@@ -223,24 +221,8 @@ export class UPlotConfigBuilder {
     config.tzDate = this.tzDate;
     config.padding = this.padding;
 
-    if (this.isStacking) {
-      // Let uPlot handle bands and fills
+    if (this.bands.length) {
       config.bands = this.bands;
-    } else {
-      // When fillBelowTo option enabled, handle series bands fill manually
-      if (this.bands?.length) {
-        config.bands = this.bands;
-        const keepFill = new Set<number>();
-        for (const b of config.bands) {
-          keepFill.add(b.series[0]);
-        }
-
-        for (let i = 1; i < config.series.length; i++) {
-          if (!keepFill.has(i)) {
-            config.series[i].fill = undefined;
-          }
-        }
-      }
     }
 
     return config;
@@ -272,6 +254,12 @@ export class UPlotConfigBuilder {
   }
 }
 
+export type Renderers = Array<{
+  fieldMap: Record<string, string>;
+  indicesOnly: string[];
+  init: (config: UPlotConfigBuilder, fieldIndices: Record<string, number>) => void;
+}>;
+
 /** @alpha */
 type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   frame: DataFrame;
@@ -280,6 +268,9 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];
+  renderers?: Renderers;
+  tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
+  tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
 } & T;
 
 /** @alpha */

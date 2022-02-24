@@ -10,6 +10,6 @@ export type Props = {
   initialValue: string;
   languageProvider: PromQlLanguageProvider;
   history: Array<HistoryItem<PromQuery>>;
-  onChange: (query: string) => void;
-  onRunQuery: () => void;
+  onRunQuery: (value: string) => void;
+  onBlur: (value: string) => void;
 };

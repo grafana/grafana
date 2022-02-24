@@ -3,7 +3,7 @@ import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState 
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
   isCurrent: boolean;
@@ -112,7 +112,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     name: css`
       text-overflow: ellipsis;
       overflow: hidden;
-      white-space: nowrap;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
       width: 100%;
@@ -120,7 +119,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     description: css`
       text-overflow: ellipsis;
       overflow: hidden;
-      white-space: nowrap;
       color: ${theme.colors.text.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.fontWeightLight};

@@ -1,47 +1,48 @@
-import React, { FC } from 'react';
+import React, { HTMLProps } from 'react';
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
 import { Button, Icon, Input } from '..';
-import { useFocus } from '../Input/utils';
+import { useCombinedRefs } from '../../utils/useCombinedRefs';
 
-export interface Props {
+export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   value: string | undefined;
-  placeholder?: string;
   width?: number;
   onChange: (value: string) => void;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  autoFocus?: boolean;
 }
 
-export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, onKeyDown, autoFocus }) => {
-  const [inputRef, setInputFocus] = useFocus();
-  const suffix =
-    value !== '' ? (
-      <Button
-        icon="times"
-        fill="text"
-        size="sm"
-        onClick={(e) => {
-          setInputFocus();
-          onChange('');
-          e.stopPropagation();
-        }}
-      >
-        Clear
-      </Button>
-    ) : null;
+export const FilterInput = React.forwardRef<HTMLInputElement, Props>(
+  ({ value, width, onChange, ...restProps }, ref) => {
+    const innerRef = React.useRef<HTMLInputElement>(null);
+    const combinedRef = useCombinedRefs(ref, innerRef) as React.Ref<HTMLInputElement>;
 
-  return (
-    <Input
-      autoFocus={autoFocus ?? false}
-      prefix={<Icon name="search" />}
-      ref={inputRef}
-      suffix={suffix}
-      width={width}
-      type="text"
-      value={value ? unEscapeStringFromRegex(value) : ''}
-      onChange={(event) => onChange(escapeStringForRegex(event.currentTarget.value))}
-      onKeyDown={onKeyDown}
-      placeholder={placeholder}
-    />
-  );
-};
+    const suffix =
+      value !== '' ? (
+        <Button
+          icon="times"
+          fill="text"
+          size="sm"
+          onClick={(e) => {
+            innerRef.current?.focus();
+            onChange('');
+            e.stopPropagation();
+          }}
+        >
+          Clear
+        </Button>
+      ) : null;
+
+    return (
+      <Input
+        prefix={<Icon name="search" />}
+        suffix={suffix}
+        width={width}
+        type="text"
+        value={value ? unEscapeStringFromRegex(value) : ''}
+        onChange={(event) => onChange(escapeStringForRegex(event.currentTarget.value))}
+        {...restProps}
+        ref={combinedRef}
+      />
+    );
+  }
+);
+
+FilterInput.displayName = 'FilterInput';

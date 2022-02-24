@@ -16,8 +16,8 @@ BASE_URL=http://172.0.10.2:3333 yarn e2e
 
 The above commands use some utils scripts under [_\<repo-root>/e2e_](../../e2e) that can also be used for more control.
 
-- `./e2e/start-server` This creates a fresh new grafana server working dir, setup's config and starts the server. It will also kill any previously started server that is still running using pid file at _\<repo-root>/e2e/tmp/pid_.
-- `./e2e/wait-for-grafana` waits for `$HOST` and `$PORT` to be available. Per default localhost and 3001.
+- `./scripts/grafana-server/start-server` This creates a fresh new grafana server working dir, setup's config and starts the server. It will also kill any previously started server that is still running using pid file at _\<repo-root>/scripts/grafana-server/tmp/pid_.
+- `./scripts/grafana-server/wait-for-grafana` waits for `$HOST` and `$PORT` to be available. Per default localhost and 3001.
 - `./e2e/run-suite <debug|dev|noarg>` Starts cypress in different modes.
 
 ## Test suites

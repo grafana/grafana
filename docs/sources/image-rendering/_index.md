@@ -72,7 +72,7 @@ RENDERING_MODE=default
 
 #### Clustered
 
-With the `clustered` mode, you can configure how many browser instances or incognito pages can execute concurrently. Default is `browser` and will ensure a maximum amount of browser instances can execute concurrently. Mode `context` will ensure a maximum amount of incognito pages can execute concurrently. You can also configure the maximum concurrency allowed, which per default is `5`.
+With the `clustered` mode, you can configure how many browser instances or incognito pages can execute concurrently. Default is `browser` and will ensure a maximum amount of browser instances can execute concurrently. Mode `context` will ensure a maximum amount of incognito pages can execute concurrently. You can also configure the maximum concurrency allowed, which per default is `5`, and the maximum duration of a rendering request, which per default is `30` seconds.
 
 Using a cluster of incognito pages is more performant and consumes less CPU and memory than a cluster of browsers. However, if one page crashes it can bring down the entire browser with it (making all the rendering requests happening at the same time fail). Also, each page isn't guaranteed to be totally clean (cookies and storage might bleed-through as seen [here](https://bugs.chromium.org/p/chromium/issues/detail?id=754576)).
 
@@ -80,6 +80,7 @@ Using a cluster of incognito pages is more performant and consumes less CPU and 
 RENDERING_MODE=clustered
 RENDERING_CLUSTERING_MODE=browser
 RENDERING_CLUSTERING_MAX_CONCURRENCY=5
+RENDERING_CLUSTERING_TIMEOUT=30
 ```
 
 ```json
@@ -88,7 +89,8 @@ RENDERING_CLUSTERING_MAX_CONCURRENCY=5
     "mode": "clustered",
     "clustering": {
       "mode": "browser",
-      "maxConcurrency": 5
+      "maxConcurrency": 5,
+      "timeout": 30
     }
   }
 }

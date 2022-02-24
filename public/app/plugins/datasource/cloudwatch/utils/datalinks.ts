@@ -22,11 +22,11 @@ export async function addDataLinksToLogsResponse(
 
   for (const dataFrame of response.data as DataFrame[]) {
     const curTarget = request.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
-    const interpolatedRegion = getRegion(replace(curTarget.region, 'region'));
+    const interpolatedRegion = getRegion(replace(curTarget.region ?? '', 'region'));
 
     for (const field of dataFrame.fields) {
       if (field.name === '@xrayTraceId' && tracingDatasourceUid) {
-        getRegion(replace(curTarget.region, 'region'));
+        getRegion(replace(curTarget.region ?? '', 'region'));
         const xrayLink = await createInternalXrayLink(tracingDatasourceUid, interpolatedRegion);
         if (xrayLink) {
           field.config.links = [xrayLink];

@@ -42,7 +42,7 @@ func TestGroupSplit(t *testing.T) {
 }
 
 func TestInitJaegerCfg_Default(t *testing.T) {
-	ts := &TracingService{}
+	ts := &Opentracing{}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -50,7 +50,7 @@ func TestInitJaegerCfg_Default(t *testing.T) {
 }
 
 func TestInitJaegerCfg_Enabled(t *testing.T) {
-	ts := &TracingService{enabled: true}
+	ts := &Opentracing{enabled: true}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -66,7 +66,7 @@ func TestInitJaegerCfg_DisabledViaEnv(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	ts := &TracingService{enabled: true}
+	ts := &Opentracing{enabled: true}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -81,7 +81,7 @@ func TestInitJaegerCfg_EnabledViaEnv(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	ts := &TracingService{enabled: false}
+	ts := &Opentracing{enabled: false}
 	cfg, err := ts.initJaegerCfg()
 	require.NoError(t, err)
 
@@ -96,7 +96,7 @@ func TestInitJaegerCfg_InvalidEnvVar(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	ts := &TracingService{}
+	ts := &Opentracing{}
 	_, err = ts.initJaegerCfg()
 	require.EqualError(t, err, "cannot parse env var JAEGER_DISABLED=totallybogus: strconv.ParseBool: parsing \"totallybogus\": invalid syntax")
 }
@@ -108,7 +108,7 @@ func TestInitJaegerCfg_EnabledViaHost(t *testing.T) {
 	}()
 
 	cfg := setting.NewCfg()
-	ts := &TracingService{Cfg: cfg}
+	ts := &Opentracing{Cfg: cfg}
 	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
 	require.NoError(t, err)
 	require.NoError(t, ts.parseSettings())
@@ -128,7 +128,7 @@ func TestInitJaegerCfg_EnabledViaHostPort(t *testing.T) {
 	}()
 
 	cfg := setting.NewCfg()
-	ts := &TracingService{Cfg: cfg}
+	ts := &Opentracing{Cfg: cfg}
 	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
 	require.NoError(t, err)
 	require.NoError(t, ts.parseSettings())

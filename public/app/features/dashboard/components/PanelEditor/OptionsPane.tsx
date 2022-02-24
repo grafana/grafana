@@ -45,7 +45,7 @@ export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
           </div>
         </>
       )}
-      {isVizPickerOpen && <VisualizationSelectPane panel={panel} />}
+      {isVizPickerOpen && <VisualizationSelectPane panel={panel} data={data} />}
     </div>
   );
 };

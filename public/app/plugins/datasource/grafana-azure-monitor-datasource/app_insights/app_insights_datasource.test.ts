@@ -10,7 +10,7 @@ const templateSrv = new TemplateSrv();
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));
@@ -142,7 +142,7 @@ describe('AppInsightsDatasource', () => {
             rawQueryString: queryString,
             timeColumn: 'timestamp',
             valueColumn: 'max',
-            segmentColumn: (undefined as unknown) as string,
+            segmentColumn: undefined as unknown as string,
           },
         },
       ],
@@ -389,73 +389,6 @@ describe('AppInsightsDatasource', () => {
             expect(data.fields[0].values.get(1)).toEqual(1504112400000);
             expect(data.fields[1].values.get(1)).toEqual(2);
           });
-        });
-      });
-    });
-  });
-
-  describe('When performing metricFindQuery', () => {
-    describe('with a metric names query', () => {
-      const response = {
-        metrics: {
-          'exceptions/server': {},
-          'requests/count': {},
-        },
-      };
-
-      beforeEach(() => {
-        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
-          expect(path).toContain('/metrics/metadata');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of metric names', () => {
-        return ctx.ds.metricFindQueryInternal('appInsightsMetricNames()').then((results: any) => {
-          expect(results.length).toBe(2);
-          expect(results[0].text).toBe('exceptions/server');
-          expect(results[0].value).toBe('exceptions/server');
-          expect(results[1].text).toBe('requests/count');
-          expect(results[1].value).toBe('requests/count');
-        });
-      });
-    });
-
-    describe('with metadata group by query', () => {
-      const response = {
-        metrics: {
-          'exceptions/server': {
-            supportedAggregations: ['sum'],
-            supportedGroupBy: {
-              all: ['client/os', 'client/city', 'client/browser'],
-            },
-            defaultAggregation: 'sum',
-          },
-          'requests/count': {
-            supportedAggregations: ['avg', 'sum', 'total'],
-            supportedGroupBy: {
-              all: ['client/os', 'client/city', 'client/browser'],
-            },
-            defaultAggregation: 'avg',
-          },
-        },
-      };
-
-      beforeEach(() => {
-        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
-          expect(path).toContain('/metrics/metadata');
-          return Promise.resolve(response);
-        });
-      });
-
-      it('should return a list of group bys', () => {
-        return ctx.ds.metricFindQueryInternal('appInsightsGroupBys(requests/count)').then((results: any) => {
-          expect(results[0].text).toContain('client/os');
-          expect(results[0].value).toContain('client/os');
-          expect(results[1].text).toContain('client/city');
-          expect(results[1].value).toContain('client/city');
-          expect(results[2].text).toContain('client/browser');
-          expect(results[2].value).toContain('client/browser');
         });
       });
     });

@@ -1,26 +1,22 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './mocks';
-import { LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
 
 describe('ElasticDetails', () => {
-  it('should render without error', () => {
-    mount(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
-  });
-
-  it('should render fields', () => {
-    const wrapper = shallow(<LogsConfig onChange={() => {}} value={createDefaultConfigOptions().jsonData} />);
-    expect(wrapper.find(FormField).length).toBe(2);
-  });
-
   it('should pass correct data to onChange', () => {
     const onChangeMock = jest.fn();
-    const wrapper = mount(<LogsConfig onChange={onChangeMock} value={createDefaultConfigOptions().jsonData} />);
-    const inputEl = wrapper.find(FormField).at(0).find('input');
-    (inputEl.getDOMNode() as any).value = 'test_field';
-    inputEl.simulate('change');
-    expect(onChangeMock.mock.calls[0][0].logMessageField).toBe('test_field');
+    const expectedMessageField = '@message';
+    const expectedLevelField = '@level';
+
+    render(<LogsConfig onChange={onChangeMock} value={createDefaultConfigOptions().jsonData} />);
+    const messageField = screen.getByLabelText('Message field name');
+    const levelField = screen.getByLabelText('Level field name');
+
+    fireEvent.change(messageField, { target: { value: expectedMessageField } });
+    expect(onChangeMock).toHaveBeenLastCalledWith(expect.objectContaining({ logMessageField: expectedMessageField }));
+
+    fireEvent.change(levelField, { target: { value: expectedLevelField } });
+    expect(onChangeMock).toHaveBeenLastCalledWith(expect.objectContaining({ logLevelField: expectedLevelField }));
   });
 });

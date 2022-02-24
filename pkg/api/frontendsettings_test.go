@@ -8,20 +8,22 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	sqlstore.InitTestDB(t)
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	{
 		oldVersion := setting.BuildVersion
@@ -35,21 +37,21 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	pm := &manager.PluginManager{Cfg: cfg, SQLStore: sqlStore}
-
-	r := &rendering.RenderingService{
-		Cfg:           cfg,
-		PluginManager: pm,
-	}
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		RenderService: r,
-		SQLStore:      sqlStore,
-		PluginManager: pm,
-		AccessControl: accesscontrolmock.New().WithDisabled(),
+		Cfg:      cfg,
+		Features: features,
+		Bus:      bus.GetBus(),
+		License:  &licensing.OSSLicensingService{Cfg: cfg},
+		RenderService: &rendering.RenderingService{
+			Cfg:                   cfg,
+			RendererPluginManager: &fakeRendererManager{},
+		},
+		SQLStore:             sqlStore,
+		SettingsProvider:     setting.ProvideProvider(cfg),
+		pluginStore:          &fakePluginStore{},
+		grafanaUpdateChecker: &updatechecker.GrafanaService{},
+		AccessControl:        accesscontrolmock.New().WithDisabled(),
 	}
 
 	m := web.New()
@@ -60,7 +62,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*web.Mux, *HTTPServer
 	return m, hs
 }
 
-func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
+func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
@@ -74,7 +76,8 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
 	cfg.Env = "testing"
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
-	m, hs := setupTestEnvironment(t, cfg)
+
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures())
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 

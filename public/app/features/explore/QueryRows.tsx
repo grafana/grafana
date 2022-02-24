@@ -22,7 +22,7 @@ const makeSelectors = (exploreId: ExploreId) => {
     getEventBridge: createSelector(exploreItemSelector, (s) => s!.eventBridge),
     getDatasourceInstanceSettings: createSelector(
       exploreItemSelector,
-      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.name)!
+      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
   };
 };
@@ -34,9 +34,9 @@ export const QueryRows = ({ exploreId }: Props) => {
     [exploreId]
   );
 
-  const queries = useSelector(getQueries);
-  const dsSettings = useSelector(getDatasourceInstanceSettings);
-  const queryResponse = useSelector(getQueryResponse);
+  const queries = useSelector(getQueries)!;
+  const dsSettings = useSelector(getDatasourceInstanceSettings)!;
+  const queryResponse = useSelector(getQueryResponse)!;
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
 

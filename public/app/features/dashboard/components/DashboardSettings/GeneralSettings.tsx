@@ -9,6 +9,8 @@ import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton'
 import { TimePickerSettings } from './TimePickerSettings';
 
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
+import { PreviewSettings } from './PreviewSettings';
+import { config } from '@grafana/runtime';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -98,7 +100,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
           <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
         </Field>
         <Field label="Tags">
-          <TagsInput tags={dashboard.tags} onChange={onTagsChange} />
+          <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} />
         </Field>
         <Field label="Folder">
           <FolderPicker
@@ -119,6 +121,10 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
           <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
         </Field>
       </div>
+
+      {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
+        <PreviewSettings uid={dashboard.uid} />
+      )}
 
       <TimePickerSettings
         onTimeZoneChange={onTimeZoneChange}

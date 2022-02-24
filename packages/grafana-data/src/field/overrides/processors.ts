@@ -1,5 +1,12 @@
-import { ComponentType } from 'react';
-import { DataLink, Field, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import {
+  DataLink,
+  Field,
+  FieldOverrideContext,
+  SelectableValue,
+  SliderMarks,
+  ThresholdsConfig,
+  ValueMapping,
+} from '../../types';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -39,6 +46,8 @@ export interface SliderFieldConfigSettings {
   min: number;
   max: number;
   step?: number;
+  included?: boolean;
+  marks?: SliderMarks;
   ariaLabelForHandle?: string;
 }
 
@@ -64,6 +73,8 @@ export const valueMappingsOverrideProcessor = (
 
 export interface SelectFieldConfigSettings<T> {
   allowCustomValue?: boolean;
+
+  isClearable?: boolean;
 
   /** The default options */
   options: Array<SelectableValue<T>>;
@@ -161,11 +172,6 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
-interface FieldNamePickerInfoProps {
-  name?: string;
-  field?: Field;
-}
-
 export interface FieldNamePickerConfigSettings {
   /**
    * Function is a predicate, to test each element of the array.
@@ -178,13 +184,7 @@ export interface FieldNamePickerConfigSettings {
    */
   noFieldsMessage?: string;
 
-  /**
-   * When a field is selected, this component can show aditional
-   * information, including validation etc
-   */
-  info?: ComponentType<FieldNamePickerInfoProps> | null;
-
-  /**
+  /**addFieldNamePicker
    * Sets the width to a pixel value.
    */
   width?: number;

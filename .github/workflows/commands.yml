@@ -1,10 +1,11 @@
 name: Run commands when issues are labeled or comments added
 on:
   issues:
-    types: [labeled]
+    types: [labeled, unlabeled]
   issue_comment:
     types: [created]
-
+concurrency:
+  group: issue-commands-${{ github.event.issue.number }}
 jobs:
   main:
     runs-on: ubuntu-latest

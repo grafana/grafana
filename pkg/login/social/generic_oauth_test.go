@@ -4,29 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
+	"testing"
 	"time"
 
-	"github.com/inconshreveable/log15"
-	"github.com/mattn/go-isatty"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"testing"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"golang.org/x/oauth2"
+	"github.com/grafana/grafana/pkg/infra/log/level"
 )
 
-func getLogFormat() log15.Format {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		return log15.TerminalFormat()
-	}
-	return log15.LogfmtFormat()
-}
-
-func newLogger(name string, level log15.Lvl) log.Logger {
-	logger := log.Root.New("logger", name)
-	logger.SetHandler(log15.LvlFilterHandler(level, log15.StreamHandler(os.Stdout, getLogFormat())))
+func newLogger(name string, lev string) log.Logger {
+	logger := log.New(name)
+	logger.Swap(level.NewFilter(logger.GetLogger(), level.AllowInfo()))
 	return logger
 }
 
@@ -34,7 +25,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 
@@ -122,7 +113,7 @@ func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 
@@ -185,7 +176,7 @@ func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 		}
 
@@ -248,7 +239,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 			emailAttributePath: "email",
 		}
@@ -457,7 +448,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 			loginAttributePath: "login",
 		}
@@ -552,7 +543,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", "debug"),
 			},
 			nameAttributePath: "name",
 		}
@@ -646,10 +637,79 @@ func TestUserInfoSearchesForName(t *testing.T) {
 	})
 }
 
+func TestUserInfoSearchesForGroup(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: newLogger("generic_oauth_test", "debug"),
+			},
+		}
+
+		tests := []struct {
+			name                string
+			groupsAttributePath string
+			responseBody        interface{}
+			expectedResult      []string
+		}{
+			{
+				name:                "If groups are not set, user groups are nil",
+				groupsAttributePath: "",
+				expectedResult:      nil,
+			},
+			{
+				name:                "If groups are empty, user groups are nil",
+				groupsAttributePath: "info.groups",
+				responseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"groups": []string{},
+					},
+				},
+				expectedResult: nil,
+			},
+			{
+				name:                "If groups are set, user groups are set",
+				groupsAttributePath: "info.groups",
+				responseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"groups": []string{"foo", "bar"},
+					},
+				},
+				expectedResult: []string{"foo", "bar"},
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				provider.groupsAttributePath = test.groupsAttributePath
+				body, err := json.Marshal(test.responseBody)
+				require.NoError(t, err)
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json")
+					t.Log("Writing fake API response body", "body", test.responseBody)
+					_, err := w.Write(body)
+					require.NoError(t, err)
+				}))
+				provider.apiUrl = ts.URL
+				token := &oauth2.Token{
+					AccessToken:  "",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				}
+
+				userInfo, err := provider.UserInfo(ts.Client(), token)
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedResult, userInfo.Groups)
+			})
+		}
+	})
+}
+
 func TestPayloadCompression(t *testing.T) {
 	provider := SocialGenericOAuth{
 		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", log15.LvlDebug),
+			log: newLogger("generic_oauth_test", "debug"),
 		},
 		emailAttributePath: "email",
 	}
@@ -664,6 +724,14 @@ func TestPayloadCompression(t *testing.T) {
 			OAuth2Extra: map[string]interface{}{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
+			},
+			ExpectedEmail: "john.doe@example.com",
+		},
+		{
+			Name: "Given a valid DEFLATE compressed id_token with numeric header, return userInfo",
+			OAuth2Extra: map[string]interface{}{
+				// Generated from https://token.dev/
+				"id_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsInZlciI6NH0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTY0MjUxNjYwNSwiZXhwIjoxNjQyNTIwMjA1LCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.ANndoPWIHNjKPG8na7UUq7nan1RgF8-ze8STU31RXcA",
 			},
 			ExpectedEmail: "john.doe@example.com",
 		},

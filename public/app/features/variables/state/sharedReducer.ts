@@ -2,10 +2,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, defaults as lodashDefaults } from 'lodash';
 import { LoadingState, VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, getInstanceState, initialVariablesState, VariablePayload, VariablesState } from './types';
+import { AddVariable, initialVariablesState, VariablePayload, VariablesState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { ensureStringValues } from '../utils';
+import { getInstanceState, getNextVariableIndex } from './selectors';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -71,7 +72,7 @@ const sharedReducerSlice = createSlice({
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
       const name = `copy_of_${original.name}`;
       const newId = action.payload.data?.newId ?? name;
-      const index = Object.keys(state).length;
+      const index = getNextVariableIndex(Object.values(state));
       state[newId] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...original,
@@ -84,25 +85,27 @@ const sharedReducerSlice = createSlice({
       state: VariablesState,
       action: PayloadAction<VariablePayload<{ fromIndex: number; toIndex: number }>>
     ) => {
-      const variables = Object.values(state).map((s) => s);
-      const fromVariable = variables.find((v) => v.index === action.payload.data.fromIndex);
-      const toVariable = variables.find((v) => v.index === action.payload.data.toIndex);
-
-      if (fromVariable) {
-        state[fromVariable.id].index = action.payload.data.toIndex;
-      }
-
-      if (toVariable) {
-        state[toVariable.id].index = action.payload.data.fromIndex;
+      const { toIndex, fromIndex } = action.payload.data;
+      const variableStates = Object.values(state);
+      for (let index = 0; index < variableStates.length; index++) {
+        const variable = variableStates[index];
+        if (variable.index === fromIndex) {
+          variable.index = toIndex;
+        } else if (variable.index > fromIndex && variable.index <= toIndex) {
+          variable.index--;
+        } else if (variable.index < fromIndex && variable.index >= toIndex) {
+          variable.index++;
+        }
       }
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
-      const { label, name, index, description } = state[id];
+      const { label, name, index, description, rootStateKey } = state[id];
 
       state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.data.newType).initialState),
-        id: id,
+        id,
+        rootStateKey: rootStateKey,
         label,
         name,
         index,

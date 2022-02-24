@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import { Select, Table } from '@grafana/ui';
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  FieldMatcherID,
+  getDataSourceRef,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+} from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
@@ -9,6 +16,7 @@ import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 import { getFooterCells } from './footer';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -68,13 +76,19 @@ export class TablePanel extends Component<Props> {
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
     const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
-    const datasource = panelModel?.datasource;
-
-    if (!datasource) {
+    if (!panelModel) {
       return;
     }
 
-    dispatch(applyFilterFromTable({ datasource, key, operator, value }));
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(panelModel.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+    if (!datasourceRef) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
   };
 
   renderTable(frame: DataFrame, width: number, height: number) {
@@ -126,7 +140,7 @@ export class TablePanel extends Component<Props> {
 
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
+          {this.renderTable(data.series[currentIndex], width, height - inputHeight + padding)}
           <div className={tableStyles.selectWrapper}>
             <Select
               menuShouldPortal
@@ -139,7 +153,7 @@ export class TablePanel extends Component<Props> {
       );
     }
 
-    return this.renderTable(data.series[0], width, height - 12);
+    return this.renderTable(data.series[0], width, height);
   }
 }
 

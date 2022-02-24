@@ -1,10 +1,11 @@
-import { prepareGraphableFrames, preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
   VisibilityMode,
   GraphGradientMode,
   StackingMode,
+  SortOrder,
 } from '@grafana/schema';
 import {
   createTheme,
@@ -16,7 +17,7 @@ import {
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions } from './types';
+import { BarChartFieldConfig } from './models.gen';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({
@@ -65,7 +66,7 @@ function mockDataFrame() {
     state: {},
   });
 
-  return preparePlotFrame([df1, df2]);
+  return prepareBarChartDisplayValues([df1], createTheme(), {} as any).aligned;
 }
 
 jest.mock('@grafana/data', () => ({
@@ -77,7 +78,7 @@ describe('BarChart utils', () => {
   describe('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();
 
-    const config: BarChartOptions = {
+    const config: BarChartOptionsEX = {
       orientation: VizOrientation.Auto,
       groupWidth: 20,
       barWidth: 2,
@@ -87,9 +88,12 @@ describe('BarChart utils', () => {
         placement: 'bottom',
         calcs: [],
       },
+      xTickLabelRotation: 0,
+      xTickLabelMaxLength: 20,
       stacking: StackingMode.None,
       tooltip: {
         mode: TooltipDisplayMode.None,
+        sort: SortOrder.None,
       },
       text: {
         valueSize: 10,
@@ -144,20 +148,20 @@ describe('BarChart utils', () => {
 
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no data in the response', () => {
-      const result = prepareGraphableFrames([], createTheme(), StackingMode.None);
+      const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as any);
       expect(result.warn).toEqual('No data in response');
     });
 
-    it('will warn when there is no string field in the response', () => {
+    it('will warn when there is no string or time field', () => {
       const df = new MutableDataFrame({
         fields: [
-          { name: 'a', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+          { name: 'a', type: FieldType.other, values: [1, 2, 3, 4, 5] },
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
-      expect(result.warn).toEqual('Bar charts requires a string field');
-      expect(result.frames).toBeUndefined();
+      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
+      expect(result.warn).toEqual('Bar charts requires a string or time field');
+      expect(result.viz).toBeUndefined();
     });
 
     it('will warn when there are no numeric fields in the response', () => {
@@ -167,9 +171,9 @@ describe('BarChart utils', () => {
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
+      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
       expect(result.warn).toEqual('No numeric fields found');
-      expect(result.frames).toBeUndefined();
+      expect(result.viz).toBeUndefined();
     });
 
     it('will convert NaN and Infinty to nulls', () => {
@@ -179,9 +183,9 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
+      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as any);
 
-      const field = result.frames![0].fields[1];
+      const field = result.viz[0].fields[1];
       expect(field!.values.toArray()).toMatchInlineSnapshot(`
       Array [
         -10,
@@ -191,6 +195,33 @@ describe('BarChart utils', () => {
         null,
       ]
     `);
+    });
+
+    it('should sort fields when legend sortBy and sortDesc are set', () => {
+      const frame = new MutableDataFrame({
+        fields: [
+          { name: 'string', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'a', values: [-10, 20, 10], state: { calcs: { min: -10 } } },
+          { name: 'b', values: [20, 20, 20], state: { calcs: { min: 20 } } },
+          { name: 'c', values: [10, 10, 10], state: { calcs: { min: 10 } } },
+        ],
+      });
+
+      const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
+        legend: { sortBy: 'Min', sortDesc: false },
+      } as any).viz[0];
+      expect(resultAsc.fields[0].type).toBe(FieldType.string);
+      expect(resultAsc.fields[1].name).toBe('a');
+      expect(resultAsc.fields[2].name).toBe('c');
+      expect(resultAsc.fields[3].name).toBe('b');
+
+      const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
+        legend: { sortBy: 'Min', sortDesc: true },
+      } as any).viz[0];
+      expect(resultDesc.fields[0].type).toBe(FieldType.string);
+      expect(resultDesc.fields[1].name).toBe('b');
+      expect(resultDesc.fields[2].name).toBe('c');
+      expect(resultDesc.fields[3].name).toBe('a');
     });
   });
 });

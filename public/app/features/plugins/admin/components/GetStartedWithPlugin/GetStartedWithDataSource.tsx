@@ -3,13 +3,14 @@ import { Button } from '@grafana/ui';
 import { addDataSource } from 'app/features/datasources/state/actions';
 import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
+import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
 type Props = {
   plugin: CatalogPlugin;
 };
 
-export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement {
+export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement | null {
   const dispatch = useDispatch();
   const onAddDataSource = useCallback(() => {
     const meta = {
@@ -19,6 +20,10 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
 
     dispatch(addDataSource(meta));
   }, [dispatch, plugin]);
+
+  if (!isDataSourceEditor()) {
+    return null;
+  }
 
   return (
     <Button variant="primary" onClick={onAddDataSource}>

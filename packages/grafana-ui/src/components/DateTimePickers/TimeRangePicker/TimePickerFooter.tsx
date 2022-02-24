@@ -1,6 +1,6 @@
-import React, { FC, useState, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { TimeZone, GrafanaTheme2, getTimeZoneInfo } from '@grafana/data';
+import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
@@ -84,7 +84,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
           </div>
           {editMode === 'tz' ? (
             <section
-              aria-label={selectors.components.TimeZonePicker.container}
+              data-testid={selectors.components.TimeZonePicker.containerV2}
               className={cx(style.timeZoneContainer, style.timeSettingContainer)}
             >
               <TimeZonePicker
@@ -101,7 +101,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
             </section>
           ) : (
             <section
-              aria-label={selectors.components.TimeZonePicker.container}
+              aria-label={selectors.components.TimeZonePicker.containerV2}
               className={cx(style.timeZoneContainer, style.timeSettingContainer)}
             >
               <Field className={style.fiscalYearField} label={'Fiscal year start month'}>

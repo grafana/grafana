@@ -44,8 +44,17 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
           scopedVars: enrichedScopedVars,
         } as DataQueryRequest<PromQuery>;
 
+        const customQueryParameters: { [key: string]: string } = {};
+        if (datasource.customQueryParameters) {
+          for (const [k, v] of datasource.customQueryParameters) {
+            customQueryParameters[k] = v;
+          }
+        }
+
         const queryOptions = datasource.createQuery(query, options, start, end);
+
         const expr = {
+          ...customQueryParameters,
           'g0.expr': queryOptions.expr,
           'g0.range_input': rangeDiff + 's',
           'g0.end_input': endTime,

@@ -15,6 +15,7 @@ import {
   setLibraryPanelInputs,
 } from './reducers';
 import { LibraryElementDTO } from '../../library-panels/types';
+import { LoadingState } from '@grafana/data';
 
 describe('importDashboardReducer', () => {
   describe('when setGcomDashboard action is dispatched', () => {
@@ -32,7 +33,7 @@ describe('importDashboardReducer', () => {
           },
           meta: { updatedAt: '2001-01-01', orgName: 'Some Org' },
           source: DashboardSource.Gcom,
-          isLoaded: true,
+          state: LoadingState.Done,
         });
     });
   });
@@ -49,7 +50,7 @@ describe('importDashboardReducer', () => {
             id: null,
           },
           source: DashboardSource.Json,
-          isLoaded: true,
+          state: LoadingState.Done,
         });
     });
   });
@@ -63,13 +64,13 @@ describe('importDashboardReducer', () => {
             title: 'Imported',
             id: null,
           },
-          isLoaded: true,
+          state: LoadingState.Done,
         })
         .whenActionIsDispatched(clearDashboard())
         .thenStateShouldEqual({
           ...initialImportDashboardState,
           dashboard: {},
-          isLoaded: false,
+          state: LoadingState.NotStarted,
         });
     });
   });

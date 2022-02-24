@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,7 +13,7 @@ import (
 func TestLoginUsingGrafanaDB(t *testing.T) {
 	grafanaLoginScenario(t, "When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
 		sc.withNonExistingUser()
-		err := loginUsingGrafanaDB(sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
 		require.EqualError(t, err, models.ErrUserNotFound.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
@@ -21,7 +22,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with invalid credentials", func(sc *grafanaLoginScenarioContext) {
 		sc.withInvalidPassword()
-		err := loginUsingGrafanaDB(sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
 
@@ -31,7 +32,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with valid credentials", func(sc *grafanaLoginScenarioContext) {
 		sc.withValidCredentials()
-		err := loginUsingGrafanaDB(sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
 		require.NoError(t, err)
 
 		assert.True(t, sc.validatePasswordCalled)
@@ -43,7 +44,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 
 	grafanaLoginScenario(t, "When login with disabled user", func(sc *grafanaLoginScenarioContext) {
 		sc.withDisabledUser()
-		err := loginUsingGrafanaDB(sc.loginUserQuery)
+		err := loginUsingGrafanaDB(context.Background(), sc.loginUserQuery)
 		require.EqualError(t, err, ErrUserDisabled.Error())
 
 		assert.False(t, sc.validatePasswordCalled)
@@ -94,7 +95,7 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 }
 
 func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(user *models.User) {
-	bus.AddHandler("test", func(query *models.GetUserByLoginQuery) error {
+	bus.AddHandler("test", func(ctx context.Context, query *models.GetUserByLoginQuery) error {
 		if user == nil {
 			return models.ErrUserNotFound
 		}

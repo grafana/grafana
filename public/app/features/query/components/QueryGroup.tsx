@@ -5,12 +5,10 @@ import {
   Button,
   CustomScrollbar,
   HorizontalGroup,
-  Icon,
   InlineFormLabel,
   Modal,
   ScrollbarPosition,
   stylesFactory,
-  Tooltip,
 } from '@grafana/ui';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
@@ -27,7 +25,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { addQuery, updateQueries } from 'app/core/utils/query';
+import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,6 +35,7 @@ import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/dataso
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 import { GroupActionComponents } from './QueryActionComponent';
+import { updateQueries } from '../state/updateQueries';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -88,10 +87,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     try {
-      const ds = await this.dataSourceSrv.get(options.dataSource.name);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
+      const ds = await this.dataSourceSrv.get(options.dataSource);
+      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
-      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource: dsSettings?.name }));
+      const datasource = ds.getRef();
+      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
       this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -111,7 +111,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
-    const queries = updateQueries(newSettings, this.state.queries, expressionDatasource.name, dsSettings);
+    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -119,6 +119,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
+        type: newSettings.meta.id,
         default: newSettings.isDefault,
       },
     });
@@ -139,12 +140,10 @@ export class QueryGroup extends PureComponent<Props, State> {
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 
-    if (!dsSettings?.meta.mixed) {
-      return { datasource: dsSettings?.name };
-    }
+    const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
 
     return {
-      datasource: defaultDataSource?.name,
+      datasource: { uid: ds?.uid, type: ds?.type },
     };
   }
 
@@ -182,7 +181,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
-              current={options.dataSource.name}
+              current={options.dataSource}
               metrics={true}
               mixed={true}
               dashboard={true}
@@ -258,7 +257,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
-    this.onQueriesChange(addQuery(queries, query, dsSettings?.name));
+    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
   };
 
@@ -305,9 +304,15 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderExtraActions() {
-    return GroupActionComponents.getAllExtraRenderAction().map((c) => {
-      return React.createElement(c, { onAddQuery: this.onAddQuery, onChangeDataSource: this.onChangeDataSource });
-    });
+    return GroupActionComponents.getAllExtraRenderAction()
+      .map((action, index) =>
+        action({
+          onAddQuery: this.onAddQuery,
+          onChangeDataSource: this.onChangeDataSource,
+          key: index,
+        })
+      )
+      .filter(Boolean);
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
@@ -327,17 +332,14 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
-            <Button
-              icon="plus"
-              onClick={this.onAddExpressionClick}
-              variant="secondary"
-              className={styles.expressionButton}
-            >
-              <span>Expression&nbsp;</span>
-              <Icon name="exclamation-triangle" className="muted" size="sm" />
-            </Button>
-          </Tooltip>
+          <Button
+            icon="plus"
+            onClick={this.onAddExpressionClick}
+            variant="secondary"
+            className={styles.expressionButton}
+          >
+            <span>Expression&nbsp;</span>
+          </Button>
         )}
         {this.renderExtraActions()}
       </HorizontalGroup>

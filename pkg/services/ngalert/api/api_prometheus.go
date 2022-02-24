@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
@@ -40,8 +40,8 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		valString := ""
-		if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
-			valString = alertState.Results[0].EvaluationString
+		if alertState.State == eval.Alerting {
+			valString = alertState.LastEvaluationString
 		}
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      map[string]string(alertState.Labels),
@@ -76,6 +76,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
 
+	if len(namespaceMap) == 0 {
+		srv.log.Debug("User does not have access to any namespaces")
+		return response.JSON(http.StatusOK, ruleResponse)
+	}
+
 	namespaceUIDs := make([]string, len(namespaceMap))
 	for k := range namespaceMap {
 		namespaceUIDs = append(namespaceUIDs, k)
@@ -96,7 +101,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
-	if err := srv.store.GetOrgRuleGroups(&ruleGroupQuery); err != nil {
+	if err := srv.store.GetOrgRuleGroups(c.Req.Context(), &ruleGroupQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rule groups: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
@@ -108,7 +113,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
 	}
-	if err := srv.store.GetOrgAlertRules(&alertRuleQuery); err != nil {
+	if err := srv.store.GetOrgAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
@@ -168,8 +173,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
-			if len(alertState.Results) > 0 && alertState.State == eval.Alerting {
-				valString = alertState.Results[0].EvaluationString
+			if alertState.State == eval.Alerting {
+				valString = alertState.LastEvaluationString
 			}
 			alert := &apimodels.Alert{
 				Labels:      map[string]string(alertState.Labels),

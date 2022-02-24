@@ -83,7 +83,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
     const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     panelCtrl.initEditMode();
     panelCtrl.onPluginTypeChange = (plugin: PanelPluginMeta) => {
-      changePanelPlugin(panel, plugin.id);
+      changePanelPlugin({ panel, pluginId: plugin.id });
     };
 
     let template = '';

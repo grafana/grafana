@@ -6,7 +6,7 @@ title = "Working with data frames"
 
 The data frame is a columnar data structure which allows efficient querying of large amounts of data. Since data frames are a central concept when developing plugins for Grafana, in this guide we'll look at some ways you can use them.
 
-The [DataFrame]({{< relref "../../packages_api/data/dataframe.md" >}}) interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
+The DataFrame interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
 
 > **Note:** If you're looking to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "migration-guide.md#migrate-to-data-frames" >}}).
 
@@ -14,7 +14,7 @@ The [DataFrame]({{< relref "../../packages_api/data/dataframe.md" >}}) interface
 
 If you build a data source plugin, then you'll most likely want to convert a response from an external API to a data frame. Let's look at how to create a data frame.
 
-Let's start with creating a simple data frame that represents a time series. The easiest way to create a data frame is to use the [toDataFrame]({{< relref "../../packages_api/data/todataframe.md" >}}) function.
+Let's start with creating a simple data frame that represents a time series. The easiest way to create a data frame is to use the toDataFrame function.
 
 ```ts
 // Need to be of the same length.
@@ -78,7 +78,7 @@ for (let i = 0; i < frame.length; i++) {
 }
 ```
 
-Alternatively, you can use the [DataFrameView]({{< relref "../../packages_api/data/dataframeview.md" >}}), which gives you an array of objects that contain a property for each field in the frame.
+Alternatively, you can use the DataFrameView, which gives you an array of objects that contain a property for each field in the frame.
 
 ```ts
 const view = new DataFrameView(frame);
@@ -113,7 +113,7 @@ return (
 );
 ```
 
-To apply field options to the name of a field, use [getFieldDisplayName]({{< relref "../../packages_api/data/getfielddisplayname.md" >}}).
+To apply field options to the name of a field, use getFieldDisplayName.
 
 ```ts
 const valueField = frame.fields.find((field) => field.type === FieldType.number);

@@ -11,7 +11,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { mockDataSource, MockDataSourceSrv } from './mocks';
 import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -39,13 +38,13 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 const mocks = {
-  getAllDataSources: typeAsJestMock(getAllDataSources),
+  getAllDataSources: jest.mocked(getAllDataSources),
 
   api: {
-    fetchRulerRulesGroup: typeAsJestMock(fetchRulerRulesGroup),
-    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
-    fetchRulerRulesNamespace: typeAsJestMock(fetchRulerRulesNamespace),
-    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
+    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
+    fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
+    fetchRulerRules: jest.mocked(fetchRulerRules),
   },
 };
 
@@ -129,7 +128,7 @@ describe('RuleEditor', () => {
     userEvent.type(await ui.inputs.name.find(), 'my great new rule');
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
@@ -270,7 +269,7 @@ describe('RuleEditor', () => {
     userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
     await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed recording rule/);
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
@@ -334,9 +333,9 @@ describe('RuleEditor', () => {
       }),
     };
 
-    const backendSrv = ({
+    const backendSrv = {
       getFolderByUid,
-    } as any) as BackendSrv;
+    } as any as BackendSrv;
     setBackendSrv(backendSrv);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
@@ -496,7 +495,7 @@ describe('RuleEditor', () => {
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
-    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    userEvent.click(byRole('combobox').get(dataSourceSelect));
     expect(await byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('cortex with ruler').query()).toBeInTheDocument();
     expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
@@ -507,6 +506,6 @@ describe('RuleEditor', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
+  userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText as string);
 };

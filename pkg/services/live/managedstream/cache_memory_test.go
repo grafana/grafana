@@ -1,6 +1,7 @@
 package managedstream
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -15,7 +16,7 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	frameJsonCache, err := data.FrameToJSONCache(frame)
 	require.NoError(t, err)
 
-	updated, err := c.Update(1, "test", frameJsonCache)
+	updated, err := c.Update(context.Background(), 1, "test", frameJsonCache)
 	require.NoError(t, err)
 	require.True(t, updated)
 
@@ -27,7 +28,7 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	require.NotZero(t, schema)
 
 	// Make sure the same frame does not update schema.
-	updated, err = c.Update(1, "test", frameJsonCache)
+	updated, err = c.Update(context.Background(), 1, "test", frameJsonCache)
 	require.NoError(t, err)
 	require.False(t, updated)
 
@@ -37,17 +38,17 @@ func testFrameCache(t *testing.T, c FrameCache) {
 	require.NoError(t, err)
 
 	// Make sure schema updated.
-	updated, err = c.Update(1, "test", frameJsonCache)
+	updated, err = c.Update(context.Background(), 1, "test", frameJsonCache)
 	require.NoError(t, err)
 	require.True(t, updated)
 
 	// Add the same with another orgID and make sure schema updated.
-	updated, err = c.Update(2, "test", frameJsonCache)
+	updated, err = c.Update(context.Background(), 2, "test", frameJsonCache)
 	require.NoError(t, err)
 	require.True(t, updated)
 
 	// Make sure that the last frame successfully saved in cache.
-	frameJSON, ok, err := c.GetFrame(1, "test")
+	frameJSON, ok, err := c.GetFrame(context.Background(), 1, "test")
 	require.NoError(t, err)
 	require.True(t, ok)
 

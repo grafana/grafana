@@ -15,11 +15,12 @@
 import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { createStyle, isLight, Theme, useTheme } from '../Theme';
-import { UIDivider } from '../uiElementsContext';
+import { Divider } from './Divider';
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     LabeledList: css`
       label: LabeledList;
@@ -33,27 +34,26 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     LabeledListLabel: css`
       label: LabeledListLabel;
-      color: ${isLight(theme) ? '#999' : '#666'};
+      color: ${theme.isLight ? '#999' : '#666'};
       margin-right: 0.25rem;
     `,
   };
-});
+};
 
 type LabeledListProps = {
   className?: string;
-  dividerClassName?: string;
   items: Array<{ key: string; label: React.ReactNode; value: React.ReactNode }>;
 };
 
 export default function LabeledList(props: LabeledListProps) {
-  const { className, dividerClassName, items } = props;
-  const styles = getStyles(useTheme());
+  const { className, items } = props;
+  const styles = useStyles2(getStyles);
   return (
     <ul className={cx(styles.LabeledList, className)}>
       {items.map(({ key, label, value }, i) => {
         const divider = i < items.length - 1 && (
           <li className={styles.LabeledListItem} key={`${key}--divider`}>
-            <UIDivider className={dividerClassName} type="vertical" />
+            <Divider />
           </li>
         );
         return [

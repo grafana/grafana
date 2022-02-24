@@ -6,4 +6,13 @@ devenv
 data
 dist
 e2e/tmp
+scripts/grafana-server/tmp
 public/lib/monaco
+deployment_tools_config.json
+
+# TS generate from cue by cuetsy
+**/*.gen.ts
+
+# Auto-generated localisation files
+public/locales/_build/
+public/locales/**/*.js

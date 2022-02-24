@@ -2,7 +2,8 @@ export { Icon } from './Icon/Icon';
 export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
-export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
+export { Tooltip } from './Tooltip/Tooltip';
+export { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
@@ -176,8 +177,9 @@ export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
+export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow } from './Button';
+export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
@@ -194,15 +196,19 @@ export { InlineLabel } from './Forms/InlineLabel';
 export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
+// Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
+export { DropdownIndicator } from './Select/DropdownIndicator';
+export { getSelectStyles } from './Select/getSelectStyles';
+export * from './Select/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, BadgeColor, BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 
-export { Input } from './Input/Input';
+export { Input, getInputStyles } from './Input/Input';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
 
@@ -217,7 +223,6 @@ export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePick
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
-
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
@@ -252,6 +257,7 @@ export { LegacyForms, LegacyInputStatus };
 export * from './uPlot/config';
 export { ScaleDistribution } from '@grafana/schema';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
+export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
@@ -261,7 +267,7 @@ export { UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
-export { preparePlotFrame } from './GraphNG/utils';
+export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

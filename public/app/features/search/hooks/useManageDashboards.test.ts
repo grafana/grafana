@@ -6,10 +6,16 @@ import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction
 import { ManageDashboardsState } from '../reducers/manageDashboards';
 import { useManageDashboards } from './useManageDashboards';
 import { GENERAL_FOLDER_ID } from '../constants';
+import { setEchoSrv } from '@grafana/runtime/src';
+import { Echo } from 'app/core/services/echo/Echo';
 
 describe('useManageDashboards', () => {
   const useSearchMock = jest.spyOn(useSearch, 'useSearch');
   const toggle = async (section: DashboardSection) => section;
+
+  beforeAll(() => {
+    setEchoSrv(new Echo());
+  });
 
   function setupTestContext({ results = [] }: { results?: DashboardSection[] } = {}) {
     jest.clearAllMocks();
@@ -21,9 +27,9 @@ describe('useManageDashboards', () => {
       initialLoading: false,
       allChecked: false,
     };
-    const dispatch: Dispatch<SearchAction> = (null as unknown) as Dispatch<SearchAction>;
+    const dispatch: Dispatch<SearchAction> = null as unknown as Dispatch<SearchAction>;
     useSearchMock.mockReturnValue({ state, dispatch, onToggleSection: toggle });
-    const dashboardQuery: DashboardQuery = ({} as unknown) as DashboardQuery;
+    const dashboardQuery: DashboardQuery = {} as unknown as DashboardQuery;
 
     const { result } = renderHook(() => useManageDashboards(dashboardQuery, {}));
 
@@ -195,6 +201,28 @@ describe('useManageDashboards', () => {
       const { result } = setupTestContext({ results });
 
       expect(result.current.canDelete).toBe(false);
+    });
+  });
+
+  describe('when called on an empty folder', () => {
+    it('then canDelete should be true', () => {
+      const results: DashboardSection[] = [
+        { id: 1, checked: true, items: [], title: 'One', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+        {
+          id: GENERAL_FOLDER_ID,
+          checked: false,
+          items: [],
+          title: 'General',
+          type: DashboardSearchItemType.DashFolder,
+          toggle,
+          url: '/',
+        },
+        { id: 2, checked: false, items: [], title: 'Two', type: DashboardSearchItemType.DashFolder, toggle, url: '/' },
+      ];
+
+      const { result } = setupTestContext({ results });
+
+      expect(result.current.canDelete).toBe(true);
     });
   });
 });

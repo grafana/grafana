@@ -7,6 +7,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourceRef,
   MetricFindValue,
   StandardVariableQuery,
   StandardVariableSupport,
@@ -19,10 +20,10 @@ import {
   ConstantVariableModel,
   QueryVariableModel,
   VariableQueryEditorType,
+  VariableQueryEditorProps,
   VariableWithMultiSupport,
   VariableWithOptions,
 } from './types';
-import { VariableQueryProps } from '../../types';
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
@@ -57,6 +58,14 @@ function hasObjectProperty(model: VariableModel, property: string): model is Var
 
   const withProperty = model as Record<string, any>;
   return withProperty.hasOwnProperty(property) && typeof withProperty[property] === 'object';
+}
+
+export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
+  if (datasource === null) {
+    return false;
+  }
+
+  return typeof datasource === 'string';
 }
 
 interface DataSourceWithLegacyVariableSupport<
@@ -169,7 +178,7 @@ export function isLegacyQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<VariableQueryProps> {
+): component is ComponentType<VariableQueryEditorProps> {
   if (!component) {
     return false;
   }

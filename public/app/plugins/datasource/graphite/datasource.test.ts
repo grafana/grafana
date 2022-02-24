@@ -2,14 +2,15 @@ import { GraphiteDatasource } from './datasource';
 import { isArray } from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { dateTime, getFrameDisplayName } from '@grafana/data';
+import { AbstractLabelMatcher, AbstractLabelOperator, dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
+import { fromString } from './configuration/parseLokiLabelMappings';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -521,6 +522,80 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
       expect(requestOptions.params.query).toBe('*.servers.*');
       expect(results).not.toBe(null);
+    });
+  });
+
+  describe('exporting to abstract query', () => {
+    async function assertQueryExport(target: string, labelMatchers: AbstractLabelMatcher[]): Promise<void> {
+      let abstractQueries = await ctx.ds.exportToAbstractQueries([
+        {
+          refId: 'A',
+          target,
+        },
+      ]);
+      expect(abstractQueries).toMatchObject([
+        {
+          refId: 'A',
+          labelMatchers: labelMatchers,
+        },
+      ]);
+    }
+
+    beforeEach(() => {
+      ctx.ds.getImportQueryConfiguration = jest.fn().mockReturnValue({
+        loki: {
+          mappings: ['servers.(cluster).(server).*'].map(fromString),
+        },
+      });
+
+      ctx.ds.createFuncInstance = jest.fn().mockImplementation((name: string) => ({
+        name,
+        params: [],
+        def: {
+          name,
+          params: [{ multiple: true }],
+        },
+        updateText: () => {},
+      }));
+    });
+
+    it('extracts metric name based on configuration', async () => {
+      await assertQueryExport('interpolate(alias(servers.west.001.cpu,1,2))', [
+        { name: 'cluster', operator: AbstractLabelOperator.Equal, value: 'west' },
+        { name: 'server', operator: AbstractLabelOperator.Equal, value: '001' },
+      ]);
+
+      await assertQueryExport('interpolate(alias(servers.east.001.request.POST.200,1,2))', [
+        { name: 'cluster', operator: AbstractLabelOperator.Equal, value: 'east' },
+        { name: 'server', operator: AbstractLabelOperator.Equal, value: '001' },
+      ]);
+
+      await assertQueryExport('interpolate(alias(servers.*.002.*,1,2))', [
+        { name: 'server', operator: AbstractLabelOperator.Equal, value: '002' },
+      ]);
+    });
+
+    it('extracts tags', async () => {
+      await assertQueryExport("interpolate(seriesByTag('cluster=west', 'server=002'), inf))", [
+        { name: 'cluster', operator: AbstractLabelOperator.Equal, value: 'west' },
+        { name: 'server', operator: AbstractLabelOperator.Equal, value: '002' },
+      ]);
+      await assertQueryExport("interpolate(seriesByTag('foo=bar', 'server=002'), inf))", [
+        { name: 'foo', operator: AbstractLabelOperator.Equal, value: 'bar' },
+        { name: 'server', operator: AbstractLabelOperator.Equal, value: '002' },
+      ]);
+    });
+
+    it('extracts regular expressions', async () => {
+      await assertQueryExport('interpolate(alias(servers.eas*.{001,002}.request.POST.200,1,2))', [
+        { name: 'cluster', operator: AbstractLabelOperator.EqualRegEx, value: '^eas.*' },
+        { name: 'server', operator: AbstractLabelOperator.EqualRegEx, value: '^(001|002)' },
+      ]);
+    });
+
+    it('does not extract metrics when the config does not match', async () => {
+      await assertQueryExport('interpolate(alias(test.west.001.cpu))', []);
+      await assertQueryExport('interpolate(alias(servers.west.001))', []);
     });
   });
 });

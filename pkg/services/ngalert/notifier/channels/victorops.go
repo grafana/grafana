@@ -10,11 +10,10 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,14 +27,18 @@ const (
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template) (*VictoropsNotifier, error) {
+func NewVictoropsNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template) (*VictoropsNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find victorops url property in settings"}
 	}
 
 	return &VictoropsNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -45,6 +48,7 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template
 		URL:         url,
 		MessageType: model.Settings.Get("messageType").MustString(),
 		log:         log.New("alerting.notifier.victorops"),
+		ns:          ns,
 		tmpl:        t,
 	}, nil
 }
@@ -53,10 +57,11 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template
 // and handles notification process by formatting POST body according to
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	URL         string
 	MessageType string
 	log         log.Logger
+	ns          notifications.WebhookSender
 	tmpl        *template.Template
 }
 
@@ -84,7 +89,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message_type", messageType)
 	bodyJSON.Set("entity_id", groupKey.Hash())
-	bodyJSON.Set("entity_display_name", tmpl(`{{ template "default.title" . }}`))
+	bodyJSON.Set("entity_display_name", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("timestamp", time.Now().Unix())
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
@@ -94,7 +99,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	u := tmpl(vn.URL)
 	if tmplErr != nil {
-		vn.log.Debug("failed to template VictorOps message", "err", tmplErr.Error())
+		vn.log.Warn("failed to template VictorOps message", "err", tmplErr.Error())
 	}
 
 	b, err := bodyJSON.MarshalJSON()
@@ -106,7 +111,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		Body: string(b),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
 		return false, err
 	}

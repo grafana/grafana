@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -18,29 +16,33 @@ import (
 // WebhookNotifier is responsible for sending
 // alert notifications as webhooks.
 type WebhookNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	URL        string
 	User       string
 	Password   string
 	HTTPMethod string
 	MaxAlerts  int
 	log        log.Logger
+	ns         notifications.WebhookSender
 	tmpl       *template.Template
 	orgID      int64
 }
 
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
-func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
+func NewWebHookNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*WebhookNotifier, error) {
 	if model.Settings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "could not find settings property"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
+	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
 	}
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
 	}
 	return &WebhookNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -50,10 +52,11 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template, 
 		orgID:      model.OrgID,
 		URL:        url,
 		User:       model.Settings.Get("username").MustString(),
-		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString(), setting.SecretKey),
+		Password:   fn(context.Background(), model.SecureSettings, "password", model.Settings.Get("password").MustString()),
 		HTTPMethod: model.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:  model.Settings.Get("maxAlerts").MustInt(0),
 		log:        log.New("alerting.notifier.webhook"),
+		ns:         ns,
 		tmpl:       t,
 	}, nil
 }
@@ -91,7 +94,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		GroupKey:        groupKey.String(),
 		TruncatedAlerts: numTruncated,
 		OrgID:           wn.orgID,
-		Title:           tmpl(`{{ template "default.title" . }}`),
+		Title:           tmpl(DefaultMessageTitleEmbed),
 		Message:         tmpl(`{{ template "default.message" . }}`),
 	}
 	if types.Alerts(as...).Status() == model.AlertFiring {
@@ -101,7 +104,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		wn.log.Debug("failed to template webhook message", "err", tmplErr.Error())
+		wn.log.Warn("failed to template webhook message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(msg)
@@ -117,7 +120,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpMethod: wn.HTTPMethod,
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		return false, err
 	}
 

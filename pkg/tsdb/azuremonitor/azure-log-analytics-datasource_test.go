@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -223,12 +224,14 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 			"azureLogAnalyticsSameAs": false,
 		},
 	}
-	ctx := context.TODO()
+	ctx := context.Background()
 	query := &AzureLogAnalyticsQuery{
 		Params:    url.Values{},
 		TimeRange: backend.TimeRange{},
 	}
-	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services[azureLogAnalytics].URL)
+	tracer, err := tracing.InitializeTracerForTest()
+	require.NoError(t, err)
+	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services[azureLogAnalytics].URL, tracer)
 	if res.Error == nil {
 		t.Fatal("expecting an error")
 	}

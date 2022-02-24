@@ -8,9 +8,11 @@ import {
   DimensionContext,
   getColorDimensionFromData,
   getResourceDimensionFromData,
+  getScalarDimensionFromData,
   getScaleDimensionFromData,
   getTextDimensionFromData,
   ResourceDimensionConfig,
+  ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from 'app/features/dimensions';
@@ -27,14 +29,30 @@ export class IconPanel extends Component<Props> {
 
   initElement = (props: Props) => {
     this.element = new ElementState(iconItem, props.options.root as any);
-    this.element.updateSize(props.width, props.height);
+    this.updateSize(props);
     this.element.updateData(this.dims);
     return this.element;
+  };
+
+  updateSize = (props: Props) => {
+    const { width, height } = props;
+    this.element.anchor = {
+      top: true,
+      left: true,
+    };
+    this.element.placement = {
+      left: 0,
+      top: 0,
+      width,
+      height,
+    };
+    this.element.updateSize(width, height);
   };
 
   dims: DimensionContext = {
     getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(this.props.data, color),
     getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(this.props.data, scale),
+    getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.props.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.props.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.props.data, res),
   };
@@ -44,7 +62,7 @@ export class IconPanel extends Component<Props> {
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
-      this.element.updateSize(nextProps.width, nextProps.height);
+      this.updateSize(nextProps);
       changed = true;
     }
     if (data !== nextProps.data) {

@@ -299,7 +299,7 @@ function PieLabel({ arc, outerRadius, innerRadius, displayLabels, total, color, 
         )}
         {displayLabels.includes(PieChartLabels.Percent) && (
           <tspan x={labelX} dy="1.2em">
-            {((arc.data.display.numeric / total) * 100).toFixed(0) + '%'}
+            {((arc.data.display.numeric / total) * 100).toFixed(arc.data.field.decimals ?? 0) + '%'}
           </tspan>
         )}
       </text>

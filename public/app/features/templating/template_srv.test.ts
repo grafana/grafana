@@ -6,10 +6,14 @@ import { createQueryVariableAdapter } from '../variables/query/adapter';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { VariableModel } from '../variables/types';
 import { FormatRegistryID } from './formatRegistry';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+
+const key = 'key';
 
 variableAdapters.setInit(() => [
-  (createQueryVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
-  (createAdHocVariableAdapter() as unknown) as VariableAdapter<VariableModel>,
+  createQueryVariableAdapter() as unknown as VariableAdapter<VariableModel>,
+  createAdHocVariableAdapter() as unknown as VariableAdapter<VariableModel>,
 ]);
 
 describe('templateSrv', () => {
@@ -18,7 +22,7 @@ describe('templateSrv', () => {
 
   describe('init', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should initialize template data', () => {
@@ -29,7 +33,7 @@ describe('templateSrv', () => {
 
   describe('replace can pass scoped vars', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('scoped vars should support objects', () => {
@@ -113,15 +117,23 @@ describe('templateSrv', () => {
 
   describe('getAdhocFilters', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'datasource',
           name: 'ds',
           current: { value: 'logstash', text: 'logstash' },
         },
-        { type: 'adhoc', name: 'test', datasource: 'oogle', filters: [1] },
-        { type: 'adhoc', name: 'test2', datasource: '$ds', filters: [2] },
+        { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
+        { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
       ]);
+      setDataSourceSrv(
+        new MockDataSourceSrv({
+          oogle: mockDataSource({
+            name: 'oogle',
+            uid: 'oogle',
+          }),
+        })
+      );
     });
 
     it('should return filters if datasourceName match', () => {
@@ -142,7 +154,7 @@ describe('templateSrv', () => {
 
   describe('replace can pass multi / all format', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'query',
           name: 'test',
@@ -158,7 +170,7 @@ describe('templateSrv', () => {
 
     describe('when the globbed variable only has one value', () => {
       beforeEach(() => {
-        _templateSrv = initTemplateSrv([
+        _templateSrv = initTemplateSrv(key, [
           {
             type: 'query',
             name: 'test',
@@ -206,7 +218,7 @@ describe('templateSrv', () => {
 
   describe('variable with all option', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'query',
           name: 'test',
@@ -244,7 +256,7 @@ describe('templateSrv', () => {
 
   describe('variable with all option and custom value', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'query',
           name: 'test',
@@ -288,19 +300,19 @@ describe('templateSrv', () => {
 
   describe('lucene format', () => {
     it('should properly escape $test with lucene escape sequences', () => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
       const target = _templateSrv.replace('this:$test', {}, 'lucene');
       expect(target).toBe('this:value\\/4');
     });
 
     it('should properly escape ${test} with lucene escape sequences', () => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
       const target = _templateSrv.replace('this:${test}', {}, 'lucene');
       expect(target).toBe('this:value\\/4');
     });
 
     it('should properly escape ${test:lucene} with lucene escape sequences', () => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
       const target = _templateSrv.replace('this:${test:lucene}', {});
       expect(target).toBe('this:value\\/4');
     });
@@ -308,7 +320,7 @@ describe('templateSrv', () => {
 
   describe('html format', () => {
     it('should encode values html escape sequences', () => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         { type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } },
       ]);
       const target = _templateSrv.replace('$test', {}, 'html');
@@ -416,48 +428,48 @@ describe('templateSrv', () => {
 
   describe('can check if variable exists', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should return true if $test exists', () => {
-      const result = _templateSrv.variableExists('$test');
+      const result = _templateSrv.containsTemplate('$test');
       expect(result).toBe(true);
     });
 
     it('should return true if $test exists in string', () => {
-      const result = _templateSrv.variableExists('something $test something');
+      const result = _templateSrv.containsTemplate('something $test something');
       expect(result).toBe(true);
     });
 
     it('should return true if [[test]] exists in string', () => {
-      const result = _templateSrv.variableExists('something [[test]] something');
+      const result = _templateSrv.containsTemplate('something [[test]] something');
       expect(result).toBe(true);
     });
 
     it('should return true if [[test:csv]] exists in string', () => {
-      const result = _templateSrv.variableExists('something [[test:csv]] something');
+      const result = _templateSrv.containsTemplate('something [[test:csv]] something');
       expect(result).toBe(true);
     });
 
     it('should return true if ${test} exists in string', () => {
-      const result = _templateSrv.variableExists('something ${test} something');
+      const result = _templateSrv.containsTemplate('something ${test} something');
       expect(result).toBe(true);
     });
 
     it('should return true if ${test:raw} exists in string', () => {
-      const result = _templateSrv.variableExists('something ${test:raw} something');
+      const result = _templateSrv.containsTemplate('something ${test:raw} something');
       expect(result).toBe(true);
     });
 
     it('should return null if there are no variables in string', () => {
-      const result = _templateSrv.variableExists('string without variables');
+      const result = _templateSrv.containsTemplate('string without variables');
       expect(result).toBe(false);
     });
   });
 
   describe('can highlight variables in string', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should insert html', () => {
@@ -478,7 +490,7 @@ describe('templateSrv', () => {
 
   describe('updateIndex with simple value', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'muuuu' } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'muuuu' } }]);
     });
 
     it('should set current value and update template data', () => {
@@ -489,7 +501,7 @@ describe('templateSrv', () => {
 
   describe('replaceWithText', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'query',
           name: 'server',
@@ -534,7 +546,7 @@ describe('templateSrv', () => {
 
   describe('replaceWithText can pass all / multi value', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'query',
           name: 'server',
@@ -585,7 +597,7 @@ describe('templateSrv', () => {
 
   describe('built in interval variables', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([]);
+      _templateSrv = initTemplateSrv(key, []);
     });
 
     it('should replace $__interval_ms with interval milliseconds', () => {
@@ -598,7 +610,7 @@ describe('templateSrv', () => {
 
   describe('date formating', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([], {
+      _templateSrv = initTemplateSrv(key, [], {
         from: dateTime(1594671549254),
         to: dateTime(1595237229747),
       } as TimeRange);
@@ -632,7 +644,7 @@ describe('templateSrv', () => {
 
   describe('handle objects gracefully', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value: { test: 'A' } } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: { test: 'A' } } }]);
     });
 
     it('should not pass object to custom function', () => {
@@ -648,7 +660,7 @@ describe('templateSrv', () => {
   describe('handle objects gracefully and call toString if defined', () => {
     beforeEach(() => {
       const value = { test: 'A', toString: () => 'hello' };
-      _templateSrv = initTemplateSrv([{ type: 'query', name: 'test', current: { value } }]);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value } }]);
     });
 
     it('should not pass object to custom function', () => {
@@ -663,7 +675,7 @@ describe('templateSrv', () => {
 
   describe('adhoc variables', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'adhoc',
           name: 'adhoc',
@@ -703,7 +715,7 @@ describe('templateSrv', () => {
 
   describe('queryparam', () => {
     beforeEach(() => {
-      _templateSrv = initTemplateSrv([
+      _templateSrv = initTemplateSrv(key, [
         {
           type: 'query',
           name: 'single',
@@ -742,8 +754,18 @@ describe('templateSrv', () => {
       expect(target).toBe('var-single=value1');
     });
 
+    it('query variable with single value with queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${single:queryparam}`, { single: { value: 'value1', text: 'value1' } });
+      expect(target).toBe('var-single=value1');
+    });
+
     it('query variable with single value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${single}', {}, 'queryparam');
+      expect(target).toBe('var-single=value1');
+    });
+
+    it('query variable with single value and queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace('${single}', { single: { value: 'value1', text: 'value1' } }, 'queryparam');
       expect(target).toBe('var-single=value1');
     });
 
@@ -752,9 +774,19 @@ describe('templateSrv', () => {
       expect(target).toBe('var-multi=value1&var-multi=value2');
     });
 
+    it('query variable with multi value with queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${multi:queryparam}`, { multi: { value: 'value2', text: 'value2' } });
+      expect(target).toBe('var-multi=value2');
+    });
+
     it('query variable with multi value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${multi}', {}, 'queryparam');
       expect(target).toBe('var-multi=value1&var-multi=value2');
+    });
+
+    it('query variable with multi value and queryparam format and scoped vars should return correct queryparam', () => {
+      const target = _templateSrv.replace('${multi}', { multi: { value: 'value2', text: 'value2' } }, 'queryparam');
+      expect(target).toBe('var-multi=value2');
     });
 
     it('query variable with adhoc value with queryparam format should return correct queryparam', () => {
@@ -762,9 +794,19 @@ describe('templateSrv', () => {
       expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
     });
 
-    it('query variable with multi value and queryparam format should return correct queryparam', () => {
+    it('query variable with adhoc value with queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace(`\${adhoc:queryparam}`, { adhoc: { value: 'value2', text: 'value2' } });
+      expect(target).toBe('var-adhoc=value2');
+    });
+
+    it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${adhoc}', {}, 'queryparam');
       expect(target).toBe('var-adhoc=alertstate%7C%3D%7Cfiring&var-adhoc=alertname%7C%3D%7CExampleAlertAlwaysFiring');
+    });
+
+    it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
+      const target = _templateSrv.replace('${adhoc}', { adhoc: { value: 'value2', text: 'value2' } }, 'queryparam');
+      expect(target).toBe('var-adhoc=value2');
     });
   });
 });

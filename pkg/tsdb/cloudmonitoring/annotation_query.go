@@ -18,7 +18,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 		return resp, err
 	}
 
-	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo)
+	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, s.tracer)
 	if err != nil {
 		return resp, err
 	}
@@ -26,7 +26,6 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	mq := struct {
 		Title string `json:"title"`
 		Text  string `json:"text"`
-		Tags  string `json:"tags"`
 	}{}
 
 	firstQuery := req.Queries[0]
@@ -34,7 +33,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text, mq.Tags)
+	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err

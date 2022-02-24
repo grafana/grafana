@@ -6,6 +6,7 @@ package sqlstore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,7 +42,7 @@ func TestDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetDataSourcesQuery{OrgId: 10}
-		err = sqlStore.GetDataSources(&query)
+		err = sqlStore.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(query.Result))
 
@@ -63,7 +65,7 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -97,7 +99,7 @@ func TestDataAccess(t *testing.T) {
 			sqlStore := InitTestDB(t)
 
 			var created *events.DataSourceCreated
-			bus.AddEventListener(func(e *events.DataSourceCreated) error {
+			bus.AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
 				created = e
 				return nil
 			})
@@ -110,7 +112,7 @@ func TestDataAccess(t *testing.T) {
 			}, time.Second, time.Millisecond)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
 
@@ -216,7 +218,7 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 0, len(query.Result))
@@ -226,10 +228,12 @@ func TestDataAccess(t *testing.T) {
 			sqlStore := InitTestDB(t)
 			ds := initDatasource(sqlStore)
 
-			err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
+			err := sqlStore.DeleteDataSource(context.Background(),
+				&models.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
 			require.NoError(t, err)
+
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(&query)
+			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -241,12 +245,13 @@ func TestDataAccess(t *testing.T) {
 		ds := initDatasource(sqlStore)
 
 		var deleted *events.DataSourceDeleted
-		bus.AddEventListener(func(e *events.DataSourceDeleted) error {
+		bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
 			deleted = e
 			return nil
 		})
 
-		err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{ID: ds.Id, UID: "nisse-uid", Name: "nisse", OrgID: 123123})
+		err := sqlStore.DeleteDataSource(context.Background(),
+			&models.DeleteDataSourceCommand{ID: ds.Id, UID: "nisse-uid", Name: "nisse", OrgID: int64(123123)})
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
@@ -267,8 +272,44 @@ func TestDataAccess(t *testing.T) {
 		err := sqlStore.DeleteDataSource(context.Background(), &models.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
-		err = sqlStore.GetDataSources(&query)
+		err = sqlStore.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
+
+		require.Equal(t, 0, len(query.Result))
+	})
+
+	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
+		sqlStore := InitTestDB(t)
+		ds := initDatasource(sqlStore)
+
+		// Init associated permission
+		errAddPermissions := sqlStore.WithTransactionalDbSession(context.TODO(), func(sess *DBSession) error {
+			_, err := sess.Table("permission").Insert(ac.Permission{
+				RoleID:  1,
+				Action:  "datasources:read",
+				Scope:   ac.Scope("datasources", "id", fmt.Sprintf("%d", ds.Id)),
+				Updated: time.Now(),
+				Created: time.Now(),
+			})
+			return err
+		})
+		require.NoError(t, errAddPermissions)
+		query := models.GetDataSourcesQuery{OrgId: 10}
+
+		errDeletingDS := sqlStore.DeleteDataSource(context.Background(),
+			&models.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId},
+		)
+		require.NoError(t, errDeletingDS)
+
+		// Check associated permission
+		permCount := int64(0)
+		errGetPermissions := sqlStore.WithTransactionalDbSession(context.TODO(), func(sess *DBSession) error {
+			var err error
+			permCount, err = sess.Table("permission").Count()
+			return err
+		})
+		require.NoError(t, errGetPermissions)
+		require.Zero(t, permCount, "permissions associated to the data source should have been removed")
 
 		require.Equal(t, 0, len(query.Result))
 	})
@@ -291,7 +332,7 @@ func TestDataAccess(t *testing.T) {
 			}
 			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
 
-			err := sqlStore.GetDataSources(&query)
+			err := sqlStore.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, datasourceLimit, len(query.Result))
@@ -314,7 +355,7 @@ func TestDataAccess(t *testing.T) {
 			}
 			query := models.GetDataSourcesQuery{OrgId: 10}
 
-			err := sqlStore.GetDataSources(&query)
+			err := sqlStore.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
@@ -337,7 +378,7 @@ func TestDataAccess(t *testing.T) {
 			}
 			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
 
-			err := sqlStore.GetDataSources(&query)
+			err := sqlStore.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
@@ -372,7 +413,7 @@ func TestDataAccess(t *testing.T) {
 
 			query := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
 
-			err = sqlStore.GetDataSourcesByType(&query)
+			err = sqlStore.GetDataSourcesByType(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
@@ -383,7 +424,7 @@ func TestDataAccess(t *testing.T) {
 
 			query := models.GetDataSourcesByTypeQuery{}
 
-			err := sqlStore.GetDataSourcesByType(&query)
+			err := sqlStore.GetDataSourcesByType(context.Background(), &query)
 
 			require.Error(t, err)
 		})
@@ -408,7 +449,7 @@ func TestGetDefaultDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetDefaultDataSourceQuery{OrgId: 10}
-		err = sqlStore.GetDefaultDataSource(&query)
+		err = sqlStore.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
 	})
@@ -429,7 +470,7 @@ func TestGetDefaultDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetDefaultDataSourceQuery{OrgId: 10}
-		err = sqlStore.GetDefaultDataSource(&query)
+		err = sqlStore.GetDefaultDataSource(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, "default datasource", query.Result.Name)
 	})
@@ -437,7 +478,7 @@ func TestGetDefaultDataSource(t *testing.T) {
 	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		query := models.GetDefaultDataSourceQuery{OrgId: 1}
-		err := sqlStore.GetDefaultDataSource(&query)
+		err := sqlStore.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
 	})

@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
@@ -22,21 +20,25 @@ var (
 // TelegramNotifier is responsible for sending
 // alert notifications to Telegram.
 type TelegramNotifier struct {
-	old_notifiers.NotifierBase
+	*Base
 	BotToken string
 	ChatID   string
 	Message  string
 	log      log.Logger
+	ns       notifications.WebhookSender
 	tmpl     *template.Template
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, ns notifications.WebhookSender, t *template.Template, fn GetDecryptedValueFn) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
+	if model.SecureSettings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	}
 
-	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), setting.SecretKey)
+	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
@@ -49,7 +51,7 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+		Base: NewBase(&models.AlertNotification{
 			Uid:                   model.UID,
 			Name:                  model.Name,
 			Type:                  model.Type,
@@ -61,6 +63,7 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template,
 		Message:  message,
 		tmpl:     t,
 		log:      log.New("alerting.notifier.telegram"),
+		ns:       ns,
 	}, nil
 }
 
@@ -108,7 +111,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send webhook", "error", err, "webhook", tn.Name)
 		return false, err
 	}
@@ -126,7 +129,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
-		tn.log.Debug("failed to template Telegram message", "err", tmplErr.Error())
+		tn.log.Warn("failed to template Telegram message", "err", tmplErr.Error())
 	}
 
 	msg["text"] = message

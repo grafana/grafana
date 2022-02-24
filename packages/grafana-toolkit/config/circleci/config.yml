@@ -69,18 +69,18 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: restore node_modules
+          name: restore yarn cache
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: Install dependencies
           command: |
             mkdir ci
-            [ -f ~/project/node_modules/.bin/grafana-toolkit ] || yarn install --immutable
+            yarn bin grafana-toolkit ] || yarn install --immutable
       - save_cache:
-          name: save node_modules
+          name: save yarn cache
           paths:
-            - ~/project/node_modules
+            - ~/project/.yarn
           key: build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - save_cache:
           name: save cypress cache
@@ -93,13 +93,13 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: restore node_modules
+          name: restore yarn cache
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: Build docs
           command: |
-            ./node_modules/.bin/grafana-toolkit plugin:ci-docs
+            yarn run grafana-toolkit plugin:ci-docs
             [ -d "dist" ] || circleci-agent step halt
       - persist_to_workspace:
           root: .
@@ -111,12 +111,12 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: restore node_modules
+          name: restore yarn cache
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: Build and test frontend
-          command: ./node_modules/.bin/grafana-toolkit plugin:ci-build
+          command: yarn run grafana-toolkit plugin:ci-build
       - persist_to_workspace:
           root: .
           paths:
@@ -127,7 +127,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: restore node_modules
+          name: restore yarn cache
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
@@ -152,18 +152,18 @@ jobs:
     steps:
     - checkout
     - restore_cache:
-        name: restore node_modules
+        name: restore yarn cache
         keys:
         - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
     - attach_workspace:
         at: .
     - run:
         name: Move results to ci folder
-        command: ./node_modules/.bin/grafana-toolkit plugin:ci-build --finish
+        command: yarn run grafana-toolkit plugin:ci-build --finish
     - run:
         name: Package distribution
         command: |
-          ./node_modules/.bin/grafana-toolkit plugin:ci-package
+          yarn run grafana-toolkit plugin:ci-package
     - persist_to_workspace:
         root: .
         paths:
@@ -211,7 +211,7 @@ jobs:
     - attach_workspace:
         at: .
     - restore_cache:
-        name: Restore node_modules
+        name: Restore yarn cache
         keys:
         - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
     - restore_cache:
@@ -237,7 +237,7 @@ jobs:
         name: Run e2e tests
         command: |
           # If the tests fail, but GRAFANACI_STRICT_E2E=0, don't worry about it
-          ./node_modules/.bin/grafana-e2e run \
+          yarn run grafana-e2e run \
           || (
             [ "$GRAFANACI_STRICT_E2E" -eq 0 ] && echo "Bypassing fail. ci-nostrict enabled"
           )
@@ -266,13 +266,13 @@ jobs:
     - attach_workspace:
         at: .
     - restore_cache:
-        name: restore node_modules
+        name: restore yarn cache
         keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
     - run:
         name: Toolkit report
         command: |
-          ./node_modules/.bin/grafana-toolkit plugin:ci-report
+          yarn run grafana-toolkit plugin:ci-report
     - store_artifacts:
         path: ci
 
@@ -286,10 +286,10 @@ jobs:
       - attach_workspace:
           at: .
       - restore_cache:
-          name: restore node_modules
+          name: restore yarn cache
           keys:
           - build-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
       - run:
           name: "Publish Release on GitHub"
           command: |
-            ./node_modules/.bin/grafana-toolkit plugin:github-publish
+            yarn run grafana-toolkit plugin:github-publish

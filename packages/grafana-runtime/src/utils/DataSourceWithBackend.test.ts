@@ -7,6 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponseData,
   MutableDataFrame,
+  DataSourceRef,
 } from '@grafana/data';
 import { of } from 'rxjs';
 
@@ -18,18 +19,18 @@ class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> 
 
 const mockDatasourceRequest = jest.fn();
 
-const backendSrv = ({
+const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
     return of(mockDatasourceRequest(options));
   },
-} as unknown) as BackendSrv;
+} as unknown as BackendSrv;
 
 jest.mock('../services', () => ({
   ...(jest.requireActual('../services') as any),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: () => ({ id: 8674 }),
+      getInstanceSettings: (ref?: DataSourceRef) => ({ type: ref?.type ?? '?', uid: ref?.uid ?? '?' }),
     };
   },
 }));
@@ -39,6 +40,8 @@ describe('DataSourceWithBackend', () => {
     const settings = {
       name: 'test',
       id: 1234,
+      uid: 'abc',
+      type: 'dummy',
       jsonData: {},
     } as DataSourceInstanceSettings<DataSourceJsonData>;
 
@@ -49,7 +52,7 @@ describe('DataSourceWithBackend', () => {
     ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: 'sample' }],
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
     } as DataQueryRequest);
 
     const mock = mockDatasourceRequest.mock;
@@ -61,14 +64,21 @@ describe('DataSourceWithBackend', () => {
         "data": Object {
           "queries": Array [
             Object {
+              "datasource": Object {
+                "type": "dummy",
+                "uid": "abc",
+              },
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "refId": "A",
             },
             Object {
-              "datasource": "sample",
-              "datasourceId": 8674,
+              "datasource": Object {
+                "type": "sample",
+                "uid": "?",
+              },
+              "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "refId": "B",

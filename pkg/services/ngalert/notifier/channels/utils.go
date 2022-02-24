@@ -12,9 +12,10 @@ import (
 	"path"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
@@ -23,6 +24,11 @@ const (
 	FooterIconURL      = "https://grafana.com/assets/img/fav32.png"
 	ColorAlertFiring   = "#D63232"
 	ColorAlertResolved = "#36a64f"
+)
+
+var (
+	// Provides current time. Can be overwritten in tests.
+	timeNow = time.Now
 )
 
 type receiverInitError struct {

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPredefinedRoles(t *testing.T) {
+func TestFixedRoles(t *testing.T) {
 	for name, role := range FixedRoles {
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
@@ -19,7 +19,7 @@ func TestPredefinedRoles(t *testing.T) {
 	}
 }
 
-func TestPredefinedRoleGrants(t *testing.T) {
+func TestFixedRoleGrants(t *testing.T) {
 	for _, grants := range FixedRoleGrants {
 		// Check grants list is sorted
 		assert.True(t,

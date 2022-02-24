@@ -7,3 +7,4 @@ export * from './templateSrv';
 export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
+export * from './appEvents';

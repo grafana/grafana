@@ -169,8 +169,9 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *models.SignedInUser, uid string) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
+func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *models.SignedInUser, uid string) (int64, error) {
+	var elementID int64
+	err := l.SQLStore.WithTransactionalDbSession(c, func(session *sqlstore.DBSession) error {
 		element, err := getLibraryElement(l.SQLStore.Dialect, session, uid, signedInUser.OrgId)
 		if err != nil {
 			return err
@@ -198,8 +199,10 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return ErrLibraryElementNotFound
 		}
 
+		elementID = element.ID
 		return nil
 	})
+	return elementID, err
 }
 
 // getLibraryElements gets a Library Element where param == value
@@ -433,7 +436,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *models.SignedInUser, cmd patchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
+func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser *models.SignedInUser, cmd PatchLibraryElementCommand, uid string) (LibraryElementDTO, error) {
 	var dto LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return LibraryElementDTO{}, err
@@ -689,9 +692,15 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		if err != nil {
 			return err
 		}
+
+		if len(folderUIDs) == 0 {
+			return models.ErrFolderNotFound
+		}
+
 		if len(folderUIDs) != 1 {
 			return fmt.Errorf("found %d folders, while expecting at most one", len(folderUIDs))
 		}
+
 		folderID := folderUIDs[0].ID
 
 		if err := l.requirePermissionsOnFolder(c, signedInUser, folderID); err != nil {

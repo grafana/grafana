@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,10 +18,10 @@ func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, settings)
 }
 
-func AdminGetStats(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetStats(c *models.ReqContext) response.Response {
 	statsQuery := models.GetAdminStatsQuery{}
 
-	if err := bus.DispatchCtx(c.Req.Context(), &statsQuery); err != nil {
+	if err := hs.SQLStore.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 

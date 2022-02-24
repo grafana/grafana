@@ -2,7 +2,9 @@ package jwt
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -55,9 +57,18 @@ type AuthService struct {
 	expectRegistered jwt.Expected
 }
 
+// Sanitize JWT base64 strings to remove paddings everywhere
+func sanitizeJWT(jwtToken string) string {
+	// JWT can be compact, JSON flatened or JSON general
+	// In every cases, parts are base64 strings without padding
+	// The padding char (=) should never interfer with data
+	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
+}
+
 func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {
 	s.log.Debug("Parsing JSON Web Token")
 
+	strToken = sanitizeJWT(strToken)
 	token, err := jwt.ParseSigned(strToken)
 	if err != nil {
 		return nil, err

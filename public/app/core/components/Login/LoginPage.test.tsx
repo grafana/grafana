@@ -3,36 +3,36 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginPage } from './LoginPage';
 
+import * as runtimeMock from '@grafana/runtime';
+
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
+  __esModule: true,
   getBackendSrv: () => ({
     post: postMock,
   }),
-}));
-
-jest.mock('app/core/config', () => {
-  return {
+  config: {
     loginError: false,
     buildInfo: {
       version: 'v1.0',
       commit: '1',
       env: 'production',
       edition: 'Open Source',
-      isEnterprise: false,
     },
     licenseInfo: {
       stateInfo: '',
       licenseUrl: '',
     },
     appSubUrl: '',
-    getConfig: () => ({
-      appSubUrl: '',
-      verifyEmailEnabled: false,
-    }),
-  };
-});
+    verifyEmailEnabled: false,
+  },
+}));
 
 describe('Login Page', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('renders correctly', () => {
     render(<LoginPage />);
 
@@ -83,5 +83,17 @@ describe('Login Page', () => {
 
     await waitFor(() => expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }));
     expect(window.location.assign).toHaveBeenCalledWith('/');
+  });
+  it('renders social logins correctly', () => {
+    (runtimeMock as any).config.oauth = {
+      okta: {
+        name: 'Okta Test',
+        icon: 'signin',
+      },
+    };
+
+    render(<LoginPage />);
+
+    expect(screen.getByRole('link', { name: 'Sign in with Okta Test' })).toBeInTheDocument();
   });
 });

@@ -10,7 +10,6 @@ import { Themeable2 } from '../../types';
 
 import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
 import { registerSuggestions } from './suggestions';
-import defineThemes from './theme';
 
 type Props = CodeEditorProps & Themeable2;
 
@@ -85,8 +84,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
-    const { language, theme, getSuggestions, onBeforeEditorMount } = this.props;
-    defineThemes(monaco, theme);
+    const { language, getSuggestions, onBeforeEditorMount } = this.props;
 
     if (getSuggestions) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
@@ -99,7 +97,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const { onEditorDidMount } = this.props;
     this.getEditorValue = () => editor.getValue();
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, this.onSave);
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
     const languagePromise = this.loadCustomLanguage();
 
     if (onEditorDidMount) {
@@ -133,6 +131,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
         top: 0.5 * theme.spacing.gridSize,
         bottom: 0.5 * theme.spacing.gridSize,
       },
+      fixedOverflowWidgets: true, // Ensures suggestions menu is drawn on top
     };
 
     if (!showLineNumbers) {
@@ -148,7 +147,6 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
           width={width}
           height={height}
           language={language}
-          theme={theme.isDark ? 'grafana-dark' : 'grafana-light'}
           value={value}
           options={{
             ...options,

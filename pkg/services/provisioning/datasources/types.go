@@ -1,6 +1,10 @@
 package datasources
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -220,7 +224,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		}
 	}
 
-	return &models.AddDataSourceCommand{
+	cmd := &models.AddDataSourceCommand{
 		OrgId:             ds.OrgID,
 		Name:              ds.Name,
 		Type:              ds.Type,
@@ -239,6 +243,18 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *models.AddDataSourceCo
 		ReadOnly:          !ds.Editable,
 		Uid:               ds.UID,
 	}
+
+	if cmd.Uid == "" {
+		cmd.Uid = safeUIDFromName(cmd.Name)
+	}
+	return cmd
+}
+
+func safeUIDFromName(name string) string {
+	h := sha256.New()
+	_, _ = h.Write([]byte(name))
+	bs := h.Sum(nil)
+	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }
 
 func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {

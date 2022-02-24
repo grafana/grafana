@@ -14,23 +14,25 @@
 
 import React from 'react';
 import { css } from '@emotion/css';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
-import { TNil } from '../types';
+import { SpanLinkFunc, TNil } from '../types';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
+import { autoColor } from '../Theme';
 import ExternalLinkContext from '../url/externalLinkContext';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     TraceTimelineViewer: css`
       label: TraceTimelineViewer;
@@ -98,11 +100,11 @@ type TProps = TExtractUiFindFromStateReturn & {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
-  theme: Theme;
-  createSpanLink?: (
-    span: TraceSpan
-  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  theme: GrafanaTheme2;
+  createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
 };
 
 type State = {
@@ -195,4 +197,4 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
   }
 }
 
-export default withTheme(UnthemedTraceTimelineViewer);
+export default withTheme2(UnthemedTraceTimelineViewer);

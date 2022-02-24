@@ -1,7 +1,7 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { isGrafanaAdmin } from 'app/features/plugins/admin/helpers';
+import { isGrafanaAdmin } from 'app/features/plugins/admin/permissions';
 
 const liveRoutes = [
   {
@@ -20,12 +20,6 @@ const liveRoutes = [
     path: '/live/cloud',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "CloudAdminPage" */ 'app/features/live/pages/CloudAdminPage')
-    ),
-  },
-  {
-    path: '/live/test',
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "CloudAdminPage" */ 'app/features/live/pages/RuleTest')
     ),
   },
 ];

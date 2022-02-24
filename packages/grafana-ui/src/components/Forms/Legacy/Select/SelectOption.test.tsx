@@ -1,9 +1,8 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import SelectOption from './SelectOption';
-import { OptionProps } from 'react-select/src/components/Option';
+import { OptionProps } from 'react-select';
 
-// @ts-ignore
 const model: OptionProps<any> = {
   data: jest.fn(),
   cx: jest.fn(),
@@ -14,12 +13,13 @@ const model: OptionProps<any> = {
   isMulti: false,
   options: [],
   selectOption: jest.fn(),
+  // @ts-ignore
   selectProps: {},
   setValue: jest.fn(),
   isDisabled: false,
   isFocused: false,
   isSelected: false,
-  innerRef: null,
+  innerRef: jest.fn(),
   innerProps: {
     id: '',
     key: '',

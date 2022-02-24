@@ -2,6 +2,7 @@ import React, { PropsWithChildren, ReactElement } from 'react';
 import { InlineFormLabel, Select, useStyles } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
+import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 interface VariableSelectFieldProps<T> {
   name: string;
@@ -9,7 +10,7 @@ interface VariableSelectFieldProps<T> {
   options: Array<SelectableValue<T>>;
   onChange: (option: SelectableValue<T>) => void;
   tooltip?: string;
-  ariaLabel?: string;
+  testId?: string;
   width?: number;
   labelWidth?: number;
 }
@@ -20,19 +21,20 @@ export function VariableSelectField({
   options,
   tooltip,
   onChange,
-  ariaLabel,
+  testId,
   width,
   labelWidth,
 }: PropsWithChildren<VariableSelectFieldProps<any>>): ReactElement {
   const styles = useStyles(getStyles);
-  const inputId = `variable-select-input-${name}`;
+  const uniqueId = useUniqueId();
+  const inputId = `variable-select-input-${name}-${uniqueId}`;
 
   return (
     <>
       <InlineFormLabel width={labelWidth ?? 6} tooltip={tooltip} htmlFor={inputId}>
         {name}
       </InlineFormLabel>
-      <div aria-label={ariaLabel}>
+      <div data-testid={testId}>
         <Select
           inputId={inputId}
           menuShouldPortal

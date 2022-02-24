@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -17,6 +17,10 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  /** Code, Builder or Explain */
+  editorMode?: QueryEditorMode;
+  /** Controls if the query preview is shown */
+  editorPreview?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -29,9 +33,14 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
 }
 
+export enum PromQueryType {
+  timeSeriesQuery = 'timeSeriesQuery',
+}
+
 export type ExemplarTraceIdDestination = {
   name: string;
   url?: string;
+  urlDisplayLabel?: string;
   datasourceUid?: string;
 };
 
@@ -110,10 +119,6 @@ export interface PromMetric {
   [index: string]: any;
 }
 
-export function isFetchErrorResponse(response: any): response is FetchError {
-  return 'cancelled' in response;
-}
-
 export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {
   return 'values' in result;
 }
@@ -147,4 +152,15 @@ export interface PromLabelQueryResponse {
     data: string[];
   };
   cancelled?: boolean;
+}
+
+/**
+ * Auto = query.legendFormat == '__auto'
+ * Verbose = query.legendFormat == null/undefined/''
+ * Custom query.legendFormat.length > 0 && query.legendFormat !== '__auto'
+ */
+export enum LegendFormatMode {
+  Auto = '__auto',
+  Verbose = '__verbose',
+  Custom = '__custom',
 }

@@ -22,10 +22,12 @@ import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
+import { autoColor } from '../../Theme';
 import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
+import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = createStyle((theme: Theme) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
       label: header;
@@ -80,7 +82,7 @@ export const getStyles = createStyle((theme: Theme) => {
       padding: 0 0.2em;
     `,
   };
-});
+};
 
 type AccordianKeyValuesProps = {
   className?: string | TNil;
@@ -96,7 +98,7 @@ type AccordianKeyValuesProps = {
 // export for tests
 export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
   const { data } = props;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   if (!Array.isArray(data) || !data.length) {
     return null;
@@ -123,7 +125,7 @@ KeyValuesSummary.defaultProps = {
 export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   const { className, data, highContrast, interactive, isOpen, label, linksGetter, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
   const iconCls = cx(uAlignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;

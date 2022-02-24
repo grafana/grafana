@@ -1,9 +1,5 @@
 import angular from 'angular';
-import Clipboard from 'clipboard';
-import coreModule from '../core/core_module';
-import kbn from 'app/core/utils/kbn';
-import { appEvents } from 'app/core/core';
-import { AppEvents } from '@grafana/data';
+import coreModule from './core_module';
 
 /** @ngInject */
 function tip($compile: any) {
@@ -14,35 +10,12 @@ function tip($compile: any) {
         '<i class="grafana-tip fa fa-' +
         (attrs.icon || 'question-circle') +
         '" bs-tooltip="\'' +
-        kbn.addSlashes(elem.text()) +
+        // here we double-html-encode any special characters in the source string
+        // this is needed so that the final html contains the encoded entities as they
+        // will be decoded when _t is parsed by angular
+        elem.text().replace(/[\'\"\\{}<>&]/g, (m: string) => '&amp;#' + m.charCodeAt(0) + ';') +
         '\'"></i>';
-      _t = _t.replace(/{/g, '\\{').replace(/}/g, '\\}');
       elem.replaceWith($compile(angular.element(_t))(scope));
-    },
-  };
-}
-
-function clipboardButton() {
-  return {
-    scope: {
-      getText: '&clipboardButton',
-    },
-    link: (scope: any, elem: any) => {
-      scope.clipboard = new Clipboard(elem[0], {
-        text: () => {
-          return scope.getText();
-        },
-      });
-
-      scope.clipboard.on('success', () => {
-        appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-      });
-
-      scope.$on('$destroy', () => {
-        if (scope.clipboard) {
-          scope.clipboard.destroy();
-        }
-      });
     },
   };
 }
@@ -208,7 +181,6 @@ function gfDropdown($parse: any, $compile: any, $timeout: any) {
 }
 
 coreModule.directive('tip', tip);
-coreModule.directive('clipboardButton', clipboardButton);
 coreModule.directive('compile', compile);
 coreModule.directive('watchChange', watchChange);
 coreModule.directive('editorOptBool', editorOptBool);

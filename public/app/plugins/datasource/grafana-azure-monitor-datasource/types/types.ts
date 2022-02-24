@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
-import Datasource from '../datasource';
 
+import Datasource from '../datasource';
 import { AzureMonitorQuery } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -64,6 +64,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   logAnalyticsClientId?: string;
   /** @deprecated Azure Logs credentials */
   logAnalyticsSubscriptionId?: string;
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsDefaultWorkspace?: string;
 
   // App Insights
   appInsightsAppId?: string;
@@ -157,10 +159,12 @@ export interface AzureResourceSummaryItem {
   resourceName: string | undefined;
 }
 
-export interface RawAzureResourceGroupItem {
-  subscriptionURI: string;
+export interface RawAzureSubscriptionItem {
   subscriptionName: string;
+  subscriptionId: string;
+}
 
+export interface RawAzureResourceGroupItem {
   resourceGroupURI: string;
   resourceGroupName: string;
 }

@@ -1,6 +1,5 @@
 import { chunk, flatten, initial, startCase, uniqBy } from 'lodash';
 import { ALIGNMENTS, AGGREGATIONS, SYSTEM_LABELS } from './constants';
-import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from './datasource';
 import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { MetricDescriptor, ValueTypes, MetricKind, AlignmentTypes, PreprocessorType, Filter } from './types';
@@ -117,8 +116,6 @@ export const stringArrayToFilters = (filterArray: string[]) =>
     value,
     condition,
   }));
-
-export const toOption = (value: string) => ({ label: value, value } as SelectableValue<string>);
 
 export const formatCloudMonitoringError = (error: any) => {
   let message = error.statusText ?? '';

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,11 +18,11 @@ import (
 
 type UsageStats struct {
 	Cfg           *setting.Cfg
-	Bus           bus.Bus
-	SQLStore      *sqlstore.SQLStore
-	PluginManager plugins.Manager
+	SQLStore      sqlstore.Store
+	pluginStore   plugins.Store
 	SocialService social.Service
 	kvStore       *kvstore.NamespacedKVStore
+	RouteRegister routing.RouteRegister
 
 	log log.Logger
 
@@ -32,18 +33,21 @@ type UsageStats struct {
 	sendReportCallbacks      []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, pluginManager plugins.Manager,
-	socialService social.Service, kvStore kvstore.KVStore) *UsageStats {
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore, pluginStore plugins.Store,
+	socialService social.Service, kvStore kvstore.KVStore, routeRegister routing.RouteRegister,
+) *UsageStats {
 	s := &UsageStats{
 		Cfg:            cfg,
-		Bus:            bus,
 		SQLStore:       sqlStore,
 		oauthProviders: socialService.GetOAuthProviders(),
-		PluginManager:  pluginManager,
+		RouteRegister:  routeRegister,
+		pluginStore:    pluginStore,
 		kvStore:        kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:            log.New("infra.usagestats"),
 		startTime:      time.Now(),
 	}
+
+	s.registerAPIEndpoints()
 
 	return s
 }

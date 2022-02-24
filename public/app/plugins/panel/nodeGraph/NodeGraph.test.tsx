@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
-jest.mock('./layout.worker.js');
+import { act } from 'react-dom/test-utils';
 
 jest.mock('react-use/lib/useMeasure', () => {
   return {
@@ -15,12 +15,19 @@ jest.mock('react-use/lib/useMeasure', () => {
 });
 
 describe('NodeGraph', () => {
-  it('doesnt fail without any data', async () => {
+  const origError = console.error;
+  const consoleErrorMock = jest.fn();
+  afterEach(() => (console.error = origError));
+  beforeEach(() => (console.error = consoleErrorMock));
+
+  it('shows no data message without any data', async () => {
     render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
+
+    await screen.findByText('No data');
   });
 
   it('can zoom in and out', async () => {
-    render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
+    render(<NodeGraph dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([[0, 1]])]} getLinks={() => []} />);
     const zoomIn = await screen.findByTitle(/Zoom in/);
     const zoomOut = await screen.findByTitle(/Zoom out/);
 
@@ -79,11 +86,15 @@ describe('NodeGraph', () => {
     const node = await screen.findByLabelText(/Node: service:0/);
     // This shows warning because there is no position for the click. We cannot add any because we use pageX/Y in the
     // context menu which is experimental (but supported) property and userEvents does not seem to support that
-    userEvent.click(node);
+    act(() => {
+      userEvent.click(node);
+    });
     await screen.findByText(/Node traces/);
 
     const edge = await screen.findByLabelText(/Edge from/);
-    userEvent.click(edge);
+    act(() => {
+      userEvent.click(edge);
+    });
     await screen.findByText(/Edge traces/);
   });
 
@@ -172,7 +183,9 @@ describe('NodeGraph', () => {
     expect(node).toBeInTheDocument();
 
     const marker = await screen.findByLabelText(/Hidden nodes marker: 3/);
-    userEvent.click(marker);
+    act(() => {
+      userEvent.click(marker);
+    });
 
     expect(screen.queryByLabelText(/Node: service:0/)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/Node: service:4/)).toBeInTheDocument();

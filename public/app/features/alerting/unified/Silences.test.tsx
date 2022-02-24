@@ -5,7 +5,6 @@ import { dateTime } from '@grafana/data';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { fetchSilences, fetchAlerts, createOrUpdateSilence } from './api/alertmanager';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { configureStore } from 'app/store/configureStore';
 import Silences from './Silences';
 import { mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv, mockSilence } from './mocks';
@@ -17,11 +16,13 @@ import userEvent from '@testing-library/user-event';
 
 jest.mock('./api/alertmanager');
 
+const TEST_TIMEOUT = 60000;
+
 const mocks = {
   api: {
-    fetchSilences: typeAsJestMock(fetchSilences),
-    fetchAlerts: typeAsJestMock(fetchAlerts),
-    createOrUpdateSilence: typeAsJestMock(createOrUpdateSilence),
+    fetchSilences: jest.mocked(fetchSilences),
+    fetchAlerts: jest.mocked(fetchAlerts),
+    createOrUpdateSilence: jest.mocked(createOrUpdateSilence),
   },
 };
 
@@ -58,7 +59,6 @@ const ui = {
     matcherName: byPlaceholderText('label'),
     matcherValue: byPlaceholderText('value'),
     comment: byPlaceholderText('Details about the silence'),
-    createdBy: byPlaceholderText('User'),
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
@@ -99,53 +99,65 @@ describe('Silences', () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
-  it('loads and shows silences', async () => {
-    renderSilences();
-    await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
+  it(
+    'loads and shows silences',
+    async () => {
+      renderSilences();
+      await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
+      await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
-    expect(ui.silencesTable.query()).not.toBeNull();
+      expect(ui.silencesTable.query()).not.toBeNull();
 
-    const silences = ui.silenceRow.queryAll();
-    expect(silences).toHaveLength(2);
-    expect(silences[0]).toHaveTextContent('foo=bar');
-    expect(silences[1]).toHaveTextContent('foo!=bar');
-  });
+      const silences = ui.silenceRow.queryAll();
+      expect(silences).toHaveLength(2);
+      expect(silences[0]).toHaveTextContent('foo=bar');
+      expect(silences[1]).toHaveTextContent('foo!=bar');
+    },
+    TEST_TIMEOUT
+  );
 
-  it('shows the correct number of silenced alerts', async () => {
-    mocks.api.fetchAlerts.mockImplementation(() => {
-      return Promise.resolve([
-        mockAlertmanagerAlert({
-          labels: { foo: 'bar', buzz: 'bazz' },
-          status: { state: AlertState.Suppressed, silencedBy: ['12345'], inhibitedBy: [] },
-        }),
-        mockAlertmanagerAlert({
-          labels: { foo: 'bar', buzz: 'bazz' },
-          status: { state: AlertState.Suppressed, silencedBy: ['12345'], inhibitedBy: [] },
-        }),
-      ]);
-    });
+  it(
+    'shows the correct number of silenced alerts',
+    async () => {
+      mocks.api.fetchAlerts.mockImplementation(() => {
+        return Promise.resolve([
+          mockAlertmanagerAlert({
+            labels: { foo: 'bar', buzz: 'bazz' },
+            status: { state: AlertState.Suppressed, silencedBy: ['12345'], inhibitedBy: [] },
+          }),
+          mockAlertmanagerAlert({
+            labels: { foo: 'bar', buzz: 'bazz' },
+            status: { state: AlertState.Suppressed, silencedBy: ['12345'], inhibitedBy: [] },
+          }),
+        ]);
+      });
 
-    renderSilences();
-    await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
+      renderSilences();
+      await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
+      await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
-    const silencedAlertRows = ui.silencedAlertCell.getAll(ui.silencesTable.get());
-    expect(silencedAlertRows).toHaveLength(2);
-    expect(silencedAlertRows[0]).toHaveTextContent('2');
-    expect(silencedAlertRows[1]).toHaveTextContent('0');
-  });
+      const silencedAlertRows = ui.silencedAlertCell.getAll(ui.silencesTable.get());
+      expect(silencedAlertRows).toHaveLength(2);
+      expect(silencedAlertRows[0]).toHaveTextContent('2');
+      expect(silencedAlertRows[1]).toHaveTextContent('0');
+    },
+    TEST_TIMEOUT
+  );
 
-  it('filters silences by matchers', async () => {
-    renderSilences();
-    await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
+  it(
+    'filters silences by matchers',
+    async () => {
+      renderSilences();
+      await waitFor(() => expect(mocks.api.fetchSilences).toHaveBeenCalled());
+      await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
-    const queryBar = ui.queryBar.get();
-    userEvent.paste(queryBar, 'foo=bar');
+      const queryBar = ui.queryBar.get();
+      userEvent.paste(queryBar, 'foo=bar');
 
-    await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(1));
-  });
+      await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(1));
+    },
+    TEST_TIMEOUT
+  );
 });
 
 describe('Silence edit', () => {
@@ -157,94 +169,100 @@ describe('Silence edit', () => {
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
-  it('prefills the matchers field with matchers params', async () => {
-    renderSilences(
-      `${baseUrlPath}?matchers=${encodeURIComponent('foo=bar,bar=~ba.+,hello!=world,cluster!~us-central.*')}`
-    );
-    await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
+  it(
+    'prefills the matchers field with matchers params',
+    async () => {
+      const matchersParams = ['foo=bar', 'bar=~ba.+', 'hello!=world', 'cluster!~us-central.*'];
+      const matchersQueryString = matchersParams.map((matcher) => `matcher=${encodeURIComponent(matcher)}`).join('&');
 
-    const matchers = ui.editor.matchersField.queryAll();
-    expect(matchers).toHaveLength(4);
+      renderSilences(`${baseUrlPath}?${matchersQueryString}`);
+      await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
-    expect(ui.editor.matcherName.query(matchers[0])).toHaveValue('foo');
-    expect(ui.editor.matcherOperator(MatcherOperator.equal).query(matchers[0])).not.toBeNull();
-    expect(ui.editor.matcherValue.query(matchers[0])).toHaveValue('bar');
+      const matchers = ui.editor.matchersField.queryAll();
+      expect(matchers).toHaveLength(4);
 
-    expect(ui.editor.matcherName.query(matchers[1])).toHaveValue('bar');
-    expect(ui.editor.matcherOperator(MatcherOperator.regex).query(matchers[1])).not.toBeNull();
-    expect(ui.editor.matcherValue.query(matchers[1])).toHaveValue('ba.+');
+      expect(ui.editor.matcherName.query(matchers[0])).toHaveValue('foo');
+      expect(ui.editor.matcherOperator(MatcherOperator.equal).query(matchers[0])).not.toBeNull();
+      expect(ui.editor.matcherValue.query(matchers[0])).toHaveValue('bar');
 
-    expect(ui.editor.matcherName.query(matchers[2])).toHaveValue('hello');
-    expect(ui.editor.matcherOperator(MatcherOperator.notEqual).query(matchers[2])).not.toBeNull();
-    expect(ui.editor.matcherValue.query(matchers[2])).toHaveValue('world');
+      expect(ui.editor.matcherName.query(matchers[1])).toHaveValue('bar');
+      expect(ui.editor.matcherOperator(MatcherOperator.regex).query(matchers[1])).not.toBeNull();
+      expect(ui.editor.matcherValue.query(matchers[1])).toHaveValue('ba.+');
 
-    expect(ui.editor.matcherName.query(matchers[3])).toHaveValue('cluster');
-    expect(ui.editor.matcherOperator(MatcherOperator.notRegex).query(matchers[3])).not.toBeNull();
-    expect(ui.editor.matcherValue.query(matchers[3])).toHaveValue('us-central.*');
-  });
+      expect(ui.editor.matcherName.query(matchers[2])).toHaveValue('hello');
+      expect(ui.editor.matcherOperator(MatcherOperator.notEqual).query(matchers[2])).not.toBeNull();
+      expect(ui.editor.matcherValue.query(matchers[2])).toHaveValue('world');
 
-  it('creates a new silence', async () => {
-    renderSilences(baseUrlPath);
-    await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
+      expect(ui.editor.matcherName.query(matchers[3])).toHaveValue('cluster');
+      expect(ui.editor.matcherOperator(MatcherOperator.notRegex).query(matchers[3])).not.toBeNull();
+      expect(ui.editor.matcherValue.query(matchers[3])).toHaveValue('us-central.*');
+    },
+    TEST_TIMEOUT
+  );
 
-    const start = new Date();
-    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  it(
+    'creates a new silence',
+    async () => {
+      renderSilences(baseUrlPath);
+      await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
-    const startDateString = dateTime(start).format('YYYY-MM-DD');
-    const endDateString = dateTime(end).format('YYYY-MM-DD');
+      const start = new Date();
+      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      const now = dateTime().format('YYYY-MM-DD HH:mm');
 
-    userEvent.clear(ui.editor.durationInput.get());
-    userEvent.type(ui.editor.durationInput.get(), '1d');
+      const startDateString = dateTime(start).format('YYYY-MM-DD');
+      const endDateString = dateTime(end).format('YYYY-MM-DD');
 
-    await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1d'));
-    await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
-    await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(endDateString));
+      userEvent.clear(ui.editor.durationInput.get());
+      userEvent.type(ui.editor.durationInput.get(), '1d');
 
-    userEvent.type(ui.editor.matcherName.get(), 'foo');
-    userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
-    userEvent.tab();
-    userEvent.type(ui.editor.matcherValue.get(), 'bar');
+      await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1d'));
+      await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
+      await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(endDateString));
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
-    userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
-    userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
-    userEvent.tab();
-    userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
+      userEvent.type(ui.editor.matcherName.get(), 'foo');
+      userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
+      userEvent.tab();
+      userEvent.type(ui.editor.matcherValue.get(), 'bar');
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
-    userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
-    userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
-    userEvent.tab();
-    userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
+      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+      userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
+      userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
+      userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
+      userEvent.tab();
+      userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
-    userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
-    userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
-    userEvent.tab();
-    userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
+      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+      userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
+      userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
+      userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
+      userEvent.tab();
+      userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
 
-    userEvent.type(ui.editor.comment.get(), 'Test');
-    userEvent.type(ui.editor.createdBy.get(), 'Homer Simpson');
+      // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
+      userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
+      userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
+      userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
+      userEvent.tab();
+      userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
 
-    userEvent.click(ui.editor.submit.get());
+      userEvent.click(ui.editor.submit.get());
 
-    await waitFor(() =>
-      expect(mocks.api.createOrUpdateSilence).toHaveBeenCalledWith(
-        'grafana',
-        expect.objectContaining({
-          comment: 'Test',
-          createdBy: 'Homer Simpson',
-          matchers: [
-            { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
-            { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },
-            { isEqual: true, isRegex: true, name: 'region', value: 'us-west-.*' },
-            { isEqual: false, isRegex: true, name: 'env', value: 'dev|staging' },
-          ],
-        })
-      )
-    );
-  });
+      await waitFor(() =>
+        expect(mocks.api.createOrUpdateSilence).toHaveBeenCalledWith(
+          'grafana',
+          expect.objectContaining({
+            comment: `created ${now}`,
+            matchers: [
+              { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
+              { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },
+              { isEqual: true, isRegex: true, name: 'region', value: 'us-west-.*' },
+              { isEqual: false, isRegex: true, name: 'env', value: 'dev|staging' },
+            ],
+          })
+        )
+      );
+    },
+    TEST_TIMEOUT
+  );
 });

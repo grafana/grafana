@@ -17,14 +17,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -38,12 +40,14 @@ type DataSourceProxy struct {
 	ctx                *models.ReqContext
 	targetUrl          *url.URL
 	proxyPath          string
-	route              *plugins.AppPluginRoute
-	plugin             *plugins.DataSourcePlugin
+	matchedRoute       *plugins.Route
+	pluginRoutes       []*plugins.Route
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
-	dataSourcesService *datasources.Service
+	dataSourcesService datasources.DataSourceService
+	tracer             tracing.Tracer
+	secretsService     secrets.Service
 }
 
 type handleResponseTransport struct {
@@ -56,6 +60,7 @@ func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, 
 		return nil, err
 	}
 	res.Header.Del("Set-Cookie")
+	proxyutil.SetProxyResponseHeaders(res.Header)
 	return res, nil
 }
 
@@ -75,11 +80,13 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
-func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+func NewDataSourceProxy(ds *models.DataSource, pluginRoutes []*plugins.Route, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
-	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service) (*DataSourceProxy, error) {
+	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
+	tracer tracing.Tracer, secretsService secrets.Service) (*DataSourceProxy, error) {
+
 	url := ds.Url
-	if cfg.UnifiedAlerting.Enabled && isLotex(ds.Type) && isRulerPath(proxyPath) {
+	if *cfg.UnifiedAlerting.Enabled && isLotex(ds.Type) && isRulerPath(proxyPath) {
 		rulerProps := ds.GetRulerProperties()
 		if rulerProps.Url != "" {
 			url = rulerProps.Url
@@ -93,7 +100,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 
 	return &DataSourceProxy{
 		ds:                 ds,
-		plugin:             plugin,
+		pluginRoutes:       pluginRoutes,
 		ctx:                ctx,
 		proxyPath:          proxyPath,
 		targetUrl:          targetURL,
@@ -101,6 +108,8 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 		clientProvider:     clientProvider,
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
+		tracer:             tracer,
+		secretsService:     secretsService,
 	}, nil
 }
 
@@ -163,35 +172,29 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	}
 
 	proxy.logRequest()
-
-	span, ctx := opentracing.StartSpanFromContext(proxy.ctx.Req.Context(), "datasource reverse proxy")
-	defer span.Finish()
+	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
+	defer span.End()
 
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
-	span.SetTag("datasource_name", proxy.ds.Name)
-	span.SetTag("datasource_type", proxy.ds.Type)
-	span.SetTag("user", proxy.ctx.SignedInUser.Login)
-	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
+	span.SetAttributes("datasource_name", proxy.ds.Name, attribute.Key("datasource_name").String(proxy.ds.Name))
+	span.SetAttributes("datasource_type", proxy.ds.Type, attribute.Key("datasource_type").String(proxy.ds.Type))
+	span.SetAttributes("user", proxy.ctx.SignedInUser.Login, attribute.Key("user").String(proxy.ctx.SignedInUser.Login))
+	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgId, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
-	if err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Header)); err != nil {
-		logger.Error("Failed to inject span context instance", "err", err)
-	}
+	proxy.tracer.Inject(ctx, proxy.ctx.Req.Header, span)
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }
 
-func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
+func (proxy *DataSourceProxy) addTraceFromHeaderValue(span tracing.Span, headerName string, tagName string) {
 	panelId := proxy.ctx.Req.Header.Get(headerName)
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
-		span.SetTag(tagName, dashId)
+		span.SetAttributes(tagName, dashId, attribute.Key(tagName).Int(dashId))
 	}
 }
 
@@ -270,14 +273,14 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	secureJsonData, err := proxy.dataSourcesService.EncryptionService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData, setting.SecretKey)
+	secureJsonData, err := proxy.secretsService.DecryptJsonData(req.Context(), proxy.ds.SecureJsonData)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
 	}
 
-	if proxy.route != nil {
-		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, DSInfo{
+	if proxy.matchedRoute != nil {
+		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
 			ID:                      proxy.ds.Id,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
@@ -288,6 +291,11 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
+
+			idToken, ok := token.Extra("id_token").(string)
+			if ok && idToken != "" {
+				req.Header.Set("X-ID-Token", idToken)
+			}
 		}
 	}
 }
@@ -310,27 +318,25 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// found route if there are any
-	if len(proxy.plugin.Routes) > 0 {
-		for _, route := range proxy.plugin.Routes {
-			// method match
-			if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
-				continue
-			}
-
-			// route match
-			if !strings.HasPrefix(proxy.proxyPath, route.Path) {
-				continue
-			}
-
-			if route.ReqRole.IsValid() {
-				if !proxy.ctx.HasUserRole(route.ReqRole) {
-					return errors.New("plugin proxy route access denied")
-				}
-			}
-
-			proxy.route = route
-			return nil
+	for _, route := range proxy.pluginRoutes {
+		// method match
+		if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
+			continue
 		}
+
+		// route match
+		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+			continue
+		}
+
+		if route.ReqRole.IsValid() {
+			if !proxy.ctx.HasUserRole(route.ReqRole) {
+				return errors.New("plugin proxy route access denied")
+			}
+		}
+
+		proxy.matchedRoute = route
+		return nil
 	}
 
 	// Trailing validation below this point for routes that were not matched

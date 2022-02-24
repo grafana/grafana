@@ -1,4 +1,4 @@
-import { createSlice, createEntityAdapter, AnyAction, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createEntityAdapter, Reducer, AnyAction, PayloadAction } from '@reduxjs/toolkit';
 import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
 import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
@@ -97,4 +97,4 @@ const slice = createSlice({
 });
 
 export const { setDisplayMode } = slice.actions;
-export const { reducer } = slice;
+export const reducer: Reducer<ReducerState, AnyAction> = slice.reducer;

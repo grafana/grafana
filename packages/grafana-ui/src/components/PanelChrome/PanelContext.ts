@@ -15,7 +15,7 @@ export interface PanelContext {
   eventBus: EventBus;
 
   /** Dashboard panels sync */
-  sync?: DashboardCursorSync;
+  sync?: () => DashboardCursorSync;
 
   /** Information on what the outer container is */
   app?: CoreApp | 'string';
@@ -59,6 +59,11 @@ export interface PanelContext {
 
   /** Update instance state, this is only supported in dashboard panel context currently */
   onInstanceStateChange?: (state: any) => void;
+
+  /**
+   * Called when a panel is changing the sort order of the legends.
+   */
+  onToggleLegendSort?: (sortBy: string) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

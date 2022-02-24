@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
@@ -38,7 +39,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.DispatchCtx(ctx, &statsQuery); err != nil {
+	if err := uss.SQLStore.GetSystemStats(ctx, &statsQuery); err != nil {
 		uss.log.Error("Failed to get system stats", "error", err)
 		return report, err
 	}
@@ -50,15 +51,16 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.viewers.count"] = statsQuery.Result.Viewers
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
-	metrics["stats.plugins.panels.count"] = uss.PluginManager.PanelCount()
-	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
+	metrics["stats.plugins.apps.count"] = uss.appCount(ctx)
+	metrics["stats.plugins.panels.count"] = uss.panelCount(ctx)
+	metrics["stats.plugins.datasources.count"] = uss.dataSourceCount(ctx)
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
 	metrics["stats.active_editors.count"] = statsQuery.Result.ActiveEditors
 	metrics["stats.active_viewers.count"] = statsQuery.Result.ActiveViewers
 	metrics["stats.active_sessions.count"] = statsQuery.Result.ActiveSessions
+	metrics["stats.monthly_active_users.count"] = statsQuery.Result.MonthlyActiveUsers
 	metrics["stats.daily_active_users.count"] = statsQuery.Result.DailyActiveUsers
 	metrics["stats.daily_active_admins.count"] = statsQuery.Result.DailyActiveAdmins
 	metrics["stats.daily_active_editors.count"] = statsQuery.Result.DailyActiveEditors
@@ -82,6 +84,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+	metrics["stats.api_keys.count"] = statsQuery.Result.APIKeys
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -92,7 +95,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.edition.oss.count"] = ossEditionCount
 	metrics["stats.edition.enterprise.count"] = enterpriseEditionCount
 
-	uss.registerExternalMetrics(metrics)
+	uss.registerExternalMetrics(ctx, metrics)
 
 	// must run after registration of external metrics
 	if v, ok := metrics["stats.valid_license.count"]; ok {
@@ -110,7 +113,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
+	if err := uss.SQLStore.GetDataSourceStats(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return report, err
 	}
@@ -120,7 +123,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if uss.ShouldBeReported(dsStat.Type) {
+		if uss.ShouldBeReported(ctx, dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -129,7 +132,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	metrics["stats.ds.other.count"] = dsOtherCount
 
 	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
-	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+	if err := uss.SQLStore.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
 		uss.log.Error("Failed to get elasticsearch json data", "error", err)
 		return report, err
 	}
@@ -152,7 +155,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
-	if err := uss.Bus.DispatchCtx(ctx, &dsAccessStats); err != nil {
+	if err := uss.SQLStore.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
 		uss.log.Error("Failed to get datasource access stats", "error", err)
 		return report, err
 	}
@@ -168,7 +171,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if uss.ShouldBeReported(dsAccessStat.Type) {
+		if uss.ShouldBeReported(ctx, dsAccessStat.Type) {
 			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -182,7 +185,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
-	if err := uss.Bus.DispatchCtx(ctx, &anStats); err != nil {
+	if err := uss.SQLStore.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
 		uss.log.Error("Failed to get alert notification stats", "error", err)
 		return report, err
 	}
@@ -230,9 +233,9 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	return report, nil
 }
 
-func (uss *UsageStats) registerExternalMetrics(metrics map[string]interface{}) {
+func (uss *UsageStats) registerExternalMetrics(ctx context.Context, metrics map[string]interface{}) {
 	for _, fn := range uss.externalMetrics {
-		fnMetrics, err := fn()
+		fnMetrics, err := fn(ctx)
 		if err != nil {
 			uss.log.Error("Failed to fetch external metrics", "error", err)
 			continue
@@ -293,7 +296,7 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.DispatchCtx(ctx, &statsQuery); err != nil {
+	if err := uss.SQLStore.GetSystemStats(ctx, &statsQuery); err != nil {
 		uss.log.Error("Failed to get system stats", "error", err)
 		return
 	}
@@ -317,7 +320,7 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.DispatchCtx(ctx, &dsStats); err != nil {
+	if err := uss.SQLStore.GetDataSourceStats(ctx, &dsStats); err != nil {
 		uss.log.Error("Failed to get datasource stats", "error", err)
 		return
 	}
@@ -327,9 +330,9 @@ func (uss *UsageStats) updateTotalStats(ctx context.Context) {
 	}
 }
 
-func (uss *UsageStats) ShouldBeReported(dsType string) bool {
-	ds := uss.PluginManager.GetDataSource(dsType)
-	if ds == nil {
+func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool {
+	ds, exists := uss.pluginStore.Plugin(ctx, dsType)
+	if !exists {
 		return false
 	}
 
@@ -362,4 +365,16 @@ func (uss *UsageStats) GetUsageStatsId(ctx context.Context) string {
 	}
 
 	return anonId
+}
+
+func (uss *UsageStats) appCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.App))
+}
+
+func (uss *UsageStats) panelCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.Panel))
+}
+
+func (uss *UsageStats) dataSourceCount(ctx context.Context) int {
+	return len(uss.pluginStore.Plugins(ctx, plugins.DataSource))
 }

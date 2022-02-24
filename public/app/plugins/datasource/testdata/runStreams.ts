@@ -9,7 +9,6 @@ import {
   CSVReader,
   Field,
   LoadingState,
-  StreamingDataFrame,
   DataFrameSchema,
   DataFrameData,
 } from '@grafana/data';
@@ -17,6 +16,7 @@ import {
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
+import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -51,10 +51,9 @@ export function runSignalStream(
 
     const schema: DataFrameSchema = {
       refId: target.refId,
-      name: target.alias || 'Signal ' + target.refId,
       fields: [
         { name: 'time', type: FieldType.time },
-        { name: 'value', type: FieldType.number },
+        { name: target.alias ?? 'value', type: FieldType.number },
       ],
     };
 
@@ -65,7 +64,7 @@ export function runSignalStream(
       schema.fields.push({ name: 'Max' + suffix, type: FieldType.number });
     }
 
-    const frame = new StreamingDataFrame({ schema }, { maxLength: maxDataPoints });
+    const frame = StreamingDataFrame.fromDataFrameJSON({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
     let timeoutId: any = null;

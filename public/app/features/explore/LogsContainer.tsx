@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Collapse } from '@grafana/ui';
 import {
   AbsoluteTimeRange,
@@ -34,7 +34,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
+class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -158,7 +158,18 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange } = item;
+  const {
+    logsResult,
+    loading,
+    scanning,
+    datasourceInstance,
+    isLive,
+    isPaused,
+    range,
+    absoluteRange,
+    logsVolumeDataProvider,
+    logsVolumeData,
+  } = item;
   const timeZone = getTimeZone(state.user);
 
   return {
@@ -175,6 +186,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    logsVolumeDataProvider,
+    logsVolumeData,
   };
 }
 

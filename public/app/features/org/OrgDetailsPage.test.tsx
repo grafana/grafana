@@ -7,6 +7,14 @@ import { Organization } from '../../types';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setOrganizationName } from './state/reducers';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     organization: {} as Organization,

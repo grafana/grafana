@@ -2,7 +2,12 @@ package encryption
 
 import "context"
 
-type Service interface {
+// Internal must not be used for general purpose encryption.
+// This service is used as an internal component for envelope encryption
+// and for very specific few use cases that still require legacy encryption.
+//
+// Unless there is any specific reason, you must use secrets.Service instead.
+type Internal interface {
 	Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error)
 

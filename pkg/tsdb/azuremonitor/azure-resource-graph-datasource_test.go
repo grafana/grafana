@@ -2,8 +2,9 @@ package azuremonitor
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,15 +25,15 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 	tests := []struct {
 		name                      string
 		queryModel                []backend.DataQuery
-		timeRange                 plugins.DataTimeRange
+		timeRange                 backend.TimeRange
 		azureResourceGraphQueries []*AzureResourceGraphQuery
 		Err                       require.ErrorAssertionFunc
 	}{
 		{
 			name: "Query with macros should be interpolated",
-			timeRange: plugins.DataTimeRange{
-				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+			timeRange: backend.TimeRange{
+				From: fromStart,
+				To:   fromStart.Add(34 * time.Minute),
 			},
 			queryModel: []backend.DataQuery{
 				{
@@ -151,4 +151,47 @@ func TestGetAzurePortalUrl(t *testing.T) {
 		}
 		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
+}
+
+func TestUnmarshalResponse400(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	res, err := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 400,
+		Status:     "400 Bad Request",
+		Body:       io.NopCloser(strings.NewReader(("Azure Error Message"))),
+	})
+
+	expectedErrMsg := "400 Bad Request. Azure Resource Graph error: Azure Error Message"
+
+	assert.Equal(t, expectedErrMsg, err.Error())
+	assert.Empty(t, res)
+}
+
+func TestUnmarshalResponse200Invalid(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	res, err := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 200,
+		Status:     "OK",
+		Body:       io.NopCloser(strings.NewReader(("Azure Data"))),
+	})
+
+	expectedRes := AzureResourceGraphResponse{}
+	expectedErr := "invalid character 'A' looking for beginning of value"
+
+	assert.Equal(t, expectedErr, err.Error())
+	assert.Equal(t, expectedRes, res)
+}
+
+func TestUnmarshalResponse200(t *testing.T) {
+	datasource := &AzureResourceGraphDatasource{}
+	res, err2 := datasource.unmarshalResponse(&http.Response{
+		StatusCode: 200,
+		Status:     "OK",
+		Body:       io.NopCloser(strings.NewReader("{}")),
+	})
+
+	expectedRes := AzureResourceGraphResponse{}
+
+	assert.NoError(t, err2)
+	assert.Equal(t, expectedRes, res)
 }

@@ -16,7 +16,7 @@ import { AnnotationsWorker } from './AnnotationsWorker';
 import { getAnnotationsByPanelId } from './utils';
 import { DashboardModel } from '../../../dashboard/state';
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
-import { RefreshEvent } from '../../../../types/events';
+import { RefreshEvent } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 

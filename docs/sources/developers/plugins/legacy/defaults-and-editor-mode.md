@@ -104,9 +104,9 @@ Note that there are some Angular attributes here. _ng-model_ will update the pan
 
 {{< figure class="float-right"  src="/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
 
-On the editor tab we use a drop down for 12/24 hour clock, an input field for font size and a color picker for the background color.
+On the editor tab we use a drop-down for 12/24 hour clock, an input field for font size and a color picker for the background color.
 
-The drop down/select has its own _gf-form-select-wrapper_ css class and looks like this:
+The drop-down/select has its own _gf-form-select-wrapper_ css class and looks like this:
 
 ```html
 <div class="gf-form">

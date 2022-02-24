@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getPanelLinksSupplier } from 'app/angular/panel/panellinks/linkSuppliers';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';

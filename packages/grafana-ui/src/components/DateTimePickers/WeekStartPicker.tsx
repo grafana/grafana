@@ -37,7 +37,7 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
     <Select
       inputId={inputId}
       value={weekStarts.find((item) => item.value === value)?.value}
-      placeholder="Choose starting day of the week"
+      placeholder={selectors.components.WeekStartPicker.placeholder}
       autoFocus={autoFocus}
       openMenuOnFocus={true}
       width={width}
@@ -45,7 +45,6 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
       onChange={onChangeWeekStart}
       onBlur={onBlur}
       disabled={disabled}
-      aria-label={selectors.components.WeekStartPicker.container}
       menuShouldPortal={true}
     />
   );

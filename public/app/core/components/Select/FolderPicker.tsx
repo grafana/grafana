@@ -174,7 +174,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     const { enableCreateNew, inputId } = this.props;
 
     return (
-      <div aria-label={selectors.components.FolderPicker.container}>
+      <div data-testid={selectors.components.FolderPicker.containerV2}>
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}

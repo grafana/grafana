@@ -14,14 +14,13 @@
 
 import * as React from 'react';
 import { css, cx } from '@emotion/css';
-
+import { stylesFactory } from '@grafana/ui';
 import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 import { TNil } from '../../types';
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
-import { createStyle } from '../../Theme';
 
 // exported for testing
-export const getStyles = createStyle(() => {
+export const getStyles = stylesFactory(() => {
   return {
     TimelineViewingLayer: css`
       label: TimelineViewingLayer;

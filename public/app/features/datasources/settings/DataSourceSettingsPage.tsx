@@ -24,7 +24,7 @@ import { StoreState, AccessControlAction } from 'app/types/';
 import { DataSourceSettings, urlUtil } from '@grafana/data';
 import { Alert, Button } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
-import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { CloudInfoBox } from './CloudInfoBox';
@@ -167,8 +167,9 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   }
 
   renderLoadError() {
-    const { loadError } = this.props;
-    const canDeleteDataSources = !this.isReadOnly() && contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
+    const { loadError, dataSource } = this.props;
+    const canDeleteDataSource =
+      !this.isReadOnly() && contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesDelete, dataSource);
 
     const node = {
       text: loadError!,
@@ -185,7 +186,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         <Page.Contents isLoading={this.props.loading}>
           {this.isReadOnly() && this.renderIsReadOnlyMessage()}
           <div className="gf-form-button-row">
-            {canDeleteDataSources && (
+            {canDeleteDataSource && (
               <Button type="submit" variant="destructive" onClick={this.onDelete}>
                 Delete
               </Button>
@@ -230,11 +231,12 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderSettings() {
     const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, plugin, testingStatus } = this.props;
-    const canEditDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+    const canWriteDataSource = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesWrite, dataSource);
+    const canDeleteDataSource = contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesDelete, dataSource);
 
     return (
       <form onSubmit={this.onSubmit}>
-        {!canEditDataSources && this.renderMissingEditRightsMessage()}
+        {!canWriteDataSource && this.renderMissingEditRightsMessage()}
         {this.isReadOnly() && this.renderIsReadOnlyMessage()}
         {dataSourceMeta.state && (
           <div className="gf-form">
@@ -277,7 +279,8 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
         <ButtonRow
           onSubmit={(event) => this.onSubmit(event)}
-          isReadOnly={this.isReadOnly()}
+          canSave={!this.isReadOnly() && canWriteDataSource}
+          canDelete={!this.isReadOnly() && canDeleteDataSource}
           onDelete={this.onDelete}
           onTest={(event) => this.onTest(event)}
           exploreUrl={this.onNavigateToExplore()}
