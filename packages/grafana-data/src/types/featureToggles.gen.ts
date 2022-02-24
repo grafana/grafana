@@ -42,5 +42,7 @@ export interface FeatureToggles {
   validatedQueries?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
+  dashboardComments?: boolean;
+  annotationComments?: boolean;
   migrationLocking?: boolean;
 }

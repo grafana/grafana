@@ -93,7 +93,7 @@ func newTestLive(t *testing.T) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features)
+		features, nil)
 	require.NoError(t, err)
 	return gLive
 }
