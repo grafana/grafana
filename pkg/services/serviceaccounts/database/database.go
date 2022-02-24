@@ -252,14 +252,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		return nil, fmt.Errorf("invalid query for service accounts")
 	}
 	// translate between users and serviceaccountsDTO
-	filters := make([]models.Filter, 0)
-	for filterName := range s.searchUserFilter.GetFilterList() {
-		filter := s.searchUserFilter.GetFilter(filterName, c.QueryStrings(filterName))
-		if filter != nil {
-			filters = append(filters, filter)
-		}
-	}
-
 	err := s.sqlStore.SearchOrgUsers(ctx, query)
 	if err != nil {
 		return nil, err

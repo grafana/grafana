@@ -1,12 +1,13 @@
 import React, { memo, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Button, ConfirmModal, Icon, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState, ServiceAccountDTO, AccessControlAction, Role } from 'app/types';
 import {
   changeFilter,
+  changeQuery,
   fetchACOptions,
   loadServiceAccounts,
   removeServiceAccount,
@@ -14,7 +15,6 @@ import {
   setServiceAccountToRemove,
 } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getServiceAccounts, getServiceAccountsSearchPage, getServiceAccountsSearchQuery } from './state/selectors';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
@@ -29,9 +29,9 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'serviceaccounts'),
-    serviceAccounts: getServiceAccounts(state.serviceAccounts),
-    searchQuery: getServiceAccountsSearchQuery(state.serviceAccounts),
-    searchPage: getServiceAccountsSearchPage(state.serviceAccounts),
+    serviceAccounts: state.serviceAccounts.serviceAccounts,
+    query: state.serviceAccounts.query,
+    page: state.serviceAccounts.page,
     isLoading: state.serviceAccounts.isLoading,
     roleOptions: state.serviceAccounts.roleOptions,
     builtInRoles: state.serviceAccounts.builtInRoles,
@@ -47,6 +47,7 @@ const mapDispatchToProps = {
   removeServiceAccount,
   setServiceAccountToRemove,
   changeFilter,
+  changeQuery,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -63,6 +64,8 @@ const ServiceAccountsListPage = ({
   roleOptions,
   builtInRoles,
   changeFilter,
+  changeQuery,
+  query,
   filters,
   toRemove,
 }: Props) => {
@@ -77,32 +80,34 @@ const ServiceAccountsListPage = ({
 
   const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
-
     updateServiceAccount(updatedServiceAccount);
   };
-  console.log(`serviceAccounts`);
-  console.log(serviceAccounts);
-
   return (
     <Page navModel={navModel}>
       <Page.Contents>
         <h2>Service accounts</h2>
         <div className="page-action-bar" style={{ justifyContent: 'flex-end' }}>
-          {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              New service account
-            </LinkButton>
-          )}
+          <FilterInput
+            placeholder="Search user by login, email, or name."
+            autoFocus={true}
+            value={query}
+            onChange={changeQuery}
+          />
           <RadioButtonGroup
             options={[
               { label: 'All service accounts', value: false },
-              { label: 'Expired', value: true },
+              { label: 'Expired tokens', value: true },
             ]}
             onChange={(value) => changeFilter({ name: 'Expired', value })}
             value={filters.find((f) => f.name === 'Expired')?.value}
             className={styles.filter}
           />
         </div>
+        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+          <LinkButton href="org/serviceaccounts/create" variant="primary">
+            New service account
+          </LinkButton>
+        )}
         {isLoading ? (
           <PageLoader />
         ) : (

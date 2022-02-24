@@ -272,6 +272,7 @@ const getFilters = (filters: UserFilter[]) => {
 };
 
 export function fetchUsers(): ThunkResult<void> {
+  console.log(`fetchusers`);
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters } = getState().userListAdmin;

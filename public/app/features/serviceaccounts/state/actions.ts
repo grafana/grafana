@@ -4,9 +4,12 @@ import {
   acOptionsLoaded,
   builtInRolesLoaded,
   filterChanged,
+  pageChanged,
+  queryChanged,
   serviceAccountLoaded,
+  serviceAccountsFetchBegin,
   serviceAccountsFetchEnd,
-  serviceAccountsLoaded,
+  serviceAccountsFetched,
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
 } from './reducers';
@@ -84,7 +87,7 @@ export function loadServiceAccounts(): ThunkResult<void> {
   return async (dispatch) => {
     try {
       const response = await getBackendSrv().get(BASE_URL, accessControlQueryParam());
-      dispatch(serviceAccountsLoaded(response));
+      dispatch(serviceAccountsFetched(response));
     } catch (error) {
       console.error(error);
     }
@@ -118,16 +121,14 @@ const getFilters = (filters: ServiceAccountFilter[]) => {
 };
 
 export function fetchServiceAccounts(): ThunkResult<void> {
-  console.log(`fetchserviceaccounts`);
+  console.log('fetchServiceAccounts');
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters } = getState().serviceAccounts;
       const result = await getBackendSrv().get(
         `/api/serviceaccounts/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`
       );
-      console.log(`result`);
-      console.log(result);
-      dispatch(serviceAccountsLoaded(result));
+      dispatch(serviceAccountsFetched(result));
     } catch (error) {
       serviceAccountsFetchEnd();
       console.error(error);
@@ -137,10 +138,26 @@ export function fetchServiceAccounts(): ThunkResult<void> {
 
 const fetchServiceAccountsWithDebounce = debounce((dispatch) => dispatch(fetchServiceAccounts()), 500);
 
+export function changeQuery(query: string): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(serviceAccountsFetchBegin());
+    dispatch(queryChanged(query));
+    fetchServiceAccountsWithDebounce(dispatch);
+  };
+}
+
 export function changeFilter(filter: ServiceAccountFilter): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(loadServiceAccounts());
+    dispatch(serviceAccountsFetchBegin());
     dispatch(filterChanged(filter));
     fetchServiceAccountsWithDebounce(dispatch);
+  };
+}
+
+export function changePage(page: number): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(serviceAccountsFetchBegin());
+    dispatch(pageChanged(page));
+    dispatch(fetchServiceAccounts());
   };
 }

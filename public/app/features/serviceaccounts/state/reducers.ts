@@ -45,8 +45,6 @@ export const initialStateList: ServiceAccountsState = {
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'Expired', value: true }],
-  searchPage: 1,
-  searchQuery: '',
 };
 
 interface ServiceAccountsFetched {
@@ -60,18 +58,10 @@ const serviceAccountsSlice = createSlice({
   name: 'serviceaccounts',
   initialState: initialStateList,
   reducers: {
-    serviceAccountsLoaded: (state, action: PayloadAction<ServiceAccountsFetched>): ServiceAccountsState => {
-      console.log(`state`);
-      console.log(state);
-      console.log(`action`);
-      console.log(action);
+    serviceAccountsFetched: (state, action: PayloadAction<ServiceAccountsFetched>): ServiceAccountsState => {
       const { totalCount, perPage, ...rest } = action.payload;
       const totalPages = Math.ceil(totalCount / perPage);
 
-      console.log(`action.payload`);
-      console.log(action.payload);
-      console.log(`rest`);
-      console.log(rest);
       return {
         ...state,
         ...rest,
@@ -80,6 +70,9 @@ const serviceAccountsSlice = createSlice({
         showPaging: totalPages > 1,
         isLoading: false,
       };
+    },
+    serviceAccountsFetchBegin: (state) => {
+      return { ...state, isLoading: true };
     },
     serviceAccountsFetchEnd: (state) => {
       return { ...state, isLoading: false };
@@ -93,10 +86,18 @@ const serviceAccountsSlice = createSlice({
     serviceAccountToRemoveLoaded: (state, action: PayloadAction<ServiceAccountDTO | null>): ServiceAccountsState => {
       return { ...state, serviceAccountToRemove: action.payload };
     },
-    setServiceAccountsSearchQuery: (state, action: PayloadAction<string>): ServiceAccountsState => {
-      // reset searchPage otherwise search results won't appear
-      return { ...state };
+    queryChanged: (state, action: PayloadAction<string>) => {
+      console.log(action);
+      return {
+        ...state,
+        query: action.payload,
+        page: 0,
+      };
     },
+    pageChanged: (state, action: PayloadAction<number>) => ({
+      ...state,
+      page: action.payload,
+    }),
     filterChanged: (state, action: PayloadAction<ServiceAccountFilter>) => {
       const { name, value } = action.payload;
 
@@ -116,13 +117,15 @@ const serviceAccountsSlice = createSlice({
 export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export const {
-  serviceAccountsLoaded,
+  serviceAccountsFetchBegin,
   serviceAccountsFetchEnd,
+  serviceAccountsFetched,
   acOptionsLoaded,
   builtInRolesLoaded,
   serviceAccountToRemoveLoaded,
-  setServiceAccountsSearchQuery,
+  pageChanged,
   filterChanged,
+  queryChanged,
 } = serviceAccountsSlice.actions;
 
 export default {

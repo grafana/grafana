@@ -250,6 +250,14 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		page = 1
 	}
 
+	// filters := make([]models.Filter, 0)
+	// for filterName := range getFilterList() {
+	// 	filter := GetFilter(filterName, c.QueryStrings(filterName))
+	// 	if filter != nil {
+	// 		filters = append(filters, filter)
+	// 	}
+	// }
+
 	query := &models.SearchOrgUsersQuery{
 		OrgID:            c.OrgId,
 		Query:            c.Query("query"),
@@ -257,6 +265,69 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		Limit:            perPage,
 		User:             c.SignedInUser,
 		IsServiceAccount: true,
+		// Filters:          filters,
+	}
+
+	serviceAccounts, err := api.store.SearchOrgServiceAccounts(ctx, query)
+	if err != nil {
+		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	filteredServiceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0, len(serviceAccounts))
+	for _, sa := range serviceAccounts {
+		if dtos.IsHiddenUser(sa.Login, c.SignedInUser, api.cfg) {
+			continue
+		}
+		sa.AvatarUrl = dtos.GetGravatarUrl(sa.Login)
+		filteredServiceAccounts = append(filteredServiceAccounts, sa)
+	}
+
+	type SearchOrgServiceAccountsQueryResult struct {
+		TotalCount      int64                                `json:"totalCount"`
+		ServiceAccounts []*serviceaccounts.ServiceAccountDTO `json:"serviceAccounts"`
+		Page            int                                  `json:"page"`
+		PerPage         int                                  `json:"perPage"`
+	}
+	result := SearchOrgServiceAccountsQueryResult{
+		TotalCount:      query.Result.TotalCount,
+		ServiceAccounts: filteredServiceAccounts,
+		Page:            query.Result.Page,
+		PerPage:         query.Result.PerPage,
+	}
+
+	return response.JSON(200, result)
+}
+
+// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
+// GET /api/org/users/search
+func (api *ServiceAccountsAPI) SearchServiceAccounts(c *models.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	// filters := make([]models.Filter, 0)
+	// for filterName := range getFilterList() {
+	// 	filter := GetFilter(filterName, c.QueryStrings(filterName))
+	// 	if filter != nil {
+	// 		filters = append(filters, filter)
+	// 	}
+	// }
+
+	query := &models.SearchOrgUsersQuery{
+		OrgID:            c.OrgId,
+		Query:            c.Query("query"),
+		Page:             page,
+		Limit:            perPage,
+		User:             c.SignedInUser,
+		IsServiceAccount: true,
+		// Filters:          filters,
 	}
 
 	serviceAccounts, err := api.store.SearchOrgServiceAccounts(ctx, query)
