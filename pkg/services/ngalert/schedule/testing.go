@@ -438,6 +438,12 @@ func NewFakeAnnotationsRepo() *FakeAnnotationsRepo {
 	}
 }
 
+func (repo *FakeAnnotationsRepo) Items() []*annotations.Item {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+	return repo.items
+}
+
 func (repo *FakeAnnotationsRepo) Len() int {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
