@@ -1137,7 +1137,7 @@ def ensure_cuetsified_step():
             '# It is required that the generated Typescript be in sync with the input CUE files.',
             '# To enforce this, the following command will attempt to generate Typescript from all',
             '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
-            '# code would have been written to. It exits 1 if any diffs are found.'
+            '# code would have been written to. It exits 1 if any diffs are found.',
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
         ],
     }
