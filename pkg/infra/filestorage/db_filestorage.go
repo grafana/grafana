@@ -333,7 +333,8 @@ func (s dbFileStorage) ListFolders(ctx context.Context, parentFolderPath string,
 			j := 1
 			for {
 				acc = fmt.Sprintf("%s%s%s", acc, Delimiter, parts[j])
-				if !mem[acc] && len(acc) > len(parentFolderPath) {
+				comparison := strings.Compare(acc, parentFolderPath)
+				if !mem[acc] && comparison > 0 {
 					folders = append(folders, FileMetadata{
 						Name:     getName(acc),
 						FullPath: acc,
