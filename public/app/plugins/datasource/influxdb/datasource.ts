@@ -402,7 +402,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
-    let expandedQuery = { ...query };
+    const expandedQuery = { ...query };
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
         return {
