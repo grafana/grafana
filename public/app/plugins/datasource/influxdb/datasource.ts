@@ -164,7 +164,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super.query(filteredRequest);
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       return super.query(filteredRequest).pipe(
         map((res) => {
           if (res.error) {
@@ -444,7 +444,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux || (config.featureToggles.influxdbBackendMigration && this.access === 'proxy')) {
+    if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
@@ -549,7 +549,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         });
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query: 'SHOW TAG KEYS',
@@ -715,5 +715,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     return date.valueOf() + 'ms';
+  }
+
+  isMigrationToggleOnAndIsAccessProxy() {
+    return config.featureToggles.influxdbBackendMigration && this.access === 'proxy';
   }
 }
