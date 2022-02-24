@@ -124,7 +124,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         ((self, values, axisIdx) => {
           return this.calculateAxisSize(self, values, axisIdx);
         }),
-      rotate: tickLabelRotation,
+      rotate: tickLabelRotation ?? 0,
       gap,
 
       labelGap: 0,

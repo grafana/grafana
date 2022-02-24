@@ -5,7 +5,7 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotConfig = Pick<
   Options,
-  'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
+  'ms' | 'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
 >;
 
 export interface PlotPluginProps {

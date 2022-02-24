@@ -22,6 +22,7 @@ import { prepareGraphableFields } from './utils';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { preparePlotConfigBuilder } from '@grafana/ui/src/components/TimeSeries/utils';
+import { debugLog } from '@grafana/ui/src/components/uPlotChart/debug';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -52,7 +53,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
 
   const cfg = useMemo(() => {
-    console.log('TimeSeriesPanel.preparePlotConfigBuilder memo');
+    debugLog('TimeSeriesPanel.preparePlotConfigBuilder memo');
 
     const alignedFrame = preparePlotFrame(data.series, {
       x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
@@ -67,7 +68,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       theme,
       getTimeRange: () => timeRange.current!,
     });
-  }, [data.structureRev, timeZone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.structureRev, timeZone]); //, options.legend, options.tooltip
 
   const plotData = useMemo(() => {
     if (!cfg) {

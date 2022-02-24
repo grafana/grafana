@@ -5,6 +5,7 @@ import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 import { preparePlotFrame } from '../GraphNG/utils';
+import { debugLog } from '../uPlotChart/debug';
 import { PrepDataFnResult } from './config/UPlotConfigBuilder';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
@@ -48,7 +49,7 @@ export function preparePlotData(opts: {
   onStackMeta?: (meta: StackMeta) => void;
   legend?: VizLegendOptions;
 }): PrepDataFnResult<{ aligned: AlignedData }> {
-  console.log('preparePlotData');
+  debugLog('preparePlotData');
   const alignedFrame = preparePlotFrame(opts.frames, {
     x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
     y: fieldMatchers.get(FieldMatcherID.numeric).get({}),

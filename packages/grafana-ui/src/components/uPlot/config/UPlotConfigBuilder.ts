@@ -181,11 +181,16 @@ export class UPlotConfigBuilder {
             },
       ],
     };
+
     config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
+
+    if (config.scales.x?.time) {
+      config.ms = 1;
+    }
 
     config.hooks = this.hooks;
 
@@ -291,7 +296,7 @@ export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>
 export interface UPlotChartEvent {
   x: number;
   y: number;
-  dataIdxs: (number | null)[];
+  dataIdxs: Array<number | null>;
   // rects?
 }
 /** @alpha */
