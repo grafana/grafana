@@ -160,6 +160,42 @@ func TestSlackNotifier(t *testing.T) {
 			}`,
 			expInitError: `failed to validate receiver "slack_testing" of type "slack": recipient must be specified when using the Slack chat API`,
 		},
+		{
+			name: "Custom endpoint url",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"endpointUrl": "https://slack-custom.com/api/",
+				"icon_emoji": ":emoji:"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:   "#testchannel",
+				Username:  "Grafana",
+				IconEmoji: ":emoji:",
+				Attachments: []attachment{
+					{
+						Title:      "[FIRING:1]  (val1)",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n",
+						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+			expMsgError: nil,
+		},
 	}
 
 	for _, c := range cases {
@@ -195,6 +231,12 @@ func TestSlackNotifier(t *testing.T) {
 				defer func() {
 					_ = request.Body.Close()
 				}()
+
+				url := settingsJSON.Get("url").MustString()
+				if len(url) == 0 {
+					endpointUrl := settingsJSON.Get("endpointUrl").MustString(SlackAPIEndpoint)
+					require.Equal(t, endpointUrl, request.URL.String())
+				}
 
 				b, err := io.ReadAll(request.Body)
 				require.NoError(t, err)
