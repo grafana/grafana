@@ -89,7 +89,6 @@ export function ServiceAccountProfile({
                 roleOptions={roleOptions}
               />
               <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} />
-              <ServiceAccountProfileRow label="Created by" value="WIP" />
               <ServiceAccountProfileRow
                 label="Creation date"
                 value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
