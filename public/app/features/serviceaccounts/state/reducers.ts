@@ -87,7 +87,6 @@ const serviceAccountsSlice = createSlice({
       return { ...state, serviceAccountToRemove: action.payload };
     },
     queryChanged: (state, action: PayloadAction<string>) => {
-      console.log(action);
       return {
         ...state,
         query: action.payload,

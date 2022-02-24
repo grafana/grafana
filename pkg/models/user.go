@@ -149,7 +149,6 @@ type SearchUsersQuery struct {
 	Filters    []Filter
 
 	IsDisabled       *bool
-	IsServiceAccount bool
 
 	Result SearchUserQueryResult
 }

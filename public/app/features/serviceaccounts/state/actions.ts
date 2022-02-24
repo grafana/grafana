@@ -121,7 +121,6 @@ const getFilters = (filters: ServiceAccountFilter[]) => {
 };
 
 export function fetchServiceAccounts(): ThunkResult<void> {
-  console.log('fetchServiceAccounts');
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters } = getState().serviceAccounts;

@@ -232,9 +232,6 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-func getFilterList() []string {
-	return []string{"Expired", "All"}
-}
 
 // SearchOrgServiceAccountsWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
@@ -250,13 +247,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		page = 1
 	}
 
-	// filters := make([]models.Filter, 0)
-	// for filterName := range getFilterList() {
-	// 	filter := GetFilter(filterName, c.QueryStrings(filterName))
-	// 	if filter != nil {
-	// 		filters = append(filters, filter)
-	// 	}
-	// }
 
 	query := &models.SearchOrgUsersQuery{
 		OrgID:            c.OrgId,
@@ -265,7 +255,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		Limit:            perPage,
 		User:             c.SignedInUser,
 		IsServiceAccount: true,
-		// Filters:          filters,
 	}
 
 	serviceAccounts, err := api.store.SearchOrgServiceAccounts(ctx, query)
