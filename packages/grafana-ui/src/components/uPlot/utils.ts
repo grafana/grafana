@@ -43,20 +43,20 @@ interface StackMeta {
 }
 
 /** @internal */
-export function preparePlotData(
-  frames: DataFrame[],
-  onStackMeta?: (meta: StackMeta) => void,
-  legend?: VizLegendOptions
-): PrepDataFnResult {
+export function preparePlotData(opts: {
+  frames: DataFrame[];
+  onStackMeta?: (meta: StackMeta) => void;
+  legend?: VizLegendOptions;
+}): PrepDataFnResult<{ aligned: AlignedData }> {
   console.log('preparePlotData');
-  const alignedFrame = preparePlotFrame(frames, {
+  const alignedFrame = preparePlotFrame(opts.frames, {
     x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
     y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
   });
 
   if (!alignedFrame) {
     return {
-      frames,
+      frames: opts.frames,
       aligned: [] as unknown as AlignedData,
     };
   }
@@ -99,7 +99,7 @@ export function preparePlotData(
 
     // array or stacking groups
     for (const [_, seriesIds] of stackingGroups.entries()) {
-      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
+      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend: opts.legend, frame });
       const noValueStack = Array(dataLength).fill(true);
       const groupTotals = byPct ? Array(dataLength).fill(0) : null;
 
@@ -135,14 +135,14 @@ export function preparePlotData(
       }
     }
 
-    onStackMeta &&
-      onStackMeta({
+    opts.onStackMeta &&
+      opts.onStackMeta({
         totals: alignedTotals as AlignedData,
       });
   }
 
   return {
-    frames,
+    frames: opts.frames,
     aligned: result as AlignedData,
   };
 }

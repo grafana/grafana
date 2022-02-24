@@ -12,7 +12,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { UPlotConfigBuilder } from 'src';
+import { UPlotOptsBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { DEFAULT_PLOT_CONFIG } from '../uPlot/utils';
 import { debugLog } from './debug';
 import { UPlotReactProps, UPlotReact } from './UPlotReact';
@@ -33,7 +33,7 @@ export interface UPlotChartEvent {
 // set up custom pathbuilders or overrides
 
 export interface UPlotChartConfig {
-  builder: UPlotConfigBuilder;
+  builder: UPlotOptsBuilder;
   on(type: EventType, handler: Handler): void;
 }
 
@@ -54,7 +54,7 @@ export const UPlotChart2 = (props: UPlotChartProps) => {
 
   const [plot, setPlot] = useState<uPlot | null>(null);
 
-  const oninit = (plot: uPlot) => {
+  const oninit = (plot: uPlot | null) => {
     debugLog('oninit!', plot);
     setPlot(plot);
   };
@@ -76,7 +76,7 @@ export const UPlotChart2 = (props: UPlotChartProps) => {
   return (
     <>
       {children}
-      <UPlotReact width={width} height={height} opts={opts} data={data} oninit={oninit} />
+      <UPlotReact width={width} height={height} opts={opts} data={data} onInit={oninit} />
     </>
   );
 };

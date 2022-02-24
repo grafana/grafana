@@ -53,7 +53,7 @@ export class UPlotConfigBuilder {
   private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
   private padding?: Padding = undefined;
 
-  prepData: PrepDataFn | undefined = undefined;
+  prepData: PrepDataFn<any, any> | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -151,8 +151,8 @@ export class UPlotConfigBuilder {
     return this.tooltipInterpolator;
   }
 
-  setPrepData(prepData: PrepDataFn) {
-    this.prepData = (opts) => {
+  setPrepData<T = any, O = { frames: DataFrame[] }>(prepData: PrepDataFn<T, O>) {
+    this.prepData = (opts: PrepDataOpts<O>) => {
       this.frames = opts.frames;
       return prepData(opts);
     };
@@ -273,22 +273,45 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   getTimeRange: () => TimeRange;
 } & T;
 
-export interface PrepDataOpts {
+export type PrepDataOpts<T extends {} = {}> = {
   frames: DataFrame[];
-}
+} & T;
 
-export type PrepDataFnResult = {
+export type PrepDataFnResult<T extends {}> = {
   frames: DataFrame[]; // original data.series
-  aligned: AlignedData;
-};
+} & T;
 
-export type PrepDataFn = (opts: PrepDataOpts) => PrepDataFnResult;
+export type PrepDataFn<T, O> = (opts: PrepDataOpts<O>) => PrepDataFnResult<T>;
 
 /** @alpha */
-export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => {
-  builder: UPlotConfigBuilder;
-  prepData: PrepDataFn;
-  // TODO: fix typings
-  on: (type: any, handler: any) => void;
-  // on(type: EventType, handler: Handler): void;
-} | null;
+export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;
+
+// uPlot v2 wrapper types below
+/** @alpha */
+export interface UPlotChartEvent {
+  x: number;
+  y: number;
+  dataIdxs: (number | null)[];
+  // rects?
+}
+/** @alpha */
+export type Handler = (event: UPlotChartEvent) => void;
+
+/** @alpha */
+export type EventType = 'hover' | 'move';
+
+/** @alpha */
+export interface UPlotChartConfig {
+  builder: UPlotOptsBuilder;
+  on(type: EventType, handler: Handler): void;
+}
+export interface UPlotChartConfigWithPrep<PrepData> extends UPlotChartConfig {
+  prepData: PrepDataFn<PrepData, any>;
+}
+
+/** @alpha */
+export type UPlotConfigPrepFn2<T extends {}, K extends { frames: DataFrame[] }> = (
+  opts: UPlotConfigPrepOpts<T>
+) => UPlotChartConfigWithPrep<K> | null;
+
+export type UPlotOptsBuilder = UPlotConfigBuilder;

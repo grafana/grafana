@@ -14,7 +14,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder, UPlotConfigPrepFn2 } from '../uPlot/config/UPlotConfigBuilder';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -29,6 +29,7 @@ import {
 import { collectStackingGroups, INTERNAL_NEGATIVE_Y_PREFIX, orderIdsByCalcs, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
 import { buildScaleKey } from '../GraphNG/utils';
+import { AlignedData } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -38,10 +39,13 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
-  sync?: () => DashboardCursorSync;
-  legend?: VizLegendOptions;
-}> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
+  {
+    sync?: () => DashboardCursorSync;
+    legend?: VizLegendOptions;
+  },
+  { frames: DataFrame[]; aligned: AlignedData }
+> = ({
   frame,
   theme,
   timeZone,
@@ -55,6 +59,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakAxis = (opts) => opts,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
+
   function on(type: any, handler: any) {}
 
   // X is the first field in the aligned frame
@@ -64,7 +69,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     return null;
   }
 
-  builder.setPrepData((prepData) => preparePlotData(prepData.frames, undefined, legend));
+  builder.setPrepData((prepData) => preparePlotData({ frames: prepData.frames, legend }));
 
   let seriesIndex = 0;
 

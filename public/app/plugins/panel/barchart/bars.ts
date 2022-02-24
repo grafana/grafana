@@ -1,7 +1,7 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import {
   StackingMode,
@@ -14,6 +14,7 @@ import {
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { PrepDataOpts } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -550,16 +551,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let alignedTotals: AlignedData | null = null;
 
-  function prepData(frames: DataFrame[]) {
+  function prepData({ frames }: PrepDataOpts) {
     alignedTotals = null;
 
-    return preparePlotData(
+    return preparePlotData({
       frames,
-      ({ totals }) => {
+      onStackMeta: ({ totals }) => {
         alignedTotals = totals;
       },
-      opts.legend
-    );
+      legend: opts.legend,
+    });
   }
 
   return {

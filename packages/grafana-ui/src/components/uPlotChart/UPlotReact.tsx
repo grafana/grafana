@@ -13,12 +13,12 @@ export interface UPlotReactProps {
   height: number;
   opts: OptsDimless;
   data: AlignedData; // {aligned:, stacked: }
-  oninit?: (plot: uPlot | null) => void;
+  onInit?: (plot: uPlot | null) => void;
 }
 
 type DedicatedMethodProps = [width: number, height: number, data: AlignedData];
 
-export const UPlotReact = ({ opts, width, height, data, oninit }: UPlotReactProps) => {
+export const UPlotReact = ({ opts, width, height, data, onInit }: UPlotReactProps) => {
   debugLog('UPlotReact()');
 
   const wrap = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export const UPlotReact = ({ opts, width, height, data, oninit }: UPlotReactProp
     if (plot.current == null) {
       debugLog('new uPlot()');
       plot.current = new uPlot({ ...opts, width, height }, data, wrap.current);
-      oninit?.(plot.current);
+      onInit?.(plot.current);
     } else if (width !== prevWidth || height !== prevHeight) {
       debugLog('u.setSize()');
       plot.current.setSize({ width, height });
@@ -59,7 +59,7 @@ export const UPlotReact = ({ opts, width, height, data, oninit }: UPlotReactProp
   // on unmounts only. e.g. for cleanup of parent or context
   useLayoutEffect(() => {
     return () => {
-      oninit?.(null);
+      onInit?.(null);
     };
   }, []);
 
