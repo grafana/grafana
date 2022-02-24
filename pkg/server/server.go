@@ -12,19 +12,17 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 // Options contains parameters for the New function.
@@ -38,10 +36,14 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+func New(
+	opts Options,
+	cfg *setting.Cfg,
+	roleRegistry accesscontrol.RoleRegistry,
+	provisioningService provisioning.ProvisioningService,
+	backgroundServiceProvider registry.BackgroundServiceRegistry,
 ) (*Server, error) {
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
+	s, err := newServer(opts, cfg, roleRegistry, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +55,8 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+func newServer(
+	opts Options, cfg *setting.Cfg, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
@@ -62,7 +65,6 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 	s := &Server{
 		context:             childCtx,
 		childRoutines:       childRoutines,
-		HTTPServer:          httpServer,
 		provisioningService: provisioningService,
 		roleRegistry:        roleRegistry,
 		shutdownFn:          shutdownFn,
@@ -97,7 +99,6 @@ type Server struct {
 	buildBranch        string
 	backgroundServices []registry.BackgroundService
 
-	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
 }

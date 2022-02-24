@@ -41,7 +41,7 @@ $(CERT_ADMIN):
 KUBE_CONFIG  := admin.kubeconfig
 KUBE_CLUSTER := intentapi
 KUBE_HOST    := localhost
-KUBE_PORT    := 6443
+KUBE_PORT    := 8443
 KUBE_USER    := admin
 
 config: $(KUBE_CONFIG)
