@@ -1,7 +1,10 @@
-import React from 'react';
-import { shallow } from 'enzyme';
-import InsightsConfig, { Props } from './InsightsConfig';
 import { Button, LegacyForms } from '@grafana/ui';
+import { shallow } from 'enzyme';
+import React from 'react';
+
+import { Props } from '../../ConfigEditor';
+import InsightsConfig from './InsightsConfig';
+
 const { Input } = LegacyForms;
 
 const setup = (propOverrides?: object) => {
@@ -33,9 +36,7 @@ const setup = (propOverrides?: object) => {
       version: 1,
       readOnly: false,
     },
-    onUpdateJsonDataOption: jest.fn(),
-    onUpdateSecureJsonDataOption: jest.fn(),
-    onResetOptionKey: jest.fn(),
+    onOptionsChange: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
