@@ -67,15 +67,8 @@ const ServiceAccountPageUnconnected = ({
     deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
   };
 
-  const onCreateToken = (name: string) => {
-    createServiceAccountToken(
-      serviceAccount.id,
-      {
-        name,
-        role: OrgRole.Viewer,
-      },
-      setNewToken
-    );
+  const onCreateToken = (token: ApiKey) => {
+    createServiceAccountToken(serviceAccount.id, token, setNewToken);
   };
 
   const onModalClose = () => {
