@@ -6,19 +6,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
 
 // AlertTest makes a test alert.
 func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
-	extractor := ProvideDashAlertExtractorService(nil, mockstore.NewSQLStoreMock())
 	dashInfo := DashAlertInfo{
 		User:  user,
 		Dash:  dash,
 		OrgID: orgID,
 	}
-	alerts, err := extractor.GetAlerts(context.Background(), dashInfo)
+	alerts, err := e.dashAlertExtractor.GetAlerts(context.Background(), dashInfo)
 	if err != nil {
 		return nil, err
 	}

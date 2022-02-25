@@ -8,9 +8,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,9 +33,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 		},
 	}
 
-	sqlStore := mockstore.NewSQLStoreMock()
-	sqlStore.ExpectedDatasource = defaultDs
-	extractor := ProvideDashAlertExtractorService(dsPermissions, sqlStore)
+	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
+	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
@@ -66,7 +65,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
-		sqlStore.ExpectedDatasource = &models.DataSource{Id: 12}
+		dsService.ExpectedDatasource = &models.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -165,7 +164,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
 		require.Nil(t, err)
 
-		sqlStore.ExpectedDatasource = &models.DataSource{Id: 12}
+		dsService.ExpectedDatasource = &models.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -277,7 +276,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
-		sqlStore.ExpectedDatasource = graphite2Ds
+		dsService.ExpectedDatasource = graphite2Ds
 		dashAlertInfo := DashAlertInfo{
 			User:  nil,
 			Dash:  models.NewDashboardFromJson(dashJSON),
@@ -294,4 +293,19 @@ func TestAlertRuleExtraction(t *testing.T) {
 		query := condition.Get("query")
 		require.EqualValues(t, 15, query.Get("datasourceId").MustInt64())
 	})
+}
+
+type fakeDatasourceService struct {
+	ExpectedDatasource *models.DataSource
+	datasources.DataSourceService
+}
+
+func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	query.Result = f.ExpectedDatasource
+	return nil
+}
+
+func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
+	query.Result = f.ExpectedDatasource
+	return nil
 }

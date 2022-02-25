@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type DashAlertExtractor interface {
@@ -21,14 +21,14 @@ type DashAlertExtractor interface {
 // DashAlertExtractorService extracts alerts from the dashboard json.
 type DashAlertExtractorService struct {
 	datasourcePermissionsService permissions.DatasourcePermissionsService
-	sqlStore                     sqlstore.Store
+	datasourceService            datasources.DataSourceService
 	log                          log.Logger
 }
 
-func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, sqlStore sqlstore.Store) *DashAlertExtractorService {
+func ProvideDashAlertExtractorService(datasourcePermissionsService permissions.DatasourcePermissionsService, datasourceService datasources.DataSourceService) *DashAlertExtractorService {
 	return &DashAlertExtractorService{
 		datasourcePermissionsService: datasourcePermissionsService,
-		sqlStore:                     sqlStore,
+		datasourceService:            datasourceService,
 		log:                          log.New("alerting.extractor"),
 	}
 }
@@ -51,14 +51,14 @@ func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, p
 
 	if dsName == "" && dsUid == "" {
 		query := &models.GetDefaultDataSourceQuery{OrgId: orgID}
-		if err := e.sqlStore.GetDefaultDataSource(ctx, query); err != nil {
+		if err := e.datasourceService.GetDefaultDataSource(ctx, query); err != nil {
 			return nil, err
 		}
 		return query.Result, nil
 	}
 
 	query := &models.GetDataSourceQuery{Name: dsName, Uid: dsUid, OrgId: orgID}
-	if err := e.sqlStore.GetDataSource(ctx, query); err != nil {
+	if err := e.datasourceService.GetDataSource(ctx, query); err != nil {
 		return nil, err
 	}
 

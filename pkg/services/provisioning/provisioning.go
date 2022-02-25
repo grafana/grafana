@@ -38,7 +38,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore p
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 		dashboardService:        dashboardService,
-		dashAlertExtractor:      dashAlertExtractor,
 	}
 	return s, nil
 }
@@ -96,7 +95,6 @@ type ProvisioningServiceImpl struct {
 	provisionPlugins        func(context.Context, string, plugins.Store, plugifaces.Store) error
 	mutex                   sync.Mutex
 	dashboardService        dashboardservice.DashboardProvisioningService
-	dashAlertExtractor      alerting.DashAlertExtractor
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
