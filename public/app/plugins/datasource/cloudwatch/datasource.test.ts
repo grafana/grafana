@@ -125,7 +125,6 @@ describe('datasource', () => {
         } as any);
       });
       it('should show debounced alert for namespace and metric name', async () => {
-        // expect(debouncedAlert).toHaveBeenCalledWith('us-east-2', undefined, true, 'region');
         expect(debouncedAlert).toHaveBeenCalledWith(
           'CloudWatch templating error',
           'Multi template variables are not supported for namespace'
@@ -137,7 +136,6 @@ describe('datasource', () => {
       });
 
       it('should not show debounced alert for region', async () => {
-        // expect(debouncedAlert).toHaveBeenCalledWith('us-east-2', undefined, true, 'region');
         expect(debouncedAlert).not.toHaveBeenCalledWith(
           'CloudWatch templating error',
           'Multi template variables are not supported for region'
