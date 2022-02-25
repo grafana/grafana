@@ -9,37 +9,49 @@ import (
 )
 
 type Store interface {
-	GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error
-	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
+	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error
+	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
+	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error
+	DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error
+	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error
+	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
+	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
 	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
 	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
-	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
+	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
+}
+type SQLStore interface {
+	GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery) error
+	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
 }
 
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, store Store, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
-	dc := newNotificationProvisioner(store, encryptionService, notificationService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, configDirectory string, alertingService Store, sqlstore SQLStore, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(sqlstore, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
 // NotificationProvisioner is responsible for provsioning alert notifiers
 type NotificationProvisioner struct {
-	log         log.Logger
-	cfgProvider *configReader
-	store       Store
+	log             log.Logger
+	cfgProvider     *configReader
+	alertingService Store
+	sqlstore        SQLStore
 }
 
-func newNotificationProvisioner(store Store, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(store SQLStore, alertingService Store, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
-		log:   log,
-		store: store,
+		log:             log,
+		alertingService: alertingService,
 		cfgProvider: &configReader{
 			encryptionService:   encryptionService,
 			notificationService: notifiationService,
 			log:                 log,
 			orgStore:            store,
 		},
+		sqlstore: store,
 	}
 }
 
@@ -61,7 +73,7 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := dc.store.GetOrgByNameHandler(ctx, getOrg); err != nil {
+			if err := dc.sqlstore.GetOrgByNameHandler(ctx, getOrg); err != nil {
 				return err
 			}
 			notification.OrgID = getOrg.Result.Id
@@ -71,13 +83,13 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
 
-		if err := dc.store.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
+		if err := dc.alertingService.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
 			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := dc.store.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
+			if err := dc.alertingService.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -90,7 +102,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 	for _, notification := range notificationToMerge {
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := dc.store.GetOrgByNameHandler(ctx, getOrg); err != nil {
+			if err := dc.sqlstore.GetOrgByNameHandler(ctx, getOrg); err != nil {
 				return err
 			}
 			notification.OrgID = getOrg.Result.Id
@@ -99,7 +111,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 		}
 
 		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
-		err := dc.store.GetAlertNotificationsWithUid(ctx, cmd)
+		err := dc.alertingService.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
 		}
@@ -119,7 +131,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.store.CreateAlertNotificationCommand(ctx, insertCmd); err != nil {
+			if err := dc.alertingService.CreateAlertNotificationCommand(ctx, insertCmd); err != nil {
 				return err
 			}
 		} else {
@@ -137,7 +149,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.store.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
+			if err := dc.sqlstore.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
 				return err
 			}
 		}
