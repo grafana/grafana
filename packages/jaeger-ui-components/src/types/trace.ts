@@ -68,6 +68,7 @@ export type TraceSpanData = {
 export type TraceSpan = TraceSpanData & {
   depth: number;
   hasChildren: boolean;
+  childSpanCount: number;
   process: TraceProcess;
   relativeStartTime: number;
   tags: NonNullable<TraceSpanData['tags']>;
