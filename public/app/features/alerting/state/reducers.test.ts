@@ -255,6 +255,7 @@ describe('Notification channel', () => {
           required: true,
           validationRule: '',
           secure: false,
+          dependsOn: '',
         },
         {
           element: 'select',
@@ -271,6 +272,7 @@ describe('Notification channel', () => {
           required: false,
           validationRule: '',
           secure: false,
+          dependsOn: '',
         },
         {
           element: 'input',
@@ -283,6 +285,7 @@ describe('Notification channel', () => {
           required: false,
           validationRule: '',
           secure: false,
+          dependsOn: '',
         },
         {
           element: 'input',
@@ -295,6 +298,7 @@ describe('Notification channel', () => {
           required: false,
           validationRule: '',
           secure: true,
+          dependsOn: '',
         },
       ],
     },
