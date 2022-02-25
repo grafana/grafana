@@ -44,7 +44,7 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Logs/LogRows.test.tsx:2288254498": [
       [3, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:1906163280": [
+    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:1297745712": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Slider/Slider.test.tsx:2110443485": [
