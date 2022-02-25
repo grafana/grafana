@@ -131,14 +131,16 @@ export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined)
     result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
   }
 
-  // Default to range query
-  if (query.range == null) {
-    result = { ...result, range: true };
-  }
+  if (query.range == null && query.instant == null) {
+    // Default to range query
+    if (query.range == null) {
+      result = { ...result, range: true };
+    }
 
-  // In explore we default to both instant & range
-  if (query.instant == null && app === CoreApp.Explore) {
-    result = { ...result, instant: true };
+    // In explore we default to both instant & range
+    if (query.instant == null && app === CoreApp.Explore) {
+      result = { ...result, instant: true };
+    }
   }
 
   return result;
