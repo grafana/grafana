@@ -141,6 +141,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           <AsyncSelect
             inputId="operation"
             menuShouldPortal
+            cacheOptions={false}
             loadOptions={() =>
               loadServices(
                 {
@@ -195,3 +196,5 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     </div>
   );
 }
+
+export default SearchForm;
