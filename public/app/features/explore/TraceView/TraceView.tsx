@@ -39,7 +39,6 @@ function noop(): {} {
 }
 
 type Props = {
-  datasource: DataSourceApi;
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
   exploreId: ExploreId;

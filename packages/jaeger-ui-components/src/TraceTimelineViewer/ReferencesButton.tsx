@@ -18,13 +18,11 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TraceSpanReference } from '../types/trace';
 import ReferenceLink from '../url/ReferenceLink';
-import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = () => {
   return {
     MultiParent: css`
       padding: 0 5px;
-      color: ${theme.colors.action};
       & ~ & {
         margin-left: 5px;
       }
