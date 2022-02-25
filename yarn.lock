@@ -4141,6 +4141,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-config@npm:3.0.0-alpha":
+  version: 3.0.0-alpha
+  resolution: "@grafana/eslint-config@npm:3.0.0-alpha"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.10.0
+    "@typescript-eslint/parser": 5.10.0
+    eslint: 7.28.0
+    eslint-config-prettier: 8.3.0
+    eslint-plugin-jsdoc: 37.7.0
+    eslint-plugin-react: 7.28.0
+    eslint-plugin-react-hooks: 4.3.0
+    typescript: 4.4.4
+  checksum: e2df2d15d65833d7a207f2270c92525caa930db81aecd97169ae90c540803c1520fb92ccea8c6fc4fea0135f9ea41181c20fdba5a11fae6e3fa19bee26f192ca
+  languageName: node
+  linkType: hard
+
 "@grafana/experimental@npm:0.0.2-canary.18":
   version: 0.0.2-canary.18
   resolution: "@grafana/experimental@npm:0.0.2-canary.18"
@@ -20701,7 +20717,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 2.5.2
+    "@grafana/eslint-config": 3.0.0-alpha
     "@grafana/experimental": 0.0.2-canary.18
     "@grafana/google-sdk": 0.0.2
     "@grafana/runtime": "workspace:*"
