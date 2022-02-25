@@ -53,7 +53,7 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer",
+    "betterer": "betterer --cache",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
@@ -62,7 +62,7 @@
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
-      "betterer precommit",
+      "betterer --cache precommit",
       "eslint --ext .js,.tsx,.ts --cache --fix",
       "prettier --write"
     ],
@@ -89,9 +89,10 @@
     "@babel/preset-env": "7.18.2",
     "@babel/preset-react": "7.17.12",
     "@babel/preset-typescript": "7.17.12",
-    "@betterer/betterer": "5.3.5",
-    "@betterer/cli": "5.3.5",
-    "@betterer/regexp": "5.3.5",
+    "@betterer/betterer": "5.3.0",
+    "@betterer/cli": "5.3.0",
+    "@betterer/eslint": "5.3.0",
+    "@betterer/regexp": "5.3.0",
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
