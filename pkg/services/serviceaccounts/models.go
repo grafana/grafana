@@ -53,5 +53,7 @@ type ServiceAccountProfileDTO struct {
 	UpdatedAt     time.Time       `json:"updatedAt"`
 	CreatedAt     time.Time       `json:"createdAt"`
 	AvatarUrl     string          `json:"avatarUrl"`
+	Role          string          `json:"role"`
+	Teams         []string        `json:"teams"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
