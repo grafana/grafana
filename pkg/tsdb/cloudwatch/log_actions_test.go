@@ -437,6 +437,38 @@ func Test_executeStartQuery(t *testing.T) {
 			},
 		}, cli.calls.startQueryWithContext)
 	})
+
+	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
+		cli = FakeCWLogsClient{}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), fakeSessionCache{})
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:     pointerInt64(0),
+				EndTime:       pointerInt64(1),
+				QueryString:   pointerString("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|"),
+				LogGroupNames: []*string{},
+			},
+		}, cli.calls.startQueryWithContext)
+	})
 }
 
 func TestQuery_StopQuery(t *testing.T) {
