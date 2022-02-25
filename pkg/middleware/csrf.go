@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 func CSRF(loginCookieName string) func(http.Handler) http.Handler {
@@ -27,7 +27,11 @@ func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 				}
 			}
 			// Otherwise - verify that Origin matches the server origin
-			host := extractHostnameOrIP(r.Host)
+			host, _, err := net.SplitHostPort(r.Host)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
+
 			origin, err := url.Parse(r.Header.Get("Origin"))
 			if err != nil || host == "" || (origin.String() != "" && origin.Hostname() != host) {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
@@ -36,23 +40,5 @@ func CSRF(loginCookieName string) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(w, r)
 		})
-	}
-}
-
-func extractHostnameOrIP(host string) string {
-	if strings.HasPrefix(host, "[") {
-		// IP address in brackets
-		host = strings.TrimPrefix(host, "[")
-		if strings.HasSuffix(host, "]") {
-			// No port
-			return strings.TrimSuffix(host, "]")
-		}
-		lindex := strings.LastIndex(host, "]")
-		if lindex < 0 {
-			return ""
-		}
-		return host[:lindex]
-	} else {
-		return strings.Split(host, ":")[0]
 	}
 }
