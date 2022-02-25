@@ -67,8 +67,8 @@ describe('SearchForm', () => {
   });
 });
 
-describe('If JaegerQuery has a delay fetching options', () => {
-  it('should show loader', async () => {
+describe('SearchForm', () => {
+  it('should show loader if there is a delay fetching options', async () => {
     const promise = Promise.resolve();
     const handleOnChange = jest.fn(() => {
       setTimeout(() => {
