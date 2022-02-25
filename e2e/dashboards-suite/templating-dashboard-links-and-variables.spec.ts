@@ -7,7 +7,6 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
     e2e()
       .intercept({
         method: 'GET',
@@ -20,6 +19,8 @@ e2e.scenario({
         url: '/api/search?tag=demo&limit=100',
       })
       .as('tagsDemoSearch');
+
+    e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
 
     // waiting for network requests first
     e2e().wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
