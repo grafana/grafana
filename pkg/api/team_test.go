@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/preferences/preftests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -374,10 +375,7 @@ func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
-
-	require.NoError(t, err)
+	sc.prefService = preftests.NewPreferenceServiceFake()
 
 	setInitCtxSignedInViewer(sc.initCtx)
 
@@ -400,10 +398,12 @@ func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
-	sc.db = sqlstore.InitTestDB(t)
-	_, err := sc.db.CreateTeam("team1", "", 1)
 
-	require.NoError(t, err)
+	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake.ExpectedPreferences = &models.Preferences{
+		Theme: "dark",
+	}
+	sc.prefService = prefFake
 
 	setInitCtxSignedInViewer(sc.initCtx)
 
@@ -413,10 +413,10 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
-		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1, Result: &models.Preferences{}}
-		err := sc.db.GetPreferences(context.Background(), prefQuery)
+		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1}
+		res, err := sc.prefService.GetPreferences(context.Background(), prefQuery)
 		require.NoError(t, err)
-		assert.Equal(t, "dark", prefQuery.Result.Theme)
+		assert.Equal(t, "dark", res.Theme)
 	})
 
 	input = strings.NewReader(teamPreferenceCmdLight)
@@ -425,9 +425,9 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
-		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1, Result: &models.Preferences{}}
-		err := sc.db.GetPreferences(context.Background(), prefQuery)
+		prefQuery := &models.GetPreferencesQuery{OrgId: 1, TeamId: 1}
+		res, err := sc.prefService.GetPreferences(context.Background(), prefQuery)
 		assert.NoError(t, err)
-		assert.Equal(t, "dark", prefQuery.Result.Theme)
+		assert.Equal(t, "dark", res.Theme)
 	})
 }

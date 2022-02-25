@@ -32,6 +32,8 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	prefs "github.com/grafana/grafana/pkg/services/preferences"
+	"github.com/grafana/grafana/pkg/services/preferences/preftests"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -280,6 +282,7 @@ type accessControlScenarioContext struct {
 	cfg *setting.Cfg
 
 	dashboardsStore dashboards.Store
+	prefService     prefs.Service
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
@@ -350,6 +353,8 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 	db.Cfg = cfg
 
 	bus := bus.GetBus()
+	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake.ExpectedPreferences = &models.Preferences{Theme: "dark"}
 
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
 
@@ -365,6 +370,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		SQLStore:           db,
 		searchUsersService: searchusers.ProvideUsersService(bus, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(dashboardsStore),
+		preferencesService: prefFake,
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -416,6 +422,7 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		db:              db,
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,
+		prefService:     prefFake,
 	}
 }
 

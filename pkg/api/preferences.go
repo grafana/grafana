@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -85,6 +86,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 func (hs *HTTPServer) GetOrgPreferences(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesQuery{UserId: 0, OrgId: c.OrgId, TeamId: 0}
 
+	fmt.Println(hs.preferencesService)
 	preferences, err := hs.preferencesService.GetPreferences(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return response.Error(500, "Failed to get preferences", err)

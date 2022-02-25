@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/preferences/preftests"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -41,11 +42,13 @@ func TestGetHomeDashboard(t *testing.T) {
 	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
-
+	prefFake := preftests.NewPreferenceServiceFake()
+	prefFake.ExpectedPreferences = &models.Preferences{}
 	hs := &HTTPServer{
 		Cfg: cfg, Bus: bus.New(),
-		pluginStore: &fakePluginStore{},
-		SQLStore:    mockstore.NewSQLStoreMock(),
+		pluginStore:        &fakePluginStore{},
+		SQLStore:           mockstore.NewSQLStoreMock(),
+		preferencesService: prefFake,
 	}
 
 	tests := []struct {
