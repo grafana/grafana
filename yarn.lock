@@ -20846,7 +20846,6 @@ __metadata:
     eslint-plugin-jest: ^26.1.0
     eslint-plugin-jsdoc: 37.9.1
     eslint-plugin-lodash: 7.4.0
-    eslint-plugin-prettier: 4.0.0
     eslint-plugin-react: 7.29.2
     eslint-plugin-react-hooks: 4.3.0
     eslint-webpack-plugin: 3.1.1
