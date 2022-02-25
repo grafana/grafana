@@ -67,7 +67,7 @@ Status Codes:
 
 ## Get dashboard version
 
-`GET /api/dashboards/id/:dashboardId/versions/:id`
+`GET /api/dashboards/id/:dashboardId/versions/:version`
 
 Get the dashboard version with the given version, for the dashboard with the given id.
 

@@ -202,7 +202,8 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result).toBe(df);
   });
 
-  test('perf stress test should be <= 10ms', () => {
+  // Leave this test skipped - it should be run manually
+  test.skip('perf stress test should be <= 10ms', () => {
     // 10 fields x 3,000 values with 50% skip (output = 10 fields x 6,000 values)
     let bigFrameA = genFrame();
 
