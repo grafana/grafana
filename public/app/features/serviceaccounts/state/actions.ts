@@ -39,7 +39,7 @@ export function setServiceAccountToRemove(serviceAccount: ServiceAccountDTO | nu
 export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`);
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`, accessControlQueryParam());
       dispatch(serviceAccountLoaded(response));
     } catch (error) {
       console.error(error);
