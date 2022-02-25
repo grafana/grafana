@@ -1,9 +1,10 @@
 import React, { PureComponent, useRef, useState } from 'react';
-import { ServiceAccountDTO } from 'app/types';
+import { Role, ServiceAccountDTO } from 'app/types';
 import { css, cx } from '@emotion/css';
 import { config } from 'app/core/config';
-import { dateTimeFormat, GrafanaTheme, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme, OrgRole, TimeZone } from '@grafana/data';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
+import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 
 interface Props {
   serviceAccount: ServiceAccountDTO;
@@ -13,6 +14,10 @@ interface Props {
   onServiceAccountDelete: (serviceAccountId: number) => void;
   onServiceAccountDisable: (serviceAccountId: number) => void;
   onServiceAccountEnable: (serviceAccountId: number) => void;
+
+  onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
+  roleOptions: Role[];
+  builtInRoles: Record<string, Role[]>;
 }
 
 export function ServiceAccountProfile({
@@ -22,6 +27,9 @@ export function ServiceAccountProfile({
   onServiceAccountDelete,
   onServiceAccountDisable,
   onServiceAccountEnable,
+  onRoleChange,
+  roleOptions,
+  builtInRoles,
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
@@ -73,9 +81,14 @@ export function ServiceAccountProfile({
                 onChange={onServiceAccountNameChange}
               />
               <ServiceAccountProfileRow label="ID" value={serviceAccount.login} />
-              <ServiceAccountProfileRow label="Roles" value="WIP" />
-              <ServiceAccountProfileRow label="Teams" value="WIP" />
-              <ServiceAccountProfileRow label="Created by" value="WIP" />
+              <ServiceAccountRoleRow
+                label="Roles"
+                serviceAccount={serviceAccount}
+                onRoleChange={onRoleChange}
+                builtInRoles={builtInRoles}
+                roleOptions={roleOptions}
+              />
+              <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} />
               <ServiceAccountProfileRow
                 label="Creation date"
                 value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
