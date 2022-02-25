@@ -124,7 +124,7 @@ describe('<SpanDetail>', () => {
   });
 
   it('lists the service name, duration and start time', () => {
-    const words = ['Child Count:', 'Duration:', 'Service:', 'Start Time:'];
+    const words = ['Duration:', 'Service:', 'Start Time:'];
     const overview = wrapper.find(LabeledList);
     expect(
       overview
