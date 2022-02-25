@@ -35,7 +35,7 @@
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
     "precommit": "yarn run lint-staged",
-    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{js,ts,tsx,scss,md,mdx}\"",
+    "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
     "prettier:write": "prettier --list-different \"**/*.{js,ts,tsx,scss,md,mdx}\" --write",
     "start": "yarn themes:generate && yarn dev --watch",
     "start:noTsCheck": "yarn start --env noTsCheck=1",
