@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { EventBus, FieldMatcherID, fieldMatchers, PanelProps, TimeRange } from '@grafana/data';
 // import { TooltipDisplayMode } from '@grafana/schema';
 import {
@@ -10,6 +10,9 @@ import {
   UPlotChart2,
   preparePlotFrame,
   useTheme2,
+  VizLayout,
+  PlotLegend,
+  LegendDisplayMode,
 } from '@grafana/ui';
 // import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 // import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
@@ -81,6 +84,16 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     });
   }, [cfg, data]);
 
+  const renderLegend = useCallback(() => {
+    const { legend } = options;
+
+    if (!frames || !cfg || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
+      return null;
+    }
+
+    return <PlotLegend data={frames} config={cfg?.builder} {...legend} />;
+  }, [options, frames, cfg]);
+
   // const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   if (!frames) {
@@ -90,8 +103,32 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   if (!plotData || !cfg) {
     return null;
   }
+
   return (
-    <UPlotChart2 config={cfg} data={plotData.aligned} width={width} height={height}></UPlotChart2>
+    <>
+      <VizLayout width={width} height={height} legend={renderLegend()}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart2 config={cfg} data={plotData.aligned} width={vizWidth} height={vizHeight}></UPlotChart2>
+        )}
+      </VizLayout>
+      {/* <Portal>
+        {hover && (
+          <VizTooltipContainer
+            position={{ x: hover.pageX, y: hover.pageY }}
+            offset={{ x: 10, y: 10 }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {shouldDisplayCloseButton && (
+              <>
+                <CloseButton onClick={onCloseToolTip} />
+                <div className={styles.closeButtonSpacer} />
+              </>
+            )}
+            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
+          </VizTooltipContainer>
+        )}
+      </Portal> */}
+    </>
     // <TimeSeries
     //   frames={frames}
     //   structureRev={data.structureRev}
