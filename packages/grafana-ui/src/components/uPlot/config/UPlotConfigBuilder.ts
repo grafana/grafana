@@ -1,4 +1,4 @@
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select, Padding, Series } from 'uplot';
 import { merge } from 'lodash';
 import {
   DataFrame,
@@ -10,7 +10,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
+import { PlotConfig, PlotTooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
@@ -32,7 +32,7 @@ const cursorDefaults: Cursor = {
   },
 };
 
-type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
+// type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];

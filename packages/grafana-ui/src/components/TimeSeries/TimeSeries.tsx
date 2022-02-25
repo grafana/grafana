@@ -33,7 +33,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       renderers,
       tweakScale,
       tweakAxis,
-    });
+    })?.builder!;
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {

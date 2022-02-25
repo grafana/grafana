@@ -43,7 +43,7 @@ export const UPlotReact = ({ opts, width, height, data, onInit }: UPlotReactProp
 
     if (plot.current == null) {
       debugLog('new uPlot()');
-      plot.current = new uPlot({ ...opts, width, height }, data, wrap.current);
+      plot.current = new uPlot({ ...opts, width, height }, data, wrap.current!);
       onInit?.(plot.current);
     } else if (width !== prevWidth || height !== prevHeight) {
       debugLog('u.setSize()');
