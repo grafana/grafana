@@ -18,10 +18,11 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")
 			resp := sc.service.searchHandler(sc.reqContext)
-			var queryHistory []QueryHistoryDTO
-			json.Unmarshal(resp.Body(), &queryHistory)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 0, len(queryHistory))
+			require.Equal(t, 0, len(response.Result))
 		})
 
 	testScenarioWithQueryInQueryHistory(t, "When users tries to get query with valid datasourceUid, it should succeed",
@@ -29,7 +30,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("datasourceUid", sc.initialResult.Result.DatasourceUID)
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
-			json.Unmarshal(resp.Body(), &response)
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 1, len(response.Result))
 		})
@@ -39,7 +41,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("datasourceUid", sc.initialResult.Result.DatasourceUID)
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
-			json.Unmarshal(resp.Body(), &response)
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 2, len(response.Result))
 			require.Equal(t, false, response.Result[0].Starred)
@@ -51,7 +54,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "non-existent")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
-			json.Unmarshal(resp.Body(), &response)
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 0, len(response.Result))
 		})
@@ -62,7 +66,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID2)
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
-			json.Unmarshal(resp.Body(), &response)
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 3, len(response.Result))
 		})
@@ -73,7 +78,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("onlyStarred", "true")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
-			json.Unmarshal(resp.Body(), &response)
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 1, len(response.Result))
 			require.Equal(t, true, response.Result[0].Starred)
@@ -85,7 +91,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("searchString", "2")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
-			json.Unmarshal(resp.Body(), &response)
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, 1, len(response.Result))
 			require.Equal(t, true, response.Result[0].Starred)
