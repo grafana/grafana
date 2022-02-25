@@ -44,6 +44,7 @@ export type TraceSpanReference = {
   span?: TraceSpan | null | undefined;
   spanID: string;
   traceID: string;
+  tags?: TraceKeyValuePair[];
 };
 
 export type TraceSpanData = {
