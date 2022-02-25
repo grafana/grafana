@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
-import { AppEvents, locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { SaveDashboardOptions } from './types';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -28,6 +29,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
     []
   );
 
+  const notifyApp = useAppNotification();
   useEffect(() => {
     if (state.value) {
       dashboard.version = state.value.version;
@@ -35,7 +37,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
 
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
-      appEvents.emit(AppEvents.alertSuccess, ['Dashboard saved']);
+      notifyApp.success('Dashboard saved');
       reportInteraction(`Dashboard ${dashboard.id ? 'saved' : 'created'}`, {
         name: dashboard.title,
         url: state.value.url,
@@ -48,7 +50,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
         setTimeout(() => locationService.replace(newUrl));
       }
     }
-  }, [dashboard, state]);
+  }, [dashboard, state, notifyApp]);
 
   return { state, onDashboardSave };
 };
