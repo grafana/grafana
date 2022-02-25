@@ -1,0 +1,60 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: datasources.grafana.core.group
+spec:
+  group: grafana.core.group
+  scope: Namespaced
+  names:
+    plural: datasources
+    singular: datasource
+    kind: Datasource
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              type:
+                type: string
+              typeLogoUrl:
+                type: string
+              access:
+                type: string
+              url:
+                type: string
+              password:
+                type: string
+              user:
+                type: string
+              database:
+                type: string
+              basicAuth:
+                type: boolean
+              basicAuthUser:
+                type: string
+              basicAuthPassword:
+                type: string
+              withCredentials:
+                type: boolean
+              isDefault:
+                type: boolean
+              jsonData:
+                type: string
+              version:
+                type: integer
+              readOnly:
+                type: boolean
+              #secureJsonFields:
+              #  type: object
+              #  additionalProperties:
+              #    - type: boolean
+              #accessControl:
+              #  type: object
+              #  additionalProperties:
+              #    - type: boolean

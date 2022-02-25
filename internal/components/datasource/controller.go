@@ -17,10 +17,10 @@ type DatasourceReconciler struct {
 }
 
 type Store interface {
-	Get(ctx context.Context, uid string) (CR, error)
+	Get(ctx context.Context, uid string) (Datasource, error)
 	//Upsert(context.Context, string, DataSource) error
-	Insert(ctx context.Context, ds CR) error
-	Update(ctx context.Context, ds CR) error
+	Insert(ctx context.Context, ds Datasource) error
+	Update(ctx context.Context, ds Datasource) error
 	Delete(ctx context.Context, uid string) error
 }
 
@@ -33,7 +33,7 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 	// TODO should Thema-based approaches differ from pure k8s here? (research!)
 	if err := ctrl.NewControllerManagedBy(mgr).
 		Named("datasource-controller").
-		For(&CR{}).
+		For(&Datasource{}).
 		Complete(reconcile.Func(d.Reconcile)); err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func ProvideDatasourceController(mgr ctrl.Manager, cli rest.Interface, stor Stor
 var errNotFound = errors.New("k8s obj not found")
 
 func (d *DatasourceReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	ds := CR{}
+	ds := Datasource{}
 
 	err := d.cli.Get().Namespace(req.Namespace).Resource("datasources").Name(req.Name).Do(ctx).Into(&ds)
 

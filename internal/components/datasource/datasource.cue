@@ -15,7 +15,7 @@ seqs: [
                 //orgId: int
                 //name: string
                 type: string
-                typeLogoUrl: string
+                typeLogoUrl?: string
                 access: *"proxy" | "direct" // TODO are we sure this default is right?
                 url: string
                 password: string
@@ -29,8 +29,8 @@ seqs: [
                 jsonData?: [string]: _
                 version: int32
                 readOnly: bool | *false
-                secureJsonFields?: [string]: bool
-                accessControl?: [string]: bool
+                //secureJsonFields?: [string]: bool
+                //accessControl?: [string]: bool
             }
         ]
     },

@@ -37,20 +37,20 @@ type storeDS struct {
 	ss *SQLStore
 }
 
-func (s storeDS) Get(ctx context.Context, uid string) (datasource.CR, error) {
+func (s storeDS) Get(ctx context.Context, uid string) (datasource.Datasource, error) {
 	cmd := &models.GetDataSourceQuery{
 		OrgId: 1, // Hardcode for now
 		Uid:   uid,
 	}
 
 	if err := s.ss.GetDataSource(ctx, cmd); err != nil {
-		return datasource.CR{}, err
+		return datasource.Datasource{}, err
 	}
 
 	return s.oldToNew(cmd.Result), nil
 }
 
-func (s storeDS) Insert(ctx context.Context, ds datasource.CR) error {
+func (s storeDS) Insert(ctx context.Context, ds datasource.Datasource) error {
 	cmd := &models.AddDataSourceCommand{
 		Name:              ds.Name,
 		Type:              ds.Spec.Type,
@@ -72,7 +72,7 @@ func (s storeDS) Insert(ctx context.Context, ds datasource.CR) error {
 	return s.ss.AddDataSource(ctx, cmd)
 }
 
-func (s storeDS) Update(ctx context.Context, ds datasource.CR) error {
+func (s storeDS) Update(ctx context.Context, ds datasource.Datasource) error {
 	rv, err := strconv.Atoi(ds.ResourceVersion)
 	if err != nil {
 		return err
@@ -110,9 +110,9 @@ func (s storeDS) Delete(ctx context.Context, uid string) error {
 }
 
 // oldToNew doesn't need to be method, but keeps things bundled
-func (s storeDS) oldToNew(ds *models.DataSource) datasource.CR {
+func (s storeDS) oldToNew(ds *models.DataSource) datasource.Datasource {
 	jdMap := ds.JsonData.MustMap()
-	cr := datasource.CR{
+	cr := datasource.Datasource{
 		Spec: datasource.Model{
 			Type:              ds.Type,
 			Access:            string(ds.Access),

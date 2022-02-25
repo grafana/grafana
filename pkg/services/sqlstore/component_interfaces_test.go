@@ -24,7 +24,7 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		jd := make(map[string]interface{})
 		jd["test"] = "test"
 
-		modelToInsert := datasource.CR{
+		modelToInsert := datasource.Datasource{
 			Spec: datasource.Model{
 				JsonData: jd,
 			},
@@ -40,7 +40,7 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		fetchedDS, err := dsStore.Get(ctx, uid)
 		require.NoError(t, err)
 
-		modelToInsertWithVersionBumped := datasource.CR{
+		modelToInsertWithVersionBumped := datasource.Datasource{
 			Spec: datasource.Model{
 				JsonData: jd,
 			},
@@ -52,7 +52,7 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		require.Equal(t, modelToInsertWithVersionBumped, fetchedDS)
 
 		// Update
-		modelForUpdate := datasource.CR{
+		modelForUpdate := datasource.Datasource{
 			Spec: datasource.Model{
 				JsonData: jd,
 				Type:     "slothFactory",
@@ -66,7 +66,7 @@ func TestStoreDSStoreCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get updated
-		modelForUpdateWithVersionBump := datasource.CR{
+		modelForUpdateWithVersionBump := datasource.Datasource{
 			Spec: datasource.Model{
 				JsonData: jd,
 				Type:     "slothFactory",
