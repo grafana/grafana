@@ -31,7 +31,7 @@ export function SecondaryActions(props: Props) {
         {!props.addQueryRowButtonHidden && (
           <Button
             variant="secondary"
-            aria-label="Add row button"
+            aria-label="Add query"
             onClick={props.onClickAddQueryRowButton}
             disabled={props.addQueryRowButtonDisabled}
             icon="plus"

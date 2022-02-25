@@ -9,10 +9,12 @@ import {
   createTheme,
 } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
-import { shallow } from 'enzyme';
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
-import { SecondaryActions } from './SecondaryActions';
+import { render, screen } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { configureStore } from 'app/store/configureStore';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 const dummyProps: Props = {
   logsResult: undefined,
@@ -90,15 +92,29 @@ const dummyProps: Props = {
   graphStyle: 'lines',
 };
 
-describe('Explore', () => {
-  it('should render component', () => {
-    const wrapper = shallow(<Explore {...dummyProps} />);
-    expect(wrapper).toMatchSnapshot();
+const setup = (children: JSX.Element) => {
+  const store = configureStore();
+
+  setDataSourceSrv({
+    getList() {
+      return [];
+    },
+    getInstanceSettings() {
+      return undefined;
+    },
+    get() {
+      return Promise.reject();
+    },
+    reload() {},
   });
 
+  return render(<Provider store={store}>{children}</Provider>);
+};
+
+describe('Explore', () => {
   it('renders SecondaryActions and add row button', () => {
-    const wrapper = shallow(<Explore {...dummyProps} />);
-    expect(wrapper.find(SecondaryActions)).toHaveLength(1);
-    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(false);
+    setup(<Explore {...dummyProps} />);
+
+    expect(screen.getByRole('button', { name: /add query/i })).toBeInTheDocument();
   });
 });
