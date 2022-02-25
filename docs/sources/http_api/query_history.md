@@ -77,6 +77,56 @@ Status codes:
 - **400** - Errors (invalid JSON, missing or invalid fields)
 - **500** – Unable to add query to the database
 
+## Query history search
+
+`GET /api/query-history`
+
+Returns a list of queries in query history that match search parameters. Query history search supports pagination. Use the `limit` query parameter to control the maximum number of queries returned; the default limit is 100. You can also use the `page` query parameter to fetch queries from any page other than the first one.
+
+Query parameters:
+
+- **datasourceUid** - Use this parameter to filter query history items for selected data source. At least 1 data source uid needs to be specified. To do an "AND" filtering with multiple data sources, specify the data source parameter multiple times e.g. `datasourceUid=uid1&datasourceUid=uid2`.
+- **searchString** – Use searchString parameter for filtering query history items based on the content of queries.
+- **sort** - Sorting order. Can be `time-asc` or `time desc`. Defaults to `time-desc`.
+- **onlyStarred** - Search for queries that are starred. Defaults to `false`.
+- **page** - Number of page you would like to to get. Search supports pagination and it is limits results to 100 queries per page.
+  **Example request for query history search**:
+
+```http
+GET /api/query-history?dataSourceUid="PE1C5CBDA0504A6A3"&dataSourceUid="FG1C1CBDA0504A6EL"&searchString="ALERTS"&sort="time-asc" HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response for query history search**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "result": [{
+    "uid": "Ahg678z",
+    "datasourceUid": "PE1C5CBDA0504A6A3",
+    "createdBy": 1,
+    "createdAt": 1643630762,
+    "starred": false,
+    "comment": "",
+    "queries": [
+      {
+        "refId": "A",
+        "key": "Q-87fed8e3-62ba-4eb2-8d2a-4129979bb4de-0",
+        "scenarioId": "csv_content",
+        "datasource": {
+            "type": "testdata",
+            "uid": "PE1C5CBDA0504A6A3"
+        }
+      }
+    ]
+  }]
+}
+```
+
 ## Delete query from Query history by UID
 
 `DELETE /api/query-history/:uid`
