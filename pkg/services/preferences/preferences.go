@@ -10,18 +10,18 @@ import (
 )
 
 type Service interface {
-	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error)
-	GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error)
-	SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) error
+	GetPreferencesWithDefaults(context.Context, *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error)
+	GetPreferences(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
+	SavePreferences(context.Context, *models.SavePreferencesCommand) error
 }
 
 type ServiceImpl struct {
 	preferenceStore pstore.Store
 }
 
-func ProvideService(cfg *setting.Cfg, sqlstore sqlstore.Store) Service {
-	return &ServiceImpl{preferenceStore: &pstore.StoreImpl{
-		SqlStore: sqlstore, Cfg: cfg},
+func ProvideService(cfg *setting.Cfg, sqlStore sqlstore.Store) Service {
+	return &ServiceImpl{
+		preferenceStore: pstore.NewPreferencesStore(cfg, sqlStore),
 	}
 }
 

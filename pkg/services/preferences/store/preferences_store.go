@@ -11,17 +11,22 @@ import (
 )
 
 type StoreImpl struct {
-	SqlStore sqlstore.Store
-	Cfg      *setting.Cfg
+	sqlStore sqlstore.Store
+	cfg      *setting.Cfg
 }
 
-// TODO : Get and Set store methods
 type Store interface {
-	// TODO adjust the methods to Get/Set methods move logic to service
 	Get(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
 	GetDefaults() *models.Preferences
 	List(ctx context.Context, query *models.ListPreferencesQuery) ([]*models.Preferences, error)
 	Set(context.Context, *models.SavePreferencesCommand) error
+}
+
+func NewPreferencesStore(cfg *setting.Cfg, sqlStore sqlstore.Store) Store {
+	return &StoreImpl{
+		sqlStore: sqlStore,
+		cfg:      cfg,
+	}
 }
 
 //  move the logic part to the service and use GetPreferences instead of this one
@@ -43,7 +48,7 @@ func (s *StoreImpl) List(ctx context.Context, query *models.ListPreferencesQuery
 	params = append(params, query.UserID)
 	params = append(params, query.OrgID)
 
-	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		err := dbSession.Where(filter, params...).
 			OrderBy("user_id ASC, team_id ASC").
 			Find(&prefs)
@@ -59,9 +64,9 @@ func (s *StoreImpl) List(ctx context.Context, query *models.ListPreferencesQuery
 
 func (s *StoreImpl) GetDefaults() *models.Preferences {
 	defaults := &models.Preferences{
-		Theme:           s.Cfg.DefaultTheme,
-		Timezone:        s.Cfg.DateFormats.DefaultTimezone,
-		WeekStart:       s.Cfg.DateFormats.DefaultWeekStart,
+		Theme:           s.cfg.DefaultTheme,
+		Timezone:        s.cfg.DateFormats.DefaultTimezone,
+		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardId: 0,
 	}
 
@@ -70,7 +75,7 @@ func (s *StoreImpl) GetDefaults() *models.Preferences {
 
 func (s *StoreImpl) Get(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
 	var prefs models.Preferences
-	err := s.SqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
 
 		if err != nil {
@@ -83,7 +88,7 @@ func (s *StoreImpl) Get(ctx context.Context, query *models.GetPreferencesQuery) 
 }
 
 func (s *StoreImpl) Set(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return s.SqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
 		if err != nil {
