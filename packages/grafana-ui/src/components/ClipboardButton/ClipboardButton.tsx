@@ -21,24 +21,46 @@ export interface Props extends ButtonProps {
 const dummyClearFunc = () => {};
 
 export function ClipboardButton({ onClipboardCopy, onClipboardError, children, getText, ...buttonProps }: Props) {
-  // Can be removed in 9.x
   const buttonRef = useRef<null | HTMLButtonElement>(null);
-  const copyText = useCallback(() => {
-    const copiedText = getText();
+  const copyTextCallback = useCallback(async () => {
+    const textToCopy = getText();
+    // Can be removed in 9.x
     const dummyEvent: ClipboardEvent = {
       action: 'copy',
       clearSelection: dummyClearFunc,
-      text: copiedText,
+      text: textToCopy,
       trigger: buttonRef.current!,
     };
-    navigator.clipboard
-      .writeText(copiedText)
-      .then(() => (onClipboardCopy?.(dummyEvent), () => onClipboardError?.(dummyEvent)));
+    try {
+      await copyText(textToCopy, buttonRef);
+      onClipboardCopy?.(dummyEvent);
+    } catch {
+      onClipboardError?.(dummyEvent);
+    }
   }, [getText, onClipboardCopy, onClipboardError]);
 
   return (
-    <Button onClick={copyText} {...buttonProps} ref={buttonRef}>
+    <Button onClick={copyTextCallback} {...buttonProps} ref={buttonRef}>
       {children}
     </Button>
   );
 }
+
+const copyText = async (text: string, buttonRef: React.MutableRefObject<HTMLButtonElement | null>) => {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  } else {
+    // Use a fallback method for browsers/contexts that don't support the Clipboard API.
+    // See https://web.dev/async-clipboard/#feature-detection.
+    const input = document.createElement('input');
+    // Normally we'd append this to the body. However if we're inside a focus manager
+    // from react-aria, we can't focus anything outside of the managed area.
+    // Instead, let's append it to the button. Then we're guaranteed to be able to focus + copy.
+    buttonRef.current?.appendChild(input);
+    input.value = text;
+    input.focus();
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+  }
+};

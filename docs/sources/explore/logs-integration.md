@@ -31,7 +31,7 @@ If the data source does not support loading full range log volume histogram, the
 
 For logs where a level label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with an unknown log level.
 
-> **Tip:** If you use Loki data source and the "level" is in you log content, try to use parsers (JSON, logfmt, regex,..) to extract level information into level label that is used to determine log level.
+> **Tip:** If you use Loki data source and the "level" is in your log-line, use parsers (JSON, logfmt, regex,..) to extract the level information into a level label that is used to determine log level. This will allow the histogram to show the various log levels in separate bars.
 
 **Supported log levels and mapping of log level abbreviation and expressions:**
 
