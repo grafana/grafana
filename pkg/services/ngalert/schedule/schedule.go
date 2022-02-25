@@ -368,7 +368,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 	for {
 		select {
 		case tick := <-sch.ticker.C:
-			start := time.Now()
+			// We use Round(0) on the start time to remove the monotonic clock.
+			// This is required as late ticks from the ticker have current monotonic
+			// timestamps such that start.Sub(tick) does not return the expected
+			// delta.
+			start := time.Now().Round(0)
 			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
