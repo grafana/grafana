@@ -11,7 +11,6 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
@@ -81,10 +80,10 @@ func newProvisioningServiceImpl(
 }
 
 type ProvisioningServiceImpl struct {
-	Cfg                     *setting.Cfg
-	SQLStore                *sqlstore.SQLStore
-	pluginStore             plugifaces.Store
-	pluginSettingsStore     pluginsettings.Store
+	Cfg         *setting.Cfg
+	SQLStore    *sqlstore.SQLStore
+	pluginStore plugifaces.Store
+	// pluginSettingsStore     pluginsettings.Store
 	EncryptionService       encryption.Internal
 	NotificationService     *notifications.NotificationService
 	log                     log.Logger
