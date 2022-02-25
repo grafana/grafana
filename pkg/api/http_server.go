@@ -144,7 +144,7 @@ type HTTPServer struct {
 	AlertNotificationService     *alerting.AlertNotificationService
 	DashboardsnapshotsService    *dashboardsnapshots.Service
 	PluginSettings               *pluginSettings.Service
-	StarsService                 stars.Manager
+	StarManager                  stars.Manager
 }
 
 type ServerOptions struct {
@@ -247,7 +247,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DashboardsnapshotsService:    dashboardsnapshotsService,
 		PluginSettings:               pluginSettings,
 		permissionServices:           permissionsServices,
-		StarsService:                 starsService,
+		StarManager:                  starsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
