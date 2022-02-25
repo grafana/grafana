@@ -1,5 +1,5 @@
 import { ApiKey, ServiceAccountDTO, ThunkResult } from '../../../types';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   acOptionsLoaded,
   builtInRolesLoaded,
@@ -90,7 +90,7 @@ export function loadServiceAccounts(): ThunkResult<void> {
 
 export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().patch(`/api/org/users/${serviceAccount.id}`, { role: serviceAccount.role });
+    await getBackendSrv().patch(`/api/org/users/${serviceAccount.id}`, { ...serviceAccount });
     dispatch(loadServiceAccounts());
   };
 }
@@ -99,5 +99,12 @@ export function removeServiceAccount(serviceAccountId: number): ThunkResult<void
   return async (dispatch) => {
     await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
     dispatch(loadServiceAccounts());
+  };
+}
+
+export function deleteServiceAccount(serviceAccountId: number): ThunkResult<void> {
+  return async (dispatch) => {
+    await getBackendSrv().delete(`${BASE_URL}/${serviceAccountId}`);
+    locationService.push('/org/serviceaccounts');
   };
 }

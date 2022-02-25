@@ -12,8 +12,6 @@ interface Props {
 
   onServiceAccountUpdate: (serviceAccount: ServiceAccountDTO) => void;
   onServiceAccountDelete: (serviceAccountId: number) => void;
-  onServiceAccountDisable: (serviceAccountId: number) => void;
-  onServiceAccountEnable: (serviceAccountId: number) => void;
 
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
@@ -25,8 +23,6 @@ export function ServiceAccountProfile({
   timeZone,
   onServiceAccountUpdate,
   onServiceAccountDelete,
-  onServiceAccountDisable,
-  onServiceAccountEnable,
   onRoleChange,
   roleOptions,
   builtInRoles,
@@ -51,11 +47,8 @@ export function ServiceAccountProfile({
   };
 
   const handleServiceAccountDelete = () => onServiceAccountDelete(serviceAccount.id);
-
-  const handleServiceAccountDisable = () => onServiceAccountDisable(serviceAccount.id);
-
-  const handleServiceAccountEnable = () => onServiceAccountEnable(serviceAccount.id);
-
+  const handleServiceAccountDisable = () => onServiceAccountUpdate({ ...serviceAccount, isDisabled: true });
+  const handleServiceAccountEnable = () => onServiceAccountUpdate({ ...serviceAccount, isDisabled: false });
   const onServiceAccountNameChange = (newValue: string) => {
     onServiceAccountUpdate({
       ...serviceAccount,

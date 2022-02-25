@@ -12,6 +12,7 @@ import {
   createServiceAccountToken,
   fetchACOptions,
   updateServiceAccount,
+  deleteServiceAccount,
 } from './state/actions';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import { getTimeZone, NavModel, OrgRole } from '@grafana/data';
@@ -44,6 +45,8 @@ const mapDispatchToProps = {
   loadServiceAccountTokens,
   createServiceAccountToken,
   deleteServiceAccountToken,
+  deleteServiceAccount,
+  updateServiceAccount,
   fetchACOptions,
 };
 
@@ -63,6 +66,8 @@ const ServiceAccountPageUnconnected = ({
   loadServiceAccountTokens,
   createServiceAccountToken,
   deleteServiceAccountToken,
+  deleteServiceAccount,
+  updateServiceAccount,
   fetchACOptions,
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,9 +96,15 @@ const ServiceAccountPageUnconnected = ({
   };
 
   const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
-    const updatedServiceAccount = { ...serviceAccount, role: role };
+    updateServiceAccount({ ...serviceAccount, role: role });
+  };
 
+  const onServiceAccountUpdate = (updatedServiceAccount: ServiceAccountDTO) => {
     updateServiceAccount(updatedServiceAccount);
+  };
+
+  const onServiceAccountDelete = (serviceAccountId: number) => {
+    deleteServiceAccount(serviceAccountId);
   };
 
   return (
@@ -104,18 +115,8 @@ const ServiceAccountPageUnconnected = ({
             <ServiceAccountProfile
               serviceAccount={serviceAccount}
               timeZone={timezone}
-              onServiceAccountDelete={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountUpdate={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountDisable={() => {
-                console.log(`not implemented`);
-              }}
-              onServiceAccountEnable={() => {
-                console.log(`not implemented`);
-              }}
+              onServiceAccountDelete={onServiceAccountDelete}
+              onServiceAccountUpdate={onServiceAccountUpdate}
               onRoleChange={onRoleChange}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
