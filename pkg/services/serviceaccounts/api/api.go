@@ -257,7 +257,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 
 	serviceAccounts, err := api.store.SearchOrgServiceAccounts(ctx, query)
 	if err != nil {
-		return response.Error(500, "Failed to get service accounts for current organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
 
 	filteredServiceAccounts := make([]*serviceaccounts.ServiceAccountDTO, 0, len(serviceAccounts))
@@ -282,5 +282,5 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 		PerPage:         query.Result.PerPage,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
