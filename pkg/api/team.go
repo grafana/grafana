@@ -218,7 +218,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 
 	prefsQuery := models.GetPreferencesQuery{UserId: 0, OrgId: orgId, TeamId: teamId}
 
-	preferences, err := hs.PreferencesService.GetPreferences(c.Req.Context(), &prefsQuery)
+	preferences, err := hs.preferencesService.GetPreferences(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}

@@ -1,8 +1,7 @@
-package preferences
+package prefs
 
 import (
 	"context"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	pstore "github.com/grafana/grafana/pkg/services/preferences/store"
@@ -17,38 +16,27 @@ type Service interface {
 }
 
 type ServiceImpl struct {
-	PreferenceStore pstore.Store
+	preferenceStore pstore.Store
 }
 
 func ProvideService(cfg *setting.Cfg, sqlstore sqlstore.Store) Service {
-	return &ServiceImpl{PreferenceStore: &pstore.StoreImpl{
+	return &ServiceImpl{preferenceStore: &pstore.StoreImpl{
 		SqlStore: sqlstore, Cfg: cfg},
 	}
 }
 
 func (s *ServiceImpl) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) (*models.Preferences, error) {
-	params := make([]interface{}, 0)
-	filter := ""
-
-	if len(query.User.Teams) > 0 {
-		filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.User.Teams)-1) + ")) OR "
-		params = append(params, query.User.OrgId)
-		for _, v := range query.User.Teams {
-			params = append(params, v)
-		}
+	listQuery := &models.ListPreferencesQuery{
+		Teams:  query.User.Teams,
+		OrgID:  query.User.OrgId,
+		UserID: query.User.UserId,
 	}
-
-	filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
-	params = append(params, query.User.OrgId)
-	params = append(params, query.User.UserId)
-	params = append(params, query.User.OrgId)
-
-	prefs, err := s.PreferenceStore.List(ctx, filter, params)
+	prefs, err := s.preferenceStore.List(ctx, listQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	res := s.PreferenceStore.GetDefaults()
+	res := s.preferenceStore.GetDefaults()
 	for _, p := range prefs {
 		if p.Theme != "" {
 			res.Theme = p.Theme
@@ -68,9 +56,9 @@ func (s *ServiceImpl) GetPreferencesWithDefaults(ctx context.Context, query *mod
 }
 
 func (s *ServiceImpl) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) (*models.Preferences, error) {
-	return s.PreferenceStore.Get(ctx, query)
+	return s.preferenceStore.Get(ctx, query)
 }
 
 func (s *ServiceImpl) SavePreferences(ctx context.Context, query *models.SavePreferencesCommand) error {
-	return s.PreferenceStore.Set(ctx, query)
+	return s.preferenceStore.Set(ctx, query)
 }

@@ -1,7 +1,8 @@
-package preferencesstore
+package prefsstore
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -19,13 +20,29 @@ type Store interface {
 	// TODO adjust the methods to Get/Set methods move logic to service
 	Get(context.Context, *models.GetPreferencesQuery) (*models.Preferences, error)
 	GetDefaults() *models.Preferences
-	List(ctx context.Context, filter string, params []interface{}) ([]*models.Preferences, error)
+	List(ctx context.Context, query *models.ListPreferencesQuery) ([]*models.Preferences, error)
 	Set(context.Context, *models.SavePreferencesCommand) error
 }
 
 //  move the logic part to the service and use GetPreferences instead of this one
-func (s *StoreImpl) List(ctx context.Context, filter string, params []interface{}) ([]*models.Preferences, error) {
+func (s *StoreImpl) List(ctx context.Context, query *models.ListPreferencesQuery) ([]*models.Preferences, error) {
 	prefs := make([]*models.Preferences, 0)
+	params := make([]interface{}, 0)
+	filter := ""
+
+	if len(query.Teams) > 0 {
+		filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.Teams)-1) + ")) OR "
+		params = append(params, query.OrgID)
+		for _, v := range query.Teams {
+			params = append(params, v)
+		}
+	}
+
+	filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
+	params = append(params, query.OrgID)
+	params = append(params, query.UserID)
+	params = append(params, query.OrgID)
+
 	err := s.SqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		err := dbSession.Where(filter, params...).
 			OrderBy("user_id ASC, team_id ASC").

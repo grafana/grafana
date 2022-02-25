@@ -30,8 +30,12 @@ type GetPreferencesQuery struct {
 
 type GetPreferencesWithDefaultsQuery struct {
 	User *SignedInUser
+}
 
-	Result *Preferences
+type ListPreferencesQuery struct {
+	Teams  []int64
+	OrgID  int64
+	UserID int64
 }
 
 // ---------------------
