@@ -428,14 +428,8 @@ func Test_executeStartQuery(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
-			{
-				StartTime:     pointerInt64(0),
-				EndTime:       pointerInt64(1),
-				QueryString:   pointerString("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|"),
-				LogGroupNames: []*string{},
-			},
-		}, cli.calls.startQueryWithContext)
+		require.Len(t, cli.calls.startQueryWithContext, 1)
+		assert.Nil(t, cli.calls.startQueryWithContext[0].Limit)
 	})
 
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
@@ -460,14 +454,8 @@ func Test_executeStartQuery(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
-			{
-				StartTime:     pointerInt64(0),
-				EndTime:       pointerInt64(1),
-				QueryString:   pointerString("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|"),
-				LogGroupNames: []*string{},
-			},
-		}, cli.calls.startQueryWithContext)
+		require.Len(t, cli.calls.startQueryWithContext, 1)
+		assert.Nil(t, cli.calls.startQueryWithContext[0].Limit)
 	})
 }
 
