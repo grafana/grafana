@@ -49,7 +49,7 @@ function SelectInputParamEditor({
 
   if (!selectOptions[0]?.label) {
     selectOptions = paramDef.options!.map((option) => ({
-      label: option as string,
+      label: option.toString(),
       value: option as string,
     }));
   }
