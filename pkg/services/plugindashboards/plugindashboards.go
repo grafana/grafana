@@ -19,7 +19,7 @@ type pluginSettingsStore interface {
 
 func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, pluginStore plugins.Store,
 	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service,
-	pluginSettingsStore *pluginsettings.Service) *Service {
+	pluginSettingsStore *pluginsettings.ServiceImpl) *Service {
 	s := new(sqlStore, bus, pluginStore, pluginDashboardManager, dashboardImportService, pluginSettingsStore)
 	s.updateAppDashboards()
 	return s
@@ -27,7 +27,7 @@ func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, pluginStore plugin
 
 func new(pluginSettingsStore pluginSettingsStore, bus bus.Bus, pluginStore plugins.Store,
 	pluginDashboardManager plugins.PluginDashboardManager, dashboardImportService dashboardimport.Service,
-	pluginSettings pluginsettings.Store) *Service {
+	pluginSettings pluginsettings.Service) *Service {
 	s := &Service{
 		pluginSettingsStore:    pluginSettingsStore,
 		bus:                    bus,
@@ -49,7 +49,7 @@ type Service struct {
 	pluginDashboardManager plugins.PluginDashboardManager
 	dashboardImportService dashboardimport.Service
 	logger                 log.Logger
-	pluginSettings         pluginsettings.Store
+	pluginSettings         pluginsettings.Service
 }
 
 func (s *Service) updateAppDashboards() {

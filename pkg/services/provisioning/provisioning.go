@@ -80,10 +80,9 @@ func newProvisioningServiceImpl(
 }
 
 type ProvisioningServiceImpl struct {
-	Cfg         *setting.Cfg
-	SQLStore    *sqlstore.SQLStore
-	pluginStore plugifaces.Store
-	// pluginSettingsStore     pluginsettings.Store
+	Cfg                     *setting.Cfg
+	SQLStore                *sqlstore.SQLStore
+	pluginStore             plugifaces.Store
 	EncryptionService       encryption.Internal
 	NotificationService     *notifications.NotificationService
 	log                     log.Logger

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-type Service struct {
+type ServiceImpl struct {
 	Bus            bus.Bus
 	SQLStore       *sqlstore.SQLStore
 	SecretsService secrets.Service
@@ -21,7 +21,7 @@ type Service struct {
 	pluginSettingDecryptionCache secureJSONDecryptionCache
 }
 
-type Store interface {
+type Service interface {
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
 	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
@@ -37,8 +37,8 @@ type secureJSONDecryptionCache struct {
 	sync.Mutex
 }
 
-func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *Service {
-	s := &Service{
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service) *ServiceImpl {
+	s := &ServiceImpl{
 		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
@@ -55,11 +55,11 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	return s
 }
 
-func (s *Service) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+func (s *ServiceImpl) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
 	return s.SQLStore.GetPluginSettingById(ctx, query)
 }
 
-func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+func (s *ServiceImpl) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
 	var err error
 	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 	if err != nil {
@@ -69,11 +69,11 @@ func (s *Service) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePlu
 	return s.SQLStore.UpdatePluginSetting(ctx, cmd)
 }
 
-func (s *Service) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
+func (s *ServiceImpl) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
 	return s.SQLStore.UpdatePluginSettingVersion(ctx, cmd)
 }
 
-func (s *Service) DecryptedValues(ps *models.PluginSetting) map[string]string {
+func (s *ServiceImpl) DecryptedValues(ps *models.PluginSetting) map[string]string {
 	s.pluginSettingDecryptionCache.Lock()
 	defer s.pluginSettingDecryptionCache.Unlock()
 

@@ -285,7 +285,7 @@ func TestPluginProxy(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, store pluginsettings.Store) *http.Request {
+func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route, store pluginsettings.Service) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{
