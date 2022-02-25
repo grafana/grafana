@@ -12,7 +12,7 @@ import { Props } from '../../ConfigEditor';
 const { Input } = LegacyForms;
 
 export class InsightsConfig extends PureComponent<Props> {
-  onAppInsightsResetApiKey = () => {
+  private onAppInsightsResetApiKey = () => {
     this.resetSecureKey('appInsightsApiKey');
   };
 
