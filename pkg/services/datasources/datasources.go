@@ -33,7 +33,7 @@ type DataSourceService interface {
 	GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error
 
 	// GetHTTPTransport gets a datasource specific HTTP transport.
-	GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
+	GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider, cacheKey string, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
 
 	// DecryptedValues decrypts the encrypted secureJSONData of the provided datasource and
 	// returns the decrypted values.
@@ -46,6 +46,8 @@ type DataSourceService interface {
 	// DecryptedBasicAuthPassword decrypts the encrypted datasource basic authentication
 	// password and returns the decryped value.
 	DecryptedBasicAuthPassword(ds *models.DataSource) string
+
+	DecryptedRulerBasicAuthPassword(ds *models.DataSource) string
 
 	// DecryptedPassword decrypts the encrypted datasource password and returns the
 	// decryped value.

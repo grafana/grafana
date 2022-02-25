@@ -539,9 +539,22 @@ export interface DataSourceJsonData {
 /**
  * Extra options for alerting ui enabled datasource. Prom & Loki currently
  **/
-export interface AlertingUIDataSourceJsonData extends DataSourceJsonData {
-  useCustomRulerURL?: boolean;
-  ruler?: Record<string, any>;
+export interface AlertingDataSourceJsonData extends DataSourceJsonData {
+  ruler?: {
+    url: string;
+    basicAuth: boolean;
+    withCredentials: boolean;
+    basicAuthPassword?: string;
+    basicAuthUser?: string;
+  };
+}
+
+export interface AlertingSecureDataSourceJsonData {
+  rulerBasicAuthPassword?: string;
+}
+
+export interface SecureDataSourceJsonData {
+  basicAuthPassword?: string;
 }
 
 /**

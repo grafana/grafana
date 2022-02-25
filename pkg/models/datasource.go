@@ -26,7 +26,6 @@ const (
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
-	DS_LOKI           = "loki"
 )
 
 var (
