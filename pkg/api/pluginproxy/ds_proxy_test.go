@@ -573,12 +573,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, true),
 			createAuthTest(t, secretsService, models.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader, false),
 
-			// These two should be enough for any other datasource at the moment. Proxy has special handling
-			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
-			// do not go through proxy but through TSDB API which is not tested here.
-			createAuthTest(t, models.DS_ES, authTypeBasic, authCheckHeader, false),
-			createAuthTest(t, models.DS_ES, authTypeBasic, authCheckHeader, true),
-
 			// no ruler proxy path; basic auth should be used
 			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, ""),
 			// valid ruler proxy paths; ruler basic auth should be used
@@ -592,6 +586,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/api/v1/rules"),
 			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace"),
 			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
+
+			// These two should be enough for any other datasource at the moment. Proxy has special handling
+			// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
+			// do not go through proxy but through TSDB API which is not tested here.
 			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, false),
 			createAuthTest(t, secretsService, models.DS_ES, "http://localhost:9200", authTypeBasic, authCheckHeader, true),
 		}
@@ -1066,8 +1064,13 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, test *t
 	require.NoError(t, err)
 
 	var routes []*plugins.Route
+	alertingEnabled := true
 	dsService := datasourceservice.ProvideService(bus.New(), nil, secretsService, featuremgmt.WithFeatures(), &acmock.Mock{}, acmock.NewPermissionsServicesMock())
-	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
+	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			Enabled: &alertingEnabled,
+		},
+	}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, secretsService)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
