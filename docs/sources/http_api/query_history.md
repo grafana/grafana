@@ -127,6 +127,11 @@ Content-Type: application/json
 }
 ```
 
+Status codes:
+
+- **200** – OK
+- **500** – Unable to add query to the database
+
 ## Delete query from Query history by UID
 
 `DELETE /api/query-history/:uid`
