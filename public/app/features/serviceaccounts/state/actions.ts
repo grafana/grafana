@@ -1,4 +1,4 @@
-import { ServiceAccountDTO, ThunkResult } from '../../../types';
+import { ApiKey, ServiceAccountDTO, ThunkResult } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   acOptionsLoaded,
@@ -39,7 +39,7 @@ export function setServiceAccountToRemove(serviceAccount: ServiceAccountDTO | nu
 export function loadServiceAccount(saID: number): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`);
+      const response = await getBackendSrv().get(`${BASE_URL}/${saID}`, accessControlQueryParam());
       dispatch(serviceAccountLoaded(response));
     } catch (error) {
       console.error(error);
@@ -49,11 +49,11 @@ export function loadServiceAccount(saID: number): ThunkResult<void> {
 
 export function createServiceAccountToken(
   saID: number,
-  data: any,
+  token: ApiKey,
   onTokenCreated: (key: string) => void
 ): ThunkResult<void> {
   return async (dispatch) => {
-    const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, data);
+    const result = await getBackendSrv().post(`${BASE_URL}/${saID}/tokens`, token);
     onTokenCreated(result.key);
     dispatch(loadServiceAccountTokens(saID));
   };

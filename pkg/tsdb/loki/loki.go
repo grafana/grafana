@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -15,10 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/loki/pkg/loghttp"
 	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/prometheus/common/model"
 )
 
 type Service struct {
@@ -44,13 +39,15 @@ type datasourceInfo struct {
 	URL        string
 }
 
-type QueryModel struct {
+type QueryJSONModel struct {
 	QueryType    string `json:"queryType"`
 	Expr         string `json:"expr"`
 	LegendFormat string `json:"legendFormat"`
 	Interval     string `json:"interval"`
 	IntervalMS   int    `json:"intervalMS"`
 	Resolution   int64  `json:"resolution"`
+	MaxLines     int    `json:"maxLines"`
+	VolumeQuery  bool   `json:"volumeQuery"`
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -111,67 +108,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return result, nil
 }
 
-//If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
-func formatLegend(metric model.Metric, query *lokiQuery) string {
-	if query.LegendFormat == "" {
-		return metric.String()
-	}
-
-	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
-		if val, exists := metric[model.LabelName(labelName)]; exists {
-			return []byte(val)
-		}
-		return []byte{}
-	})
-
-	return string(result)
-}
-
-func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames, error) {
-	frames := data.Frames{}
-
-	//We are currently processing only matrix results (for alerting)
-	matrix, ok := value.Data.Result.(loghttp.Matrix)
-	if !ok {
-		return frames, fmt.Errorf("unsupported result format: %q", value.Data.ResultType)
-	}
-
-	for _, v := range matrix {
-		name := formatLegend(v.Metric, query)
-		tags := make(map[string]string, len(v.Metric))
-		timeVector := make([]time.Time, 0, len(v.Values))
-		values := make([]float64, 0, len(v.Values))
-
-		for k, v := range v.Metric {
-			tags[string(k)] = string(v)
-		}
-
-		for _, k := range v.Values {
-			timeVector = append(timeVector, k.Timestamp.Time().UTC())
-			values = append(values, float64(k.Value))
-		}
-
-		timeField := data.NewField("time", nil, timeVector)
-		timeField.Config = &data.FieldConfig{Interval: float64(query.Step.Milliseconds())}
-		valueField := data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-
-		frame := data.NewFrame(name, timeField, valueField)
-		frame.SetMeta(&data.FrameMeta{
-			ExecutedQueryString: "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String(),
-		})
-
-		frames = append(frames, frame)
-	}
-
-	return frames, nil
-}
-
 // we extracted this part of the functionality to make it easy to unit-test it
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
-	value, err := api.QueryRange(ctx, *query)
+	value, err := api.Query(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}
