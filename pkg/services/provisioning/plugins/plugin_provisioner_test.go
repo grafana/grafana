@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
@@ -21,14 +20,6 @@ func TestPluginProvisioner(t *testing.T) {
 	})
 
 	t.Run("Should apply configurations", func(t *testing.T) {
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetOrgByNameQuery) error {
-			if query.Name == "Org 4" {
-				query.Result = &models.Org{Id: 4}
-			}
-
-			return nil
-		})
-
 		cfg := []*pluginsAsConfig{
 			{
 				Apps: []*appFromConfig{
@@ -40,10 +31,33 @@ func TestPluginProvisioner(t *testing.T) {
 			},
 		}
 		reader := &testConfigReader{result: cfg}
-		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, pluginSettings: &mockPluginsSettingsService{pluginSetting: &models.PluginSetting{}}}
+		store := &mockStore{}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, store: store}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
+		require.Len(t, store.sentCommands, 4)
+
+		testCases := []struct {
+			ExpectedPluginID      string
+			ExpectedOrgID         int64
+			ExpectedEnabled       bool
+			ExpectedPluginVersion string
+		}{
+			{ExpectedPluginID: "test-plugin", ExpectedOrgID: 2, ExpectedEnabled: true, ExpectedPluginVersion: "2.0.1"},
+			{ExpectedPluginID: "test-plugin-2", ExpectedOrgID: 3, ExpectedEnabled: false},
+			{ExpectedPluginID: "test-plugin", ExpectedOrgID: 4, ExpectedEnabled: true},
+			{ExpectedPluginID: "test-plugin-2", ExpectedOrgID: 1, ExpectedEnabled: true},
+		}
+
+		for index, tc := range testCases {
+			cmd := store.sentCommands[index]
+			require.NotNil(t, cmd)
+			require.Equal(t, tc.ExpectedPluginID, cmd.PluginId)
+			require.Equal(t, tc.ExpectedOrgID, cmd.OrgId)
+			require.Equal(t, tc.ExpectedEnabled, cmd.Enabled)
+			require.Equal(t, tc.ExpectedPluginVersion, cmd.PluginVersion)
+		}
 	})
 }
 
@@ -56,20 +70,29 @@ func (tcr *testConfigReader) readConfig(ctx context.Context, path string) ([]*pl
 	return tcr.result, tcr.err
 }
 
-type mockPluginsSettingsService struct {
-	pluginSetting *models.PluginSetting
-	err           error
+type mockStore struct {
+	sentCommands []*models.UpdatePluginSettingCmd
 }
 
-func (s *mockPluginsSettingsService) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	query.Result = s.pluginSetting
-	return s.err
+func (m *mockStore) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
+	if query.Name == "Org 4" {
+		query.Result = &models.Org{Id: 4}
+	}
+	return nil
 }
 
-func (s *mockPluginsSettingsService) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-	return s.err
+func (m *mockStore) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
+	if query.PluginId == "test-plugin" && query.OrgId == 2 {
+		query.Result = &models.PluginSetting{
+			PluginVersion: "2.0.1",
+		}
+		return nil
+	}
+
+	return models.ErrPluginSettingNotFound
 }
 
-func (s *mockPluginsSettingsService) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
-	return s.err
+func (m *mockStore) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
+	m.sentCommands = append(m.sentCommands, cmd)
+	return nil
 }

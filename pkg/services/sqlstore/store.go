@@ -24,7 +24,8 @@ type Store interface {
 	UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error
 	UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error
 	DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error
-	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
+	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CloneUserToServiceAccount(ctx context.Context, siUser *models.SignedInUser) (*models.User, error)
@@ -147,4 +148,8 @@ type Store interface {
 	ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
+	HasAdminPermissionInFolders(ctx context.Context, query *models.HasAdminPermissionInFoldersQuery) error
+	GetDashboardPermissionsForUser(ctx context.Context, query *models.GetDashboardPermissionsForUserQuery) error
+	GetDashboardsByPluginId(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
+	GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error
 }

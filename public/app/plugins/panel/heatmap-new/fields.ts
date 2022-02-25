@@ -3,7 +3,7 @@ import {
   calculateHeatmapFromData,
   createHeatmapFromBuckets,
   sortAscStrInf,
-} from 'app/core/components/TransformersUI/calculateHeatmap/heatmap';
+} from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
