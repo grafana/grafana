@@ -18,6 +18,7 @@ export interface FileDropzoneProps {
    *  maxSize: Infinity,
    *  minSize: 0,
    *  multiple: true,
+   *  useFsAccessApi: false,
    *  maxFiles: 0,
    * }
    */
@@ -135,7 +136,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     setFiles(newFiles);
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, useFsAccessApi: false, onDrop });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
   const fileList = files.map((file) => {
