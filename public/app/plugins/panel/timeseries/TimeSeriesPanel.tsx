@@ -1,31 +1,28 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { EventBus, FieldMatcherID, fieldMatchers, PanelProps, TimeRange } from '@grafana/data';
-// import { TooltipDisplayMode } from '@grafana/schema';
+import { EventBus, Field, FieldMatcherID, fieldMatchers, PanelProps, TimeRange } from '@grafana/data';
 import {
-  // usePanelContext,
-  // TimeSeries,
-  // TooltipPlugin,
-  // ZoomPlugin,
-  // KeyboardPlugin,
   UPlotChart2,
   preparePlotFrame,
   useTheme2,
   VizLayout,
   PlotLegend,
   LegendDisplayMode,
+  ZoomPlugin,
+  TooltipPlugin,
+  usePanelContext,
 } from '@grafana/ui';
-// import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-// import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
-// import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
-// import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
-// import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
-// import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { preparePlotConfigBuilder } from '@grafana/ui/src/components/TimeSeries/utils';
 import { debugLog } from '@grafana/ui/src/components/uPlotChart/debug';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
+import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -41,7 +38,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   timeZone,
   ...otherProps
 }) => {
-  // const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
   const theme = useTheme2();
   const timeRange = useRef<TimeRange>();
   const eventBus = useRef<EventBus>();
@@ -49,9 +46,9 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   timeRange.current = otherProps.timeRange;
   eventBus.current = otherProps.eventBus;
 
-  // const getFieldLinks = (field: Field, rowIndex: number) => {
-  //   return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-  // };
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange.current! });
+  };
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
 
@@ -94,7 +91,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return <PlotLegend data={frames} config={cfg?.builder} {...legend} />;
   }, [options, frames, cfg]);
 
-  // const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   if (!frames) {
     return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
@@ -108,114 +105,86 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart2 config={cfg} data={plotData.aligned} width={vizWidth} height={vizHeight}></UPlotChart2>
+          <UPlotChart2 config={cfg} data={plotData.aligned} width={vizWidth} height={vizHeight}>
+            {(cfg, u) => {
+              return (
+                <>
+                  <ZoomPlugin config={cfg.builder} onZoom={onChangeTimeRange} />
+                  <TooltipPlugin
+                    data={plotData.alignedFrame}
+                    config={cfg.builder}
+                    mode={options.tooltip.mode}
+                    sortOrder={options.tooltip.sort}
+                    sync={sync}
+                    timeZone={timeZone}
+                  />
+
+                  {data.annotations && (
+                    <AnnotationsPlugin annotations={data.annotations} config={cfg.builder} timeZone={timeZone} />
+                  )}
+
+                  {/* Enables annotations creation*/}
+                  {enableAnnotationCreation ? (
+                    <AnnotationEditorPlugin data={plotData.alignedFrame} timeZone={timeZone} config={cfg.builder}>
+                      {({ startAnnotating }) => {
+                        return (
+                          <ContextMenuPlugin
+                            data={plotData.alignedFrame}
+                            config={cfg.builder}
+                            timeZone={timeZone}
+                            replaceVariables={replaceVariables}
+                            defaultItems={[
+                              {
+                                items: [
+                                  {
+                                    label: 'Add annotation',
+                                    ariaLabel: 'Add annotation',
+                                    icon: 'comment-alt',
+                                    onClick: (e, p) => {
+                                      if (!p) {
+                                        return;
+                                      }
+                                      startAnnotating({ coords: p.coords });
+                                    },
+                                  },
+                                ],
+                              },
+                            ]}
+                          />
+                        );
+                      }}
+                    </AnnotationEditorPlugin>
+                  ) : (
+                    <ContextMenuPlugin
+                      data={plotData.alignedFrame}
+                      config={cfg.builder}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={[]}
+                    />
+                  )}
+                  {data.annotations && (
+                    <ExemplarsPlugin
+                      config={cfg.builder}
+                      exemplars={data.annotations}
+                      timeZone={timeZone}
+                      getFieldLinks={getFieldLinks}
+                    />
+                  )}
+
+                  {canEditThresholds && onThresholdsChange && (
+                    <ThresholdControlsPlugin
+                      config={cfg.builder}
+                      fieldConfig={fieldConfig}
+                      onThresholdsChange={onThresholdsChange}
+                    />
+                  )}
+                </>
+              );
+            }}
+          </UPlotChart2>
         )}
       </VizLayout>
-      {/* <Portal>
-        {hover && (
-          <VizTooltipContainer
-            position={{ x: hover.pageX, y: hover.pageY }}
-            offset={{ x: 10, y: 10 }}
-            allowPointerEvents={isToolTipOpen.current}
-          >
-            {shouldDisplayCloseButton && (
-              <>
-                <CloseButton onClick={onCloseToolTip} />
-                <div className={styles.closeButtonSpacer} />
-              </>
-            )}
-            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
-          </VizTooltipContainer>
-        )}
-      </Portal> */}
     </>
-    // <TimeSeries
-    //   frames={frames}
-    //   structureRev={data.structureRev}
-    //   timeRange={timeRange}
-    //   timeZone={timeZone}
-    //   width={width}
-    //   height={height}
-    //   legend={options.legend}
-    // >
-    //   {(config, alignedDataFrame) => {
-    //     return (
-    //       <>
-    //         <KeyboardPlugin config={config} />
-    //         <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-    //         {options.tooltip.mode === TooltipDisplayMode.None || (
-    //           <TooltipPlugin
-    //             data={alignedDataFrame}
-    //             config={config}
-    //             mode={options.tooltip.mode}
-    //             sortOrder={options.tooltip.sort}
-    //             sync={sync}
-    //             timeZone={timeZone}
-    //           />
-    //         )}
-    //         {/* Renders annotation markers*/}
-    //         {data.annotations && (
-    //           <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
-    //         )}
-    //         {/* Enables annotations creation*/}
-    //         {enableAnnotationCreation ? (
-    //           <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-    //             {({ startAnnotating }) => {
-    //               return (
-    //                 <ContextMenuPlugin
-    //                   data={alignedDataFrame}
-    //                   config={config}
-    //                   timeZone={timeZone}
-    //                   replaceVariables={replaceVariables}
-    //                   defaultItems={[
-    //                     {
-    //                       items: [
-    //                         {
-    //                           label: 'Add annotation',
-    //                           ariaLabel: 'Add annotation',
-    //                           icon: 'comment-alt',
-    //                           onClick: (e, p) => {
-    //                             if (!p) {
-    //                               return;
-    //                             }
-    //                             startAnnotating({ coords: p.coords });
-    //                           },
-    //                         },
-    //                       ],
-    //                     },
-    //                   ]}
-    //                 />
-    //               );
-    //             }}
-    //           </AnnotationEditorPlugin>
-    //         ) : (
-    //           <ContextMenuPlugin
-    //             data={alignedDataFrame}
-    //             config={config}
-    //             timeZone={timeZone}
-    //             replaceVariables={replaceVariables}
-    //             defaultItems={[]}
-    //           />
-    //         )}
-    //         {data.annotations && (
-    //           <ExemplarsPlugin
-    //             config={config}
-    //             exemplars={data.annotations}
-    //             timeZone={timeZone}
-    //             getFieldLinks={getFieldLinks}
-    //           />
-    //         )}
-
-    //         {canEditThresholds && onThresholdsChange && (
-    //           <ThresholdControlsPlugin
-    //             config={config}
-    //             fieldConfig={fieldConfig}
-    //             onThresholdsChange={onThresholdsChange}
-    //           />
-    //         )}
-    //       </>
-    //     );
-    //   }}
-    // </TimeSeries>
   );
 };

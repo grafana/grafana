@@ -44,7 +44,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn2<
     sync?: () => DashboardCursorSync;
     legend?: VizLegendOptions;
   },
-  { frames: DataFrame[]; aligned: AlignedData }
+  { frames: DataFrame[]; aligned: AlignedData; alignedFrame: DataFrame }
 > = ({
   frame,
   theme,

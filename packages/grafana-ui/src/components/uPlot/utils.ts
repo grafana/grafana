@@ -48,7 +48,7 @@ export function preparePlotData(opts: {
   frames: DataFrame[];
   onStackMeta?: (meta: StackMeta) => void;
   legend?: VizLegendOptions;
-}): PrepDataFnResult<{ aligned: AlignedData }> {
+}): PrepDataFnResult<{ aligned: AlignedData; alignedFrame: DataFrame }> {
   debugLog('preparePlotData');
   const alignedFrame = preparePlotFrame(opts.frames, {
     x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
@@ -58,6 +58,7 @@ export function preparePlotData(opts: {
   if (!alignedFrame) {
     return {
       frames: opts.frames,
+      alignedFrame: {} as DataFrame,
       aligned: [] as unknown as AlignedData,
     };
   }
@@ -144,6 +145,7 @@ export function preparePlotData(opts: {
 
   return {
     frames: opts.frames,
+    alignedFrame,
     aligned: result as AlignedData,
   };
 }
