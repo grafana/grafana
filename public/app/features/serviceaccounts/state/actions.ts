@@ -90,8 +90,8 @@ export function loadServiceAccounts(): ThunkResult<void> {
 
 export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().patch(`/api/org/users/${serviceAccount.id}`, { ...serviceAccount });
-    dispatch(loadServiceAccounts());
+    const response = await getBackendSrv().patch(`${BASE_URL}/${serviceAccount.id}`, { ...serviceAccount });
+    dispatch(serviceAccountLoaded(response));
   };
 }
 

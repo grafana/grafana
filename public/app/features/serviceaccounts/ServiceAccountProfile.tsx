@@ -103,12 +103,11 @@ export function ServiceAccountProfile({
               onDismiss={showDeleteServiceAccountModal(false)}
             />
           </>
-          {serviceAccount.isDisabled && (
+          {serviceAccount.isDisabled ? (
             <Button variant="secondary" onClick={handleServiceAccountEnable}>
               Enable service account
             </Button>
-          )}
-          {!serviceAccount.isDisabled && (
+          ) : (
             <>
               <Button variant="secondary" onClick={showDisableServiceAccountModal(true)} ref={disableServiceAccountRef}>
                 Disable service account
