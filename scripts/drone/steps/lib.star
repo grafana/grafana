@@ -241,7 +241,7 @@ def build_storybook_step(edition, ver_mode):
         'depends_on': [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'build-frontend',
-            'build-frontend-package',
+            'build-frontend-packages',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
@@ -431,17 +431,17 @@ def build_frontend_package_step(edition, ver_mode, is_downstream=False):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend-package --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
+            './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
             '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
             ]
     else:
         cmds = [
-            './bin/grabpl build-frontend-package --jobs 8 --edition {} '.format(edition) + \
+            './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
             '--build-id {} --no-pull-enterprise'.format(build_no),
             ]
 
     return {
-        'name': 'build-frontend-package',
+        'name': 'build-frontend-packages',
         'image': build_image,
         'depends_on': [
             'initialize',
@@ -638,7 +638,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
         'build-plugins',
         'build-backend',
         'build-frontend',
-        'build-frontend-package',
+        'build-frontend-packages',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -714,7 +714,7 @@ def grafana_server_step(edition, port=3001):
             'build-plugins',
             'build-backend',
             'build-frontend',
-            'build-frontend-package',
+            'build-frontend-packages',
         ],
         'environment': environment,
         'commands': [

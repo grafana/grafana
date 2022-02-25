@@ -146,14 +146,14 @@ steps:
   image: grafana/build-container:1.5.1
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend-package
+  name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
@@ -187,7 +187,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment: null
   image: grafana/build-container:1.5.1
   name: package
@@ -197,7 +197,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   detach: true
   environment:
     ARCH: linux-amd64
@@ -277,7 +277,7 @@ steps:
   - ./bin/grabpl verify-storybook
   depends_on:
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.1
@@ -675,14 +675,14 @@ steps:
   image: grafana/build-container:1.5.1
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend-package
+  name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
@@ -718,7 +718,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -738,7 +738,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   detach: true
   environment:
     ARCH: linux-amd64
@@ -818,7 +818,7 @@ steps:
   - ./bin/grabpl verify-storybook
   depends_on:
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.1
@@ -1283,14 +1283,14 @@ steps:
   image: grafana/build-container:1.5.1
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-package --jobs 8 --github-token $${GITHUB_TOKEN} --edition
-    oss --no-pull-enterprise ${DRONE_TAG}
+  - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
+    --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend-package
+  name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
@@ -1326,7 +1326,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1377,7 +1377,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   detach: true
   environment:
     ARCH: linux-amd64
@@ -1457,7 +1457,7 @@ steps:
   - ./bin/grabpl verify-storybook
   depends_on:
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.1
@@ -1877,14 +1877,14 @@ steps:
   image: grafana/build-container:1.5.1
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-package --jobs 8 --github-token $${GITHUB_TOKEN} --edition
-    enterprise --no-pull-enterprise ${DRONE_TAG}
+  - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
+    --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend-package
+  name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
   depends_on:
@@ -1930,7 +1930,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   - build-backend-enterprise2
   environment:
     GITHUB_TOKEN:
@@ -1982,7 +1982,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   detach: true
   environment:
     ARCH: linux-amd64
@@ -2088,7 +2088,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   - build-backend-enterprise2
   environment:
     GITHUB_TOKEN:
@@ -3045,14 +3045,14 @@ steps:
   image: grafana/build-container:1.5.1
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --no-pull-enterprise
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend-package
+  name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
@@ -3088,7 +3088,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3139,7 +3139,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   detach: true
   environment:
     ARCH: linux-amd64
@@ -3219,7 +3219,7 @@ steps:
   - ./bin/grabpl verify-storybook
   depends_on:
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.1
@@ -3566,14 +3566,14 @@ steps:
   image: grafana/build-container:1.5.1
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
-    --no-pull-enterprise
+  - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
+    ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.1
-  name: build-frontend-package
+  name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
   depends_on:
@@ -3617,7 +3617,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   - build-backend-enterprise2
   environment:
     GITHUB_TOKEN:
@@ -3669,7 +3669,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   detach: true
   environment:
     ARCH: linux-amd64
@@ -3750,7 +3750,7 @@ steps:
   - ./bin/grabpl verify-storybook
   depends_on:
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.1
@@ -3784,7 +3784,7 @@ steps:
   - build-plugins
   - build-backend
   - build-frontend
-  - build-frontend-package
+  - build-frontend-packages
   - build-backend-enterprise2
   environment:
     GITHUB_TOKEN:
@@ -4330,6 +4330,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: fdc54427ab562d70327afef40c8f7006ed1802d1315ab89d21cdaee14aeff36d
+hmac: f8445040a37308e4bf836c7cc0756dcd56a7355eb52e2e47bcb186aa58d47b8f
 
 ...
