@@ -17,10 +17,11 @@ type Props = {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     containerMargin: css`
-      margin-top: ${theme.spacing(2)};
+      margin-top: ${theme.spacing(1)};
     `,
   };
 };
+
 export function SecondaryActions(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);

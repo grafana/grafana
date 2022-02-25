@@ -5,7 +5,7 @@
 }
 
 // TODO: check if this is used
-.explore {
+.explore-pane {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -13,7 +13,7 @@
   height: 100vh;
 }
 
-.explore + .explore {
+.explore-pane + .explore-pane {
   border-left: 1px dotted $table-border;
 }
 
@@ -21,13 +21,12 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  padding: 0 $dashboard-padding;
+  padding: $dashboard-padding;
+  padding-top: 0;
 }
 
-.explore-wrapper {
+.explore {
   display: flex;
-  height: 100%;
-
   > .explore-split {
     width: 50%;
   }

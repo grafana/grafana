@@ -73,17 +73,15 @@ class WrapperUnconnected extends PureComponent<Props> {
     const hasSplit = Boolean(left) && Boolean(right);
 
     return (
-      <div className="page-scrollbar-wrapper">
-        <div className="explore-wrapper">
+      <div className="explore">
+        <ErrorBoundaryAlert style="page">
+          <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+        </ErrorBoundaryAlert>
+        {hasSplit && (
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
           </ErrorBoundaryAlert>
-          {hasSplit && (
-            <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
-            </ErrorBoundaryAlert>
-          )}
-        </div>
+        )}
       </div>
     );
   }
