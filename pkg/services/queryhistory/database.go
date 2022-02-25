@@ -2,6 +2,8 @@ package queryhistory
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -39,6 +41,79 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *models.Signe
 	}
 
 	return dto, nil
+}
+
+func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.SignedInUser, query SearchInQueryHistoryQuery) ([]QueryHistoryDTO, error) {
+	var queries []QueryHistoryDTO
+
+	if len(query.DatasourceUIDs) == 0 {
+		return nil, errors.New("no selected data source for query history search")
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+
+	if query.Limit <= 0 {
+		query.Limit = 100
+	}
+
+	if query.Sort == "" {
+		query.Sort = "time-desc"
+	}
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		sql := `SELECT
+			query_history.uid,
+			query_history.datasource_uid,
+			query_history.created_by,
+			query_history.created_at as "created_at",
+			query_history.comment,
+			query_history.queries,
+		`
+
+		if query.OnlyStarred {
+			sql = sql + `1 as "starred"
+				FROM query_history
+				INNER JOIN query_history_star ON query_history_star.query_uid = query_history.uid
+			`
+		} else {
+			sql = sql + `IIF(query_history_star.query_uid IS NULL, false, true) AS starred
+				FROM query_history
+				LEFT JOIN query_history_star ON query_history_star.query_uid = query_history.uid
+			`
+		}
+
+		sql = sql + `WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.queries LIKE ? AND query_history.datasource_uid IN (?` + strings.Repeat(",?", len(query.DatasourceUIDs)-1) + `)
+		`
+
+		if query.Sort == "time-asc" {
+			sql = sql + `ORDER BY created_at ASC
+			`
+		} else {
+			sql = sql + `ORDER BY created_at DESC
+			`
+		}
+
+		sql = sql + `LIMIT ? OFFSET ?
+		`
+
+		params := []interface{}{user.OrgId, user.UserId, "%" + query.SearchString + "%"}
+		for _, uid := range query.DatasourceUIDs {
+			params = append(params, uid)
+		}
+		offset := query.Limit * (query.Page - 1)
+		params = append(params, query.Limit, offset)
+
+		err := session.SQL(sql, params...).Find(&queries)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return queries, nil
 }
 
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *models.SignedInUser, UID string) (int64, error) {

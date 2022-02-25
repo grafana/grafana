@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -37,6 +38,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		ctx := web.Context{Req: &http.Request{
 			Header: http.Header{},
+			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
 		sqlStore := sqlstore.InitTestDB(t)
