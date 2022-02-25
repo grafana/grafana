@@ -97,6 +97,34 @@ func TestCalculateChanges(t *testing.T) {
 		require.Equal(t, 0, changes.newRules)
 	})
 
+	t.Run("should include only if there are changes ignoring specific fields", func(t *testing.T) {
+		namespace := randFolder()
+		groupName := util.GenerateShortUID()
+		_, inDatabase := models.GenerateUniqueAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), withGroup(groupName), withNamespace(namespace)))
+
+		submitted := make([]*models.AlertRule, 0, len(inDatabase))
+		for _, rule := range inDatabase {
+			r := models.CopyRule(rule)
+
+			// Ignore difference in the following fields as submitted models do not have them set
+			r.ID = rand.Int63()
+			r.Version = rand.Int63()
+			r.Updated = r.Updated.Add(1 * time.Minute)
+
+			submitted = append(submitted, r)
+		}
+
+		fakeStore := store.NewFakeRuleStore(t)
+		fakeStore.PutRule(context.Background(), inDatabase...)
+
+		changes, err := calculateChanges(context.Background(), fakeStore, orgId, namespace, groupName, submitted)
+		require.NoError(t, err)
+
+		require.Len(t, changes.Upsert, 0)
+		require.Len(t, changes.Delete, 0)
+		require.Equal(t, 0, changes.newRules)
+	})
+
 	t.Run("should patch rule with UID specified by existing rule", func(t *testing.T) {
 		testCases := []struct {
 			name    string

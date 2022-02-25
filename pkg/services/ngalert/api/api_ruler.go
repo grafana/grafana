@@ -269,10 +269,12 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return err
 		}
 
-		// TODO add update/delete authz logic
-		err = srv.store.UpsertAlertRules(tranCtx, changes.Upsert)
-		if err != nil {
-			return fmt.Errorf("failed to add or update rules: %w", err)
+		if len(changes.Upsert) > 0 {
+			// TODO add update/delete authz logic
+			err = srv.store.UpsertAlertRules(tranCtx, changes.Upsert)
+			if err != nil {
+				return fmt.Errorf("failed to add or update rules: %w", err)
+			}
 		}
 
 		for _, rule := range changes.Delete {
@@ -307,15 +309,14 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	// TODO uncomment when rules that are not changed will be filter out from the upsert list.
-	// for _, rule := range changes.Upsert {
-	// 	if rule.Existing != nil {
-	// 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
-	// 			OrgID: c.SignedInUser.OrgId,
-	// 			UID:   rule.Existing.UID,
-	// 		})
-	// 	}
-	// }
+	for _, rule := range changes.Upsert {
+		if rule.Existing != nil {
+			srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
+				OrgID: c.SignedInUser.OrgId,
+				UID:   rule.Existing.UID,
+			})
+		}
+	}
 
 	for _, rule := range changes.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
@@ -423,7 +424,12 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		}
 
 		ngmodels.PatchPartialAlertRule(existing, r)
-		// TODO diff between patched and existing, as well as between submitted
+
+		diff := existing.Diff(r, alertRuleFieldsToIgnoreInDiff...)
+		if len(diff) == 0 {
+			continue
+		}
+
 		upsert = append(upsert, store.UpsertRule{
 			Existing: existing,
 			New:      *r,
@@ -441,3 +447,6 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 		newRules: newRules,
 	}, nil
 }
+
+// alertRuleFieldsToIgnoreInDiff contains fields that the AlertRule.Diff should ignore
+var alertRuleFieldsToIgnoreInDiff = []string{"ID", "Version", "Updated"}
