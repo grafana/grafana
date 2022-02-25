@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -27,6 +28,53 @@ import (
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+
+func TestDashboardAnnotations(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	sqlStore := mockstore.NewSQLStoreMock()
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, sqlStore)
+
+	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
+	annotations.SetRepository(fakeAnnoRepo)
+
+	const mainOrgID int64 = 1
+
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+		"test1": "testValue1",
+		"test2": "{{ $labels.instance_label }}",
+	})
+
+	st.Warm(ctx)
+	_ = st.ProcessEvalResults(ctx, rule, eval.Results{{
+		Instance:    data.Labels{"instance_label": "testValue2"},
+		State:       eval.Alerting,
+		EvaluatedAt: evaluationTime,
+	}})
+
+	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - Alerting"}
+	sort.Strings(expected)
+	require.Eventuallyf(t, func() bool {
+		var actual []string
+		for _, next := range fakeAnnoRepo.Items {
+			actual = append(actual, next.Text)
+		}
+		sort.Strings(actual)
+		if len(expected) != len(actual) {
+			return false
+		}
+		for i := 0; i < len(expected); i++ {
+			if expected[i] != actual[i] {
+				return false
+			}
+		}
+		return true
+	}, time.Second, 100*time.Millisecond, "unexpected annotations")
+}
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")

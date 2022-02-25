@@ -79,6 +79,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			accesscontrol.AddDashboardPermissionsMigrator(mg)
 		}
 	}
+	addQueryHistoryStarMigrations(mg)
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardComments) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationComments) {
