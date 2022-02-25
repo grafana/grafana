@@ -30,7 +30,7 @@ import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/t
 import AccordianReferences from './AccordianReferences';
 import { autoColor } from '../../Theme';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { Divider } from 'src/common/Divider';
+import { Divider } from '../../common/Divider';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
