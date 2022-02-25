@@ -23,7 +23,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
-  "dataSourceUid": "PE1C5CBDA0504A6A3",
+  "datasourceUid": "PE1C5CBDA0504A6A3",
   "queries": [
     {
         "refId": "A",
@@ -93,7 +93,7 @@ Query parameters:
   **Example request for query history search**:
 
 ```http
-GET /api/query-history?dataSourceUid="PE1C5CBDA0504A6A3"&dataSourceUid="FG1C1CBDA0504A6EL"&searchString="ALERTS"&sort="time-asc" HTTP/1.1
+GET /api/query-history?datasourceUid="PE1C5CBDA0504A6A3"&datasourceUid="FG1C1CBDA0504A6EL"&searchString="ALERTS"&sort="time-asc" HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
